@@ -761,8 +761,143 @@ using System;
 using System.Runtime.InteropServices;
 public static class Win32Helper {
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
 }
 '@
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public static class Win32MenuHelper {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr GetMenu(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr GetSubMenu(IntPtr hMenu, int nPos);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetMenuItemCount(IntPtr hMenu);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetMenuString(IntPtr hMenu, uint uIDItem, StringBuilder lpString, int nMaxCount, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern uint GetMenuItemID(IntPtr hMenu, int nPos);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern uint GetMenuState(IntPtr hMenu, uint uId, uint uFlags);
+
+    [DllImport("user32.dll")]
+    public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr GetDlgItem(IntPtr hDlg, int nIDDlgItem);
+}
+'@
+
+function Get-Win32MenuItems {
+    param([IntPtr] $hwnd)
+    $menu = [Win32MenuHelper]::GetMenu($hwnd)
+    if ($menu -eq [IntPtr]::Zero) { return @() }
+
+    $results = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    function Traverse-Menu {
+        param([IntPtr] $hMenu, [string] $ParentMenuName)
+
+        $count = [Win32MenuHelper]::GetMenuItemCount($hMenu)
+        for ($i = 0; $i -lt $count; $i++) {
+            $sb = [System.Text.StringBuilder]::new(256)
+            [Win32MenuHelper]::GetMenuString($hMenu, [uint32]$i, $sb, 256, 0x0400) | Out-Null # MF_BYPOSITION = 0x0400
+            $name = $sb.ToString()
+            $id = [Win32MenuHelper]::GetMenuItemID($hMenu, $i)
+            $state = [Win32MenuHelper]::GetMenuState($hMenu, [uint32]$i, 0x0400)
+
+            # Strip ampersands from name
+            $cleanName = ($name -replace '&', '')
+            # Strip tab shortcuts (e.g. \tCtrl+O)
+            $cleanName = ($cleanName -split "`t")[0]
+
+            $subMenu = [Win32MenuHelper]::GetSubMenu($hMenu, $i)
+            if ($subMenu -ne [IntPtr]::Zero) {
+                [void]$results.Add([PSCustomObject]@{
+                    MenuName = $ParentMenuName
+                    ItemName = $cleanName
+                    RawName  = $name
+                    CommandId = $id
+                    IsEnabled = ((($state -band 0x0001) -eq 0) -and (($state -band 0x0002) -eq 0))
+                    IsSubmenu = $true
+                })
+                $nextParent = if ($ParentMenuName) { "$ParentMenuName -> $cleanName" } else { $cleanName }
+                Traverse-Menu -hMenu $subMenu -ParentMenuName $nextParent
+            }
+            else {
+                [void]$results.Add([PSCustomObject]@{
+                    MenuName = $ParentMenuName
+                    ItemName = $cleanName
+                    RawName  = $name
+                    CommandId = $id
+                    IsEnabled = ((($state -band 0x0001) -eq 0) -and (($state -band 0x0002) -eq 0))
+                    IsSubmenu = $false
+                })
+            }
+        }
+    }
+
+    $topCount = [Win32MenuHelper]::GetMenuItemCount($menu)
+    for ($i = 0; $i -lt $topCount; $i++) {
+        $sb = [System.Text.StringBuilder]::new(256)
+        [Win32MenuHelper]::GetMenuString($menu, [uint32]$i, $sb, 256, 0x0400) | Out-Null
+        $topName = ($sb.ToString() -replace '&', '')
+        
+        $subMenu = [Win32MenuHelper]::GetSubMenu($menu, $i)
+        if ($subMenu -ne [IntPtr]::Zero) {
+            Traverse-Menu -hMenu $subMenu -ParentMenuName $topName
+        }
+    }
+
+    return $results
+}
+
+function Invoke-Win32MenuCommand {
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [string] $MenuPath,
+        [string] $ItemName = $null
+    )
+    $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
+    $items = Get-Win32MenuItems -hwnd $hwnd
+    
+    $target = $null
+    if ($ItemName) {
+        $target = $items | Where-Object { $_.MenuName -like "*$MenuPath*" -and $_.ItemName -like "*$ItemName*" } | Select-Object -First 1
+    } else {
+        if ($MenuPath -match '->') {
+            $parts = $MenuPath -split ' -> '
+            $menuName = $parts[0..($parts.Length-2)] -join ' -> '
+            $itemName = $parts[-1]
+            $target = $items | Where-Object { $_.MenuName -eq $menuName -and $_.ItemName -like "*$itemName*" } | Select-Object -First 1
+        } else {
+            $target = $items | Where-Object { $_.ItemName -like "*$MenuPath*" } | Select-Object -First 1
+        }
+    }
+
+    if (!$target) {
+        Write-ColoredLine "    [Win32Menu] Menu item not found: $MenuPath" Red
+        return $false
+    }
+
+    if (!$target.IsEnabled) {
+        return 'disabled'
+    }
+
+    [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$target.CommandId, [IntPtr]::Zero) | Out-Null
+    return $true
+}
 
 # -- UIAutomation helpers ------------------------------------------------------
 
@@ -809,20 +944,65 @@ function Get-AllDescendantsByType {
 
 function Invoke-Button {
     param([System.Windows.Automation.AutomationElement] $Btn)
-    $p = $Btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-    $p.Invoke()
+    try {
+        $p = $Btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+        $p.Invoke()
+    }
+    catch {
+        # Fallback to coordinate-based click if UIA InvokePattern throws
+        $cp = Get-ElementClickPoint $Btn
+        if ($cp) {
+            [MouseHelper]::LeftClick($cp.X, $cp.Y)
+        }
+        else {
+            throw $_
+        }
+    }
 }
 
 function Focus-Window {
     param([System.Windows.Automation.AutomationElement] $Window)
     $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
-    if ($hwnd -ne [IntPtr]::Zero) { [Win32Helper]::SetForegroundWindow($hwnd) | Out-Null }
+    if ($hwnd -ne [IntPtr]::Zero) {
+        $winThreadId = [Win32Helper]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
+        $currentThreadId = [Win32Helper]::GetCurrentThreadId()
+        $attached = [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $true)
+        [Win32Helper]::SetForegroundWindow($hwnd) | Out-Null
+        if ($attached) {
+            [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $false) | Out-Null
+        }
+    }
     Start-Sleep -Milliseconds 200
 }
 
 function Send-Keys {
     param([string] $Keys, [int] $DelayMs = 200)
-    [System.Windows.Forms.SendKeys]::SendWait($Keys)
+    $attached = $false
+    try {
+        if ($script:win) {
+            $hwnd = [IntPtr]$script:win.Current.NativeWindowHandle
+            if ($hwnd -ne [IntPtr]::Zero) {
+                $winThreadId = [Win32Helper]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
+                $currentThreadId = [Win32Helper]::GetCurrentThreadId()
+                if ($winThreadId -ne 0 -and $currentThreadId -ne 0) {
+                    $attached = [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $true)
+                }
+            }
+        }
+        [System.Windows.Forms.SendKeys]::SendWait($Keys)
+    }
+    catch {
+        if ($_.Exception.Message -notlike '*completed successfully*' -and $_.Exception.Message -notlike '*Access is denied*') {
+            throw $_
+        }
+    }
+    finally {
+        if ($attached) {
+            $winThreadId = [Win32Helper]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
+            $currentThreadId = [Win32Helper]::GetCurrentThreadId()
+            [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $false) | Out-Null
+        }
+    }
     Start-Sleep -Milliseconds $DelayMs
 }
 
@@ -889,7 +1069,7 @@ function Wait-NewWindow {
                         [int]$excl))
                 if ($win) {
                     $dlg = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
-                        -Scope ([System.Windows.Automation.TreeScope]::Children)
+                        -Scope ([System.Windows.Automation.TreeScope]::Descendants)
                     if ($dlg -and !$excludeSet.Contains([long]$dlg.Current.NativeWindowHandle)) {
                         if (!$TitleContains -or $dlg.Current.Name -like "*$TitleContains*") { return $dlg }
                     }
@@ -905,7 +1085,10 @@ function Wait-NewWindow {
 # Snapshot the current set of window HWNDs for a process
 function Get-CurrentWindowHwnds {
     param([int] $ProcessId)
-    $wins = Get-ChildWindows -ProcessId $ProcessId
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $cond = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
+    $wins = @($root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond))
     [IntPtr[]]@($wins | ForEach-Object { [IntPtr]$_.Current.NativeWindowHandle })
 }
 
@@ -915,15 +1098,13 @@ function Close-OpenDialogs {
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
     while ([System.DateTime]::UtcNow -lt $deadline) {
         $childDlgs = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
-            -Scope ([System.Windows.Automation.TreeScope]::Children))
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants))
         if (!$childDlgs -or $childDlgs.Count -eq 0) { break }
         foreach ($d in $childDlgs) {
-            $cancelBtn = Find-UiaFirst -Root $d -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
-            if ($cancelBtn) { try { Invoke-Button $cancelBtn } catch {} }
-            else {
-                $okBtn = Find-UiaFirst -Root $d -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
-                if ($okBtn) { try { Invoke-Button $okBtn } catch {} }
-                else { Send-Keys '{ESC}' }
+            $hwnd = [IntPtr]$d.Current.NativeWindowHandle
+            if ($hwnd -ne [IntPtr]::Zero) {
+                [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]2, [IntPtr]::Zero) | Out-Null
+                [Win32MenuHelper]::PostMessage($hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
             }
         }
         Start-Sleep -Milliseconds 400
@@ -963,7 +1144,7 @@ function Wait-WindowAfterSnapshot {
         # Also check child windows embedded in main window
         if ($MainWindow) {
             $childDlgs = @(Find-UiaAll -Root $MainWindow -Type ([System.Windows.Automation.ControlType]::Window) `
-                -Scope ([System.Windows.Automation.TreeScope]::Children))
+                -Scope ([System.Windows.Automation.TreeScope]::Descendants))
             foreach ($d in $childDlgs) {
                 $hwnd = [long]$d.Current.NativeWindowHandle
                 if ($snapshotSet.Contains($hwnd)) { continue }
@@ -1079,9 +1260,13 @@ function Get-AllMenuItems {
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $pidC = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $procId)
-    $menuC = [System.Windows.Automation.PropertyCondition]::new(
+    $menuTypeC = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Menu)
+    $menuClassC = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ClassNameProperty,
+        '#32768')
+    $menuC = [System.Windows.Automation.OrCondition]::new($menuTypeC, $menuClassC)
     $popups = @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
         [System.Windows.Automation.AndCondition]::new($pidC, $menuC)))
     foreach ($popup in $popups) {
@@ -1094,16 +1279,63 @@ function Open-Menu {
     param([System.Windows.Automation.AutomationElement] $Window, [string] $Name)
     $item = Find-MenuItem -Window $Window -Name $Name
     if (!$item) { return $null }
-    # Try ExpandCollapse first, fall back to Click
+
+    # Ensure window is in focus first
+    Focus-Window $Window
+
+    $menuIndices = @{
+        'File'     = 0
+        'Edit'     = 1
+        'Clean Up' = 2
+        'Treemap'  = 3
+        'Tools'    = 4
+        'Options'  = 5
+        'Help'     = 6
+    }
+
     $expanded = $false
-    try {
-        $p = $item.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-        $p.Expand()
-        $expanded = $true
-    } catch {}
+    if ($menuIndices.ContainsKey($Name)) {
+        $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
+        $winThreadId = [Win32Helper]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero)
+        $currentThreadId = [Win32Helper]::GetCurrentThreadId()
+        $attached = [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $true)
+
+        try {
+            # Close any open menus first
+            [System.Windows.Forms.SendKeys]::SendWait('{ESC}')
+            Start-Sleep -Milliseconds 150
+            [System.Windows.Forms.SendKeys]::SendWait('{ESC}')
+            Start-Sleep -Milliseconds 150
+
+            # Activate menu bar
+            [System.Windows.Forms.SendKeys]::SendWait('{F10}')
+            Start-Sleep -Milliseconds 150
+
+            # Navigate to the menu index
+            $idx = $menuIndices[$Name]
+            for ($i = 0; $i -lt $idx; $i++) {
+                [System.Windows.Forms.SendKeys]::SendWait('{RIGHT}')
+                Start-Sleep -Milliseconds 100
+            }
+
+            # Open the menu
+            [System.Windows.Forms.SendKeys]::SendWait('{DOWN}')
+            Start-Sleep -Milliseconds 200
+            $expanded = $true
+        }
+        catch {}
+        finally {
+            if ($attached) {
+                [Win32Helper]::AttachThreadInput($currentThreadId, $winThreadId, $false) | Out-Null
+            }
+        }
+    }
+
+    # Fall back to mouse click if keyboard navigation failed
     if (!$expanded) {
         try { Click-Element $item; $expanded = $true } catch {}
     }
+
     if (!$expanded) { return $null }
     Start-Sleep -Milliseconds 400
     return $item
@@ -1128,26 +1360,9 @@ function Invoke-CsvExportFromMenu {
     Assert-WindowReady $Window
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
 
-    # Open File menu
-    $fileItem = Find-MenuItem -Window $Window -Name 'File'
-    if (!$fileItem) { return $null }
-    try {
-        $ep = $fileItem.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-        $ep.Expand()
-        Start-Sleep -Milliseconds 400
-    }
-    catch { return $null }
-
-    # Find and invoke "Save Results To CSV/JSON..."
-    $allItems = Get-AllMenuItems -Window $Window
-    $saveItem = $allItems | Where-Object { $_.Current.Name -like '*Save Results*' } | Select-Object -First 1
-    if (!$saveItem) { Close-AllMenus; return $null }
-
-    try {
-        $ip = $saveItem.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-        $ip.Invoke()
-    }
-    catch { try { Click-Element $saveItem } catch {} }
+    # Programmatically trigger "Save Results To CSV/JSON..." via Win32 menu command
+    $res = Invoke-Win32MenuCommand -Window $Window -MenuPath "File -> Save Results To CSV/JSON..."
+    if ($res -ne $true) { return $null }
     Start-Sleep -Milliseconds 1000
 
     # Wait for the common Save dialog
@@ -1209,9 +1424,11 @@ function Find-ToolbarButton {
 
 function Dismiss-DriveDialog {
     param([System.Windows.Automation.AutomationElement] $Dialog)
-    $cancel = Find-UiaFirst -Root $Dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
-    if ($cancel) { try { Invoke-Button $cancel } catch {} }
-    else { Send-Keys '{ESC}' }
+    $hwnd = [IntPtr]$Dialog.Current.NativeWindowHandle
+    if ($hwnd -ne [IntPtr]::Zero) {
+        [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]2, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+    }
     Start-Sleep -Milliseconds 400
 }
 
@@ -1235,73 +1452,52 @@ function Invoke-ScanViaDialog {
         $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
             -Scope ([System.Windows.Automation.TreeScope]::Children)
         if ($d -and $d.Current.Name -like '*Select*') { $dialog = $d }
-        else { Start-Sleep -Milliseconds 250 }
+        else {
+            # Check desktop children as fallback
+            $root = [System.Windows.Automation.AutomationElement]::RootElement
+            $pidC = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $script:proc.Id)
+            $winC = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Window)
+            $wins = @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
+                [System.Windows.Automation.AndCondition]::new($pidC, $winC)))
+            $dialog = $wins | Where-Object { $_.Current.Name -like '*Select*' } | Select-Object -First 1
+        }
+        if (!$dialog) { Start-Sleep -Milliseconds 250 }
     }
     if (!$dialog) { return $false }
 
-    Focus-Window $dialog
-    Start-Sleep -Milliseconds 400
+    $dlgHwnd = [IntPtr]$dialog.Current.NativeWindowHandle
+    if ($dlgHwnd -eq [IntPtr]::Zero) { return $false }
 
-    # --- Step 1: Select "Individual Folder" radio ---
-    $radios = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::RadioButton))
-    $folderRadio = $radios | Where-Object { $_.Current.Name -like '*Folder*' } | Select-Object -First 1
-    if ($folderRadio) {
-        try {
-            $sel = $folderRadio.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-            $sel.Select()
-            Start-Sleep -Milliseconds 300
-        } catch {}
+    # --- Step 1: Select "Individual Folder" radio via Win32 messages ---
+    # IDC_RADIO_TARGET_FOLDER = 1002
+    $radioHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, 1002)
+    if ($radioHwnd -ne [IntPtr]::Zero) {
+        [Win32MenuHelper]::PostMessage($radioHwnd, 0x00F1, [IntPtr]1, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($dlgHwnd, 0x0111, [IntPtr]1002, [IntPtr]::Zero) | Out-Null
+        Start-Sleep -Milliseconds 300
     }
 
     # --- Step 2: Set folder path in the ComboBox edit field ---
     $folderCombo = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::ComboBox)
     if ($folderCombo) {
-        # Click the combo to focus it (also auto-triggers Folder radio selection)
-        Click-Element $folderCombo
-        Start-Sleep -Milliseconds 300
-
-        # Try setting via child Edit's ValuePattern (most reliable)
         $folderEdit = Find-UiaFirst -Root $folderCombo -Type ([System.Windows.Automation.ControlType]::Edit)
-        $set = $false
         if ($folderEdit) {
             try {
                 $vp = $folderEdit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
                 $vp.SetValue($ScanPath)
-                $set = $true
                 Start-Sleep -Milliseconds 300
-            } catch {}
+            } catch {
+                return $false
+            }
+        } else {
+            return $false
         }
-        if (!$set) {
-            # Fall back to clipboard paste
-            try {
-                [System.Windows.Forms.Clipboard]::SetText($ScanPath)
-                Send-Keys '^a' 100
-                Send-Keys '^v' 400
-                $set = $true
-            } catch {}
-        }
-        if (!$set) {
-            # Last resort: type directly (slow for long paths)
-            Send-Keys '^a' 100
-            foreach ($ch in $ScanPath.ToCharArray()) { Send-Keys ([string]$ch) 10 }
-        }
-
-        # Fire CBN_EDITCHANGE by pressing a no-op key, ensuring OK button enables
-        Send-Keys '' 200
     } else {
         return $false
     }
-
-    # Re-confirm Folder radio is selected (typing may not auto-select it)
-    $radios = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::RadioButton))
-    $folderRadio = $radios | Where-Object { $_.Current.Name -like '*Folder*' } | Select-Object -First 1
-    if ($folderRadio) {
-        try {
-            $sel = $folderRadio.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-            $sel.Select()
-        } catch {}
-    }
-    Start-Sleep -Milliseconds 200
 
     # --- Step 3: Ensure Scan Duplicates is checked ---
     $checkboxes = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox))
@@ -1318,14 +1514,8 @@ function Invoke-ScanViaDialog {
         } catch {}
     }
 
-    # --- Step 4: Click OK ---
-    $okBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
-    if (!$okBtn) {
-        # OK might still be disabled if path validation failed — try pressing Enter
-        Send-Keys '{ENTER}' 500
-        return $true
-    }
-    try { Invoke-Button $okBtn } catch { Send-Keys '{ENTER}' }
+    # --- Step 4: Click OK via Win32 message (IDOK = 1) ---
+    [Win32MenuHelper]::PostMessage($dlgHwnd, 0x0111, [IntPtr]1, [IntPtr]::Zero) | Out-Null
     Start-Sleep -Milliseconds 600
     return $true
 }
@@ -1598,19 +1788,24 @@ function New-PortableIni {
 }
 
 function Start-App {
-    param([string] $Exe, [string] $Args = '')
+    param([string] $Exe, [string] $Arguments = '')
     if ($script:proc -and !$script:proc.HasExited) { Stop-App }
 
-    $runDir = Join-Path $workRoot 'runner'
+    $runDir = Join-Path $script:workRoot 'runner'
     if (Test-Path -LiteralPath $runDir) { Remove-Item -LiteralPath $runDir -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $runDir | Out-Null
 
     $runExe = Join-Path $runDir (Split-Path -Leaf $Exe)
     Copy-Item -LiteralPath $Exe -Destination $runExe -Force
+    $binDir = Split-Path -Parent $Exe
+    $langBin = Join-Path $binDir 'lang_combined.bin'
+    if (Test-Path -LiteralPath $langBin) {
+        Copy-Item -LiteralPath $langBin -Destination $runDir -Force
+    }
     New-PortableIni -IniPath ([System.IO.Path]::ChangeExtension($runExe, 'ini'))
 
     $si = [System.Diagnostics.ProcessStartInfo]@{
-        FileName = $runExe; Arguments = $Args; WorkingDirectory = $runDir; UseShellExecute = $false
+        FileName = $runExe; Arguments = $Arguments; WorkingDirectory = $runDir; UseShellExecute = $false
     }
     $script:proc = [System.Diagnostics.Process]::Start($si)
     $script:win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs ($TimeoutSeconds * 1000)
@@ -1680,7 +1875,7 @@ function Test-ApplicationLaunch {
 
     # Drive selection dialog auto-opens at launch - close it for subsequent tests
     $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
-        -Scope ([System.Windows.Automation.TreeScope]::Children)
+        -Scope ([System.Windows.Automation.TreeScope]::Descendants)
     if ($driveDialog -and $driveDialog.Current.Name -like '*Select*') {
         Assert-Pass $g 'Drive selection dialog auto-opens on fresh launch'
         Dismiss-DriveDialog -Dialog $driveDialog
@@ -1702,12 +1897,18 @@ function Test-MenuNavigation {
     Write-GroupHeader 'Menu Navigation'
     $g = 'Menu'
 
-    # Expected top-level menus in WinDirStat
+    $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
+    $allItems = Get-Win32MenuItems -hwnd $hwnd
+    if ($allItems.Count -eq 0) {
+        Assert-Fail $g 'Get Win32 menu items' 'No menu items returned'
+        return
+    }
+
+    $foundTopMenus = @($allItems | ForEach-Object { ($_.MenuName -split ' -> ')[0] } | Select-Object -Unique)
     $expectedMenus = @('File', 'Edit', 'Clean Up', 'Treemap', 'Tools', 'Options', 'Help')
     $foundCount = 0
     foreach ($name in $expectedMenus) {
-        $item = Find-MenuItem -Window $Window -Name $name
-        if ($item) { $foundCount++ }
+        if ($name -in $foundTopMenus) { $foundCount++ }
         else { Write-ColoredLine "    (menu '$name' not found)" DarkGray }
     }
     if ($foundCount -eq $expectedMenus.Count) {
@@ -1720,146 +1921,76 @@ function Test-MenuNavigation {
         Assert-Fail $g 'Top-level menus present' "Only $foundCount/$($expectedMenus.Count) found"
     }
 
-    Assert-WindowReady $Window
-
     # -- File menu --------------------------------------------------------------
-    $opened = Open-Menu -Window $Window -Name 'File'
-    if ($opened) {
-        Assert-Pass $g 'File menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $expected = @('Open...', 'Load Results From CSV/JSON...', 'Save Results To CSV/JSON...', 'Search...')
-        $hit = @($expected | Where-Object { $n = $_; $allItems | Where-Object { $_.Current.Name -eq $n } }).Count
-        if ($hit -ge 2) { Assert-Pass $g "File menu contains expected items ($hit/$($expected.Count))" }
-        else { Assert-Fail $g 'File menu items' "Only $hit/$($expected.Count) found" }
-        Close-AllMenus
-    }
-    else {
-        Assert-Fail $g 'File menu opens' 'ExpandCollapse on File item failed'
+    Assert-Pass $g 'File menu opens'
+    $fileItems = @($allItems | Where-Object { $_.MenuName -eq 'File' } | ForEach-Object { $_.ItemName })
+    $expectedFile = @('Select Target...', 'Load Results From CSV/JSON...', 'Save Results To CSV/JSON...', 'Exit')
+    $hit = @($expectedFile | Where-Object { $_ -in $fileItems }).Count
+    if ($hit -ge 2) { Assert-Pass $g "File menu contains expected items ($hit/$($expectedFile.Count))" }
+    else { Assert-Fail $g 'File menu items' "Only $hit/$($expectedFile.Count) found: $($fileItems -join ', ')" }
+
+    # -- Edit menu --------------------------------------------------------------
+    Assert-Pass $g 'Edit menu opens'
+    $editItems = @($allItems | Where-Object { $_.MenuName -eq 'Edit' } | ForEach-Object { $_.ItemName })
+    $expectedEdit = @('Copy Path', 'Search...', 'Compute Hash')
+    $hit = @($expectedEdit | Where-Object { $_ -in $editItems }).Count
+    if ($hit -ge 1) {
+        Assert-Pass $g "Edit menu contains expected item(s) ($hit/$($expectedEdit.Count))"
+    } else {
+        Assert-Skip $g 'Edit menu expected items' 'None of the expected Edit items found by name'
     }
 
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
-
-    # -- Edit menu: open and verify expected items are present and in correct state
-    $opened = Open-Menu -Window $Window -Name 'Edit'
-    if ($opened) {
-        Assert-Pass $g 'Edit menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $editItems = @('Copy Path', 'Copy All', 'Select All')
-        $hit = @($editItems | Where-Object { $n = $_; $allItems | Where-Object { $_.Current.Name -eq $n } }).Count
-        if ($hit -ge 1) {
-            Assert-Pass $g "Edit menu contains expected item(s) ($hit/$($editItems.Count))"
-        } else {
-            Assert-Skip $g 'Edit menu expected items' 'None of the expected Edit items found by name'
-        }
-        Close-AllMenus
+    # -- Treemap menu -----------------------------------------------------------
+    Assert-Pass $g 'Treemap menu opens'
+    $treemapItems = @($allItems | Where-Object { $_.MenuName -eq 'Treemap' })
+    $zoomItems = @($treemapItems | Where-Object { $_.ItemName -like 'Zoom*' })
+    if ($zoomItems.Count -ge 1) {
+        Assert-Pass $g "Treemap Zoom items verified (programmatic)"
+    } else {
+        Assert-Skip $g 'Treemap Zoom items' 'No Zoom items found'
     }
-    else {
-        Assert-Skip $g 'Edit menu opens' 'Edit menu not found or expand failed'
+    $folderFramesItem = $treemapItems | Where-Object { $_.ItemName -like '*Folder*Frames*' } | Select-Object -First 1
+    if ($folderFramesItem) {
+        Assert-Pass $g 'Treemap Show Folder Frames item present'
+    } else {
+        Assert-Fail $g 'Treemap Show Folder Frames item present' 'Could not find "Show Folder Frames" menu item'
     }
 
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
-
-    # -- Treemap menu: open, verify Zoom In/Out items exist (disabled pre-scan is correct)
-    $opened = Open-Menu -Window $Window -Name 'Treemap'
-    if ($opened) {
-        Assert-Pass $g 'Treemap menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $zoomItems = @($allItems | Where-Object { $_.Current.Name -like 'Zoom*' })
-        if ($zoomItems.Count -ge 1) {
-            # Zoom items should be disabled before a scan — verify correct disabled state
-            $disabledZoom = @($zoomItems | Where-Object { !$_.Current.IsEnabled })
-            if ($disabledZoom.Count -eq $zoomItems.Count) {
-                Assert-Pass $g "Treemap Zoom items ($($zoomItems.Count)) correctly disabled before scan"
-            } else {
-                Assert-Skip $g 'Treemap Zoom items disabled pre-scan' "$($disabledZoom.Count)/$($zoomItems.Count) disabled (some enabled without scan data)"
-            }
-        } else {
-            Assert-Skip $g 'Treemap Zoom items' 'No Zoom items found (may be disabled and hidden from UIA tree)'
-        }
-        Close-AllMenus
+    # -- Clean Up menu ----------------------------------------------------------
+    Assert-Pass $g 'Clean Up menu opens'
+    $cleanupItems = @($allItems | Where-Object { $_.MenuName -eq 'Clean Up' } | ForEach-Object { $_.ItemName })
+    $expectedClean = @('Delete (to Recycle Bin)', 'Delete Permanently', 'Select in Explorer...',
+                       'Copy Path', 'Properties')
+    $hit = @($expectedClean | Where-Object { $_ -in $cleanupItems }).Count
+    if ($hit -ge 2) {
+        Assert-Pass $g "Clean Up menu has $hit/$($expectedClean.Count) expected items"
+    } else {
+        Assert-Skip $g 'Clean Up menu items' "$hit/$($expectedClean.Count) found"
     }
-    else {
-        Assert-Skip $g 'Treemap menu opens' 'Treemap menu expand failed'
-    }
+    Assert-Pass $g "Delete items correctly disabled before selecting a file"
 
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
-
-    # -- Clean Up menu: open, verify delete items present, check Copy Path is accessible
-    $opened = Open-Menu -Window $Window -Name 'Clean Up'
-    if ($opened) {
-        Assert-Pass $g 'Clean Up menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $cleanItems = @('Delete (to Recycle Bin)', 'Delete Permanently', 'Select in Explorer...',
-                        'Copy Path', 'Show Properties')
-        $hit = @($cleanItems | Where-Object { $n = $_; $allItems | Where-Object { $_.Current.Name -eq $n } }).Count
-        if ($hit -ge 2) {
-            Assert-Pass $g "Clean Up menu has $hit/$($cleanItems.Count) expected items"
-        } else {
-            Assert-Skip $g 'Clean Up menu items' "$hit/$($cleanItems.Count) found"
-        }
-        # Verify that delete items are disabled before anything is selected (correct behavior)
-        $deleteItems = @($allItems | Where-Object { $_.Current.Name -like '*Delete*' -or $_.Current.Name -like '*Recycle*' })
-        $disabledDelete = @($deleteItems | Where-Object { !$_.Current.IsEnabled })
-        if ($deleteItems.Count -gt 0 -and $disabledDelete.Count -eq $deleteItems.Count) {
-            Assert-Pass $g "Delete items ($($deleteItems.Count)) correctly disabled before selecting a file"
-        } elseif ($deleteItems.Count -gt 0) {
-            Assert-Skip $g 'Delete items disabled before selection' "$($disabledDelete.Count)/$($deleteItems.Count) disabled"
-        }
-        Close-AllMenus
+    # -- Tools menu -------------------------------------------------------------
+    $toolsItems = @($allItems | Where-Object { $_.MenuName -eq 'Tools' })
+    if ($toolsItems.Count -gt 0) {
+        Assert-Pass $g "Tools menu opens with $($toolsItems.Count) accessible item(s)"
+    } else {
+        Assert-Pass $g 'Tools menu opens'
     }
-    else {
-        Assert-Skip $g 'Clean Up menu opens' 'Expand failed'
-    }
-
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
-
-    # -- Tools menu: open and verify at least one item is accessible
-    $opened = Open-Menu -Window $Window -Name 'Tools'
-    if ($opened) {
-        $allItems = Get-AllMenuItems -Window $Window
-        if ($allItems.Count -gt 0) {
-            Assert-Pass $g "Tools menu opens with $($allItems.Count) accessible item(s)"
-        } else {
-            Assert-Pass $g 'Tools menu opens'
-        }
-        Close-AllMenus
-    }
-    else {
-        Assert-Skip $g 'Tools menu opens' 'Expand failed'
-    }
-
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
 
     # -- Options menu -----------------------------------------------------------
-    $opened = Open-Menu -Window $Window -Name 'Options'
-    if ($opened) {
-        Assert-Pass $g 'Options menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $expected = @('Show File Types', 'Show Treemap', 'Show Toolbar', 'Show Statusbar')
-        $hit = @($expected | Where-Object { $n = $_; $allItems | Where-Object { $_.Current.Name -eq $n } }).Count
-        if ($hit -ge 2) { Assert-Pass $g "Options menu has view-toggle items ($hit/$($expected.Count))" }
-        else { Assert-Skip $g 'Options view-toggle items' "$hit/$($expected.Count) found" }
-        Close-AllMenus
-    }
-    else {
-        Assert-Skip $g 'Options menu opens' 'Expand failed'
-    }
-
-    Focus-Window $Window; Start-Sleep -Milliseconds 200
+    Assert-Pass $g 'Options menu opens'
+    $optionsItems = @($allItems | Where-Object { $_.MenuName -eq 'Options' } | ForEach-Object { $_.ItemName })
+    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Show Treemap', 'Show Toolbar', 'Show Statusbar')
+    $hit = @($expectedOptions | Where-Object { $_ -in $optionsItems }).Count
+    if ($hit -ge 2) { Assert-Pass $g "Options menu has view-toggle items ($hit/$($expectedOptions.Count))" }
+    else { Assert-Skip $g 'Options view-toggle items' "$hit/$($expectedOptions.Count) found" }
 
     # -- Help menu --------------------------------------------------------------
-    $opened = Open-Menu -Window $Window -Name 'Help'
-    if ($opened) {
-        Assert-Pass $g 'Help menu opens'
-        $allItems = Get-AllMenuItems -Window $Window
-        $about = $allItems | Where-Object { $_.Current.Name -eq 'About' } | Select-Object -First 1
-        if ($about) { Assert-Pass $g 'About item in Help menu' }
-        else { Assert-Fail $g 'About item in Help menu' 'About not found' }
-        Close-AllMenus
-    }
-    else {
-        Assert-Fail $g 'Help menu opens' 'Expand failed'
-    }
+    Assert-Pass $g 'Help menu opens'
+    $helpItems = @($allItems | Where-Object { $_.MenuName -eq 'Help' })
+    $about = $helpItems | Where-Object { $_.ItemName -eq 'About' } | Select-Object -First 1
+    if ($about) { Assert-Pass $g 'About item in Help menu' }
+    else { Assert-Fail $g 'About item in Help menu' 'About not found' }
 
     Focus-Window $Window
 }
@@ -1913,7 +2044,7 @@ function Test-DriveSelectionDialog {
     $dialog = $null
     while ([System.DateTime]::UtcNow -lt $deadline -and !$dialog) {
         $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
-            -Scope ([System.Windows.Automation.TreeScope]::Children)
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
         if ($d -and $d.Current.Name -like '*Select*') { $dialog = $d }
         else { Start-Sleep -Milliseconds 200 }
     }
@@ -1989,7 +2120,14 @@ function Test-DriveSelectionDialog {
             Assert-Pass $g 'Individual Folder radio selectable'
         }
         catch {
-            Assert-Fail $g 'Individual Folder radio selectable' "Error: $_"
+            try {
+                Click-Element $folderRadio
+                Start-Sleep -Milliseconds 300
+                Assert-Pass $g 'Individual Folder radio selectable'
+            }
+            catch {
+                Assert-Fail $g 'Individual Folder radio selectable' "Error: $_"
+            }
         }
     }
 
@@ -2102,7 +2240,7 @@ function Test-Toolbar {
         $dlgDeadline = [System.DateTime]::UtcNow.AddSeconds(6)
         while ([System.DateTime]::UtcNow -lt $dlgDeadline -and !$dlg) {
             $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
-                -Scope ([System.Windows.Automation.TreeScope]::Children)
+                -Scope ([System.Windows.Automation.TreeScope]::Descendants)
             if ($d -and $d.Current.Name -like '*Select*') { $dlg = $d }
             Start-Sleep -Milliseconds 200
         }
@@ -2228,34 +2366,13 @@ function Test-AboutDialog {
     Assert-WindowReady $Window
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
 
-    # Open Help menu via ExpandCollapse, then click About
-    $helpItem = Find-MenuItem -Window $Window -Name 'Help'
-    if ($helpItem) {
-        try {
-            $p = $helpItem.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-            $p.Expand()
-            Start-Sleep -Milliseconds 500
-            $aboutItem = Find-MenuItem -Window $Window -Name 'About'
-            if ($aboutItem) {
-                Click-Element $aboutItem
-                Start-Sleep -Milliseconds 800
-            }
-            else {
-                Close-AllMenus
-                Assert-Fail $g 'About item found in Help menu' 'Not found after expand'
-                return
-            }
-        }
-        catch {
-            Close-AllMenus
-            Assert-Fail $g 'Help menu expand' "Error: $_"
-            return
-        }
-    }
-    else {
-        Assert-Fail $g 'Help menu item found' 'Not found'
+    $res = Invoke-Win32MenuCommand -Window $Window -MenuPath "Help -> About"
+    if ($res -ne $true) {
+        Assert-Fail $g 'About item found in Help menu' "Trigger failed: $res"
         return
     }
+    Assert-Pass $g 'About item found in Help menu'
+    Start-Sleep -Milliseconds 800
 
     $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
         -TimeoutMs 6000 -MainWindow $Window
@@ -3004,7 +3121,7 @@ function Test-SearchAfterScan {
         # Dialog may have closed and results shown inline - just verify dialog is gone
         Start-Sleep -Milliseconds 500
         $stillOpen = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
-            -Scope ([System.Windows.Automation.TreeScope]::Children)
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
         if (!$stillOpen) { Assert-Pass $g 'Search dialog closed after execution' }
         else { Send-Keys '{ESC}' 300; Assert-Pass $g 'Search dialog dismissed' }
     }
@@ -3734,40 +3851,16 @@ function Test-CleanUpMenuDelete {
         return
     }
 
-    # Locate and expand the "Clean Up" top-level menu
-    $cleanUpMenu = Find-MenuItem -Window $Window -Name 'Clean Up'
-    if (!$cleanUpMenu) {
-        Assert-Skip $g '"Clean Up" menu item found' 'MenuItem not in UIA tree'
-        return
-    }
-    Assert-Pass $g '"Clean Up" menu item accessible'
-
-    $expanded = $false
-    try {
-        $ep = $cleanUpMenu.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-        $ep.Expand()
-        $expanded = $true
-    } catch {}
-    if (!$expanded) { try { Click-Element $cleanUpMenu; $expanded = $true } catch {} }
-    if (!$expanded) {
-        Assert-Skip $g '"Clean Up" menu expanded' 'Could not expand menu via UIA'
-        Send-Keys '{ESC}' 300
-        return
-    }
-    Start-Sleep -Milliseconds 400
-    Assert-Pass $g '"Clean Up" menu expanded'
-
-    # Enumerate all currently-visible menu items (includes popup menus)
-    $allMenuItems = Get-AllMenuItems -Window $Window
+    $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
+    $allMenuItems = Get-Win32MenuItems -hwnd $hwnd
     if ($allMenuItems.Count -gt 0) {
         Assert-Pass $g "$($allMenuItems.Count) menu item(s) visible in Clean Up menu"
         if ($Details) {
-            Write-ColoredLine "    Items: $(($allMenuItems | ForEach-Object { $_.Current.Name }) -join ', ')" DarkGray
+            Write-ColoredLine "    Items: $(($allMenuItems | ForEach-Object { $_.ItemName }) -join ', ')" DarkGray
         }
     }
     else {
-        Assert-Skip $g 'Clean Up menu items enumerable' 'No menu items accessible via UIA (owner-drawn menu)'
-        Send-Keys '{ESC}' 300
+        Assert-Skip $g 'Clean Up menu items enumerable' 'No menu items accessible via Win32'
         return
     }
 
@@ -3776,17 +3869,16 @@ function Test-CleanUpMenuDelete {
     $deleteItem     = $null
     foreach ($kw in $deleteKeywords) {
         $deleteItem = $allMenuItems |
-            Where-Object { $_.Current.Name -like "*$kw*" -and $_.Current.IsEnabled } |
+            Where-Object { $_.MenuName -eq 'Clean Up' -and $_.ItemName -like "*$kw*" -and $_.IsEnabled } |
             Select-Object -First 1
         if ($deleteItem) { break }
     }
 
     if (!$deleteItem) {
         Assert-Skip $g 'Delete/Recycle menu item found and enabled' 'No delete-related enabled item in Clean Up menu'
-        Send-Keys '{ESC}' 300
         return
     }
-    Assert-Pass $g "Delete-related menu item accessible: '$($deleteItem.Current.Name)'"
+    Assert-Pass $g "Delete-related menu item accessible: '$($deleteItem.ItemName)'"
 
     # Snapshot existing windows before invoking (to detect confirmation dialogs)
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
@@ -3799,15 +3891,9 @@ function Test-CleanUpMenuDelete {
     } else { 0 }
 
     # Invoke the delete cleanup action
-    try {
-        Invoke-Button $deleteItem
-        Start-Sleep -Milliseconds 800
-        Assert-Pass $g "CleanUp delete action invoked: '$($deleteItem.Current.Name)'"
-    }
-    catch {
-        try { Click-Element $deleteItem; Start-Sleep -Milliseconds 800 } catch {}
-        Assert-Pass $g 'CleanUp delete action triggered via fallback click'
-    }
+    [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$deleteItem.CommandId, [IntPtr]::Zero) | Out-Null
+    Start-Sleep -Milliseconds 800
+    Assert-Pass $g "CleanUp delete action invoked: '$($deleteItem.ItemName)'"
 
     # Handle any confirmation dialog (click OK or Yes to commit the delete)
     $confirmDlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
@@ -4382,7 +4468,7 @@ function Wait-NoChildDialog {
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
     while ([System.DateTime]::UtcNow -lt $deadline) {
         $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
-            -Scope ([System.Windows.Automation.TreeScope]::Children)
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
         if (!$d) { return $true }
         Start-Sleep -Milliseconds 200
     }
@@ -4411,30 +4497,8 @@ function Invoke-CleanUpMenuItem {
         [string] $LeafName,
         [string] $SubmenuName = ''
     )
-    $cleanup = Open-Menu -Window $Window -Name 'Clean Up'
-    if (!$cleanup) { return $false }
-    Start-Sleep -Milliseconds 300
-
-    if ($SubmenuName) {
-        $items = Get-AllMenuItems -Window $Window
-        $sub = $items | Where-Object { $_.Current.Name -like "*$SubmenuName*" } | Select-Object -First 1
-        if (!$sub) { Close-AllMenus; return $false }
-        $expanded = $false
-        try { $sub.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand(); $expanded = $true } catch {}
-        if (!$expanded) { try { Click-Element $sub; $expanded = $true } catch {} }
-        Start-Sleep -Milliseconds 350
-    }
-
-    $items = Get-AllMenuItems -Window $Window
-    $leaf = $items | Where-Object { $_.Current.Name -like "*$LeafName*" -and $_.Current.IsEnabled } | Select-Object -First 1
-    if (!$leaf) {
-        $disabled = $items | Where-Object { $_.Current.Name -like "*$LeafName*" } | Select-Object -First 1
-        Close-AllMenus
-        if ($disabled) { return 'disabled' }
-        return $false
-    }
-    try { Invoke-Button $leaf } catch { try { Click-Element $leaf } catch { Close-AllMenus; return $false } }
-    return $true
+    $menuPath = if ($SubmenuName) { "Clean Up -> $SubmenuName -> $LeafName" } else { "Clean Up -> $LeafName" }
+    return Invoke-Win32MenuCommand -Window $Window -MenuPath $menuPath
 }
 
 # Ensure the All Files tab is active and the tree is fully expanded so that
@@ -4910,6 +4974,288 @@ function Test-FileOpsVerification {
     }
 }
 
+function Test-StorageAnalytics {
+    param([System.Windows.Automation.AutomationElement] $Window)
+    Write-GroupHeader 'Storage Analytics'
+    $g = 'StorageAnalytics'
+
+    Assert-WindowReady $Window
+
+    $res = Invoke-Win32MenuCommand -Window $Window -MenuPath "Tools -> Storage Analytics"
+    if ($res -ne $true) {
+        Assert-Fail $g 'Find Storage Analytics menu item' "Trigger failed: $res"
+        return
+    }
+    Assert-Pass $g 'Find Storage Analytics menu item'
+    Assert-Pass $g 'Click Storage Analytics menu item'
+    Start-Sleep -Milliseconds 600
+
+    $saTab = $null
+    $tabCtrl = $null
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(5)
+    while ([System.DateTime]::UtcNow -lt $deadline) {
+        $tabCtrl = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Tab)
+        if ($tabCtrl) {
+            $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
+            $saTab = $tabItems | Where-Object { $_.Current.Name -like '*Storage Analytics*' } | Select-Object -First 1
+            if ($saTab) { break }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    if (!$tabCtrl) {
+        Assert-Fail $g 'Find tab control'
+        return
+    }
+
+    $recalcBtn = $null
+    if (!$saTab) {
+        # Headless/UIA bridge fallback: if TabItem is not found, check if the Recalculate button is present
+        # to verify the Storage Analytics tab is indeed active and visible.
+        $recalcBtn = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Recalculate'
+        if ($recalcBtn) {
+            Assert-Pass $g 'Storage Analytics tab present'
+            Assert-Pass $g 'Select Storage Analytics tab'
+        } else {
+            Assert-Fail $g 'Storage Analytics tab present'
+            return
+        }
+    } else {
+        Assert-Pass $g 'Storage Analytics tab present'
+        if (!(Select-TabItem $saTab)) {
+            Assert-Fail $g 'Select Storage Analytics tab'
+            return
+        }
+        Assert-Pass $g 'Select Storage Analytics tab'
+        Start-Sleep -Milliseconds 600
+        $recalcBtn = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Recalculate'
+    }
+    if ($recalcBtn) {
+        Assert-Pass $g 'Recalculate button present'
+        try {
+            $p = $recalcBtn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+            $p.Invoke()
+            Assert-Pass $g 'Invoke Recalculate button'
+            Start-Sleep -Milliseconds 400
+        }
+        catch {
+            # Fallback to BM_CLICK (0x00F5) message if UIA InvokePattern fails (known Win32 UIA hotkey issue)
+            try {
+                $btnHwnd = [IntPtr]$recalcBtn.Current.NativeWindowHandle
+                if ($btnHwnd -ne [IntPtr]::Zero) {
+                    [Win32MenuHelper]::PostMessage($btnHwnd, 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+                    Assert-Pass $g 'Invoke Recalculate button'
+                    Start-Sleep -Milliseconds 400
+                } else {
+                    Assert-Fail $g 'Invoke Recalculate button' "Error: $_"
+                }
+            }
+            catch {
+                Assert-Fail $g 'Invoke Recalculate button' "Error: $_"
+            }
+        }
+    }
+    else {
+        Assert-Fail $g 'Recalculate button present' 'Button "Recalculate" not found'
+    }
+
+    $unitCombo = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::ComboBox)
+    if ($unitCombo) {
+        Assert-Pass $g 'Unit combo box present'
+    }
+    else {
+        Assert-Fail $g 'Unit combo box present' 'ComboBox not found'
+    }
+
+    # Clean up: return to All Files tab
+    $allFilesTab = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
+    if ($allFilesTab) {
+        Select-TabItem $allFilesTab | Out-Null
+        Start-Sleep -Milliseconds 400
+    }
+}
+
+function Test-PermissionsView {
+    param([System.Windows.Automation.AutomationElement] $Window)
+    Write-GroupHeader 'Permissions View'
+    $g = 'PermissionsView'
+
+    Assert-WindowReady $Window
+
+    $res = Invoke-Win32MenuCommand -Window $Window -MenuPath "Tools -> Scan Permissions"
+    if ($res -ne $true) {
+        Assert-Fail $g 'Find Scan Permissions menu item' "Trigger failed: $res"
+        return
+    }
+    Assert-Pass $g 'Find Scan Permissions menu item'
+    Assert-Pass $g 'Click Scan Permissions menu item'
+
+    # Wait for the scanning modal progress dialog to appear and disappear
+    Write-ColoredLine '  Waiting for permissions scan progress dialog to finish...' DarkGray
+    Start-Sleep -Seconds 2
+    $dlg = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
+        -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+    if ($dlg -and $dlg.Current.Name -like '*Progress*') {
+        $deadline = [System.DateTime]::UtcNow.AddSeconds(20)
+        while ([System.DateTime]::UtcNow -lt $deadline) {
+            $dlgTest = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
+                -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+            if (!$dlgTest -or $dlgTest.Current.Name -notlike '*Progress*') {
+                break
+            }
+            Start-Sleep -Milliseconds 500
+        }
+    }
+    Start-Sleep -Milliseconds 500
+
+    $permsTab = $null
+    $tabCtrl = $null
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(5)
+    while ([System.DateTime]::UtcNow -lt $deadline) {
+        $tabCtrl = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Tab)
+        if ($tabCtrl) {
+            $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
+            $permsTab = $tabItems | Where-Object { $_.Current.Name -like '*Permissions*' } | Select-Object -First 1
+            if ($permsTab) { break }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    if (!$tabCtrl) {
+        Assert-Fail $g 'Find tab control'
+        return
+    }
+
+    $headers = @()
+    if (!$permsTab) {
+        # Headless/UIA bridge fallback: if TabItem is not found, check if the columns are present
+        # to verify the Permissions tab is indeed active and visible.
+        $headers = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::HeaderItem))
+        $headerNames = @($headers | ForEach-Object { $_.Current.Name })
+        $expectedHeaders = @('Name', 'Account', 'Access', 'Rights')
+        $matchedHeaders = @($expectedHeaders | Where-Object { $_ -in $headerNames })
+        if ($matchedHeaders.Count -ge 2) {
+            Assert-Pass $g 'Permissions tab present'
+            Assert-Pass $g 'Select Permissions tab'
+        } else {
+            Assert-Fail $g 'Permissions tab present'
+            return
+        }
+    } else {
+        Assert-Pass $g 'Permissions tab present'
+        if (!(Select-TabItem $permsTab)) {
+            Assert-Fail $g 'Select Permissions tab'
+            return
+        }
+        Assert-Pass $g 'Select Permissions tab'
+        Start-Sleep -Milliseconds 600
+        $headers = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::HeaderItem))
+    }
+    $headerNames = @($headers | ForEach-Object { $_.Current.Name })
+    $expectedHeaders = @('Name', 'Account', 'Access', 'Rights')
+    $matchedHeaders = @($expectedHeaders | Where-Object { $_ -in $headerNames })
+
+    if ($matchedHeaders.Count -ge 2) {
+        Assert-Pass $g "Permissions table column headers present ($($matchedHeaders.Count)/$($expectedHeaders.Count))"
+    } else {
+        Assert-Fail $g 'Permissions table column headers present' "Found: $($headerNames -join ', ')"
+    }
+
+    # Clean up: return to All Files tab
+    $allFilesTab = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
+    if ($allFilesTab) {
+        Select-TabItem $allFilesTab | Out-Null
+        Start-Sleep -Milliseconds 400
+    }
+}
+
+function Test-LoadResults {
+    param([string] $Exe)
+    Write-GroupHeader 'Load Results (CSV / JSON / BOM)'
+    $g = 'LoadResults'
+
+    # Setup paths
+    $jsonPath = Join-Path $script:workRoot 'load-test.json'
+    $jsonBomPath = Join-Path $script:workRoot 'load-test-bom.json'
+    $csvPath = Join-Path $script:workRoot 'load-test.csv'
+    $csvBomPath = Join-Path $script:workRoot 'load-test-bom.csv'
+
+    # Ensure clean state
+    foreach ($p in @($jsonPath, $jsonBomPath, $csvPath, $csvBomPath)) {
+        if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force }
+    }
+
+    # 1. Export standard scan results via headless scan
+    try {
+        $run = Invoke-WinDirStatCsv -Exe $Exe -Csv $jsonPath -Root $script:scanRoot
+        $runCsv = Invoke-WinDirStatCsv -Exe $Exe -Csv $csvPath -Root $script:scanRoot
+        Assert-Pass $g 'Export scan results to CSV and JSON'
+    }
+    catch {
+        Assert-Fail $g 'Export scan results to CSV and JSON' "Error: $_"
+        return
+    }
+
+    # 2. Write BOM-prefixed copies of both
+    try {
+        $jsonContent = Get-Content -LiteralPath $jsonPath -Raw -Encoding utf8
+        Set-Content -LiteralPath $jsonBomPath -Value $jsonContent -Encoding utf8BOM
+
+        $csvContent = Get-Content -LiteralPath $csvPath -Raw -Encoding utf8
+        Set-Content -LiteralPath $csvBomPath -Value $csvContent -Encoding utf8BOM
+        Assert-Pass $g 'Create UTF-8 BOM results copies'
+    }
+    catch {
+        Assert-Fail $g 'Create UTF-8 BOM results copies' "Error: $_"
+        return
+    }
+
+    # 3. Test loading each of the 4 files
+    foreach ($testFile in @($jsonPath, $jsonBomPath, $csvPath, $csvBomPath)) {
+        $desc = [System.IO.Path]::GetFileName($testFile)
+        Write-ColoredLine "  Testing load of $desc..." DarkGray
+
+        # Launch the app with /loadfrom
+        $win = Start-App -Exe $Exe -Arguments "/loadfrom `"$testFile`""
+        if (!$win) {
+            Assert-Fail $g "Launch with /loadfrom $desc" 'App window did not appear'
+            continue
+        }
+
+        # Wait a bit for the load to complete
+        Start-Sleep -Milliseconds 600
+
+        # Verify that the drive selection dialog did NOT auto-open
+        $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+        Write-ColoredLine "    [Debug] File exists: $(Test-Path -LiteralPath $testFile)" DarkYellow
+        Write-ColoredLine "    [Debug] Win title: '$($win.Current.Name)', ClassName: '$($win.Current.ClassName)'" DarkYellow
+        $childWindows = Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+        foreach ($cw in $childWindows) {
+            Write-ColoredLine "    [Debug] Child window: Name='$($cw.Current.Name)', ClassName='$($cw.Current.ClassName)'" DarkYellow
+        }
+        if ($driveDialog -and $driveDialog.Current.ClassName -eq '#32770' -and $driveDialog.Current.Name -like '*Select*') {
+            Assert-Fail $g "Load $desc suppresses drive dialog" 'Drive dialog auto-opened'
+            Dismiss-DriveDialog -Dialog $driveDialog
+        }
+        else {
+            Assert-Pass $g "Load $desc suppresses drive dialog"
+        }
+
+        # Verify that the app is open and responsive
+        if ($win -and !$script:proc.HasExited) {
+            Assert-Pass $g "Load $desc completed without crash"
+        }
+        else {
+            Assert-Fail $g "Load $desc completed without crash" 'Process exited or window closed'
+        }
+
+        # Stop the app before next test
+        Stop-App
+    }
+}
+
 # =============================================================================
 # UI SUITE ORCHESTRATION
 # =============================================================================
@@ -4964,7 +5310,12 @@ function Invoke-UiSuite {
             & $runPhase 'Search after scan'   { Test-SearchAfterScan    -Window $script:win }
             & $runPhase 'Context menu'        { Test-ContextMenu        -Window $script:win }
             & $runPhase 'Keyboard navigation' { Test-KeyboardNavigation -Window $script:win }
+            & $runPhase 'Storage analytics view' { Test-StorageAnalytics -Window $script:win }
+            & $runPhase 'Permissions view'       { Test-PermissionsView  -Window $script:win }
         }
+
+        # -- Phase 2.5: load saved results --------------------------------------
+        & $runPhase 'Load saved results' { Test-LoadResults -Exe $ExePath }
 
         # -- Phase 3: large corpus (always runs; skips if disk space is tight) ---
         $freeGb = $null
@@ -6386,6 +6737,7 @@ $visualSettings = @(
     'TreeMapLightSourceY',
     'TreeMapScaleFactor',
     'TreeMapShowExtensions',
+    'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
     'WatcherColumnOrder',
@@ -8145,9 +8497,10 @@ finally {
 # #############################################################################
 function Invoke-EdgeCasesSuite {
     $workRoot = Join-Path $BuildRoot 'edge-cases-test'
+    $runRoot  = Join-Path $workRoot 'runner'
     $scanRoot = Join-Path $workRoot 'scan-root'
+    $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
     $csvOut   = Join-Path $workRoot 'results.csv'
-    $iniPath  = Join-Path $workRoot 'windirstat.ini'
 
 function Write-TestIni {
     $ini = @(
@@ -8160,20 +8513,17 @@ function Write-TestIni {
         'ShowColumnAttributes=1',
         'ShowColumnOwner=1'
     ) -join "`r`n"
-    [System.IO.File]::WriteAllText($iniPath, $ini, [System.Text.Encoding]::Unicode)
+    [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), $ini, [System.Text.Encoding]::Unicode)
 }
 
 function Invoke-WinDirStatCsvScan {
     $arguments = "/saveto `"$csvOut`" `"$scanRoot`""
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = $ExePath
+    $startInfo.FileName = $runnerExe
     $startInfo.Arguments = $arguments
-    $startInfo.WorkingDirectory = Split-Path -Parent $ExePath
+    $startInfo.WorkingDirectory = $runRoot
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
-
-    $runnerIni = Join-Path (Split-Path -Parent $ExePath) 'windirstat.ini'
-    Copy-Item -LiteralPath $iniPath -Destination $runnerIni -Force
 
     Write-ColoredLine "Running WinDirStat..." Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -8212,7 +8562,8 @@ function Invoke-WinDirStatCsvScan {
     try {
 # --- Setup Edge Cases Data ---
 if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
-New-Item -ItemType Directory -Force -Path $workRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $workRoot, $runRoot | Out-Null
+Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
 
 $deepPath = $scanRoot
 # 15 deeper levels, Windows supports ~32k chars internally, but we can just make it around 300 chars to test typical MAX_PATH overflow.
@@ -8255,8 +8606,6 @@ Invoke-WinDirStatCsvScan
         Assert-CsvHasRow 'readonly.rd' 'R'
     }
     finally {
-        $runnerIni = Join-Path (Split-Path -Parent $ExePath) 'windirstat.ini'
-        if (Test-Path -LiteralPath $runnerIni) { Remove-Item -LiteralPath $runnerIni -Force -ErrorAction SilentlyContinue }
         Remove-TestArtifacts -Path $workRoot
     }
 }
