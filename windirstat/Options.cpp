@@ -76,6 +76,7 @@ Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::TreeMapShowExtensions(OptionsTreeMap, L"TreeMapShowExtensions", (CTreeMap::GetDefaults().showExtensions));
+Setting<bool> COptions::TreeMapShowFolderFrames(OptionsTreeMap, L"TreeMapShowFolderFrames", (CTreeMap::GetDefaults().showFolderFrames));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", true);
@@ -220,6 +221,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
+    TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
     TreeMapGridColor = TreeMapOptions.gridColor;
     TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
     TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
@@ -268,6 +270,7 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
+    TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;
     TreeMapOptions.gridColor = TreeMapGridColor;
     TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
     TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);

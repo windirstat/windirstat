@@ -156,6 +156,7 @@ IDS_MENU_STORAGE_ANALYTICS=Analyse du &stockage
 IDS_MENU_TOOL_BAR=Afficher la barre d'&outils
 IDS_MENU_TOOLS=Outils
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Afficher les extensions
+IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES=Afficher les cadres des dossiers
 IDS_MENU_TREEMAP=&Treemap
 IDS_MENU_WATCHER=Démarrer le surveillant de fichiers
 IDS_MENU_ZOOMIN=Agrand&ir

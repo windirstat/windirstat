@@ -156,6 +156,7 @@ IDS_MENU_STORAGE_ANALYTICS=Analýza &úložiště
 IDS_MENU_TOOL_BAR=Zobrazit &panel nástrojů
 IDS_MENU_TOOLS=Nástroje
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Zobrazit přípony
+IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES=Zobrazit rámečky složek
 IDS_MENU_TREEMAP=Stromová &mapa
 IDS_MENU_WATCHER=Spustit sledování souborů
 IDS_MENU_ZOOMIN=&Přiblížit

@@ -248,6 +248,8 @@ protected:
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();
     afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
+    afx_msg void OnViewShowFolderFramesOnTreeMap();
+    afx_msg void OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
     afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }

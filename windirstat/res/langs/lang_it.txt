@@ -156,6 +156,7 @@ IDS_MENU_STORAGE_ANALYTICS=Analisi &archiviazione
 IDS_MENU_TOOL_BAR=Visualizza &barra strumenti
 IDS_MENU_TOOLS=Strumenti
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Visualizza estensioni
+IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES=Visualizza cornici cartelle
 IDS_MENU_TREEMAP=Mappa s&truttura
 IDS_MENU_WATCHER=Avvia monitor file
 IDS_MENU_ZOOMIN=Zoom &+

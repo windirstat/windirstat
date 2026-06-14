@@ -104,18 +104,22 @@ std::set<LANGID> Localization::GetLanguageList()
 
 bool Localization::LoadResource(const WORD language)
 {
+    // Load English strings first as a baseline fallback
+    const std::wstring sResourceData = GetTextResource(IDR_LANGS);
+    CrackStrings(sResourceData, L"en");
+
     const LCID lcid = MAKELCID(language, SORT_DEFAULT);
     std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
-    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return {};
+    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return true;
 
     // Try to load external language file first
     if (LoadExternalLanguage(LOCALE_SNAME, language) ||
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true;
 
     // Try to load built-in resource
-    const std::wstring sResourceData = GetTextResource(IDR_LANGS);
-    return CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||
-        CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language));
+    CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language));
+    CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language));
+    return true;
 }
 
 void Localization::UpdateMenu(CMenu& menu)

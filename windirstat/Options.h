@@ -160,6 +160,7 @@ public:
     static Setting<bool> AutoElevate;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapShowExtensions;
+    static Setting<bool> TreeMapShowFolderFrames;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseDrawTextCache;

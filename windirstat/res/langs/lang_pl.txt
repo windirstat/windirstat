@@ -156,6 +156,7 @@ IDS_MENU_STORAGE_ANALYTICS=Analiza &pamięci masowej
 IDS_MENU_TOOL_BAR=Pokaż &Pasek Narzędzi
 IDS_MENU_TOOLS=Narzędzia
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Pokaż rozszerzenia
+IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES=Pokaż ramki folderów
 IDS_MENU_TREEMAP=&Mapa drzewa
 IDS_MENU_WATCHER=Uruchom monitor plików
 IDS_MENU_ZOOMIN=Po&większ

@@ -410,6 +410,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
     ON_COMMAND(ID_TREEMAP_SHOW_EXTENSIONS, OnViewShowExtensionsOnTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_SHOW_EXTENSIONS, OnUpdateViewShowExtensionsOnTreeMap)
+    ON_COMMAND(ID_TREEMAP_SHOW_FOLDER_FRAMES, OnViewShowFolderFramesOnTreeMap)
+    ON_UPDATE_COMMAND_UI(ID_TREEMAP_SHOW_FOLDER_FRAMES, OnUpdateViewShowFolderFramesOnTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TOOLS_WATCHER, OnUpdateViewShowWatcher)
     ON_WM_CLOSE()
     ON_WM_CREATE()
@@ -1370,6 +1372,18 @@ void CMainFrame::OnViewShowExtensionsOnTreeMap()
 void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
+}
+
+void CMainFrame::OnViewShowFolderFramesOnTreeMap()
+{
+    COptions::TreeMapShowFolderFrames = !static_cast<bool>(COptions::TreeMapShowFolderFrames);
+    COptions::TreeMapOptions.showFolderFrames = COptions::TreeMapShowFolderFrames;
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+}
+
+void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
 }
 
 void CMainFrame::RebuildToolBar()
