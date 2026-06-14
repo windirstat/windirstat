@@ -199,12 +199,17 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
-    std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    auto vcnStart = retrievalBuffer->StartingVcn.QuadPart;
     for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
     {
-        dataRuns[i] = { retrievalBuffer->Extents[i].Lcn.QuadPart,
-            retrievalBuffer->Extents[i].NextVcn.QuadPart - (i == 0
-                ? retrievalBuffer->StartingVcn.QuadPart : retrievalBuffer->Extents[i - 1].NextVcn.QuadPart) };
+        const auto vcnNext = retrievalBuffer->Extents[i].NextVcn.QuadPart;
+        dataRuns[i] = std::make_tuple(
+            static_cast<ULONGLONG>(vcnStart),
+            retrievalBuffer->Extents[i].Lcn.QuadPart,
+            static_cast<ULONGLONG>(vcnNext - vcnStart)
+        );
+        vcnStart = vcnNext;
     }
 
     // Process MFT records
@@ -216,18 +221,22 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
             static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
 
-        const auto& [clusterStart, clusterCount] = dataRun;
+        const auto& [runVcnStart, clusterStart, clusterCount] = dataRun;
 
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
         thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
-        for (ULONG bytesRead = 0; bytesToRead > 0; bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
+        const ULONGLONG mftRunOffset = runVcnStart * volumeInfo.BytesPerCluster;
+        ULONG bytesRead = 0;
+        for (ULONGLONG bytesReadFromRun = 0; bytesToRead > 0;
+            bytesReadFromRun += bytesRead, bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
             // Animate pacman
             driveitem->UpwardDrivePacman();
 
             // Set file pointer for synchronous read
+            bytesRead = 0;
             const ULONG bytesThisRead = static_cast<ULONG>(std::min<ULONGLONG>(bytesToRead, bufferSize));
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0)
@@ -269,7 +278,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
                 // Only process records with valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
-                const auto currentRecord = fileRecord->SegmentNumber();
+                const auto currentRecord = (mftRunOffset + bytesReadFromRun + offset) / volumeInfo.BytesPerFileRecordSegment;
                 const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
                 FileRecordBase* baseRecordPtr = nullptr;
                 if (std::scoped_lock lock(m_baseFileRecordMutex); true)
