@@ -260,6 +260,8 @@ protected:
     afx_msg void OnToolsWatcher();
     afx_msg void OnToolsPermissions();
     afx_msg void OnUpdateToolsPermissions(CCmdUI* pCmdUI);
+    afx_msg void OnToolsStorageAnalytics();
+    afx_msg void OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI);
     void UpdateToolsMenu(CMenu* menu);
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();

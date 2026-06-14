@@ -433,6 +433,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_TOOLS_WATCHER, &CMainFrame::OnToolsWatcher)
     ON_COMMAND(ID_TOOLS_PERMISSIONS, &CMainFrame::OnToolsPermissions)
     ON_UPDATE_COMMAND_UI(ID_TOOLS_PERMISSIONS, OnUpdateToolsPermissions)
+    ON_COMMAND(ID_TOOLS_STORAGE_ANALYTICS, &CMainFrame::OnToolsStorageAnalytics)
+    ON_UPDATE_COMMAND_UI(ID_TOOLS_STORAGE_ANALYTICS, &CMainFrame::OnUpdateToolsStorageAnalytics)
 END_MESSAGE_MAP()
 
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
@@ -1550,5 +1552,23 @@ void CMainFrame::OnUpdateToolsPermissions(CCmdUI* pCmdUI)
     const auto* doc = CDirStatDoc::Get();
     pCmdUI->SetCheck(GetFileTabbedView()->IsPermsTabVisible());
     pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() ||
+        (doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning()));
+}
+
+void CMainFrame::OnToolsStorageAnalytics()
+{
+    GetFileTabbedView()->SetStorageAnalyticsTabVisibility(!GetFileTabbedView()->IsStorageAnalyticsTabVisible());
+
+    if (GetFileTabbedView()->IsStorageAnalyticsTabVisible())
+    {
+        GetFileTabbedView()->SetActiveStorageAnalyticsView();
+    }
+}
+
+void CMainFrame::OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI)
+{
+    const auto* doc = CDirStatDoc::Get();
+    pCmdUI->SetCheck(GetFileTabbedView()->IsStorageAnalyticsTabVisible());
+    pCmdUI->Enable(GetFileTabbedView()->IsStorageAnalyticsTabVisible() ||
         (doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning()));
 }

@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
+#include "StorageAnalyticsView.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -44,6 +45,8 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_fileWatcherView = DYNAMIC_DOWNCAST(CFileWatcherView, GetTabControl().GetTabWnd(m_fileWatcherViewIndex));
     m_filePermsViewIndex = AddView(RUNTIME_CLASS(CFilePermsView), IDS_PERMISSIONS.data(), CHAR_MAX);
     m_filePermsView = DYNAMIC_DOWNCAST(CFilePermsView, GetTabControl().GetTabWnd(m_filePermsViewIndex));
+    m_storageAnalyticsViewIndex = AddView(RUNTIME_CLASS(CStorageAnalyticsView), IDS_STORAGE_ANALYTICS.data(), CHAR_MAX);
+    m_storageAnalyticsView = DYNAMIC_DOWNCAST(CStorageAnalyticsView, GetTabControl().GetTabWnd(m_storageAnalyticsViewIndex));
 
     return 0;
 }
@@ -58,6 +61,7 @@ void CFileTabbedView::OnInitialUpdate()
     SetSearchTabVisibility(false);
     SetWatcherTabVisibility(false);
     SetPermsTabVisibility(false);
+    SetStorageAnalyticsTabVisibility(false);
     SetDupeTabVisibility(COptions::ScanForDuplicates &&
         CDirStatDoc::Get()->GetRootItem() != nullptr);
 }
@@ -92,6 +96,11 @@ void CFileTabbedView::SetPermsTabVisibility(const bool show)
     GetTabControl().ShowTab(m_filePermsViewIndex, CFilePermsControl::Get()->StartScan());
 }
 
+void CFileTabbedView::SetStorageAnalyticsTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_storageAnalyticsViewIndex, show);
+}
+
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return TRUE;
@@ -112,7 +121,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 bool CFileTabbedView::CycleTab(const bool forward)
 {
     std::vector<int> visibleTabs;
-    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex })
+    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex })
     {
         if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
     }

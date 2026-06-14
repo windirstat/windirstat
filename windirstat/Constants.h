@@ -58,6 +58,7 @@ namespace wds
     inline constexpr int alphaSize = std::ssize(strAlpha);
 
     // Font name constants
+    inline constexpr auto strFontSegoeUI = L"Segoe UI";
     inline constexpr auto strFontArial = L"Arial";
     inline constexpr auto strFontLucidaConsole = L"Lucida Console";
     inline constexpr auto strFontSegoeUISymbol = L"Segoe UI Symbol";
