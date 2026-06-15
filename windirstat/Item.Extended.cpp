@@ -85,9 +85,10 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         // Walk to root and compute this item's fraction of the total tree size
         const CItem* root = this;
         while (root->GetParent() != nullptr) root = root->GetParent();
-        const ULONGLONG rootSize = root->GetSizePhysical();
+        const bool useLogical = COptions::TreeMapUseLogical;
+        const ULONGLONG rootSize = useLogical ? root->GetSizeLogical() : root->GetSizePhysical();
         const double absoluteFraction = rootSize == 0 ? 0.0 :
-            static_cast<double>(GetSizePhysical()) / static_cast<double>(rootSize);
+            static_cast<double>(useLogical ? GetSizeLogical() : GetSizePhysical()) / static_cast<double>(rootSize);
 
         // Derive palette for track, subtree bar, and absolute bar
         const COLORREF neutralBack  = dark ? RGB(40, 40, 40) : RGB(225, 225, 225);
