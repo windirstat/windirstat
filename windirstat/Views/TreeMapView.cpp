@@ -183,9 +183,8 @@ void CTreeMapView::OnDraw(CDC* pDC)
         const long long total = m_renderJobsTotal;
         if (total > 0 && done < total)
         {
-            const int w = static_cast<int>(done * rc.Width() / total);
-            if (w > 0)
-                pDC->FillSolidRect(CRect(0, 0, w, 3), RGB(0, 120, 215));
+            const int w = std::max(5, static_cast<int>(done * rc.Width() / total));
+            pDC->FillSolidRect(CRect(0, 0, w, 3), RGB(0, 120, 215));
         }
         return;
     }

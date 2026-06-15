@@ -125,7 +125,10 @@ namespace
 
             D3D11_MAPPED_SUBRESOURCE mapped{};
             if (FAILED(m_context->Map(m_bitmapStaging, 0, D3D11_MAP_READ, 0, &mapped)))
+            {
+                m_available = false; // device lost; disable GPU path until app restart
                 return false;
+            }
 
             std::memcpy(bitmapBits.data(), mapped.pData,
                 bitmapCount * sizeof(COLORREF));
