@@ -21,7 +21,10 @@
 
 IMPLEMENT_DYNCREATE(CTreeMapView, CWinDirStatPane)
 
+static constexpr UINT_PTR TIMER_RENDER_POLL = 1;
+
 BEGIN_MESSAGE_MAP(CTreeMapView, CWinDirStatPane)
+    ON_WM_TIMER()
     ON_WM_SIZE()
     ON_WM_LBUTTONDBLCLK()
     ON_WM_LBUTTONDOWN()
@@ -133,7 +136,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     }
 }
 
-void CTreeMapView::OnDraw(CDC * pDC)
+void CTreeMapView::OnDraw(CDC* pDC)
 {
     const CItem* root = CWinDirStatModel::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone() || m_drawingSuspended || !m_showTreeMap)
@@ -149,26 +152,95 @@ void CTreeMapView::OnDraw(CDC * pDC)
     CDC dcmem;
     dcmem.CreateCompatibleDC(pDC);
 
-    if (!IsDrawn())
+    // ── finalize a completed async render ──────────────────────────────────
+    if (m_renderPending &&
+        m_renderFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
     {
-        CWaitCursor wc;
+        KillTimer(TIMER_RENDER_POLL);
+        auto layout = m_renderFuture.get();
+        m_renderPending = false;
 
-        m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
-
-        CSelectObject sobmp(&dcmem, &m_bitmap);
-
-        if (CWinDirStatModel::Get()->IsZoomed())
+        if (m_renderSize == m_size) // guard against resize during render
         {
-            DrawZoomFrame(&dcmem, rc);
+            // m_bitmap already has zoom frame + outer border from launch time
+            CSelectObject sobmp(&dcmem, &m_bitmap);
+            m_treeMap.DrawOverlays(&dcmem, layout.renderArea, CWinDirStatModel::Get()->GetZoomItem(),
+                                   layout.bitmapBits, layout.folders);
+            // fall through to BitBlt below
+        }
+        else
+        {
+            m_bitmap.DeleteObject(); // stale: wrong size; IsDrawn() → false → fresh render next frame
+            Invalidate(FALSE);
+            return;
+        }
+    }
+    // ── async render still running ─────────────────────────────────────────
+    else if (m_renderPending)
+    {
+        pDC->FillSolidRect(rc, RGB(0, 0, 0));
+        const long long done  = m_renderProgress->load(std::memory_order_relaxed);
+        const long long total = m_renderJobsTotal;
+        if (total > 0 && done < total)
+        {
+            const int w = static_cast<int>(done * rc.Width() / total);
+            if (w > 0)
+                pDC->FillSolidRect(CRect(0, 0, w, 3), RGB(0, 120, 215));
+        }
+        return;
+    }
+    // ── nothing drawn yet: launch render ───────────────────────────────────
+    else if (!IsDrawn())
+    {
+        if (COptions::TreeMapAsyncRendering)
+        {
+            // Create bitmap now so PrepareRenderArea can draw the outer border into it
+            m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
+            CSelectObject sobmp(&dcmem, &m_bitmap);
+            if (CWinDirStatModel::Get()->IsZoomed()) DrawZoomFrame(&dcmem, rc);
+
+            auto layout = m_treeMap.BuildLayout(&dcmem, rc,
+                CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
+
+            if (layout.bitmapBits.empty())
+            {
+                m_bitmap.DeleteObject();
+                DrawEmptyView(pDC);
+                return;
+            }
+
+            m_renderJobsTotal = static_cast<int>(layout.leafJobs.size());
+            m_renderProgress  = std::make_shared<std::atomic<int>>(0);
+            m_renderCancel    = std::make_shared<std::atomic<bool>>(false);
+            m_renderSize      = m_size;
+            m_renderPending   = true;
+
+            CTreeMap treeMapCopy = m_treeMap;
+            auto prog   = m_renderProgress;
+            auto cancel = m_renderCancel;
+            m_renderFuture = std::async(std::launch::async,
+                [l = std::move(layout), tm = std::move(treeMapCopy), prog, cancel]() mutable
+                {
+                    tm.RenderLeafJobs(l.bitmapBits, l.leafJobs, prog.get(), cancel.get());
+                    return std::move(l);
+                });
+            SetTimer(TIMER_RENDER_POLL, 50, nullptr);
+
+            // Show empty frame while first render runs (progress bar at 0%)
+            pDC->FillSolidRect(rc, RGB(0, 0, 0));
+            return;
         }
 
+        // ── sync path ──────────────────────────────────────────────────────
+        CWaitCursor wc;
+        m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
+        CSelectObject sobmp(&dcmem, &m_bitmap);
+        if (CWinDirStatModel::Get()->IsZoomed()) DrawZoomFrame(&dcmem, rc);
         m_treeMap.DrawTreeMap(&dcmem, rc, CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
     }
 
     CSelectObject sobmp2(&dcmem, &m_bitmap);
-
     pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
-
     DrawHighlights(pDC);
 }
 
@@ -419,6 +491,7 @@ bool CTreeMapView::IsDrawn() const
 void CTreeMapView::Inactivate()
 {
     if (m_bitmap.m_hObject == nullptr) return;
+    if (m_renderPending) return; // async render owns m_bitmap; leave it intact
 
     // Move the old bitmap to m_dimmed for later dimmed display
     m_dimmed.DeleteObject();
@@ -442,6 +515,14 @@ void CTreeMapView::Inactivate()
 
 void CTreeMapView::EmptyView()
 {
+    if (m_renderPending)
+    {
+        m_renderCancel->store(true, std::memory_order_relaxed);
+        if (m_renderFuture.valid()) m_renderFuture.get(); // block until worker exits (fast: cancel flag set)
+        m_renderPending = false;
+        KillTimer(TIMER_RENDER_POLL);
+    }
+
     if (m_bitmap.m_hObject != nullptr)
     {
         m_bitmap.DeleteObject();
@@ -451,6 +532,13 @@ void CTreeMapView::EmptyView()
     {
         m_dimmed.DeleteObject();
     }
+}
+
+void CTreeMapView::OnTimer(UINT_PTR nIDEvent)
+{
+    if (nIDEvent == TIMER_RENDER_POLL)
+        Invalidate(FALSE); // OnDraw will check whether the future is ready
+    CWinDirStatPane::OnTimer(nIDEvent);
 }
 
 void CTreeMapView::OnSetFocus(CWnd* /*pOldWnd*/)
