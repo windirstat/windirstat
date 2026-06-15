@@ -548,9 +548,11 @@ void CTreeMap::DrawOverlays(CDC* pdc, const CRect& rc, CItem* root,
 {
     BlitBitmap(pdc, rc, bitmapBits);
 
+    // Font must be active for both folder headers and DrawTreeMapLabels
+    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
+
     if (m_options.showFolderFrames)
     {
-        CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
         CSetBkMode soBkMode(pdc, TRANSPARENT);
         CBrush borderBrush(DarkMode::WdsSysColor(COLOR_3DSHADOW));
         const CPoint rcOffset = rc.TopLeft();
