@@ -469,20 +469,26 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.clear();
     if (m_radio == RADIO_TARGET_FOLDER)
     {
-        if (!m_folderName.IsEmpty() && m_folderName.GetAt(m_folderName.GetLength() - 1) == L':') m_folderName.AppendChar(L'\\');
-        m_folderName = ResolveFullPath(m_folderName.GetString()).c_str();
+        // Split semicolon-separated list and normalize each path individually
+        std::wstring normalizedSpec;
+        for (auto part : SplitString(std::wstring(m_folderName.GetString()), L';'))
+        {
+            TrimString(part);
+            if (part.empty()) continue;
+            if (part.back() == L':') part += L'\\';
+            part = ResolveFullPath(part);
+            m_drives.emplace_back(part);
+            if (!normalizedSpec.empty()) normalizedSpec += L';';
+            normalizedSpec += part;
+        }
+        m_folderName = normalizedSpec.c_str();
 
-        // Remove the folder from the most recently used list to avoid duplicates
-        std::wstring folderName = m_folderName.GetString();
-        std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folderName](const std::wstring& s) {
-            return _wcsicmp(s.c_str(), folderName.c_str()) == 0;
+        // Save the full semicolon-spec as one history entry
+        std::erase_if(COptions::SelectDrivesFolder.Obj(), [&normalizedSpec](const std::wstring& s) {
+            return _wcsicmp(s.c_str(), normalizedSpec.c_str()) == 0;
         });
-
-        // Insert it at the beginning of the used list
         COptions::SelectDrivesFolder.Obj().insert(
-          COptions::SelectDrivesFolder.Obj().begin(), folderName);
-
-        // Limit the folder history to the configured count
+            COptions::SelectDrivesFolder.Obj().begin(), normalizedSpec);
         COptions::SelectDrivesFolder.Obj().resize(std::min(static_cast<size_t>(COptions::FolderHistoryCount),
             COptions::SelectDrivesFolder.Obj().size()));
     }
@@ -534,8 +540,14 @@ void CSelectDrivesDlg::UpdateButtons()
     case RADIO_TARGET_FOLDER:
         if (!m_folderName.IsEmpty())
         {
-            enableOk = (m_folderName.GetLength() >= 2 && m_folderName.Left(2) == L"\\\\") ||
-                       FinderBasic::DoesFileExist(m_folderName.GetString());
+            // All semicolon-separated paths must be accessible
+            const auto parts = SplitString(std::wstring(m_folderName.GetString()), L';');
+            enableOk = !parts.empty() && std::ranges::all_of(parts, [](std::wstring part) {
+                TrimString(part);
+                if (part.empty()) return false;
+                return (part.size() >= 2 && part.substr(0, 2) == L"\\\\") ||
+                       FinderBasic::DoesFileExist(part);
+            });
         }
         break;
     default:
@@ -699,11 +711,7 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
 
 std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
 {
-    if (m_radio == RADIO_TARGET_FOLDER)
-    {
-        return { m_folderName.GetString() };
-    }
-    return m_drives; // valid for both RADIO_TARGET_DRIVES_ALL and RADIO_TARGET_DRIVES_SUBSET
+    return m_drives; // valid for all modes after OnOK(); folder mode now populates m_drives too
 }
 
 HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
@@ -724,7 +732,14 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
     const std::wstring path = dlg.GetFolderPath().GetString();
 
     if (!FinderBasic::DoesFileExist(path)) return;
-    m_folderName = path.c_str();
+
+    // Append to existing selection with semicolon separator
+    CString current;
+    m_browseList.GetWindowText(current);
+    if (current.IsEmpty())
+        m_folderName = path.c_str();
+    else
+        m_folderName = current + L";" + path.c_str();
     UpdateData(FALSE);
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
