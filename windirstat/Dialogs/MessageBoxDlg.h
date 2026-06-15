@@ -91,7 +91,7 @@ private:
 
     // Optional controls
     CButton m_checkbox;
-    CBrush m_checkboxBrush;
+    CBrush m_checkboxBrush{ DarkMode::WdsSysColor(COLOR_BTNFACE) };
     CListBox m_listView;
     std::wstring m_checkboxText;
     std::vector<std::wstring> m_listViewItems;

@@ -443,11 +443,7 @@ constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
 constexpr auto ID_STATUSPANE_SIZE_INDEX = 1;
 constexpr auto ID_STATUSPANE_RAM_INDEX = 2;
 
-CMainFrame* CMainFrame::s_Singleton;
-
-CMainFrame::CMainFrame() :
-        m_subSplitter(COptions::SubSplitterPos.Ptr())
-      , m_splitter(COptions::MainSplitterPos.Ptr())
+CMainFrame::CMainFrame()
 {
     s_Singleton = this;
 }

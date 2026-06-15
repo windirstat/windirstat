@@ -27,7 +27,6 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     , m_checkboxText(checkBoxText)
     , m_listViewItems(listViewItems)
     , m_checkboxChecked(checkBoxValue ? TRUE : FALSE)
-    , m_checkboxBrush(DarkMode::WdsSysColor(COLOR_BTNFACE))
 {
     const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
     {

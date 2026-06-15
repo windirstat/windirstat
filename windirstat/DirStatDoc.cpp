@@ -31,9 +31,7 @@
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
-CDirStatDoc::CDirStatDoc() :
-        m_showFreeSpace(COptions::ShowFreeSpace)
-      , m_showUnknown(COptions::ShowUnknown)
+CDirStatDoc::CDirStatDoc()
 {
     ASSERT(nullptr == s_singleton);
     s_singleton = this;

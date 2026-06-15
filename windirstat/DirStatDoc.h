@@ -169,8 +169,8 @@ protected:
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
 
-    bool m_showFreeSpace; // Whether to show the <Free Space> item
-    bool m_showUnknown;   // Whether to show the <Unknown> item
+    bool m_showFreeSpace = COptions::ShowFreeSpace; // Whether to show the <Free Space> item
+    bool m_showUnknown = COptions::ShowUnknown;   // Whether to show the <Unknown> item
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

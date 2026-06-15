@@ -27,8 +27,6 @@ IMPLEMENT_DYNAMIC(CPageTreeMap, CMFCPropertyPage)
 
 CPageTreeMap::CPageTreeMap()
     : CMFCPropertyPage(IDD)
-    , m_options()
-    , m_undo()
 {
 }
 

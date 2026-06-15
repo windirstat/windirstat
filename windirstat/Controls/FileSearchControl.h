@@ -37,7 +37,7 @@ public:
 
 protected:
 
-    static CFileSearchControl* m_singleton;
+    inline static CFileSearchControl* m_singleton = nullptr;
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
 

@@ -19,8 +19,6 @@
 #include "FilePermsControl.h"
 #include "ProgressDlg.h"
 
-CFilePermsControl* CFilePermsControl::m_singleton = nullptr;
-
 CFilePermsControl::CFilePermsControl()
     : CTreeListControl(COptions::PermsViewColumnOrder.Ptr(), COptions::PermsViewColumnWidths.Ptr(), LF_PERMSLIST, false)
 {

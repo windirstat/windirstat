@@ -144,7 +144,7 @@ class CMainFrame final : public CFrameWndEx
 protected:
     static constexpr DWORD WM_CALLBACKUI = WM_APP + 1;
     static UINT s_TaskBarMessage;
-    static CMainFrame* s_Singleton;
+    inline static CMainFrame* s_Singleton = nullptr;
 
     CMainFrame();
     ~CMainFrame() override;
@@ -208,8 +208,8 @@ protected:
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
 
-    CWdsSplitterWnd m_subSplitter; // Contains the two upper views
-    CWdsSplitterWnd m_splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Contains the two upper views
+    CWdsSplitterWnd m_splitter{ COptions::MainSplitterPos.Ptr() };    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar

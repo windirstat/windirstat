@@ -57,9 +57,9 @@ protected:
             hashLevel == ITHASH_MEDIUM ? wds::Mi : ULONGLONG_MAX;
     }
 
-    static CFileDupeControl* m_singleton;
+    inline static CFileDupeControl* m_singleton = nullptr;
     CItemDupe* m_rootItem = nullptr;
-    bool m_showCloudWarningOnThisScan = true;
+    bool m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 
     DECLARE_MESSAGE_MAP()
 };

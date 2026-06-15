@@ -26,10 +26,6 @@ IMPLEMENT_DYNAMIC(SearchDlg, CLayoutDialogEx)
 
 SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
     : CLayoutDialogEx(IDD_SEARCH, COptions::SearchWindowRect.Ptr(), pParent)
-    , m_searchWholePhrase(FALSE)
-    , m_searchCase(FALSE)
-    , m_searchRegex(FALSE)
-    , m_searchTerm(L"")
 {
 }
 

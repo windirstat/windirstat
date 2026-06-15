@@ -22,7 +22,6 @@
 CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr(), LF_DUPELIST, false)
 {
     m_singleton = this;
-    m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 }
 
 bool CFileDupeControl::GetAscendingDefault(const int column)
@@ -32,8 +31,6 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
 END_MESSAGE_MAP()
-
-CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
 
 void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
