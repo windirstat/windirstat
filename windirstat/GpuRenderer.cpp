@@ -147,23 +147,32 @@ namespace
             if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
                 0, &kLevel, 1, D3D11_SDK_VERSION, &m_device, nullptr, &m_context)))
             {
+                OutputDebugStringW(L"GpuRenderer: D3D11CreateDevice failed — GPU path disabled\n");
                 return;
             }
 
             const std::string source = LoadShaderSource();
-            if (source.empty()) return;
+            if (source.empty())
+            {
+                OutputDebugStringW(L"GpuRenderer: shader resource not found — GPU path disabled\n");
+                return;
+            }
 
             CComPtr<ID3DBlob> blob, errors;
             if (FAILED(D3DCompile(source.data(), source.size(), "TreeMapCushion.hlsl",
                 nullptr, nullptr, "CSCushion", "cs_5_0",
                 D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &blob, &errors)))
             {
+                if (errors)
+                    OutputDebugStringA(static_cast<const char*>(errors->GetBufferPointer()));
+                OutputDebugStringW(L"GpuRenderer: shader compile failed — GPU path disabled\n");
                 return;
             }
 
             if (FAILED(m_device->CreateComputeShader(
                 blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &m_shader)))
             {
+                OutputDebugStringW(L"GpuRenderer: CreateComputeShader failed — GPU path disabled\n");
                 return;
             }
 
