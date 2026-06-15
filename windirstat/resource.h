@@ -20,6 +20,7 @@
 #define IDR_POPUP_MAP                   130
 #define IDR_LICENSE                     131
 #define IDR_LANGS                       132
+#define IDR_TREEMAPCUSHION_SHADER       133
 #define IDC_RADIO_TARGET_DRIVES_ALL     1000
 #define IDC_RADIO_TARGET_DRIVES_SUBSET  1001
 #define IDC_RADIO_TARGET_FOLDER         1002

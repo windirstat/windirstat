@@ -522,6 +522,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="BlockingQueue.h" />
     <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
+    <ClInclude Include="GpuRenderer.h" />
     <ClInclude Include="FinderBasic.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemDupe.h" />
@@ -568,6 +569,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
+    <ClCompile Include="GpuRenderer.cpp" />
     <ClCompile Include="Filtering.cpp" />
     <ClCompile Include="Item.Extended.cpp" />
     <ClCompile Include="Pages\PagePrompts.cpp" />
@@ -635,6 +637,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
   <ItemGroup>
     <None Include="res\lang_combined.bin" />
     <None Include="res\license.bin" />
+    <None Include="Shaders\TreeMapCushion.hlsl" />
     <None Include="res\license.txt" />
     <None Include="res\windirstat.manifest" />
     <None Include="res\windirstat.rc2" />

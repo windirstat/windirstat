@@ -167,6 +167,7 @@ public:
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;
     static Setting<bool> TreeMapAsyncRendering;
+    static Setting<bool> TreeMapGpuRendering;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapShowExtensions;
     static Setting<bool> TreeMapShowFolderFrames;

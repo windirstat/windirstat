@@ -804,6 +804,8 @@ IDR_LICENSE             TEXT                    "res\\license.bin"
 
 IDR_LANGS               TEXT                    "res\\lang_combined.bin"
 
+IDR_TREEMAPCUSHION_SHADER RCDATA              "Shaders\\TreeMapCushion.hlsl"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
