@@ -75,6 +75,7 @@ Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"Sho
 Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);
 Setting<bool> COptions::TreeMapAsyncRendering(OptionsTreeMap, L"TreeMapAsyncRendering", false);
+Setting<bool> COptions::TreeMapGpuRendering(OptionsTreeMap, L"TreeMapGpuRendering", false);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::TreeMapShowExtensions(OptionsTreeMap, L"TreeMapShowExtensions", (CTreeMap::GetDefaults().showExtensions));
 Setting<bool> COptions::TreeMapShowFolderFrames(OptionsTreeMap, L"TreeMapShowFolderFrames", (CTreeMap::GetDefaults().showFolderFrames));

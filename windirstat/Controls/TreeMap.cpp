@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "TreeMap.h"
 #include "Item.h"
+#include "GpuRenderer.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
 {
@@ -528,9 +529,53 @@ CTreeMap::LayoutResult CTreeMap::BuildLayout(CDC* pdc, CRect rc, CItem* root, co
     return result;
 }
 
+bool CTreeMap::RenderLeafJobsGpu(std::vector<COLORREF>& bitmapBits,
+    const std::vector<LeafJob>& jobs) const
+{
+    if (!GpuRenderer::IsAvailable() || jobs.empty()) return false;
+
+    std::vector<GpuRenderer::LeafInput> gpuLeaves;
+    gpuLeaves.reserve(jobs.size());
+
+    for (const auto& job : jobs)
+    {
+        const PreparedColor prep = PrepareRenderColor(job.color, m_options.brightness);
+        GpuRenderer::LeafInput li{};
+        li.rcLeft  = job.rc.left;
+        li.rcTop   = job.rc.top;
+        li.rcRight = job.rc.right;
+        li.rcBottom = job.rc.bottom;
+        li.s0 = static_cast<float>(job.surface[0]);
+        li.s1 = static_cast<float>(job.surface[1]);
+        li.s2 = static_cast<float>(job.surface[2]);
+        li.s3 = static_cast<float>(job.surface[3]);
+        li.colR = static_cast<float>(GetRValue(prep.color));
+        li.colG = static_cast<float>(GetGValue(prep.color));
+        li.colB = static_cast<float>(GetBValue(prep.color));
+        li.brightnessFactor = static_cast<float>(prep.brightness / PALETTE_BRIGHTNESS);
+        gpuLeaves.push_back(li);
+    }
+
+    return GpuRenderer::Render(bitmapBits, gpuLeaves,
+        m_renderArea.Width(),
+        static_cast<float>(m_options.ambientLight),
+        static_cast<float>(m_lx),
+        static_cast<float>(m_ly),
+        static_cast<float>(m_lz));
+}
+
 void CTreeMap::RenderLeafJobs(std::vector<COLORREF>& bitmapBits, const std::vector<LeafJob>& jobs,
     std::atomic<int>* progress, const std::atomic<bool>* cancel) const
 {
+    // GPU path: cushion shading only; solid-rect fallback stays on CPU
+    if (IsCushionShading() && COptions::TreeMapGpuRendering &&
+        RenderLeafJobsGpu(bitmapBits, jobs))
+    {
+        if (progress != nullptr)
+            progress->store(static_cast<int>(jobs.size()), std::memory_order_relaxed);
+        return;
+    }
+
     std::for_each(std::execution::par_unseq, jobs.begin(), jobs.end(),
         [&](const LeafJob& job) noexcept {
             if (cancel != nullptr && cancel->load(std::memory_order_relaxed)) return;

@@ -216,6 +216,8 @@ public:
 
     // Background-thread-safe: fills bitmapBits from leafJobs with par_unseq across leaves.
     // progress is incremented after each leaf; cancel stops processing early when set.
+    // When COptions::TreeMapGpuRendering is true and a D3D11 device is available, the GPU
+    // path is tried first; on failure it falls through to the CPU par_unseq path.
     void RenderLeafJobs(std::vector<COLORREF>& bitmapBits, const std::vector<LeafJob>& jobs,
         std::atomic<int>* progress, const std::atomic<bool>* cancel) const;
 
@@ -229,6 +231,10 @@ public:
 
     // Draws a sample rectangle in the given style (for color legend)
     void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
+
+private:
+    bool RenderLeafJobsGpu(std::vector<COLORREF>& bitmapBits,
+        const std::vector<LeafJob>& jobs) const;
 
 protected:
 
