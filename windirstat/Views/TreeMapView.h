@@ -77,7 +77,16 @@ protected:
     CSize m_dimmedSize{ 0,0 };        // Size of bitmap m_dimmed
     CBitmap m_dimmed;                 // Dimmed view. Used during refresh to avoid the ooops-effect.
 
+    // Async rendering state (only active when COptions::TreeMapAsyncRendering is true)
+    std::future<CTreeMap::LayoutResult> m_renderFuture;
+    std::shared_ptr<std::atomic<int>>  m_renderProgress;
+    std::shared_ptr<std::atomic<bool>> m_renderCancel;
+    int   m_renderJobsTotal = 0;
+    bool  m_renderPending   = false;
+    CSize m_renderSize;               // window size at async-render launch; used to detect stale results
+
     DECLARE_MESSAGE_MAP()
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnMButtonDown(UINT nFlags, CPoint point);

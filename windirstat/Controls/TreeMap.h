@@ -186,8 +186,46 @@ public:
     void RecurseCheckTree(const CItem *item);
 #endif // _DEBUG
 
-    // Create and draw a treemap
+    // Per-leaf shading job: pure value data, no tree pointers, safe to process on any thread
+    struct LeafJob
+    {
+        CRect rc;
+        std::array<double, 4> surface;
+        DWORD color;
+    };
+
+    // Folder overlay info collected during layout
+    struct FolderInfo
+    {
+        const CItem* item;
+        CRect rc;
+        int depth;
+        bool showHeader;
+    };
+
+    // Result of the UI-thread layout pass
+    struct LayoutResult
+    {
+        std::vector<COLORREF>   bitmapBits;
+        std::vector<LeafJob>    leafJobs;
+        std::vector<FolderInfo> folders;
+        CRect renderArea;           // inner rect after PrepareRenderArea shrinkage
+    };
+
+    // Create and draw a treemap (sync, UI thread)
     void DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options = nullptr);
+
+    // UI-thread layout pass: sets TmiSetRectangle, resolves GetTextExtent for folder headers
+    LayoutResult BuildLayout(CDC* pdc, CRect rc, CItem* root, const Options* options = nullptr);
+
+    // Background-thread-safe: fills bitmapBits from leafJobs with par_unseq across leaves.
+    // progress is incremented after each leaf; cancel stops processing early when set.
+    void RenderLeafJobs(std::vector<COLORREF>& bitmapBits, const std::vector<LeafJob>& jobs,
+        std::atomic<int>* progress, const std::atomic<bool>* cancel) const;
+
+    // UI-thread: BlitBitmap + folder frames + extension labels
+    void DrawOverlays(CDC* pdc, const CRect& rc, CItem* root,
+        const std::vector<COLORREF>& bitmapBits, const std::vector<FolderInfo>& folders) const;
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be nullptr, iff point is outside root rect.
