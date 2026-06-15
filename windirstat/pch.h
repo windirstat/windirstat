@@ -69,6 +69,7 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <chrono>
 #include <cstdint>
 #include <cmath>
 #include <condition_variable>
