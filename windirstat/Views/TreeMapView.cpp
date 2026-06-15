@@ -168,7 +168,9 @@ void CTreeMapView::OnDraw(CDC* pDC)
             CSelectObject sobmp(&dcmem, &m_bitmap);
             m_treeMap.DrawOverlays(&dcmem, layout.renderArea, CWinDirStatModel::Get()->GetZoomItem(),
                                    layout.bitmapBits, layout.folders);
-            // fall through to BitBlt below
+            pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
+            DrawHighlights(pDC);
+            return;
         }
         else
         {
@@ -238,9 +240,13 @@ void CTreeMapView::OnDraw(CDC* pDC)
         CSelectObject sobmp(&dcmem, &m_bitmap);
         if (CWinDirStatModel::Get()->IsZoomed()) DrawZoomFrame(&dcmem, rc);
         m_treeMap.DrawTreeMap(&dcmem, rc, CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
+        pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
+        DrawHighlights(pDC);
+        return;
     }
 
-    CSelectObject sobmp2(&dcmem, &m_bitmap);
+    // ── already drawn: plain repaint ───────────────────────────────────────
+    CSelectObject sobmp(&dcmem, &m_bitmap);
     pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
     DrawHighlights(pDC);
 }
@@ -541,7 +547,19 @@ void CTreeMapView::EmptyView()
 void CTreeMapView::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_RENDER_POLL)
-        Invalidate(FALSE); // OnDraw will check whether the future is ready
+    {
+        if (m_renderPending &&
+            m_renderFuture.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+        {
+            // Render still running: only repaint the 3-pixel progress bar strip
+            CRect progressStrip(0, 0, m_size.cx, 3);
+            InvalidateRect(&progressStrip, FALSE);
+        }
+        else
+        {
+            Invalidate(FALSE); // render done: repaint full window to show result
+        }
+    }
     CWinDirStatPane::OnTimer(nIDEvent);
 }
 
