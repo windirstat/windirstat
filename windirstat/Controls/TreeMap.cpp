@@ -567,8 +567,10 @@ bool CTreeMap::RenderLeafJobsGpu(std::vector<COLORREF>& bitmapBits,
 void CTreeMap::RenderLeafJobs(std::vector<COLORREF>& bitmapBits, const std::vector<LeafJob>& jobs,
     std::atomic<int>* progress, const std::atomic<bool>* cancel) const
 {
-    // GPU path: cushion shading only; solid-rect fallback stays on CPU
+    // GPU path: cushion shading only; solid-rect fallback stays on CPU.
+    // Check cancel first — GpuRenderer::Render has no incremental cancel support.
     if (IsCushionShading() && COptions::TreeMapGpuRendering &&
+        (cancel == nullptr || !cancel->load(std::memory_order_relaxed)) &&
         RenderLeafJobsGpu(bitmapBits, jobs))
     {
         if (progress != nullptr)
