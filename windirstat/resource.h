@@ -239,7 +239,17 @@
 #define ID_TOOLS_PERMISSIONS            32944
 #define ID_SAVE_PERMISSIONS             32945
 #define ID_TOOLS_STORAGE_ANALYTICS      32946
-#define ID_VIEW_LAYOUT_SIDE_BY_SIDE     32948
+#define ID_VIEW_CONFIGURE_LAYOUT        32948
+#define IDD_PAGE_LAYOUT                 115
+#define IDC_LAYOUT_MODE_DEFAULT         1136
+#define IDC_LAYOUT_MODE_SIDE            1137
+#define IDC_LAYOUT_MODE_WIDE            1138
+#define IDC_LAYOUT_TREEMAP_RIGHT        1139
+#define IDC_LAYOUT_TREEMAP_LEFT         1140
+#define IDC_LAYOUT_WIDE_COL0            1141
+#define IDC_LAYOUT_WIDE_COL1            1142
+#define IDC_LAYOUT_WIDE_COL2            1143
+#define IDC_LAYOUT_RESET                1144
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -253,9 +263,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        306
+#define _APS_NEXT_RESOURCE_VALUE        307
 #define _APS_NEXT_COMMAND_VALUE         32949
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_CONTROL_VALUE         1145
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

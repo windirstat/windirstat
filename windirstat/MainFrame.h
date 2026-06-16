@@ -82,15 +82,21 @@ protected:
 class CWdsSplitterWnd final : public CSplitterWndEx
 {
 public:
-    CWdsSplitterWnd(double * splitterPos);
+    CWdsSplitterWnd(double* pos1, double* pos2 = nullptr);
     void StopTracking(BOOL bAccept) override;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
+    void SetSplitterPos2(double pos);
+    void RestoreSplitterPos2(double posIfVirgin);
+    double GetSplitterPos() const { return m_splitterPos; }
 
 protected:
-    double m_splitterPos{0};    // Current split ratio
-    bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
-    double * m_userSplitterPos; // Split ratio as set by the user
+    double  m_splitterPos{0};
+    double  m_splitterPos2{0};
+    bool    m_wasTrackedByUser{false};
+    bool    m_wasTrackedByUser2{false};
+    double* m_userSplitterPos;
+    double* m_userSplitterPos2{nullptr};
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -157,12 +163,16 @@ protected:
     void RestoreExtensionView();
     void MinimizeTreeMapView();
     void MinimizeExtensionView();
+    void WideCollapsePanel(int col);
+    void WideRestorePanel(int col, bool isTreemap);
     void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views
     CFileTabbedView* m_fileTabbedView = nullptr;
     CExtensionView* m_extensionView = nullptr;
     CTreeMapView* m_treeMapView = nullptr;
+    int m_treemapCol{-1};   // Wide mode: which column (0/1/2) holds the treemap
+    int m_extensionCol{-1}; // Wide mode: which column holds the extension panel
     CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
@@ -246,8 +256,7 @@ protected:
     afx_msg void OnViewShowTreeMap();
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
-    afx_msg void OnViewLayoutSideBySide();
-    afx_msg void OnUpdateViewLayoutSideBySide(CCmdUI* pCmdUI);
+    afx_msg void OnViewConfigureLayout(); // Opens Options dialog on the Layout page
     afx_msg void OnViewShowExtensionsOnTreeMap();
     afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFolderFramesOnTreeMap();

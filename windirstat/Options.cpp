@@ -70,7 +70,14 @@ Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
 Setting<bool> COptions::LargeToolBar(OptionsGeneral, L"LargeToolBar", false);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
-Setting<bool> COptions::LayoutSideBySide(OptionsGeneral, L"LayoutSideBySide", false);
+// TODO (maintainer): change the default value (3rd arg) to 1 or 2 if Side/Wide should be the out-of-box experience.
+Setting<int>    COptions::LayoutMode(OptionsGeneral, L"LayoutMode", 0, 0, 2);
+Setting<bool>   COptions::LayoutSideTreeMapRight(OptionsGeneral, L"LayoutSideTreeMapRight", true);
+Setting<int>    COptions::LayoutWideCol0(OptionsGeneral, L"LayoutWideCol0", 0, 0, 2);
+Setting<int>    COptions::LayoutWideCol1(OptionsGeneral, L"LayoutWideCol1", 1, 0, 2);
+Setting<int>    COptions::LayoutWideCol2(OptionsGeneral, L"LayoutWideCol2", 2, 0, 2);
+Setting<double> COptions::WideSplitterPos0(OptionsGeneral, L"WideSplitterPos0", -1.0, 0.0, 1.0);
+Setting<double> COptions::WideSplitterPos1(OptionsGeneral, L"WideSplitterPos1", -1.0, 0.0, 1.0);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);
 Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);

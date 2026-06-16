@@ -533,6 +533,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Pages\PageAdvanced.h" />
     <ClInclude Include="Pages\PageCleanups.h" />
     <ClInclude Include="Pages\PageGeneral.h" />
+    <ClInclude Include="Pages\PageLayout.h" />
     <ClInclude Include="Pages\PageFileTree.h" />
     <ClInclude Include="Pages\PageTreeMap.h" />
     <ClInclude Include="Property.h" />
@@ -597,6 +598,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Pages\PageCleanups.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp" />
+    <ClCompile Include="Pages\PageLayout.cpp" />
     <ClCompile Include="Pages\PagePermissions.cpp" />
     <ClCompile Include="Pages\PageGeneral.cpp">
     </ClCompile>

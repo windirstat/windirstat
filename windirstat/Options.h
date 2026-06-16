@@ -155,7 +155,14 @@ public:
     static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
-    static Setting<bool> LayoutSideBySide;
+    // TODO (maintainer): LayoutMode default is 0 (Standard). Consider 1 (Side-by-side) or 2 (Wide) for ultrawide users.
+    static Setting<int>    LayoutMode;             // 0=Standard, 1=Side-by-side, 2=Wide (3-column)
+    static Setting<bool>   LayoutSideTreeMapRight; // Mode 1: true=treemap on right, false=treemap on left
+    static Setting<int>    LayoutWideCol0;         // Mode 2: panel in left col   (0=FileList, 1=Treemap, 2=Extensions)
+    static Setting<int>    LayoutWideCol1;         // Mode 2: panel in center col
+    static Setting<int>    LayoutWideCol2;         // Mode 2: panel in right col
+    static Setting<double> WideSplitterPos0;       // Mode 2: left divider position (col0 width as fraction)
+    static Setting<double> WideSplitterPos1;       // Mode 2: col1 width as fraction
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;

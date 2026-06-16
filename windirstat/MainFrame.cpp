@@ -29,6 +29,7 @@
 #include "PageTreeMap.h"
 #include "PagePermissions.h"
 #include "PageGeneral.h"
+#include "PageLayout.h"
 #include "PagePrompts.h"
 #include "ProgressDlg.h"
 
@@ -131,20 +132,22 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     auto general = std::make_unique<CPageGeneral>();
     auto filtering = std::make_unique<CPageFiltering>();
     auto treelist = std::make_unique<CPageFileTree>();
+    auto layout = std::make_unique<CPageLayout>();
     auto treemap = std::make_unique<CPageTreeMap>();
     auto permissions = std::make_unique<CPagePermissions>();
     auto cleanups = std::make_unique<CPageCleanups>();
     auto prompts = std::make_unique<CPagePrompts>();
     auto advanced = std::make_unique<CPageAdvanced>();
 
-    sheet->AddPage(general.get());
-    sheet->AddPage(filtering.get()); // index 1
-    sheet->AddPage(treelist.get());
-    sheet->AddPage(treemap.get());
-    sheet->AddPage(permissions.get());
-    sheet->AddPage(cleanups.get());
-    sheet->AddPage(prompts.get());
-    sheet->AddPage(advanced.get());
+    sheet->AddPage(general.get());     // index 0
+    sheet->AddPage(filtering.get());   // index 1
+    sheet->AddPage(treelist.get());    // index 2
+    sheet->AddPage(treemap.get());     // index 3
+    sheet->AddPage(permissions.get()); // index 4
+    sheet->AddPage(cleanups.get());    // index 5
+    sheet->AddPage(prompts.get());     // index 6
+    sheet->AddPage(layout.get());      // index 7
+    sheet->AddPage(advanced.get());    // index 8
 
     sheet->DoModal();
     return sheet->m_restartApplication;
@@ -189,10 +192,12 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CWdsSplitterWnd::CWdsSplitterWnd(double* splitterPos) :
-    m_userSplitterPos(splitterPos)
+CWdsSplitterWnd::CWdsSplitterWnd(double* pos1, double* pos2) :
+    m_userSplitterPos(pos1),
+    m_userSplitterPos2(pos2)
 {
-    m_wasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
+    m_wasTrackedByUser  = (pos1 && *pos1 > 0 && *pos1 < 1);
+    m_wasTrackedByUser2 = (pos2 && *pos2 > 0 && *pos2 < 1);
 }
 
 BEGIN_MESSAGE_MAP(CWdsSplitterWnd, CSplitterWndEx)
@@ -201,41 +206,127 @@ END_MESSAGE_MAP()
 
 void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 {
-    // Define toggle functions for both views, which will show or hide the corresponding views based on the calculated visibility.
-    static constexpr bool (*toggleTreeMap)(bool) = [](bool isVisible) { CTreeMapView* pView = CMainFrame::Get()->GetTreeMapView(); return pView && (pView->ShowTreeMap(isVisible), true); };
-    static constexpr bool (*toggleExtension)(bool) = [](bool isVisible) { CExtensionView* pView = CMainFrame::Get()->GetExtensionView(); return pView && (pView->ShowTypes(isVisible), true); };
-
-    static constexpr struct {
-        void (CMainFrame::* minimize)();
-        bool (*toggle)(bool);
-    } views[] = {
-        { &CMainFrame::MinimizeTreeMapView,   toggleTreeMap },   // [0] TreeMap
-        { &CMainFrame::MinimizeExtensionView, toggleExtension }  // [1] Extension List
+    static constexpr bool (*toggleTreeMap)(bool) = [](bool v)
+    {
+        CTreeMapView* p = CMainFrame::Get()->GetTreeMapView();
+        return p && (p->ShowTreeMap(v), true);
     };
+    static constexpr bool (*toggleExtension)(bool) = [](bool v)
+    {
+        CExtensionView* p = CMainFrame::Get()->GetExtensionView();
+        return p && (p->ShowTypes(v), true);
+    };
+
+    // For 3-column mode: capture column widths before base class call.
+    // m_nTrackColumn is not accessible in this MFC version (MSVC 14.51), so we
+    // detect the dragged divider via delta comparison against stored fractions.
+    int preDragCol0 = 0, preDragCol1 = 0, preMinSz = 0;
+    if (GetColumnCount() == 3)
+    {
+        GetColumnInfo(0, preDragCol0, preMinSz);
+        GetColumnInfo(1, preDragCol1, preMinSz);
+    }
 
     CSplitterWndEx::StopTracking(bAccept);
     if (!bAccept) return;
 
-    int currentPos, dummy;
-    const bool isVertical = (GetColumnCount() > 1); // Determine if the splitter is vertical (columns) or horizontal (rows)
-    isVertical ? GetColumnInfo(0, currentPos, dummy) : GetRowInfo(0, currentPos, dummy); // Get the current position of the splitter
+    const bool isVertical = (GetColumnCount() > 1);
+    const CRect rcClient = ClientRectOf(this);
+    const int totalSize = isVertical ? rcClient.Width() : rcClient.Height();
+    if (totalSize <= 0) return;
 
-    // In side-by-side layout the main splitter is vertical (controls TreeMap) and the sub-splitter is
-    // horizontal (controls Extension) — opposite of the default layout. Flip the view index accordingly.
-    const size_t viewIdx = (COptions::LayoutSideBySide ? !isVertical : isVertical) ? 1 : 0;
+    int currentPos, dummy;
+    isVertical ? GetColumnInfo(0, currentPos, dummy) : GetRowInfo(0, currentPos, dummy);
+
+    // === 3-column mode (Wide layout) ===
+    if (GetColumnCount() == 3)
+    {
+        int col0, col1, minSz;
+        GetColumnInfo(0, col0, minSz);
+        GetColumnInfo(1, col1, minSz);
+        const int threshold = DpiRest(COptions::MinimizeViewThreshold);
+
+        // Determine which divider was dragged: the one whose column changed more.
+        const double d0 = std::abs(static_cast<double>(preDragCol0) - m_splitterPos  * totalSize);
+        const double d1 = std::abs(static_cast<double>(preDragCol1) - m_splitterPos2 * totalSize);
+        const int trackCol = (d0 >= d1) ? 0 : 1;
+
+        if (trackCol == 0)
+        {
+            // Left divider: controls col0 size
+            if (col0 > threshold)
+            {
+                m_splitterPos = static_cast<double>(col0) / totalSize;
+                m_wasTrackedByUser = true;
+                *m_userSplitterPos = m_splitterPos;
+            }
+            else
+            {
+                // Collapse left panel
+                const int panel = COptions::LayoutWideCol0;
+                if (panel == 1 && !toggleTreeMap(false)) return;
+                if (panel == 2 && !toggleExtension(false)) return;
+                m_splitterPos = 0.0;
+                SetColumnInfo(0, 0, 0);
+                RecalcLayout();
+            }
+        }
+        else if (trackCol == 1)
+        {
+            // Right divider: controls col2 size (col2 = total - col0 - col1 - dividers)
+            const int col2 = std::max(0, totalSize - col0 - col1);
+            if (col2 > threshold)
+            {
+                m_splitterPos2 = static_cast<double>(col1) / totalSize;
+                m_wasTrackedByUser2 = true;
+                if (m_userSplitterPos2) *m_userSplitterPos2 = m_splitterPos2;
+            }
+            else
+            {
+                // Collapse right panel
+                const int panel = COptions::LayoutWideCol2;
+                if (panel == 1 && !toggleTreeMap(false)) return;
+                if (panel == 2 && !toggleExtension(false)) return;
+                m_splitterPos2 = 1.0 - m_splitterPos;
+                SetColumnInfo(1, totalSize - col0, 0);
+                RecalcLayout();
+            }
+        }
+        return;
+    }
+
+    // === 2-panel mode (Standard and Side-by-side) ===
+    // viewIdx 0=TreeMap, 1=Extension. Mapping depends on layout mode and split orientation:
+    //   Mode 0 (Standard):  main=rows(isVertical=false)→TreeMap, sub=cols(isVertical=true)→Extension
+    //   Mode 1 (Side):      main=cols(isVertical=true)→TreeMap,  sub=rows(isVertical=false)→Extension
+    const int mode = COptions::LayoutMode;
+    const size_t viewIdx = (mode == 1) ? (isVertical ? 0 : 1) : (isVertical ? 1 : 0);
+
+    static constexpr struct
+    {
+        void (CMainFrame::* minimize)();
+        bool (*toggle)(bool);
+    } views[] = {
+        { &CMainFrame::MinimizeTreeMapView,   toggleTreeMap },
+        { &CMainFrame::MinimizeExtensionView, toggleExtension }
+    };
+
     const auto& view = views[viewIdx];
 
-    const CRect rcClient = ClientRectOf(this); // Get the current client area to calculate the total size for visibility determination
-    const int totalSize = isVertical ? rcClient.Width() : rcClient.Height(); // Based on actual split direction
-    const bool isVisible = (totalSize - currentPos) > DpiRest(COptions::MinimizeViewThreshold);
+    // For Side-by-side with treemap on LEFT: treemap is in col0, collapses when col0 < threshold.
+    // All other cases: collapse the right/bottom panel when (total - currentPos) < threshold.
+    bool isVisible;
+    if (mode == 1 && !static_cast<bool>(COptions::LayoutSideTreeMapRight) && isVertical)
+        isVisible = currentPos > DpiRest(COptions::MinimizeViewThreshold);
+    else
+        isVisible = (totalSize - currentPos) > DpiRest(COptions::MinimizeViewThreshold);
 
-    if (totalSize <= 0) return;
     if (!view.toggle(isVisible)) return;
 
     if (!isVisible)
     {
-        (CMainFrame::Get()->*view.minimize)(); // Minimize the view if it is considered not visible
-        return; // Early exit to keep the current splitter position unchanged for show views to function properly
+        (CMainFrame::Get()->*view.minimize)();
+        return;
     }
 
     m_splitterPos = static_cast<double>(currentPos) / totalSize;
@@ -277,32 +368,53 @@ void CWdsSplitterWnd::SetSplitterPos(const double pos)
 void CWdsSplitterWnd::RestoreSplitterPos(const double posIfVirgin)
 {
     if (m_wasTrackedByUser)
-    {
         SetSplitterPos(*m_userSplitterPos);
-    }
     else
-    {
         SetSplitterPos(posIfVirgin);
+}
+
+void CWdsSplitterWnd::SetSplitterPos2(const double pos)
+{
+    m_splitterPos2 = pos;
+    const CRect rcClient = ClientRectOf(this);
+    if (m_pColInfo != nullptr && GetColumnCount() == 3)
+    {
+        const int cxCol1 = static_cast<int>(pos * rcClient.Width());
+        SetColumnInfo(1, cxCol1, 0);
+        RecalcLayout();
     }
+}
+
+void CWdsSplitterWnd::RestoreSplitterPos2(const double posIfVirgin)
+{
+    if (m_wasTrackedByUser2)
+        SetSplitterPos2(*m_userSplitterPos2);
+    else
+        SetSplitterPos2(posIfVirgin);
 }
 
 void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
-    if (GetColumnCount() > 1)
+    if (GetColumnCount() == 3 && m_userSplitterPos2 != nullptr)
+    {
+        // 3-column mode: maintain both divider positions proportionally
+        if (m_pColInfo != nullptr)
+        {
+            SetColumnInfo(0, static_cast<int>(cx * m_splitterPos), 0);
+            SetColumnInfo(1, static_cast<int>(cx * m_splitterPos2), 0);
+        }
+    }
+    else if (GetColumnCount() > 1)
     {
         const int cxLeft = static_cast<int>(cx * m_splitterPos);
         if (cxLeft > 0)
-        {
             SetColumnInfo(0, cxLeft, 0);
-        }
     }
     else
     {
         const int cyUpper = static_cast<int>(cy * m_splitterPos);
         if (cyUpper > 0)
-        {
             SetRowInfo(0, cyUpper, 0);
-        }
     }
     CSplitterWndEx::OnSize(nType, cx, cy);
 }
@@ -402,8 +514,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
-    ON_COMMAND(ID_VIEW_LAYOUT_SIDE_BY_SIDE, OnViewLayoutSideBySide)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_LAYOUT_SIDE_BY_SIDE, OnUpdateViewLayoutSideBySide)
+    // TODO (maintainer): uncomment this line if you add a "Layout" menu item pointing to ID_VIEW_CONFIGURE_LAYOUT
+    // ON_COMMAND(ID_VIEW_CONFIGURE_LAYOUT, OnViewConfigureLayout)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
@@ -449,7 +561,11 @@ constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
 constexpr auto ID_STATUSPANE_SIZE_INDEX = 1;
 constexpr auto ID_STATUSPANE_RAM_INDEX = 2;
 
-CMainFrame::CMainFrame()
+CMainFrame::CMainFrame() :
+        m_subSplitter(COptions::SubSplitterPos.Ptr())
+      , m_splitter(
+            COptions::LayoutMode == 2 ? COptions::WideSplitterPos0.Ptr() : COptions::MainSplitterPos.Ptr(),
+            COptions::LayoutMode == 2 ? COptions::WideSplitterPos1.Ptr() : nullptr)
 {
     s_Singleton = this;
 }
@@ -784,28 +900,70 @@ void CMainFrame::OnDestroy()
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
-    if (COptions::LayoutSideBySide)
-    {
-        // Side-by-side: file list and extension panel on the left, treemap on the right
-        m_splitter.CreateStatic(this, 1, 2);
-        m_splitter.CreateView(0, 1, RUNTIME_CLASS(CTreeMapView), CSize(500, 100), pContext);
-        m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
-        m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(400, 400), pContext);
-        m_subSplitter.CreateView(1, 0, RUNTIME_CLASS(CExtensionView), CSize(400, 150), pContext);
+    const int mode = COptions::LayoutMode;
 
-        m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(0, 1));
-        m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
-        m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(1, 0));
+    if (mode == 2)
+    {
+        // Wide: 3 freely-arranged columns. Panels assigned by LayoutWideCol0/1/2.
+        // Values: 0=FileList, 1=Treemap, 2=Extensions
+        const int col[3] = { COptions::LayoutWideCol0, COptions::LayoutWideCol1, COptions::LayoutWideCol2 };
+        m_splitter.CreateStatic(this, 1, 3);
+        for (int i = 0; i < 3; i++)
+        {
+            switch (col[i])
+            {
+            case 0:
+                m_splitter.CreateView(0, i, RUNTIME_CLASS(CFileTabbedView), CSize(400, 500), pContext);
+                m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_splitter.GetPane(0, i));
+                break;
+            case 1:
+                m_splitter.CreateView(0, i, RUNTIME_CLASS(CTreeMapView), CSize(400, 500), pContext);
+                m_treeMapView = DYNAMIC_DOWNCAST(CTreeMapView, m_splitter.GetPane(0, i));
+                m_treemapCol = i;
+                break;
+            case 2:
+                m_splitter.CreateView(0, i, RUNTIME_CLASS(CExtensionView), CSize(200, 500), pContext);
+                m_extensionView = DYNAMIC_DOWNCAST(CExtensionView, m_splitter.GetPane(0, i));
+                m_extensionCol = i;
+                break;
+            }
+        }
+    }
+    else if (mode == 1)
+    {
+        if (COptions::LayoutSideTreeMapRight)
+        {
+            // Side-by-side, treemap on the right
+            m_splitter.CreateStatic(this, 1, 2);
+            m_splitter.CreateView(0, 1, RUNTIME_CLASS(CTreeMapView), CSize(500, 100), pContext);
+            m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
+            m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(400, 400), pContext);
+            m_subSplitter.CreateView(1, 0, RUNTIME_CLASS(CExtensionView), CSize(400, 150), pContext);
+            m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(0, 1));
+            m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
+            m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(1, 0));
+        }
+        else
+        {
+            // Side-by-side, treemap on the left
+            m_splitter.CreateStatic(this, 1, 2);
+            m_splitter.CreateView(0, 0, RUNTIME_CLASS(CTreeMapView), CSize(500, 100), pContext);
+            m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 1));
+            m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(400, 400), pContext);
+            m_subSplitter.CreateView(1, 0, RUNTIME_CLASS(CExtensionView), CSize(400, 150), pContext);
+            m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(0, 0));
+            m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
+            m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(1, 0));
+        }
     }
     else
     {
-        // Default: file list and extension panel on top, treemap on the bottom
+        // Standard: file list + extensions on top, treemap below
         m_splitter.CreateStatic(this, 2, 1);
         m_splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
         m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
         m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
         m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
-
         m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(1, 0));
         m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
         m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(0, 1));
@@ -845,14 +1003,50 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
     return TRUE;
 }
 
+void CMainFrame::WideCollapsePanel(const int col)
+{
+    if (col == 0)
+    {
+        m_splitter.SetSplitterPos(0.0);
+    }
+    else if (col == 2)
+    {
+        // Make col1 fill the remaining space → col2 width ≈ 0
+        m_splitter.SetSplitterPos2(1.0 - m_splitter.GetSplitterPos());
+    }
+    // col == 1 (middle): cannot be collapsed via dividers
+}
+
+void CMainFrame::WideRestorePanel(const int col, const bool isTreemap)
+{
+    if (col == 0)
+    {
+        m_splitter.RestoreSplitterPos(0.33);
+    }
+    else if (col == 2)
+    {
+        m_splitter.RestoreSplitterPos2(isTreemap ? 0.34 : 0.50);
+    }
+    // col == 1 (middle): always visible, nothing to restore
+}
+
 void CMainFrame::MinimizeExtensionView()
 {
-    m_subSplitter.SetSplitterPos(1.0);
+    if (COptions::LayoutMode == 2)
+        WideCollapsePanel(m_extensionCol);
+    else
+        m_subSplitter.SetSplitterPos(1.0);
 }
 
 void CMainFrame::RestoreExtensionView()
 {
-    if (GetExtensionView()->IsShowTypes())
+    if (!GetExtensionView()->IsShowTypes()) return;
+    if (COptions::LayoutMode == 2)
+    {
+        WideRestorePanel(m_extensionCol, false);
+        GetExtensionView()->RedrawWindow();
+    }
+    else
     {
         m_subSplitter.RestoreSplitterPos(0.72);
         GetExtensionView()->RedrawWindow();
@@ -861,18 +1055,35 @@ void CMainFrame::RestoreExtensionView()
 
 void CMainFrame::MinimizeTreeMapView()
 {
-    m_splitter.SetSplitterPos(1.0);
+    const int mode = COptions::LayoutMode;
+    if (mode == 2)
+        WideCollapsePanel(m_treemapCol);
+    else if (mode == 1 && !static_cast<bool>(COptions::LayoutSideTreeMapRight))
+        m_splitter.SetSplitterPos(0.0); // treemap on left: collapse to zero
+    else
+        m_splitter.SetSplitterPos(1.0); // default / treemap-right: push right
 }
 
 void CMainFrame::RestoreTreeMapView(bool force)
 {
     if (force) GetTreeMapView()->ShowTreeMap(true);
-    if (GetTreeMapView()->IsShowTreeMap())
+    if (!GetTreeMapView()->IsShowTreeMap()) return;
+
+    const int mode = COptions::LayoutMode;
+    if (mode == 2)
+    {
+        WideRestorePanel(m_treemapCol, true);
+    }
+    else if (mode == 1 && !static_cast<bool>(COptions::LayoutSideTreeMapRight))
+    {
+        m_splitter.RestoreSplitterPos(0.5); // treemap on left: restore from left side
+    }
+    else
     {
         m_splitter.RestoreSplitterPos(0.5);
-        GetTreeMapView()->DrawEmptyView();
-        GetTreeMapView()->RedrawWindow();
     }
+    GetTreeMapView()->DrawEmptyView();
+    GetTreeMapView()->RedrawWindow();
 }
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
@@ -1383,19 +1594,10 @@ void CMainFrame::OnViewShowFileTypes()
     }
 }
 
-void CMainFrame::OnViewLayoutSideBySide()
+void CMainFrame::OnViewConfigureLayout()
 {
-    COptions::LayoutSideBySide = !static_cast<bool>(COptions::LayoutSideBySide);
-    PersistedSetting::WritePersistedProperties();
-    if (IDYES == WdsMessageBox(Localization::Lookup(IDS_RESTART_REQUEST), MB_YESNO | MB_ICONQUESTION))
-    {
-        CDirStatApp::Get()->RestartApplication();
-    }
-}
-
-void CMainFrame::OnUpdateViewLayoutSideBySide(CCmdUI* pCmdUI)
-{
-    pCmdUI->SetCheck(COptions::LayoutSideBySide);
+    // Opens the Options dialog directly on the Layout page (index 7: General=0,...,Prompts=6,Layout=7,Advanced=8)
+    COptionsPropertySheet::ShowSettings(7);
 }
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()
