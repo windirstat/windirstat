@@ -155,6 +155,7 @@ public:
     static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
+    static Setting<bool> LayoutSideBySide;
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;

@@ -207,11 +207,10 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 
     static constexpr struct {
         void (CMainFrame::* minimize)();
-        int (CRect::* totalSize)() const;
         bool (*toggle)(bool);
     } views[] = {
-        { &CMainFrame::MinimizeTreeMapView,  &CRect::Height, toggleTreeMap },  // [0] TreeMap
-        { &CMainFrame::MinimizeExtensionView, &CRect::Width, toggleExtension } // [1] Extension List
+        { &CMainFrame::MinimizeTreeMapView,   toggleTreeMap },   // [0] TreeMap
+        { &CMainFrame::MinimizeExtensionView, toggleExtension }  // [1] Extension List
     };
 
     CSplitterWndEx::StopTracking(bAccept);
@@ -220,13 +219,18 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
     int currentPos, dummy;
     const bool isVertical = (GetColumnCount() > 1); // Determine if the splitter is vertical (columns) or horizontal (rows)
     isVertical ? GetColumnInfo(0, currentPos, dummy) : GetRowInfo(0, currentPos, dummy); // Get the current position of the splitter
-    const auto& view = views[isVertical]; // Select view based on the splitter orientation
+
+    // In side-by-side layout the main splitter is vertical (controls TreeMap) and the sub-splitter is
+    // horizontal (controls Extension) — opposite of the default layout. Flip the view index accordingly.
+    const size_t viewIdx = (COptions::LayoutSideBySide ? !isVertical : isVertical) ? 1 : 0;
+    const auto& view = views[viewIdx];
+
     const CRect rcClient = ClientRectOf(this); // Get the current client area to calculate the total size for visibility determination
-    const int totalSize = (rcClient.*view.totalSize)(); // Calculate the left or upper view size
-    const bool isVisible = (totalSize - currentPos) > DpiRest(COptions::MinimizeViewThreshold); // Consider the view visible if larger than 10 pixels by default
+    const int totalSize = isVertical ? rcClient.Width() : rcClient.Height(); // Based on actual split direction
+    const bool isVisible = (totalSize - currentPos) > DpiRest(COptions::MinimizeViewThreshold);
 
     if (totalSize <= 0) return;
-    if (!view.toggle(isVisible)) return; // Toggle Show/Hide of the view based on the calculated visibility
+    if (!view.toggle(isVisible)) return;
 
     if (!isVisible)
     {
@@ -398,6 +402,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
+    ON_COMMAND(ID_VIEW_LAYOUT_SIDE_BY_SIDE, OnViewLayoutSideBySide)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_LAYOUT_SIDE_BY_SIDE, OnUpdateViewLayoutSideBySide)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
@@ -778,15 +784,32 @@ void CMainFrame::OnDestroy()
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
-    m_splitter.CreateStatic(this, 2, 1);
-    m_splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
-    m_subSplitter.CreateStatic(&m_splitter, 1, 2,WS_CHILD  | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
-    m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
-    m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
+    if (COptions::LayoutSideBySide)
+    {
+        // Side-by-side: file list and extension panel on the left, treemap on the right
+        m_splitter.CreateStatic(this, 1, 2);
+        m_splitter.CreateView(0, 1, RUNTIME_CLASS(CTreeMapView), CSize(500, 100), pContext);
+        m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
+        m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(400, 400), pContext);
+        m_subSplitter.CreateView(1, 0, RUNTIME_CLASS(CExtensionView), CSize(400, 150), pContext);
 
-    m_treeMapView = DYNAMIC_DOWNCAST(CTreeMapView, m_splitter.GetPane(1, 0));
-    m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
-    m_extensionView = DYNAMIC_DOWNCAST(CExtensionView, m_subSplitter.GetPane(0, 1));
+        m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(0, 1));
+        m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
+        m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(1, 0));
+    }
+    else
+    {
+        // Default: file list and extension panel on top, treemap on the bottom
+        m_splitter.CreateStatic(this, 2, 1);
+        m_splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
+        m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
+        m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
+        m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
+
+        m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(1, 0));
+        m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
+        m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(0, 1));
+    }
 
     MinimizeTreeMapView();
     MinimizeExtensionView();
@@ -1358,6 +1381,21 @@ void CMainFrame::OnViewShowFileTypes()
     {
         MinimizeExtensionView();
     }
+}
+
+void CMainFrame::OnViewLayoutSideBySide()
+{
+    COptions::LayoutSideBySide = !static_cast<bool>(COptions::LayoutSideBySide);
+    PersistedSetting::WritePersistedProperties();
+    if (IDYES == WdsMessageBox(Localization::Lookup(IDS_RESTART_REQUEST), MB_YESNO | MB_ICONQUESTION))
+    {
+        CDirStatApp::Get()->RestartApplication();
+    }
+}
+
+void CMainFrame::OnUpdateViewLayoutSideBySide(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::LayoutSideBySide);
 }
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()

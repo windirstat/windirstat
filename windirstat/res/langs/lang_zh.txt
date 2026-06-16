@@ -123,6 +123,7 @@ IDS_MENU_HELP_ABOUT=关于(&A)
 IDS_MENU_HELP_REPORT=问题反馈与建议(&R)...
 IDS_MENU_HELP=帮助(&H)
 IDS_MENU_LARGE_TOOLBAR=大图标工具栏(&L)
+IDS_MENU_LAYOUT_SIDE_BY_SIDE=Side-by-side layout (requires restart)
 IDS_MENU_LOAD_RESULTS=读取 CSV/JSON 扫描记录
 IDS_MENU_LOGICAL_SIZE=使用逻辑大小统计(&L)
 IDS_MENU_MOVE_TO=移动到(&M)...

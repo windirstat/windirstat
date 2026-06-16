@@ -239,6 +239,7 @@
 #define ID_TOOLS_PERMISSIONS            32944
 #define ID_SAVE_PERMISSIONS             32945
 #define ID_TOOLS_STORAGE_ANALYTICS      32946
+#define ID_VIEW_LAYOUT_SIDE_BY_SIDE     32948
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -253,7 +254,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32948
+#define _APS_NEXT_COMMAND_VALUE         32949
 #define _APS_NEXT_CONTROL_VALUE         1136
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
