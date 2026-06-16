@@ -34,7 +34,7 @@ void CPageLayout::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Radio(pDX, IDC_LAYOUT_MODE_DEFAULT, m_layoutMode);
-    DDX_Radio(pDX, IDC_LAYOUT_TREEMAP_RIGHT, m_treemapRight);
+    DDX_Radio(pDX, IDC_LAYOUT_TREEMAP_RIGHT, m_treemapSide);
     DDX_Control(pDX, IDC_LAYOUT_WIDE_COL0, m_comboCol0);
     DDX_Control(pDX, IDC_LAYOUT_WIDE_COL1, m_comboCol1);
     DDX_Control(pDX, IDC_LAYOUT_WIDE_COL2, m_comboCol2);
@@ -77,7 +77,7 @@ BOOL CPageLayout::OnInitDialog()
     DarkMode::AdjustControls(GetSafeHwnd());
 
     m_layoutMode  = COptions::LayoutMode;
-    m_treemapRight = COptions::LayoutSideTreeMapRight ? TRUE : FALSE;
+    m_treemapSide = COptions::LayoutSideTreeMapRight ? 0 : 1;
 
     FillPanelCombo(m_comboCol0, COptions::LayoutWideCol0);
     FillPanelCombo(m_comboCol1, COptions::LayoutWideCol1);
@@ -157,7 +157,7 @@ void CPageLayout::OnOK()
     UpdateData(TRUE);
 
     const int newMode         = m_layoutMode;
-    const bool newTreemapRight = (m_treemapRight != FALSE);
+    const bool newTreemapRight = (m_treemapSide == 0);
     const int newCol0         = m_comboCol0.GetCurSel();
     const int newCol1         = m_comboCol1.GetCurSel();
     const int newCol2         = m_comboCol2.GetCurSel();

@@ -88,7 +88,8 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
     void SetSplitterPos2(double pos);
     void RestoreSplitterPos2(double posIfVirgin);
-    double GetSplitterPos() const { return m_splitterPos; }
+    double GetSplitterPos()  const { return m_splitterPos; }
+    double GetSplitterPos2() const { return m_splitterPos2; }
 
 protected:
     double  m_splitterPos{0};

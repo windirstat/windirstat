@@ -44,7 +44,7 @@ protected:
     void FillPanelCombo(CComboBox& combo, int selectedPanel);
 
     int  m_layoutMode = 0;
-    BOOL m_treemapRight = TRUE;
+    int  m_treemapSide = 0; // DDX_Radio index: 0=right (IDC_LAYOUT_TREEMAP_RIGHT), 1=left
     CComboBox m_comboCol0;
     CComboBox m_comboCol1;
     CComboBox m_comboCol2;

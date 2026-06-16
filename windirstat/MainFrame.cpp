@@ -969,6 +969,15 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
         m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(0, 1));
     }
 
+    // Wide mode: set initial column fractions before minimizing panels so that
+    // the FileList column (which is never explicitly collapsed) has non-zero width.
+    // RestoreSplitterPos uses the saved registry value when available, else 0.30.
+    if (mode == 2)
+    {
+        m_splitter.RestoreSplitterPos(0.30);
+        m_splitter.RestoreSplitterPos2(0.30);
+    }
+
     MinimizeTreeMapView();
     MinimizeExtensionView();
 
@@ -1007,6 +1016,10 @@ void CMainFrame::WideCollapsePanel(const int col)
 {
     if (col == 0)
     {
+        // Expand col1 to absorb col0's space so col2 stays at its current fraction.
+        // Without this, col2 would inherit col0's freed width after SetSplitterPos(0).
+        const double newPos2 = std::min(1.0, m_splitter.GetSplitterPos() + m_splitter.GetSplitterPos2());
+        m_splitter.SetSplitterPos2(newPos2);
         m_splitter.SetSplitterPos(0.0);
     }
     else if (col == 2)
