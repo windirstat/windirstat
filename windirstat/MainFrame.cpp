@@ -393,6 +393,14 @@ void CWdsSplitterWnd::RestoreSplitterPos2(const double posIfVirgin)
         SetSplitterPos2(posIfVirgin);
 }
 
+void CWdsSplitterWnd::ClearTrackedState()
+{
+    m_wasTrackedByUser  = false;
+    m_wasTrackedByUser2 = false;
+    if (m_userSplitterPos)  *m_userSplitterPos  = -1.0;
+    if (m_userSplitterPos2) *m_userSplitterPos2 = -1.0;
+}
+
 void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
     if (GetColumnCount() == 3 && m_userSplitterPos2 != nullptr)
@@ -1041,6 +1049,27 @@ void CMainFrame::WideRestorePanel(const int col, const bool isTreemap)
         m_splitter.RestoreSplitterPos2(isTreemap ? 0.34 : 0.50);
     }
     // col == 1 (middle): always visible, nothing to restore
+}
+
+void CMainFrame::ResetDividers()
+{
+    // Clear saved positions and reset wasTrackedByUser so RestoreSplitterPos
+    // uses virgin defaults instead of stale user positions.
+    m_splitter.ClearTrackedState();
+    m_subSplitter.ClearTrackedState();
+
+    // Re-apply the startup layout: collapse hidden panels, restore visible ones.
+    if (COptions::LayoutMode == 2)
+    {
+        m_splitter.RestoreSplitterPos(0.30);
+        m_splitter.RestoreSplitterPos2(0.30);
+    }
+    MinimizeTreeMapView();
+    MinimizeExtensionView();
+    if (GetTreeMapView()->IsShowTreeMap())  RestoreTreeMapView();
+    if (GetExtensionView()->IsShowTypes())  RestoreExtensionView();
+
+    PersistedSetting::WritePersistedProperties();
 }
 
 void CMainFrame::MinimizeExtensionView()

@@ -88,6 +88,7 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
     void SetSplitterPos2(double pos);
     void RestoreSplitterPos2(double posIfVirgin);
+    void ClearTrackedState();
     double GetSplitterPos()  const { return m_splitterPos; }
     double GetSplitterPos2() const { return m_splitterPos2; }
 
@@ -166,6 +167,7 @@ protected:
     void MinimizeExtensionView();
     void WideCollapsePanel(int col);
     void WideRestorePanel(int col, bool isTreemap);
+    void ResetDividers();
     void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views

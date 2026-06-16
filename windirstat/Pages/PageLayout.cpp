@@ -144,12 +144,8 @@ void CPageLayout::OnColChanged()
 
 void CPageLayout::OnBnClickedReset()
 {
-    // Reset splitter positions to their defaults (virgin state = auto-position on next start)
-    COptions::MainSplitterPos = -1.0;
-    COptions::SubSplitterPos  = -1.0;
-    COptions::WideSplitterPos0 = -1.0;
-    COptions::WideSplitterPos1 = -1.0;
-    PersistedSetting::WritePersistedProperties();
+    // Apply default divider positions immediately — no restart needed.
+    CMainFrame::Get()->ResetDividers();
 }
 
 void CPageLayout::OnOK()
