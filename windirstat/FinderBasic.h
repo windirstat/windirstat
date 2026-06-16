@@ -109,6 +109,7 @@ public:
     ULONGLONG GetIndex() const override;
     DWORD GetReparseTag() const override { return m_reparseTag; }
     bool IsReserved() const override { return false; }
+    bool HasIgnoredStream() const override;
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

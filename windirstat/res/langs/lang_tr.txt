@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer'a, mükemmel Linux aracı KDirStat iç
 IDS_ABOUT_THANKS=Teşekkürler
 IDS_ABOUT_TITLE=WinDirStat Hakkında
 IDS_ADMIN=Yönetici
+IDS_ADS_IGNORED=Dropbox tarafından yok sayıldı
 IDS_ALL_FILES=Tüm Dosyalar
 IDS_ANALYTICS_CONFIG=Parametreler
 IDS_ANALYTICS_TITLE=Depolama Analitiği ve Maliyet Optimizasyonu

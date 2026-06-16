@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefanu Hundhammerovi za skvělou linuxovou utilitku KDi
 IDS_ABOUT_THANKS=Poděkování
 IDS_ABOUT_TITLE=O programu WinDirStat
 IDS_ADMIN=Správce
+IDS_ADS_IGNORED=Ignorováno Dropboxem
 IDS_ALL_FILES=Všechny soubory
 IDS_ANALYTICS_CONFIG=Parametry
 IDS_ANALYTICS_TITLE=Analýza úložiště a optimalizace nákladů

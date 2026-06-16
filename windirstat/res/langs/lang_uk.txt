@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer за його чудовий інст�
 IDS_ABOUT_THANKS=Подяки
 IDS_ABOUT_TITLE=Про WinDirStat
 IDS_ADMIN=Адміністратор
+IDS_ADS_IGNORED=Ігнорується Dropbox
 IDS_ALL_FILES=Всі файли
 IDS_ANALYTICS_CONFIG=Параметри
 IDS_ANALYTICS_TITLE=Аналітика сховища й оптимізація витрат

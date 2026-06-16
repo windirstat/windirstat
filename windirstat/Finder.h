@@ -45,6 +45,7 @@ public:
     virtual inline ULONGLONG GetIndex() const = 0;
     virtual DWORD GetReparseTag() const = 0;
     virtual bool IsReserved() const = 0;
+    virtual bool HasIgnoredStream() const = 0;
 
     bool IsDirectory() const
     {

@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammerile tema suurepärase Linuxi tööriist
 IDS_ABOUT_THANKS=Tänud
 IDS_ABOUT_TITLE=WinDirStatist
 IDS_ADMIN=Administraator
+IDS_ADS_IGNORED=Dropboxi poolt eiratud
 IDS_ALL_FILES=Kõik failid
 IDS_ANALYTICS_CONFIG=Parameetrid
 IDS_ANALYTICS_TITLE=Salvestusruumi analüüs ja kulude optimeerimine

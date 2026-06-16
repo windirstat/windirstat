@@ -176,6 +176,7 @@ public:
     inline static Setting<bool> ExcludeVolumeMountPoints{ OptionsGeneral, L"ExcludeVolumeMountPoints", true };
     inline static Setting<bool> ExcludeHiddenDirectory{ OptionsGeneral, L"ExcludeHiddenDirectory", false };
     inline static Setting<bool> ExcludeProtectedDirectory{ OptionsGeneral, L"ExcludeProtectedDirectory", false };
+    inline static Setting<bool> ExcludeAdsIgnored{ OptionsGeneral, L"ExcludeAdsIgnored", false };
     inline static Setting<bool> ExcludeSymbolicLinksFile{ OptionsGeneral, L"ExcludeSymbolicLinksFile", true };
     inline static Setting<bool> ExcludeHiddenFile{ OptionsGeneral, L"ExcludeHiddenFile", false };
     inline static Setting<bool> ExcludeProtectedFile{ OptionsGeneral, L"ExcludeProtectedFile", false };

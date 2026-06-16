@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\n感谢 Stefan Hundhammer 开发的出色 Linux 工具 KD
 IDS_ABOUT_THANKS=致谢
 IDS_ABOUT_TITLE=关于 WinDirStat
 IDS_ADMIN=管理员
+IDS_ADS_IGNORED=被 Dropbox 忽略
 IDS_ALL_FILES=所有文件
 IDS_ANALYTICS_CONFIG=参数
 IDS_ANALYTICS_TITLE=存储分析与成本优化

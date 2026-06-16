@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer氏による素晴らしいLinuxツー�
 IDS_ABOUT_THANKS=謝辞
 IDS_ABOUT_TITLE=WinDirStatについて
 IDS_ADMIN=管理者
+IDS_ADS_IGNORED=Dropbox の無視対象
 IDS_ALL_FILES=すべてのファイル
 IDS_ANALYTICS_CONFIG=パラメーター
 IDS_ANALYTICS_TITLE=ストレージ分析とコスト最適化

@@ -47,6 +47,7 @@ public:
     ULONGLONG GetIndex() const override { return 0; }
     DWORD GetReparseTag() const override { return 0; }
     bool IsReserved() const override { return false; }
+    bool HasIgnoredStream() const override { return false; }
 
     static bool IsPath(std::wstring_view path) noexcept;
     static std::wstring StripPrefix(std::wstring_view path);

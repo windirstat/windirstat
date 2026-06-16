@@ -5,6 +5,7 @@ IDS_ABOUT_THANKS_TEXT=\nStefanu Hundhammerju za njegovo odlično orodje za Linux
 IDS_ABOUT_THANKS=Zahvale
 IDS_ABOUT_TITLE=O WinDirStat
 IDS_ADMIN=Skrbnik
+IDS_ADS_IGNORED=Prezrto s strani Dropboxa
 IDS_ALL_FILES=Vse datoteke
 IDS_ANALYTICS_CONFIG=Parametri
 IDS_ANALYTICS_TITLE=Analitika shrambe in optimizacija stroškov

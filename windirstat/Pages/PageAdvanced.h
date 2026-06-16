@@ -53,6 +53,7 @@ inline std::span<const RouteEntry> CPageAdvanced::Routes()
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_BACKUP_RESTORE),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_DIRECTORY),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_DIRECTORY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_ADS_IGNORED),
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_COMBO_THREADS),
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_HASH_ALGORITHM),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SAMPLE_LARGE_FILES),
