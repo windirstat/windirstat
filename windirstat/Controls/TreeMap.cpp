@@ -276,6 +276,10 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
     CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
 
+    TEXTMETRIC tm{};
+    pdc->GetTextMetrics(&tm);
+    const int headerHeight = tm.tmHeight + 4;
+
     m_renderArea = rc;
 
     if (root->TmiGetSize() == 0)
@@ -494,14 +498,14 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         {
             std::wstring name = item->GetName();
             const int textWidth = state.rc.Width() - 8;
-            const bool showHeader = (state.rc.Height() > 18) &&
+            const bool showHeader = (state.rc.Height() > headerHeight) &&
                 (pdc->GetTextExtent(name.c_str(), static_cast<int>(name.size())).cx <= textWidth);
 
             foldersToDraw.push_back({ item, state.rc, state.depth, showHeader });
             state.rc.left += 1;
             state.rc.right -= 1;
             state.rc.bottom -= 1;
-            state.rc.top += showHeader ? 18 : 1;
+            state.rc.top += showHeader ? headerHeight : 1;
 
             if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
             {
@@ -562,7 +566,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
                 if (folder.showHeader)
                 {
-                    CRect rcHeader(rcFolder.left + 1, rcFolder.top + 1, rcFolder.right - 1, rcFolder.top + 18);
+                    CRect rcHeader(rcFolder.left + 1, rcFolder.top + 1, rcFolder.right - 1, rcFolder.top + headerHeight);
                     const COLORREF headerColor = GetDepthColor(folder.depth);
                     pdc->FillSolidRect(&rcHeader, headerColor);
 
