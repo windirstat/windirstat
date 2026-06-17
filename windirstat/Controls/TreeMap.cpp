@@ -1065,25 +1065,6 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
 }
 #pragma float_control(pop)
 
-// Future optimization idea: SIMD (SSE4/AVX2) inner loop for DrawCushion
-//
-// PROS
-//   - Process 4 (SSE4) or 8 (AVX2) pixels per iteration instead of 1
-//   - rsqrtps + Newton-Raphson is already SIMD-native; no scalar fallback needed
-//   - Memory bandwidth stays the only bottleneck on large leaves; CPU cycles drop ~4-8x
-//   - Combines well with par_unseq across leaves: thread-level + SIMD-level parallelism
-//
-// CONS
-//   - Requires x86 intrinsics (<immintrin.h>): not portable to ARM64/Clang-CL without
-//     separate code paths or auto-vectorization hints
-//   - Column-stride write (row[ix]) is sequential; gather/scatter adds complexity
-//   - Compiler with /fp:fast + /O2 may auto-vectorize already — measure before hand-coding
-//   - Maintenance cost: intrinsic code is harder to read and review than scalar float
-//
-// RECOMMENDATION: profile first (VTune/perf). If auto-vectorization is already happening
-// (check asm output for vmulps/vrsqrtps), there is nothing to gain. If not, a targeted
-// __m256 loop for the inner ix-loop (8 pixels, AVX2) would be the highest-impact change.
-
 void CTreeMap::AddRidge(const CRect& rc, std::array<double, 4>& surface, const double h)
 {
     const int width = rc.Width();

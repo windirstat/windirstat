@@ -21,9 +21,6 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-
 static_assert(sizeof(GpuRenderer::LeafInput) == 48,
     "GpuRenderer::LeafInput must be 48 bytes to match TreeMapCushion.hlsl LeafInput");
 
@@ -142,14 +139,32 @@ namespace
 
         void Initialize()
         {
+            // Probe d3d11.dll without causing a startup crash on Server Core /
+            // headless machines where the DirectX runtime may be absent.
+            const HMODULE hD3D11 = LoadLibraryW(L"d3d11.dll");
+            if (!hD3D11)
+            {
+                OutputDebugStringW(L"GpuRenderer: d3d11.dll not found — GPU path disabled\n");
+                return;
+            }
+            const auto pfnCreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>(
+                GetProcAddress(hD3D11, "D3D11CreateDevice"));
+            if (!pfnCreateDevice)
+            {
+                FreeLibrary(hD3D11);
+                return;
+            }
             // Hardware device only; WARP would be slower than the CPU par_unseq path
             constexpr D3D_FEATURE_LEVEL kLevel = D3D_FEATURE_LEVEL_11_0;
-            if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
+            if (FAILED(pfnCreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
                 0, &kLevel, 1, D3D11_SDK_VERSION, &m_device, nullptr, &m_context)))
             {
                 OutputDebugStringW(L"GpuRenderer: D3D11CreateDevice failed — GPU path disabled\n");
+                FreeLibrary(hD3D11);
                 return;
             }
+            // d3d11.dll stays loaded via COM object reference counting
+            FreeLibrary(hD3D11);
 
             const std::string source = LoadShaderSource();
             if (source.empty())
@@ -158,10 +173,28 @@ namespace
                 return;
             }
 
+            // Load d3dcompiler_47.dll for shader compilation; FreeLibrary after
+            // compile since the blob bytecode is independent of the DLL.
+            const HMODULE hD3DComp = LoadLibraryW(L"d3dcompiler_47.dll");
+            if (!hD3DComp)
+            {
+                OutputDebugStringW(L"GpuRenderer: d3dcompiler_47.dll not found — GPU path disabled\n");
+                return;
+            }
+            const auto pfnCompile = reinterpret_cast<pD3DCompile>(
+                GetProcAddress(hD3DComp, "D3DCompile"));
+
             CComPtr<ID3DBlob> blob, errors;
-            if (FAILED(D3DCompile(source.data(), source.size(), "TreeMapCushion.hlsl",
-                nullptr, nullptr, "CSCushion", "cs_5_0",
-                D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &blob, &errors)))
+            HRESULT hrCompile = E_FAIL;
+            if (pfnCompile)
+            {
+                hrCompile = pfnCompile(source.data(), source.size(), "TreeMapCushion.hlsl",
+                    nullptr, nullptr, "CSCushion", "cs_5_0",
+                    D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &blob, &errors);
+            }
+            FreeLibrary(hD3DComp);
+
+            if (FAILED(hrCompile))
             {
                 if (errors)
                     OutputDebugStringA(static_cast<const char*>(errors->GetBufferPointer()));
@@ -265,8 +298,8 @@ namespace
             return true;
         }
 
-        std::once_flag m_initFlag;
-        bool           m_available    = false;
+        std::once_flag       m_initFlag;
+        std::atomic<bool>    m_available{false};
         std::mutex     m_mutex;
 
         CComPtr<ID3D11Device>           m_device;
