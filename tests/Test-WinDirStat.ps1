@@ -1809,6 +1809,12 @@ function Start-App {
     }
     $script:proc = [System.Diagnostics.Process]::Start($si)
     $script:win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs ($TimeoutSeconds * 1000)
+    if ($script:win) {
+        try {
+            $wfp = $script:win.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern)
+            $wfp.SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Minimized)
+        } catch {}
+    }
     return $script:win
 }
 
