@@ -2,6 +2,7 @@
 /.claude/
 /.vs/
 /publish/
+/contrib/
 /build/
 /enc_temp_folder/
 intermediate/

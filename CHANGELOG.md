@@ -7,6 +7,7 @@ Enhancements
 - Added folder frames option to treemap visualization
 - Added multilingual support for MSI installer
 - Added file deletion warning before profile deletions
+- Added xxHash (XXH3) as a selectable file hashing algorithm
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog
 - Improved CSV/JSON loading performance using buffered reads

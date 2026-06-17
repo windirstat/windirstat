@@ -19,6 +19,7 @@
 #include "Item.h"
 
 static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
@@ -951,15 +952,25 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
+    const bool useXxHash = hashAlgorithm == HASH_XXHASH;
 
     thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
     thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
     thread_local SmartPointer hashAlgHandle(CloseBCryptAlgHandle, BCRYPT_ALG_HANDLE{});
     thread_local SmartPointer hashHandle(BCryptDestroyHash, BCRYPT_HASH_HANDLE{});
+    thread_local SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHasher(FreeXxHashState, nullptr);
 
-    // Initialize shared structures once per thread and selected algorithm.
-    if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
+    if (useXxHash)
+    {
+        if (!xxHasher.IsValid())
+        {
+            xxHasher = XXH3_createState();
+            if (!xxHasher.IsValid()) return {};
+        }
+        XXH3_64bits_reset(xxHasher);
+    }
+    else if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
     {
         hashHandle.Release();
         hashAlgHandle.Release();
@@ -985,7 +996,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Check if initialization succeeded
-    if (hashBuffer.empty())
+    if (!useXxHash && hashBuffer.empty())
     {
         return {};
     }
@@ -1012,8 +1023,12 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         UpwardDrivePacman();
 
         // Hash the data
-        iHashResult = BCryptHashData(hashHandle, fileBuffer.data(), iReadBytes, 0);
-        if (iHashResult != 0) break;
+        if (useXxHash) XXH3_64bits_update(xxHasher, fileBuffer.data(), iReadBytes);
+        else
+        {
+            iHashResult = BCryptHashData(hashHandle, fileBuffer.data(), iReadBytes, 0);
+            if (iHashResult != 0) break;
+        }
 
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
@@ -1022,7 +1037,17 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         queue->WaitIfSuspended();
     }
 
-    // Complete the hashing process and check on errors
+    // Complete the hashing process and check on errors.
+    if (useXxHash)
+    {
+        if (iReadResult == 0) return {};
+        XXH64_canonical_t canonical;
+        XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(xxHasher));
+        return { canonical.digest, canonical.digest + sizeof(canonical.digest) };
+    }
+
+    // BCryptFinishHash must run even after a read failure
+    // so the reusable hash handle is reset for the next call.
     if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
         hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
         iFinishResult != 0 || iReadResult == 0 || iHashResult != 0)

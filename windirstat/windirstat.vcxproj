@@ -504,6 +504,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Filtering.h" />
     <ClInclude Include="HelpersInterface.h" />
     <ClInclude Include="HelpersTasks.h" />
+    <ClInclude Include="..\contrib\xxhash\xxhash.h" />
     <ClInclude Include="Pages\PagePrompts.h" />
     <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
@@ -574,6 +575,9 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="HelpersTasks.cpp">
+    </ClCompile>
+    <ClCompile Include="..\contrib\xxhash\xxhash.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HelpersInterface.cpp" />
     <ClCompile Include="Item.cpp">
@@ -665,6 +669,15 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <Text Include="res\langs\lang_zh-HK.txt" />
     <Text Include="res\langs\lang_zh.txt" />
   </ItemGroup>
+  <PropertyGroup Label="XXHash">
+    <XXHashHeaderPath>$(MSBuildThisFileDirectory)..\contrib\xxhash\xxhash.h</XXHashHeaderPath>
+    <XXHashSourcePath>$(MSBuildThisFileDirectory)..\contrib\xxhash\xxhash.c</XXHashSourcePath>
+  </PropertyGroup>
+  <Target Name="DownloadXXHash" BeforeTargets="PrepareForBuild">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(XXHashHeaderPath)'))" />
+    <Exec Condition="!Exists('$(XXHashHeaderPath)') Or !Exists('$(XXHashSourcePath)')"
+          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$tag = 'v0.8.3'; try { $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/Cyan4973/xxHash/releases/latest' -UseBasicParsing -TimeoutSec 5; if ($release.tag_name) { $tag = $release.tag_name } } catch {}; if (!(Test-Path '$(XXHashHeaderPath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.h') -OutFile '$(XXHashHeaderPath)' -UseBasicParsing }; if (!(Test-Path '$(XXHashSourcePath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.c') -OutFile '$(XXHashSourcePath)' -UseBasicParsing }&quot;" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)project.targets" Condition="exists('$(SolutionDir)project.targets')" Label="ProjectSpecific (solution/targets)" />

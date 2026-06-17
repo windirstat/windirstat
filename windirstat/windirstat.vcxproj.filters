@@ -76,6 +76,9 @@
     <Filter Include="Header Files\User Interface\Controls">
       <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Contrib">
+      <UniqueIdentifier>{c4f0a2d1-8b3e-4a6f-9d52-7e1c9a0b4f33}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\windirstat.manifest">
