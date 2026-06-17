@@ -469,21 +469,21 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.clear();
     if (m_radio == RADIO_TARGET_FOLDER)
     {
-        // Split semicolon-separated list and normalize each path individually
+        // Split pipe-separated list and normalize each path individually
         std::wstring normalizedSpec;
-        for (auto part : SplitString(std::wstring(m_folderName.GetString()), L';'))
+        for (auto part : SplitString(std::wstring(m_folderName.GetString())))
         {
             TrimString(part);
             if (part.empty()) continue;
             if (part.back() == L':') part += L'\\';
             part = ResolveFullPath(part);
             m_drives.emplace_back(part);
-            if (!normalizedSpec.empty()) normalizedSpec += L';';
+            if (!normalizedSpec.empty()) normalizedSpec += wds::chrPipe;
             normalizedSpec += part;
         }
         m_folderName = normalizedSpec.c_str();
 
-        // Save the full semicolon-spec as one history entry
+        // Save the full pipe-spec as one history entry
         std::erase_if(COptions::SelectDrivesFolder.Obj(), [&normalizedSpec](const std::wstring& s) {
             return _wcsicmp(s.c_str(), normalizedSpec.c_str()) == 0;
         });
@@ -540,8 +540,8 @@ void CSelectDrivesDlg::UpdateButtons()
     case RADIO_TARGET_FOLDER:
         if (!m_folderName.IsEmpty())
         {
-            // All semicolon-separated paths must be accessible
-            const auto parts = SplitString(std::wstring(m_folderName.GetString()), L';');
+            // All pipe-separated paths must be accessible
+            const auto parts = SplitString(std::wstring(m_folderName.GetString()));
             enableOk = !parts.empty() && std::ranges::all_of(parts, [](std::wstring part) {
                 TrimString(part);
                 if (part.empty()) return false;
@@ -733,13 +733,13 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
     if (!FinderBasic::DoesFileExist(path)) return;
 
-    // Append to existing selection with semicolon separator
+    // Append to existing selection with pipe separator
     CString current;
     m_browseList.GetWindowText(current);
     if (current.IsEmpty())
         m_folderName = path.c_str();
     else
-        m_folderName = current + L";" + path.c_str();
+        m_folderName = current + wds::chrPipe + path.c_str();
     UpdateData(FALSE);
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
