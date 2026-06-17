@@ -644,18 +644,18 @@ STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "IDS_PAGE_LAYOUT_TITLE"
 FONT 8, "MS Shell Dlg 2", 400, 0, 0x1
 BEGIN
-    // Top area (y=0..100) is painted by CLayoutChooserDlg::OnPaint as GDI lineart cards.
-    // Sub-options for Side-by-side mode (shown only when mode 1 is selected):
+    /* Top area (y=0..100) is painted by CLayoutChooserDlg::OnPaint as GDI lineart cards. */
+    /* Sub-options for Side-by-side mode (shown only when mode 1 is selected): */
     CONTROL         "IDS_PAGE_LAYOUT_TREEMAP_RIGHT",IDC_LAYOUT_TREEMAP_RIGHT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,104,295,11
     CONTROL         "IDS_PAGE_LAYOUT_TREEMAP_LEFT", IDC_LAYOUT_TREEMAP_LEFT, "Button",BS_AUTORADIOBUTTON,15,118,295,11
-    // Sub-options for Wide mode (shown only when mode 2 is selected):
+    /* Sub-options for Wide mode (shown only when mode 2 is selected): */
     LTEXT           "IDS_PAGE_LAYOUT_COLUMN_LEFT",  IDC_LAYOUT_LABEL_COL0,15,107,75,10
     COMBOBOX        IDC_LAYOUT_WIDE_COL0,95,104,120,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "IDS_PAGE_LAYOUT_COLUMN_CENTER",IDC_LAYOUT_LABEL_COL1,15,124,75,10
     COMBOBOX        IDC_LAYOUT_WIDE_COL1,95,121,120,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "IDS_PAGE_LAYOUT_COLUMN_RIGHT", IDC_LAYOUT_LABEL_COL2,15,141,75,10
     COMBOBOX        IDC_LAYOUT_WIDE_COL2,95,138,120,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    // Bottom row:
+    /* Bottom row: */
     PUSHBUTTON      "IDS_PAGE_LAYOUT_RESET_POSITIONS",IDC_LAYOUT_RESET,8,152,120,14
     DEFPUSHBUTTON   "IDS_GENERIC_OK",    IDOK,    194,152,52,14
     PUSHBUTTON      "IDS_GENERIC_CANCEL",IDCANCEL,251,152,52,14

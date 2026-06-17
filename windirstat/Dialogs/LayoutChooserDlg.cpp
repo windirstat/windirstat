@@ -98,9 +98,9 @@ void CLayoutChooserDlg::UpdateSubControls()
     m_comboCol[0].ShowWindow(wideVis);
     m_comboCol[1].ShowWindow(wideVis);
     m_comboCol[2].ShowWindow(wideVis);
-    GetDlgItem(IDC_LAYOUT_LABEL_COL0)->ShowWindow(wideVis);
-    GetDlgItem(IDC_LAYOUT_LABEL_COL1)->ShowWindow(wideVis);
-    GetDlgItem(IDC_LAYOUT_LABEL_COL2)->ShowWindow(wideVis);
+    if (auto* p = GetDlgItem(IDC_LAYOUT_LABEL_COL0)) p->ShowWindow(wideVis);
+    if (auto* p = GetDlgItem(IDC_LAYOUT_LABEL_COL1)) p->ShowWindow(wideVis);
+    if (auto* p = GetDlgItem(IDC_LAYOUT_LABEL_COL2)) p->ShowWindow(wideVis);
 }
 
 CRect CLayoutChooserDlg::GetCardArea() const
@@ -357,10 +357,10 @@ void CLayoutChooserDlg::OnOK()
     COptions::LayoutWideCol1         = newCol1;
     COptions::LayoutWideCol2         = newCol2;
 
-    CDialog::OnOK();
-
     if (changed)
     {
         AfxMessageBox(Localization::Lookup(IDS_PAGE_LAYOUT_RESTART_NOTE).c_str(), MB_OK | MB_ICONINFORMATION);
     }
+
+    CDialog::OnOK();
 }

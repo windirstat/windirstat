@@ -195,8 +195,10 @@ CWdsSplitterWnd::CWdsSplitterWnd(double* pos1, double* pos2) :
     m_userSplitterPos(pos1),
     m_userSplitterPos2(pos2)
 {
-    m_wasTrackedByUser  = (pos1 && *pos1 > 0 && *pos1 < 1);
-    m_wasTrackedByUser2 = (pos2 && *pos2 > 0 && *pos2 < 1);
+    // >= 0 && <= 1 so that 0.0 (explicitly collapsed) is treated as user-set,
+    // while -1.0 (virgin default) is treated as never-touched.
+    m_wasTrackedByUser  = (pos1 && *pos1 >= 0 && *pos1 <= 1);
+    m_wasTrackedByUser2 = (pos2 && *pos2 >= 0 && *pos2 <= 1);
 }
 
 BEGIN_MESSAGE_MAP(CWdsSplitterWnd, CSplitterWndEx)
@@ -246,8 +248,10 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
         const int threshold = DpiRest(COptions::MinimizeViewThreshold);
 
         // Determine which divider was dragged: the one whose column changed more.
-        const double d0 = std::abs(static_cast<double>(preDragCol0) - m_splitterPos  * totalSize);
-        const double d1 = std::abs(static_cast<double>(preDragCol1) - m_splitterPos2 * totalSize);
+        // Compare post-drag vs pre-drag pixel sizes (not vs stored fractions, which
+        // equal the pre-drag state and would yield d0≈d1≈0 for an established splitter).
+        const double d0 = std::abs(static_cast<double>(col0 - preDragCol0));
+        const double d1 = std::abs(static_cast<double>(col1 - preDragCol1));
         const int trackCol = (d0 >= d1) ? 0 : 1;
 
         if (trackCol == 0)
@@ -266,14 +270,16 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
                 if (panel == 1 && !toggleTreeMap(false)) return;
                 if (panel == 2 && !toggleExtension(false)) return;
                 m_splitterPos = 0.0;
+                m_wasTrackedByUser = true;
+                *m_userSplitterPos = 0.0;
                 SetColumnInfo(0, 0, 0);
                 RecalcLayout();
             }
         }
         else if (trackCol == 1)
         {
-            // Right divider: controls col2 size (col2 = total - col0 - col1 - dividers)
-            const int col2 = std::max(0, totalSize - col0 - col1);
+            int col2, col2MinSz;
+            GetColumnInfo(2, col2, col2MinSz);
             if (col2 > threshold)
             {
                 m_splitterPos2 = static_cast<double>(col1) / totalSize;
@@ -287,6 +293,8 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
                 if (panel == 1 && !toggleTreeMap(false)) return;
                 if (panel == 2 && !toggleExtension(false)) return;
                 m_splitterPos2 = 1.0 - m_splitterPos;
+                m_wasTrackedByUser2 = true;
+                if (m_userSplitterPos2) *m_userSplitterPos2 = m_splitterPos2;
                 SetColumnInfo(1, totalSize - col0, 0);
                 RecalcLayout();
             }
