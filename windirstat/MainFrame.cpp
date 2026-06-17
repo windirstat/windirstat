@@ -29,8 +29,8 @@
 #include "PageTreeMap.h"
 #include "PagePermissions.h"
 #include "PageGeneral.h"
-#include "PageLayout.h"
 #include "PagePrompts.h"
+#include "Dialogs/LayoutChooserDlg.h"
 #include "ProgressDlg.h"
 
 // Clipboard Opener
@@ -132,7 +132,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     auto general = std::make_unique<CPageGeneral>();
     auto filtering = std::make_unique<CPageFiltering>();
     auto treelist = std::make_unique<CPageFileTree>();
-    auto layout = std::make_unique<CPageLayout>();
+
     auto treemap = std::make_unique<CPageTreeMap>();
     auto permissions = std::make_unique<CPagePermissions>();
     auto cleanups = std::make_unique<CPageCleanups>();
@@ -146,8 +146,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     sheet->AddPage(permissions.get()); // index 4
     sheet->AddPage(cleanups.get());    // index 5
     sheet->AddPage(prompts.get());     // index 6
-    sheet->AddPage(layout.get());      // index 7
-    sheet->AddPage(advanced.get());    // index 8
+    sheet->AddPage(advanced.get());    // index 7
 
     sheet->DoModal();
     return sheet->m_restartApplication;
@@ -522,8 +521,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
-    // TODO (maintainer): uncomment this line if you add a "Layout" menu item pointing to ID_VIEW_CONFIGURE_LAYOUT
-    // ON_COMMAND(ID_VIEW_CONFIGURE_LAYOUT, OnViewConfigureLayout)
+    ON_COMMAND(ID_VIEW_CONFIGURE_LAYOUT, OnViewConfigureLayout)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
@@ -1638,8 +1636,8 @@ void CMainFrame::OnViewShowFileTypes()
 
 void CMainFrame::OnViewConfigureLayout()
 {
-    // Opens the Options dialog directly on the Layout page (index 7: General=0,...,Prompts=6,Layout=7,Advanced=8)
-    COptionsPropertySheet::ShowSettings(7);
+    CLayoutChooserDlg dlg(this);
+    dlg.DoModal();
 }
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()
