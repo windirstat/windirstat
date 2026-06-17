@@ -115,10 +115,7 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     // Reject an empty path list
     if (selections.empty()) return false;
 
-    // Multiple selections are supported only when every selection is a drive
-    if (selections.size() >= 2 && selections.size() != driveCount) return false;
-
-    // Determine if we should add multiple drives under a single node
+    // Determine if we should add multiple paths under a single node
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
@@ -136,7 +133,8 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto& rootFolder : selections)
         {
-            const auto drive = new CItem(IT_DRIVE, rootFolder);
+            const ITEMTYPE childType = std::regex_match(rootFolder, driveMatch) ? IT_DRIVE : IT_DIRECTORY;
+            const auto drive = new CItem(childType, rootFolder);
             m_rootItem->AddChild(drive);
         }
     }
