@@ -44,6 +44,9 @@ void CPageFiltering::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_FILTERING_INCLUDE_FILES, m_ctrlFilteringIncludeFiles);
     DDX_Control(pDX, IDC_FILTERING_INCLUDE_DIRS, m_ctrlFilteringIncludeDirs);
     DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_filteringSizeUnits);
+    DDX_Check(pDX, IDC_EXT_JUNK_ENABLE, m_extJunkEnable);
+    DDX_Text(pDX, IDC_EXT_JUNK_PATTERN, m_extJunkPattern);
+    DDX_Control(pDX, IDC_EXT_JUNK_PATTERN, m_ctrlExtJunkPattern);
 }
 
 BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
@@ -56,6 +59,8 @@ BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_MAX_AGE_DAYS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXT_JUNK_ENABLE, OnSettingChanged)
+    ON_EN_CHANGE(IDC_EXT_JUNK_PATTERN, OnSettingChanged)
     ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
@@ -79,6 +84,8 @@ BOOL CPageFiltering::OnInitDialog()
     m_filteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
     m_filteringIncludeDirs = COptions::FilteringIncludeDirs.Obj().c_str();
     m_filteringIncludeFiles = COptions::FilteringIncludeFiles.Obj().c_str();
+    m_extJunkEnable = COptions::ExtJunkGroupingEnable;
+    m_extJunkPattern = COptions::ExtJunkGroupingPattern.Obj().c_str();
 
     m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
@@ -143,6 +150,16 @@ void CPageFiltering::OnOK()
     COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
     COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
     CFiltering::CompileFilters();
+
+    const bool junkChanged =
+        COptions::ExtJunkGroupingEnable != (FALSE != m_extJunkEnable) ||
+        COptions::ExtJunkGroupingPattern.Obj() != m_extJunkPattern.GetString();
+    COptions::ExtJunkGroupingEnable = (FALSE != m_extJunkEnable);
+    COptions::ExtJunkGroupingPattern.Obj() = m_extJunkPattern.GetString();
+    if (junkChanged && CDirStatDoc::Get() != nullptr)
+    {
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_NULL);
+    }
 
     CMFCPropertyPage::OnOK();
 }
