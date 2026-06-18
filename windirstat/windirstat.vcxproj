@@ -531,6 +531,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Pages\PageAdvanced.h" />
+    <ClInclude Include="Pages\PageGpu.h" />
     <ClInclude Include="Pages\PageCleanups.h" />
     <ClInclude Include="Pages\PageGeneral.h" />
     <ClInclude Include="Pages\PageFileTree.h" />
@@ -565,6 +566,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="DarkMode.cpp" />
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
+    <ClCompile Include="GpuHasher.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="Filtering.cpp" />
@@ -594,6 +596,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Options.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageAdvanced.cpp" />
+    <ClCompile Include="Pages\PageGpu.cpp" />
     <ClCompile Include="Pages\PageCleanups.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp" />
