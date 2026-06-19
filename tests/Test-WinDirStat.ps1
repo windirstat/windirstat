@@ -6669,7 +6669,7 @@ function Invoke-SettingsDump {
 function Get-DefinedSettingNames {
     $optionsCpp = Join-Path $repoRoot 'windirstat\Options.cpp'
     $text = Get-Content -LiteralPath $optionsCpp -Raw
-    $matches = [regex]::Matches($text, 'Setting<.+>\s+COptions::(?<name>[A-Za-z0-9_]+)\s*\(')
+    $matches = [regex]::Matches($text, 'Setting<.+>\s+COptions::(?<name>[A-Za-z0-9_]+)\s*[\(\[]')
     @($matches | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
 }
 
@@ -6694,14 +6694,7 @@ $visualSettings = @(
     'DupeViewColumnWidths',
     'ExtViewColumnOrder',
     'ExtViewColumnWidths',
-    'FileTreeColor0',
-    'FileTreeColor1',
-    'FileTreeColor2',
-    'FileTreeColor3',
-    'FileTreeColor4',
-    'FileTreeColor5',
-    'FileTreeColor6',
-    'FileTreeColor7',
+    'FileTreeColors',
     'FileTreeColorCount',
     'FileTreeColumnOrder',
     'FileTreeColumnWidths',
@@ -6713,6 +6706,9 @@ $visualSettings = @(
     'MainWindowPlacement',
     'MinimizeViewThreshold',
     'PacmanAnimation',
+    'PermsColor',
+    'PermsColorAccount',
+    'PermsColorLevel',
     'PermsViewColumnOrder',
     'PermsViewColumnWidths',
     'SearchViewColumnOrder',

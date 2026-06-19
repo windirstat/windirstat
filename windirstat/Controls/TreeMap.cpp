@@ -194,6 +194,94 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
         [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
 }
 
+std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
+{
+    [[msvc::noinline_calls]]
+    {
+        std::vector<COLORREF> colors;
+        GetDefaultPalette(colors);
+        int colorIndex = -1;
+
+        auto getNextColor = [&colors, &colorIndex]
+        {
+            ++colorIndex;
+            colorIndex %= static_cast<int>(colors.size());
+            return colors[colorIndex];
+        };
+
+        auto createLeaf = [](const int size, const COLORREF color) -> CItem*
+        {
+            const auto item = new CItem(IT_FILE | ITF_PREVIEW, L"");
+            item->SetSizePhysical(size);
+            item->SetSizeLogical(size);
+            item->SetIndex(color);
+            return item;
+        };
+
+        auto createContainer = [](std::vector<CItem*>& children) -> CItem*
+        {
+            std::ranges::sort(children, [](CItem* a, CItem* b) { return a->GetSizePhysical() > b->GetSizePhysical(); });
+            const auto item = new CItem(IT_DIRECTORY, L"");
+            for (auto* child : children)
+            {
+                item->AddChild(child);
+            }
+            return item;
+        };
+
+        constexpr auto c4Items = 30;
+        std::vector<CItem*> c4;
+        c4.reserve(c4Items);
+        COLORREF color = getNextColor();
+        for (const int i : std::views::iota(0, c4Items))
+        {
+            c4.emplace_back(createLeaf(1 + 100 * i, color));
+        }
+
+        constexpr auto c0Items = 8;
+        std::vector<CItem*> c0;
+        c0.reserve(c0Items);
+        for (const int i : std::views::iota(0, c0Items))
+        {
+            c0.emplace_back(createLeaf(500 + 600 * i, getNextColor()));
+        }
+
+        constexpr auto c1Items = 10;
+        std::vector<CItem*> c1;
+        c1.reserve(c1Items);
+        color = getNextColor();
+        for (const int i : std::views::iota(0, c1Items))
+        {
+            c1.emplace_back(createLeaf(1 + 200 * i, color));
+        }
+        c0.emplace_back(createContainer(c1));
+
+        constexpr auto c2Items = 160;
+        std::vector<CItem*> c2;
+        c2.reserve(c2Items);
+        color = getNextColor();
+        for (const int i : std::views::iota(0, c2Items))
+        {
+            c2.emplace_back(createLeaf(1 + i, color));
+        }
+
+        std::vector<CItem*> c3;
+        c3.reserve(5);
+        c3.emplace_back(createLeaf(10000, getNextColor()));
+        c3.emplace_back(createContainer(c4));
+        c3.emplace_back(createContainer(c2));
+        c3.emplace_back(createLeaf(6000, getNextColor()));
+        c3.emplace_back(createLeaf(1500, getNextColor()));
+
+        std::vector<CItem*> c10;
+        c10.reserve(2);
+        c10.emplace_back(createContainer(c0));
+        c10.emplace_back(createContainer(c3));
+
+        return std::unique_ptr<CItem>(createContainer(c10));
+    }
+}
+
 CTreeMap::Options CTreeMap::GetDefaults()
 {
     return DefaultOptions;
@@ -1028,89 +1116,7 @@ void CTreeMapPreview::SetOptions(const CTreeMap::Options* options)
 
 void CTreeMapPreview::BuildDemoData()
 {
-    [[msvc::noinline_calls]]
-    {
-        CTreeMap::GetDefaultPalette(m_colors);
-        int col = -1;
-
-        auto createLeaf = [&](const int size, const COLORREF color) -> CItem*
-        {
-            const auto item = new CItem(IT_FILE | ITF_PREVIEW, L"");
-            item->SetSizePhysical(size);
-            item->SetSizeLogical(size);
-            item->SetIndex(color);
-            return item;
-        };
-
-        auto createContainer = [&](std::vector<CItem*>& children) -> CItem*
-        {
-            std::ranges::sort(children, [](CItem* a, CItem* b) { return a->GetSizePhysical() > b->GetSizePhysical(); });
-            const auto item = new CItem(IT_DIRECTORY, L"");
-            for (auto* child : children)
-            {
-                item->AddChild(child);
-            }
-            return item;
-        };
-
-        constexpr auto c4Items = 30;
-        std::vector<CItem*> c4;
-        c4.reserve(c4Items);
-        COLORREF color = GetNextColor(col);
-        for (const int i : std::views::iota(0, c4Items))
-        {
-            c4.emplace_back(createLeaf(1 + 100 * i, color));
-        }
-
-        constexpr auto c0Items = 8;
-        std::vector<CItem*> c0;
-        c0.reserve(c0Items);
-        for (const int i : std::views::iota(0, c0Items))
-        {
-            c0.emplace_back(createLeaf(500 + 600 * i, GetNextColor(col)));
-        }
-
-        constexpr auto c1Items = 10;
-        std::vector<CItem*> c1;
-        c1.reserve(c1Items);
-        color = GetNextColor(col);
-        for (const int i : std::views::iota(0, c1Items))
-        {
-            c1.emplace_back(createLeaf(1 + 200 * i, color));
-        }
-        c0.emplace_back(createContainer(c1));
-
-        constexpr auto c2Items = 160;
-        std::vector<CItem*> c2;
-        c2.reserve(c2Items);
-        color = GetNextColor(col);
-        for (const int i : std::views::iota(0, c2Items))
-        {
-            c2.emplace_back(createLeaf(1 + i, color));
-        }
-
-        std::vector<CItem*> c3;
-        c3.reserve(5);
-        c3.emplace_back(createLeaf(10000, GetNextColor(col)));
-        c3.emplace_back(createContainer(c4));
-        c3.emplace_back(createContainer(c2));
-        c3.emplace_back(createLeaf(6000, GetNextColor(col)));
-        c3.emplace_back(createLeaf(1500, GetNextColor(col)));
-
-        std::vector<CItem*> c10;
-        c10.reserve(2);
-        c10.emplace_back(createContainer(c0));
-        c10.emplace_back(createContainer(c3));
-
-        m_root = createContainer(c10);
-    }
-}
-
-COLORREF CTreeMapPreview::GetNextColor(int& i) const
-{
-    i++;
-    i %= m_colors.size();
-    return m_colors[i];
+    m_root = CTreeMap::BuildDemoTree().release();
 }
 
 void CTreeMapPreview::OnPaint()

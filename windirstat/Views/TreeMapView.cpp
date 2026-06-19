@@ -85,27 +85,30 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     {
         pDC->FillSolidRect(rc, emptyBg);
 
-        LOGFONT lf = {
-            .lfHeight  = -MulDiv(16, ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSY), 72),
-            .lfWeight  = FW_NORMAL,
-            .lfCharSet = DEFAULT_CHARSET,
-            .lfQuality = CLEARTYPE_QUALITY,
+        CTreeMap::Options options = COptions::TreeMapOptions;
+        options.showExtensions = false;
+        options.showFolderFrames = false;
+
+        struct Tile { int x, y, w, h, shade; };
+        static constexpr Tile tiles[] = {
+            {  0,  0, 25, 58, 58 }, { 25,  0, 13, 34, 72 }, { 25, 34, 13, 24, 48 },
+            {  0, 58, 18, 42, 76 }, { 18, 58, 20, 25, 54 }, { 18, 83, 20, 17, 88 },
+            { 38,  0, 28, 44, 66 }, { 38, 44, 14, 31, 82 }, { 52, 44, 14, 31, 52 },
+            { 38, 75, 28, 25, 92 }, { 66,  0, 19, 62, 60 }, { 85,  0, 15, 38, 78 },
+            { 66, 62, 16, 38, 50 }, { 82, 38, 18, 36, 86 }, { 82, 74, 18, 26, 68 },
         };
-        wcscpy_s(lf.lfFaceName, L"Segoe UI");
 
-        CFont font;
-        font.CreateFontIndirect(&lf);
-        CFont* oldFont = pDC->SelectObject(&font);
-        const COLORREF oldColor = pDC->SetTextColor(RGB(72, 72, 72));
-        const int oldMode = pDC->SetBkMode(TRANSPARENT);
+        for (const Tile& t : tiles)
+        {
+            CRect tile(
+                rc.left + rc.Width()  * t.x / 100,
+                rc.top  + rc.Height() * t.y / 100,
+                rc.left + rc.Width()  * (t.x + t.w) / 100,
+                rc.top  + rc.Height() * (t.y + t.h) / 100);
 
-        CRect textRc = rc;
-        pDC->DrawText(L"Waiting For Scan Data…", -1, &textRc,
-                      DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
-
-        pDC->SetBkMode(oldMode);
-        pDC->SetTextColor(oldColor);
-        pDC->SelectObject(oldFont);
+            if (tile.Width() > 0 && tile.Height() > 0)
+                m_treeMap.DrawColorPreview(pDC, tile, RGB(t.shade, t.shade, t.shade), &options);
+        }
     }
     else
     {

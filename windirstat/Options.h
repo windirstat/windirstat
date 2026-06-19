@@ -175,14 +175,7 @@ public:
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<bool> ProcessHardlinks;
-    static Setting<COLORREF> FileTreeColor0;
-    static Setting<COLORREF> FileTreeColor1;
-    static Setting<COLORREF> FileTreeColor2;
-    static Setting<COLORREF> FileTreeColor3;
-    static Setting<COLORREF> FileTreeColor4;
-    static Setting<COLORREF> FileTreeColor5;
-    static Setting<COLORREF> FileTreeColor6;
-    static Setting<COLORREF> FileTreeColor7;
+    static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT];
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;
     static Setting<std::wstring> PermsColorAccount[PERMSRULECOUNT];

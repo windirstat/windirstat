@@ -214,8 +214,6 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
     CSplitterWndEx::StopTracking(bAccept);
     if (!bAccept) return;
 
-    const bool hasCb = m_onMinimize && m_onToggle;
-
     int currentPos = 0, dummy = 0;
     const bool isVertical = (GetColumnCount() > 1);
     isVertical ? GetColumnInfo(0, currentPos, dummy) : GetRowInfo(0, currentPos, dummy);
@@ -224,41 +222,38 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
     const int   totalSize = isVertical ? rcClient.Width() : rcClient.Height();
     if (totalSize <= 0) return;
 
-    const int viewSize = hasCb ? (m_lastPaneIsView ? totalSize - currentPos : currentPos)
-                                : totalSize - currentPos;
-    const bool isVisible = viewSize > DpiRest(COptions::MinimizeViewThreshold);
+    const int paneSize[2] = { currentPos, totalSize - currentPos };
+    for (int pane = 0; pane < 2; ++pane)
+    {
+        const PaneTracking& tracking = m_paneTracking[pane];
+        if (!tracking.onToggle) continue;
 
-    bool handled;
-    if (hasCb)
-    {
-        handled = m_onToggle(isVisible);
-    }
-    else if (isVertical)
-    {
-        CExtensionView* p = CMainFrame::Get()->GetExtensionView();
-        handled = p && (p->ShowTypes(isVisible), true);
-    }
-    else
-    {
-        CTreeMapView* p = CMainFrame::Get()->GetTreeMapView();
-        handled = p && (p->ShowTreeMap(isVisible), true);
-    }
-    if (!handled) return;
+        const bool isVisible = paneSize[pane] > DpiRest(COptions::MinimizeViewThreshold);
+        tracking.onToggle(isVisible);
 
-    if (!isVisible)
-    {
-        if (hasCb)
-            m_onMinimize();
-        else if (isVertical)
-            CMainFrame::Get()->MinimizeExtensionView();
-        else
-            CMainFrame::Get()->MinimizeTreeMapView();
-        return;
+        if (!isVisible)
+        {
+            if (tracking.onMinimize) tracking.onMinimize();
+            return;
+        }
     }
 
     m_splitterPos       = static_cast<double>(currentPos) / totalSize;
     m_wasTrackedByUser  = true;
     *m_userSplitterPos  = m_splitterPos;
+}
+
+void CWdsSplitterWnd::ClearPaneTracking()
+{
+    m_paneTracking[0] = {};
+    m_paneTracking[1] = {};
+}
+
+void CWdsSplitterWnd::TrackPane(const int pane, std::function<void(bool)> onToggle, std::function<void()> onMinimize)
+{
+    ASSERT(pane == 0 || pane == 1);
+    if (pane == 0 || pane == 1)
+        m_paneTracking[pane] = { std::move(onToggle), std::move(onMinimize) };
 }
 
 void CWdsSplitterWnd::SetSplitterPos(const double pos)
@@ -1659,48 +1654,56 @@ void CMainFrame::OnViewWindowLayout()
 
 void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
 {
-    m_splitter.m_onMinimize     = nullptr;
-    m_splitter.m_onToggle       = nullptr;
-    m_splitter.m_lastPaneIsView = true;
-    m_subSplitter.m_onMinimize  = nullptr;
-    m_subSplitter.m_onToggle    = nullptr;
-    m_subSplitter.m_lastPaneIsView = true;
+    m_splitter.ClearPaneTracking();
+    m_subSplitter.ClearPaneTracking();
+
+    auto showTreeMap = [this](bool visible) { GetTreeMapView()->ShowTreeMap(visible); };
+    auto showFileTypes = [this](bool visible) { GetExtensionView()->ShowTypes(visible); };
 
     switch (topo)
     {
     case LT_ROWS_SUB_COLS:
-        m_splitter.m_lastPaneIsView = (perm == 0);
-        m_splitter.m_onToggle      = [this](bool v) { GetTreeMapView()->ShowTreeMap(v); return true; };
-        m_splitter.m_onMinimize    = [this, perm]() { m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0); };
-        m_subSplitter.m_onToggle   = [this](bool v) { GetExtensionView()->ShowTypes(v); return true; };
-        m_subSplitter.m_onMinimize = [this]() { m_subSplitter.SetSplitterPos(1.0); };
+        m_splitter.TrackPane(perm == 0 ? 1 : 0, showTreeMap,
+            [this, perm]() { m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0); });
+        m_subSplitter.TrackPane(1, showFileTypes,
+            [this]() { m_subSplitter.SetSplitterPos(1.0); });
         break;
 
-    case LT_COLS_THREE: // perm 0/1: ExtV last; perm 2/3: FTV or TM first
-        if (perm == 0 || perm == 1)
+    case LT_COLS_THREE:
+        switch (perm)
         {
-            m_splitter.m_onToggle   = [this](bool v) { GetExtensionView()->ShowTypes(v); return true; };
-            m_splitter.m_onMinimize = [this]() { m_splitter.SetSplitterPos(1.0); };
-        }
-        else
-        {
-            m_splitter.m_lastPaneIsView = false;
-            if (perm == 3) // TM in col 0
-            {
-                m_splitter.m_onToggle   = [this](bool v) { GetTreeMapView()->ShowTreeMap(v); return true; };
-                m_splitter.m_onMinimize = [this]() { m_splitter.SetSplitterPos(0.0); };
-            }
-            else // perm 2: FTV in col 0, no standard toggle
-            {
-                m_splitter.m_onToggle   = [](bool) { return false; };
-                m_splitter.m_onMinimize = [this]() { m_splitter.SetSplitterPos(0.0); };
-            }
+        case 0: // [FTV|TM] | ExtV
+            m_splitter.TrackPane(1, showFileTypes,
+                [this]() { m_splitter.SetSplitterPos(1.0); });
+            m_subSplitter.TrackPane(1, showTreeMap,
+                [this]() { m_subSplitter.SetSplitterPos(1.0); });
+            break;
+        case 1: // [TM|FTV] | ExtV
+            m_splitter.TrackPane(1, showFileTypes,
+                [this]() { m_splitter.SetSplitterPos(1.0); });
+            m_subSplitter.TrackPane(0, showTreeMap,
+                [this]() { m_subSplitter.SetSplitterPos(0.0); });
+            break;
+        case 2: // FTV | [ExtV|TM]
+            m_subSplitter.TrackPane(0, showFileTypes,
+                [this]() { m_subSplitter.SetSplitterPos(0.0); });
+            m_subSplitter.TrackPane(1, showTreeMap,
+                [this]() { m_subSplitter.SetSplitterPos(1.0); });
+            break;
+        case 3: // TM | [ExtV|FTV]
+            m_splitter.TrackPane(0, showTreeMap,
+                [this]() { m_splitter.SetSplitterPos(0.0); });
+            m_subSplitter.TrackPane(0, showFileTypes,
+                [this]() { m_subSplitter.SetSplitterPos(0.0); });
+            break;
         }
         break;
 
     case LT_COLS_SUB_ROWS:
-        m_splitter.m_onToggle   = [this](bool v) { GetExtensionView()->ShowTypes(v); return true; };
-        m_splitter.m_onMinimize = [this]() { m_splitter.SetSplitterPos(1.0); };
+        m_splitter.TrackPane(1, showFileTypes,
+            [this]() { m_splitter.SetSplitterPos(1.0); });
+        m_subSplitter.TrackPane(perm == 0 ? 0 : 1, showTreeMap,
+            [this, perm]() { m_subSplitter.SetSplitterPos(perm == 0 ? 0.0 : 1.0); });
         break;
     }
 }
@@ -1792,10 +1795,16 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
 
 void CMainFrame::RebuildLayout(bool resetPositions)
 {
-    // Sanitize: old registry value 1 (LT_ROWS_ONLY, removed) → default topology
-    if (COptions::LayoutTopology == 1) COptions::LayoutTopology = static_cast<int>(LT_ROWS_SUB_COLS);
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
+    int topo = COptions::LayoutTopology;
+    int perm = COptions::LayoutPermutation;
+    const bool isDefault = (topo == LT_ROWS_SUB_COLS && perm == 0);
+    if (topo == 1 || (!isDefault && CLayoutPopup::LayoutIndex(topo, perm) == 0))
+    {
+        topo = LT_ROWS_SUB_COLS;
+        perm = 0;
+        COptions::LayoutTopology = topo;
+        COptions::LayoutPermutation = perm;
+    }
 
     // Capture view HWNDs; reparent to frame so DestroyWindow below doesn't kill them.
     const HWND hFTV   = GetFileTabbedView()->GetSafeHwnd();

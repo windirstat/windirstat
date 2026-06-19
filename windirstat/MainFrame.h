@@ -89,16 +89,20 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
     void ResetUserPosition() { m_wasTrackedByUser = false; }
     void SetStorage(double* ptr) { m_userSplitterPos = ptr; m_wasTrackedByUser = (*ptr > 0.0 && *ptr < 1.0); }
-
-    // Topology-aware callbacks set by CMainFrame::BuildSplitterLayout
-    std::function<void()>       m_onMinimize;      // minimize the tracked view
-    std::function<bool(bool)>   m_onToggle;        // show/hide the tracked view; returns true if handled
-    bool                        m_lastPaneIsView = true; // false when the view is in pane 0
+    void ClearPaneTracking();
+    void TrackPane(int pane, std::function<void(bool)> onToggle, std::function<void()> onMinimize);
 
 protected:
+    struct PaneTracking
+    {
+        std::function<void(bool)> onToggle;
+        std::function<void()> onMinimize;
+    };
+
     double m_splitterPos{0};    // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double * m_userSplitterPos; // Split ratio as set by the user
+    PaneTracking m_paneTracking[2];
 
     void PostNcDestroy() override;
 

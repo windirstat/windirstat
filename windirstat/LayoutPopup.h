@@ -20,7 +20,7 @@
 #include "pch.h"
 #include "Options.h"
 
-// CLayoutPopup – 2×5 grid of layout cards, anchored to a toolbar button; closes on selection/Esc/focus-loss.
+// CLayoutPopup - 2x4 grid of layout cards, anchored to a toolbar button.
 class CLayoutPopup final : public CWnd
 {
 public:
@@ -51,8 +51,8 @@ protected:
     int m_selectedLayout = 0;  // currently active layout index
     int m_hoveredLayout  = -1; // -1 = none
 
-    static constexpr int CARD_W_BASE = 160;
-    static constexpr int CARD_H_BASE =  90;
+    static constexpr int CARD_W_BASE = 192;
+    static constexpr int CARD_H_BASE = CARD_W_BASE * 9 / 16;
     static constexpr int GAP_BASE    =  12;
     static constexpr int MARGIN_BASE =  14;
     static constexpr int COLS        =   2;
@@ -69,9 +69,11 @@ protected:
     afx_msg void OnPaint();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnKillFocus(CWnd* pNewWnd);
     afx_msg void OnActivateApp(BOOL bActive, DWORD dwThreadID);
+    afx_msg void OnCaptureChanged(CWnd* pWnd);
     afx_msg LRESULT OnMouseLeave(WPARAM, LPARAM);
 };

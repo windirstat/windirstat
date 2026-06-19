@@ -167,6 +167,9 @@ public:
     // Get a good palette of 18 colors
     static void GetDefaultPalette(std::vector<COLORREF>& palette);
 
+    // Build the small demo tree used by treemap previews.
+    [[nodiscard]] static std::unique_ptr<CItem> BuildDemoTree();
+
     // Good values
     static Options GetDefaults();
 
@@ -277,9 +280,7 @@ public:
 
 protected:
     void BuildDemoData();
-    COLORREF GetNextColor(int& i) const;
 
-    std::vector<COLORREF> m_colors; // Our color palette
     CItem* m_root;                  // Demo tree
     CTreeMap m_treeMap;             // Our treemap creator
 

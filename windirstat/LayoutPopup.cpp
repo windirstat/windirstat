@@ -82,10 +82,12 @@ BEGIN_MESSAGE_MAP(CLayoutPopup, CWnd)
     ON_WM_PAINT()
     ON_WM_ERASEBKGND()
     ON_WM_MOUSEMOVE()
+    ON_WM_LBUTTONDOWN()
     ON_WM_LBUTTONUP()
     ON_WM_KEYDOWN()
     ON_WM_KILLFOCUS()
     ON_WM_ACTIVATEAPP()
+    ON_WM_CAPTURECHANGED()
     ON_MESSAGE(WM_MOUSELEAVE, &CLayoutPopup::OnMouseLeave)
 END_MESSAGE_MAP()
 
@@ -108,7 +110,7 @@ BOOL CLayoutPopup::Create(CWnd* parent)
     }
 
     return CWnd::CreateEx(
-        WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+        WS_EX_TOOLWINDOW,
         L"WdsLayoutPopup",
         nullptr,
         WS_POPUP | WS_BORDER,
@@ -149,13 +151,23 @@ void CLayoutPopup::ShowAtButton(const CRect& buttonScreenRect)
         origin.y = work.top;
 
     SetWindowPos(nullptr, origin.x, origin.y, popupW, popupH,
-        SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+        SWP_NOZORDER | SWP_SHOWWINDOW);
+    SetFocus();
+    SetCapture();
     Invalidate();
 }
 
 void CLayoutPopup::DismissPopup(bool cancel, bool resetPositions)
 {
     ShowWindow(SW_HIDE);
+
+    if (::GetCapture() == GetSafeHwnd())
+        ReleaseCapture();
+
+    if (::GetFocus() == GetSafeHwnd())
+        if (CWnd* parent = GetParent())
+            parent->SetFocus();
+
     if (!cancel)
         CMainFrame::Get()->RebuildLayout(resetPositions);
 }
@@ -183,11 +195,59 @@ int CLayoutPopup::CardAtPoint(CPoint pt) const
     return -1;
 }
 
-static void DrawPaneHeader(CDC& dc, const CRect& r, int rowH, COLORREF bar, COLORREF hdr, COLORREF sep)
+static void DrawPaneHeader(CDC& dc, const CRect& r, int rowH, COLORREF hdr, COLORREF sep)
 {
-    dc.FillSolidRect(r.left, r.top,            r.Width(), 1,    bar);
-    dc.FillSolidRect(r.left, r.top + 1,        r.Width(), rowH, hdr);
+    dc.FillSolidRect(r.left, r.top,            r.Width(), rowH + 1, hdr);
     dc.FillSolidRect(r.left, r.top + 1 + rowH, r.Width(), 1,    sep);
+}
+
+static COLORREF GetPaneHeaderBackground()
+{
+    return DarkMode::WdsSysColor(COLOR_BTNFACE);
+}
+
+static COLORREF GetPaneHeaderSeparator()
+{
+    return DarkMode::WdsSysColor(DarkMode::IsDarkModeActive() ? COLOR_3DHIGHLIGHT : COLOR_3DSHADOW);
+}
+
+static COLORREF GetPaneHeaderTextColor()
+{
+    return DarkMode::IsDarkModeActive() ? RGB(176, 176, 176) : RGB(88, 88, 88);
+}
+
+static void DrawHeaderDivider(CDC& dc, const CRect& r, const int rowH, const int x, const COLORREF color)
+{
+    if (x <= r.left || x >= r.right) return;
+    dc.FillSolidRect(x, r.top + 1, 1, rowH, color);
+}
+
+static void DrawHeaderText(CDC& dc, CRect r, const int seed = 0)
+{
+    r.DeflateRect(2, 0);
+    if (r.Width() <= 2 || r.Height() <= 0) return;
+
+    constexpr int strokeH = 1;
+    const int y = r.top + (r.Height() - strokeH) / 2;
+    const int width = std::max(2, r.Width() * (55 + (seed % 3) * 10) / 100);
+    dc.FillSolidRect(r.left, y, std::min(width, r.Width()), strokeH, GetPaneHeaderTextColor());
+}
+
+static void DrawMiniText(CDC& dc, CRect r, int seed = 0)
+{
+    if (r.Width() <= 2 || r.Height() <= 0) return;
+
+    const COLORREF color = DarkMode::IsDarkModeActive() ? RGB(204, 204, 204) : RGB(52, 52, 52);
+    constexpr int strokeH = 1;
+    const int y = r.top + (r.Height() - strokeH) / 2;
+    const int first = std::max(2, r.Width() - (seed % 4));
+    dc.FillSolidRect(r.left, y, first, strokeH, color);
+}
+
+static COLORREF GetFileTreeColor(const int index)
+{
+    const int count = std::clamp(static_cast<int>(COptions::FileTreeColorCount), 1, TREELISTCOLORCOUNT);
+    return COptions::FileTreeColors[index % count];
 }
 
 void CLayoutPopup::DrawAllFilesPane(CDC& dc, CRect r) const
@@ -195,18 +255,19 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, CRect r) const
     const bool dk   = DarkMode::IsDarkModeActive();
     const COLORREF bg    = dk ? RGB(26, 24, 22)    : RGB(255, 254, 249);
     const COLORREF alt   = dk ? RGB(34, 32, 28)    : RGB(247, 245, 240);
-    const COLORREF hdrBg = dk ? RGB(44, 42, 40)    : RGB(238, 235, 228);
-    const COLORREF sep   = dk ? RGB(70, 66, 58)    : RGB(212, 206, 196);
+    const COLORREF hdrBg = GetPaneHeaderBackground();
+    const COLORREF sep   = GetPaneHeaderSeparator();
     const COLORREF folio = RGB(228, 178, 36);
-    const COLORREF text  = dk ? RGB(188, 184, 178) : RGB(45, 42, 36);
-    const COLORREF pct   = dk ? RGB(55, 132, 222)  : RGB(65, 142, 228);
 
     const int rowH  = DpiRest(7, this);
     const int iSz   = std::max(3, rowH - 2);
     const int indU  = std::max(2, r.Width() / 9);
     const int pColX = r.left + r.Width() * 54 / 100;
 
-    DrawPaneHeader(dc, r, rowH, folio, hdrBg, sep);
+    DrawPaneHeader(dc, r, rowH, hdrBg, sep);
+    DrawHeaderText(dc, CRect(r.left, r.top, pColX, r.top + rowH), 0);
+    DrawHeaderDivider(dc, r, rowH, pColX, sep);
+    DrawHeaderText(dc, CRect(pColX, r.top, r.right, r.top + rowH), 1);
 
     struct Row { int ind; float pf; };
     static constexpr Row rows[] = {
@@ -237,14 +298,14 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, CRect r) const
         if (tx < pColX - 4 && txW > 2)
         {
             CRect txt(tx, iy, std::min(tx + txW, pColX - 2), iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&txt, text);
+            DrawMiniText(dc, txt, i);
         }
 
         const int pw = static_cast<int>((r.right - pColX - 2) * rows[i].pf);
         if (pw > 0)
         {
             CRect bar(pColX, iy, pColX + pw, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&bar, pct);
+            dc.FillSolidRect(&bar, GetFileTreeColor(i));
         }
     }
 }
@@ -254,12 +315,8 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, CRect r) const
     const bool dk   = DarkMode::IsDarkModeActive();
     const COLORREF bg    = dk ? RGB(22, 24, 26)    : RGB(249, 252, 255);
     const COLORREF alt   = dk ? RGB(28, 30, 36)    : RGB(241, 245, 252);
-    const COLORREF hdrBg = dk ? RGB(38, 40, 46)    : RGB(230, 234, 244);
-    const COLORREF sep   = dk ? RGB(62, 66, 76)    : RGB(205, 210, 224);
-    const COLORREF text  = dk ? RGB(182, 186, 194) : RGB(42, 45, 52);
-    const COLORREF num   = dk ? RGB(126, 130, 140) : RGB(136, 140, 152);
-
-    const COLORREF topBdrClr = dk ? RGB(48, 152, 68) : RGB(50, 168, 72);
+    const COLORREF hdrBg = GetPaneHeaderBackground();
+    const COLORREF sep   = GetPaneHeaderSeparator();
 
     static constexpr COLORREF iconClr[] = {
         RGB( 65, 115, 220),
@@ -277,7 +334,12 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, CRect r) const
     const int extColW = r.Width() * 28 / 100;
     const int numColX = r.left + r.Width() * 68 / 100;
 
-    DrawPaneHeader(dc, r, rowH, topBdrClr, hdrBg, sep);
+    DrawPaneHeader(dc, r, rowH, hdrBg, sep);
+    DrawHeaderText(dc, CRect(r.left, r.top, r.left + extColW, r.top + rowH), 0);
+    DrawHeaderDivider(dc, r, rowH, r.left + extColW, sep);
+    DrawHeaderText(dc, CRect(r.left + extColW, r.top, numColX, r.top + rowH), 1);
+    DrawHeaderDivider(dc, r, rowH, numColX, sep);
+    DrawHeaderText(dc, CRect(numColX, r.top, r.right, r.top + rowH), 2);
 
     for (int i = 0; i < 8; ++i)
     {
@@ -299,7 +361,7 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, CRect r) const
         if (extX < numColX - 4 && extW > 2)
         {
             CRect extR(extX, iy, extX + extW, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&extR, text);
+            DrawMiniText(dc, extR, i);
         }
 
         const int descX = r.left + extColW + 2;
@@ -307,77 +369,23 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, CRect r) const
         if (descX < numColX - 4 && descW > 2)
         {
             CRect descR(descX, iy, descX + descW, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&descR, num);
+            DrawMiniText(dc, descR, i + 1);
         }
 
         const int numW = (r.right - numColX - 2) * 2 / 3;
         if (numW > 2)
         {
             CRect numR(numColX + 2, iy, numColX + 2 + numW, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&numR, num);
+            DrawMiniText(dc, numR, i + 2);
         }
     }
 }
 
-void CLayoutPopup::DrawTreeMapPane(CDC& dc, CRect r, int cardIdx) const
+void CLayoutPopup::DrawTreeMapPane(CDC& dc, CRect r, int /*cardIdx*/) const
 {
-    dc.FillSolidRect(&r, RGB(8, 8, 8));
-
-    // Five color roles per scheme: [0]=dominant, [1]=secondary, [2]=tertiary,
-    // [3]=accent1, [4]=accent2.  Each card gets a distinct scheme.
-    struct Scheme { COLORREF c[5]; };
-    static constexpr Scheme schemes[10] = {
-        /* 0 */ {{ RGB( 42,  82,188), RGB(215, 88, 78), RGB( 38,168, 65), RGB(165, 50,175), RGB( 32,155,158) }},
-        /* 1 */ {{ RGB( 38,168, 65), RGB( 55, 95,200), RGB(155, 60,190), RGB(205,172, 28), RGB(215, 88, 78) }},
-        /* 2 */ {{ RGB(140, 50,185), RGB( 35,160,165), RGB(215,158, 30), RGB( 55,110,210), RGB(210, 80, 70) }},
-        /* 3 */ {{ RGB(220,110, 40), RGB( 42, 90,195), RGB( 45,165, 75), RGB(165, 55,180), RGB( 38,155,162) }},
-        /* 4 */ {{ RGB( 30,155,165), RGB(200, 65, 60), RGB( 55,100,210), RGB(195,168, 28), RGB(145, 55,185) }},
-        /* 5 */ {{ RGB(215, 75,140), RGB( 42,168, 62), RGB(140, 55,190), RGB( 50,115,215), RGB(210,152, 28) }},
-        /* 6 */ {{ RGB(215,158, 28), RGB(148, 48,188), RGB( 32,162,168), RGB( 42, 82,190), RGB(210, 78, 68) }},
-        /* 7 */ {{ RGB( 35,175,215), RGB(215,112, 35), RGB( 40,162, 65), RGB(145, 50,188), RGB(215, 78, 78) }},
-        /* 8 */ {{ RGB(195, 38, 52), RGB( 32,155,162), RGB( 48, 88,205), RGB(205,162, 28), RGB(140, 50,185) }},
-        /* 9 */ {{ RGB( 68, 58,195), RGB(205,152, 28), RGB( 38,168, 68), RGB( 32,158,165), RGB(215, 72, 78) }},
-    };
-
-    const auto& s = schemes[cardIdx % 10];
-
-    auto Tint = [](COLORREF c, int d) -> COLORREF {
-        auto clamp = [](int v) { return static_cast<BYTE>(v < 0 ? 0 : v > 255 ? 255 : v); };
-        return RGB(clamp(GetRValue(c) + d), clamp(GetGValue(c) + d), clamp(GetBValue(c) + d));
-    };
-
-    struct Tile { float x, y, w, h; int ci, td; };
-    static constexpr Tile tiles[] = {
-        { 0.00f, 0.00f, 0.20f, 0.56f,  0,   0 },
-        { 0.20f, 0.00f, 0.10f, 0.32f,  0, -12 },
-        { 0.20f, 0.32f, 0.10f, 0.24f,  0, +14 },
-        { 0.00f, 0.56f, 0.14f, 0.44f,  0, -18 },
-        { 0.14f, 0.56f, 0.16f, 0.28f,  3,   0 },
-        { 0.14f, 0.84f, 0.16f, 0.16f,  3,  -8 },
-        { 0.30f, 0.00f, 0.26f, 0.44f,  1,   0 },
-        { 0.30f, 0.44f, 0.12f, 0.30f,  1, +12 },
-        { 0.42f, 0.44f, 0.14f, 0.30f,  1, -12 },
-        { 0.30f, 0.74f, 0.26f, 0.26f,  1, +18 },
-        { 0.56f, 0.00f, 0.22f, 0.58f,  2,   0 },
-        { 0.78f, 0.00f, 0.22f, 0.38f,  2, -15 },
-        { 0.56f, 0.58f, 0.16f, 0.42f,  2, +12 },
-        { 0.72f, 0.58f, 0.12f, 0.26f,  2,  -8 },
-        { 0.72f, 0.84f, 0.10f, 0.16f,  3, +10 },
-        { 0.82f, 0.38f, 0.18f, 0.36f,  3,  +5 },
-        { 0.84f, 0.74f, 0.16f, 0.26f,  4,   0 },
-    };
-
-    for (const auto& t : tiles)
-    {
-        CRect tile(
-            r.left + static_cast<int>(r.Width()  * t.x) + 1,
-            r.top  + static_cast<int>(r.Height() * t.y) + 1,
-            r.left + static_cast<int>(r.Width()  * (t.x + t.w)),
-            r.top  + static_cast<int>(r.Height() * (t.y + t.h))
-        );
-        if (tile.Width() > 0 && tile.Height() > 0)
-            dc.FillSolidRect(&tile, Tint(s.c[t.ci], t.td));
-    }
+    static const std::unique_ptr<CItem> demoRoot = CTreeMap::BuildDemoTree();
+    CTreeMap treeMap;
+    treeMap.DrawTreeMap(&dc, r, demoRoot.get(), &COptions::TreeMapOptions);
 }
 
 void CLayoutPopup::PaintCard(CDC& dc, int idx) const
@@ -485,10 +493,20 @@ LRESULT CLayoutPopup::OnMouseLeave(WPARAM, LPARAM)
     return 0;
 }
 
+void CLayoutPopup::OnLButtonDown(UINT /*nFlags*/, CPoint point)
+{
+    if (CardAtPoint(point) < 0)
+        DismissPopup(true);
+}
+
 void CLayoutPopup::OnLButtonUp(UINT /*nFlags*/, CPoint point)
 {
     const int hit = CardAtPoint(point);
-    if (hit < 0) return;
+    if (hit < 0)
+    {
+        DismissPopup(true);
+        return;
+    }
 
     m_selectedLayout = hit;
     COptions::LayoutTopology    = LAYOUTS[hit].topology;
@@ -509,4 +527,10 @@ void CLayoutPopup::OnKillFocus(CWnd* /*pNewWnd*/)
 void CLayoutPopup::OnActivateApp(BOOL bActive, DWORD /*dwThreadID*/)
 {
     if (!bActive && IsWindowVisible()) DismissPopup(true);
+}
+
+void CLayoutPopup::OnCaptureChanged(CWnd* pWnd)
+{
+    if (pWnd != this && IsWindowVisible())
+        DismissPopup(true);
 }
