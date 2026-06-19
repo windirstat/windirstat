@@ -618,12 +618,12 @@ CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
         for (const int i : std::views::iota(0, current->TmiGetChildCount()))
         {
             CItem* child = current->TmiGetChild(i);
-            ASSERT(child->TmiGetSize() > 0);
+            if (child->TmiGetSize() == 0) break; // children sorted by size; remainder are zero-size
 
 #ifdef _DEBUG
             // An empty rectangle is the sentinel for a child that was not laid out
-            // this pass (e.g. a folder frame whose interior collapsed); skip the
-            // containment check for those since they are never hit-tested anyway.
+            // this pass (e.g. a folder frame whose interior collapsed); non-zero-size
+            // children with empty rectangles are never hit-tested, so skip bounds check.
             const CRect rcChild(child->TmiGetRectangle());
             ASSERT(rcChild.IsRectEmpty() ||
                    (rc.left <= rcChild.left && rcChild.right <= rc.right &&

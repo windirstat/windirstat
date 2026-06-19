@@ -79,6 +79,9 @@
     <Filter Include="Header Files\Contrib">
       <UniqueIdentifier>{c4f0a2d1-8b3e-4a6f-9d52-7e1c9a0b4f33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Contrib">
+      <UniqueIdentifier>{a87d04f4-5518-4f28-8d78-5c42d1d673af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\windirstat.manifest">
@@ -287,6 +290,9 @@
     <ClInclude Include="Filtering.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\contrib\xxhash\xxhash.h">
+      <Filter>Header Files\Contrib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
@@ -453,6 +459,9 @@
     </ClCompile>
     <ClCompile Include="Filtering.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\contrib\xxhash\xxhash.c">
+      <Filter>Source Files\Contrib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

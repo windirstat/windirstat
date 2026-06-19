@@ -41,6 +41,14 @@ enum DARKMODE : std::uint8_t
     DM_USE_WINDOWS
 };
 
+// Layout topology: the structural arrangement of the two splitters
+enum LAYOUT_TOPOLOGY : int
+{
+    LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
+    LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)
+    LT_COLS_SUB_ROWS = 3, // Main = 2 cols; sub-splitter = 2 rows in col 0
+};
+
 struct USERDEFINEDCLEANUP
 {
     USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
@@ -183,8 +191,9 @@ public:
     static Setting<std::wstring> PermsExcludeRegex;
     static Setting<double> MainSplitterPos;
     static Setting<double> SubSplitterPos;
+    static Setting<int> LayoutTopology;
+    static Setting<int> LayoutPermutation;
     static Setting<int> ConfigPage;
-    static Setting<int> FollowReparsePointMask;
     static Setting<int> LanguageId;
     static Setting<int> FileHashAlgorithm;
     static Setting<int> LargeFileCount;

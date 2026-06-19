@@ -76,14 +76,36 @@ void CTreeMapView::DrawEmptyView()
 
 void CTreeMapView::DrawEmptyView(CDC* pDC)
 {
-    constexpr COLORREF gray = RGB(160, 160, 160);
+    constexpr COLORREF emptyBg = RGB(15, 15, 15);
 
     Inactivate();
 
     const CRect rc = ClientRectOf(this);
     if (m_dimmed.m_hObject == nullptr)
     {
-        pDC->FillSolidRect(rc, gray);
+        pDC->FillSolidRect(rc, emptyBg);
+
+        LOGFONT lf = {
+            .lfHeight  = -MulDiv(16, ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSY), 72),
+            .lfWeight  = FW_NORMAL,
+            .lfCharSet = DEFAULT_CHARSET,
+            .lfQuality = CLEARTYPE_QUALITY,
+        };
+        wcscpy_s(lf.lfFaceName, L"Segoe UI");
+
+        CFont font;
+        font.CreateFontIndirect(&lf);
+        CFont* oldFont = pDC->SelectObject(&font);
+        const COLORREF oldColor = pDC->SetTextColor(RGB(72, 72, 72));
+        const int oldMode = pDC->SetBkMode(TRANSPARENT);
+
+        CRect textRc = rc;
+        pDC->DrawText(L"Waiting For Scan Data…", -1, &textRc,
+                      DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
+
+        pDC->SetBkMode(oldMode);
+        pDC->SetTextColor(oldColor);
+        pDC->SelectObject(oldFont);
     }
     else
     {
@@ -96,14 +118,14 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
         {
             CRect r = rc;
             r.left  = r.left + m_dimmedSize.cx;
-            pDC->FillSolidRect(r, gray);
+            pDC->FillSolidRect(r, emptyBg);
         }
 
         if (rc.Height() > m_dimmedSize.cy)
         {
             CRect r = rc;
             r.top   = r.top + m_dimmedSize.cy;
-            pDC->FillSolidRect(r, gray);
+            pDC->FillSolidRect(r, emptyBg);
         }
     }
 }

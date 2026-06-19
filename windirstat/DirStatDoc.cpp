@@ -95,9 +95,8 @@ BOOL CDirStatDoc::OnNewDocument()
 
 BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
-    // Temporarily minimize extra views
-    CMainFrame::Get()->MinimizeTreeMapView();
-    CMainFrame::Get()->MinimizeExtensionView();
+    // Expand All Files view to full window during scan
+    CMainFrame::Get()->ExpandFileTabbedView();
 
     // Decode list of folders to scan
     const std::wstring spec = lpszPathName;
@@ -161,8 +160,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
 BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
 {
-    CMainFrame::Get()->MinimizeTreeMapView();
-    CMainFrame::Get()->MinimizeExtensionView();
+    CMainFrame::Get()->ExpandFileTabbedView();
 
     CDocument::OnNewDocument(); // --> DeleteContents()
 
@@ -313,8 +311,7 @@ void CDirStatDoc::UnlinkRoot()
 {
     CMainFrame::Get()->InvokeInMessageThread([this]
     {
-        CMainFrame::Get()->MinimizeTreeMapView();
-        CMainFrame::Get()->MinimizeExtensionView();
+        CMainFrame::Get()->ExpandFileTabbedView();
         DeleteContents();
         UpdateAllViews(nullptr, HINT_NEWROOT);
         CMainFrame::Get()->SetProgressComplete();

@@ -21,6 +21,7 @@
 #include "PacMan.h"
 #include "FileTabbedView.h"
 #include "Dialogs/ProgressDlg.h"
+#include "LayoutPopup.h"
 
 class CWdsSplitterWnd;
 class CMainFrame;
@@ -86,11 +87,20 @@ public:
     void StopTracking(BOOL bAccept) override;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
+    void ResetUserPosition() { m_wasTrackedByUser = false; }
+    void SetStorage(double* ptr) { m_userSplitterPos = ptr; m_wasTrackedByUser = (*ptr > 0.0 && *ptr < 1.0); }
+
+    // Topology-aware callbacks set by CMainFrame::BuildSplitterLayout
+    std::function<void()>       m_onMinimize;      // minimize the tracked view
+    std::function<bool(bool)>   m_onToggle;        // show/hide the tracked view; returns true if handled
+    bool                        m_lastPaneIsView = true; // false when the view is in pane 0
 
 protected:
     double m_splitterPos{0};    // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double * m_userSplitterPos; // Split ratio as set by the user
+
+    void PostNcDestroy() override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -157,6 +167,7 @@ protected:
     void RestoreExtensionView();
     void MinimizeTreeMapView();
     void MinimizeExtensionView();
+    void ExpandFileTabbedView();
     void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views
@@ -210,6 +221,7 @@ protected:
 
     CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Contains the two upper views
     CWdsSplitterWnd m_splitter{ COptions::MainSplitterPos.Ptr() };    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CLayoutPopup m_layoutPopup;                                        // Floating layout-picker popup
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar
@@ -265,6 +277,7 @@ protected:
     afx_msg void OnToolsStorageAnalytics();
     afx_msg void OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI);
     void UpdateToolsMenu(CMenu* menu);
+    afx_msg void OnViewWindowLayout();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
@@ -276,5 +289,10 @@ protected:
 public:
     static CMainFrame* Get() { return s_Singleton; }
     void RebuildToolBar();
+    void RebuildLayout(bool resetPositions = false);
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
+
+private:
+    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hTMV);
+    void ConfigureSplitterCallbacks(int topology, int permutation);
 };
