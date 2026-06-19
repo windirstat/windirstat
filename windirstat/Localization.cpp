@@ -112,14 +112,12 @@ bool Localization::LoadResource(const WORD language)
     std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
     if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return true;
 
-    // Try to load external language file first
-    if (LoadExternalLanguage(LOCALE_SNAME, language) ||
-        LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true;
-
-    // Try to load built-in resource
-    CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language));
-    CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language));
-    return true;
+    // Short-circuit language resource loading sequence, first successful load will return true and exit the function
+    return
+        LoadExternalLanguage(LOCALE_SNAME, language) ||                                 // External BCP 47 language file
+        LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||                       // External ISO 639-1 language file
+        CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||         // Built-in BCP 47 resource
+        CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)); // Built-in ISO 639-1 resource
 }
 
 void Localization::UpdateMenu(CMenu& menu)

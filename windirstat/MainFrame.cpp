@@ -591,6 +591,7 @@ void CMainFrame::UpdateProgress()
 
 void CMainFrame::CreateStatusProgress()
 {
+    UpdatePaneText();
     if (m_progress.m_hWnd == nullptr)
     {
         CRect rc;
@@ -642,6 +643,7 @@ void CMainFrame::DestroyProgress()
 
     m_workingItem = nullptr;
     m_progressVisible = false;
+    UpdatePaneText();
 }
 
 void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
@@ -1288,7 +1290,8 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
 void CMainFrame::UpdatePaneText()
 {
     const auto focus = GetLogicalFocus();
-    std::wstring fileSelectionText = Localization::Lookup(IDS_IDLEMESSAGE);
+    std::wstring fileSelectionText = !CDirStatDoc::Get()->IsScanRunning() ?
+        Localization::Lookup(IDS_IDLEMESSAGE) : wds::strEmpty;
     ULONGLONG size = MAXULONGLONG;
 
     // Allow override on hover
