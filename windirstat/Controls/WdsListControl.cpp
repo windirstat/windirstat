@@ -607,14 +607,38 @@ bool CWdsListControl::HasFocus() const
     return ::GetFocus() == m_hWnd;
 }
 
-int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem)
+CFont* CWdsListControl::GetFont() const
 {
-    CClientDC dc(this);
+    if (!m_isFontCached)
+    {
+        CFont* pFont = CWnd::GetFont();
+        m_cachedFont = pFont ? (HFONT)pFont->GetSafeHandle() : NULL;
+        m_isFontCached = true;
+    }
+    return CFont::FromHandle(m_cachedFont);
+}
+
+LRESULT CWdsListControl::OnSetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
+{
+    m_cachedFont = NULL;
+    m_isFontCached = false;
+    return Default();
+}
+
+int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC* pDC)
+{
+    if (pDC == nullptr)
+    {
+        CClientDC dc(this);
+        CSelectObject sofont(&dc, GetFont());
+        return GetSubItemWidth(item, subitem, &dc);
+    }
+
     const CRect rc(0, 0, 3500, 20);
 
     int width;
     int dummy = rc.left;
-    if (item->DrawSubItem(subitem, &dc, rc, 0, &width, &dummy))
+    if (item->DrawSubItem(subitem, pDC, rc, 0, &width, &dummy))
     {
         return width;
     }
@@ -625,10 +649,8 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem)
         return 0;
     }
 
-    CSelectObject sofont(&dc, GetFont());
-
     SIZE size;
-    GetTextExtentPoint32(dc, s.c_str(), static_cast<int>(s.size()), &size);
+    GetTextExtentPoint32W(pDC->m_hDC, s.c_str(), static_cast<int>(s.size()), &size);
     return TEXT_X_MARGIN + size.cx;
 }
 
@@ -831,6 +853,7 @@ BEGIN_MESSAGE_MAP(CWdsListControl, CListCtrl)
     ON_WM_DESTROY()
     ON_WM_ERASEBKGND()
     ON_WM_SHOWWINDOW()
+    ON_MESSAGE(WM_SETFONT, OnSetFont)
 END_MESSAGE_MAP()
 
 void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
@@ -895,10 +918,13 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     int width = GetColumnWidth(column);
     DeleteColumn(falseColumn);
 
+    CClientDC dc(this);
+    CSelectObject sofont(&dc, GetFont());
+
     // fetch size of sub-elements
     for (const int i : std::views::iota(0, GetItemCount()))
     {
-        width = std::max(width, GetSubItemWidth(GetItem(i), subitem));
+        width = std::max(width, GetSubItemWidth(GetItem(i), subitem, &dc));
     }
 
     // update final column width
