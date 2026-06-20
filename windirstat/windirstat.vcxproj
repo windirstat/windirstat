@@ -527,6 +527,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="ItemDupe.h" />
     <ClInclude Include="ItemPerm.h" />
     <ClInclude Include="Layout.h" />
+    <ClInclude Include="LayoutPopup.h" />
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="Options.h" />
@@ -588,6 +589,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
     </ClCompile>
+    <ClCompile Include="LayoutPopup.cpp" />
     <ClCompile Include="Localization.cpp" />
     <ClCompile Include="MainFrame.cpp">
     </ClCompile>

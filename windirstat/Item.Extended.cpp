@@ -1127,17 +1127,6 @@ bool CItem::MustShowReadJobs() const noexcept
 
 COLORREF CItem::GetPercentageColor() const noexcept
 {
-    static const COLORREF* const kColors[] =
-    {
-        &COptions::FileTreeColor0.Obj(),
-        &COptions::FileTreeColor1.Obj(),
-        &COptions::FileTreeColor2.Obj(),
-        &COptions::FileTreeColor3.Obj(),
-        &COptions::FileTreeColor4.Obj(),
-        &COptions::FileTreeColor5.Obj(),
-        &COptions::FileTreeColor6.Obj(),
-        &COptions::FileTreeColor7.Obj()
-    };
     const int i = GetIndent() % COptions::FileTreeColorCount;
-    return *kColors[i];
+    return COptions::FileTreeColors[i];
 }

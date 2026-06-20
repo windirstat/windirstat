@@ -368,6 +368,19 @@ namespace Icons
         g.DrawEllipse(&bearingPen, 23, 23, 18, 18);
     }
 
+    void PaintWindowLayout(Graphics& g)
+    {
+        Pen framePen(Neutral(), 4);
+        g.DrawRectangle(&framePen, 4, 4, 56, 56);
+        g.DrawLine(&framePen, 4, 34, 60, 34);
+        g.DrawLine(&framePen, 36, 4, 36, 34);
+
+        SolidBrush afBrush(C(70, 120, 200)), ftBrush(C(60, 160, 90)), tmBrush(C(200, 140, 40));
+        g.FillRectangle(&afBrush,  8,  8, 24, 22);
+        g.FillRectangle(&ftBrush, 40,  8, 16, 22);
+        g.FillRectangle(&tmBrush,  8, 38, 48, 18);
+    }
+
     void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold)
     {
         const WCHAR text[]{ ch, L'\0' };

@@ -83,14 +83,17 @@ Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", tr
 Setting<bool> COptions::UseFastScanEngine(OptionsGeneral, L"UseFastScanEngine", true);
 Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
 Setting<bool> COptions::ProcessHardlinks(OptionsGeneral, L"ProcessHardlinks", true);
-Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
-Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
-Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor3(OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor4(OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255));
-Setting<COLORREF> COptions::FileTreeColor5(OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0));
-Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0));
-Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0));
+Setting<COLORREF> COptions::FileTreeColors[TREELISTCOLORCOUNT] =
+{
+    { OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140) },
+    { OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64) },
+    { OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64) },
+    { OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64) },
+    { OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255) },
+    { OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0) },
+    { OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0) },
+    { OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0) }
+};
 Setting<COLORREF> COptions::TreeMapGridColor(OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor);
 Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255));
 Setting<std::wstring> COptions::PermsColorAccount[PERMSRULECOUNT] =
@@ -143,6 +146,8 @@ Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
+Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_SUB_ROWS);
+Setting<int> COptions::LayoutPermutation(OptionsGeneral, L"LayoutPermutation", 0, 0, 3);
 Setting<RECT> COptions::AboutWindowRect(OptionsGeneral, L"AboutWindowRect");
 Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"WindowRect");
 Setting<RECT> COptions::SearchWindowRect(OptionsSearch, L"WindowRect");
