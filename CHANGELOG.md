@@ -4,10 +4,13 @@
 Enhancements
 - Added Storage Analytics and cost optimization view
 - Added permissions scanning and export capabilities
+- Added window layout chooser for the main panes
+- Added tools to remove empty folders and change folder dates to last change
 - Added folder frames option to treemap visualization
 - Added multilingual support for MSI installer
 - Added file deletion warning before profile deletions
 - Added xxHash (XXH3) as a selectable file hashing algorithm
+- Improved column width autosizing performance in list and tree views
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog
 - Improved CSV/JSON loading performance using buffered reads
@@ -22,6 +25,7 @@ Bug Fixes
 - Corrected potential scan cancellation hang when worker thread is blocked
 - Corrected progress bar behavior dropping from 100% back to 99% at scan completion
 - Corrected layout alignment and spacing in setting dialogs
+- Corrected localization language fallback logic regression
 
 Miscellaneous
 - Added MSIX bundle publishing support in WinGet
