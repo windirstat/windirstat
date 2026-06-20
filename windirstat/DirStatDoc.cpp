@@ -960,6 +960,8 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
+        { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
+        { ID_TOOLS_REMOVE_EMPTY,      { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, ITF_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, ITF_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE, ITF_ANY, isZoomed } },
@@ -1058,6 +1060,8 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPTIMIZE_VHD, OnCleanupOptimizeVhd)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_SPARSIFY_FILE, OnCleanupSparsifyFile)
+    ON_COMMAND_UPDATE_WRAPPER(ID_TOOLS_SET_DATES, OnToolsSetDates)
+    ON_COMMAND_UPDATE_WRAPPER(ID_TOOLS_REMOVE_EMPTY, OnToolsRemoveEmpty)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
@@ -1873,6 +1877,14 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         items = items.front()->GetChildren();
     }
 
+    // Prune descendants: if both an ancestor and a descendant are in the list,
+    // remove any descendant since it will be rescanned as part of the ancestor scan
+    std::erase_if(items, [&](const CItem* item) {
+        return std::ranges::any_of(items, [item](const CItem* other) {
+            return other != item && other->IsAncestorOf(item);
+        });
+    });
+
     // Remove items in UI thread so we do not conflict with the timer updates
     const auto selectedItems = GetAllSelected();
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
@@ -2172,4 +2184,118 @@ void CDirStatDoc::OnCreateHardlink()
 
     // Refresh the target item to reflect the change
     RefreshItem(selected);
+}
+
+void CDirStatDoc::OnToolsSetDates()
+{
+    CWaitCursor wc;
+
+    std::vector<CItem*> directories;
+    auto stack = GetAllSelected();
+    if (stack.empty()) stack = { GetRootItem() };
+    while (!stack.empty())
+    {
+        CItem* item = stack.back();
+        stack.pop_back();
+        if (item->IsTypeOrFlag(IT_DIRECTORY))
+        {
+            directories.push_back(item);
+        }
+        if (item->HasChildren())
+        {
+            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+        }
+    }
+
+    CProgressDlg(directories.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        for (CItem* item : directories)
+        {
+            if (pdlg->IsCancelled()) break;
+
+            const FILETIME lastChange = item->GetLastChange();
+            if (std::bit_cast<std::uint64_t>(lastChange) != 0)
+            {
+                std::error_code ec;
+                std::filesystem::last_write_time(
+                    item->GetPathLong(),
+                    std::filesystem::file_time_type{std::chrono::file_clock::duration(std::bit_cast<std::int64_t>(lastChange))},
+                    ec
+                );
+            }
+            pdlg->Increment();
+        }
+    }).DoModal();
+}
+
+void CDirStatDoc::OnToolsRemoveEmpty()
+{
+    CWaitCursor wc;
+    const auto& itemsSelected = GetAllSelected();
+    const std::vector<CItem*> roots = itemsSelected.empty() ?
+        std::vector<CItem*>{ GetRootItem() } : itemsSelected;
+
+    // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
+    // Such a directory is wholly empty, so all of its descendants qualify as well. Each item is
+    // recorded before its children are pushed, so ancestors precede descendants; reversing then
+    // yields a bottom-up order suitable for RemoveDirectory, which only removes empty folders and
+    // so is guaranteed to find each parent empty once its children have been processed.
+    std::vector<CItem*> emptyDirs;
+    std::vector<CItem*> stack(roots.begin(), roots.end());
+    while (!stack.empty())
+    {
+        CItem* item = stack.back();
+        stack.pop_back();
+        if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
+        {
+            emptyDirs.push_back(item);
+        }
+        if (item->HasChildren())
+        {
+            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+        }
+    }
+    std::reverse(emptyDirs.begin(), emptyDirs.end());
+
+    if (emptyDirs.empty())
+    {
+        return;
+    }
+
+    size_t deletedCount = 0;
+    std::unordered_set<const CItem*> deletedDirs;
+    std::unordered_set<CItem*> parentsToRefresh;
+
+    CProgressDlg(emptyDirs.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        for (CItem* item : emptyDirs)
+        {
+            if (pdlg->IsCancelled()) break;
+
+            if (RemoveDirectory(item->GetPathLong().c_str()))
+            {
+                deletedCount++;
+                deletedDirs.insert(item);
+                if (CItem* parent = item->GetParent())
+                {
+                    parentsToRefresh.insert(parent);
+                }
+                pdlg->Increment();
+            }
+        }
+    }).DoModal();
+
+    // Refresh parents of deleted items that were not themselves deleted
+    std::erase_if(parentsToRefresh, [&](const CItem* parent) {
+        return deletedDirs.contains(parent);
+    });
+
+    if (!parentsToRefresh.empty())
+    {
+        RefreshItem(std::vector<CItem*>(parentsToRefresh.begin(), parentsToRefresh.end()));
+    }
+    else if (deletedCount > 0)
+    {
+        RefreshItem(roots);
+    }
 }

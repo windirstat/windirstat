@@ -174,7 +174,7 @@ void CWdsProgressCtrl::OnPaint()
     const COLORREF trackPenColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
     const COLORREF trackBrushColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
 
-    // 1. Draw track background and border
+    // Draw track background and border
     {
         CPen trackPen(PS_SOLID, 1, trackPenColor);
         CBrush trackBrush(trackBrushColor);
@@ -183,7 +183,7 @@ void CWdsProgressCtrl::OnPaint()
         dc.RoundRect(&rect, CPoint(4, 4));
     }
 
-    // 3. Draw progress fill (square)
+    // Draw progress fill (square)
     const COLORREF progColor = DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
     CRect progRect = rect;
     progRect.DeflateRect(1, 1);
