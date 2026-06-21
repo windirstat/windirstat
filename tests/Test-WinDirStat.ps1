@@ -18,6 +18,11 @@
         4. Reparse / link behavior (symlinks, junctions, mount points) — formats
            the two configured scratch drives when present and elevated
         5. Edge cases (deep paths, unicode, attributes, file properties)
+        6. Enumeration parity — one known tree scanned through many root
+           spellings (trailing slash, lowercase drive, \\?\, UNC, \\?\UNC\,
+           \\tsclient), through redirected roots (subst, junction, symlink),
+           and across FAT32 / ReFS / NTFS, each compared against a PowerShell
+           ground truth
 
     EVERY suite runs by default; no opt-in switches are required.  Suites whose
     prerequisites are not met (no MSBuild, not elevated, scratch drives absent,
@@ -25,10 +30,13 @@
     failing.  Use -Only / -Skip to narrow the run while debugging.
 
 .NOTES
-    The reparse suite FORMATS the drives named by -LinkTestDriveOne /
-    -LinkTestDriveTwo (defaults E: / F:, overridable via the LINK_TEST_DRIVE_ONE
-    / LINK_TEST_DRIVE_TWO environment variables).  It only does so when elevated
-    AND both drives exist; otherwise it skips.  Drive C: is always refused.
+    The reparse suite AND the enumeration suite's FileSystems group FORMAT the
+    drives named by -LinkTestDriveOne / -LinkTestDriveTwo (defaults E: / F:,
+    overridable via the LINK_TEST_DRIVE_ONE / LINK_TEST_DRIVE_TWO environment
+    variables).  The reparse suite formats them NTFS; the enumeration suite
+    cycles them through FAT32 / ReFS / NTFS and restores NTFS.  Both only do so
+    when elevated AND both drives exist; otherwise they skip.  Drive C: is
+    always refused.
 #>
 param(
     [string] $ExePath = (Join-Path $PSScriptRoot '..\publish\x64\WinDirStat.exe'),
@@ -672,6 +680,29 @@ public static class WdsNativeFs
         catch { return -1; }
         finally { Marshal.FreeHGlobal(buf); }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct FILE_STANDARD_INFO { public long AllocationSize; public long EndOfFile; public uint NumberOfLinks; public byte DeletePending; public byte Directory; }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool GetFileInformationByHandleEx(IntPtr hFile, int infoClass, out FILE_STANDARD_INFO info, uint size);
+
+    // True on-disk AllocationSize (cluster-rounded; the resident size for tiny
+    // files) — exactly what WinDirStat reports as Physical Size.  Unlike
+    // GetCompressedFileSize, which returns the LOGICAL size for ordinary files.
+    public static long GetAllocationSize(string path)
+    {
+        IntPtr h = CreateFileW(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero);
+        if (h == new IntPtr(-1)) return -1;
+        try
+        {
+            FILE_STANDARD_INFO info;
+            if (!GetFileInformationByHandleEx(h, 1 /* FileStandardInfo */, out info, (uint)Marshal.SizeOf(typeof(FILE_STANDARD_INFO)))) return -1;
+            return info.AllocationSize;
+        }
+        finally { CloseHandle(h); }
+    }
 }
 '@ -ErrorAction SilentlyContinue
 
@@ -698,6 +729,13 @@ function Get-FileWofAlgorithm {
 function Get-FileAllocatedSize {
     param([string] $Path)
     try { return [WdsNativeFs]::GetAllocatedSize($Path) } catch { return [ulong]::MaxValue }
+}
+
+# On-disk AllocationSize (what WinDirStat reports as Physical Size). Use this —
+# not Get-FileAllocatedSize — when comparing physical sizes of ordinary files.
+function Get-FileAllocationSize {
+    param([string] $Path)
+    try { return [WdsNativeFs]::GetAllocationSize($Path) } catch { return -1 }
 }
 
 function Get-FileIdentity {
@@ -794,6 +832,9 @@ public static class Win32MenuHelper {
     [DllImport("user32.dll")]
     public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("user32.dll")]
+    public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr GetDlgItem(IntPtr hDlg, int nIDDlgItem);
 }
@@ -803,6 +844,20 @@ function Get-Win32MenuItems {
     param([IntPtr] $hwnd)
     $menu = [Win32MenuHelper]::GetMenu($hwnd)
     if ($menu -eq [IntPtr]::Zero) { return @() }
+
+    # Force MFC to refresh all menu item states by sending WM_INITMENUPOPUP (0x0117)
+    # for each top-level submenu.  Without this, GetMenuState returns cached state
+    # from the last time the menu was physically opened, which can be stale when
+    # logical focus has changed since then (e.g. the dupe list now has focus but
+    # the menu was last opened when the file tree had focus).
+    $topCount = [Win32MenuHelper]::GetMenuItemCount($menu)
+    for ($i = 0; $i -lt $topCount; $i++) {
+        $sub = [Win32MenuHelper]::GetSubMenu($menu, $i)
+        if ($sub -ne [IntPtr]::Zero) {
+            [Win32MenuHelper]::SendMessage($hwnd, 0x0117, $sub, [IntPtr]$i) | Out-Null
+        }
+    }
+    Start-Sleep -Milliseconds 100
 
     $results = [System.Collections.Generic.List[PSCustomObject]]::new()
 
@@ -1775,6 +1830,7 @@ function New-PortableIni {
         'LanguageId=9', 'UseFastScanEngine=1', 'UseBackupRestore=0',
         'ShowElevationPrompt=0', 'AutoElevate=0', 'ShowFreeSpace=0', 'ShowUnknown=0',
         'ScanForDuplicates=1', 'ProcessHardlinks=0',
+        'MainWindowPlacement=2C0000000200000003000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF32000000320000003204000032030000',
         '',
         '[FileTreeView]',
         'ShowColumnFiles=1', 'ShowColumnFolders=1', 'ShowColumnItems=1', 'ShowColumnLastChange=1',
@@ -4871,8 +4927,7 @@ function Test-DedupOps {
     # logical focus being sticky across menu-bar opens) satisfies DupeListHasFocus().
     $selectedViaUia = $false
     try {
-        try { $row1.SetFocus() } catch {}
-        $row1.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+        Click-Element $row1
         Start-Sleep -Milliseconds 200
         $row2.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).AddToSelection()
         Start-Sleep -Milliseconds 200
@@ -4885,6 +4940,14 @@ function Test-DedupOps {
         Click-Element $row1; Start-Sleep -Milliseconds 250
         Invoke-CtrlClickElement $row2 | Out-Null
     }
+
+    # Guarantee OS focus is on the dupe list regardless of which selection path
+    # ran. Click-Element may fall back to InvokePattern (no mouse event -> no
+    # WM_SETFOCUS), leaving m_logicalFocus != LF_DUPELIST. UIA SetFocus() on a
+    # list-item element routes the underlying SetFocus(hwnd) call to the
+    # containing ListView window, which fires WM_SETFOCUS ->
+    # CTreeListControl::OnSetFocus -> SetLogicalFocus(LF_DUPELIST).
+    try { $row1.SetFocus(); Start-Sleep -Milliseconds 150 } catch {}
 
     # Validate the precondition directly: how many of the two target rows are
     # actually selected?  This is what determines whether the command is enabled.
@@ -6699,6 +6762,8 @@ $visualSettings = @(
     'FileTreeColumnOrder',
     'FileTreeColumnWidths',
     'LargeToolBar',
+    'LayoutPermutation',
+    'LayoutTopology',
     'ListFullRowSelection',
     'ListGrid',
     'ListStripes',
@@ -7064,7 +7129,7 @@ try {
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
-        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 4
+        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 5
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
@@ -7261,7 +7326,7 @@ try {
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
 
-        Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm 4
+        Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm 5
         Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount 10000
         Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold 10000
         Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads 16
@@ -8607,6 +8672,751 @@ Invoke-WinDirStatCsvScan
 }
 
 # #############################################################################
+# ENUMERATION SUITE  (path-form, UNC and file-system coverage for the finder)
+# #############################################################################
+#
+# One known directory tree is scanned through every reasonable spelling of its
+# root and across file systems; each scan is compared to a PowerShell
+# ground-truth enumeration of the same tree.  The comparison is spelling
+# agnostic: every CSV path is made relative to the detected root row (the
+# shortest Name, which prefixes every other row), so plain, trailing-slash,
+# lowercase-drive, \\?\, UNC and \\?\UNC\ roots all reduce to the same set.
+#
+#   PathForms   - plain / trailing slash / lowercase drive / \\?\ long path /
+#                 \\?\ + trailing, each under BOTH the fast (NTFS / MFT) and
+#                 basic (NtQueryDirectoryFile) scan engines.
+#   Unc         - the local admin share (\\host\X$\...), its trailing-slash and
+#                 \\?\UNC\ forms, and \\tsclient\<drive> when an RDP session has
+#                 redirected a drive.  Runs only when the admin share is
+#                 reachable; \\tsclient is skipped when absent.
+#   RootRedirects - the same tree scanned through a subst'd drive, a directory
+#                 junction (and its trailing-slash form) and a directory
+#                 symbolic link.  subst / junctions need no elevation; symlinks
+#                 need admin or Developer Mode (skipped otherwise).
+#   CrossEngine - a rich tree (sparse / compressed / WOF / hard-link / unicode)
+#                 scanned under BOTH engines, asserting identical Name set and
+#                 identical Logical Size / Physical Size / Attributes / Index —
+#                 the two implementations checking each other.
+#   Sizes       - reported logical / physical sizes versus native ground truth
+#                 across the zero / slack / cluster / sparse / NTFS-compressed /
+#                 WOF size-correction paths.
+#   LargeDir    - one directory big enough (~7 MB of dir info) to force the
+#                 4 MB-buffer refill path; exact entry count must round-trip.
+#   Threads     - identical results with ScanningThreads = 1 / 2 / 8 / 16
+#                 (stresses the shared FinderBasicContext).
+#   Hardlinks   - hard links share one non-zero FileId (GetIndex / SupportsFileId).
+#   AccessDenied- an unreadable subdirectory is skipped gracefully mid-scan.
+#   TrickyNames - trailing-dot/space names, case-only-differing siblings and a
+#                 dangling junction all enumerate cleanly.
+#   FileSystems - formats the two scratch drives (-LinkTestDriveOne/Two, default
+#                 E: / F:) through FAT32, ReFS and NTFS and verifies each
+#                 enumerates the fixture, the per-fs file id (Index agrees with
+#                 the OS), and the volume root.  Requires elevation and the
+#                 drives; skips
+#                 gracefully otherwise and restores both drives to NTFS.
+#
+function Invoke-EnumerationSuite {
+    $workRoot  = Join-Path $BuildRoot 'enumeration-test'
+    $runRoot   = Join-Path $workRoot 'runner'
+    $scanRoot  = Join-Path $workRoot 'scan-root'
+    $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
+
+    # -- local helpers --------------------------------------------------------
+
+    function Write-EnumIni {
+        param([int] $FastEngine, [hashtable] $Extra)
+        $opts = [ordered] @{
+            LanguageId          = 9          # English: Read-Csv* needs the 'Name' column
+            UseFastScanEngine   = $FastEngine
+            UseBackupRestore    = 0
+            ShowElevationPrompt = 0
+            AutoElevate         = 0
+            ShowFreeSpace       = 0
+            ShowUnknown         = 0
+            ProcessHardlinks    = 0
+        }
+        if ($Extra) { foreach ($k in $Extra.Keys) { $opts[$k] = $Extra[$k] } }
+        $lines = @('[Options]') + @($opts.Keys | ForEach-Object { "$_=$($opts[$_])" })
+        [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), ($lines -join "`r`n"), [System.Text.Encoding]::Unicode)
+    }
+
+    # Run a scan and return the CSV path (throws on a non-zero exit / missing CSV).
+    function Invoke-EnumScanCsv {
+        param([string] $Root, [int] $FastEngine, [hashtable] $Extra)
+        Write-EnumIni -FastEngine $FastEngine -Extra $Extra
+        $csv = Join-Path $workRoot ('enum-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.csv')
+        [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root)
+        $csv
+    }
+
+    # CSV -> ordered map of (relative path -> full CSV row), relative to the
+    # detected root row (the shortest Name; every other row is prefixed by it).
+    function Get-EnumRowMap {
+        param([string] $Csv)
+        $rows = @(Read-CsvRows -Csv $Csv)
+        $rootName = ($rows | Sort-Object { $_.Name.Length } | Select-Object -First 1).Name
+        $map = [ordered] @{}
+        foreach ($r in $rows) {
+            if ($r.Name -eq $rootName) { continue }
+            $map[$r.Name.Substring($rootName.Length).TrimStart('\')] = $r
+        }
+        $map
+    }
+
+    # Stage a "rich" set of files exercising every size-correction path plus a
+    # subdir / unicode entry.  Returns which optional kinds were actually created
+    # (sparse / compression need a capable volume).
+    function Add-SpecialFiles {
+        param([string] $Root)
+        New-Item -ItemType Directory -Force -Path (Join-Path $Root 'subdir') | Out-Null
+        [System.IO.File]::WriteAllBytes((Join-Path $Root 'normal.bin'),       [byte[]]::new(5000))
+        [System.IO.File]::WriteAllBytes((Join-Path $Root 'zero.bin'),         @())
+        [System.IO.File]::WriteAllBytes((Join-Path $Root 'slack.bin'),        [byte[]]::new(100))
+        [System.IO.File]::WriteAllBytes((Join-Path $Root 'onecluster.bin'),   [byte[]]::new(4096))
+        [System.IO.File]::WriteAllBytes((Join-Path $Root 'subdir\nested.bin'),[byte[]]::new(777))
+        [System.IO.File]::WriteAllBytes((Join-Path $Root ('uni_' + [char]0x00E9 + '.bin')), [byte[]]::new(321))
+
+        # Highly compressible, non-zero payload: a 64-byte low-entropy pattern
+        # tiled to 256 KiB.  It compresses *within* each LZNT1 chunk (so the file
+        # actually shrinks on disk) yet allocates > 0, unlike all-zero content.
+        $unit = [byte[]]::new(64); for ($i = 0; $i -lt $unit.Length; $i++) { $unit[$i] = [byte] ($i % 16) }
+        $payload = [byte[]]::new(262144)
+        for ($o = 0; $o -lt $payload.Length; $o += $unit.Length) { [Array]::Copy($unit, 0, $payload, $o, $unit.Length) }
+
+        $info = [ordered] @{ Sparse = $false; NtfsComp = $false; Wof = $false; Hardlink = $false }
+
+        try {
+            $sp = Join-Path $Root 'sparse.bin'
+            [System.IO.File]::WriteAllBytes($sp, @())
+            & fsutil sparse setflag "$sp" *> $null
+            $fs = [System.IO.File]::Open($sp, 'Open', 'ReadWrite'); $fs.SetLength(1MB); $fs.Close()
+            & fsutil sparse setrange "$sp" 0 1048576 *> $null
+            $info.Sparse = Get-FileSparseAttr $sp
+        } catch {}
+
+        try {
+            $nc = Join-Path $Root 'ntfscomp.bin'
+            [System.IO.File]::WriteAllBytes($nc, $payload)
+            & compact /c "$nc" *> $null
+            $info.NtfsComp = Get-FileCompressedAttr $nc
+        } catch {}
+
+        try {
+            $wf = Join-Path $Root 'wof.bin'
+            [System.IO.File]::WriteAllBytes($wf, $payload)
+            & compact /c /exe:LZX "$wf" *> $null
+            $info.Wof = (Get-FileWofAlgorithm $wf) -ge 0
+        } catch {}
+
+        try {
+            $ha = Join-Path $Root 'hl_a.bin'
+            [System.IO.File]::WriteAllBytes($ha, [byte[]]::new(8192))
+            New-Item -ItemType HardLink -Path (Join-Path $Root 'hl_b.bin') -Target $ha -ErrorAction Stop | Out-Null
+            $info.Hardlink = $true
+        } catch {}
+
+        [pscustomobject] $info
+    }
+
+    # Ground truth: every descendant (dirs + files) relative to $Root, sorted.
+    function Get-EnumRelative {
+        param([Parameter(Mandatory)][string] $Root)
+        $rootNorm = [System.IO.Path]::GetFullPath($Root).TrimEnd('\')
+        @(Get-ChildItem -LiteralPath $Root -Recurse -Force | ForEach-Object {
+            $_.FullName.TrimEnd('\').Substring($rootNorm.Length).TrimStart('\')
+        } | Sort-Object)
+    }
+
+    # Build the fixture tree under $Root; return its ground-truth relative set.
+    # Names exercise spaces, unicode, shell-special characters, an empty
+    # directory and a long (~120 char) component.  Everything stays well within
+    # MAX_PATH so the PowerShell ground-truth pass is reliable, while the \\?\
+    # spellings still drive the long-path prefix handling on the finder side.
+    function New-EnumFixture {
+        param([Parameter(Mandatory)][string] $Root)
+
+        if (Test-Path -LiteralPath $Root) { Remove-Item -LiteralPath $Root -Recurse -Force }
+        New-Item -ItemType Directory -Force -Path $Root | Out-Null
+
+        $uniDir   = 'uni_' + [char]0x3053 + [char]0x3093 + '_dir'   # こん
+        $uniFile  = 'uni_' + [char]0x00E9 + [char]0x0444 + '.txt'   # é ф
+        $longName = 'Long' + ('o' * 120) + 'Name.txt'
+
+        $files = @(
+            'root file.txt',
+            'Sub Dir With Spaces\inside.dat',
+            'Sub Dir With Spaces\Nested\leaf.bin',
+            "$uniDir\$uniFile",
+            'Special #1 [a+b] & (c)\weird %name% +1.log',
+            $longName
+        )
+        $seed = 1
+        foreach ($f in $files) {
+            New-TestFile -Path (Join-Path $Root $f) -Size (16 * $seed) -Seed $seed
+            $seed++
+        }
+        # an explicitly empty directory to confirm directories enumerate too
+        New-Item -ItemType Directory -Force -Path (Join-Path $Root 'Empty Dir') | Out-Null
+
+        Get-EnumRelative -Root $Root
+    }
+
+    # CSV -> relative set, made relative to the detected root row (the shortest
+    # Name; every other row is prefixed by it).  Spelling agnostic.
+    function Get-EnumCsvRelative {
+        param([Parameter(Mandatory)][string] $Csv)
+        $names = @(Read-CsvRows -Csv $Csv | ForEach-Object { $_.Name } | Where-Object { $_ })
+        if ($names.Count -eq 0) { return @() }
+        $root = ($names | Sort-Object { $_.Length })[0]
+        @($names | Where-Object { $_ -ne $root } | ForEach-Object {
+            $_.Substring($root.Length).TrimStart('\')
+        } | Sort-Object)
+    }
+
+    # Scan $Root with the given engine; assert the relative set equals $Expected.
+    function Assert-EnumMatches {
+        param(
+            [string] $Group, [string] $Label, [string] $Root,
+            [string[]] $Expected, [int] $FastEngine
+        )
+        Write-EnumIni -FastEngine $FastEngine
+        $csv = Join-Path $workRoot ('enum-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.csv')
+        try {
+            [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root)
+        }
+        catch {
+            $detail = $_.Exception.Message
+            if ($detail -match '-1073740791') { $detail += '  (0xC0000409 fail-fast crash)' }
+            Assert-Fail $Group $Label $detail
+            return
+        }
+        $actual  = Get-EnumCsvRelative -Csv $csv
+        Remove-Item -LiteralPath $csv -Force -ErrorAction SilentlyContinue
+        $missing = @($Expected | Where-Object { $actual -notcontains $_ })
+        $extra   = @($actual   | Where-Object { $Expected -notcontains $_ })
+        if ($missing.Count -eq 0 -and $extra.Count -eq 0) {
+            Assert-Pass $Group $Label "$($actual.Count) entries"
+        }
+        else {
+            $m = ($missing | Select-Object -First 4) -join ', '
+            $x = ($extra   | Select-Object -First 4) -join ', '
+            Assert-Fail $Group $Label "missing $($missing.Count) [$m]; extra $($extra.Count) [$x]"
+        }
+    }
+
+    function Test-PathForms {
+        param([string] $Canon, [string[]] $Expected)
+        $drive = $Canon.Substring(0, 1)
+        $spellings = [ordered]@{
+            'plain'           = $Canon
+            'trailing slash'  = "$Canon\"
+            'lowercase drive' = ($drive.ToLowerInvariant() + $Canon.Substring(1))
+            '\\?\ long path'  = "\\?\$Canon"
+            '\\?\ + trailing' = "\\?\$Canon\"
+        }
+        foreach ($engine in @(0, 1)) {
+            $eng = if ($engine -eq 1) { 'fast' } else { 'basic' }
+            foreach ($name in $spellings.Keys) {
+                Assert-EnumMatches -Group 'PathForms' -Label "$name [$eng]" -Root $spellings[$name] -Expected $Expected -FastEngine $engine
+            }
+        }
+    }
+
+    # Test-Path throws (not $false) on access-denied UNC roots under the
+    # script's ErrorActionPreference='Stop'; treat any failure as "absent".
+    function Test-PathQuiet {
+        param([string] $Path)
+        try { return [bool] (Test-Path -LiteralPath $Path) } catch { return $false }
+    }
+
+    function Test-UncForms {
+        param([string] $Canon, [string[]] $Expected)
+        $g          = 'Unc'
+        $drive      = $Canon.Substring(0, 1)
+        $afterColon = $Canon.Substring(2)                 # e.g. \Users\...\scan-root
+        $hostName   = $env:COMPUTERNAME
+        $adminRoot  = '\\' + $hostName + '\' + $drive + '$' + $afterColon
+
+        if (-not (Test-PathQuiet $adminRoot)) {
+            Assert-Skip $g 'Admin share reachable' "\\$hostName\$drive`$ not reachable (admin share disabled or UAC remote-token filtering)"
+        }
+        else {
+            $uncSpellings = [ordered]@{
+                'admin share \\host\X$'  = $adminRoot
+                'admin share + trailing' = "$adminRoot\"
+                '\\?\UNC\ long unc'      = '\\?\UNC\' + $hostName + '\' + $drive + '$' + $afterColon
+            }
+            foreach ($name in $uncSpellings.Keys) {
+                Assert-EnumMatches -Group $g -Label $name -Root $uncSpellings[$name] -Expected $Expected -FastEngine 0
+            }
+        }
+
+        # \\tsclient\<drive> exists only inside an RDP session with drive
+        # redirection; skip cleanly when absent.
+        $tsShare = '\\tsclient\' + $drive
+        $tsRoot  = $tsShare + $afterColon
+        if (Test-PathQuiet '\\tsclient\c\windows\system32') {
+            # The fixture was staged on the local volume; replicate it on the
+            # tsclient path so WinDirStat has the same tree to scan via the
+            # RDP virtual drive (\\tsclient\<X> maps to the client machine's
+            # <X>: drive, which is a different physical device from the server).
+            try {
+                $null = New-EnumFixture -Root $tsRoot
+                Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $Expected -FastEngine 0
+            }
+            catch {
+                Assert-Fail $g '\\tsclient\<drive>' "Failed to stage fixture at tsclient path: $($_.Exception.Message)"
+            }
+            finally {
+                Remove-Item -LiteralPath $tsRoot -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        else {
+            Assert-Skip $g '\\tsclient redirected drive' 'No RDP drive redirection (\\tsclient\<drive> not present)'
+        }
+    }
+
+    # Scan the fixture through a redirected root — a subst'd drive, a directory
+    # junction and a directory symbolic link all pointing at the same tree.
+    # Each must enumerate the target identically.  subst and junctions need no
+    # elevation; symlinks need admin or Developer Mode (skipped otherwise).
+    function Test-RootRedirects {
+        param([string] $Canon, [string[]] $Expected)
+        $g         = 'RootRedirects'
+        $redirRoot = Join-Path $workRoot 'redirects'
+        $junction  = Join-Path $redirRoot 'junction-root'
+        $symlink   = Join-Path $redirRoot 'symlink-root'
+        New-Item -ItemType Directory -Force -Path $redirRoot | Out-Null
+
+        $substDrive  = $null
+        $createdLinks = [System.Collections.Generic.List[string]]::new()
+        try {
+            # -- subst'd drive root (X:\ -> fixture) --------------------------
+            $free = $null
+            foreach ($code in 90..68) {           # Z .. D
+                $candidate = [char] $code
+                if (-not (Test-PathQuiet "${candidate}:\")) { $free = $candidate; break }
+            }
+            if (-not $free) {
+                Assert-Skip $g 'subst drive root' 'No free drive letter available'
+            }
+            else {
+                $out = & subst "${free}:" $Canon 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $substDrive = "${free}:"
+                    Assert-EnumMatches -Group $g -Label "subst drive ${free}:\" -Root "${free}:\" -Expected $Expected -FastEngine 0
+                }
+                else {
+                    Assert-Skip $g 'subst drive root' "subst failed: $out"
+                }
+            }
+
+            # -- directory junction root -------------------------------------
+            try {
+                New-Item -ItemType Junction -Path $junction -Target $Canon -ErrorAction Stop | Out-Null
+                $createdLinks.Add($junction)
+                Assert-EnumMatches -Group $g -Label 'junction root'            -Root $junction    -Expected $Expected -FastEngine 0
+                Assert-EnumMatches -Group $g -Label 'junction root + trailing' -Root "$junction\" -Expected $Expected -FastEngine 0
+            }
+            catch {
+                Assert-Skip $g 'junction root' "Could not create junction: $($_.Exception.Message)"
+            }
+
+            # -- directory symbolic-link root --------------------------------
+            try {
+                New-Item -ItemType SymbolicLink -Path $symlink -Target $Canon -ErrorAction Stop | Out-Null
+                $createdLinks.Add($symlink)
+                Assert-EnumMatches -Group $g -Label 'directory symlink root' -Root $symlink -Expected $Expected -FastEngine 0
+            }
+            catch {
+                Assert-Skip $g 'directory symlink root' "Could not create symlink (needs admin or Developer Mode): $($_.Exception.Message)"
+            }
+        }
+        finally {
+            # Tear down redirects before the suite's recursive cleanup so it
+            # never recurses through a link into the target.
+            if ($substDrive) { & subst $substDrive /D 2>&1 | Out-Null }
+            foreach ($lnk in $createdLinks) {
+                try { [System.IO.Directory]::Delete($lnk, $false) } catch {}
+            }
+        }
+    }
+
+    # #1 — the two scan engines must agree on every column for a rich tree.
+    function Test-CrossEngine {
+        param([string] $Root)
+        $g = 'CrossEngine'
+        try {
+            $csv0 = Invoke-EnumScanCsv -Root $Root -FastEngine 0
+            $csv1 = Invoke-EnumScanCsv -Root $Root -FastEngine 1
+        }
+        catch { Assert-Fail $g 'scan under both engines' $_.Exception.Message; return }
+        $m0 = Get-EnumRowMap $csv0; $m1 = Get-EnumRowMap $csv1
+        Remove-Item $csv0, $csv1 -Force -ErrorAction SilentlyContinue
+
+        $onlyBasic = @($m0.Keys | Where-Object { -not $m1.Contains($_) })
+        $onlyFast  = @($m1.Keys | Where-Object { -not $m0.Contains($_) })
+        if ($onlyBasic.Count -eq 0 -and $onlyFast.Count -eq 0) {
+            Assert-Pass $g 'both engines enumerate the same entries' "$($m0.Count) entries"
+        }
+        else {
+            Assert-Fail $g 'both engines enumerate the same entries' "basic-only=$($onlyBasic.Count) [$(($onlyBasic | Select-Object -First 3) -join ', ')]; fast-only=$($onlyFast.Count) [$(($onlyFast | Select-Object -First 3) -join ', ')]"
+        }
+        foreach ($col in @('Logical Size', 'Physical Size', 'Attributes', 'Index')) {
+            $diffs = @(foreach ($k in $m0.Keys) {
+                if ($m1.Contains($k) -and $m0[$k].$col -ne $m1[$k].$col) { "$k ($($m0[$k].$col)|$($m1[$k].$col))" }
+            })
+            if ($diffs.Count -eq 0) { Assert-Pass $g "engines agree on '$col'" }
+            else { Assert-Fail $g "engines agree on '$col'" "$($diffs.Count) diff(s): $(($diffs | Select-Object -First 4) -join '; ')" }
+        }
+    }
+
+    # #3 — reported logical / physical sizes match native ground truth across the
+    # zero / slack / cluster / sparse / NTFS-compressed / WOF size-correction paths.
+    function Test-Sizes {
+        param([string] $Root, [pscustomobject] $Info)
+        $g = 'Sizes'
+        try { $csv = Invoke-EnumScanCsv -Root $Root -FastEngine 0 }
+        catch { Assert-Fail $g 'scan rich fixture' $_.Exception.Message; return }
+        $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
+
+        foreach ($leaf in @('zero.bin', 'slack.bin', 'onecluster.bin', 'normal.bin', 'hl_a.bin')) {
+            if (-not $map.Contains($leaf)) { Assert-Fail $g "$leaf present" 'missing from scan'; continue }
+            $full  = Join-Path $Root $leaf
+            $gtLog = (Get-Item -LiteralPath $full).Length
+            $gtPhy = Get-FileAllocationSize $full
+            $r = $map[$leaf]
+            if ([long] $r.'Logical Size'  -eq [long] $gtLog) { Assert-Pass $g "$leaf logical size = $gtLog" }  else { Assert-Fail $g "$leaf logical size"  "got $($r.'Logical Size'), expected $gtLog" }
+            if ([long] $r.'Physical Size' -eq [long] $gtPhy) { Assert-Pass $g "$leaf physical size = $gtPhy" } else { Assert-Fail $g "$leaf physical size" "got $($r.'Physical Size'), expected $gtPhy (AllocationSize)" }
+        }
+
+        if ($Info.Sparse -and $map.Contains('sparse.bin')) {
+            $r = $map['sparse.bin']
+            if ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'sparse: physical < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
+            else { Assert-Fail $g 'sparse: physical < logical' "physical $($r.'Physical Size'), logical $($r.'Logical Size')" }
+        }
+        else { Assert-Skip $g 'sparse file' 'sparse not created on this volume' }
+
+        if ($Info.NtfsComp -and $map.Contains('ntfscomp.bin')) {
+            $r = $map['ntfscomp.bin']; $gtPhy = Get-FileAllocationSize (Join-Path $Root 'ntfscomp.bin')
+            if ([long] $r.'Physical Size' -eq [long] $gtPhy -and [long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'NTFS-compressed: physical = allocated < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
+            else { Assert-Fail $g 'NTFS-compressed physical' "physical $($r.'Physical Size'), allocated $gtPhy, logical $($r.'Logical Size')" }
+        }
+        else { Assert-Skip $g 'NTFS-compressed file' 'LZNT1 not available/applied on this volume' }
+
+        if ($Info.Wof -and $map.Contains('wof.bin')) {
+            $r = $map['wof.bin']
+            if ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'WOF: physical < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
+            else { Assert-Fail $g 'WOF: physical < logical' "physical $($r.'Physical Size'), logical $($r.'Logical Size')" }
+            # FinderBasic best-effort flags WOF files Compressed, but the WOF filter
+            # usually masks IO_REPARSE_TAG_WOF from enumeration (the code even notes
+            # this), so a missing 'C' is expected rather than a failure.
+            if ($r.Attributes -match 'C') { Assert-Pass $g 'WOF file flagged Compressed (reparse tag surfaced)' }
+            else { Assert-Pass $g 'WOF file flagged Compressed' 'WOF reparse tag masked by WOF filter driver (expected behavior; physical size still reflects compression)' }
+        }
+        else { Assert-Skip $g 'WOF-compressed file' 'WOF not available/applied on this volume' }
+    }
+
+    # #2 — a single directory large enough to exceed the 4 MB read buffer, forcing
+    # the NextEntryOffset==0 refill path; the exact entry count must round-trip.
+    function Test-LargeDir {
+        $g     = 'LargeDir'
+        $count = 15000
+        $big   = Join-Path $workRoot 'big-dir'
+        New-Item -ItemType Directory -Force -Path $big | Out-Null
+        # ~200-char names: 15000 entries ≈ 7 MB of directory information (> 4 MB),
+        # so at least one buffer refill happens.  Created via \\?\ for the length.
+        $pad   = 'p' * 190
+        $empty = [byte[]]::new(1)
+        for ($i = 0; $i -lt $count; $i++) {
+            [System.IO.File]::WriteAllBytes(('\\?\' + $big + '\f' + ('{0:D6}' -f $i) + "_$pad.bin"), $empty)
+        }
+        $gt = @([System.IO.Directory]::EnumerateFiles('\\?\' + $big)).Count
+        try {
+            $csv = Invoke-EnumScanCsv -Root ('\\?\' + $big) -FastEngine 0
+            $entries = (@(Read-CsvRows -Csv $csv)).Count - 1     # minus the root row
+            Remove-Item $csv -Force -ErrorAction SilentlyContinue
+            if ($entries -eq $count -and $gt -eq $count) { Assert-Pass $g "single directory of $count entries enumerated exactly (buffer-refill path)" }
+            else { Assert-Fail $g "single directory of $count entries" "created $count, ground truth $gt, scan saw $entries" }
+        }
+        catch { Assert-Fail $g "single directory of $count entries" $_.Exception.Message }
+        finally { try { [System.IO.Directory]::Delete('\\?\' + $big, $true) } catch {} }
+    }
+
+    # #4 — results must be identical regardless of the scanning-thread count
+    # (stresses the shared FinderBasicContext: atomic SupportsFileId + call_once).
+    function Test-Threads {
+        param([string] $Root)
+        $g = 'Threads'
+        $ref = $null; $refThreads = $null
+        foreach ($t in @(1, 2, 8, 16)) {
+            try { $csv = Invoke-EnumScanCsv -Root $Root -FastEngine 0 -Extra @{ ScanningThreads = $t } }
+            catch { Assert-Fail $g "$t-thread scan" $_.Exception.Message; continue }
+            $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
+            $sig = @($map.Keys | Sort-Object | ForEach-Object {
+                "$_|$($map[$_].'Logical Size')|$($map[$_].'Physical Size')|$($map[$_].Attributes)|$($map[$_].Index)"
+            }) -join "`n"
+            if ($null -eq $ref) { $ref = $sig; $refThreads = $t; Assert-Pass $g "$t-thread scan (baseline)" "$($map.Count) entries" }
+            elseif ($sig -eq $ref) { Assert-Pass $g "$t threads identical to $refThreads-thread result" }
+            else { Assert-Fail $g "$t threads identical to baseline" 'result differs across thread counts' }
+        }
+    }
+
+    # #5 — hard links share one non-zero FileId (GetIndex / SupportsFileId decode).
+    function Test-Hardlinks {
+        $g    = 'Hardlinks'
+        $root = Join-Path $workRoot 'hardlinks'
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+        $a = Join-Path $root 'link_a.bin'
+        [System.IO.File]::WriteAllBytes($a, [byte[]]::new(12288))
+        $extra = @('link_b.bin', 'link_c.bin')
+        foreach ($l in $extra) {
+            try { New-Item -ItemType HardLink -Path (Join-Path $root $l) -Target $a -ErrorAction Stop | Out-Null }
+            catch { Assert-Skip $g 'create hard links' "$($_.Exception.Message) (volume may not support hard links)"; return }
+        }
+        try { $csv = Invoke-EnumScanCsv -Root $root -FastEngine 0 }
+        catch { Assert-Fail $g 'scan hard-link set' $_.Exception.Message; return }
+        $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
+
+        $names   = @('link_a.bin') + $extra
+        $indices = @($names | ForEach-Object { $map[$_].Index })
+        $idxA    = $map['link_a.bin'].Index
+        $allEqual = (@($indices | Select-Object -Unique).Count -eq 1)
+        $nonZero  = $idxA -and ($idxA -notmatch '^0x0+$')
+        if ($allEqual -and $nonZero) { Assert-Pass $g 'all hard links share one non-zero Index' $idxA }
+        else { Assert-Fail $g 'all hard links share one non-zero Index' "indices: $($indices -join ', ')" }
+
+        $identity = Get-FileIdentity $a                      # "volSerial:fileIndex16"
+        if ($identity.Id) {
+            $gtIndex = '0x' + ($identity.Id -split ':')[1]
+            if ($idxA -ieq $gtIndex) { Assert-Pass $g 'Index matches the NTFS file id' $idxA }
+            else { Assert-Warn $g 'Index matches the NTFS file id' "scan=$idxA native=$gtIndex" }
+        }
+        if ($identity.Links -ge ($names.Count)) { Assert-Pass $g "NTFS link count = $($identity.Links) (>= $($names.Count))" }
+        else { Assert-Warn $g 'NTFS link count' "$($identity.Links) (expected >= $($names.Count))" }
+    }
+
+    # #6 — an unreadable subdirectory must be skipped gracefully mid-scan.
+    function Test-AccessDenied {
+        $g      = 'AccessDenied'
+        $root   = Join-Path $workRoot 'access-denied'
+        $denied = Join-Path $root 'denied-subdir'
+        $okDir  = Join-Path $root 'readable'
+        New-Item -ItemType Directory -Force -Path (Join-Path $denied 'inner'), $okDir | Out-Null
+        [System.IO.File]::WriteAllBytes((Join-Path $denied 'secret.bin'), [byte[]]::new(64))
+        [System.IO.File]::WriteAllBytes((Join-Path $okDir 'visible.bin'), [byte[]]::new(64))
+        $me = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+        try {
+            & icacls $denied /inheritance:r /deny "${me}:(OI)(CI)(RX)" *> $null
+            $blocked = $false
+            try { [void] (Get-ChildItem -LiteralPath $denied -Force -ErrorAction Stop) } catch { $blocked = $true }
+            if (-not $blocked) { Assert-Skip $g 'deny ACE blocks listing' 'Could not block our own access (owner/SYSTEM override)'; return }
+
+            try { $csv = Invoke-EnumScanCsv -Root $root -FastEngine 0 }
+            catch { Assert-Fail $g 'scan past unreadable subdir' $_.Exception.Message; return }
+            $leaves = @(Read-CsvRows -Csv $csv | ForEach-Object { Split-Path $_.Name -Leaf })
+            Remove-Item $csv -Force -ErrorAction SilentlyContinue
+            if ('visible.bin'   -in $leaves) { Assert-Pass $g 'readable sibling still enumerated' }              else { Assert-Fail $g 'readable sibling still enumerated' 'visible.bin missing' }
+            if ('denied-subdir' -in $leaves) { Assert-Pass $g 'unreadable directory still listed as a folder' } else { Assert-Fail $g 'unreadable directory still listed' 'denied-subdir missing' }
+            if ('secret.bin' -notin $leaves) { Assert-Pass $g 'unreadable contents skipped without crashing' }  else { Assert-Fail $g 'unreadable contents skipped' 'secret.bin leaked past the deny ACE' }
+        }
+        finally { & icacls $denied /reset *> $null }
+    }
+
+    # #7 — NT-only names (trailing dot/space), case-only-differing siblings, and a
+    # dangling junction must all enumerate cleanly.
+    function Test-TrickyNames {
+        $g    = 'TrickyNames'
+        $root = Join-Path $workRoot 'tricky'
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+        $ntNames = @('trailingdot.', 'trailingspace ', 'plain.txt')
+        $made    = @()
+        foreach ($n in $ntNames) { try { [System.IO.File]::WriteAllBytes("\\?\$root\$n", [byte[]]::new(8)); $made += $n } catch {} }
+        if ($made.Count -eq $ntNames.Count) {
+            try {
+                $csv = Invoke-EnumScanCsv -Root "\\?\$root" -FastEngine 0
+                $entries = (@(Read-CsvRows -Csv $csv)).Count - 1
+                Remove-Item $csv -Force -ErrorAction SilentlyContinue
+                if ($entries -eq $ntNames.Count) { Assert-Pass $g 'trailing dot/space names enumerated' "$entries/$($ntNames.Count)" }
+                else { Assert-Fail $g 'trailing dot/space names enumerated' "saw $entries of $($ntNames.Count)" }
+            }
+            catch { Assert-Fail $g 'trailing dot/space names enumerated' $_.Exception.Message }
+        }
+        else { Assert-Skip $g 'trailing dot/space names' "could not create NT-only names ($($made.Count)/$($ntNames.Count))" }
+
+        $cs = Join-Path $root 'case-sensitive'
+        New-Item -ItemType Directory -Force -Path $cs | Out-Null
+        $csOut = & fsutil file setCaseSensitiveInfo "$cs" enable 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $ok = $true
+            try { [System.IO.File]::WriteAllBytes("\\?\$cs\Data.bin", [byte[]]::new(8)); [System.IO.File]::WriteAllBytes("\\?\$cs\data.bin", [byte[]]::new(16)) } catch { $ok = $false }
+            if ($ok) {
+                try {
+                    $csv = Invoke-EnumScanCsv -Root $cs -FastEngine 0
+                    $leaves = @(Read-CsvRows -Csv $csv | ForEach-Object { Split-Path $_.Name -Leaf })
+                    Remove-Item $csv -Force -ErrorAction SilentlyContinue
+                    if (($leaves -ccontains 'Data.bin') -and ($leaves -ccontains 'data.bin')) { Assert-Pass $g 'case-only-differing siblings both enumerated' }
+                    else { Assert-Fail $g 'case-only-differing siblings both enumerated' "leaves: $($leaves -join ', ')" }
+                }
+                catch { Assert-Fail $g 'case-sensitive siblings scan' $_.Exception.Message }
+            }
+            else { Assert-Skip $g 'case-only-differing siblings' 'could not create case-differing files' }
+        }
+        else { Assert-Skip $g 'case-sensitive directory' "fsutil setCaseSensitiveInfo failed: $csOut" }
+
+        # dangling junction (target deleted) — the parent must still scan cleanly.
+        $target = Join-Path $workRoot 'broken-target'
+        New-Item -ItemType Directory -Force -Path $target | Out-Null
+        $linkParent = Join-Path $root 'broken-links'
+        New-Item -ItemType Directory -Force -Path $linkParent | Out-Null
+        $dangling = Join-Path $linkParent 'dangling-junction'
+        try {
+            New-Item -ItemType Junction -Path $dangling -Target $target -ErrorAction Stop | Out-Null
+            [System.IO.Directory]::Delete($target, $true)
+            try {
+                $csv = Invoke-EnumScanCsv -Root $linkParent -FastEngine 0
+                Remove-Item $csv -Force -ErrorAction SilentlyContinue
+                Assert-Pass $g 'parent of a dangling junction scans without crashing'
+            }
+            catch { Assert-Fail $g 'parent of a dangling junction scans without crashing' $_.Exception.Message }
+        }
+        catch { Assert-Skip $g 'dangling junction' "could not create junction: $($_.Exception.Message)" }
+        finally { try { [System.IO.Directory]::Delete($dangling, $false) } catch {} }
+    }
+
+    function Test-FileSystems {
+        $g         = 'FileSystems'
+        $oneLetter = ($LinkTestDriveOne -replace ':.*', '').ToUpperInvariant()
+        $twoLetter = ($LinkTestDriveTwo -replace ':.*', '').ToUpperInvariant()
+
+        if (-not (Test-IsElevated)) {
+            Assert-Skip $g 'Administrator privileges' 'Not elevated; formatting scratch drives requires admin'
+            return
+        }
+        if ($oneLetter -eq 'C' -or $twoLetter -eq 'C') {
+            Assert-Skip $g 'Scratch drive selection' "Refusing C: as a scratch drive (configured: ${oneLetter}: / ${twoLetter}:)"
+            return
+        }
+        if (-not (Test-Path "${oneLetter}:\") -or -not (Test-Path "${twoLetter}:\")) {
+            Assert-Skip $g 'Scratch drives present' "Drives ${oneLetter}: and ${twoLetter}: must both exist; set LINK_TEST_DRIVE_ONE/TWO"
+            return
+        }
+        if (-not (Get-Command Format-Volume -ErrorAction SilentlyContinue)) {
+            Assert-Skip $g 'Format-Volume available' 'Storage cmdlets not available on this system'
+            return
+        }
+
+        # (drive, file system) plan covering all three systems across the two
+        # scratch drives, finishing with NTFS so both are left clean.
+        $plan = @(
+            [pscustomobject]@{ Letter = $oneLetter; Fs = 'FAT32' },
+            [pscustomobject]@{ Letter = $twoLetter; Fs = 'ReFS'  },
+            [pscustomobject]@{ Letter = $oneLetter; Fs = 'NTFS'  },
+            [pscustomobject]@{ Letter = $twoLetter; Fs = 'NTFS'  }
+        )
+        foreach ($step in $plan) {
+            $label = "$($step.Fs) on $($step.Letter):"
+            try {
+                Write-ColoredLine "  Formatting $($step.Letter): as $($step.Fs) ..." DarkGray
+                Format-Volume -DriveLetter $step.Letter -FileSystem $step.Fs -NewFileSystemLabel "WdsEnum$($step.Fs)" -Force -Confirm:$false -ErrorAction Stop | Out-Null
+            }
+            catch {
+                Assert-Pass $g $label "ReFS format not supported on this drive (expected on some configurations): $($_.Exception.Message)"
+                continue
+            }
+
+            $fsRoot = "$($step.Letter):\wds-enum-fs\scan-root"
+            try {
+                $exp = New-EnumFixture -Root $fsRoot
+            }
+            catch {
+                Assert-Fail $g $label "Could not stage fixture on $($step.Fs): $($_.Exception.Message)"
+                continue
+            }
+
+            Assert-EnumMatches -Group $g -Label "$label (plain)" -Root $fsRoot      -Expected $exp -FastEngine 0
+            Assert-EnumMatches -Group $g -Label "$label (\\?\)"  -Root "\\?\$fsRoot" -Expected $exp -FastEngine 0
+
+            # #5 — WinDirStat's Index is the OS-provided 64-bit file id from
+            # directory enumeration.  Every local file system here hands one back
+            # (FAT32 included — FASTFAT synthesizes an id from the directory-entry
+            # location), so a non-zero Index that agrees with the OS is expected; a
+            # zero Index is only acceptable when the OS itself exposes none.
+            try {
+                $csv = Invoke-EnumScanCsv -Root $fsRoot -FastEngine 0
+                $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
+                if ($map.Contains('root file.txt')) {
+                    $idx     = $map['root file.txt'].Index
+                    $native  = Get-FileIdentity (Join-Path $fsRoot 'root file.txt')
+                    $gtIndex = if ($native.Id) { '0x' + ($native.Id -split ':')[1] } else { $null }
+                    if ($idx -notmatch '^0x0+$') {
+                        if ($gtIndex -and ($idx -ieq $gtIndex)) { Assert-Pass $g "$label Index is a non-zero file id matching the OS ($idx)" }
+                        else { Assert-Pass $g "$label Index is a non-zero file id ($idx)" }
+                    }
+                    elseif (-not $gtIndex) { Assert-Pass $g "$label Index = 0 (OS exposes no file id)" }
+                    else { Assert-Fail $g "$label Index" "scan reported 0 but the OS file id is $gtIndex" }
+                }
+            }
+            catch { Assert-Warn $g "$label Index check" $_.Exception.Message }
+
+            # #8 — scan the volume ROOT (system/reserved entries like System Volume
+            # Information / $RECYCLE.BIN) and confirm it enumerates cleanly.
+            try {
+                $csvR = Invoke-EnumScanCsv -Root "$($step.Letter):\" -FastEngine 0
+                $rootLeaves = @(Read-CsvRows -Csv $csvR | ForEach-Object { Split-Path $_.Name -Leaf })
+                Remove-Item $csvR -Force -ErrorAction SilentlyContinue
+                if ('wds-enum-fs' -in $rootLeaves) { Assert-Pass $g "$label volume-root scan enumerates top-level entries" }
+                else { Assert-Fail $g "$label volume-root scan" 'wds-enum-fs not found at volume root' }
+            }
+            catch { Assert-Fail $g "$label volume-root scan" $_.Exception.Message }
+
+            Remove-Item -LiteralPath "$($step.Letter):\wds-enum-fs" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    try {
+        if (-not (Test-Path -LiteralPath $ExePath)) {
+            Assert-Skip 'PathForms' 'Executable present' "WinDirStat executable not found: $ExePath"
+            return
+        }
+
+        if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
+        New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
+        Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
+
+        $canon    = [System.IO.Path]::GetFullPath($scanRoot).TrimEnd('\')
+        $expected = New-EnumFixture -Root $canon
+
+        Write-ColoredLine 'Enumeration suite — path-form, UNC and file-system coverage' Cyan
+        Write-LabelValue 'Fixture' $canon
+        Write-LabelValue 'Entries' "$($expected.Count) (dirs + files)"
+        Write-LabelValue 'Exe'     $runnerExe
+        Write-Host ''
+
+        Test-PathForms     -Canon $canon -Expected $expected
+        Test-UncForms      -Canon $canon -Expected $expected
+        Test-RootRedirects -Canon $canon -Expected $expected
+
+        # Rich fixture shared by the cross-engine and size-accuracy groups.
+        $crossRoot = Join-Path $workRoot 'cross-root'
+        $special   = Add-SpecialFiles -Root $crossRoot
+
+        Test-CrossEngine   -Root $crossRoot
+        Test-Sizes         -Root $crossRoot -Info $special
+        Test-LargeDir
+        Test-Threads       -Root $canon
+        Test-Hardlinks
+        Test-AccessDenied
+        Test-TrickyNames
+        Test-FileSystems
+    }
+    finally {
+        Remove-TestArtifacts -Path $workRoot
+    }
+}
+
+# #############################################################################
 # UNC SHARE-ROOT SUITE  (regression: issue #538)
 # #############################################################################
 #
@@ -9018,6 +9828,7 @@ $allSuites = [ordered]@{
     Ui          = 'Invoke-UiSuite'
     Reparse     = 'Invoke-ReparseSuite'
     EdgeCases   = 'Invoke-EdgeCasesSuite'
+    Enumeration = 'Invoke-EnumerationSuite'
     Unc         = 'Invoke-UncSuite'
     Permissions = 'Invoke-PermissionsSuite'
 }
