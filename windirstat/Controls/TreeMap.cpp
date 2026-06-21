@@ -651,6 +651,10 @@ void CTreeMap::DrawOverlays(CDC* pdc, const CRect& rc, CItem* root,
     // Font must be active for both folder headers and DrawTreeMapLabels
     CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
 
+    TEXTMETRIC tm{};
+    pdc->GetTextMetrics(&tm);
+    const int headerHeight = tm.tmHeight + 4;
+
     if (m_options.showFolderFrames)
     {
         CSetBkMode soBkMode(pdc, TRANSPARENT);
