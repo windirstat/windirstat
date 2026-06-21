@@ -125,8 +125,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
 
         // Determine the appropriate hash level for this item based on what's already been hashed
         hashLevel = std::min(maxHashLevel,
-            hashLevel == ITHASH_SMALL ? ITHASH_MEDIUM :
-            hashLevel == ITHASH_MEDIUM ? ITHASH_LARGE : ITHASH_LARGE);
+            hashLevel == ITHASH_SMALL ? ITHASH_MEDIUM : ITHASH_LARGE);
     }
 
     // Lock once and lookup dupeParent before iterating
