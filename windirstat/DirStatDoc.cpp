@@ -2143,26 +2143,24 @@ void CDirStatDoc::OnRemoveMarkOfTheWebTags()
 void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
 {
     // Only allow when focused on duplicate list
-    const auto& control = CFileDupeControl::Get();
-    if (!DupeListHasFocus() || control == nullptr)
+    if (!DupeListHasFocus())
     {
         return pCmdUI->Enable(FALSE);
-
     }
 
     // Get the selected tree list items directly
-    const auto selected = control->GetAllSelected();
+    const auto selected = GetAllSelected();
     if (selected.size() < 2)
     {
         return pCmdUI->Enable(FALSE);
     }
 
     // Validate all items are on same logical volume
-    const auto drive = selected.front()->GetLinkedItem()->GetParentDrive();
+    const auto drive = selected.front()->GetParentDrive();
     for (auto* item : selected)
     {
-        if (!item->GetLinkedItem()->IsTypeOrFlag(IT_FILE) ||
-            item->GetLinkedItem()->GetParentDrive() != drive)
+        if (!item->IsTypeOrFlag(IT_FILE) ||
+            item->GetParentDrive() != drive)
         {
             return pCmdUI->Enable(FALSE);
         }
