@@ -35,8 +35,8 @@
     overridable via the LINK_TEST_DRIVE_ONE / LINK_TEST_DRIVE_TWO environment
     variables).  The reparse suite formats them NTFS; the enumeration suite
     cycles them through FAT32 / ReFS / NTFS and restores NTFS.  Both only do so
-    when elevated AND both drives exist; otherwise they skip.  Drive C: is
-    always refused.
+    when elevated, both drives exist, and each drive is smaller than 4 GB;
+    otherwise they skip.  Drive C: is always refused.
 #>
 param(
     [string] $ExePath = (Join-Path $PSScriptRoot '..\publish\x64\WinDirStat.exe'),
@@ -75,6 +75,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -499,12 +500,23 @@ function Invoke-ProcessWithTimeout {
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $process = [System.Diagnostics.Process]::Start($startInfo)
+
+    # Begin draining BOTH redirected pipes asynchronously *before* waiting on the
+    # process.  A child that writes more than the pipe buffer (~4 KB) blocks until
+    # the reader drains it; if we instead blocked in WaitForExit first, that child
+    # would deadlock and surface as a bogus timeout + killed process.  The async
+    # readers keep the pipes empty so the child always runs to completion.
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+
     if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
         try { $process.Kill($true) } catch {}
         throw "$([System.IO.Path]::GetFileName($FileName)) did not finish within $TimeoutSeconds seconds."
     }
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
+    # The process has exited; the readers see EOF momentarily — GetResult() blocks
+    # only until the final buffered bytes are drained, so no output is lost.
+    $stdout = $stdoutTask.GetAwaiter().GetResult()
+    $stderr = $stderrTask.GetAwaiter().GetResult()
     $sw.Stop()
 
     [pscustomobject]@{
@@ -788,6 +800,61 @@ function Test-IsElevated {
     catch { return $false }
 }
 
+function Get-DriveTotalSizeBytes {
+    param([Parameter(Mandatory)] [string] $Letter)
+
+    $l = ($Letter -replace ':.*', '').ToUpperInvariant()
+    if ($l -notmatch '^[A-Z]$') { return $null }
+
+    try {
+        $vol = Get-Volume -DriveLetter $l -ErrorAction SilentlyContinue
+        if ($vol -and $null -ne $vol.Size -and [uint64]$vol.Size -gt 0) {
+            return [uint64]$vol.Size
+        }
+    }
+    catch {}
+
+    try {
+        $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='${l}:'" -ErrorAction SilentlyContinue
+        if ($disk -and $null -ne $disk.Size -and [uint64]$disk.Size -gt 0) {
+            return [uint64]$disk.Size
+        }
+    }
+    catch {}
+
+    return $null
+}
+
+function Test-ScratchDrivesUnderSizeLimit {
+    param(
+        [Parameter(Mandatory)] [string[]] $Letters,
+        [uint64] $MaxBytes = 4GB
+    )
+
+    $tooLarge = [System.Collections.Generic.List[string]]::new()
+    $unknown  = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($letter in $Letters) {
+        $l = ($letter -replace ':.*', '').ToUpperInvariant()
+        $size = Get-DriveTotalSizeBytes -Letter $l
+        if ($null -eq $size) {
+            [void]$unknown.Add("${l}:")
+            continue
+        }
+
+        if ($size -ge $MaxBytes) {
+            [void]$tooLarge.Add("${l}: ($([Math]::Round($size / 1GB, 2)) GB)")
+        }
+    }
+
+    [pscustomobject]@{
+        Allowed  = ($tooLarge.Count -eq 0 -and $unknown.Count -eq 0)
+        TooLarge = @($tooLarge)
+        Unknown  = @($unknown)
+        MaxBytes = $MaxBytes
+    }
+}
+
 # #############################################################################
 # UI AUTOMATION SUITE  (UIAutomation-driven end-to-end navigation + file ops)
 # #############################################################################
@@ -952,6 +1019,22 @@ function Invoke-Win32MenuCommand {
 
     [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$target.CommandId, [IntPtr]::Zero) | Out-Null
     return $true
+}
+
+function Invoke-Win32CommandId {
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [int] $CommandId
+    )
+    try {
+        $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
+        if ($hwnd -eq [IntPtr]::Zero) { return $false }
+        [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$CommandId, [IntPtr]::Zero) | Out-Null
+        return $true
+    }
+    catch {
+        return $false
+    }
 }
 
 # -- UIAutomation helpers ------------------------------------------------------
@@ -4366,6 +4449,39 @@ public static class RightClickHelper {
     Focus-Window $script:win
 }
 
+function Start-UiScanSession {
+    param(
+        [string] $Exe,
+        [string] $ScanPath,
+        [string] $Group,
+        [string] $Label,
+        [int] $ScanTimeoutMs = ([Math]::Max($TimeoutSeconds * 1000, 60000))
+    )
+
+    $win = Start-App -Exe $Exe
+    if (!$win) { Assert-Fail $Group "App launches for $Label" 'Window not found'; return $null }
+    Assert-Pass $Group "App launches for $Label"
+
+    if (!(Invoke-ScanViaDialog -Window $win -ScanPath $ScanPath -TimeoutMs 15000)) {
+        Assert-Fail $Group "$Label scan started via Drive Select dialog" 'Dialog interaction failed'
+        return $null
+    }
+    Assert-Pass $Group "$Label scan started via Drive Select dialog"
+
+    if (!(Wait-ScanDone -TimeoutMs $ScanTimeoutMs)) {
+        Assert-Fail $Group "$Label scan completed" "Still scanning after ${TimeoutSeconds}s"
+        return $null
+    }
+    Assert-Pass $Group "$Label scan completed"
+
+    $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
+    if (!$win) { Assert-Fail $Group 'Main window after scan' 'Lost window reference'; return $null }
+
+    $script:win = $win
+    $script:tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
+    return $win
+}
+
 # ---------------------------------------------------------------------------
 # Test-FileOperations: orchestrates the file-operations test phase.
 # Creates a staged scan root, launches a fresh app instance, runs the scan,
@@ -4393,46 +4509,10 @@ function Test-FileOperations {
         return
     }
 
-    # Launch a fresh app instance (Start-App calls Stop-App if one is running)
-    $win = Start-App -Exe $Exe
-    if (!$win) {
-        Assert-Fail $g 'App launches for file-operations test' 'Window not found'
-        return
-    }
-    Assert-Pass $g 'App launches for file-operations test'
+    $win = Start-UiScanSession -Exe $Exe -ScanPath $opsScanRoot -Group $g -Label 'file-operations test' -ScanTimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 90000))
+    if (!$win) { return }
 
-    # Start the scan via the Drive Select dialog (enables Duplicate Files tab)
-    $ok = Invoke-ScanViaDialog -Window $win -ScanPath $opsScanRoot -TimeoutMs 15000
-    if ($ok) {
-        Assert-Pass $g 'Ops scan started via Drive Select dialog'
-    }
-    else {
-        Assert-Fail $g 'Ops scan started via Drive Select dialog' 'Dialog interaction failed'
-        return
-    }
-
-    # Wait for scan (including duplicate hashing) to complete
-    $done = Wait-ScanDone -TimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 90000))
-    if ($done) {
-        Assert-Pass $g 'Ops scan completed within timeout'
-    }
-    else {
-        Assert-Fail $g 'Ops scan completed within timeout' "Still scanning after ${TimeoutSeconds}s"
-        return
-    }
-
-    # Refresh the window reference and locate the tab control
-    $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
-    if ($win) {
-        $script:win = $win
-        Assert-Pass $g "Ops window title after scan: '$($win.Current.Name)'"
-    }
-    else {
-        Assert-Fail $g 'Main window found after ops scan' 'Lost window reference'
-        return
-    }
-
-    $script:tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
+    Assert-Pass $g "Ops window title after scan: '$($win.Current.Name)'"
     if ($script:tabCtrl) {
         $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
         Assert-Pass $g "$($tabItems.Count) tab(s) found in ops window"
@@ -4505,18 +4585,6 @@ function Test-MarkOfWebPresent {
     catch { return $false }
 }
 
-# Describe how a process exited, distinguishing an abnormal/crash exit (NTSTATUS
-# codes with the high bit set, e.g. 0xC0000005 access violation) from a clean one.
-function Format-ExitInfo {
-    param([System.Diagnostics.Process] $Proc)
-    try {
-        $code = [uint32]($Proc.ExitCode)
-        $kind = if ($code -ge 0x80000000) { 'abnormal exit / likely crash' } else { 'clean exit' }
-        return ('exit code 0x{0:X8} ({1})' -f $code, $kind)
-    }
-    catch { return 'exit code unavailable' }
-}
-
 # Wait until the main window has no transient child dialog (progress dialog),
 # without clicking anything (so an in-flight operation is never cancelled).
 function Wait-NoChildDialog {
@@ -4572,13 +4640,52 @@ function Show-AllFilesExpanded {
     Start-Sleep -Milliseconds 300
 }
 
+function Get-UiaRowItems {
+    param([System.Windows.Automation.AutomationElement] $Root)
+    foreach ($type in @(
+        [System.Windows.Automation.ControlType]::DataItem,
+        [System.Windows.Automation.ControlType]::ListItem,
+        [System.Windows.Automation.ControlType]::TreeItem
+    )) {
+        $items = @(Find-UiaAll -Root $Root -Type $type)
+        if ($items.Count -gt 0) { return $items }
+    }
+    return @()
+}
+
+function Get-UiaRowsAllTypes {
+    param([System.Windows.Automation.AutomationElement] $Root)
+    @(
+        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::DataItem))
+        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::ListItem))
+        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::TreeItem))
+    )
+}
+
+function Expand-DupeRowsByKeyboard {
+    param([System.Windows.Automation.AutomationElement[]] $Rows)
+
+    $targetRoot = $Rows | Where-Object { $_.Current.Name -eq 'Duplicate Files' } | Select-Object -First 1
+    $targetHash = $Rows | Where-Object { $_.Current.Name -match '\([.]' } | Select-Object -First 1
+    $targets = @($targetRoot, $targetHash) | Where-Object { $_ }
+
+    foreach ($target in $targets) {
+        try {
+            $sp = $target.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+            $sp.Select()
+        }
+        catch {}
+        try { $target.SetFocus() } catch {}
+        Send-Keys '{RIGHT}' 120
+        Send-Keys '{MULTIPLY}' 180
+    }
+}
+
 # Enumerate UIA items in the current view whose Name contains a backslash
 # (i.e. real file-system rows, not tab headers or extension-pane categories).
 function Get-TreePathItems {
     param([System.Windows.Automation.AutomationElement] $Window)
-    $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $items = Get-UiaRowItems -Root $Window
     @($items | Where-Object { $_.Current.Name -match '\\' })
 }
 
@@ -4616,9 +4723,20 @@ function Select-TreeFiles {
 
 # --- Fixture for the file-op verification scan -------------------------------
 function New-FileOpsVerifyRoot {
-    param([string] $Root)
+    param(
+        [string] $Root,
+        [switch] $DedupOnly
+    )
     if (Test-Path -LiteralPath $Root) { Clear-TestAttributes -Path $Root; Remove-Item -LiteralPath $Root -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $Root | Out-Null
+
+    if ($DedupOnly) {
+        $dedupDir = Join-Path $Root 'dedup'
+        New-Item -ItemType Directory -Force -Path $dedupDir | Out-Null
+        New-TestFile -Path (Join-Path $dedupDir 'd_src.bin')  -Size 65536 -Seed 211
+        New-TestFile -Path (Join-Path $dedupDir 'd_copy.bin') -Size 65536 -Seed 211
+        return
+    }
 
     # Highly compressible payload (low-entropy repeating pattern) so NTFS/WOF
     # actually shrink the allocation and the compression state is unambiguous.
@@ -4656,14 +4774,6 @@ function New-FileOpsVerifyRoot {
         New-MarkOfWeb -Path $f
     }
 
-    # Deduplicate candidates: two identical pairs (same Seed+Size => identical
-    # content => grouped in the Duplicate Files tab).
-    $dedupDir = Join-Path $Root 'dedup'
-    New-Item -ItemType Directory -Force -Path $dedupDir | Out-Null
-    New-TestFile -Path (Join-Path $dedupDir 'd_src.bin')   -Size 65536 -Seed 211
-    New-TestFile -Path (Join-Path $dedupDir 'd_copy.bin')  -Size 65536 -Seed 211
-    New-TestFile -Path (Join-Path $dedupDir 'd_src2.bin')  -Size 49152 -Seed 212
-    New-TestFile -Path (Join-Path $dedupDir 'd_copy2.bin') -Size 49152 -Seed 212
 }
 
 function Test-CompressionOps {
@@ -4897,19 +5007,39 @@ function Test-DedupOps {
     }
     if (!(Select-TabItem $dupeTab)) { Assert-Skip $g 'Duplicate Files tab selectable' 'Could not invoke tab'; return }
     Start-Sleep -Milliseconds 900
+    Invoke-Win32CommandId -Window $Window -CommandId 32829 | Out-Null
+    Start-Sleep -Milliseconds 600
     Assert-Pass $g 'Duplicate Files tab selected for dedup'
 
     $f1 = Join-Path $dir 'd_src.bin'
     $f2 = Join-Path $dir 'd_copy.bin'
 
-    $rows = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($rows.Count -eq 0) { $rows = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($rows.Count -eq 0) { $rows = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
-    $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
-    $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
+    $row1 = $null
+    $row2 = $null
+    $rows = @()
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(8)
+    while ([System.DateTime]::UtcNow -lt $deadline) {
+        $rows = Get-UiaRowsAllTypes -Root $Window
+        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
+        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
+        if ($row1 -and $row2) { break }
+
+        Expand-DupeRowsByKeyboard -Rows $rows
+
+        $rows = Get-UiaRowsAllTypes -Root $Window
+        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
+        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
+        if ($row1 -and $row2) { break }
+
+        Invoke-Win32CommandId -Window $Window -CommandId 32829 | Out-Null
+        Send-Keys '^{F3}' 250
+        Start-Sleep -Milliseconds 250
+    }
 
     if (!$row1 -or !$row2) {
-        Assert-Skip $g 'Duplicate pair rows located' 'd_src.bin / d_copy.bin not exposed as UIA rows in the duplicate list'
+        $sampleNames = @($rows | ForEach-Object { $_.Current.Name } | Select-Object -First 8)
+        $detail = if ($sampleNames.Count -gt 0) { "Sample row names: $($sampleNames -join ' | ')" } else { 'No UIA rows found' }
+        Assert-Skip $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows in the duplicate list. $detail"
         return
     }
 
@@ -4921,10 +5051,6 @@ function Test-DedupOps {
         Assert-Skip $g 'Duplicate pair distinct before dedup' "Could not read distinct ids (1=$($idBefore1.Id), 2=$($idBefore2.Id))"
     }
 
-    # Deterministic multi-select via UIA SelectionItemPattern (more reliable than
-    # synthetic Ctrl+click on an owner-drawn list).  Focusing a row makes the dupe
-    # control receive WM_SETFOCUS -> SetLogicalFocus(LF_DUPELIST), which (with the
-    # logical focus being sticky across menu-bar opens) satisfies DupeListHasFocus().
     $selectedViaUia = $false
     try {
         Click-Element $row1
@@ -4936,41 +5062,41 @@ function Test-DedupOps {
     catch {}
 
     if (-not $selectedViaUia) {
-        # Fallback: synthetic plain-click + Ctrl+click.
         Click-Element $row1; Start-Sleep -Milliseconds 250
         Invoke-CtrlClickElement $row2 | Out-Null
     }
 
-    # Guarantee OS focus is on the dupe list regardless of which selection path
-    # ran. Click-Element may fall back to InvokePattern (no mouse event -> no
-    # WM_SETFOCUS), leaving m_logicalFocus != LF_DUPELIST. UIA SetFocus() on a
-    # list-item element routes the underlying SetFocus(hwnd) call to the
-    # containing ListView window, which fires WM_SETFOCUS ->
-    # CTreeListControl::OnSetFocus -> SetLogicalFocus(LF_DUPELIST).
     try { $row1.SetFocus(); Start-Sleep -Milliseconds 150 } catch {}
 
-    # Validate the precondition directly: how many of the two target rows are
-    # actually selected?  This is what determines whether the command is enabled.
     $selCount = Get-SelectedRowCount -Rows @($row1, $row2)
     if ($selCount -lt 2) {
-        # WinDirStat correctly disables Deduplicate without >=2 selected files, so
-        # this is an expected skip, not a product bug or a false negative.
         Assert-Skip $g 'Select duplicate pair (2 rows)' "Only $selCount/2 rows confirmed selected; the owner-drawn duplicate list did not accept a 2-item UIA selection. WinDirStat correctly disables Deduplicate without 2 selected files (expected)."
         return
     }
     Assert-Pass $g "Duplicate pair selected (d_src.bin + d_copy.bin; $selCount/2 confirmed selected via UIA)"
 
     $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Deduplicate'
-    if ($r -eq 'disabled') {
-        # 2 files ARE selected and the dupe list holds logical focus, yet the
-        # command is disabled -> a genuine discrepancy worth investigating, not an
-        # expected skip.  Surface it as a warning.
-        Assert-Warn $g 'Deduplicate with Hardlink enabled' "2 duplicate files selected with the dupe list focused, but WinDirStat left 'Deduplicate with Hardlink' disabled (check OnUpdateCreateHardlink: focus=LF_DUPELIST, >=2 IT_FILE on same volume)."
-        return
+    $probeReason = $null
+    if ($r -eq $true) {
+        Assert-Pass $g 'Deduplicate with Hardlink menu item invoked'
     }
-    if ($r -ne $true) {
-        Assert-Skip $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu'
-        return
+    elseif ($r -eq 'disabled') {
+        if (Invoke-Win32CommandId -Window $Window -CommandId 32843) {
+            $probeReason = 'disabled'
+        }
+        else {
+            Assert-Warn $g 'Deduplicate with Hardlink enabled' "2 duplicate files selected with the dupe list focused, but WinDirStat left 'Deduplicate with Hardlink' disabled and command id 32843 could not be posted (check OnUpdateCreateHardlink: focus=LF_DUPELIST, >=2 IT_FILE on same volume)."
+            return
+        }
+    }
+    else {
+        if (Invoke-Win32CommandId -Window $Window -CommandId 32843) {
+            $probeReason = 'missing'
+        }
+        else {
+            Assert-Skip $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu and command id 32843 probe failed'
+            return
+        }
     }
     Wait-OpComplete -Window $Window
 
@@ -4978,17 +5104,25 @@ function Test-DedupOps {
     $idAfter2 = Get-FileIdentity -Path $f2
     if ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id -and $idAfter1.Links -ge 2) {
         Assert-Pass $g "Dedup: d_src.bin and d_copy.bin are now one hardlink (shared id, $($idAfter1.Links) links) (verified on disk)"
+        if ($probeReason) {
+            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but command id 32843 executed and dedup succeeded."
+        }
     }
     elseif ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id) {
         Assert-Pass $g 'Dedup: duplicate pair now share the same NTFS file id (verified on disk)'
+        if ($probeReason) {
+            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but command id 32843 executed and dedup succeeded."
+        }
     }
     else {
-        Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))"
+        $extra = if ($probeReason) { " (menuState=$probeReason; invoked via command id 32843 probe)" } else { '' }
+        Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))$extra"
     }
 }
 
-# Orchestrates the file-operation verification phase: stage files, launch, scan
-# (with duplicates) via the dialog, then drive each operation.
+# Orchestrates file-operation verification in two scans:
+# 1) compression/sparse/motw on the general fixture
+# 2) dedup on a reset fixture containing only d_src.bin + d_copy.bin
 function Test-FileOpsVerification {
     param([string] $Exe)
     Write-GroupHeader 'File Operations Verification Setup'
@@ -5004,37 +5138,40 @@ function Test-FileOpsVerification {
         return
     }
 
-    $win = Start-App -Exe $Exe
-    if (!$win) { Assert-Fail $g 'App launches for file-op verification' 'Window not found'; return }
-    Assert-Pass $g 'App launches for file-op verification'
-
-    if (Invoke-ScanViaDialog -Window $win -ScanPath $verifyRoot -TimeoutMs 15000) {
-        Assert-Pass $g 'File-op verification scan started via Drive Select dialog'
-    } else {
-        Assert-Fail $g 'File-op verification scan started' 'Dialog interaction failed'
-        return
-    }
-
-    if (Wait-ScanDone -TimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 60000))) {
-        Assert-Pass $g 'File-op verification scan completed'
-    } else {
-        Assert-Fail $g 'File-op verification scan completed' "Still scanning after ${TimeoutSeconds}s"
-        return
-    }
-
-    $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
-    if ($win) { $script:win = $win } else { Assert-Fail $g 'Main window after scan' 'Lost window reference'; return }
-    $script:tabCtrl = Find-UiaFirst -Root $script:win -Type ([System.Windows.Automation.ControlType]::Tab)
+    $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'file-op verification'
+    if (!$win) { return }
 
     foreach ($phase in @(
         { Test-CompressionOps -Window $script:win -ScanRoot $verifyRoot },
         { Test-SparsifyOps    -Window $script:win -ScanRoot $verifyRoot },
-        { Test-MotwOps        -Window $script:win -ScanRoot $verifyRoot },
-        { Test-DedupOps       -Window $script:win -ScanRoot $verifyRoot }
+        { Test-MotwOps        -Window $script:win -ScanRoot $verifyRoot }
     )) {
         try { & $phase } catch { Assert-Fail 'OpVerify' 'File-op phase executes' $_.Exception.Message }
         Assert-WindowReady $script:win
     }
+
+    try { Stop-App } catch {}
+
+    try {
+        New-FileOpsVerifyRoot -Root $verifyRoot -DedupOnly
+        $dedupFileCount = @(Get-ChildItem -LiteralPath $verifyRoot -Recurse -File).Count
+        if ($dedupFileCount -ne 2) {
+            Assert-Fail $g 'Dedup verification fixture prepared' "Expected 2 files, found $dedupFileCount at $verifyRoot"
+            return
+        }
+        Assert-Pass $g "Dedup verification fixture prepared with 2 files: $verifyRoot"
+    }
+    catch {
+        Assert-Fail $g 'Dedup verification fixture prepared' "Error: $_"
+        return
+    }
+
+    $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'dedup verification'
+    if (!$win) { return }
+
+    try { Test-DedupOps -Window $script:win -ScanRoot $verifyRoot }
+    catch { Assert-Fail 'OpVerify' 'Dedup phase executes' $_.Exception.Message }
+    Assert-WindowReady $script:win
 }
 
 function Test-StorageAnalytics {
@@ -5291,13 +5428,6 @@ function Test-LoadResults {
         # Verify that the drive selection dialog did NOT auto-open
         $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
             -Scope ([System.Windows.Automation.TreeScope]::Descendants)
-        Write-ColoredLine "    [Debug] File exists: $(Test-Path -LiteralPath $testFile)" DarkYellow
-        Write-ColoredLine "    [Debug] Win title: '$($win.Current.Name)', ClassName: '$($win.Current.ClassName)'" DarkYellow
-        $childWindows = Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
-            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
-        foreach ($cw in $childWindows) {
-            Write-ColoredLine "    [Debug] Child window: Name='$($cw.Current.Name)', ClassName='$($cw.Current.ClassName)'" DarkYellow
-        }
         if ($driveDialog -and $driveDialog.Current.ClassName -eq '#32770' -and $driveDialog.Current.Name -like '*Select*') {
             Assert-Fail $g "Load $desc suppresses drive dialog" 'Drive dialog auto-opened'
             Dismiss-DriveDialog -Dialog $driveDialog
@@ -8033,6 +8163,17 @@ try {
         return
     }
 
+    $sizeGate = Test-ScratchDrivesUnderSizeLimit -Letters @($driveOneLetter, $driveTwoLetter) -MaxBytes 4GB
+    if (-not $sizeGate.Allowed) {
+        if ($sizeGate.Unknown.Count -gt 0) {
+            Assert-Skip 'Reparse' 'Scratch drive size check' "Could not read total size for: $($sizeGate.Unknown -join ', '). Refusing to format without confirming each drive is < 4GB."
+        }
+        else {
+            Assert-Skip 'Reparse' 'Scratch drive size check' "Refusing to format scratch drives unless each is < 4GB. Too large: $($sizeGate.TooLarge -join ', ')."
+        }
+        return
+    }
+
     # Validate parameters.
     Assert-ValidTestDrive -Letter $driveOneLetter
     Assert-ValidTestDrive -Letter $driveTwoLetter
@@ -8956,19 +9097,44 @@ function Invoke-EnumerationSuite {
         $tsShare = '\\tsclient\' + $drive
         $tsRoot  = $tsShare + $afterColon
         if (Test-PathQuiet '\\tsclient\c\windows\system32') {
-            # The fixture was staged on the local volume; replicate it on the
-            # tsclient path so WinDirStat has the same tree to scan via the
-            # RDP virtual drive (\\tsclient\<X> maps to the client machine's
-            # <X>: drive, which is a different physical device from the server).
+            # \\tsclient\<X> maps to the RDP CLIENT's <X>: drive.  Usually that is
+            # a different physical device than the server's, so the fixture must
+            # be replicated on the tsclient path before WinDirStat can scan it.
+            # But in a same-machine RDP session \\tsclient\C aliases the server's
+            # OWN C:, making $tsRoot the very directory the local fixture already
+            # lives in.  Probe with a unique marker so we never (a) redundantly
+            # re-stage or (b) delete the shared fixture in the cleanup below — a
+            # deletion that would cascade into the RootRedirects / Threads groups
+            # that scan the same $canon tree afterwards.
+            $probeName = '.tsclient-probe-' + $PID + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+            $aliasesLocal = $false
             try {
-                $null = New-EnumFixture -Root $tsRoot
-                Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $Expected -FastEngine 0
+                Set-Content -LiteralPath (Join-Path $canon $probeName) -Value 'x' -ErrorAction Stop
+                $aliasesLocal = Test-PathQuiet (Join-Path $tsRoot $probeName)
+            }
+            catch {}
+            finally {
+                Remove-Item -LiteralPath (Join-Path $canon $probeName) -Force -ErrorAction SilentlyContinue
+            }
+
+            try {
+                if ($aliasesLocal) {
+                    # Same-machine RDP: scan the already-present fixture in place.
+                    # Do NOT stage or delete — the suite-level cleanup owns $canon.
+                    Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $Expected -FastEngine 0
+                }
+                else {
+                    try {
+                        $tsExpected = New-EnumFixture -Root $tsRoot
+                        Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $tsExpected -FastEngine 0
+                    }
+                    finally {
+                        Remove-Item -LiteralPath $tsRoot -Recurse -Force -ErrorAction SilentlyContinue
+                    }
+                }
             }
             catch {
-                Assert-Fail $g '\\tsclient\<drive>' "Failed to stage fixture at tsclient path: $($_.Exception.Message)"
-            }
-            finally {
-                Remove-Item -LiteralPath $tsRoot -Recurse -Force -ErrorAction SilentlyContinue
+                Assert-Fail $g '\\tsclient\<drive>' "tsclient enumeration failed: $($_.Exception.Message)"
             }
         }
         else {
@@ -9304,6 +9470,17 @@ function Invoke-EnumerationSuite {
         }
         if (-not (Get-Command Format-Volume -ErrorAction SilentlyContinue)) {
             Assert-Skip $g 'Format-Volume available' 'Storage cmdlets not available on this system'
+            return
+        }
+
+        $sizeGate = Test-ScratchDrivesUnderSizeLimit -Letters @($oneLetter, $twoLetter) -MaxBytes 4GB
+        if (-not $sizeGate.Allowed) {
+            if ($sizeGate.Unknown.Count -gt 0) {
+                Assert-Skip $g 'Scratch drive size check' "Could not read total size for: $($sizeGate.Unknown -join ', '). Refusing to format without confirming each drive is < 4GB."
+            }
+            else {
+                Assert-Skip $g 'Scratch drive size check' "Refusing to format scratch drives unless each is < 4GB. Too large: $($sizeGate.TooLarge -join ', ')."
+            }
             return
         }
 
@@ -9874,7 +10051,7 @@ if (-not $KeepArtifacts -and (Test-Path -LiteralPath $BuildRoot)) {
 
 $swAll.Stop()
 
-# Distinct names from the $Skip parameter (PowerShell variable names are case-insensitive).
+# Tally the unified result registry across every suite that ran.
 $total     = $script:Results.Count
 $passCount = @($script:Results | Where-Object Status -eq 'PASS').Count
 $failCount = @($script:Results | Where-Object Status -eq 'FAIL').Count
@@ -9926,6 +10103,27 @@ if ($failCount -gt 0) {
     $script:Results | Where-Object Status -eq 'FAIL' | ForEach-Object {
         Write-ColoredLine "    $symbolFail [$($_.Suite)/$($_.Group)] $($_.Name)" Red
         if ($_.Detail) { Write-ColoredLine "        $($_.Detail)" DarkRed }
+    }
+    Write-Host ''
+}
+
+# Surface the reason behind every WARN and SKIP, not just the count.  The suite's
+# goal is a clean run; when a check warns or skips, the "why" needs to be visible
+# at a glance rather than buried in the streaming output above.
+if ($warnCount -gt 0) {
+    Write-ColoredLine '  WARNED CHECKS:' Yellow
+    $script:Results | Where-Object Status -eq 'WARN' | ForEach-Object {
+        Write-ColoredLine "    $symbolWarn [$($_.Suite)/$($_.Group)] $($_.Name)" Yellow
+        if ($_.Detail) { Write-ColoredLine "        $($_.Detail)" DarkYellow }
+    }
+    Write-Host ''
+}
+
+if ($skipCount -gt 0) {
+    Write-ColoredLine '  SKIPPED CHECKS:' Yellow
+    $script:Results | Where-Object Status -eq 'SKIP' | ForEach-Object {
+        Write-ColoredLine "    $symbolSkip [$($_.Suite)/$($_.Group)] $($_.Name)" Yellow
+        if ($_.Detail) { Write-ColoredLine "        $($_.Detail)" DarkGray }
     }
     Write-Host ''
 }
