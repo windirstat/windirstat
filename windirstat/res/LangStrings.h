@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string_view>
 constexpr std::wstring_view IDS_ABOUT_ABOUT = L"IDS_ABOUT_ABOUT";
 constexpr std::wstring_view IDS_ABOUT_ABOUT_TEXTss = L"IDS_ABOUT_ABOUT_TEXTss";
@@ -93,7 +93,8 @@ constexpr std::wstring_view IDS_IDLEMESSAGE = L"IDS_IDLEMESSAGE";
 constexpr std::wstring_view IDS_IO_PRIORITY_BELOW_NORMAL = L"IDS_IO_PRIORITY_BELOW_NORMAL";
 constexpr std::wstring_view IDS_IO_PRIORITY_IDLE = L"IDS_IO_PRIORITY_IDLE";
 constexpr std::wstring_view IDS_IO_PRIORITY_NORMAL = L"IDS_IO_PRIORITY_NORMAL";
-constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";`nconstexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
+constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";
+constexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
 constexpr std::wstring_view IDS_LARGEST_FILES = L"IDS_LARGEST_FILES";
 constexpr std::wstring_view IDS_MENU_CANCEL = L"IDS_MENU_CANCEL";
 constexpr std::wstring_view IDS_MENU_CHKDSK = L"IDS_MENU_CHKDSK";
