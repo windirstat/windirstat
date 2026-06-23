@@ -63,6 +63,7 @@ Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", 
 Setting<bool> COptions::ShowElevationPrompt(OptionsGeneral, L"ShowElevationPrompt", true);
 Setting<bool> COptions::ShowMicrosoftProgress(OptionsGeneral, L"ShowMicrosoftProgress", false);
 Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
+Setting<bool> COptions::GroupUnregisteredTypes(OptionsGeneral, L"GroupUnregisteredTypes", false);
 Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
 Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);
 Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);

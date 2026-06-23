@@ -211,6 +211,12 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
     }
 }
 
+// True if the leaf is a file whose extension is in the highlighted (unregistered) set
+static bool IsUnregisteredLeaf(const CItem* item, const std::unordered_set<std::wstring>& set)
+{
+    return item->IsTypeOrFlag(IT_FILE) && set.contains(item->GetExtension());
+}
+
 void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
@@ -221,6 +227,8 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 
     const CDirStatDoc* doc = CDirStatDoc::Get();
     const std::wstring& highlightExt = doc->GetHighlightExtension();
+    const bool unregistered = doc->IsHighlightUnregistered();
+    const auto& highlightExtensions = doc->GetHighlightExtensions();
     const bool isZoomed = doc->IsZoomed();
 
     std::vector<const CItem*> stack;
@@ -245,7 +253,7 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 
         if (item->TmiIsLeaf())
         {
-            if (item->HasExtension(highlightExt))
+            if (unregistered ? IsUnregisteredLeaf(item, highlightExtensions) : item->HasExtension(highlightExt))
             {
                 RenderHighlightRectangle(pdc, rc);
             }

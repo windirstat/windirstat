@@ -67,6 +67,7 @@ void CDirStatDoc::DeleteContents()
 
     // Reset extension data
     GetExtensionData()->clear();
+    m_registeredExtensions.clear();
 
     // Cleanup visual artifacts - controllers manage their own root items
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->DeleteAllItems();
@@ -240,6 +241,30 @@ SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
     return &m_extensionData[ext];
 }
 
+// Snapshots every ".ext" key directly under HKEY_CLASSES_ROOT. Rebuilt with the extension
+// data so registration tests are lock-free set lookups
+void CDirStatDoc::RebuildRegisteredExtensions()
+{
+    if (!m_registeredExtensions.empty()) return;
+
+    CRegKey classes;
+    if (classes.Open(HKEY_CLASSES_ROOT, nullptr, KEY_READ) != ERROR_SUCCESS) return;
+
+    wchar_t name[UCHAR_MAX + 1];
+    for (DWORD i = 0, length = std::size(name); classes.EnumKey(i, name, &length) == ERROR_SUCCESS; ++i, length = std::size(name))
+    {
+        if (name[0] != L'.') continue;
+        _wcslwr_s(name, std::size(name));
+        m_registeredExtensions.emplace(name);
+    }
+}
+
+// True if the extension was present in the HKEY_CLASSES_ROOT snapshot (registered on this PC)
+bool CDirStatDoc::IsExtensionRegistered(const std::wstring& ext) const
+{
+    return m_registeredExtensions.contains(ext);
+}
+
 ULONGLONG CDirStatDoc::GetRootSize() const
 {
     ASSERT(m_rootItem != nullptr);
@@ -294,15 +319,38 @@ bool CDirStatDoc::IsZoomed() const
     return GetZoomItem() != GetRootItem();
 }
 
-void CDirStatDoc::SetHighlightExtension(const std::wstring & ext)
+void CDirStatDoc::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
     m_highlightExtension = ext;
+    m_highlightUnregistered = unregistered;
+
+    // Precompute the unregistered extensions once so the treemap highlight can test each
+    // leaf with a single lock-free lookup instead of a per-leaf registry query
+    m_highlightExtensions.clear();
+    if (unregistered)
+    {
+        for (const auto& [key, rec] : m_extensionData)
+        {
+            if (!key.empty() && !IsExtensionRegistered(key)) m_highlightExtensions.insert(key);
+        }
+    }
+
     CMainFrame::Get()->UpdatePaneText();
 }
 
 std::wstring CDirStatDoc::GetHighlightExtension() const
 {
     return m_highlightExtension;
+}
+
+bool CDirStatDoc::IsHighlightUnregistered() const
+{
+    return m_highlightUnregistered;
+}
+
+const std::unordered_set<std::wstring>& CDirStatDoc::GetHighlightExtensions() const
+{
+    return m_highlightExtensions;
 }
 
 // The root item has been deleted.
@@ -403,25 +451,44 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
 
 void CDirStatDoc::RebuildExtensionData()
 {
+    // Snapshot the registered extensions up front so all registration tests below (and on
+    // the UI thread afterwards) are lock-free lookups against an immutable set
+    RebuildRegisteredExtensions();
+
     // Do initial extension information population if necessary
     if (m_extensionData.empty())
     {
         GetRootItem()->ExtensionDataProcessChildren();
     }
 
-    // Collect iterators to the map entries to avoid copying keys
-    std::vector<CExtensionData::iterator> sortedExtensions;
-    sortedExtensions.reserve(m_extensionData.size());
+    // Each registered extension is colored on its own; when grouping is enabled the
+    // unregistered extensions are gathered so the whole group can share one color
+    const bool group = COptions::GroupUnregisteredTypes;
+    std::vector<CExtensionData::iterator> individual;
+    std::vector<CExtensionData::iterator> unregistered;
+    individual.reserve(m_extensionData.size());
     for (auto it = m_extensionData.begin(); it != m_extensionData.end(); ++it)
     {
-        sortedExtensions.emplace_back(it);
+        const bool grouped = group && !it->first.empty() && !IsExtensionRegistered(it->first);
+        (grouped ? unregistered : individual).emplace_back(it);
     }
 
-    // Sort the iterators based on total bytes in descending order
-    std::ranges::sort(sortedExtensions, [](const auto& a_it, const auto& b_it)
+    // Rank color units by descending bytes; the unregistered group is a single unit
+    // (marked with index 'groupUnit') sized by the sum of its members
+    constexpr size_t groupUnit = SIZE_MAX;
+    ULONGLONG unregisteredBytes = 0;
+    for (const auto& it : unregistered) unregisteredBytes += it->second.GetBytes();
+
+    std::vector<std::pair<ULONGLONG, size_t>> units;
+    units.reserve(individual.size() + 1);
+    for (size_t i = 0; i < individual.size(); ++i)
     {
-        return a_it->second.GetBytes() > b_it->second.GetBytes();
-    });
+        units.emplace_back(individual[i]->second.GetBytes(), i);
+    }
+    if (!unregistered.empty()) units.emplace_back(unregisteredBytes, groupUnit);
+
+    // Sort the color units based on total bytes in descending order
+    std::ranges::sort(units, [](const auto& a, const auto& b) { return a.first > b.first; });
 
     // Initialize colors if not already done
     static std::vector<COLORREF> colors;
@@ -430,19 +497,18 @@ void CDirStatDoc::RebuildExtensionData()
         CTreeMap::GetDefaultPalette(colors);
     }
 
-    // Assign primary colors to extensions
-    const auto extensionsSize = sortedExtensions.size();
-    const auto primaryColorsMax = std::min(colors.size(), extensionsSize);
-    for (const size_t i : std::views::iota(0u, primaryColorsMax))
+    // Assign palette colors by rank: distinct primary colors first, then the shared fallback
+    for (size_t rank = 0; rank < units.size(); ++rank)
     {
-        sortedExtensions[i]->second.color = colors[i];
-    }
-
-    // Assign fallback colors to extensions
-    const auto fallbackColor = colors.back();
-    for (const size_t i : std::views::iota(primaryColorsMax, extensionsSize))
-    {
-        sortedExtensions[i]->second.color = fallbackColor;
+        const COLORREF color = colors[std::min(rank, colors.size() - 1)];
+        if (units[rank].second == groupUnit)
+        {
+            for (const auto& it : unregistered) it->second.color = color;
+        }
+        else
+        {
+            individual[units[rank].second]->second.color = color;
+        }
     }
 }
 

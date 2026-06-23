@@ -258,10 +258,12 @@ protected:
     afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
     afx_msg void OnViewShowTreeMap();
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
+    afx_msg void OnViewGroupUnregisteredTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();
     afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFolderFramesOnTreeMap();

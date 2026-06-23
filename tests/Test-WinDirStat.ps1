@@ -6891,6 +6891,7 @@ $visualSettings = @(
     'FileTreeColorCount',
     'FileTreeColumnOrder',
     'FileTreeColumnWidths',
+    'GroupUnregisteredTypes',
     'LargeToolBar',
     'LayoutPermutation',
     'LayoutTopology',

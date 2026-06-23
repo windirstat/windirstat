@@ -10,6 +10,7 @@ Enhancements
 - Added multilingual support for MSI installer
 - Added file deletion warning before profile deletions
 - Added xxHash (XXH3) as a selectable file hashing algorithm
+- Added option to group unregistered file extensions
 - Improved column width autosizing performance in list and tree views
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog

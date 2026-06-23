@@ -384,6 +384,7 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
+    ON_COMMAND(ID_VIEW_GROUP_TYPES, OnViewGroupUnregisteredTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
@@ -394,6 +395,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_GROUP_TYPES, OnUpdateViewGroupUnregisteredTypes)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
     ON_COMMAND(ID_TREEMAP_SHOW_EXTENSIONS, OnViewShowExtensionsOnTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_SHOW_EXTENSIONS, OnUpdateViewShowExtensionsOnTreeMap)
@@ -1376,6 +1378,14 @@ void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(GetExtensionView()->IsShowTypes());
 }
 
+void CMainFrame::OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI)
+{
+    // Only allow regrouping when types are shown and the scan has finished
+    const CDirStatDoc* doc = CDirStatDoc::Get();
+    pCmdUI->Enable(GetExtensionView()->IsShowTypes() && doc->IsRootDone() && !doc->IsScanRunning());
+    pCmdUI->SetCheck(COptions::GroupUnregisteredTypes);
+}
+
 void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(GetFileTabbedView()->IsWatcherTabVisible());
@@ -1414,6 +1424,16 @@ void CMainFrame::OnViewShowFileTypes()
     {
         MinimizeExtensionView();
     }
+}
+
+void CMainFrame::OnViewGroupUnregisteredTypes()
+{
+    COptions::GroupUnregisteredTypes = !COptions::GroupUnregisteredTypes;
+
+    // Recolor extensions so the unregistered group shares one color, then refresh the list and treemap
+    CDirStatDoc::Get()->RebuildExtensionData();
+    GetExtensionView()->OnUpdate(nullptr, HINT_NULL, nullptr);
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()

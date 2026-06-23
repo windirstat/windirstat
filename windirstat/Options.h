@@ -156,6 +156,7 @@ public:
     static Setting<bool> ShowElevationPrompt;
     static Setting<bool> ShowMicrosoftProgress;
     static Setting<bool> ShowFileTypes;
+    static Setting<bool> GroupUnregisteredTypes;
     static Setting<bool> ShowFreeSpace;
     static Setting<bool> ShowStatusBar;
     static Setting<bool> ShowTimeSpent;

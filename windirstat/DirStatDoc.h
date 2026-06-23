@@ -100,6 +100,7 @@ protected:
 
     CExtensionData* GetExtensionData();
     SExtensionRecord* GetExtensionDataRecord(const std::wstring& ext);
+    bool IsExtensionRegistered(const std::wstring& ext) const;
     ULONGLONG GetRootSize() const;
 
     void RefreshReparsePointItems();
@@ -111,8 +112,10 @@ protected:
     CItem* GetZoomItem() const;
     bool IsZoomed() const;
 
-    void SetHighlightExtension(const std::wstring& ext);
+    void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
     std::wstring GetHighlightExtension() const;
+    bool IsHighlightUnregistered() const;
+    const std::unordered_set<std::wstring>& GetHighlightExtensions() const;
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
@@ -126,6 +129,7 @@ protected:
 
     void RecurseRefreshReparsePoints(CItem* items) const;
     void RebuildExtensionData();
+    void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
@@ -155,6 +159,9 @@ protected:
     CItem* m_rootItem = nullptr; // The very root item
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
     std::wstring m_highlightExtension; // Currently highlighted extension
+    bool m_highlightUnregistered = false; // Highlight all unregistered extensions instead of one
+    std::unordered_set<std::wstring> m_highlightExtensions; // Precomputed unregistered set for the treemap highlight
+    std::unordered_set<std::wstring> m_registeredExtensions; // Snapshot of HKEY_CLASSES_ROOT extensions, rebuilt per scan
 
     std::mutex m_extensionMutex;
     CExtensionData m_extensionData;    // Base for the extension view and cushion colors
