@@ -169,9 +169,10 @@ BOOL CPageGpu::OnInitDialog()
         m_gpuResults[i] = -1.0;
     }
 
-    m_selectedAlgorithm = std::clamp(COptions::GpuHashAlgorithm.Obj(),
-        static_cast<int>(HASH_MD5), static_cast<int>(HASH_SHA512));
     m_useGpu = (COptions::UseGpuHashing && m_gpuAvailable) ? 1 : 0;
+    const int algoSource = m_useGpu ? COptions::GpuHashAlgorithm.Obj() : COptions::FileHashAlgorithm.Obj();
+    m_selectedAlgorithm = std::clamp(algoSource,
+        static_cast<int>(HASH_MD5), static_cast<int>(HASH_SHA512));
 
     UpdateData(FALSE);
     return TRUE;
