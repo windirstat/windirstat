@@ -332,8 +332,7 @@ MSI_OptionsDlgDescription=Per personalizzare l'installazione di WinDirStat selez
 MSI_OptionsDlgDesktopShortcut=Crea collegamento programma sul desktop
 MSI_OptionsDlgHeaderTitle=Opzioni installazione
 MSI_OptionsDlgTitle=Opzioni WinDirStat
-IDS_PAGE_ADVANCED_IO_PRIORITY=Priorità I/O della scansione
-
-IDS_IO_PRIORITY_NORMAL=Normale
 IDS_IO_PRIORITY_BELOW_NORMAL=Sotto il normale
 IDS_IO_PRIORITY_IDLE=Inattivo
+IDS_IO_PRIORITY_NORMAL=Normale
+IDS_PAGE_ADVANCED_IO_PRIORITY=Priorità I/O della scansione

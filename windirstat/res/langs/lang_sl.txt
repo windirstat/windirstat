@@ -332,8 +332,7 @@ MSI_OptionsDlgDescription=Izberite spodnje možnosti za prilagoditev namestitve 
 MSI_OptionsDlgDesktopShortcut=Ustvari bližnjico na namizju
 MSI_OptionsDlgHeaderTitle=Možnosti namestitve
 MSI_OptionsDlgTitle=Možnosti WinDirStat
-IDS_PAGE_ADVANCED_IO_PRIORITY=Prednost V/I skeniranja
-
-IDS_IO_PRIORITY_NORMAL=Normalno
 IDS_IO_PRIORITY_BELOW_NORMAL=Pod normalno
 IDS_IO_PRIORITY_IDLE=Neaktivno
+IDS_IO_PRIORITY_NORMAL=Normalno
+IDS_PAGE_ADVANCED_IO_PRIORITY=Prednost V/I skeniranja
