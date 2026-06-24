@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Åpne WinDirStat hjelp på internett.\nBrukerhåndbok
 IDS_HIDDEN=Skj&ulte elementer
 IDS_HOT_COST=Kostnad for varmt nivå ($/{}/mnd.):
 IDS_IDLEMESSAGE=Klar
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elementer merket | {} filer | {} mapper
 IDS_JUNCTIONS=Filsystemkoblinger (Junctions)
 IDS_LARGEST_FILES=Største filer
 IDS_MENU_CANCEL=A&vslutt

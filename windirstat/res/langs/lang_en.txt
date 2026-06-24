@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Open the WinDirStat Online Help.\nManual
 IDS_HIDDEN=Hidden
 IDS_HOT_COST=Hot Cost ($/{}/mo):
 IDS_IDLEMESSAGE=Ready
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} Items Selected | {} Files | {} Folders
 IDS_JUNCTIONS=Junctions
 IDS_LARGEST_FILES=Largest Files
 IDS_MENU_CANCEL=C&ancel

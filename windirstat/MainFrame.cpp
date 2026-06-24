@@ -1323,7 +1323,8 @@ void CMainFrame::UpdatePaneText()
                     totalFiles += item->GetFilesCount();
                     totalFolders += item->GetFoldersCount();
                 }
-                fileSelectionText = Localization::Format(IDS_sITEMS_SELECTED, items.size(), totalFiles, totalFolders);
+                fileSelectionText = Localization::Format(IDS_ITEMSs_SELECTED_FILESs_FOLDERSs,
+                    items.size(), totalFiles, totalFolders);
             }
 
             for (size = 0; const auto& item : items)

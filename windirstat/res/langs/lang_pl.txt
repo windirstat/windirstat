@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Otwiera okno pomocy WinDirStat\nPomoc
 IDS_HIDDEN=Ukryty
 IDS_HOT_COST=Koszt warstwy gorącej ($/{}/mies.):
 IDS_IDLEMESSAGE=Gotowy
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=Wybrano {} elementy | {} pliki | {} foldery
 IDS_JUNCTIONS=Połączenia
 IDS_LARGEST_FILES=Największe pliki
 IDS_MENU_CANCEL=&Anuluj

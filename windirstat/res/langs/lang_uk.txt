@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Відкриває онлайн допомогу по WinDirStat
 IDS_HIDDEN=Приховано
 IDS_HOT_COST=Вартість гарячого рівня ($/{}/міс.):
 IDS_IDLEMESSAGE=Готово
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=Вибрано елементів: {} | Файлів: {} | Папок: {}
 IDS_JUNCTIONS=Перехрестя
 IDS_LARGEST_FILES=Найбільші файли
 IDS_MENU_CANCEL=Скасувати
