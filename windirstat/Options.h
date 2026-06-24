@@ -203,6 +203,7 @@ public:
     static Setting<int> FilteringMaxAgeDays;
     static Setting<int> TreeMapAmbientLightPercent;
     static Setting<int> TreeMapBrightness;
+    static Setting<int> TreeMapFolderFramesDrawThreshold;
     static Setting<int> TreeMapHeightFactor;
     static Setting<int> TreeMapLightSourceX;
     static Setting<int> TreeMapLightSourceY;

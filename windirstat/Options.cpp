@@ -140,6 +140,7 @@ Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits",
 Setting<int> COptions::FilteringMaxAgeDays(OptionsGeneral, L"FilteringMaxAgeDays", 0);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
 Setting<int> COptions::TreeMapBrightness(OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100);
+Setting<int> COptions::TreeMapFolderFramesDrawThreshold(OptionsTreeMap, L"TreeMapFolderFramesDrawThreshold", 5, 3, 128);
 Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100);
 Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200);
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);

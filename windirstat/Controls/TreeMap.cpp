@@ -366,7 +366,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
     TEXTMETRIC tm{};
     pdc->GetTextMetrics(&tm);
-    const int headerHeight = tm.tmHeight + 4;
+    const int headerHeight = tm.tmHeight + 2;
 
     m_renderArea = rc;
 
@@ -582,7 +582,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
             continue;
         }
 
-        if (m_options.showFolderFrames && !state.asRoot)
+        // Draw folder frames and headers if the rectangle is large enough
+        if (m_options.showFolderFrames && !state.asRoot &&
+            std::min(state.rc.Width(), state.rc.Height()) >= COptions::TreeMapFolderFramesDrawThreshold)
         {
             std::wstring name = item->GetName();
             const int textWidth = state.rc.Width() - 8;
@@ -639,8 +641,6 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
     if (m_options.showFolderFrames)
     {
         CSetBkMode soBkMode(pdc, TRANSPARENT);
-        CBrush borderBrush(DarkMode::WdsSysColor(COLOR_3DSHADOW));
-
         const CPoint rcOffset = rc.TopLeft();
 
         for (const auto& folder : foldersToDraw)
@@ -650,6 +650,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
+                CBrush borderBrush(DimColor(GetDepthColor(folder.depth)));
                 pdc->FrameRect(&rcFolder, &borderBrush);
 
                 if (folder.showHeader)
