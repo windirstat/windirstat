@@ -51,7 +51,7 @@ void CFileWatcherControl::StartMonitoring()
 {
     StopMonitoring();
 
-    const auto* doc = CDirStatDoc::Get();
+    const auto* doc = CWinDirStatModel::Get();
     if (!doc || !doc->HasRootItem()) return;
 
     if (CItem* root = doc->GetRootItem(); root != nullptr)

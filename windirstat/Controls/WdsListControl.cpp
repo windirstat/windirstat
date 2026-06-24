@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -999,7 +999,7 @@ LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
     UNREFERENCED_PARAMETER(lParam);
 
     m_selectionChangePending = false;
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
 
     return 0;
 }

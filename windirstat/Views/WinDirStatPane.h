@@ -18,37 +18,39 @@
 #pragma once
 
 #include "pch.h"
-#include "WinDirStatPane.h"
-#include "ExtensionListControl.h"
+
+class CItem;
+enum MODEL_CHANGE : std::uint8_t;
 
 //
-// CExtensionView. The upper right view, which shows the extensions and their
-// cushion colors.
+// CWinDirStatPane. A plain child window base for splitter/tab panes.
+// It supplies the small subset of pane behavior this UI uses.
 //
-class CExtensionView final : public CWinDirStatPane
+class CWinDirStatPane : public CWnd
 {
 protected:
-    CExtensionView();
-    DECLARE_DYNCREATE(CExtensionView)
+    DECLARE_DYNAMIC(CWinDirStatPane)
 
-    ~CExtensionView() override = default;
+    CWinDirStatPane() = default;
+    ~CWinDirStatPane() override = default;
 
-    void SysColorChanged();
-    bool IsShowTypes() const;
-    void ShowTypes(bool show);
+    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    void PostNcDestroy() override;
 
-    void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
+    virtual void OnDraw(CDC* pDC);
 
-    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-    void OnDraw(CDC* pDC) override;
-    void SetSelection();
+public:
+    virtual void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item);
 
-    bool m_showTypes = true; // Whether this view shall be shown (F8 option)
-    CExtensionListControl m_extensionListControl; // The list control
-
+protected:
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnPaint();
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+
+    void NotifyOtherPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 };

@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -498,7 +498,7 @@ void CMainFrame::SetProgressComplete()
     }
 
     DestroyProgress();
-    CDirStatDoc::Get()->SetTitlePrefix(wds::strEmpty);
+    CWinDirStatModel::Get()->SetScanTitlePrefix(wds::strEmpty);
     CFileTreeControl::Get()->SortItems();
     CFileDupeControl::Get()->SortItems();
     CFileTopControl::Get()->SortItems();
@@ -531,7 +531,7 @@ void CMainFrame::SuspendState(const bool suspend)
 void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
-    const auto currentRoot = CDirStatDoc::Get()->GetRootItem();
+    const auto currentRoot = CWinDirStatModel::Get()->GetRootItem();
     if (currentRoot != m_workingItem &&
         currentRoot != nullptr && !currentRoot->IsDone())
     {
@@ -583,7 +583,7 @@ void CMainFrame::UpdateProgress()
     }
 
     TrimString(titlePrefix);
-    CDirStatDoc::Get()->SetTitlePrefix(titlePrefix);
+    CWinDirStatModel::Get()->SetScanTitlePrefix(titlePrefix);
 }
 
 void CMainFrame::CreateStatusProgress()
@@ -731,7 +731,7 @@ void CMainFrame::OnClose()
     m_shuttingDown = true;
 
     // Suspend the scan and wait for scan to complete
-    CDirStatDoc::Get()->StopScanningEngine(CDirStatDoc::Abort);
+    CWinDirStatModel::Get()->StopScanningEngine(CWinDirStatModel::Abort);
 
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();
@@ -786,6 +786,60 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
     m_layoutPopup.Create(this);
     RebuildLayout();
     return TRUE;
+}
+
+void CMainFrame::UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item)
+{
+    if (m_fileTabbedView != nullptr && m_fileTabbedView != sender)
+    {
+        static_cast<CWinDirStatPane*>(m_fileTabbedView)->OnUpdate(sender, change, item);
+    }
+    if (m_extensionView != nullptr && m_extensionView != sender)
+    {
+        static_cast<CWinDirStatPane*>(m_extensionView)->OnUpdate(sender, change, item);
+    }
+    if (m_treeMapView != nullptr && m_treeMapView != sender)
+    {
+        static_cast<CWinDirStatPane*>(m_treeMapView)->OnUpdate(sender, change, item);
+    }
+}
+
+void CMainFrame::UpdateFrameTitleForScan(LPCWSTR scanName)
+{
+    UpdateFrameTitleForDocument(scanName);
+}
+
+BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+    if (CWnd* focus = GetFocus())
+    {
+        for (CWnd* target = focus; target != nullptr && target != this; target = target->GetParent())
+        {
+            if (target->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+            {
+                return TRUE;
+            }
+        }
+    }
+
+    if (CFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+    {
+        return TRUE;
+    }
+
+    if (CWinDirStatModel::Get() != nullptr &&
+        CWinDirStatModel::Get()->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+    {
+        return TRUE;
+    }
+
+    if (CWinApp* app = AfxGetApp();
+        app != nullptr && app->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
@@ -936,7 +990,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     }
 
     // UI updates that do need to processed frequently
-    if (!CDirStatDoc::Get()->IsRootDone() && !IsScanSuspended())
+    if (!CWinDirStatModel::Get()->IsRootDone() && !IsScanSuspended())
     {
         // Update the visual progress at the bottom of the screen
         UpdateProgress();
@@ -1028,7 +1082,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
         }
 
         std::vector<std::wstring> paths;
-        for (const auto& item : CDirStatDoc::Get()->GetAllSelected())
+        for (const auto& item : CWinDirStatModel::Get()->GetAllSelected())
         {
             paths.push_back(item->GetPath());
         }
@@ -1140,7 +1194,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
 
 void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 {
-    const auto& items = CDirStatDoc::Get()->GetAllSelected();
+    const auto& items = CWinDirStatModel::Get()->GetAllSelected();
 
     // get list of paths from items
     std::vector<std::wstring> paths;
@@ -1178,7 +1232,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         bool udcValid = GetLogicalFocus() == LF_FILETREE && !items.empty();
         if (udcValid) for (const auto& item : items)
         {
-            udcValid &= CDirStatDoc::Get()->UserDefinedCleanupWorksForItem(&udc, item);
+            udcValid &= CWinDirStatModel::Get()->UserDefinedCleanupWorksForItem(&udc, item);
         }
 
         customMenu->AppendMenu(MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
@@ -1256,7 +1310,7 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
         m_logicalFocus = lf;
         UpdatePaneText();
 
-        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
     }
 }
 
@@ -1287,7 +1341,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
 void CMainFrame::UpdatePaneText()
 {
     const auto focus = GetLogicalFocus();
-    std::wstring fileSelectionText = !CDirStatDoc::Get()->IsScanRunning() ?
+    std::wstring fileSelectionText = !CWinDirStatModel::Get()->IsScanRunning() ?
         Localization::Lookup(IDS_IDLEMESSAGE) : wds::strEmpty;
     ULONGLONG size = MAXULONGLONG;
 
@@ -1299,12 +1353,12 @@ void CMainFrame::UpdatePaneText()
         size = hoverSize;
     }
 
-    // Only get the data the document is not actively updating
-    else if (CDirStatDoc::Get()->IsRootDone())
+    // Only get the data if the scan model is not actively updating
+    else if (CWinDirStatModel::Get()->IsRootDone())
     {
         if (focus != LF_EXTLIST)
         {
-            const auto& items = CDirStatDoc::Get()->GetAllSelected();
+            const auto& items = CWinDirStatModel::Get()->GetAllSelected();
             if (items.size() == 1)
             {
                 // If single item selected, show full path
@@ -1335,7 +1389,7 @@ void CMainFrame::UpdatePaneText()
         }
         else if (fileSelectionText.empty())
         {
-            fileSelectionText = wds::chrStar + CDirStatDoc::Get()->GetHighlightExtension();
+            fileSelectionText = wds::chrStar + CWinDirStatModel::Get()->GetHighlightExtension();
         }
     }
 
@@ -1397,7 +1451,7 @@ void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
 void CMainFrame::OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI)
 {
     // Only allow regrouping when types are shown and the scan has finished
-    const CDirStatDoc* doc = CDirStatDoc::Get();
+    const CWinDirStatModel* doc = CWinDirStatModel::Get();
     pCmdUI->Enable(GetExtensionView()->IsShowTypes() && doc->IsRootDone() && !doc->IsScanRunning());
     pCmdUI->SetCheck(COptions::GroupUnregisteredTypes);
 }
@@ -1425,7 +1479,7 @@ void CMainFrame::OnViewTreeMapUseLogical()
     COptions::TreeMapUseLogical = !COptions::TreeMapUseLogical;
     if (GetTreeMapView()->IsShowTreeMap())
     {
-        CDirStatDoc::Get()->RefreshItem(CDirStatDoc::Get()->GetRootItem());
+        CWinDirStatModel::Get()->RefreshItem(CWinDirStatModel::Get()->GetRootItem());
     }
 }
 
@@ -1447,16 +1501,16 @@ void CMainFrame::OnViewGroupUnregisteredTypes()
     COptions::GroupUnregisteredTypes = !COptions::GroupUnregisteredTypes;
 
     // Recolor extensions so the unregistered group shares one color, then refresh the list and treemap
-    CDirStatDoc::Get()->RebuildExtensionData();
-    GetExtensionView()->OnUpdate(nullptr, HINT_NULL, nullptr);
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+    CWinDirStatModel::Get()->RebuildExtensionData();
+    GetExtensionView()->OnUpdate(nullptr, MODEL_CHANGE_NONE, nullptr);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()
 {
     COptions::TreeMapShowExtensions = !static_cast<bool>(COptions::TreeMapShowExtensions);
     COptions::TreeMapOptions.showExtensions = COptions::TreeMapShowExtensions;
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
 void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
@@ -1468,7 +1522,7 @@ void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 {
     COptions::TreeMapShowFolderFrames = !static_cast<bool>(COptions::TreeMapShowFolderFrames);
     COptions::TreeMapOptions.showFolderFrames = COptions::TreeMapShowFolderFrames;
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
 void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
@@ -1655,7 +1709,7 @@ void CMainFrame::OnToolsPermissions()
 void CMainFrame::OnUpdateToolsPermissions(CCmdUI* pCmdUI)
 {
     // Only allow launching a scan once the file tree has been fully populated
-    const auto* doc = CDirStatDoc::Get();
+    const auto* doc = CWinDirStatModel::Get();
     pCmdUI->SetCheck(GetFileTabbedView()->IsPermsTabVisible());
     pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() ||
         (doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning()));
@@ -1673,7 +1727,7 @@ void CMainFrame::OnToolsStorageAnalytics()
 
 void CMainFrame::OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI)
 {
-    const auto* doc = CDirStatDoc::Get();
+    const auto* doc = CWinDirStatModel::Get();
     pCmdUI->SetCheck(GetFileTabbedView()->IsStorageAnalyticsTabVisible());
     pCmdUI->Enable(GetFileTabbedView()->IsStorageAnalyticsTabVisible() ||
         (doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning()));

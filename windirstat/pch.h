@@ -112,7 +112,7 @@
 #include "BlockingQueue.h"
 #include "Options.h"
 #include "WinDirStat.h"
-#include "DirStatDoc.h"
+#include "WinDirStatModel.h"
 #include "Item.h"
 #include "SmartPointer.h"
 #include "Localization.h"

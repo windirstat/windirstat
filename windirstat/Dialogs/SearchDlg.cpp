@@ -87,7 +87,7 @@ void SearchDlg::OnBnClickedOk()
     CLayoutDialogEx::OnOK();
 
     // Process search request
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(),
+    CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         COptions::SearchTerm, COptions::SearchCase,
         COptions::SearchWholePhrase, COptions::SearchRegex);
 

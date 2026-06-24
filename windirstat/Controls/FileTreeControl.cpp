@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -104,7 +104,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
         CItem* indexItem = item->FindHardlinksIndexItem();
         if (indexItem == nullptr) return;
 
-        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, indexItem);
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_ACTION, indexItem);
         ExpandItem(indexItem);
     }
     else if (item->IsTypeOrFlag(IT_HLINKS_FILE))
@@ -113,7 +113,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
         CItem* linkedItem = const_cast<CItem*>(item)->GetLinkedItem();
         if (linkedItem == nullptr || linkedItem == item) return;
 
-        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, linkedItem);
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_ACTION, linkedItem);
     }
 }
 

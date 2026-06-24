@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ class CItem;
 class CItemDupe;
 class CItemTop;
 class CItemSearch;
+class CWinDirStatPane;
 enum LOGICAL_FOCUS : uint8_t;
 
 //
@@ -58,42 +59,43 @@ struct alignas(std::hardware_destructive_interference_size) SExtensionRecord
 using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 
 //
-// Hints for UpdateAllViews()
+// Model changes that panes can respond to.
 //
-using VIEW_HINT = enum VIEW_HINT : std::uint8_t
+enum MODEL_CHANGE : std::uint8_t
 {
-    HINT_NULL,                      // General update
-    HINT_NEWROOT,                   // Root item has changed - clear everything.
-    HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
-    HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
-    HINT_SELECTIONSTYLECHANGED,     // Only update selection in TreeMapView
-    HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
-    HINT_ZOOMCHANGED,               // Only zoom item has changed.
-    HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
-    HINT_TREEMAPSTYLECHANGED        // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_NONE,                // General update
+    MODEL_CHANGE_NEW_ROOT,            // Root item has changed - clear everything.
+    MODEL_CHANGE_SELECTION_ACTION,    // Inform central selection handler to update selection (uses item)
+    MODEL_CHANGE_SELECTION_REFRESH,   // Inform all views to redraw based on current selections
+    MODEL_CHANGE_SELECTION_STYLE,     // Only update selection in TreeMapView
+    MODEL_CHANGE_EXTENSION_SELECTION, // Type list selected a new extension
+    MODEL_CHANGE_ZOOM,                // Only zoom item has changed.
+    MODEL_CHANGE_LIST_STYLE,          // Options: List style (grid/stripes) or treelist colors changed
+    MODEL_CHANGE_TREEMAP_STYLE        // Options: Treemap style (grid, colors etc.) changed
 };
 
 //
-// CDirStatDoc. The "Document" class.
+// CWinDirStatModel. The application model.
 // Owner of the root item and various other data (see data members).
 //
-class CDirStatDoc final : public CDocument
+class CWinDirStatModel final : public CCmdTarget
 {
+    friend class CWinDirStatPane;
+
 public:
-    static CDirStatDoc* Get() { return s_singleton; }
+    static CWinDirStatModel* Get() { return s_singleton; }
+    CWinDirStatModel();
+    ~CWinDirStatModel() override;
 
-protected:
-    CDirStatDoc(); // Created by MFC only
-    DECLARE_DYNCREATE(CDirStatDoc)
-
-    ~CDirStatDoc() override;
-
-    void DeleteContents() override;
-    BOOL OnNewDocument() override;
-    BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
-    BOOL OnOpenDocument(CItem* newroot);
-    void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
-    void SetTitlePrefix(const std::wstring& prefix) const;
+    void ClearScanState();
+    BOOL ResetScan();
+    BOOL StartScan(const std::wstring& pathSpec);
+    BOOL OpenLoadedScan(CItem* loadedRoot);
+    void SetScanPathSpec(const std::wstring& pathSpec);
+    const std::wstring& GetScanPathSpec() const { return m_scanPathSpec; }
+    const std::wstring& GetScanTitle() const { return m_scanTitle; }
+    void SetScanTitle(const std::wstring& title) { m_scanTitle = title; }
+    void SetScanTitlePrefix(const std::wstring& prefix) const;
 
     COLORREF GetCushionColor(const std::wstring& ext);
     COLORREF GetZoomColor() const;
@@ -152,9 +154,15 @@ protected:
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
-    void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CItem* pHint = nullptr);
+    void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
-    static CDirStatDoc* s_singleton;
+private:
+    void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
+
+    static CWinDirStatModel* s_singleton;
+
+    std::wstring m_scanPathSpec;
+    std::wstring m_scanTitle;
 
     CItem* m_rootItem = nullptr; // The very root item
     CItem* m_zoomItem = nullptr;   // Current "zoom root"

@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -236,7 +236,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapLightSourceX = TreeMapOptions.GetLightSourceXPercent();
     TreeMapLightSourceY = TreeMapOptions.GetLightSourceYPercent();
 
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
 void COptions::PreProcessPersistedSettings()

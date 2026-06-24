@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -158,7 +158,7 @@ void CPageTreeMap::OnOK()
 
     COptions::SetTreeMapOptions(m_options);
     COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
 
     CMFCPropertyPage::OnOK();
 }

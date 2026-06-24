@@ -131,6 +131,9 @@
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
+    <ClInclude Include="Views\WinDirStatPane.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
     <ClInclude Include="Views\StorageAnalyticsView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
@@ -215,7 +218,7 @@
     <ClInclude Include="CsvLoader.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="DirStatDoc.h">
+    <ClInclude Include="WinDirStatModel.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Options.h">
@@ -331,6 +334,9 @@
     <ClCompile Include="Views\ExtensionView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="Views\WinDirStatPane.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="Views\StorageAnalyticsView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
@@ -415,7 +421,7 @@
     <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="DirStatDoc.cpp">
+    <ClCompile Include="WinDirStatModel.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Property.cpp">

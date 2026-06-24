@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -94,7 +94,7 @@ void CPagePermissions::OnOK()
 
     // Force colorization to be recomputed and repaint the list
     CItemPerm::InvalidateRuleColors();
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     CMFCPropertyPage::OnOK();
 }
 

@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ protected:
     ~CFileTreeView() override = default;
 
     void CreateColumns(bool all = false);
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
     CFileTreeControl m_control;
 

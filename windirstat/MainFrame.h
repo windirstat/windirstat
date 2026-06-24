@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -207,6 +207,7 @@ protected:
 
     BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
 
     void CreateStatusProgress();
     void CreatePacmanProgress();
@@ -294,6 +295,8 @@ protected:
     afx_msg BOOL OnNcActivate(BOOL bActive);
 public:
     static CMainFrame* Get() { return s_Singleton; }
+    void UpdateFrameTitleForScan(LPCWSTR scanName);
+    void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item);
     void RebuildToolBar();
     void RebuildLayout(bool resetPositions = false);
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;

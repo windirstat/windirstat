@@ -145,7 +145,7 @@ bool CFilePermsControl::StartScan()
 {
     DeleteAllItems();
 
-    const auto* doc = CDirStatDoc::Get();
+    const auto* doc = CWinDirStatModel::Get();
     if (doc == nullptr || !doc->HasRootItem() || !doc->IsRootDone()) return false;
 
     std::unordered_set<const CItem*> roots;

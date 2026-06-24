@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,16 @@
 #pragma once
 
 #include "pch.h"
+#include "WinDirStatPane.h"
 #include "TreeMap.h"
 
-class CDirStatDoc;
+class CWinDirStatModel;
 class CItem;
 
 //
 // CTreeMapView. The treemap window.
 //
-class CTreeMapView final : public CView
+class CTreeMapView final : public CWinDirStatPane
 {
 protected:
     CTreeMapView() = default;
@@ -42,7 +43,7 @@ protected:
 
 protected:
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     void OnDraw(CDC* pDC) override;
     bool IsDrawn() const;
     void Inactivate();
