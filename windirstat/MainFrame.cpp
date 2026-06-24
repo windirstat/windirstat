@@ -1314,8 +1314,8 @@ void CMainFrame::UpdatePaneText()
             else if (items.size() > 1)
             {
                 // If multiple items are selected, show the statistics of selected items, files, and folders
-                int totalFiles = 0;
-                int totalFolders = 0;
+                ULONGLONG totalFiles = 0;
+                ULONGLONG totalFolders = 0;
                 for (const auto& item : items)
                 {
                     if (item->IsTypeOrFlag(IT_FILE)) totalFiles++;
@@ -1324,7 +1324,7 @@ void CMainFrame::UpdatePaneText()
                     totalFolders += item->GetFoldersCount();
                 }
                 fileSelectionText = Localization::Format(IDS_ITEMSs_SELECTED_FILESs_FOLDERSs,
-                    items.size(), totalFiles, totalFolders);
+                    FormatCount(items.size()), FormatCount(totalFiles), FormatCount(totalFolders));
             }
 
             for (size = 0; const auto& item : items)
