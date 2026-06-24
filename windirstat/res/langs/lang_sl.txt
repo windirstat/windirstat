@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Odpri spletno pomoč za WinDirStat.\nPriročnik
 IDS_HIDDEN=Skrito
 IDS_HOT_COST=Strošek vroče ravni ($/{}/mes.):
 IDS_IDLEMESSAGE=Pripravljeno
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} izbranih elementov | {} datotek | {} map
 IDS_JUNCTIONS=Stiki (Junctions)
 IDS_LARGEST_FILES=Največje datoteke
 IDS_MENU_CANCEL=Pre&kliči

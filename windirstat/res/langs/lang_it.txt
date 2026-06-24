@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Apri guida in linea WinDirStat\nGuida in linea
 IDS_HIDDEN=Nascosto
 IDS_HOT_COST=Costo livello elevato ($/{}/mese):
 IDS_IDLEMESSAGE=Pronto
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elementi selezionati | {} file | {} cartelle
 IDS_JUNCTIONS=Punti di giunzione
 IDS_LARGEST_FILES=File più grandi
 IDS_MENU_CANCEL=A&nnulla

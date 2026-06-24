@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=WinDirStat Çevrimiçi Yardım'ı açın.\nKılavuz
 IDS_HIDDEN=Gizli
 IDS_HOT_COST=Sıcak Katman Maliyeti ($/{}/ay):
 IDS_IDLEMESSAGE=Hazır
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} öğe seçildi | {} dosya | {} klasör
 IDS_JUNCTIONS=Bağlantı Noktaları
 IDS_LARGEST_FILES=En Büyük Dosyalar
 IDS_MENU_CANCEL=İptal

@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Åbn WinDirStat onlinehjælpen.\nManual
 IDS_HIDDEN=Skjult
 IDS_HOT_COST=Omkostning for varmt niveau ($/{}/md.):
 IDS_IDLEMESSAGE=Parat
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elementer markeret | {} filer | {} mapper
 IDS_JUNCTIONS=Kryds
 IDS_LARGEST_FILES=Største filer
 IDS_MENU_CANCEL=Annuller

@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=開啟 WinDirStat 網上說明。\n手冊
 IDS_HIDDEN=隱藏
 IDS_HOT_COST=經常性存取成本 ($/{}/月)：
 IDS_IDLEMESSAGE=就緒
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=已選取 {} 個項目 | {} 個檔案 | {} 個資料夾
 IDS_JUNCTIONS=連接點
 IDS_LARGEST_FILES=最大的檔案
 IDS_MENU_CANCEL=取消(&A)

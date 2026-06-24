@@ -88,6 +88,7 @@ IDS_HELP_MANUAL=Avaa WinDirStatin käyttöohjeen\nOhje
 IDS_HIDDEN=Piilotettu
 IDS_HOT_COST=Kuuman tason kustannus ($/{}/kk):
 IDS_IDLEMESSAGE=Valmis
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} kohdetta valittu | {} tiedostoa | {} kansiota
 IDS_JUNCTIONS=Liitokset
 IDS_LARGEST_FILES=Suurimmat tiedostot
 IDS_MENU_CANCEL=P&eruuta
