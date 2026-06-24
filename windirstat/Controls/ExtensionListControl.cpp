@@ -150,6 +150,7 @@ int CExtensionListControl::CListItem::Compare(const CWdsListItem* baseOther, con
 
 BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
+    ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_CONTEXTMENU()
@@ -306,6 +307,13 @@ void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 }
 
+void CExtensionListControl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    const auto pNMListView = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+    if (pNMListView->iItem != -1) OnSearchExtension();
+    *pResult = 0;
+}
+
 void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
 {
     CWdsListControl::OnSetFocus(pOldWnd);
@@ -381,6 +389,7 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     menu.AppendMenu(MF_STRING | aggregateFlags, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
     menu.AppendMenu(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
+    SetMenuDefaultItem(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE);
 
     // Add search bitmap to menu
     if (m_searchBitmap.GetSafeHandle() == nullptr)
