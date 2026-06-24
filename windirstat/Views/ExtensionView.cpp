@@ -49,9 +49,9 @@ void CExtensionView::ShowTypes(const bool show)
     OnUpdate(nullptr, 0, nullptr);
 }
 
-void CExtensionView::SetHighlightExtension(const std::wstring & ext)
+void CExtensionView::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
-    CDirStatDoc::Get()->SetHighlightExtension(ext);
+    CDirStatDoc::Get()->SetHighlightExtension(ext, unregistered);
     if (GetFocus() == &m_extensionListControl)
     {
         CDirStatDoc::Get()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);

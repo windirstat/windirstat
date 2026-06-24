@@ -8,6 +8,7 @@ param(
     [string]$Build,
     [string]$EstimatedSize,
     [string]$ProductCode,
+    [int]$Jobs = 0,
     [switch]$GenerateOnly
 )
 
@@ -198,9 +199,9 @@ function Generate-WxlFiles {
     $langFiles = Get-ChildItem -Path "$LangDir\lang_*.txt"
     foreach ($file in $langFiles) {
         $code = ($file.BaseName -replace '^lang_', '').ToLower()
-        
+
         $lines = [System.IO.File]::ReadAllLines($file.FullName, [System.Text.UTF8Encoding]::new($false))
-        
+
         $msiKeys = @{}
         foreach ($line in $lines) {
             if ($line -match '^MSI_([^=]+)=(.*)$') {
@@ -209,20 +210,20 @@ function Generate-WxlFiles {
                 $msiKeys[$key] = $value
             }
         }
-        
+
         if (-not $msiKeys.ContainsKey('CULTURE') -or -not $msiKeys.ContainsKey('LCID') -or -not $msiKeys.ContainsKey('CODEPAGE')) {
             continue
         }
-        
+
         $culture = $msiKeys['CULTURE']
         $lcid = [int]$msiKeys['LCID']
         $codepage = $msiKeys['CODEPAGE']
-        
+
         $xmlLines = @(
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<WixLocalization Culture=""$culture"" Codepage=""$codepage"" xmlns=""http://wixtoolset.org/schemas/v4/wxl"">"
         )
-        
+
         $sortedKeys = $msiKeys.Keys | Sort-Object
         foreach ($key in $sortedKeys) {
             if ($key -eq 'CULTURE' -or $key -eq 'LCID' -or $key -eq 'CODEPAGE') {
@@ -231,15 +232,15 @@ function Generate-WxlFiles {
             $escapedValue = Escape-XmlString $msiKeys[$key]
             $xmlLines += "  <String Id=""$key"" Value=""$escapedValue""/>"
         }
-        
+
         $xmlLines += "</WixLocalization>"
         $xmlContent = $xmlLines -join "`r`n"
-        
+
         $wxlFileName = "WinDirStat_$code.wxl"
         $wxlPath = Join-Path $OutputDir $wxlFileName
-        
+
         [System.IO.File]::WriteAllText($wxlPath, $xmlContent, [System.Text.UTF8Encoding]::new($false))
-        
+
         $languagesList.Add([PSCustomObject]@{
             Code     = $code
             Culture  = $culture
@@ -258,7 +259,18 @@ if ($GenerateOnly) {
 }
 
 # Dynamically generate .wxl files and load language metadata (except 'en')
-$languages = Generate-WxlFiles | Where-Object { $_.Code -ne 'en' }
+$languages = @(Generate-WxlFiles | Where-Object { $_.Code -ne 'en' })
+
+if ($Jobs -le 0) {
+    $jobsFromEnv = 0
+    if ([int]::TryParse($env:WDS_MSI_LANG_JOBS, [ref]$jobsFromEnv) -and $jobsFromEnv -gt 0) {
+        $Jobs = $jobsFromEnv
+    }
+    else {
+        $Jobs = [Math]::Min([Math]::Max([Environment]::ProcessorCount - 1, 1), 6)
+    }
+}
+$Jobs = [Math]::Max(1, $Jobs)
 
 
 # Version/release args shared by every wix build invocation
@@ -285,45 +297,264 @@ $embeddedLcids.Add(1033)   # base English is always present
 
 $failed = [System.Collections.Generic.List[string]]::new()
 
+$languageJobScript = {
+    param(
+        [string]$ScriptRoot,
+        [string]$Arch,
+        [string]$MsiPath,
+        [string]$RelType,
+        [string]$MajVer,
+        [string]$MinVer,
+        [string]$Patch,
+        [string]$Build,
+        [string]$EstimatedSize,
+        [string]$ProductCode,
+        [string]$LicenseRtf,
+        [string]$TempRoot,
+        [string]$Code,
+        [string]$Culture,
+        [int]$Lcid,
+        [string]$WxlPath
+    )
+
+    $ErrorActionPreference = 'Stop'
+    Set-Location $ScriptRoot
+
+    function Read-LogText {
+        param([string]$Path)
+        if (Test-Path $Path) {
+            return [System.IO.File]::ReadAllText($Path)
+        }
+        return ''
+    }
+
+    $workDir = Join-Path $TempRoot "$Arch-$Code"
+    $tmpMsi = Join-Path $workDir "WinDirStat-$Arch-$Code.msi"
+    $tmpMst = Join-Path $workDir "WinDirStat-$Arch-$Code.mst"
+    $buildOut = Join-Path $workDir 'wix-build.out.log'
+    $buildErr = Join-Path $workDir 'wix-build.err.log'
+    $transformOut = Join-Path $workDir 'wix-transform.out.log'
+    $transformErr = Join-Path $workDir 'wix-transform.err.log'
+    $logParts = [System.Collections.Generic.List[string]]::new()
+
+    try {
+        New-Item -ItemType Directory -Force -Path $workDir | Out-Null
+
+        $localVerArgs = @(
+            '-d', "RELTYPE=$RelType",
+            '-d', "MAJVER=$MajVer",
+            '-d', "MINVER=$MinVer",
+            '-d', "PATCH=$Patch",
+            '-d', "BUILD=$Build",
+            '-d', "EstimatedSize=$EstimatedSize",
+            '-d', "ProductCode=$ProductCode",
+            '-d', "LicenseRtf=$LicenseRtf"
+        )
+
+        # Fall back to en-US so strings the WixUI extension doesn't localize for
+        # this culture resolve to English instead of failing the build.
+        $buildArgs = @(
+            'build',
+            '-arch', $Arch,
+            'WinDirStat.wxs',
+            '-loc', $WxlPath,
+            '-culture', $Culture,
+            '-culture', 'en-US',
+            '-o', $tmpMsi,
+            '-intermediatefolder', (Join-Path $workDir 'build'),
+            '-pdbtype', 'none'
+        ) + $localVerArgs + @(
+            '-ext', 'WixToolset.UI.wixext',
+            '-ext', 'WixToolset.Util.wixext'
+        )
+
+        & wix @buildArgs > $buildOut 2> $buildErr
+        $buildExitCode = $LASTEXITCODE
+        foreach ($logFile in @($buildOut, $buildErr)) {
+            $logText = Read-LogText $logFile
+            if (-not [string]::IsNullOrWhiteSpace($logText)) {
+                $logParts.Add($logText.Trim())
+            }
+        }
+        if ($buildExitCode -ne 0) {
+            return [PSCustomObject]@{
+                Code    = $Code
+                Culture = $Culture
+                Lcid    = $Lcid
+                Success = $false
+                Stage   = 'wix build'
+                MstPath = $null
+                Log     = ($logParts -join [Environment]::NewLine)
+            }
+        }
+
+        $transformArgs = @(
+            'msi',
+            'transform',
+            $MsiPath,
+            $tmpMsi,
+            '-out', $tmpMst,
+            '-t', 'language',
+            '-intermediateFolder', (Join-Path $workDir 'transform')
+        )
+
+        & wix @transformArgs > $transformOut 2> $transformErr
+        $transformExitCode = $LASTEXITCODE
+        foreach ($logFile in @($transformOut, $transformErr)) {
+            $logText = Read-LogText $logFile
+            if (-not [string]::IsNullOrWhiteSpace($logText)) {
+                $logParts.Add($logText.Trim())
+            }
+        }
+        if ($transformExitCode -ne 0) {
+            Remove-Item $tmpMsi -ErrorAction SilentlyContinue
+            return [PSCustomObject]@{
+                Code    = $Code
+                Culture = $Culture
+                Lcid    = $Lcid
+                Success = $false
+                Stage   = 'wix msi transform'
+                MstPath = $null
+                Log     = ($logParts -join [Environment]::NewLine)
+            }
+        }
+        if (-not (Test-Path $tmpMst)) {
+            Remove-Item $tmpMsi -ErrorAction SilentlyContinue
+            return [PSCustomObject]@{
+                Code    = $Code
+                Culture = $Culture
+                Lcid    = $Lcid
+                Success = $false
+                Stage   = 'transform output'
+                MstPath = $null
+                Log     = 'Transform file was not created.'
+            }
+        }
+
+        Remove-Item $tmpMsi -ErrorAction SilentlyContinue
+
+        return [PSCustomObject]@{
+            Code    = $Code
+            Culture = $Culture
+            Lcid    = $Lcid
+            Success = $true
+            Stage   = 'complete'
+            MstPath = $tmpMst
+            Log     = ($logParts -join [Environment]::NewLine)
+        }
+    }
+    catch {
+        return [PSCustomObject]@{
+            Code    = $Code
+            Culture = $Culture
+            Lcid    = $Lcid
+            Success = $false
+            Stage   = 'job'
+            MstPath = $null
+            Log     = $_.Exception.Message
+        }
+    }
+}
+
+Write-Host "  Building language transforms with up to $Jobs parallel job(s)..."
+
+$pending = [System.Collections.Queue]::new()
 foreach ($lang in $languages) {
-    $wxl     = $lang.WxlPath
-    $tmpMsi  = Join-Path $tmpDir "WinDirStat-$Arch-$($lang.Code).msi"
-    $tmpMst  = Join-Path $tmpDir "WinDirStat-$Arch-$($lang.Code).mst"
+    $pending.Enqueue($lang)
+}
 
-    # Fall back to en-US so strings the WixUI extension doesn't localize for
-    # this culture resolve to English instead of failing the build.
-    Write-Host "  [$($lang.Culture)] building localized MSI..."
-    & wix build -arch $Arch 'WinDirStat.wxs' `
-        -loc $wxl -culture $lang.Culture -culture 'en-US' `
-        -o $tmpMsi @verArgs `
-        -ext WixToolset.UI.wixext `
-        -ext WixToolset.Util.wixext
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "  wix build failed for $($lang.Culture) - skipping"
-        $failed.Add($lang.Culture)
+$running = @()
+$results = [System.Collections.Generic.List[object]]::new()
+
+while ($pending.Count -gt 0 -or $running.Count -gt 0) {
+    while ($pending.Count -gt 0 -and $running.Count -lt $Jobs) {
+        $lang = $pending.Dequeue()
+        Write-Host "  [$($lang.Culture)] starting localized MSI/transform job..."
+        $job = Start-Job -ScriptBlock $languageJobScript -ArgumentList @(
+            $PSScriptRoot,
+            $Arch,
+            $MsiPath,
+            $RelType,
+            $MajVer,
+            $MinVer,
+            $Patch,
+            $Build,
+            $EstimatedSize,
+            $ProductCode,
+            $licenseRtf,
+            $tmpDir,
+            $lang.Code,
+            $lang.Culture,
+            $lang.Lcid,
+            $lang.WxlPath
+        )
+        $running += [PSCustomObject]@{
+            Job  = $job
+            Lang = $lang
+        }
+    }
+
+    if ($running.Count -eq 0) {
         continue
     }
 
-    Write-Host "  [$($lang.Culture)] creating language transform..."
-    & wix msi transform $MsiPath $tmpMsi -out $tmpMst -t language
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "  wix msi transform failed for $($lang.Culture) - skipping"
-        $failed.Add($lang.Culture)
-        Remove-Item $tmpMsi -ErrorAction SilentlyContinue
-        continue
+    Wait-Job -Job @($running | ForEach-Object { $_.Job }) -Any | Out-Null
+
+    $finished = @($running | Where-Object { $_.Job.State -ne 'Running' })
+    foreach ($entry in $finished) {
+        $job = $entry.Job
+        $lang = $entry.Lang
+
+        try {
+            $jobOutput = @(Receive-Job -Job $job -ErrorAction Stop)
+            $result = $jobOutput | Select-Object -Last 1
+            if ($null -eq $result) {
+                throw 'Job returned no result.'
+            }
+        }
+        catch {
+            $result = [PSCustomObject]@{
+                Code    = $lang.Code
+                Culture = $lang.Culture
+                Lcid    = $lang.Lcid
+                Success = $false
+                Stage   = 'job'
+                MstPath = $null
+                Log     = $_.Exception.Message
+            }
+        }
+        finally {
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+
+        $results.Add($result)
+        if ($result.Success) {
+            Write-Host "  [$($result.Culture)] language transform ready."
+        }
+        else {
+            Write-Warning "  $($result.Stage) failed for $($result.Culture) - skipping"
+            if (-not [string]::IsNullOrWhiteSpace($result.Log)) {
+                Write-Warning $result.Log
+            }
+            $failed.Add($result.Culture)
+        }
     }
-    if (-not (Test-Path $tmpMst)) {
-        Write-Warning "  Transform file not created for $($lang.Culture) - skipping"
-        $failed.Add($lang.Culture)
-        Remove-Item $tmpMsi -ErrorAction SilentlyContinue
+
+    $finishedIds = @($finished | ForEach-Object { $_.Job.Id })
+    $running = @($running | Where-Object { $finishedIds -notcontains $_.Job.Id })
+}
+
+foreach ($lang in $languages) {
+    $result = $results | Where-Object { $_.Code -eq $lang.Code } | Select-Object -First 1
+    if ($null -eq $result -or -not $result.Success) {
         continue
     }
 
     Write-Host "  [$($lang.Culture)] embedding transform (LCID $($lang.Lcid))..."
-    Add-LanguageTransform -MsiPath $MsiPath -MstPath $tmpMst -Lcid $lang.Lcid
+    Add-LanguageTransform -MsiPath $MsiPath -MstPath $result.MstPath -Lcid $lang.Lcid
     $embeddedLcids.Add($lang.Lcid)
 
-    Remove-Item $tmpMsi, $tmpMst -ErrorAction SilentlyContinue
+    Remove-Item $result.MstPath -ErrorAction SilentlyContinue
 }
 
 Write-Host "  Updating Template Summary Information..."

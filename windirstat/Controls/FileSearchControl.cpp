@@ -32,8 +32,6 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
 END_MESSAGE_MAP()
 
-CFileSearchControl* CFileSearchControl::m_singleton = nullptr;
-
 std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTerm, const bool searchCase, const bool useRegex)
 {
     try

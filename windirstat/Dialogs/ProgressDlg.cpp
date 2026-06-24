@@ -153,3 +153,75 @@ HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
     return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
+
+BEGIN_MESSAGE_MAP(CWdsProgressCtrl, CProgressCtrl)
+    ON_WM_PAINT()
+    ON_WM_ERASEBKGND()
+END_MESSAGE_MAP()
+
+BOOL CWdsProgressCtrl::OnEraseBkgnd(CDC* /*pDC*/)
+{
+    return TRUE;
+}
+
+void CWdsProgressCtrl::OnPaint()
+{
+    CPaintDC dc(this);
+    CRect rect;
+    GetClientRect(&rect);
+
+    const bool isDark = DarkMode::IsDarkModeActive();
+    const COLORREF trackPenColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
+    const COLORREF trackBrushColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
+
+    // Draw track background and border
+    {
+        CPen trackPen(PS_SOLID, 1, trackPenColor);
+        CBrush trackBrush(trackBrushColor);
+        const CSelectObject soPen(&dc, &trackPen);
+        const CSelectObject soBrush(&dc, &trackBrush);
+        dc.RoundRect(&rect, CPoint(4, 4));
+    }
+
+    // Draw progress fill (square)
+    const COLORREF progColor = DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
+    CRect progRect = rect;
+    progRect.DeflateRect(1, 1);
+
+    CRgn clipRgn;
+    clipRgn.CreateRoundRectRgn(rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1, 2, 2);
+    dc.SelectClipRgn(&clipRgn);
+
+    if (GetStyle() & PBS_MARQUEE)
+    {
+        const ULONGLONG tick = GetTickCount64();
+        const float cycle = static_cast<float>(tick % 1500) / 1500.0f;
+        const int blockWidth = std::max(10, progRect.Width() / 5);
+        const int xOffset = static_cast<int>(cycle * (progRect.Width() + blockWidth)) - blockWidth;
+
+        const int origLeft = progRect.left;
+        const int origRight = progRect.right;
+
+        progRect.left = std::clamp(origLeft + xOffset, origLeft, origRight);
+        progRect.right = std::clamp(origLeft + xOffset + blockWidth, origLeft, origRight);
+
+        if (progRect.left < progRect.right)
+        {
+            dc.FillSolidRect(&progRect, progColor);
+        }
+    }
+    else
+    {
+        int lower = 0, upper = 100;
+        GetRange(lower, upper);
+        const float percent = (upper > lower) ? std::clamp(static_cast<float>(GetPos() - lower) / (upper - lower), 0.0f, 1.0f) : 0.0f;
+
+        if (percent > 0.0f)
+        {
+            progRect.right = std::max(progRect.left, progRect.left + static_cast<int>(progRect.Width() * percent));
+            dc.FillSolidRect(&progRect, progColor);
+        }
+    }
+
+    dc.SelectClipRgn(NULL);
+}

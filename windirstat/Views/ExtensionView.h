@@ -36,7 +36,7 @@ protected:
     bool IsShowTypes() const;
     void ShowTypes(bool show);
 
-    void SetHighlightExtension(const std::wstring& ext);
+    void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
 
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
     void OnDraw(CDC* pDC) override;

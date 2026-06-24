@@ -63,6 +63,7 @@ Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", 
 Setting<bool> COptions::ShowElevationPrompt(OptionsGeneral, L"ShowElevationPrompt", true);
 Setting<bool> COptions::ShowMicrosoftProgress(OptionsGeneral, L"ShowMicrosoftProgress", false);
 Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
+Setting<bool> COptions::GroupUnregisteredTypes(OptionsGeneral, L"GroupUnregisteredTypes", false);
 Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
 Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);
 Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
@@ -76,20 +77,24 @@ Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::TreeMapShowExtensions(OptionsTreeMap, L"TreeMapShowExtensions", (CTreeMap::GetDefaults().showExtensions));
+Setting<bool> COptions::TreeMapShowFolderFrames(OptionsTreeMap, L"TreeMapShowFolderFrames", (CTreeMap::GetDefaults().showFolderFrames));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", true);
 Setting<bool> COptions::UseFastScanEngine(OptionsGeneral, L"UseFastScanEngine", true);
 Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
 Setting<bool> COptions::ProcessHardlinks(OptionsGeneral, L"ProcessHardlinks", true);
-Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
-Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
-Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor3(OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor4(OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255));
-Setting<COLORREF> COptions::FileTreeColor5(OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0));
-Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0));
-Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0));
+Setting<COLORREF> COptions::FileTreeColors[TREELISTCOLORCOUNT] =
+{
+    { OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140) },
+    { OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64) },
+    { OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64) },
+    { OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64) },
+    { OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255) },
+    { OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0) },
+    { OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0) },
+    { OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0) }
+};
 Setting<COLORREF> COptions::TreeMapGridColor(OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor);
 Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255));
 Setting<std::wstring> COptions::PermsColorAccount[PERMSRULECOUNT] =
@@ -124,7 +129,7 @@ Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
 Setting<int> COptions::DarkMode(OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
 Setting<int> COptions::FileHashAlgorithm(OptionsGeneral, L"FileHashAlgorithm",
-    HASH_SHA512, HASH_MD5, HASH_SHA512);
+    HASH_XXHASH, HASH_MD5, HASH_XXHASH);
 Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 10000);
 Setting<int> COptions::MinimizeViewThreshold(OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
@@ -142,6 +147,8 @@ Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
+Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_SUB_ROWS);
+Setting<int> COptions::LayoutPermutation(OptionsGeneral, L"LayoutPermutation", 0, 0, 3);
 Setting<RECT> COptions::AboutWindowRect(OptionsGeneral, L"AboutWindowRect");
 Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"WindowRect");
 Setting<RECT> COptions::SearchWindowRect(OptionsSearch, L"WindowRect");
@@ -220,6 +227,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
+    TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
     TreeMapGridColor = TreeMapOptions.gridColor;
     TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
     TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
@@ -268,6 +276,7 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
+    TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;
     TreeMapOptions.gridColor = TreeMapGridColor;
     TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
     TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);

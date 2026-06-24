@@ -394,7 +394,17 @@ static CItem* LoadResultsJson(std::ifstream& reader)
 CItem* LoadResults(const std::wstring& path)
 {
     std::ifstream reader(path);
+    std::vector<char> buffer(1ul * wds::Mi);
+    reader.rdbuf()->pubsetbuf(buffer.data(), buffer.size());
     if (!reader.is_open()) return nullptr;
+
+    char bom[3] = {};
+    if (reader.read(bom, 3); std::string_view(bom, 3) != "\xEF\xBB\xBF")
+    {
+        reader.clear();
+        reader.seekg(0);
+    }
+
     return IsJsonPath(path) ? LoadResultsJson(reader) : LoadResultsCsv(reader);
 }
 

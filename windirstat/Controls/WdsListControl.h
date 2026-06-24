@@ -158,11 +158,12 @@ public:
     // Selection change batching
     void PostSelectionChanged();
     void DeselectAll();
+    CFont* GetFont() const;
 
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
-    int GetSubItemWidth(CWdsListItem* item, int subitem);
+    int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);
     void SavePersistentAttributes() const;
 
     // Owner-drawn related members
@@ -186,6 +187,8 @@ protected:
     // Selection change batching
     static constexpr DWORD WM_SELECTION_CHANGED = WM_APP + 1;
     bool m_selectionChangePending = false;
+    mutable HFONT m_cachedFont = NULL;
+    mutable bool m_isFontCached = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -197,4 +200,5 @@ protected:
     afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
     afx_msg virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 };

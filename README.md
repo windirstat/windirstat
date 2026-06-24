@@ -92,7 +92,7 @@ WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio soluti
 
 ## Contributors
 
-You can contribute by responding to issues, developing source code, or developing translations.
+You can contribute by responding to issues, [developing](https://github.com/windirstat/windirstat/wiki/Developers) source code, or developing [translations](https://github.com/windirstat/windirstat/wiki/Contribute-Translation).
 
 Thank you to everyone who has helped shape WinDirStat over the years.
 

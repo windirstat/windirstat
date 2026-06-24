@@ -38,7 +38,8 @@ using HashAlgorithm = enum HashAlgorithm {
     HASH_SHA1,
     HASH_SHA256,
     HASH_SHA384,
-    HASH_SHA512
+    HASH_SHA512,
+    HASH_XXHASH
 };
 
 struct HashAlgorithmInfo
@@ -53,7 +54,8 @@ constexpr std::array HashAlgorithms = {
     HashAlgorithmInfo{ HASH_SHA1, BCRYPT_SHA1_ALGORITHM, L"SHA1" },
     HashAlgorithmInfo{ HASH_SHA256, BCRYPT_SHA256_ALGORITHM, L"SHA256" },
     HashAlgorithmInfo{ HASH_SHA384, BCRYPT_SHA384_ALGORITHM, L"SHA384" },
-    HashAlgorithmInfo{ HASH_SHA512, BCRYPT_SHA512_ALGORITHM, L"SHA512" }
+    HashAlgorithmInfo{ HASH_SHA512, BCRYPT_SHA512_ALGORITHM, L"SHA512" },
+    HashAlgorithmInfo{ HASH_XXHASH, nullptr, L"xxHash" }
 };
 
 // Used at runtime to distinguish between mount points and junction points since they
@@ -70,6 +72,7 @@ constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset) noexcept
 
 // WMI helpers
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause);
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause = L"__PATH IS NOT NULL");
 bool CreateShadowCopy(const std::wstring& volumePath);
 

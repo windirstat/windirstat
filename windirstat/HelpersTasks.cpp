@@ -29,6 +29,7 @@ static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG Proc
         reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
 static void CloseAlgProvider(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
@@ -82,6 +83,35 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
             if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR || ret == 0) break;
         }
     }
+}
+
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause)
+{
+    std::vector<std::wstring> results;
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"),
+            CComBSTR(std::format(L"SELECT {} FROM {} WHERE {}", property, wmiClass, whereClause).c_str()),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        return results;
+    }
+
+    while (true)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
+
+        CComVariant vtVal;
+        if (SUCCEEDED(pObj->Get(property.c_str(), 0, &vtVal, nullptr, nullptr)) && vtVal.vt == VT_BSTR)
+        {
+            results.emplace_back(vtVal.bstrVal);
+        }
+    }
+
+    return results;
 }
 
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause)
@@ -678,6 +708,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
+        bool isXxHash = false;
+        SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHash = { FreeXxHashState, nullptr };
         SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
     };
@@ -687,6 +719,21 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     for (const auto& [algorithm, id, name] : HashAlgorithms)
     {
         HashContext ctx;
+
+        // xxHash is not provided by BCrypt; use the bundled implementation
+        if (algorithm == HASH_XXHASH)
+        {
+            ctx.name = name;
+            ctx.isXxHash = true;
+            ctx.xxHash = XXH3_createState();
+            if (ctx.xxHash.IsValid())
+            {
+                XXH3_64bits_reset(ctx.xxHash);
+            }
+            contexts.emplace_back(std::move(ctx));
+            continue;
+        }
+
         BCRYPT_ALG_HANDLE hAlg = nullptr;
         if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer(CloseAlgProvider, hAlg);
@@ -724,7 +771,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     {
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
-                (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+                if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
+                else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
     }
 
@@ -732,7 +780,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     std::wstring result = filePath + L"\n\n";
     for (auto& ctx : contexts)
     {
-        if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
+        if (ctx.isXxHash)
+        {
+            XXH64_canonical_t canonical;
+            XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(ctx.xxHash));
+            ctx.hash.assign(canonical.digest, canonical.digest + sizeof(canonical.digest));
+        }
+        else if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
             static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;
 
         // Add to result

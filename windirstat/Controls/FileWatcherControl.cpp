@@ -19,8 +19,6 @@
 #include "FileWatcherControl.h"
 #include "FinderBasic.h"
 
-CFileWatcherControl* CFileWatcherControl::m_singleton = nullptr;
-
 CFileWatcherControl::CFileWatcherControl()
     : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), LF_WATCHERLIST, false)
 {

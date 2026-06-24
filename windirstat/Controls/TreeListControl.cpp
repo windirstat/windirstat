@@ -682,7 +682,10 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
     CWaitCursor wc;
 
-    int maxwidth = GetSubItemWidth(item, 0);
+    CClientDC dc(this);
+    CSelectObject sofont(&dc, GetFont());
+
+    int maxwidth = GetSubItemWidth(item, 0, &dc);
     const auto childCount = item->GetTreeListChildCount();
     std::vector<CWdsListItem*> children;
     for (const int c : std::views::iota(0, childCount))
@@ -696,7 +699,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         // first few bunch of visible items
         if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
         {
-            maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0));
+            maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0, &dc));
         }
     }
 

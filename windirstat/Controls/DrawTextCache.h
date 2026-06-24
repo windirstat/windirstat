@@ -53,6 +53,7 @@ private:
         USHORT width;
         USHORT height;
         USHORT dpi;
+        HFONT font;
 
         bool operator==(const CacheKey& other) const = default;
     };
@@ -69,6 +70,7 @@ private:
             hash ^= std::hash<USHORT>{}(key.width) << 4;
             hash ^= std::hash<USHORT>{}(key.height) << 5;
             hash ^= (std::hash<USHORT>{}(key.dpi)) << 6;
+            hash ^= (std::hash<HFONT>{}(key.font)) << 7;
             return hash;
         }
     };
@@ -106,4 +108,6 @@ private:
 
     CacheMap m_cache;
     LRUList m_leastRecentList;
+    mutable HDC m_lastHDC = nullptr;
+    mutable USHORT m_lastDpi = USER_DEFAULT_SCREEN_DPI;
 };

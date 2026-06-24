@@ -20,6 +20,8 @@
 #include "pch.h"
 #include "PacMan.h"
 #include "FileTabbedView.h"
+#include "Dialogs/ProgressDlg.h"
+#include "LayoutPopup.h"
 
 class CWdsSplitterWnd;
 class CMainFrame;
@@ -85,11 +87,24 @@ public:
     void StopTracking(BOOL bAccept) override;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
+    void ResetUserPosition() { m_wasTrackedByUser = false; }
+    void SetStorage(double* ptr) { m_userSplitterPos = ptr; m_wasTrackedByUser = (*ptr > 0.0 && *ptr < 1.0); }
+    void ClearPaneTracking();
+    void TrackPane(int pane, std::function<void(bool)> onToggle, std::function<void()> onMinimize);
 
 protected:
+    struct PaneTracking
+    {
+        std::function<void(bool)> onToggle;
+        std::function<void()> onMinimize;
+    };
+
     double m_splitterPos{0};    // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double * m_userSplitterPos; // Split ratio as set by the user
+    PaneTracking m_paneTracking[2];
+
+    void PostNcDestroy() override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -143,7 +158,7 @@ class CMainFrame final : public CFrameWndEx
 protected:
     static constexpr DWORD WM_CALLBACKUI = WM_APP + 1;
     static UINT s_TaskBarMessage;
-    static CMainFrame* s_Singleton;
+    inline static CMainFrame* s_Singleton = nullptr;
 
     CMainFrame();
     ~CMainFrame() override;
@@ -156,6 +171,7 @@ protected:
     void RestoreExtensionView();
     void MinimizeTreeMapView();
     void MinimizeExtensionView();
+    void ExpandFileTabbedView();
     void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views
@@ -207,13 +223,14 @@ protected:
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
 
-    CWdsSplitterWnd m_subSplitter; // Contains the two upper views
-    CWdsSplitterWnd m_splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Contains the two upper views
+    CWdsSplitterWnd m_splitter{ COptions::MainSplitterPos.Ptr() };    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CLayoutPopup m_layoutPopup;                                        // Floating layout-picker popup
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar
     CSize m_defaultButtonSize;    // Toolbar button size at creation (pre-SetSizes, DPI-scaled)
-    CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CWdsProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_pacman;      // Static control for Pacman
     LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
     CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
@@ -241,12 +258,16 @@ protected:
     afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
     afx_msg void OnViewShowTreeMap();
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
+    afx_msg void OnViewGroupUnregisteredTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();
     afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
+    afx_msg void OnViewShowFolderFramesOnTreeMap();
+    afx_msg void OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
     afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }
@@ -259,7 +280,10 @@ protected:
     afx_msg void OnToolsWatcher();
     afx_msg void OnToolsPermissions();
     afx_msg void OnUpdateToolsPermissions(CCmdUI* pCmdUI);
+    afx_msg void OnToolsStorageAnalytics();
+    afx_msg void OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI);
     void UpdateToolsMenu(CMenu* menu);
+    afx_msg void OnViewWindowLayout();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
@@ -271,5 +295,10 @@ protected:
 public:
     static CMainFrame* Get() { return s_Singleton; }
     void RebuildToolBar();
+    void RebuildLayout(bool resetPositions = false);
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
+
+private:
+    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hTMV);
+    void ConfigureSplitterCallbacks(int topology, int permutation);
 };

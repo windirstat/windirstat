@@ -99,6 +99,9 @@
 #include <utility>
 #include <vector>
 
+// Third-party libraries
+#include <contrib/xxhash/xxhash.h>
+
 // Common WinDirStat headers
 #include "resource.h"
 #include "Tracer.h"

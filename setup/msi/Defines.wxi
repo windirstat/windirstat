@@ -5,15 +5,15 @@
         <?define ProductCode =          "*"?>
     <?endif ?>
     <?if $(var.RELTYPE) = PRODUCTION ?>
-        <?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH)"?>	
+        <?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH)"?>
         <?define UpgradeCode =              "46F106C9-090C-43D0-8815-D03BA9FA55A9"?>
         <?define UpgradeCodeAlt =           "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
     <?else ?>
-        <?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH).$(var.BUILD)"?>	
+        <?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH).$(var.BUILD)"?>
         <?define UpgradeCode =              "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
         <?define UpgradeCodeAlt =           "46F106C9-090C-43D0-8815-D03BA9FA55A9"?>
     <?endif ?>
-	
+
 	<!-- Product and Company information -->
     <?define ProductName =              "WinDirStat"?>
     <?define ProductFolder =            "WinDirStat"?>
@@ -31,20 +31,20 @@
     <?endif ?>
     <?define BannerBmp =                "banner.bmp"?>
     <?define DialogBmp =                "background.bmp"?>
-    
+
     <?define WinDirStatExe = "WinDirStat_$(sys.BUILDARCH).exe" ?>
 	<?if $(sys.BUILDARCH) = x64 Or $(sys.BUILDARCH) = arm64 ?>
     <?define Win64 = "yes" ?>
     <?define ProgramFilesNative = "ProgramFiles64Folder" ?>
     <?else ?>
     <?define Win64 = "no" ?>
-    <?define ProgramFilesNative = "ProgramFilesFolder" ?>    
+    <?define ProgramFilesNative = "ProgramFilesFolder" ?>
     <?endif ?>
     <!-- Default Registry Key, in which most registry settings are saved. -->
     <?define ProductRegKeyPath = "SOFTWARE\WinDirStat\WinDirStat"?>
     <?if $(var.RELTYPE) = PRODUCTION ?>
-	<?define AllowSameVersionUpgrades = "no"?>	
+	<?define AllowSameVersionUpgrades = "no"?>
     <?else ?>
-	<?define AllowSameVersionUpgrades = "yes"?>	
+	<?define AllowSameVersionUpgrades = "yes"?>
     <?endif ?>
 </Include>

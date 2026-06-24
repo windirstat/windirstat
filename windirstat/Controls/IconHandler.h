@@ -103,6 +103,7 @@ namespace Icons
     void PaintPause(Graphics& g);
     void PaintMagnifier(Graphics& g, bool plus);
     void PaintGear(Graphics& g);
+    void PaintWindowLayout(Graphics& g);
     void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold = true);
 
     std::function<void(Graphics&)> Char(WCHAR ch, COLORREF clr);

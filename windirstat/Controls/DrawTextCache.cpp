@@ -53,6 +53,32 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     }
 
     // Cache miss - create new cached entry
+    if (format & DT_CALCRECT)
+    {
+        SIZE size;
+        if (GetTextExtentPoint32W(pDC->m_hDC, text.c_str(), static_cast<int>(text.length()), &size))
+        {
+            rect.right = rect.left + size.cx;
+            rect.bottom = rect.top + size.cy;
+        }
+
+        while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
+        {
+            const CacheKey& keyToRemove = m_leastRecentList.back();
+            m_cache.erase(keyToRemove);
+            m_leastRecentList.pop_back();
+        }
+
+        auto entry = std::make_unique<CacheEntry>();
+        entry->bmpSize = size;
+        entry->format = format;
+        entry->calcRect = rect;
+
+        m_leastRecentList.push_front(key);
+        m_cache.emplace(std::move(key), std::make_pair(std::move(entry), m_leastRecentList.begin()));
+        return;
+    }
+
     while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
     {
         // Remove least recently used (back of list)
@@ -61,10 +87,9 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
         m_leastRecentList.pop_back();
     }
 
-    // Handle rectangle calculation or normal drawing
+    // Handle normal drawing
     auto entry = CreateCachedBitmap(pDC, text, rect, format);
-    if (format & DT_CALCRECT) rect = entry->calcRect;
-    else PaintCachedEntry(pDC, rect, *entry);
+    PaintCachedEntry(pDC, rect, *entry);
 
     // Add to LRU list and cache
     m_leastRecentList.push_front(key);
@@ -74,11 +99,18 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
     const std::wstring& text, const CRect& rect, const UINT format) const noexcept
 {
+    if (pDC->m_hDC != m_lastHDC)
+    {
+        m_lastHDC = pDC->m_hDC;
+        m_lastDpi = static_cast<USHORT>(::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX));
+    }
+
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),
         .backgroundColor = pDC->GetBkColor(), .format = format,
         .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
-        .dpi = static_cast<USHORT>(::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX))};
+        .dpi = m_lastDpi,
+        .font = static_cast<HFONT>(::GetCurrentObject(pDC->m_hDC, OBJ_FONT))};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
@@ -109,12 +141,6 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     entry->calcRect = CRect(rect.left, rect.top,
         rect.left + calcRect.Width(), rect.top + calcRect.Height());
 
-    // If this is just a DT_CALCRECT request, we don't need to create the bitmap
-    if (format & DT_CALCRECT)
-    {
-        return entry;
-    }
-
     // Create compatible bitmap sized exactly for the text
     entry->bmp.CreateCompatibleBitmap(pDC, calcRect.Width(), textHeight);
     CSelectObject sobmp(&memDC, &entry->bmp);
@@ -138,6 +164,8 @@ void DrawTextCache::ClearCache()
 {
     m_cache.clear();
     m_leastRecentList.clear();
+    m_lastHDC = nullptr;
+    m_lastDpi = 96;
 }
 
 void DrawTextCache::TouchEntry(const CacheMap::iterator& it)

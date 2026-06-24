@@ -37,7 +37,7 @@ public:
     static std::vector<CItemPerm*> ScanTree(const CItem* docRoot);
 
 protected:
-    static CFilePermsControl* m_singleton;
+    inline static CFilePermsControl* m_singleton = nullptr;
 
     // Collect the items to scan and flag those whose every ACE (incl. inherited) should be listed
     static std::vector<const CItem*> BuildScanList(const CItem* docRoot, std::unordered_set<const CItem*>& roots);

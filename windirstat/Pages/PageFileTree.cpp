@@ -92,14 +92,10 @@ BOOL CPageFileTree::OnInitDialog()
     m_showColumnSizeLogical = COptions::ShowColumnSizeLogical;
 
     m_fileTreeColorCount = COptions::FileTreeColorCount;
-    m_fileTreeColor[0] = COptions::FileTreeColor0;
-    m_fileTreeColor[1] = COptions::FileTreeColor1;
-    m_fileTreeColor[2] = COptions::FileTreeColor2;
-    m_fileTreeColor[3] = COptions::FileTreeColor3;
-    m_fileTreeColor[4] = COptions::FileTreeColor4;
-    m_fileTreeColor[5] = COptions::FileTreeColor5;
-    m_fileTreeColor[6] = COptions::FileTreeColor6;
-    m_fileTreeColor[7] = COptions::FileTreeColor7;
+    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
+    {
+        m_fileTreeColor[i] = COptions::FileTreeColors[i];
+    }
 
     m_slider.SetRange(1, TREELISTCOLORCOUNT);
     m_slider.SetPos(m_fileTreeColorCount);
@@ -133,14 +129,10 @@ void CPageFileTree::OnOK()
     COptions::ShowColumnSizePhysical = (FALSE != m_showColumnSizePhysical);
     COptions::ShowColumnSizeLogical = (FALSE != m_showColumnSizeLogical);
     COptions::FileTreeColorCount = m_fileTreeColorCount;
-    COptions::FileTreeColor0 = m_fileTreeColor[0];
-    COptions::FileTreeColor1 = m_fileTreeColor[1];
-    COptions::FileTreeColor2 = m_fileTreeColor[2];
-    COptions::FileTreeColor3 = m_fileTreeColor[3];
-    COptions::FileTreeColor4 = m_fileTreeColor[4];
-    COptions::FileTreeColor5 = m_fileTreeColor[5];
-    COptions::FileTreeColor6 = m_fileTreeColor[6];
-    COptions::FileTreeColor7 = m_fileTreeColor[7];
+    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
+    {
+        COptions::FileTreeColors[i] = m_fileTreeColor[i];
+    }
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
 
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
