@@ -67,14 +67,13 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
+void CFileTreeView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
-    CControlView::OnUpdate(pSender, lHint,
-        reinterpret_cast<CObject*>(CDirStatDoc::Get()->GetRootItem()));
+    CControlView::OnUpdate(sender, change, CWinDirStatModel::Get()->GetRootItem());
 
-    if (lHint == HINT_SELECTIONACTION)
+    if (change == MODEL_CHANGE_SELECTION_ACTION)
     {
-        m_control.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
+        m_control.EmulateInteractiveSelection(item);
     }
 }
 

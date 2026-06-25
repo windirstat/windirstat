@@ -415,14 +415,14 @@ HICON CItem::GetIcon()
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 {
-    if (!IsRootItem() && this == CDirStatDoc::Get()->GetZoomItem())
+    if (!IsRootItem() && this == CWinDirStatModel::Get()->GetZoomItem())
     {
         CRect rc = rcLabel;
         rc.InflateRect(1, 0);
         rc.bottom++;
 
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, CDirStatDoc::Get()->GetZoomColor());
+        CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
         CSelectObject sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
@@ -1109,7 +1109,7 @@ COLORREF CItem::GetGraphColor() const
 
     if (IsTypeOrFlag(IT_FILE))
     {
-        return CDirStatDoc::Get()->GetCushionColor(GetExtension());
+        return CWinDirStatModel::Get()->GetCushionColor(GetExtension());
     }
 
     return RGB(0, 0, 0);

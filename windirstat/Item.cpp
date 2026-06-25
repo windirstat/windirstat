@@ -246,7 +246,7 @@ void CItem::RemoveAllChildren()
 {
     if (IsRootItem())
     {
-        CDirStatDoc::Get()->GetExtensionData()->clear();
+        CWinDirStatModel::Get()->GetExtensionData()->clear();
     }
 
     if (IsLeaf()) return;
@@ -439,7 +439,7 @@ ULONGLONG CItem::GetItemsCount() const noexcept
 void CItem::ExtensionDataAdd()
 {
     if (!IsTypeOrFlag(IT_FILE) || IsTypeOrFlag(ITF_EXTDATA)) return;
-    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
+    const auto record = CWinDirStatModel::Get()->GetExtensionDataRecord(GetExtension());
     record->AddFile(GetSizeLogical());
     SetFlag(ITF_EXTDATA);
 }
@@ -447,9 +447,9 @@ void CItem::ExtensionDataAdd()
 void CItem::ExtensionDataRemove()
 {
     if (!IsTypeOrFlag(IT_FILE) || !IsTypeOrFlag(ITF_EXTDATA)) return;
-    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
+    const auto record = CWinDirStatModel::Get()->GetExtensionDataRecord(GetExtension());
     record->RemoveFile(GetSizeLogical());
-    if (record->GetFiles() == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
+    if (record->GetFiles() == 0) CWinDirStatModel::Get()->GetExtensionData()->erase(GetExtension());
     SetFlag(ITF_EXTDATA, true);
 }
 

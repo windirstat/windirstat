@@ -135,7 +135,7 @@ void CPageFileTree::OnOK()
     }
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
 
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     CMFCPropertyPage::OnOK();
 }
 

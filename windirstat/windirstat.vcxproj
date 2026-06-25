@@ -521,7 +521,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Constants.h" />
     <ClInclude Include="BlockingQueue.h" />
     <ClInclude Include="CsvLoader.h" />
-    <ClInclude Include="DirStatDoc.h" />
+    <ClInclude Include="WinDirStatModel.h" />
     <ClInclude Include="FinderBasic.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemDupe.h" />
@@ -541,6 +541,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Views\ExtensionView.h" />
+    <ClInclude Include="Views\WinDirStatPane.h" />
     <ClInclude Include="Views\StorageAnalyticsView.h" />
     <ClInclude Include="Views\FileTabbedView.h" />
     <ClInclude Include="Views\FileTreeView.h" />
@@ -566,7 +567,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="DarkMode.cpp" />
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
-    <ClCompile Include="DirStatDoc.cpp">
+    <ClCompile Include="WinDirStatModel.cpp">
     </ClCompile>
     <ClCompile Include="Filtering.cpp" />
     <ClCompile Include="Item.Extended.cpp" />
@@ -617,6 +618,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Views\ExtensionView.cpp" />
+    <ClCompile Include="Views\WinDirStatPane.cpp" />
     <ClCompile Include="Views\StorageAnalyticsView.cpp" />
     <ClCompile Include="Views\FileTabbedView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />

@@ -18,9 +18,10 @@
 #pragma once
 
 #include "pch.h"
+#include "WinDirStatPane.h"
 #include "TreeListControl.h"
 
-class CControlView : public CView
+class CControlView : public CWinDirStatPane
 {
 public:
     void SysColorChanged();
@@ -35,7 +36,7 @@ protected:
 
     int InsertCol(const std::wstring_view& colName, int nFormat, int nWidth, const int nSubItem);
     void OnDraw(CDC*) override;
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

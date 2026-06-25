@@ -18,6 +18,7 @@
 #pragma once
 
 #include "pch.h"
+#include "WinDirStatPane.h"
 
 //
 // CCenteredEdit. Custom edit control that vertically centers its text.
@@ -36,7 +37,7 @@ protected:
 //
 // CStorageAnalyticsView. Shows storage tier analytics and cloud cost estimations.
 //
-class CStorageAnalyticsView final : public CView
+class CStorageAnalyticsView final : public CWinDirStatPane
 {
 protected:
     CStorageAnalyticsView();
@@ -44,7 +45,7 @@ protected:
     DECLARE_DYNCREATE(CStorageAnalyticsView)
 
     void OnDraw(CDC* pDC) override;
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     BOOL PreTranslateMessage(MSG* pMsg) override;
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnSize(UINT nType, int cx, int cy);

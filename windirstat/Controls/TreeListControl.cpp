@@ -333,7 +333,7 @@ void CTreeListControl::OnItemDoubleClick(const int i)
     // If it's a file, open it
     if (item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
-        CDirStatDoc::OpenItem(item);
+        CWinDirStatModel::OpenItem(item);
     }
     else
     {

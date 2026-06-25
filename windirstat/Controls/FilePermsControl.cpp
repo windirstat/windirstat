@@ -145,11 +145,11 @@ bool CFilePermsControl::StartScan()
 {
     DeleteAllItems();
 
-    const auto* doc = CDirStatDoc::Get();
-    if (doc == nullptr || !doc->HasRootItem() || !doc->IsRootDone()) return false;
+    const auto* model = CWinDirStatModel::Get();
+    if (model == nullptr || !model->HasRootItem() || !model->IsRootDone()) return false;
 
     std::unordered_set<const CItem*> roots;
-    const auto items = BuildScanList(doc->GetRootItem(), roots);
+    const auto items = BuildScanList(model->GetRootItem(), roots);
 
     // Scan in parallel under a modal progress dialog so large trees show progress
     std::vector<CItemPerm*> rows;

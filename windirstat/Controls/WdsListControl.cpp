@@ -999,7 +999,7 @@ LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
     UNREFERENCED_PARAMETER(lParam);
 
     m_selectionChangePending = false;
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
 
     return 0;
 }

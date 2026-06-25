@@ -29,9 +29,7 @@
 #include "ProgressDlg.h"
 #include "Filtering.h"
 
-IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
-
-CDirStatDoc::CDirStatDoc()
+CWinDirStatModel::CWinDirStatModel()
 {
     ASSERT(nullptr == s_singleton);
     s_singleton = this;
@@ -41,15 +39,15 @@ CDirStatDoc::CDirStatDoc()
     VTRACE(L"sizeof(CWdsListItem) = {}", sizeof(CWdsListItem));
 }
 
-CDirStatDoc::~CDirStatDoc()
+CWinDirStatModel::~CWinDirStatModel()
 {
     delete m_rootItem;
     s_singleton = nullptr;
 }
 
-CDirStatDoc* CDirStatDoc::s_singleton = nullptr;
+CWinDirStatModel* CWinDirStatModel::s_singleton = nullptr;
 
-void CDirStatDoc::DeleteContents()
+void CWinDirStatModel::ClearScanState()
 {
     CWaitCursor wc;
 
@@ -83,31 +81,27 @@ void CDirStatDoc::DeleteContents()
     m_zoomItem = nullptr;
 }
 
-BOOL CDirStatDoc::OnNewDocument()
+BOOL CWinDirStatModel::ResetScan()
 {
-    if (!CDocument::OnNewDocument())
-    {
-        return FALSE;
-    }
-
-    UpdateAllViews(nullptr, HINT_NEWROOT);
+    ClearScanState();
+    SetScanPathSpec(wds::strEmpty);
+    NotifyPanes(MODEL_CHANGE_NEW_ROOT);
     return TRUE;
 }
 
-BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
+BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
 {
     // Expand All Files view to full window during scan
     CMainFrame::Get()->ExpandFileTabbedView();
 
     // Decode list of folders to scan
-    const std::wstring spec = lpszPathName;
-    std::vector<std::wstring> selections = SplitString(spec);
+    std::vector<std::wstring> selections = SplitString(pathSpec);
 
     // Prepare for new root and delete any existing data
-    CDocument::OnNewDocument();
+    ClearScanState();
 
-    // Call base class to commit path to internal doc name string
-    Get()->SetPathName(spec.c_str(), FALSE);
+    // Persist the full scan spec, which may contain pipe-separated roots.
+    Get()->SetScanPathSpec(pathSpec);
 
     // Count number of drives for validation
     const std::wregex driveMatch(LR"(^[A-Za-z]:[\\]?$)", std::regex_constants::optimize);
@@ -154,34 +148,34 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     m_zoomItem = m_rootItem;
 
     // Update new root for display
-    UpdateAllViews(nullptr, HINT_NEWROOT);
+    NotifyPanes(MODEL_CHANGE_NEW_ROOT);
     StartScanningEngine(std::vector({ Get()->GetRootItem() }));
     return true;
 }
 
-BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
+BOOL CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
 {
     CMainFrame::Get()->ExpandFileTabbedView();
 
-    CDocument::OnNewDocument(); // --> DeleteContents()
+    ClearScanState();
 
     // Determine root spec string using GetNameView to avoid temporary allocations
-    std::wstring spec(newroot->GetNameView());
-    if (newroot->IsTypeOrFlag(IT_MYCOMPUTER))
+    std::wstring spec(loadedRoot->GetNameView());
+    if (loadedRoot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
-        std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
+        std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring { return GetDrive(obj->GetNameView()); });
         spec = JoinString(folders);
     }
-    else if (newroot->IsTypeOrFlag(IT_DRIVE))
+    else if (loadedRoot->IsTypeOrFlag(IT_DRIVE))
     {
-        spec = GetDrive(newroot->GetNameView());
+        spec = GetDrive(loadedRoot->GetNameView());
     }
 
-    Get()->SetPathName(spec.c_str(), FALSE);
+    Get()->SetScanPathSpec(spec);
 
-    m_rootItem = newroot;
+    m_rootItem = loadedRoot;
     m_zoomItem = m_rootItem;
 
     // Populate the Largest Files list from the pre-built tree
@@ -190,52 +184,48 @@ BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
         CFileTopControl::Get()->ProcessTop(item);
     }
 
-    UpdateAllViews(nullptr, HINT_NEWROOT);
+    NotifyPanes(MODEL_CHANGE_NEW_ROOT);
     StartScanningEngine({});
     return true;
 }
 
-// We don't want MFC's AfxFullPath() logic, because lpszPathName
-// is not a path. So we have overridden this.
+// The scan spec can be a pipe-separated list of folders, not a filesystem path.
 //
-void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
+void CWinDirStatModel::SetScanPathSpec(const std::wstring& pathSpec)
 {
     // MRU would be fine but is not implemented yet.
-    m_strPathName = lpszPathName;
-    m_bEmbedded = FALSE;
-    SetTitle(m_strPathName);
-
-    ASSERT_VALID(this);
+    m_scanPathSpec = pathSpec;
+    SetScanTitle(m_scanPathSpec);
 }
 
 // Prefix the window title (with percentage or "Scanning")
 //
-void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
+void CWinDirStatModel::SetScanTitlePrefix(const std::wstring& prefix) const
 {
     static std::wstring suffix = IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"";
-    std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
-    docName = TrimString(docName);
-    CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());
+    std::wstring scanName = std::format(L"{} {} {}", prefix, GetScanTitle(), suffix);
+    scanName = TrimString(scanName);
+    CMainFrame::Get()->UpdateFrameTitleForScan(scanName.empty() ? nullptr : scanName.c_str());
 }
 
-COLORREF CDirStatDoc::GetCushionColor(const std::wstring & ext)
+COLORREF CWinDirStatModel::GetCushionColor(const std::wstring & ext)
 {
     const auto& record = GetExtensionData()->find(ext);
     ASSERT(record != GetExtensionData()->end());
     return record->second.color;
 }
 
-COLORREF CDirStatDoc::GetZoomColor() const
+COLORREF CWinDirStatModel::GetZoomColor() const
 {
     return RGB(0, 0, 255);
 }
 
-CExtensionData* CDirStatDoc::GetExtensionData()
+CExtensionData* CWinDirStatModel::GetExtensionData()
 {
     return &m_extensionData;
 }
 
-SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
+SExtensionRecord* CWinDirStatModel::GetExtensionDataRecord(const std::wstring& ext)
 {
     std::scoped_lock guard(m_extensionMutex);
     return &m_extensionData[ext];
@@ -243,7 +233,7 @@ SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
 
 // Snapshots every ".ext" key directly under HKEY_CLASSES_ROOT. Rebuilt with the extension
 // data so registration tests are lock-free set lookups
-void CDirStatDoc::RebuildRegisteredExtensions()
+void CWinDirStatModel::RebuildRegisteredExtensions()
 {
     if (!m_registeredExtensions.empty()) return;
 
@@ -260,12 +250,12 @@ void CDirStatDoc::RebuildRegisteredExtensions()
 }
 
 // True if the extension was present in the HKEY_CLASSES_ROOT snapshot (registered on this PC)
-bool CDirStatDoc::IsExtensionRegistered(const std::wstring& ext) const
+bool CWinDirStatModel::IsExtensionRegistered(const std::wstring& ext) const
 {
     return m_registeredExtensions.contains(ext);
 }
 
-ULONGLONG CDirStatDoc::GetRootSize() const
+ULONGLONG CWinDirStatModel::GetRootSize() const
 {
     ASSERT(m_rootItem != nullptr);
     ASSERT(IsRootDone());
@@ -275,7 +265,7 @@ ULONGLONG CDirStatDoc::GetRootSize() const
 // Starts a refresh of all mount points in our tree.
 // Called when the user changes the follow mount points option.
 //
-void CDirStatDoc::RefreshReparsePointItems()
+void CWinDirStatModel::RefreshReparsePointItems()
 {
     CWaitCursor wc;
 
@@ -285,17 +275,17 @@ void CDirStatDoc::RefreshReparsePointItems()
     }
 }
 
-bool CDirStatDoc::HasRootItem() const
+bool CWinDirStatModel::HasRootItem() const
 {
     return m_rootItem != nullptr;
 }
 
-bool CDirStatDoc::IsRootDone() const
+bool CWinDirStatModel::IsRootDone() const
 {
     return HasRootItem() && m_rootItem->IsDone();
 }
 
-bool CDirStatDoc::IsScanRunning() const
+bool CWinDirStatModel::IsScanRunning() const
 {
     if (!m_thread.has_value()) return false;
 
@@ -304,22 +294,22 @@ bool CDirStatDoc::IsScanRunning() const
     return (exitCode == STILL_ACTIVE);
 }
 
-CItem* CDirStatDoc::GetRootItem() const
+CItem* CWinDirStatModel::GetRootItem() const
 {
     return m_rootItem;
 }
 
-CItem* CDirStatDoc::GetZoomItem() const
+CItem* CWinDirStatModel::GetZoomItem() const
 {
     return m_zoomItem;
 }
 
-bool CDirStatDoc::IsZoomed() const
+bool CWinDirStatModel::IsZoomed() const
 {
     return GetZoomItem() != GetRootItem();
 }
 
-void CDirStatDoc::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
+void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
     m_highlightExtension = ext;
     m_highlightUnregistered = unregistered;
@@ -338,37 +328,37 @@ void CDirStatDoc::SetHighlightExtension(const std::wstring & ext, const bool unr
     CMainFrame::Get()->UpdatePaneText();
 }
 
-std::wstring CDirStatDoc::GetHighlightExtension() const
+std::wstring CWinDirStatModel::GetHighlightExtension() const
 {
     return m_highlightExtension;
 }
 
-bool CDirStatDoc::IsHighlightUnregistered() const
+bool CWinDirStatModel::IsHighlightUnregistered() const
 {
     return m_highlightUnregistered;
 }
 
-const std::unordered_set<std::wstring>& CDirStatDoc::GetHighlightExtensions() const
+const std::unordered_set<std::wstring>& CWinDirStatModel::GetHighlightExtensions() const
 {
     return m_highlightExtensions;
 }
 
 // The root item has been deleted.
 //
-void CDirStatDoc::UnlinkRoot()
+void CWinDirStatModel::UnlinkRoot()
 {
     CMainFrame::Get()->InvokeInMessageThread([this]
     {
         CMainFrame::Get()->ExpandFileTabbedView();
-        DeleteContents();
-        UpdateAllViews(nullptr, HINT_NEWROOT);
+        ClearScanState();
+        NotifyPanes(MODEL_CHANGE_NEW_ROOT);
         CMainFrame::Get()->SetProgressComplete();
     });
 }
 
 // Determines whether a UDC works for a given item.
 //
-bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
+bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
     return item != nullptr && (
         (item->IsTypeOrFlag(IT_DRIVE) && udc->WorksForDrives) ||
@@ -377,7 +367,7 @@ bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const 
         (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
-void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
+void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
 {
     ASSERT(item != nullptr);
 
@@ -413,7 +403,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     ShellExecuteEx(&sei);
 }
 
-void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
+void CWinDirStatModel::RecurseRefreshReparsePoints(CItem* items) const
 {
     std::vector<CItem*> toRefresh;
 
@@ -449,7 +439,7 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
     }
 }
 
-void CDirStatDoc::RebuildExtensionData()
+void CWinDirStatModel::RebuildExtensionData()
 {
     // Snapshot the registered extensions up front so all registration tests below (and on
     // the UI thread afterwards) are lock-free lookups against an immutable set
@@ -512,7 +502,7 @@ void CDirStatDoc::RebuildExtensionData()
     }
 }
 
-void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
+void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
     if (COptions::ShowDeleteWarning)
     {
@@ -657,27 +647,27 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     RefreshItem(itemsToRefresh);
 }
 
-void CDirStatDoc::SetZoomItem(CItem* item)
+void CWinDirStatModel::SetZoomItem(CItem* item)
 {
     m_zoomItem = item;
     CTreeListControl* pControl = GetFocusControl();
     pControl->Invalidate();
     pControl->UpdateWindow();
-    UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
+    NotifyPanes(MODEL_CHANGE_ZOOM);
 }
 
 // Starts a refresh of an item.
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item) const
+void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item) const
 {
     Get()->StartScanningEngine(item);
 }
 
 // UDC confirmation dialog.
 //
-void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
+void CWinDirStatModel::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     if (!udc->AskForConfirmation)
     {
@@ -693,7 +683,7 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
     }
 }
 
-void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item)
+void CWinDirStatModel::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     CWaitCursor wc;
 
@@ -731,7 +721,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
 }
 
-void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const
+void CWinDirStatModel::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const
 {
     // Do not refresh if we are not set to wait
     if (!udc->WaitForCompletion.Obj())
@@ -758,7 +748,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
     }
 }
 
-void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath)
+void CWinDirStatModel::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath)
 {
     // (Depth first.)
 
@@ -780,7 +770,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
     CallUserDefinedCleanup(true, udc->CommandLine.Obj(), rootPath, currentPath, udc->ShowConsoleWindow, true);
 }
 
-void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, const bool showConsoleWindow, const bool wait)
+void CWinDirStatModel::CallUserDefinedCleanup(const bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, const bool showConsoleWindow, const bool wait)
 {
     const std::wstring userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
 
@@ -810,7 +800,7 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     CloseHandle(pi.hProcess);
 }
 
-std::wstring CDirStatDoc::BuildUserDefinedCleanupCommandLine(const std::wstring & format, const std::wstring & rootPath, const std::wstring & currentPath)
+std::wstring CWinDirStatModel::BuildUserDefinedCleanupCommandLine(const std::wstring & format, const std::wstring & rootPath, const std::wstring & currentPath)
 {
     const std::wstring rootName    = GetBaseNameFromPath(rootPath);
     const std::wstring currentName = GetBaseNameFromPath(currentPath);
@@ -833,12 +823,12 @@ std::wstring CDirStatDoc::BuildUserDefinedCleanupCommandLine(const std::wstring 
     return s;
 }
 
-void CDirStatDoc::PushReselectChild(CItem* item)
+void CWinDirStatModel::PushReselectChild(CItem* item)
 {
     m_reselectChildStack.push_back(item);
 }
 
-CItem* CDirStatDoc::PopReselectChild()
+CItem* CWinDirStatModel::PopReselectChild()
 {
     if (m_reselectChildStack.empty()) return nullptr;
     CItem* item = m_reselectChildStack.back();
@@ -846,47 +836,47 @@ CItem* CDirStatDoc::PopReselectChild()
     return item;
 }
 
-void CDirStatDoc::ClearReselectChildStack()
+void CWinDirStatModel::ClearReselectChildStack()
 {
     m_reselectChildStack.clear();
 }
 
-bool CDirStatDoc::IsReselectChildAvailable() const
+bool CWinDirStatModel::IsReselectChildAvailable() const
 {
     return !m_reselectChildStack.empty();
 }
 
-bool CDirStatDoc::FileTreeHasFocus()
+bool CWinDirStatModel::FileTreeHasFocus()
 {
     return LF_FILETREE == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::DupeListHasFocus()
+bool CWinDirStatModel::DupeListHasFocus()
 {
     return LF_DUPELIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::TopListHasFocus()
+bool CWinDirStatModel::TopListHasFocus()
 {
     return LF_TOPLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::SearchListHasFocus()
+bool CWinDirStatModel::SearchListHasFocus()
 {
     return LF_SEARCHLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::WatcherListHasFocus()
+bool CWinDirStatModel::WatcherListHasFocus()
 {
     return LF_WATCHERLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::PermsListHasFocus()
+bool CWinDirStatModel::PermsListHasFocus()
 {
     return LF_PERMSLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
-CTreeListControl* CDirStatDoc::GetFocusControl()
+CTreeListControl* CWinDirStatModel::GetFocusControl()
 {
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
@@ -896,14 +886,22 @@ CTreeListControl* CDirStatDoc::GetFocusControl()
     return CFileTreeControl::Get();
 }
 
-void CDirStatDoc::UpdateAllViews(CView* pSender, VIEW_HINT hint, CItem* pHint)
+void CWinDirStatModel::NotifyPanes(MODEL_CHANGE change, CItem* item)
+{
+    NotifyPanesExcept(nullptr, change, item);
+}
+
+void CWinDirStatModel::NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change, CItem* item)
 {
     InvalidateSelectionCache();
 
-    CDocument::UpdateAllViews(pSender, static_cast<LONG>(hint), reinterpret_cast<CObject*>(pHint));
+    if (CMainFrame::Get() != nullptr)
+    {
+        CMainFrame::Get()->UpdateAllPanes(sender, change, item);
+    }
 }
 
-std::vector<CItem*> CDirStatDoc::GetAllSelected()
+std::vector<CItem*> CWinDirStatModel::GetAllSelected()
 {
     // Check if we can use cached results
     const auto currentFocus = CMainFrame::Get()->GetLogicalFocus();
@@ -940,12 +938,12 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
     return selection;
 }
 
-void CDirStatDoc::InvalidateSelectionCache()
+void CWinDirStatModel::InvalidateSelectionCache()
 {
     m_selectionCacheValid = false;
 }
 
-void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct commandFilter
     {
@@ -958,17 +956,17 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     };
 
     // special conditions
-    static auto doc = this;
-    static bool (*isZoomed)(CItem*) = [](CItem*) { return CDirStatDoc::Get()->IsZoomed(); };
-    static bool (*canZoomIn)(CItem*) = [](CItem* i) { return i != nullptr && (i = i->IsLeaf() ? i->GetParent() : i) != nullptr && i != doc->GetZoomItem() && i->TmiGetSize() > 0; };
-    static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
+    static auto model = this;
+    static bool (*isZoomed)(CItem*) = [](CItem*) { return CWinDirStatModel::Get()->IsZoomed(); };
+    static bool (*canZoomIn)(CItem*) = [](CItem* i) { return i != nullptr && (i = i->IsLeaf() ? i->GetParent() : i) != nullptr && i != model->GetZoomItem() && i->TmiGetSize() > 0; };
+    static bool (*canZoomOut)(CItem*) = [](CItem*) { return model->GetZoomItem() != model->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* i) { return i != nullptr && i->GetParent() != nullptr; };
-    static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
+    static bool (*reselectAvail)(CItem*) = [](CItem*) { return model->IsReselectChildAvailable(); };
     static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
     static bool (*hasRecycleBin)(CItem*) = [](CItem* i) { return i != nullptr && !i->IsRootItem() && IsLocalDrive(i->GetPath()); };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
+    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isStoppable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone(); };
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
@@ -1062,7 +1060,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     pCmdUI->Enable(allow);
 }
 
-void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 {
     // Defer to standard update handler for initial value
     OnUpdateCentralHandler(pCmdUI);
@@ -1079,7 +1077,7 @@ void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 }
 
 #define ON_COMMAND_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
-BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
+BEGIN_MESSAGE_MAP(CWinDirStatModel, CCmdTarget)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
@@ -1141,7 +1139,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
 
-void CDirStatDoc::OnFilterExcludeItem()
+void CWinDirStatModel::OnFilterExcludeItem()
 {
     const auto& selected = GetAllSelected();
     for (const auto* item : selected)
@@ -1158,7 +1156,7 @@ void CDirStatDoc::OnFilterExcludeItem()
     RefreshItem(selected);
 }
 
-void CDirStatDoc::OnCleanupSparsifyFile()
+void CWinDirStatModel::OnCleanupSparsifyFile()
 {
     // Only sparsify files (no recursion)
     const auto& itemsSelected = GetAllSelected();
@@ -1180,7 +1178,7 @@ void CDirStatDoc::OnCleanupSparsifyFile()
     RefreshItem(itemsSelected);
 }
 
-void CDirStatDoc::OnRefreshSelected()
+void CWinDirStatModel::OnRefreshSelected()
 {
     // Optimize refresh selected when done on root item
     const auto& selected = GetAllSelected();
@@ -1188,12 +1186,12 @@ void CDirStatDoc::OnRefreshSelected()
     else RefreshItem(selected);
 }
 
-void CDirStatDoc::OnRefreshAll()
+void CWinDirStatModel::OnRefreshAll()
 {
-    OnOpenDocument(Get()->GetPathName().GetString());
+    StartScan(Get()->GetScanPathSpec());
 }
 
-void CDirStatDoc::OnSaveResults()
+void CWinDirStatModel::OnSaveResults()
 {
     // Request the file path from the user
     const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
@@ -1207,7 +1205,7 @@ void CDirStatDoc::OnSaveResults()
     }).DoModal();
 }
 
-void CDirStatDoc::OnSaveDuplicates()
+void CWinDirStatModel::OnSaveDuplicates()
 {
     // Request the file path from the user
     const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
@@ -1221,7 +1219,7 @@ void CDirStatDoc::OnSaveDuplicates()
     }).DoModal();
 }
 
-void CDirStatDoc::OnSavePermissions()
+void CWinDirStatModel::OnSavePermissions()
 {
     // Request the file path from the user
     const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
@@ -1235,7 +1233,7 @@ void CDirStatDoc::OnSavePermissions()
     }).DoModal();
 }
 
-void CDirStatDoc::OnLoadResults()
+void CWinDirStatModel::OnLoadResults()
 {
     // Request the file path from the user
     const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
@@ -1249,10 +1247,10 @@ void CDirStatDoc::OnLoadResults()
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
 
-    if (newroot != nullptr) Get()->OnOpenDocument(newroot);
+    if (newroot != nullptr) Get()->OpenLoadedScan(newroot);
 }
 
-void CDirStatDoc::OnEditCopy()
+void CWinDirStatModel::OnEditCopy()
 {
     // create concatenated paths
     std::wstring paths;
@@ -1265,7 +1263,7 @@ void CDirStatDoc::OnEditCopy()
     CMainFrame::Get()->CopyToClipboard(paths);
 }
 
-void CDirStatDoc::OnCleanupEmptyRecycleBin()
+void CWinDirStatModel::OnCleanupEmptyRecycleBin()
 {
     CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg*)
     {
@@ -1287,7 +1285,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
     if (!toRefresh.empty()) Get()->StartScanningEngine(toRefresh);
 }
 
-void CDirStatDoc::OnRemoveShadowCopies()
+void CWinDirStatModel::OnRemoveShadowCopies()
 {
     // Show progress dialog and compress files
     ULONGLONG count = 0, bytesUsed = 0;
@@ -1301,13 +1299,13 @@ void CDirStatDoc::OnRemoveShadowCopies()
     GetRootItem()->UpdateFreeSpaceItem();
 }
 
-void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
     pCmdUI->SetCheck(m_showFreeSpace);
 }
 
-void CDirStatDoc::OnViewShowFreeSpace()
+void CWinDirStatModel::OnViewShowFreeSpace()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
@@ -1337,13 +1335,13 @@ void CDirStatDoc::OnViewShowFreeSpace()
     StartScanningEngine({});
 }
 
-void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
     pCmdUI->SetCheck(m_showUnknown);
 }
 
-void CDirStatDoc::OnViewShowUnknown()
+void CWinDirStatModel::OnViewShowUnknown()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
@@ -1373,7 +1371,7 @@ void CDirStatDoc::OnViewShowUnknown()
     StartScanningEngine({});
 }
 
-void CDirStatDoc::OnTreeMapZoomIn()
+void CWinDirStatModel::OnTreeMapZoomIn()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
@@ -1385,7 +1383,7 @@ void CDirStatDoc::OnTreeMapZoomIn()
     }
 }
 
-void CDirStatDoc::OnTreeMapZoomOut()
+void CWinDirStatModel::OnTreeMapZoomOut()
 {
     if (GetZoomItem() != nullptr)
     {
@@ -1395,7 +1393,7 @@ void CDirStatDoc::OnTreeMapZoomOut()
     }
 }
 
-void CDirStatDoc::OnTreeMapZoomReset()
+void CWinDirStatModel::OnTreeMapZoomReset()
 {
     if (IsZoomed())
     {
@@ -1403,7 +1401,7 @@ void CDirStatDoc::OnTreeMapZoomReset()
     }
 }
 
-void CDirStatDoc::OnExplorerSelect()
+void CWinDirStatModel::OnExplorerSelect()
 {
     // accumulate a unique set of paths
     const auto& items = GetAllSelected();
@@ -1450,7 +1448,7 @@ void CDirStatDoc::OnExplorerSelect()
     }
 }
 
-void CDirStatDoc::OnCommandPromptHere()
+void CWinDirStatModel::OnCommandPromptHere()
 {
     // accumulate a unique set of paths
     const auto& items = GetAllSelected();
@@ -1473,7 +1471,7 @@ void CDirStatDoc::OnCommandPromptHere()
     }
 }
 
-void CDirStatDoc::OnPowerShellHere()
+void CWinDirStatModel::OnPowerShellHere()
 {
     // locate PWSH
     static std::wstring pwsh(MAX_PATH, L'\0');
@@ -1502,22 +1500,22 @@ void CDirStatDoc::OnPowerShellHere()
     }
 }
 
-void CDirStatDoc::OnCleanupDeleteToBin()
+void CWinDirStatModel::OnCleanupDeleteToBin()
 {
     DeletePhysicalItems(GetAllSelected(), true);
 }
 
-void CDirStatDoc::OnCleanupDelete()
+void CWinDirStatModel::OnCleanupDelete()
 {
     DeletePhysicalItems(GetAllSelected(), false);
 }
 
-void CDirStatDoc::OnCleanupEmptyFolder()
+void CWinDirStatModel::OnCleanupEmptyFolder()
 {
     DeletePhysicalItems(GetAllSelected(), false, true);
 }
 
-void CDirStatDoc::OnCleanupMoveTo()
+void CWinDirStatModel::OnCleanupMoveTo()
 {
     const auto& items = GetAllSelected();
     if (items.empty()) return;
@@ -1578,13 +1576,13 @@ void CDirStatDoc::OnCleanupMoveTo()
     }
 }
 
-void CDirStatDoc::OnSearch()
+void CWinDirStatModel::OnSearch()
 {
     SearchDlg search;
     search.DoModal();
 }
 
-void CDirStatDoc::OnDisableHibernateFile()
+void CWinDirStatModel::OnDisableHibernateFile()
 {
     DisableHibernate();
 
@@ -1601,7 +1599,7 @@ void CDirStatDoc::OnDisableHibernateFile()
     }
 }
 
-void CDirStatDoc::OnRemoveRoamingProfiles()
+void CWinDirStatModel::OnRemoveRoamingProfiles()
 {
     constexpr std::wstring_view whereClause = L"RoamingConfigured = TRUE";
     const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
@@ -1620,7 +1618,7 @@ void CDirStatDoc::OnRemoveRoamingProfiles()
     GetRootItem()->UpdateFreeSpaceItem();
 }
 
-void CDirStatDoc::OnRemoveLocalProfiles()
+void CWinDirStatModel::OnRemoveLocalProfiles()
 {
     constexpr std::wstring_view whereClause = L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE";
     const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
@@ -1639,32 +1637,32 @@ void CDirStatDoc::OnRemoveLocalProfiles()
     GetRootItem()->UpdateFreeSpaceItem();
 }
 
-void CDirStatDoc::OnExecuteDiskCleanupUtility()
+void CWinDirStatModel::OnExecuteDiskCleanupUtility()
 {
     ShellExecuteWrapper(L"CLEANMGR.EXE");
 }
 
-void CDirStatDoc::OnExecuteProgramsFeatures()
+void CWinDirStatModel::OnExecuteProgramsFeatures()
 {
     ShellExecuteWrapper(L"appwiz.cpl");
 }
 
-void CDirStatDoc::OnExecuteDismAnalyze()
+void CWinDirStatModel::OnExecuteDismAnalyze()
 {
     ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /AnalyzeComponentStore", L"DISM");
 }
 
-void CDirStatDoc::OnExecuteDismReset()
+void CWinDirStatModel::OnExecuteDismReset()
 {
     ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /StartComponentCleanup /ResetBase", L"DISM");
 }
 
-void CDirStatDoc::OnExecuteDism()
+void CWinDirStatModel::OnExecuteDism()
 {
     ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /StartComponentCleanup", L"DISM");
 }
 
-void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = GetAllSelected();
@@ -1678,7 +1676,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
     pCmdUI->Enable(allowControl);
 }
 
-void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
+void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
 {
     USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
     const auto & items = GetAllSelected();
@@ -1710,23 +1708,23 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
     }
 }
 
-void CDirStatDoc::OnTreeMapSelectParent()
+void CWinDirStatModel::OnTreeMapSelectParent()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     PushReselectChild(item);
     CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true, true);
-    UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
+    NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
 }
 
-void CDirStatDoc::OnTreeMapReselectChild()
+void CWinDirStatModel::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
     CFileTreeControl::Get()->ExpandPathToItem(item); // ensure item is visible before selecting
     CFileTreeControl::Get()->SelectItem(item, true, true, true);
-    UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
+    NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
 }
 
-void CDirStatDoc::OnCleanupOpenTarget()
+void CWinDirStatModel::OnCleanupOpenTarget()
 {
     for (const auto & item : GetAllSelected())
     {
@@ -1734,7 +1732,7 @@ void CDirStatDoc::OnCleanupOpenTarget()
     }
 }
 
-void CDirStatDoc::OnCleanupProperties()
+void CWinDirStatModel::OnCleanupProperties()
 {
     const auto& selected = GetAllSelected();
     const CComPtr<IShellItemArray> psia = CreateShellItemArray(selected);
@@ -1748,7 +1746,7 @@ void CDirStatDoc::OnCleanupProperties()
         OpenItem(item, L"properties");
 }
 
-void CDirStatDoc::OnComputeHash()
+void CWinDirStatModel::OnComputeHash()
 {
     // Compute the hash in the message thread
     std::wstring hashResult;
@@ -1764,7 +1762,7 @@ void CDirStatDoc::OnComputeHash()
     dlg.DoModal();
 }
 
-constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
+constexpr CompressionAlgorithm CWinDirStatModel::CompressionIdToAlg(const UINT id)
 {
     switch (id)
     {
@@ -1778,7 +1776,7 @@ constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
     }
 }
 
-void CDirStatDoc::OnCleanupCompress(UINT id)
+void CWinDirStatModel::OnCleanupCompress(UINT id)
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
@@ -1800,7 +1798,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     RefreshItem(itemsSelected);
 }
 
-void CDirStatDoc::OnCleanupOptimizeVhd()
+void CWinDirStatModel::OnCleanupOptimizeVhd()
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
@@ -1822,7 +1820,7 @@ void CDirStatDoc::OnCleanupOptimizeVhd()
     RefreshItem(itemsSelected);
 }
 
-void CDirStatDoc::OnScanSuspend()
+void CWinDirStatModel::OnScanSuspend()
 {
     // Wait for system to fully shutdown
     for (auto& queue : m_queues | std::views::values)
@@ -1833,7 +1831,7 @@ void CDirStatDoc::OnScanSuspend()
         CMainFrame::Get()->SuspendState(true);
 }
 
-void CDirStatDoc::OnScanResume()
+void CWinDirStatModel::OnScanResume()
 {
     for (auto& queue : m_queues | std::views::values)
         queue.ResumeExecution();
@@ -1842,12 +1840,12 @@ void CDirStatDoc::OnScanResume()
         CMainFrame::Get()->SuspendState(false);
 }
 
-void CDirStatDoc::OnScanStop()
+void CWinDirStatModel::OnScanStop()
 {
     StopScanningEngine(Stop);
 }
 
-void CDirStatDoc::StopScanningEngine(StopReason stopReason)
+void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
 {
     // Interrupt blocking I/O (e.g. ReadFile on large files) in worker threads
     // so they reach WaitIfSuspended promptly. Without this, SuspendExecution
@@ -1873,7 +1871,7 @@ void CDirStatDoc::StopScanningEngine(StopReason stopReason)
     }
 }
 
-void CDirStatDoc::OnContextMenuExplore(UINT nID)
+void CWinDirStatModel::OnContextMenuExplore(UINT nID)
 {
     // get list of paths from items
     const auto selected = GetAllSelected();
@@ -1904,7 +1902,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
     contextMenu->InvokeCommand(reinterpret_cast<LPCMINVOKECOMMANDINFO>(&info));
 }
 
-void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
+void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 {
     // Stop any previous executions
     CWaitCursor wc;
@@ -2008,14 +2006,14 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             item->GetParent()->RemoveChild(item);
         }
     }
-    CDirStatDoc::InvalidateSelectionCache();
+    CWinDirStatModel::InvalidateSelectionCache();
 
     // Refresh filter cutoffs immediately before scanning in case settings
     // were compiled long ago (e.g. dialog left open before clicking scan).
     CFiltering::CompileFilters();
 
-    // Start a thread so we do not hang the message loop during inserts
-    // Lambda captures assume document exists for duration of thread
+    // Start a thread so we do not hang the message loop during inserts.
+    // Lambda captures assume the model exists for the duration of the scan.
     m_thread.emplace([this,items, visualInfo] () mutable
     {
         // Add items to processing queue
@@ -2133,12 +2131,12 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Handle quiet save mode if path is set
         if (const auto savePath = CDirStatApp::Get()->GetSaveToPath(); !savePath.empty())
         {
-            // Get the document and root item
-            const auto* doc = CDirStatDoc::Get();
-            if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
+            // Get the model and root item
+            const auto* model = CWinDirStatModel::Get();
+            if (model == nullptr || !model->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveResults(savePath, doc->GetRootItem()) ? 0 : 1);
+            ExitProcess(SaveResults(savePath, model->GetRootItem()) ? 0 : 1);
         }
 
         // Handle quiet save duplicates mode if path is set
@@ -2167,7 +2165,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
             CMainFrame::Get()->LockWindowUpdate();
-            Get()->UpdateAllViews(nullptr);
+            Get()->NotifyPanes();
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->RestoreExtensionView();
             CMainFrame::Get()->RestoreTreeMapView();
@@ -2189,7 +2187,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     });
 }
 
-void CDirStatDoc::OnRemoveMarkOfTheWebTags()
+void CWinDirStatModel::OnRemoveMarkOfTheWebTags()
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
@@ -2206,7 +2204,7 @@ void CDirStatDoc::OnRemoveMarkOfTheWebTags()
     }).DoModal();
 }
 
-void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
 {
     // Only allow when focused on duplicate list
     if (!DupeListHasFocus())
@@ -2235,7 +2233,7 @@ void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
     pCmdUI->Enable(TRUE);
 }
 
-void CDirStatDoc::OnCreateHardlink()
+void CWinDirStatModel::OnCreateHardlink()
 {
     // Validate all items are on same logical volume
     const auto selected = GetAllSelected();
@@ -2250,7 +2248,7 @@ void CDirStatDoc::OnCreateHardlink()
     RefreshItem(selected);
 }
 
-void CDirStatDoc::OnToolsSetDates()
+void CWinDirStatModel::OnToolsSetDates()
 {
     CWaitCursor wc;
 
@@ -2292,7 +2290,7 @@ void CDirStatDoc::OnToolsSetDates()
     }).DoModal();
 }
 
-void CDirStatDoc::OnToolsRemoveEmpty()
+void CWinDirStatModel::OnToolsRemoveEmpty()
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();

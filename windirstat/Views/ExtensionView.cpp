@@ -21,9 +21,9 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNCREATE(CExtensionView, CView)
+IMPLEMENT_DYNCREATE(CExtensionView, CWinDirStatPane)
 
-BEGIN_MESSAGE_MAP(CExtensionView, CView)
+BEGIN_MESSAGE_MAP(CExtensionView, CWinDirStatPane)
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
     ON_WM_SIZE()
@@ -46,21 +46,21 @@ bool CExtensionView::IsShowTypes() const
 void CExtensionView::ShowTypes(const bool show)
 {
     m_showTypes = show;
-    OnUpdate(nullptr, 0, nullptr);
+    OnUpdate(nullptr, MODEL_CHANGE_NONE, nullptr);
 }
 
 void CExtensionView::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
-    CDirStatDoc::Get()->SetHighlightExtension(ext, unregistered);
+    CWinDirStatModel::Get()->SetHighlightExtension(ext, unregistered);
     if (GetFocus() == &m_extensionListControl)
     {
-        CDirStatDoc::Get()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);
+        NotifyOtherPanes(MODEL_CHANGE_EXTENSION_SELECTION);
     }
 }
 
 int CExtensionView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
-    if (CView::OnCreate(lpCreateStruct) == -1)
+    if (CWinDirStatPane::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
@@ -76,16 +76,16 @@ int CExtensionView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
+void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem* /*item*/)
 {
-    switch (lHint)
+    switch (change)
     {
-    case HINT_NEWROOT:
-    case HINT_NULL:
-        if (IsShowTypes() && CDirStatDoc::Get()->IsRootDone())
+    case MODEL_CHANGE_NEW_ROOT:
+    case MODEL_CHANGE_NONE:
+        if (IsShowTypes() && CWinDirStatModel::Get()->IsRootDone())
         {
-            m_extensionListControl.SetRootSize(CDirStatDoc::Get()->GetRootSize());
-            m_extensionListControl.SetExtensionData(CDirStatDoc::Get()->GetExtensionData());
+            m_extensionListControl.SetRootSize(CWinDirStatModel::Get()->GetRootSize());
+            m_extensionListControl.SetExtensionData(CWinDirStatModel::Get()->GetExtensionData());
 
             // If there is no vertical scroll bar, the header control doesn't repaint
             // correctly. Don't know why. But this helps:
@@ -97,17 +97,17 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
         }
 
         [[fallthrough]];
-    case HINT_SELECTIONREFRESH:
+    case MODEL_CHANGE_SELECTION_REFRESH:
         if (IsShowTypes())
         {
             SetSelection();
         }
         break;
 
-    case HINT_ZOOMCHANGED:
+    case MODEL_CHANGE_ZOOM:
         break;
 
-    case HINT_TREEMAPSTYLECHANGED:
+    case MODEL_CHANGE_TREEMAP_STYLE:
         {
             InvalidateRect(nullptr);
             m_extensionListControl.InvalidateRect(nullptr);
@@ -115,7 +115,7 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
         }
         break;
 
-    case HINT_LISTSTYLECHANGED:
+    case MODEL_CHANGE_LIST_STYLE:
         {
             m_extensionListControl.ShowGrid(COptions::ListGrid);
             m_extensionListControl.ShowStripes(COptions::ListStripes);
@@ -152,12 +152,12 @@ void CExtensionView::SetSelection()
 
 void CExtensionView::OnDraw(CDC* pDC)
 {
-    CView::OnDraw(pDC);
+    CWinDirStatPane::OnDraw(pDC);
 }
 
 void CExtensionView::OnSize(const UINT nType, const int cx, const int cy)
 {
-    CView::OnSize(nType, cx, cy);
+    CWinDirStatPane::OnSize(nType, cx, cy);
     if (IsWindow(m_extensionListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);

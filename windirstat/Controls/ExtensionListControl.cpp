@@ -216,7 +216,7 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
         for (const auto& [ext, rec] : *ed)
         {
             // Fold unregistered extensions together; "no extension" (empty key) stays separate
-            if (group && !ext.empty() && !CDirStatDoc::Get()->IsExtensionRegistered(ext))
+            if (group && !ext.empty() && !CWinDirStatModel::Get()->IsExtensionRegistered(ext))
             {
                 const ULONGLONG bytes = rec.GetBytes();
                 groupBytes += bytes;
@@ -263,7 +263,7 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
         const CListItem* item = GetListItem(i);
         if (item->IsAggregate())
         {
-            return !ext.empty() && !CDirStatDoc::Get()->IsExtensionRegistered(ext);
+            return !ext.empty() && !CWinDirStatModel::Get()->IsExtensionRegistered(ext);
         }
         return _wcsicmp(item->GetExtension().c_str(), ext.c_str()) == 0;
     });
@@ -412,7 +412,7 @@ void CExtensionListControl::OnSearchExtension()
 
     const auto searchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
         (GlobToRegex(GetSelectedExtension(), false) + L"$");
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(),
+    CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         searchTerm, false, false, true, true);
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();

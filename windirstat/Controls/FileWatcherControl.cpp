@@ -51,10 +51,10 @@ void CFileWatcherControl::StartMonitoring()
 {
     StopMonitoring();
 
-    const auto* doc = CDirStatDoc::Get();
-    if (!doc || !doc->HasRootItem()) return;
+    const auto* model = CWinDirStatModel::Get();
+    if (!model || !model->HasRootItem()) return;
 
-    if (CItem* root = doc->GetRootItem(); root != nullptr)
+    if (CItem* root = model->GetRootItem(); root != nullptr)
     {
         auto children = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
             std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);

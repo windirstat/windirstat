@@ -82,9 +82,9 @@ void CCenteredEdit::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
     }
 }
 
-IMPLEMENT_DYNCREATE(CStorageAnalyticsView, CView)
+IMPLEMENT_DYNCREATE(CStorageAnalyticsView, CWinDirStatPane)
 
-BEGIN_MESSAGE_MAP(CStorageAnalyticsView, CView)
+BEGIN_MESSAGE_MAP(CStorageAnalyticsView, CWinDirStatPane)
     ON_WM_CREATE()
     ON_WM_SIZE()
     ON_WM_ERASEBKGND()
@@ -98,7 +98,7 @@ CStorageAnalyticsView::CStorageAnalyticsView() = default;
 
 int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
-    if (CView::OnCreate(lpCreateStruct) == -1)
+    if (CWinDirStatPane::OnCreate(lpCreateStruct) == -1)
         return -1;
 
     const CRect rect(0, 0, 0, 0);
@@ -211,7 +211,7 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CStorageAnalyticsView::OnSize(const UINT nType, const int cx, const int cy)
 {
-    CView::OnSize(nType, cx, cy);
+    CWinDirStatPane::OnSize(nType, cx, cy);
 
     const int panelX = DpiRest(15, this);
     const int panelW = DpiRest(180, this);
@@ -287,9 +287,9 @@ HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlCo
     if (DarkMode::IsDarkModeActive())
     {
         const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-        return brush ? brush : CView::OnCtlColor(pDC, pWnd, nCtlColor);
+        return brush ? brush : CWinDirStatPane::OnCtlColor(pDC, pWnd, nCtlColor);
     }
-    return CView::OnCtlColor(pDC, pWnd, nCtlColor);
+    return CWinDirStatPane::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 void CStorageAnalyticsView::OnBtnRecalculate()
@@ -331,7 +331,7 @@ BOOL CStorageAnalyticsView::PreTranslateMessage(MSG* pMsg)
             }
         }
     }
-    return CView::PreTranslateMessage(pMsg);
+    return CWinDirStatPane::PreTranslateMessage(pMsg);
 }
 
 bool CStorageAnalyticsView::AreParametersValid()
@@ -393,12 +393,12 @@ void CStorageAnalyticsView::OnEditChangeRange(UINT)
     OnEditChange();
 }
 
-void CStorageAnalyticsView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject* /*pHint*/)
+void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem* /*item*/)
 {
-    if (lHint == HINT_NEWROOT || lHint == HINT_NULL)
+    if (change == MODEL_CHANGE_NEW_ROOT || change == MODEL_CHANGE_NONE)
     {
-        const auto* doc = CDirStatDoc::Get();
-        if (doc && doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning())
+        const auto* model = CWinDirStatModel::Get();
+        if (model && model->HasRootItem() && model->IsRootDone() && !model->IsScanRunning())
         {
             Recalculate();
         }
@@ -412,8 +412,8 @@ void CStorageAnalyticsView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, COb
 
 void CStorageAnalyticsView::Recalculate()
 {
-    const auto* doc = CDirStatDoc::Get();
-    if (!doc || !doc->HasRootItem())
+    const auto* model = CWinDirStatModel::Get();
+    if (!model || !model->HasRootItem())
     {
         m_hasData = false;
         InvalidateRect(nullptr);
@@ -461,7 +461,7 @@ void CStorageAnalyticsView::Recalculate()
     ::GetSystemTimeAsFileTime(&now);
 
     CWaitCursor wait;
-    Traverse(doc->GetRootItem(), now);
+    Traverse(model->GetRootItem(), now);
 
     m_hasData = true;
     InvalidateRect(nullptr);

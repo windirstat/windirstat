@@ -21,6 +21,7 @@
 #include "IconHandler.h"
 
 class CMainFrame;
+class CWinDirStatModel;
 class CDirStatApp;
 
 // Frequently used "globals"
@@ -37,6 +38,7 @@ class CDirStatApp final : public CWinAppEx
 public:
 
     CDirStatApp();
+    ~CDirStatApp() override;
     BOOL InitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
     BOOL IsIdleMessage(MSG* pMsg) override;
@@ -67,7 +69,7 @@ protected:
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which) const;
 
-    CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
+    std::unique_ptr<CWinDirStatModel> m_model;
 
     CIconHandler m_iconList;        // Central icon list
     COLORREF m_altColor;            // Coloring of compressed items
@@ -82,7 +84,7 @@ protected:
 #endif
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnFileOpen();
+    afx_msg void OnSelectScanRoots();
     afx_msg void OnRunElevated();
     afx_msg void OnFilter();
     afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);
