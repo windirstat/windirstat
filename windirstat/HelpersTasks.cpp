@@ -828,7 +828,7 @@ void SetProcessIoPriorityHigh() noexcept
 void SetCurrentThreadIoPriority(const int level) noexcept
 {
     enum class NtIoPriority : ULONG { VeryLow = 0, Low = 1, Normal = 2 };
-    constexpr THREADINFOCLASS ThreadIoPriorityClass = static_cast<THREADINFOCLASS>(31);
+    constexpr THREADINFOCLASS ThreadIoPriorityClass = static_cast<THREADINFOCLASS>(22); // ThreadIoPriority = 0x16
 
     // Map user-facing level (0=Normal, 1=BelowNormal, 2=Idle) to NT values
     const auto ntPriority = static_cast<NtIoPriority>(
