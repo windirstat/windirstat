@@ -833,7 +833,7 @@ void CMainFrame::UpdateFrameTitleForScan(LPCWSTR scanName)
 
 BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
 {
-    if (CWnd* focus = GetFocus())
+    if (CWnd* focus = GetFocus(); focus != nullptr && focus != this && this->IsChild(focus))
     {
         for (CWnd* target = focus; target != nullptr && target != this; target = target->GetParent())
         {
