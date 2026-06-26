@@ -418,6 +418,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_TIMER()
     ON_WM_NCPAINT()
     ON_WM_NCACTIVATE()
+    ON_WM_ERASEBKGND()
     ON_COMMAND(ID_VIEW_ALL_FILES, &CMainFrame::OnViewAllFiles)
     ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
     ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
@@ -447,6 +448,11 @@ CMainFrame::CMainFrame()
 CMainFrame::~CMainFrame()
 {
     s_Singleton = nullptr;
+}
+
+BOOL CMainFrame::OnEraseBkgnd(CDC* /*pDC*/)
+{
+    return TRUE;
 }
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)

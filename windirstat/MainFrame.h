@@ -295,6 +295,7 @@ protected:
     afx_msg LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam);
     afx_msg void OnNcPaint();
     afx_msg BOOL OnNcActivate(BOOL bActive);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 public:
     static CMainFrame* Get() { return s_Singleton; }
     void UpdateFrameTitleForScan(LPCWSTR scanName);
