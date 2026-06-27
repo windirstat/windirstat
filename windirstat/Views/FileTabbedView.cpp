@@ -24,6 +24,7 @@ IMPLEMENT_DYNCREATE(CFileTabbedView, CWinDirStatPane)
 
 BEGIN_MESSAGE_MAP(CFileTabbedView, CWinDirStatPane)
     ON_WM_CREATE()
+    ON_WM_SETFOCUS()
     ON_WM_SIZE()
     ON_WM_ERASEBKGND()
     ON_REGISTERED_MESSAGE(AFX_WM_CHANGING_ACTIVE_TAB, OnChangeActiveTab)
@@ -53,6 +54,19 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     OnInitialUpdate();
     return 0;
+}
+
+void CFileTabbedView::FocusActiveTabContent()
+{
+    if (CWnd* tabWnd = m_tabControl.GetTabWnd(m_tabControl.GetActiveTab()))
+    {
+        tabWnd->SetFocus();
+    }
+}
+
+void CFileTabbedView::OnSetFocus(CWnd* /*pOldWnd*/)
+{
+    FocusActiveTabContent();
 }
 
 int CFileTabbedView::AddPane(CRuntimeClass* paneClass, const std::wstring_view& tabLabel)
@@ -152,6 +166,15 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
         CFileDupeControl::Get()->SortItems();
     }
 
+    // Route keyboard focus to the newly-active tab's content when focus is
+    // already inside this container (tab clicked while app is focused, or
+    // programmatic switch from within this pane).
+    if (const CWnd* focused = GetFocus(); focused != nullptr &&
+        (focused->GetSafeHwnd() == m_hWnd || IsChild(focused)))
+    {
+        FocusActiveTabContent();
+    }
+
     return 0;
 }
 
@@ -190,6 +213,7 @@ bool CFileTabbedView::CycleTab(const bool forward)
     if (nextPos >= visibleTabs.size()) return false;
 
     SetActiveView(visibleTabs[nextPos]);
+    FocusActiveTabContent();
     return true;
 }
 

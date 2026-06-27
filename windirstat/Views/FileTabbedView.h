@@ -87,8 +87,11 @@ protected:
     int m_storageAnalyticsViewIndex = -1;
     CStorageAnalyticsView* m_storageAnalyticsView = nullptr;
 
+    void FocusActiveTabContent();
+
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);

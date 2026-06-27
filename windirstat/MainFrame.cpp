@@ -1351,7 +1351,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
         case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
         case LF_PERMSLIST: GetFilePermsView()->SetFocus(); break;
-        case LF_FILETREE: GetFileTreeView()->SetFocus(); break;
+        case LF_FILETREE: GetFileTabbedView()->SetFocus(); break;
         case LF_NONE:
         {
             SetLogicalFocus(LF_NONE);

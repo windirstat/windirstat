@@ -22,6 +22,7 @@ IMPLEMENT_DYNAMIC(CWinDirStatPane, CWnd)
 
 BEGIN_MESSAGE_MAP(CWinDirStatPane, CWnd)
     ON_WM_CREATE()
+    ON_WM_MOUSEACTIVATE()
     ON_WM_PAINT()
 END_MESSAGE_MAP()
 
@@ -62,6 +63,20 @@ void CWinDirStatPane::OnPaint()
 
 void CWinDirStatPane::OnDraw(CDC* /*pDC*/)
 {
+}
+
+int CWinDirStatPane::OnMouseActivate(CWnd* pDesktopWnd, const UINT nHitTest, const UINT message)
+{
+    const int result = CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
+    if (result != MA_NOACTIVATE && result != MA_NOACTIVATEANDEAT)
+    {
+        const HWND focus = ::GetFocus();
+        if (m_hWnd != focus && !::IsChild(m_hWnd, focus) && IsTopParentActive())
+        {
+            SetFocus();
+        }
+    }
+    return result;
 }
 
 void CWinDirStatPane::OnUpdate(CWnd* /*sender*/, MODEL_CHANGE /*change*/, CItem* /*item*/)
