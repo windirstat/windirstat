@@ -814,6 +814,18 @@ void SetProcessIoPriorityHigh() noexcept
     }
 }
 
+void SetCurrentThreadIoPriority(const int level) noexcept
+{
+    enum class NtIoPriority : ULONG { VeryLow = 0, Low = 1, Normal = 2 };
+    constexpr THREADINFOCLASS ThreadIoPriorityClass = static_cast<THREADINFOCLASS>(22); // ThreadIoPriority = 0x16
+
+    // Map user-facing level (0=Normal, 1=BelowNormal, 2=Idle) to NT values
+    const auto ntPriority = static_cast<NtIoPriority>(
+        static_cast<ULONG>(NtIoPriority::Normal) - static_cast<ULONG>(std::clamp(level, 0, 2)));
+    ULONG value = static_cast<ULONG>(ntPriority);
+    NtSetInformationThread(GetCurrentThread(), ThreadIoPriorityClass, &value, sizeof(value));
+}
+
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept
 {
     constexpr VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
