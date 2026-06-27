@@ -107,9 +107,9 @@ const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
     return BGR(blue, green, red);
 }
 
-static COLORREF GetDepthColor(int depth)
+static COLORREF GetDepthColor(int depth) noexcept
 {
-    static constexpr COLORREF palette[] = {
+    static constexpr std::array<COLORREF, 7> palette = {
         RGB(240, 128, 128), // Light Coral (Red)
         RGB(244, 200, 120), // Tan / Light Orange
         RGB(250, 250, 160), // Light Yellow
@@ -118,7 +118,7 @@ static COLORREF GetDepthColor(int depth)
         RGB(160, 160, 240), // Light Blue
         RGB(240, 160, 240)  // Light Magenta
     };
-    return (depth <= 0) ? RGB(200, 200, 200) : palette[(depth - 1) % std::size(palette)];
+    return (depth <= 0) ? RGB(200, 200, 200) : palette[static_cast<std::size_t>(depth - 1) % palette.size()];
 }
 
 [[nodiscard]] bool PrepareRenderArea(CDC* const pdc, CRect& rc, const bool drawOuterFrame)

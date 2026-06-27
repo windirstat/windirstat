@@ -35,7 +35,7 @@ class BlockingQueue final
     bool m_cancelled = false;
     bool m_exitOnAllIdle = true;
 
-    bool AllThreadsIdling() const
+    bool AllThreadsIdling() const noexcept
     {
         return m_totalWorkerThreads == m_workersWaiting;
     }
@@ -240,7 +240,7 @@ public:
 };
 
 template<typename T>
-class SingleConsumerQueue
+class SingleConsumerQueue final
 {
     struct Node
     {

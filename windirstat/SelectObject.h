@@ -29,7 +29,7 @@
 class CSelectObject final
 {
 public:
-    CSelectObject(CDC* pdc, CGdiObject* pObject)
+    CSelectObject(CDC* pdc, CGdiObject* pObject) noexcept
     {
         m_pOldObject = pdc->SelectObject(pObject);
         m_pdc        = pdc;
@@ -40,7 +40,7 @@ public:
     CSelectObject(CSelectObject&&) = delete;
     CSelectObject& operator=(CSelectObject&&) = delete;
 
-    ~CSelectObject()
+    ~CSelectObject() noexcept
     {
         if (m_pdc != nullptr && m_pOldObject != nullptr)
         {
@@ -56,7 +56,7 @@ protected:
 class CSelectStockObject final
 {
 public:
-    CSelectStockObject(CDC* pdc, const int nIndex)
+    CSelectStockObject(CDC* pdc, const int nIndex) noexcept
     {
         m_pOldObject = pdc->SelectStockObject(nIndex);
         m_pdc = pdc;
@@ -67,7 +67,7 @@ public:
     CSelectStockObject(CSelectStockObject&&) = delete;
     CSelectStockObject& operator=(CSelectStockObject&&) = delete;
 
-    ~CSelectStockObject()
+    ~CSelectStockObject() noexcept
     {
         if (m_pdc != nullptr && m_pOldObject != nullptr)
         {
@@ -86,7 +86,7 @@ template <typename V, V (CDC::* Setter)(V)>
 class CSetDCAttribute final
 {
 public:
-    CSetDCAttribute(CDC* pdc, const V value) : m_pdc(pdc)
+    CSetDCAttribute(CDC* pdc, const V value) noexcept : m_pdc(pdc)
     {
         m_oldValue = (pdc->*Setter)(value);
     }
@@ -96,7 +96,7 @@ public:
     CSetDCAttribute(CSetDCAttribute&&) = delete;
     CSetDCAttribute& operator=(CSetDCAttribute&&) = delete;
 
-    ~CSetDCAttribute()
+    ~CSetDCAttribute() noexcept
     {
         if (m_pdc != nullptr)
         {
@@ -116,7 +116,7 @@ using CSetBkColor = CSetDCAttribute<COLORREF, &CDC::SetBkColor>;
 class CSaveDC final
 {
 public:
-    CSaveDC(CDC* pdc)
+    CSaveDC(CDC* pdc) noexcept
     {
         m_pdc = pdc;
         m_save = pdc->SaveDC();
@@ -127,7 +127,7 @@ public:
     CSaveDC(CSaveDC&&) = delete;
     CSaveDC& operator=(CSaveDC&&) = delete;
 
-    ~CSaveDC()
+    ~CSaveDC() noexcept
     {
         if (m_pdc != nullptr)
         {
