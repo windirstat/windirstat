@@ -6374,6 +6374,8 @@ function Copy-SourceTreeForBuild {
 
     $excludedRoots = @(
         (Join-Path $Source '.git'),
+        (Join-Path $Source '.vs'),
+        (Join-Path $Source 'publish'),
         (Join-Path $Source 'build'),
         (Join-Path $Source 'intermediate')
     ) | ForEach-Object { [System.IO.Path]::GetFullPath($_).TrimEnd('\') }

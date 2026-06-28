@@ -69,6 +69,7 @@ protected:
     const CMFCTabCtrl& GetTabControl() const { return m_tabControl; }
     void SetActiveView(int index) { m_tabControl.SetActiveTab(index); }
     int AddPane(CRuntimeClass* paneClass, const std::wstring_view& tabLabel);
+    void ResetOptionalTabVisibility();
 
     // Used for storing and retrieving the various tab views
     CMFCTabCtrl m_tabControl;

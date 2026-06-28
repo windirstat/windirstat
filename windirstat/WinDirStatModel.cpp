@@ -2067,6 +2067,12 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         for (auto& queue : m_queues | std::views::values)
             stopReason = static_cast<StopReason>(queue.WaitForCompletion());
 
+        // If new scan or closing, exit early before making any synchronous calls to the UI thread
+        if (stopReason == Abort)
+        {
+            return;
+        }
+
         // Restore unknown and freespace items
         for (const auto& item : items)
         {
@@ -2112,16 +2118,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             {
                 CMainFrame::Get()->UpdateProgressRange(correctedRange);
             });
-        }
-
-        // If new scan or closing, indicate done and exit early
-        if (stopReason == Abort)
-        {
-            CMainFrame::Get()->InvokeInMessageThread([&]
-            {
-                CMainFrame::Get()->SetProgressComplete();
-            });
-            return;
         }
 
         // Sorting and other finalization tasks

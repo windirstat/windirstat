@@ -97,7 +97,11 @@ void CFileTabbedView::OnInitialUpdate()
 {
     CTabCtrlHelper::SetupTabControl(GetTabControl());
     Localization::UpdateTabControl(GetTabControl());
+    ResetOptionalTabVisibility();
+}
 
+void CFileTabbedView::ResetOptionalTabVisibility()
+{
     SetSearchTabVisibility(false);
     SetWatcherTabVisibility(false);
     SetPermsTabVisibility(false);
@@ -180,6 +184,11 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 
 void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
+    if (change == MODEL_CHANGE_NEW_ROOT)
+    {
+        ResetOptionalTabVisibility();
+    }
+
     for (auto* pane : { static_cast<CWinDirStatPane*>(m_fileTreeView),
         static_cast<CWinDirStatPane*>(m_fileTopView),
         static_cast<CWinDirStatPane*>(m_fileDupeView),
