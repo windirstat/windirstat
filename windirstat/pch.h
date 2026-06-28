@@ -38,9 +38,7 @@
 // enables new GDI+ version
 #define GDIPVER 0x0110
 
-#include <afxwin.h>         // MFC Core
-#include <afxext.h>         // MFC Extensions
-#include <afxcontrolbars.h> // MFC support for ribbons and control bars
+#include "WinDirStatShim.h" // Drop-in MFC compatibility layer (replaces afxwin/afxext/afxcontrolbars)
 
 // Windows API headers
 #include <VersionHelpers.h>

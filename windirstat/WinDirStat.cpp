@@ -179,7 +179,7 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
 {
     // If portable mode is Enabled, then just ensure the full path is used
     const std::wstring ini = GetAppFileName(L"ini");
-    if (ini == m_pszProfileName &&
+    if (m_pszProfileName != nullptr && ini == m_pszProfileName &&
         enable == InPortableMode())
     {
         return true;

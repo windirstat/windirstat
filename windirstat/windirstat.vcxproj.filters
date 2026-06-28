@@ -245,6 +245,12 @@
     <ClInclude Include="WinDirStat.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="WinDirStatShim.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="WinDirStatShimRes.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="DarkMode.h">
       <Filter>Header Files\User Interface</Filter>
     </ClInclude>

@@ -16,3 +16,9 @@
 //
 
 #include "pch.h"
+
+// Application entry point (formerly provided by MFC's AfxWinMain).
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
+    return WdsAfxWinMain(hInstance, lpCmdLine, nCmdShow);
+}
