@@ -974,6 +974,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i) { return i != nullptr && IsElevationActive() && (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx")); };
+    static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*) { return IsStorageSenseAvailable(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -981,6 +982,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, hasRecycleBin } },
         { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
+        { ID_CLEANUP_STORAGE_SENSE,   { true,  true,  false, LF_NONE,     ITF_ANY, isStorageSenseAvailable } },
         { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,     ITF_ANY, isElevationPossible } },
@@ -1109,6 +1111,7 @@ BEGIN_MESSAGE_MAP(CWinDirStatModel, CCmdTarget)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_LOCAL, OnRemoveLocalProfiles)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_STORAGE_SENSE, OnLaunchStorageSense)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_PROGRAMS, OnExecuteProgramsFeatures)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_MOTW, OnRemoveMarkOfTheWebTags)
     ON_UPDATE_COMMAND_UI(ID_CLEANUP_CREATE_HARDLINK, OnUpdateCreateHardlink)
@@ -1640,6 +1643,11 @@ void CWinDirStatModel::OnRemoveLocalProfiles()
 void CWinDirStatModel::OnExecuteDiskCleanupUtility()
 {
     ShellExecuteWrapper(L"CLEANMGR.EXE");
+}
+
+void CWinDirStatModel::OnLaunchStorageSense()
+{
+    ShellExecuteWrapper(L"ms-settings:storagesense");
 }
 
 void CWinDirStatModel::OnExecuteProgramsFeatures()

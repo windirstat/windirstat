@@ -96,6 +96,7 @@ inline auto GetDrive(const std::wstring_view& sv) { return std::wstring{ sv.subs
 // Hibernation
 void DisableHibernate() noexcept;
 bool IsHibernateEnabled() noexcept;
+bool IsStorageSenseAvailable() noexcept;
 
 // Elevation and privileges
 bool IsElevationActive() noexcept;

@@ -311,6 +311,15 @@ void DisableHibernate() noexcept
     }
 }
 
+bool IsStorageSenseAvailable() noexcept
+{
+    static const bool result = []() noexcept -> bool {
+        CRegKey key;
+        return key.Open(HKEY_CLASSES_ROOT, L"ms-settings", KEY_READ) == ERROR_SUCCESS;
+    }();
+    return result;
+}
+
 bool IsHibernateEnabled() noexcept
 {
     WCHAR drive[3];

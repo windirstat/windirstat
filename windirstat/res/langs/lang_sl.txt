@@ -158,6 +158,7 @@ IDS_MENU_SHOW=&Pokaži drevesno karto
 IDS_MENU_SPARSIFY_FILE=Naredi datoteko redko
 IDS_MENU_STATUS_BAR=Pokaži vrstico s &stanjem
 IDS_MENU_STORAGE_ANALYTICS=Analitika &shrambe
+IDS_MENU_STORAGE_SENSE=Microsoftove nastavitve shrambe
 IDS_MENU_TOOL_BAR=Pokaži orodno &vrstico
 IDS_MENU_TOOLS=Orodja
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Prikaži končnice
