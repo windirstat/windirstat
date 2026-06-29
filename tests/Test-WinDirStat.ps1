@@ -1082,19 +1082,25 @@ function Get-AllDescendantsByType {
 
 function Invoke-Button {
     param([System.Windows.Automation.AutomationElement] $Btn)
+    $isToolbarBtn = $false
+    try {
+        $parent = [System.Windows.Automation.TreeWalker]::RawViewWalker.GetParent($Btn)
+        if ($parent -and $parent.Current.ClassName -like '*Toolbar*') {
+            $isToolbarBtn = $true
+        }
+    } catch {}
+
+    if ($isToolbarBtn) {
+        Click-Element $Btn
+        return
+    }
+
     try {
         $p = $Btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
         $p.Invoke()
     }
     catch {
-        # Fallback to coordinate-based click if UIA InvokePattern throws
-        $cp = Get-ElementClickPoint $Btn
-        if ($cp) {
-            [MouseHelper]::LeftClick($cp.X, $cp.Y)
-        }
-        else {
-            throw $_
-        }
+        Click-Element $Btn
     }
 }
 
@@ -1333,6 +1339,14 @@ function Get-ElementClickPoint {
 
 function Click-Element {
     param([System.Windows.Automation.AutomationElement] $El)
+    try {
+        $w = $El
+        while ($w -and $w.Current.ControlType -ne [System.Windows.Automation.ControlType]::Window) {
+            $w = [System.Windows.Automation.TreeWalker]::RawViewWalker.GetParent($w)
+        }
+        if ($w) { Focus-Window $w }
+    } catch {}
+
     $cp = Get-ElementClickPoint $El
     if ($cp) {
         [MouseHelper]::LeftClick($cp.X, $cp.Y)
@@ -1364,17 +1378,15 @@ function Select-TabItem {
 # Find the toolbar pane (class contains 'ToolBar') and return its buttons
 function Get-ToolbarPane {
     param([System.Windows.Automation.AutomationElement] $Window)
-    Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Pane) `
-        -ClassName 'Afx:ToolBar:5f580000:8:10003:10' `
-        -Scope ([System.Windows.Automation.TreeScope]::Children)
+    $elements = Find-UiaAll -Root $Window -Scope ([System.Windows.Automation.TreeScope]::Children)
+    $elements | Where-Object { $_.Current.ClassName -like '*ToolBar*' } | Select-Object -First 1
 }
 
 # Toolbar class name varies by ASLR address - use a partial class name match via a loop
 function Find-ToolbarPane {
     param([System.Windows.Automation.AutomationElement] $Window)
-    $panes = Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::Pane) `
-        -Scope ([System.Windows.Automation.TreeScope]::Children)
-    $panes | Where-Object { $_.Current.ClassName -like '*ToolBar*' } | Select-Object -First 1
+    $elements = Find-UiaAll -Root $Window -Scope ([System.Windows.Automation.TreeScope]::Children)
+    $elements | Where-Object { $_.Current.ClassName -like '*ToolBar*' } | Select-Object -First 1
 }
 
 function Find-StatusBarPane {
@@ -1386,7 +1398,14 @@ function Find-StatusBarPane {
 
 function Find-MenuItem {
     param([System.Windows.Automation.AutomationElement] $Window, [string] $Name)
-    Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem) -Name $Name
+    $item = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem) -Name $Name
+    if ($item) { return $item }
+    $cleanName = ($Name -split "`t")[0].Trim()
+    $items = Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem)
+    $items | Where-Object { 
+        $n = ($_.Current.Name -split "`t")[0].Trim()
+        $n -eq $cleanName
+    } | Select-Object -First 1
 }
 
 # Collect all currently-visible menu items (fast single pass) from window + popup windows
@@ -2143,7 +2162,11 @@ function Test-DriveSelectionDialog {
 
     # Open via toolbar "Open..." button
     $tb = Find-ToolbarPane -Window $Window
-    $openBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Open' } else { $null }
+    $openBtn = if ($tb) {
+        $btn = Find-ToolbarButton -Toolbar $tb -NameContains 'Select'
+        if (!$btn) { $btn = Find-ToolbarButton -Toolbar $tb -NameContains 'Open' }
+        $btn
+    } else { $null }
 
     if ($openBtn) {
         try {
@@ -2159,7 +2182,8 @@ function Test-DriveSelectionDialog {
         # Fallback: File > Open... via menu
         $opened = Open-Menu -Window $Window -Name 'File'
         if ($opened) {
-            $openItem = Find-MenuItem -Window $Window -Name 'Open...'
+            $openItem = Find-MenuItem -Window $Window -Name 'Select Target...'
+            if (!$openItem) { $openItem = Find-MenuItem -Window $Window -Name 'Open...' }
             if ($openItem) {
                 try {
                     $p = $openItem.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
@@ -2370,7 +2394,8 @@ function Test-Toolbar {
     Assert-WindowReady $Window
 
     # -- Open button: click → Drive Select dialog → interact with radios → cancel
-    $openBtn = Find-ToolbarButton -Toolbar $tb -NameContains 'Open'
+    $openBtn = Find-ToolbarButton -Toolbar $tb -NameContains 'Select'
+    if (!$openBtn) { $openBtn = Find-ToolbarButton -Toolbar $tb -NameContains 'Open' }
     if ($openBtn) {
         $snap = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
         try { Invoke-Button $openBtn } catch { Click-Element $openBtn }

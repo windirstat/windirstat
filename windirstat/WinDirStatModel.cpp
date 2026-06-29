@@ -2146,13 +2146,16 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Handle quiet save duplicates mode if path is set
         if (const auto dupeSavePath = CDirStatApp::Get()->GetSaveDupesToPath(); !dupeSavePath.empty())
         {
-            // Get the duplicate root item
-            CFileDupeControl::Get()->SortItems();
-            const auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
-            if (dupeRoot == nullptr) ExitProcess(1);
+            CMainFrame::Get()->InvokeInMessageThread([this, dupeSavePath]
+            {
+                // Get the duplicate root item
+                CFileDupeControl::Get()->SortItems();
+                const auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
+                if (dupeRoot == nullptr) ExitProcess(1);
 
-            // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) ? 0 : 1);
+                // Run scan and exit with success == 0 or failure == 1
+                ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) ? 0 : 1);
+            });
         }
 
         // Handle quiet save permissions mode if path is set
