@@ -1462,14 +1462,14 @@ public:
     LRESULT SendMessage(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) const noexcept { return ::SendMessageW(m_hWnd, msg, wParam, lParam); }
     BOOL PostMessage(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) const noexcept { return ::PostMessageW(m_hWnd, msg, wParam, lParam); }
     // Like SendMessage but, when we have subclassed this window, calls the previous wndproc
-    // directly via CallWindowProcW instead of routing through SendMessage's user32 dispatch
-    // machinery (thread-queue check, hook chain, etc.).  Safe to call only from the window's
-    // own thread — which is always true for MFC-style control methods.
+    // On the window's own thread: bypass SendMessage dispatch via CallWindowProcW (fast path).
+    // From any other thread: use SendMessage so the owning thread's message loop services it,
+    // matching real MFC's CWnd::SendMessage which always goes through ::SendMessage.
     LRESULT SendSelf(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) const
     {
-        return m_pfnSuper
-            ? ::CallWindowProcW(m_pfnSuper, m_hWnd, msg, wParam, lParam)
-            : ::SendMessageW(m_hWnd, msg, wParam, lParam);
+        if (m_pfnSuper && ::GetWindowThreadProcessId(m_hWnd, nullptr) == ::GetCurrentThreadId())
+            return ::CallWindowProcW(m_pfnSuper, m_hWnd, msg, wParam, lParam);
+        return ::SendMessageW(m_hWnd, msg, wParam, lParam);
     }
     LRESULT SendDlgItemMessage(int nID, UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) noexcept { return ::SendDlgItemMessageW(m_hWnd, nID, msg, wParam, lParam); }
 
