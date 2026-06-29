@@ -327,8 +327,9 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap);
     }
 
+    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
     for (const auto& val : parentMap | std::views::values)
-        val->SortItemsBySizePhysical();
+        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
 
     return newroot;
 }
@@ -385,8 +386,9 @@ static CItem* LoadResultsJson(std::ifstream& reader)
             fieldValues[FIELD_FOLDERS], newroot, parentMap);
     }
 
+    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
     for (const auto& val : parentMap | std::views::values)
-        val->SortItemsBySizePhysical();
+        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
 
     return newroot;
 }
