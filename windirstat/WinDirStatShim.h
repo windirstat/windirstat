@@ -3157,33 +3157,8 @@ inline void CWinApp::ParseCommandLine(CCommandLineInfo& rCmdInfo)
     ::LocalFree(argv);
 }
 
-inline void WdsLog(const wchar_t* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    wchar_t buf[2048];
-    int len = vswprintf_s(buf, format, args);
-    va_end(args);
-    if (len <= 0) return;
-    wcscat_s(buf, L"\r\n");
-    len += 2;
-    char utf8[4096];
-    int utf8Len = ::WideCharToMultiByte(CP_UTF8, 0, buf, len, utf8, sizeof(utf8), nullptr, nullptr);
-    if (utf8Len <= 0) return;
-    HANDLE hFile = ::CreateFileW(L"C:\\Users\\Bryan Berns\\.gemini\\antigravity\\brain\\147ab7ba-d819-4c0a-b1ee-6eebe865fa32\\scratch\\shim_debug.log",
-        FILE_APPEND_DATA, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        DWORD written;
-        ::WriteFile(hFile, utf8, utf8Len, &written, nullptr);
-        ::CloseHandle(hFile);
-    }
-}
-
 inline UINT CWinApp::GetProfileInt(LPCWSTR section, LPCWSTR entry, int nDefault)
 {
-    WdsLog(L"GetProfileInt: section=%s, entry=%s, default=%d, reg=%s, profile=%s",
-        section, entry, nDefault, m_pszRegistryKey ? m_pszRegistryKey : L"NULL", m_pszProfileName ? m_pszProfileName : L"NULL");
     if (m_pszRegistryKey)
     {
         HKEY hk;
@@ -3192,22 +3167,14 @@ inline UINT CWinApp::GetProfileInt(LPCWSTR section, LPCWSTR entry, int nDefault)
             DWORD val = 0, sz = sizeof(val), type = 0;
             const LONG r = ::RegQueryValueExW(hk, entry, nullptr, &type, reinterpret_cast<LPBYTE>(&val), &sz);
             ::RegCloseKey(hk);
-            if (r == ERROR_SUCCESS && type == REG_DWORD) {
-                WdsLog(L"  GetProfileInt: returning REG_DWORD value=%d", val);
-                return val;
-            }
+            if (r == ERROR_SUCCESS && type == REG_DWORD) return val;
         }
-        WdsLog(L"  GetProfileInt: returning REG default=%d", nDefault);
         return static_cast<UINT>(nDefault);
     }
-    UINT res = ::GetPrivateProfileIntW(section, entry, nDefault, m_pszProfileName);
-    WdsLog(L"  GetProfileInt: returning INI value=%d", res);
-    return res;
+    return ::GetPrivateProfileIntW(section, entry, nDefault, m_pszProfileName);
 }
 inline BOOL CWinApp::WriteProfileInt(LPCWSTR section, LPCWSTR entry, int nValue)
 {
-    WdsLog(L"WriteProfileInt: section=%s, entry=%s, value=%d, reg=%s, profile=%s",
-        section, entry, nValue, m_pszRegistryKey ? m_pszRegistryKey : L"NULL", m_pszProfileName ? m_pszProfileName : L"NULL");
     if (m_pszRegistryKey)
     {
         HKEY hk;
@@ -3224,8 +3191,6 @@ inline BOOL CWinApp::WriteProfileInt(LPCWSTR section, LPCWSTR entry, int nValue)
 }
 inline CString CWinApp::GetProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR def)
 {
-    WdsLog(L"GetProfileString: section=%s, entry=%s, default=%s, reg=%s, profile=%s",
-        section, entry, def, m_pszRegistryKey ? m_pszRegistryKey : L"NULL", m_pszProfileName ? m_pszProfileName : L"NULL");
     if (m_pszRegistryKey)
     {
         HKEY hk;
@@ -3238,24 +3203,19 @@ inline CString CWinApp::GetProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR
                 ::RegQueryValueExW(hk, entry, nullptr, nullptr, reinterpret_cast<LPBYTE>(s.data()), &sz);
                 ::RegCloseKey(hk);
                 while (!s.empty() && s.back() == L'\0') s.pop_back();
-                WdsLog(L"  GetProfileString: returning REG value=%s", s.c_str());
                 return CString(s.c_str());
             }
             ::RegCloseKey(hk);
         }
-        WdsLog(L"  GetProfileString: returning REG default=%s", def);
         return CString(def);
     }
     std::wstring buf(8192, L'\0');
     const DWORD n = ::GetPrivateProfileStringW(section, entry, def, buf.data(), static_cast<DWORD>(buf.size()), m_pszProfileName);
     buf.resize(n);
-    WdsLog(L"  GetProfileString: returning INI value=%s", buf.c_str());
     return CString(buf.c_str());
 }
 inline BOOL CWinApp::WriteProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR value)
 {
-    WdsLog(L"WriteProfileString: section=%s, entry=%s, value=%s, reg=%s, profile=%s",
-        section, entry, value, m_pszRegistryKey ? m_pszRegistryKey : L"NULL", m_pszProfileName ? m_pszProfileName : L"NULL");
     if (m_pszRegistryKey)
     {
         HKEY hk;
