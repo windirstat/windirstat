@@ -1607,26 +1607,16 @@ void CWinDirStatModel::OnDisableHibernateFile()
 
 void CWinDirStatModel::OnRemoveRoamingProfiles()
 {
-    constexpr std::wstring_view whereClause = L"RoamingConfigured = TRUE";
-    const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
-    if (paths.empty()) return;
-
-    const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING), paths,
-        {}, false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 },
-        Localization::Lookup(IDS_DELETE_TITLE));
-    if (result.nID != IDYES) return;
-
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
-    {
-        RemoveWmiInstances(L"Win32_UserProfile", pdlg, whereClause.data());
-    }).DoModal();
-
-    GetRootItem()->UpdateFreeSpaceItem();
+    ReemoveLocalProfiles(L"RoamingConfigured = TRUE");
 }
 
 void CWinDirStatModel::OnRemoveLocalProfiles()
 {
-    constexpr std::wstring_view whereClause = L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE";
+    ReemoveLocalProfiles(L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
+}
+
+void CWinDirStatModel::ReemoveLocalProfiles(const std::wstring_view whereClause)
+{
     const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
     if (paths.empty()) return;
 
@@ -1635,12 +1625,20 @@ void CWinDirStatModel::OnRemoveLocalProfiles()
         Localization::Lookup(IDS_DELETE_TITLE));
     if (result.nID != IDYES) return;
 
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(paths.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_UserProfile", pdlg, whereClause.data());
     }).DoModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
+    SmartPointer profilePath(CoTaskMemFree, static_cast<PWSTR>(nullptr));
+    if (SHGetKnownFolderPath(FOLDERID_UserProfiles, 0, nullptr, &profilePath) == S_OK && profilePath)
+    {
+        if (CItem* profileItem = GetRootItem()->FindItemByPath(profilePath.Get()); profileItem != nullptr)
+        {
+            RefreshItem(profileItem);
+        }
+    }
 }
 
 void CWinDirStatModel::OnExecuteDiskCleanupUtility()
