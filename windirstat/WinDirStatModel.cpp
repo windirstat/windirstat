@@ -60,6 +60,9 @@ void CWinDirStatModel::ClearScanState()
     // Stop permissions scanner before the tree is torn down
     if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
 
+    // Discard pending top-list entries that still point into the old tree.
+    if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->ClearPendingItems();
+
     // Clean out icon queue
     GetIconHandler()->ClearAsyncShellInfoQueue();
 
@@ -2075,9 +2078,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         for (auto& queue : m_queues | std::views::values)
             stopReason = static_cast<StopReason>(queue.WaitForCompletion());
 
-        // If new scan or closing, exit early before making any synchronous calls to the UI thread
+        // If new scan or closing, complete scan UI cleanup before the old
+        // tree is torn down.
         if (stopReason == Abort)
         {
+            CMainFrame::Get()->InvokeInMessageThread([]
+            {
+                CMainFrame::Get()->SetProgressComplete();
+            });
             return;
         }
 
