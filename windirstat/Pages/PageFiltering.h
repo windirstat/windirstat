@@ -30,7 +30,7 @@ class CPageFiltering final : public CMFCPropertyPage
 
     enum : std::uint8_t { IDD = IDD_PAGE_FILTERING };
 
-    CPageFiltering();
+    explicit CPageFiltering(bool refreshOnFilteringChange = true);
     ~CPageFiltering() override = default;
 
 protected:
@@ -55,6 +55,7 @@ protected:
     CEdit m_ctrlFilteringIncludeFiles;
     CEdit m_ctrlFilteringIncludeDirs;
     CToolTipCtrl m_toolTip;
+    bool m_refreshOnFilteringChange = true;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();
