@@ -1,5 +1,5 @@
 <a name="windirstat-2.7.0"></a>
-# WinDirStat 2.7.0 (Upcoming)
+# WinDirStat 2.7.0
 
 Enhancements
 - Added Storage Analytics and cost optimization view
@@ -9,16 +9,17 @@ Enhancements
 - Added folder frames option to treemap visualization
 - Added multilingual support for MSI installer
 - Added file deletion warning before profile deletions
+- Added profile deletion progress tracking
 - Added xxHash (XXH3) as a selectable file hashing algorithm
 - Added option to group unregistered file extensions
 - Added shortcut to launch Microsoft Storage Settings
 - Added extension search on double-click in extension list (thanks @harryytm)
 - Added selected items count and statistics to status bar (thanks @harryytm)
+- Added UTF-8 BOM support for CSV/JSON files
 - Improved column width autosizing performance in list and tree views
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog
 - Improved CSV/JSON loading performance using buffered reads
-- Added UTF-8 BOM support for CSV/JSON files
 - Improved tab spacing in light mode
 - Improved Italian translation (thanks @bovirus)
 
