@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$MsiPath,
     [string]$Arch,
     [string]$RelType,
@@ -11,7 +11,6 @@ param(
     [int]$Jobs = 0,
     [switch]$GenerateOnly
 )
-
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
@@ -271,7 +270,6 @@ if ($Jobs -le 0) {
     }
 }
 $Jobs = [Math]::Max(1, $Jobs)
-
 
 # Version/release args shared by every wix build invocation
 $licenseRtf = if (Test-Path 'license-build.rtf') { 'license-build.rtf' } else { 'license.rtf' }

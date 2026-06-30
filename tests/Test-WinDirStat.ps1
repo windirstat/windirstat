@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 <#
 .SYNOPSIS
     WinDirStat combined test suite.
@@ -77,15 +77,157 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-Add-Type -AssemblyName System.Windows.Forms
-
 # =============================================================================
 # CONSTANTS & GLOBAL STATE
 # =============================================================================
 
-$RepoRoot   = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$RepoRoot                = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$ResourceHeaderPath      = Join-Path $RepoRoot 'windirstat\resource.h'
+$MainResourceScriptPath  = Join-Path $RepoRoot 'windirstat\windirstat.rc'
+$HashAlgorithmHeaderPath = Join-Path $RepoRoot 'windirstat\HelpersTasks.h'
+
+function Convert-CIntegerLiteral {
+    param([Parameter(Mandatory)] [string] $Value)
+
+    $trimmed = $Value.Trim()
+    if ($trimmed -match '^0[xX](?<hex>[0-9A-Fa-f]+)$') {
+        return [Convert]::ToInt32($Matches.hex, 16)
+    }
+    return [int] $trimmed
+}
+
+function Read-CHeaderNumericDefines {
+    param([Parameter(Mandatory)] [string] $Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Required header not found: $Path"
+    }
+
+    $defines = [ordered] @{}
+    foreach ($line in [System.IO.File]::ReadLines($Path)) {
+        if ($line -match '^\s*#define\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s+(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+)\b') {
+            $defines[$Matches.name] = Convert-CIntegerLiteral $Matches.value
+        }
+    }
+    return $defines
+}
+
+function Read-CSequentialEnum {
+    param(
+        [Parameter(Mandatory)] [string] $Path,
+        [Parameter(Mandatory)] [string] $EnumName
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Required header not found: $Path"
+    }
+
+    $text = [System.IO.File]::ReadAllText($Path)
+    $pattern = "enum\s+$([regex]::Escape($EnumName))\s*\{(?<body>.*?)\};"
+    $match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $match.Success) {
+        throw "Enum '$EnumName' was not found in $Path"
+    }
+
+    $values = [ordered] @{}
+    $nextValue = 0
+    foreach ($rawLine in ($match.Groups['body'].Value -split '\r?\n')) {
+        $line = ($rawLine -replace '//.*$', '').Trim().TrimEnd(',')
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+
+        if ($line -match '^(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+))?$') {
+            if ($Matches.ContainsKey('value') -and $Matches['value']) {
+                $nextValue = Convert-CIntegerLiteral $Matches['value']
+            }
+            $values[$Matches.name] = $nextValue
+            $nextValue++
+        }
+    }
+    return $values
+}
+
+function Get-RequiredMapValue {
+    param(
+        [Parameter(Mandatory)] [System.Collections.IDictionary] $Map,
+        [Parameter(Mandatory)] [string] $Name,
+        [Parameter(Mandatory)] [string] $Source
+    )
+
+    if (-not $Map.Contains($Name)) {
+        throw "Required symbol '$Name' was not found in $Source"
+    }
+    return [int] $Map[$Name]
+}
+
+$script:ResourceIds      = Read-CHeaderNumericDefines -Path $ResourceHeaderPath
+$script:HashAlgorithmIds = Read-CSequentialEnum -Path $HashAlgorithmHeaderPath -EnumName 'HashAlgorithm'
+
+function Get-ResourceId {
+    param([Parameter(Mandatory)] [string] $Name)
+    Get-RequiredMapValue -Map $script:ResourceIds -Name $Name -Source $ResourceHeaderPath
+}
+
+function Get-HashAlgorithmId {
+    param([Parameter(Mandatory)] [string] $Name)
+    Get-RequiredMapValue -Map $script:HashAlgorithmIds -Name $Name -Source $HashAlgorithmHeaderPath
+}
+
+# Win32 / dialog constants used by UI automation.  Keep these here so message
+# traffic below is readable and no command/control/resource IDs are baked into
+# individual test bodies.
+$script:WM_CLOSE         = 0x0010
+$script:WM_COMMAND       = 0x0111
+$script:WM_INITMENUPOPUP = 0x0117
+$script:BM_SETCHECK      = 0x00F1
+$script:BM_CLICK         = 0x00F5
+$script:MF_GRAYED        = 0x0001
+$script:MF_DISABLED      = 0x0002
+$script:MF_BYPOSITION    = 0x0400
+$script:IDOK             = 1
+$script:IDCANCEL         = 2
+$script:ButtonChecked    = 1
+
+$script:DefaultDialogTimeoutMs = 10000
+$script:DefaultLargeScanFileCount = 100000
+$script:SettingsLowOutOfRangeValue = -99
+$script:SettingsHighOutOfRangeValue = 999999
+$script:SettingsSearchHighOutOfRangeValue = 9999999
+$script:SettingsDefaultSearchMaxResults = 10000
+$script:SettingsMaxBoundedCount = 10000
+$script:SettingsMaxSearchResults = 1000000
+$script:WindowsLocaleUserDefaultLcid = 0x0400
+$script:SparseRangeBytes = 1MB
+$script:FailFastExitCode = -1073740791
+$script:FailFastExitHex  = '0xC0000409'
+$script:DuplicateHashPrefixHexChars = 32
+$script:XxHashPrefixHexChars = 16
+
+$script:HashAlgorithm = [ordered] @{
+    MD5    = Get-HashAlgorithmId 'HASH_MD5'
+    SHA1   = Get-HashAlgorithmId 'HASH_SHA1'
+    SHA256 = Get-HashAlgorithmId 'HASH_SHA256'
+    SHA384 = Get-HashAlgorithmId 'HASH_SHA384'
+    SHA512 = Get-HashAlgorithmId 'HASH_SHA512'
+    XXHASH = Get-HashAlgorithmId 'HASH_XXHASH'
+}
+
+$script:SettingsMinHashAlgorithm = $script:HashAlgorithm.MD5
+$script:SettingsMaxHashAlgorithm = $script:HashAlgorithm.XXHASH
+$script:SettingsMinLargeFileCount = 0
+$script:SettingsMinMinimizeViewThreshold = 1
+$script:SettingsMinScanningThreads = 1
+$script:SettingsMaxScanningThreads = 16
+$script:SettingsMinDarkMode = 0
+$script:SettingsMaxDarkMode = 2
+$script:SettingsMinSelectDrivesRadio = 0
+$script:SettingsMaxSelectDrivesRadio = 2
+$script:SettingsMinFolderHistoryCount = 0
+$script:SettingsMaxFolderHistoryCount = 100
+$script:SettingsMinSearchMaxResults = 1
+
+Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+Add-Type -AssemblyName System.Windows.Forms
 
 # All generated test data lives under a temporary directory on the SYSTEM drive
 # (C:), never the repository's drive.  The repo may sit on a volume (e.g. a Dev
@@ -912,7 +1054,7 @@ function Get-Win32MenuItems {
     $menu = [Win32MenuHelper]::GetMenu($hwnd)
     if ($menu -eq [IntPtr]::Zero) { return @() }
 
-    # Force MFC to refresh all menu item states by sending WM_INITMENUPOPUP (0x0117)
+    # Force MFC to refresh all menu item states by sending WM_INITMENUPOPUP
     # for each top-level submenu.  Without this, GetMenuState returns cached state
     # from the last time the menu was physically opened, which can be stale when
     # logical focus has changed since then (e.g. the dupe list now has focus but
@@ -921,7 +1063,7 @@ function Get-Win32MenuItems {
     for ($i = 0; $i -lt $topCount; $i++) {
         $sub = [Win32MenuHelper]::GetSubMenu($menu, $i)
         if ($sub -ne [IntPtr]::Zero) {
-            [Win32MenuHelper]::SendMessage($hwnd, 0x0117, $sub, [IntPtr]$i) | Out-Null
+            [Win32MenuHelper]::SendMessage($hwnd, $script:WM_INITMENUPOPUP, $sub, [IntPtr]$i) | Out-Null
         }
     }
     Start-Sleep -Milliseconds 100
@@ -934,10 +1076,10 @@ function Get-Win32MenuItems {
         $count = [Win32MenuHelper]::GetMenuItemCount($hMenu)
         for ($i = 0; $i -lt $count; $i++) {
             $sb = [System.Text.StringBuilder]::new(256)
-            [Win32MenuHelper]::GetMenuString($hMenu, [uint32]$i, $sb, 256, 0x0400) | Out-Null # MF_BYPOSITION = 0x0400
+            [Win32MenuHelper]::GetMenuString($hMenu, [uint32]$i, $sb, 256, $script:MF_BYPOSITION) | Out-Null
             $name = $sb.ToString()
             $id = [Win32MenuHelper]::GetMenuItemID($hMenu, $i)
-            $state = [Win32MenuHelper]::GetMenuState($hMenu, [uint32]$i, 0x0400)
+            $state = [Win32MenuHelper]::GetMenuState($hMenu, [uint32]$i, $script:MF_BYPOSITION)
 
             # Strip ampersands from name
             $cleanName = ($name -replace '&', '')
@@ -951,7 +1093,7 @@ function Get-Win32MenuItems {
                     ItemName = $cleanName
                     RawName  = $name
                     CommandId = $id
-                    IsEnabled = ((($state -band 0x0001) -eq 0) -and (($state -band 0x0002) -eq 0))
+                    IsEnabled = ((($state -band $script:MF_GRAYED) -eq 0) -and (($state -band $script:MF_DISABLED) -eq 0))
                     IsSubmenu = $true
                 })
                 $nextParent = if ($ParentMenuName) { "$ParentMenuName -> $cleanName" } else { $cleanName }
@@ -963,7 +1105,7 @@ function Get-Win32MenuItems {
                     ItemName = $cleanName
                     RawName  = $name
                     CommandId = $id
-                    IsEnabled = ((($state -band 0x0001) -eq 0) -and (($state -band 0x0002) -eq 0))
+                    IsEnabled = ((($state -band $script:MF_GRAYED) -eq 0) -and (($state -band $script:MF_DISABLED) -eq 0))
                     IsSubmenu = $false
                 })
             }
@@ -973,9 +1115,9 @@ function Get-Win32MenuItems {
     $topCount = [Win32MenuHelper]::GetMenuItemCount($menu)
     for ($i = 0; $i -lt $topCount; $i++) {
         $sb = [System.Text.StringBuilder]::new(256)
-        [Win32MenuHelper]::GetMenuString($menu, [uint32]$i, $sb, 256, 0x0400) | Out-Null
+        [Win32MenuHelper]::GetMenuString($menu, [uint32]$i, $sb, 256, $script:MF_BYPOSITION) | Out-Null
         $topName = ($sb.ToString() -replace '&', '')
-        
+
         $subMenu = [Win32MenuHelper]::GetSubMenu($menu, $i)
         if ($subMenu -ne [IntPtr]::Zero) {
             Traverse-Menu -hMenu $subMenu -ParentMenuName $topName
@@ -983,6 +1125,59 @@ function Get-Win32MenuItems {
     }
 
     return $results
+}
+
+function Get-RcMenuCommandSymbols {
+    param(
+        [Parameter(Mandatory)] [string] $ResourceName,
+        [string] $Path = $MainResourceScriptPath
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Resource script not found: $Path"
+    }
+
+    $symbols = [System.Collections.Generic.List[string]]::new()
+    $inside = $false
+    $depth = 0
+
+    foreach ($rawLine in [System.IO.File]::ReadLines($Path)) {
+        $line = $rawLine -replace '//.*$', ''
+
+        if (-not $inside) {
+            if ($line -match "^\s*$([regex]::Escape($ResourceName))\s+MENU\b") {
+                $inside = $true
+            }
+            continue
+        }
+
+        if ($line -match '\bBEGIN\b') {
+            $depth++
+        }
+
+        if ($depth -gt 0 -and $line -match '^\s*MENUITEM\s+(?:"[^"]*"|[A-Za-z_][A-Za-z0-9_]*)\s*,\s*(?<symbol>[A-Za-z_][A-Za-z0-9_]*)\b') {
+            [void] $symbols.Add($Matches.symbol)
+        }
+
+        if ($line -match '\bEND\b') {
+            $depth--
+            if ($depth -le 0) { break }
+        }
+    }
+
+    return @($symbols | Select-Object -Unique)
+}
+
+function Get-AppOwnedMainMenuCommands {
+    $symbols = Get-RcMenuCommandSymbols -ResourceName 'IDR_MAINFRAME'
+    foreach ($symbol in $symbols) {
+        if ($script:ResourceIds.Contains($symbol)) {
+            [pscustomobject] @{
+                Symbol = $symbol
+                Id     = [int] $script:ResourceIds[$symbol]
+            }
+        }
+    }
 }
 
 function Invoke-Win32MenuCommand {
@@ -993,7 +1188,7 @@ function Invoke-Win32MenuCommand {
     )
     $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
     $items = Get-Win32MenuItems -hwnd $hwnd
-    
+
     $target = $null
     if ($ItemName) {
         $target = $items | Where-Object { $_.MenuName -like "*$MenuPath*" -and $_.ItemName -like "*$ItemName*" } | Select-Object -First 1
@@ -1017,7 +1212,7 @@ function Invoke-Win32MenuCommand {
         return 'disabled'
     }
 
-    [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$target.CommandId, [IntPtr]::Zero) | Out-Null
+    [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$target.CommandId, [IntPtr]::Zero) | Out-Null
     return $true
 }
 
@@ -1029,7 +1224,7 @@ function Invoke-Win32CommandId {
     try {
         $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
         if ($hwnd -eq [IntPtr]::Zero) { return $false }
-        [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$CommandId, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$CommandId, [IntPtr]::Zero) | Out-Null
         return $true
     }
     catch {
@@ -1145,7 +1340,7 @@ function Send-Keys {
 }
 
 function Wait-Window {
-    param([int] $ProcessId, [string] $TitleContains = $null, [int] $TimeoutMs = 10000)
+    param([int] $ProcessId, [string] $TitleContains = $null, [int] $TimeoutMs = $script:DefaultDialogTimeoutMs)
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
     while ([System.DateTime]::UtcNow -lt $deadline) {
@@ -1241,8 +1436,8 @@ function Close-OpenDialogs {
         foreach ($d in $childDlgs) {
             $hwnd = [IntPtr]$d.Current.NativeWindowHandle
             if ($hwnd -ne [IntPtr]::Zero) {
-                [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]2, [IntPtr]::Zero) | Out-Null
-                [Win32MenuHelper]::PostMessage($hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+                [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero) | Out-Null
+                [Win32MenuHelper]::PostMessage($hwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
             }
         }
         Start-Sleep -Milliseconds 400
@@ -1564,8 +1759,8 @@ function Dismiss-DriveDialog {
     param([System.Windows.Automation.AutomationElement] $Dialog)
     $hwnd = [IntPtr]$Dialog.Current.NativeWindowHandle
     if ($hwnd -ne [IntPtr]::Zero) {
-        [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]2, [IntPtr]::Zero) | Out-Null
-        [Win32MenuHelper]::PostMessage($hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($hwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
     }
     Start-Sleep -Milliseconds 400
 }
@@ -1580,7 +1775,7 @@ function Invoke-ScanViaDialog {
     param(
         [System.Windows.Automation.AutomationElement] $Window,
         [string] $ScanPath,
-        [int] $TimeoutMs = 10000
+        [int] $TimeoutMs = $script:DefaultDialogTimeoutMs
     )
 
     # Wait for Drive Select dialog to appear as a child window
@@ -1610,11 +1805,11 @@ function Invoke-ScanViaDialog {
     if ($dlgHwnd -eq [IntPtr]::Zero) { return $false }
 
     # --- Step 1: Select "Individual Folder" radio via Win32 messages ---
-    # IDC_RADIO_TARGET_FOLDER = 1002
-    $radioHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, 1002)
+    $targetFolderRadioId = Get-ResourceId 'IDC_RADIO_TARGET_FOLDER'
+    $radioHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, $targetFolderRadioId)
     if ($radioHwnd -ne [IntPtr]::Zero) {
-        [Win32MenuHelper]::PostMessage($radioHwnd, 0x00F1, [IntPtr]1, [IntPtr]::Zero) | Out-Null
-        [Win32MenuHelper]::PostMessage($dlgHwnd, 0x0111, [IntPtr]1002, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($radioHwnd, $script:BM_SETCHECK, [IntPtr]$script:ButtonChecked, [IntPtr]::Zero) | Out-Null
+        [Win32MenuHelper]::PostMessage($dlgHwnd, $script:WM_COMMAND, [IntPtr]$targetFolderRadioId, [IntPtr]::Zero) | Out-Null
         Start-Sleep -Milliseconds 300
     }
 
@@ -1652,8 +1847,8 @@ function Invoke-ScanViaDialog {
         } catch {}
     }
 
-    # --- Step 4: Click OK via Win32 message (IDOK = 1) ---
-    [Win32MenuHelper]::PostMessage($dlgHwnd, 0x0111, [IntPtr]1, [IntPtr]::Zero) | Out-Null
+    # --- Step 4: Click OK via Win32 message ---
+    [Win32MenuHelper]::PostMessage($dlgHwnd, $script:WM_COMMAND, [IntPtr]$script:IDOK, [IntPtr]::Zero) | Out-Null
     Start-Sleep -Milliseconds 600
     return $true
 }
@@ -1663,7 +1858,7 @@ function Invoke-ScanViaDialog {
 # Returns a metadata hashtable with exact counts for later verification.
 # ---------------------------------------------------------------------------
 function New-LargeScanRoot {
-    param([string] $Root, [int] $FileCount = 100000)
+    param([string] $Root, [int] $FileCount = $script:DefaultLargeScanFileCount)
 
     $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
     Write-ColoredLine "  Creating large corpus: $FileCount files in $Root" DarkGray
@@ -2041,6 +2236,20 @@ function Test-MenuNavigation {
     if ($allItems.Count -eq 0) {
         Assert-Fail $g 'Get Win32 menu items' 'No menu items returned'
         return
+    }
+
+    $expectedCommands = @(Get-AppOwnedMainMenuCommands)
+    $runtimeCommandIds = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($item in @($allItems | Where-Object { -not $_.IsSubmenu -and $_.CommandId -ne [uint32]::MaxValue })) {
+        [void] $runtimeCommandIds.Add([int] $item.CommandId)
+    }
+    $missingCommands = @($expectedCommands | Where-Object { -not $runtimeCommandIds.Contains($_.Id) })
+    if ($missingCommands.Count -eq 0) {
+        Assert-Pass $g "Runtime menu exposes all $($expectedCommands.Count) resource-backed IDR_MAINFRAME commands"
+    }
+    else {
+        $detail = @($missingCommands | ForEach-Object { "$($_.Symbol)=$($_.Id)" }) -join ', '
+        Assert-Fail $g 'Runtime menu exposes resource-backed commands' "Missing: $detail"
     }
 
     $foundTopMenus = @($allItems | ForEach-Object { ($_.MenuName -split ' -> ')[0] } | Select-Object -Unique)
@@ -4030,7 +4239,7 @@ function Test-CleanUpMenuDelete {
     } else { 0 }
 
     # Invoke the delete cleanup action
-    [Win32MenuHelper]::PostMessage($hwnd, 0x0111, [IntPtr]$deleteItem.CommandId, [IntPtr]::Zero) | Out-Null
+    [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$deleteItem.CommandId, [IntPtr]::Zero) | Out-Null
     Start-Sleep -Milliseconds 800
     Assert-Pass $g "CleanUp delete action invoked: '$($deleteItem.ItemName)'"
 
@@ -4997,6 +5206,8 @@ function Test-DedupOps {
     Write-GroupHeader 'File Op: Deduplicate with Hardlink'
     $g = 'OpDedup'
     $dir = Join-Path $ScanRoot 'dedup'
+    $viewDuplicateFilesCommandId = Get-ResourceId 'ID_VIEW_DUPLICATE_FILES'
+    $createHardlinkCommandId = Get-ResourceId 'ID_CLEANUP_CREATE_HARDLINK'
 
     if (!$script:tabCtrl) { Assert-Skip $g 'Duplicate Files tab' 'Tab control reference not available'; return }
     $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
@@ -5007,7 +5218,7 @@ function Test-DedupOps {
     }
     if (!(Select-TabItem $dupeTab)) { Assert-Skip $g 'Duplicate Files tab selectable' 'Could not invoke tab'; return }
     Start-Sleep -Milliseconds 900
-    Invoke-Win32CommandId -Window $Window -CommandId 32829 | Out-Null
+    Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
     Start-Sleep -Milliseconds 600
     Assert-Pass $g 'Duplicate Files tab selected for dedup'
 
@@ -5031,7 +5242,7 @@ function Test-DedupOps {
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
 
-        Invoke-Win32CommandId -Window $Window -CommandId 32829 | Out-Null
+        Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
         Send-Keys '^{F3}' 250
         Start-Sleep -Milliseconds 250
     }
@@ -5081,20 +5292,20 @@ function Test-DedupOps {
         Assert-Pass $g 'Deduplicate with Hardlink menu item invoked'
     }
     elseif ($r -eq 'disabled') {
-        if (Invoke-Win32CommandId -Window $Window -CommandId 32843) {
+        if (Invoke-Win32CommandId -Window $Window -CommandId $createHardlinkCommandId) {
             $probeReason = 'disabled'
         }
         else {
-            Assert-Warn $g 'Deduplicate with Hardlink enabled' "2 duplicate files selected with the dupe list focused, but WinDirStat left 'Deduplicate with Hardlink' disabled and command id 32843 could not be posted (check OnUpdateCreateHardlink: focus=LF_DUPELIST, >=2 IT_FILE on same volume)."
+            Assert-Warn $g 'Deduplicate with Hardlink enabled' "2 duplicate files selected with the dupe list focused, but WinDirStat left 'Deduplicate with Hardlink' disabled and ID_CLEANUP_CREATE_HARDLINK could not be posted (check OnUpdateCreateHardlink: focus=LF_DUPELIST, >=2 IT_FILE on same volume)."
             return
         }
     }
     else {
-        if (Invoke-Win32CommandId -Window $Window -CommandId 32843) {
+        if (Invoke-Win32CommandId -Window $Window -CommandId $createHardlinkCommandId) {
             $probeReason = 'missing'
         }
         else {
-            Assert-Skip $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu and command id 32843 probe failed'
+            Assert-Skip $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu and ID_CLEANUP_CREATE_HARDLINK probe failed'
             return
         }
     }
@@ -5105,17 +5316,17 @@ function Test-DedupOps {
     if ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id -and $idAfter1.Links -ge 2) {
         Assert-Pass $g "Dedup: d_src.bin and d_copy.bin are now one hardlink (shared id, $($idAfter1.Links) links) (verified on disk)"
         if ($probeReason) {
-            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but command id 32843 executed and dedup succeeded."
+            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but ID_CLEANUP_CREATE_HARDLINK executed and dedup succeeded."
         }
     }
     elseif ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id) {
         Assert-Pass $g 'Dedup: duplicate pair now share the same NTFS file id (verified on disk)'
         if ($probeReason) {
-            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but command id 32843 executed and dedup succeeded."
+            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but ID_CLEANUP_CREATE_HARDLINK executed and dedup succeeded."
         }
     }
     else {
-        $extra = if ($probeReason) { " (menuState=$probeReason; invoked via command id 32843 probe)" } else { '' }
+        $extra = if ($probeReason) { " (menuState=$probeReason; invoked via ID_CLEANUP_CREATE_HARDLINK probe)" } else { '' }
         Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))$extra"
     }
 }
@@ -5239,11 +5450,11 @@ function Test-StorageAnalytics {
             Start-Sleep -Milliseconds 400
         }
         catch {
-            # Fallback to BM_CLICK (0x00F5) message if UIA InvokePattern fails (known Win32 UIA hotkey issue)
+            # Fallback to BM_CLICK if UIA InvokePattern fails (known Win32 UIA hotkey issue)
             try {
                 $btnHwnd = [IntPtr]$recalcBtn.Current.NativeWindowHandle
                 if ($btnHwnd -ne [IntPtr]::Zero) {
-                    [Win32MenuHelper]::PostMessage($btnHwnd, 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+                    [Win32MenuHelper]::PostMessage($btnHwnd, $script:BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
                     Assert-Pass $g 'Invoke Recalculate button'
                     Start-Sleep -Milliseconds 400
                 } else {
@@ -7250,7 +7461,7 @@ try {
         Assert-Equal $ctx 'ExcludeProtectedFile' $s.ExcludeProtectedFile $false
         Assert-Equal $ctx 'FollowVolumeMountPoints' $s.FollowVolumeMountPoints $false
         Assert-Equal $ctx 'ScanForDuplicates' $s.ScanForDuplicates $false
-        Assert-Equal $ctx 'SearchMaxResults' $s.SearchMaxResults 10000
+        Assert-Equal $ctx 'SearchMaxResults' $s.SearchMaxResults $script:SettingsDefaultSearchMaxResults
         Assert-Equal $ctx 'ShowDeleteWarning' $s.ShowDeleteWarning $true
         Assert-Equal $ctx 'ShowElevationPrompt' $s.ShowElevationPrompt $true
         Assert-Equal $ctx 'ShowMicrosoftProgress' $s.ShowMicrosoftProgress $false
@@ -7262,7 +7473,7 @@ try {
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
-        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 5
+        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
@@ -7313,7 +7524,7 @@ try {
             UseFastScanEngine = 0
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
-            FileHashAlgorithm = 2
+            FileHashAlgorithm = $script:HashAlgorithm.SHA256
             FilteringMaxAgeDays = 14
             LargeFileCount = 123
             MinimizeViewThreshold = 42
@@ -7379,7 +7590,7 @@ try {
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
-        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 2
+        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
@@ -7419,26 +7630,26 @@ try {
         param($ctx)
 
         $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'FileHashAlgorithm' -99
-        Set-IniValue $sections 'Options' 'LargeFileCount' -99
-        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' -99
-        Set-IniValue $sections 'Options' 'ScanningThreads' -99
-        Set-IniValue $sections 'Options' 'DarkMode' -99
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' -99
-        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' -99
-        Set-IniValue $sections 'SearchView' 'SearchMaxResults' -99
+        Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'DarkMode' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
         $s = $dump.Dump
 
-        Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm 0
-        Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount 0
-        Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold 1
-        Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads 1
-        Assert-Equal $ctx 'DarkMode minimum' $s.DarkMode 0
-        Assert-Equal $ctx 'SelectDrivesRadio minimum' $s.SelectDrivesRadio 0
-        Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount 0
-        Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults 1
+        Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm $script:SettingsMinHashAlgorithm
+        Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount $script:SettingsMinLargeFileCount
+        Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold $script:SettingsMinMinimizeViewThreshold
+        Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads $script:SettingsMinScanningThreads
+        Assert-Equal $ctx 'DarkMode minimum' $s.DarkMode $script:SettingsMinDarkMode
+        Assert-Equal $ctx 'SelectDrivesRadio minimum' $s.SelectDrivesRadio $script:SettingsMinSelectDrivesRadio
+        Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
+        Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
 
         $dump
     }))
@@ -7447,26 +7658,26 @@ try {
         param($ctx)
 
         $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'FileHashAlgorithm' 99
-        Set-IniValue $sections 'Options' 'LargeFileCount' 999999
-        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' 999999
-        Set-IniValue $sections 'Options' 'ScanningThreads' 999999
-        Set-IniValue $sections 'Options' 'DarkMode' 99
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' 99
-        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' 999999
-        Set-IniValue $sections 'SearchView' 'SearchMaxResults' 9999999
+        Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'DarkMode' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
 
-        Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm 5
-        Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount 10000
-        Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold 10000
-        Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads 16
-        Assert-Equal $ctx 'DarkMode maximum' $s.DarkMode 2
-        Assert-Equal $ctx 'SelectDrivesRadio maximum' $s.SelectDrivesRadio 2
-        Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount 100
-        Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults 1000000
+        Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm $script:SettingsMaxHashAlgorithm
+        Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount $script:SettingsMaxBoundedCount
+        Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold $script:SettingsMaxBoundedCount
+        Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads $script:SettingsMaxScanningThreads
+        Assert-Equal $ctx 'DarkMode maximum' $s.DarkMode $script:SettingsMaxDarkMode
+        Assert-Equal $ctx 'SelectDrivesRadio maximum' $s.SelectDrivesRadio $script:SettingsMaxSelectDrivesRadio
+        Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
+        Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
 
         $dump
     }))
@@ -7483,7 +7694,7 @@ try {
 
         Set-IniValue $sections 'Options' 'UseWindowsLocaleSetting' 1
         $windows = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Locale_WindowsDefault'
-        Assert-Equal $ctx 'Windows locale sentinel' $windows.Dump.LocaleForFormatting 1024
+        Assert-Equal $ctx 'Windows locale sentinel' $windows.Dump.LocaleForFormatting $script:WindowsLocaleUserDefaultLcid
 
         [pscustomobject] @{
             CommandLine = $windows.CommandLine
@@ -7636,19 +7847,19 @@ try {
     [void] $results.Add((Invoke-Scenario -Name 'Duplicates_FileHashAlgorithm' -Behavior 'Each duplicate hash algorithm setting should produce hashes with the expected width in non-interactive duplicate CSV output.' -Body {
         param($ctx)
 
+        $referenceFile = Join-Path $dupeRoot 'duplicate-a.bin'
         $expectations = @(
-            @{ Algorithm = 0; Name = 'MD5' }
-            @{ Algorithm = 1; Name = 'SHA1' }
-            @{ Algorithm = 2; Name = 'SHA256' }
-            @{ Algorithm = 3; Name = 'SHA384' }
-            @{ Algorithm = 4; Name = 'SHA512' }
+            @{ Algorithm = $script:HashAlgorithm.MD5;    Name = 'MD5';    ExpectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm 'MD5').Hash.Substring(0, $script:DuplicateHashPrefixHexChars).ToLowerInvariant() }
+            @{ Algorithm = $script:HashAlgorithm.SHA1;   Name = 'SHA1';   ExpectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm 'SHA1').Hash.Substring(0, $script:DuplicateHashPrefixHexChars).ToLowerInvariant() }
+            @{ Algorithm = $script:HashAlgorithm.SHA256; Name = 'SHA256'; ExpectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm 'SHA256').Hash.Substring(0, $script:DuplicateHashPrefixHexChars).ToLowerInvariant() }
+            @{ Algorithm = $script:HashAlgorithm.SHA384; Name = 'SHA384'; ExpectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm 'SHA384').Hash.Substring(0, $script:DuplicateHashPrefixHexChars).ToLowerInvariant() }
+            @{ Algorithm = $script:HashAlgorithm.SHA512; Name = 'SHA512'; ExpectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm 'SHA512').Hash.Substring(0, $script:DuplicateHashPrefixHexChars).ToLowerInvariant() }
+            @{ Algorithm = $script:HashAlgorithm.XXHASH; Name = 'xxHash';  ExpectedPrefix = $null }
         )
         $elapsed = 0.0
         $lastCommand = ''
-        $referenceFile = Join-Path $dupeRoot 'duplicate-a.bin'
 
         foreach ($expectation in $expectations) {
-            $expectedPrefix = (Get-FileHash -LiteralPath $referenceFile -Algorithm $expectation.Name).Hash.Substring(0, 32).ToLowerInvariant()
             $sections = New-BaseIniSections
             Set-IniValue $sections 'Options' 'FileHashAlgorithm' $expectation.Algorithm
             Set-IniValue $sections 'Options' 'UseFastScanEngine' 0
@@ -7660,9 +7871,13 @@ try {
             $lastCommand = $run.CommandLine
             $rows = @(Read-CsvRows -Csv $csv)
             Assert-Equal $ctx "$($expectation.Name) duplicate row count" $rows.Count 2
+            $expectedLength = if ($expectation.Name -eq 'xxHash') { $script:XxHashPrefixHexChars } else { $script:DuplicateHashPrefixHexChars }
             foreach ($row in $rows) {
-                Assert-Equal $ctx "$($expectation.Name) hash prefix length for $($row.Name)" $row.'Hash Prefix'.Length 32
-                Assert-Equal $ctx "$($expectation.Name) hash prefix for $($row.Name)" $row.'Hash Prefix'.ToLowerInvariant() $expectedPrefix
+                Assert-Equal $ctx "$($expectation.Name) hash prefix length for $($row.Name)" $row.'Hash Prefix'.Length $expectedLength
+                Assert-True $ctx "$($expectation.Name) hash prefix is lowercase hex for $($row.Name)" ($row.'Hash Prefix' -cmatch "^[0-9a-f]{$expectedLength}$")
+                if ($expectation.ExpectedPrefix) {
+                    Assert-Equal $ctx "$($expectation.Name) hash prefix for $($row.Name)" $row.'Hash Prefix'.ToLowerInvariant() $expectation.ExpectedPrefix
+                }
             }
         }
 
@@ -8155,14 +8370,17 @@ try {
     # runs when elevated AND both (non-C:) drives are present; otherwise it skips.
     if (-not (Test-IsElevated)) {
         Assert-Skip 'Reparse' 'Administrator privileges' 'Not elevated; reparse suite formats drives and requires admin'
+        $suiteSucceeded = $true
         return
     }
     if ($driveOneLetter -eq 'C' -or $driveTwoLetter -eq 'C') {
         Assert-Skip 'Reparse' 'Scratch drive selection' "Refusing to use C: as a scratch drive (configured: ${driveOneLetter}: / ${driveTwoLetter}:)"
+        $suiteSucceeded = $true
         return
     }
     if ((-not (Test-Path -LiteralPath "${driveOneLetter}:\")) -or (-not (Test-Path -LiteralPath "${driveTwoLetter}:\"))) {
         Assert-Skip 'Reparse' 'Scratch drives present' "Drives ${driveOneLetter}: and ${driveTwoLetter}: are not both available; set LINK_TEST_DRIVE_ONE/TWO to dedicated scratch drives"
+        $suiteSucceeded = $true
         return
     }
 
@@ -8174,6 +8392,7 @@ try {
         else {
             Assert-Skip 'Reparse' 'Scratch drive size check' "Refusing to format scratch drives unless each is < 4GB. Too large: $($sizeGate.TooLarge -join ', ')."
         }
+        $suiteSucceeded = $true
         return
     }
 
@@ -8934,7 +9153,7 @@ function Invoke-EnumerationSuite {
             [System.IO.File]::WriteAllBytes($sp, @())
             & fsutil sparse setflag "$sp" *> $null
             $fs = [System.IO.File]::Open($sp, 'Open', 'ReadWrite'); $fs.SetLength(1MB); $fs.Close()
-            & fsutil sparse setrange "$sp" 0 1048576 *> $null
+            & fsutil sparse setrange "$sp" 0 $script:SparseRangeBytes *> $null
             $info.Sparse = Get-FileSparseAttr $sp
         } catch {}
 
@@ -9030,7 +9249,7 @@ function Invoke-EnumerationSuite {
         }
         catch {
             $detail = $_.Exception.Message
-            if ($detail -match '-1073740791') { $detail += '  (0xC0000409 fail-fast crash)' }
+            if ($detail -match [regex]::Escape([string] $script:FailFastExitCode)) { $detail += "  ($script:FailFastExitHex fail-fast crash)" }
             Assert-Fail $Group $Label $detail
             return
         }
@@ -9700,8 +9919,8 @@ function Invoke-UncSuite {
         Write-Host ''
 
         # --- Core regression check: scan the share ROOT, expect a clean exit -
-        # Invoke-WinDirStatCsv throws on a non-zero exit code; a 0xC0000409
-        # fail-fast surfaces as exit code -1073740791, which is precisely the
+        # Invoke-WinDirStatCsv throws on a non-zero exit code; a fail-fast
+        # surfaces as the shared fail-fast exit code, which is precisely the
         # #538 crash we are guarding against.
         $scanOk = $false
         try {
@@ -9713,8 +9932,8 @@ function Invoke-UncSuite {
         }
         catch {
             $detail = $_.Exception.Message
-            if ($detail -match '-1073740791') {
-                $detail += '  (exit 0xC0000409 fail-fast — issue #538 regression)'
+            if ($detail -match [regex]::Escape([string] $script:FailFastExitCode)) {
+                $detail += "  (exit $script:FailFastExitHex fail-fast - issue #538 regression)"
             }
             Assert-Fail $g 'Scan UNC share root without crashing' $detail
         }
