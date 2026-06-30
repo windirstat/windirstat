@@ -208,7 +208,7 @@ namespace Icons
         g.DrawLines(&outlinePen, docFoldPts, static_cast<INT>(std::size(docFoldPts)));
     }
 
-    static void PaintBin(Graphics& g, Color body, Color bar)
+    static void PaintBin(Graphics& g, Color body, Color bar, bool recycle = false)
     {
         SolidBrush bodyBrush(body), barBrush(bar);
         g.FillRectangle(&bodyBrush, 24, 6,  16, 6);
@@ -216,12 +216,24 @@ namespace Icons
         g.FillRectangle(&bodyBrush, 12, 18,  4, 40);
         g.FillRectangle(&bodyBrush, 48, 18,  4, 40);
         g.FillRectangle(&bodyBrush, 12, 54, 40, 4);
-        for (int i = 0; i < 3; ++i)
-            g.FillRectangle(&barBrush, 23 + i * 8, 26, 3, 24);
+        if (recycle)
+        {
+            GraphicsState state = g.Save();
+            g.TranslateTransform(32.0f, 36.0f);
+            g.ScaleTransform(0.5f, 0.5f);
+            g.TranslateTransform(-32.0f, -32.0f);
+            PaintCharacter(g, L'♻', RGB(bar.GetR(), bar.GetG(), bar.GetB()));
+            g.Restore(state);
+        }
+        else
+        {
+            for (int i = 0; i < 3; ++i)
+                g.FillRectangle(&barBrush, 23 + i * 8, 26, 3, 24);
+        }
     }
 
     void PaintDelete(Graphics& g)    { PaintBin(g, C(204, 0, 0), C(204, 40, 40)); }
-    void PaintDeleteBin(Graphics& g) { PaintBin(g, Neutral(), Neutral()); }
+    void PaintDeleteBin(Graphics& g) { PaintBin(g, Neutral(), Neutral(), true); }
 
     void PaintExplorerSelect(Graphics& g)
     {
@@ -260,13 +272,12 @@ namespace Icons
     void PaintRefreshSelected(Graphics& g)
     {
         PaintDocument(g);
-        Pen arcPen(C(0, 156, 221), 4);
-        arcPen.SetStartCap(LineCapRound);
-        arcPen.SetEndCap(LineCapRound);
-        g.DrawArc(&arcPen, Rect(18, 20, 27, 27), -45, 270);
-        SolidBrush brush(C(0, 156, 221));
-        Point arrow[] = { {26,20},{24,30},{16,22} };
-        g.FillPolygon(&brush, arrow, static_cast<INT>(std::size(arrow)));
+        GraphicsState state = g.Save();
+        g.TranslateTransform(29.0f, 35.0f);
+        g.ScaleTransform(0.65f, 0.65f);
+        g.TranslateTransform(-32.0f, -32.0f);
+        PaintCharacter(g, L'↻', RGB(0, 156, 221));
+        g.Restore(state);
     }
 
     void PaintProperties(Graphics& g)
