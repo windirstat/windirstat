@@ -305,7 +305,7 @@ BOOL CDirStatApp::InitInstance()
     // Restrict DLL search to System32 — prevents DLL hijacking from CWD or PATH
     if (const auto pSetDefaultDllDirectories = reinterpret_cast<decltype(&SetDefaultDllDirectories)>(
         GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetDefaultDllDirectories"));
-        pSetDefaultDllDirectories && !IsWindows7())
+        pSetDefaultDllDirectories && IsWindows8OrGreater())
     {
         pSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
     }
