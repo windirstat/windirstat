@@ -11,13 +11,16 @@ Enhancements
 - Added file deletion warning before profile deletions
 - Added xxHash (XXH3) as a selectable file hashing algorithm
 - Added option to group unregistered file extensions
+- Added shortcut to launch Microsoft Storage Settings
+- Added extension search on double-click in extension list (thanks @harrytm)
+- Added selected items count and statistics to status bar (thanks @harrytm)
 - Improved column width autosizing performance in list and tree views
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog
 - Improved CSV/JSON loading performance using buffered reads
 - Added UTF-8 BOM support for CSV/JSON files
 - Improved tab spacing in light mode
-- Improved Italian translation
+- Improved Italian translation (thanks @bovirus)
 
 Bug Fixes
 - Corrected accelerated scanning on Linux-created NTFS file systems
@@ -26,7 +29,8 @@ Bug Fixes
 - Corrected potential scan cancellation hang when worker thread is blocked
 - Corrected progress bar behavior dropping from 100% back to 99% at scan completion
 - Corrected layout alignment and spacing in setting dialogs
-- Corrected localization language fallback logic regression
+- Corrected localization language fallback logic regression (thanks @harrytm)
+- Corrected various other minor issues
 
 Miscellaneous
 - Added MSIX bundle publishing support in WinGet
