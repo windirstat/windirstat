@@ -21,7 +21,9 @@
 
 IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
 
-CPageFiltering::CPageFiltering() : CMFCPropertyPage(IDD) {}
+CPageFiltering::CPageFiltering(const bool refreshOnFilteringChange) :
+    CMFCPropertyPage(IDD),
+    m_refreshOnFilteringChange(refreshOnFilteringChange) {}
 
 COptionsPropertySheet* CPageFiltering::GetSheet() const
 {
@@ -134,6 +136,15 @@ void CPageFiltering::OnOK()
 {
     UpdateData();
 
+    const bool refreshAll = COptions::FilteringSizeMinimum != m_filteringSizeMinimum ||
+        COptions::FilteringSizeUnits != m_filteringSizeUnits ||
+        COptions::FilteringUseRegex != (FALSE != m_filteringUseRegex) ||
+        COptions::FilteringMaxAgeDays != m_filteringMaxAgeDays ||
+        COptions::FilteringExcludeFiles.Obj() != m_filteringExcludeFiles.GetString() ||
+        COptions::FilteringExcludeDirs.Obj() != m_filteringExcludeDirs.GetString() ||
+        COptions::FilteringIncludeFiles.Obj() != m_filteringIncludeFiles.GetString() ||
+        COptions::FilteringIncludeDirs.Obj() != m_filteringIncludeDirs.GetString();
+
     COptions::FilteringSizeMinimum = m_filteringSizeMinimum;
     COptions::FilteringSizeUnits = m_filteringSizeUnits;
     COptions::FilteringUseRegex = (FALSE != m_filteringUseRegex);
@@ -143,6 +154,12 @@ void CPageFiltering::OnOK()
     COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
     COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
     CFiltering::CompileFilters();
+
+    if (m_refreshOnFilteringChange && refreshAll)
+    {
+        CWinDirStatModel::Get()->StartScan(
+            CWinDirStatModel::Get()->GetScanPathSpec());
+    }
 
     CMFCPropertyPage::OnOK();
 }

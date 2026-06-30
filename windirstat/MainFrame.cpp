@@ -123,13 +123,13 @@ BOOL COptionsPropertySheet::PreTranslateMessage(MSG* pMsg)
     return CMFCPropertySheet::PreTranslateMessage(pMsg);
 }
 
-bool COptionsPropertySheet::ShowSettings(const int initialPage)
+bool COptionsPropertySheet::ShowSettings(const int initialPage, const bool refreshOnFilteringChange)
 {
     auto sheet = std::make_unique<COptionsPropertySheet>();
     sheet->m_initialPage = initialPage; // -1 means restore last-used tab
 
     auto general = std::make_unique<CPageGeneral>();
-    auto filtering = std::make_unique<CPageFiltering>();
+    auto filtering = std::make_unique<CPageFiltering>(refreshOnFilteringChange);
     auto treelist = std::make_unique<CPageFileTree>();
     auto treemap = std::make_unique<CPageTreeMap>();
     auto permissions = std::make_unique<CPagePermissions>();
