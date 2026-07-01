@@ -410,10 +410,15 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount) noexcept
 
 double CItem::GetFraction() const noexcept
 {
-    if (!GetParent() || GetParent()->GetSizePhysical() == 0)
+    if (COptions::TreeMapUseLogical)
     {
-        return 1.0;
+        if (!GetParent() || GetParent()->GetSizeLogical() == 0)
+            return 1.0;
+        return static_cast<double>(GetSizeLogical()) /
+            static_cast<double>(GetParent()->GetSizeLogical());
     }
+    if (!GetParent() || GetParent()->GetSizePhysical() == 0)
+        return 1.0;
     return static_cast<double>(GetSizePhysical()) /
         static_cast<double>(GetParent()->GetSizePhysical());
 }
