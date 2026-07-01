@@ -1607,15 +1607,15 @@ void CWinDirStatModel::OnDisableHibernateFile()
 
 void CWinDirStatModel::OnRemoveRoamingProfiles()
 {
-    ReemoveLocalProfiles(L"RoamingConfigured = TRUE");
+    RemoveLocalProfiles(L"RoamingConfigured = TRUE");
 }
 
 void CWinDirStatModel::OnRemoveLocalProfiles()
 {
-    ReemoveLocalProfiles(L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
+    RemoveLocalProfiles(L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
 }
 
-void CWinDirStatModel::ReemoveLocalProfiles(const std::wstring_view whereClause)
+void CWinDirStatModel::RemoveLocalProfiles(const std::wstring_view whereClause)
 {
     const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
     if (paths.empty()) return;
