@@ -486,8 +486,8 @@ std::vector<CItem*> CItem::GetDriveItems() const
     {
         for (const auto& child : root->GetChildren())
         {
-            ASSERT(child->IsTypeOrFlag(IT_DRIVE));
-            drives.push_back(child);
+            if (child->IsTypeOrFlag(IT_DRIVE))
+                drives.push_back(child);
         }
     }
     else if (root->IsTypeOrFlag(IT_DRIVE))
@@ -725,7 +725,9 @@ void CItem::CreateHardlinksItem()
 
 CItem* CItem::FindHardlinksItem() const
 {
-    const auto& children = GetParentDrive()->GetChildren();
+    const CItem* driveItem = GetParentDrive();
+    if (driveItem == nullptr) return nullptr;
+    const auto& children = driveItem->GetChildren();
     const auto it = std::ranges::find_if(children,
         [](const auto& child) { return child->IsTypeOrFlag(IT_HLINKS); });
 
