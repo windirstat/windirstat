@@ -817,11 +817,28 @@ std::wstring CWinDirStatModel::BuildUserDefinedCleanupCommandLine(const std::wst
     ReplaceString(s, L"%sp", L">sp");
     ReplaceString(s, L"%sn", L">sn");
 
-    // Now substitute
-    ReplaceString(s, L">p", rootPath);
-    ReplaceString(s, L">n", rootName);
-    ReplaceString(s, L">sp", currentPath);
-    ReplaceString(s,L">sn", currentName);
+    // Substitute each marker, adding surrounding quotes unless the user's command
+    // template already wraps the placeholder in double quotes (e.g. "%p").
+    // Quoting prevents CMD metacharacter injection (&, |, ^, etc.) from path
+    // components. Windows paths cannot contain '"', so no inner-quote escaping
+    // is needed.
+    auto SubstQuoted = [&s](const std::wstring& marker, const std::wstring& value)
+    {
+        size_t pos = 0;
+        while ((pos = s.find(marker, pos)) != std::wstring::npos)
+        {
+            const bool alreadyQuoted = pos > 0 && s[pos - 1] == L'"' &&
+                pos + marker.size() < s.size() && s[pos + marker.size()] == L'"';
+            const std::wstring repl = alreadyQuoted ? value : (L'"' + value + L'"');
+            s.replace(pos, marker.size(), repl);
+            pos += repl.size();
+        }
+    };
+
+    SubstQuoted(L">p",  rootPath);
+    SubstQuoted(L">n",  rootName);
+    SubstQuoted(L">sp", currentPath);
+    SubstQuoted(L">sn", currentName);
 
     return s;
 }
