@@ -62,7 +62,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
     // Process search request using progress dialog
     std::vector<CItem*> matchedItems;
-    CProgressDlg(static_cast<size_t>(item->GetItemsCount()), false, AfxGetMainWnd(),
+    CProgressDlg(static_cast<size_t>(item->GetItemsCount()), CProgressDlg::Flags::None, AfxGetMainWnd(),
         [&](CProgressDlg* pdlg)
     {
         // Remove previous results

@@ -20,12 +20,12 @@
 
 IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
-CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task)
+CProgressDlg::CProgressDlg(const size_t total, const CProgressDlg::Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task)
     : CDialogEx(IDD, pParent)
     , m_message(Localization::Lookup(IDS_PROGRESS))
     , m_task(std::move(task))
     , m_total(total)
-    , m_noCancel(noCancel)
+    , m_flags(flags)
 {
 }
 
@@ -55,7 +55,7 @@ BOOL CProgressDlg::OnInitDialog()
     m_messageCtrl.SetWindowText(m_message.c_str());
 
     // Configure cancel button
-    if (m_noCancel) m_cancelButton.ShowWindow(SW_HIDE);
+    if (HasFlag(Flags::NoCancel)) m_cancelButton.ShowWindow(SW_HIDE);
 
     // Configure progress bar
     if (m_total > 0)
@@ -100,13 +100,17 @@ void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_ID)
     {
+        const size_t current = m_current.load();
+        const double percent = (static_cast<double>(current) * 100) / m_total;
+
         // Update progress bar position
-        m_progressCtrl.SetPos(static_cast<int>((m_current.load() * 100) / m_total));
+        m_progressCtrl.SetPos(static_cast<int>(std::clamp(percent, 0.0, 100.0)));
 
         // Update message with progress
-        const std::wstring progressText = std::format(L"{}: {}% - {} / {}",
-            m_message, FormatDouble((static_cast<double>(m_current.load()) * 100) / m_total),
-            FormatCount(m_current.load()), FormatCount(m_total));
+        const std::wstring progressText = HasFlag(Flags::PercentageOnly) ?
+            std::format(L"{}: {}%", m_message, FormatDouble(percent)) :
+            std::format(L"{}: {}% ({} / {})",
+                m_message, FormatDouble(percent), FormatCount(current), FormatCount(m_total));
         m_messageCtrl.SetWindowText(progressText.c_str());
     }
     CDialogEx::OnTimer(nIDEvent);

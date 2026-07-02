@@ -884,7 +884,7 @@ void CopyAllDriveMappings() noexcept
 
     // Wait for all mappings to complete with a progress dialog
     if (futures.empty()) return;
-    CProgressDlg(futures.size(), true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         constexpr auto timeout = std::chrono::seconds(5);
         for (auto& f : futures)
