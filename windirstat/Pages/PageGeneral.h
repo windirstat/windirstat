@@ -54,7 +54,7 @@ protected:
     int m_darkModeRadio = 0;
 
     // Helper methods for context menu registry operations
-    static bool IsContextMenuRegistered();
+    static bool IsContextMenuRegistered(HKEY root);
     static bool SetContextMenuRegistration(bool enable);
 
     DECLARE_MESSAGE_MAP()
