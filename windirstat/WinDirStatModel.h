@@ -144,7 +144,7 @@ public:
     CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable() const;
-    static constexpr CompressionAlgorithm CompressionIdToAlg(UINT id);
+    static CompressionAlgorithm CompressionIdToAlg(UINT id);
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
