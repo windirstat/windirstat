@@ -85,6 +85,8 @@ public:
 
     void StartMonitoring();
     void StopMonitoring();
+    bool IsMonitoring() const { return !m_watchThreads.empty(); }
+    void ClearResults();
 
 protected:
     inline static CFileWatcherControl* m_singleton = nullptr;

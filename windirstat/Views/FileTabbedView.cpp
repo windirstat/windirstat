@@ -170,6 +170,13 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
         CFileDupeControl::Get()->SortItems();
     }
 
+    // Show the contextual watcher toolbar buttons only while its tab is active;
+    // this message is sent before the switch, so compare against the new index
+    if (CMainFrame::Get() != nullptr)
+    {
+        CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(m_fileWatcherViewIndex));
+    }
+
     // Route keyboard focus to the newly-active tab's content when focus is
     // already inside this container (tab clicked while app is focused, or
     // programmatic switch from within this pane).

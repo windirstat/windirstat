@@ -429,6 +429,14 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND_RANGE(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize, &CMainFrame::OnAdvancedDefrag)
     ON_COMMAND_RANGE(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize, &CMainFrame::OnAdvancedChkdsk)
     ON_COMMAND(ID_TOOLS_WATCHER, &CMainFrame::OnToolsWatcher)
+    ON_COMMAND(ID_WATCHER_START, &CMainFrame::OnWatcherStart)
+    ON_UPDATE_COMMAND_UI(ID_WATCHER_START, &CMainFrame::OnUpdateWatcherStart)
+    ON_COMMAND(ID_WATCHER_PAUSE, &CMainFrame::OnWatcherPause)
+    ON_UPDATE_COMMAND_UI(ID_WATCHER_PAUSE, &CMainFrame::OnUpdateWatcherPause)
+    ON_COMMAND(ID_WATCHER_AUTOSCROLL, &CMainFrame::OnWatcherAutoScroll)
+    ON_UPDATE_COMMAND_UI(ID_WATCHER_AUTOSCROLL, &CMainFrame::OnUpdateWatcherAutoScroll)
+    ON_COMMAND(ID_WATCHER_CLEAR, &CMainFrame::OnWatcherClear)
+    ON_UPDATE_COMMAND_UI(ID_WATCHER_CLEAR, &CMainFrame::OnUpdateWatcherClear)
     ON_COMMAND(ID_TOOLS_PERMISSIONS, &CMainFrame::OnToolsPermissions)
     ON_UPDATE_COMMAND_UI(ID_TOOLS_PERMISSIONS, OnUpdateToolsPermissions)
     ON_COMMAND(ID_TOOLS_STORAGE_ANALYTICS, &CMainFrame::OnToolsStorageAnalytics)
@@ -1563,6 +1571,60 @@ void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
 }
 
+//
+// CToolBarLabel. A non-interactive, text-only toolbar entry used to
+// caption the contextual watcher button group.
+//
+class CToolBarLabel final : public CMFCToolBarButton
+{
+    DECLARE_DYNCREATE(CToolBarLabel)
+
+public:
+    CToolBarLabel() = default;
+    CToolBarLabel(const UINT id, const std::wstring& text)
+        : CMFCToolBarButton(id, -1, text.c_str())
+    {
+        m_bText = TRUE;
+        m_bImage = FALSE;
+        m_nStyle = TBBS_DISABLED;
+    }
+
+    SIZE OnCalculateSize(CDC* pDC, const CSize& sizeDefault, BOOL /*bHorz*/) override
+    {
+        // Pad the measured text by its height to keep the caption visually separated
+        CFont* oldFont = pDC->SelectObject(&GetGlobalData()->fontRegular);
+        const CSize textSize = pDC->GetTextExtent(m_strText);
+        pDC->SelectObject(oldFont);
+        return { textSize.cx + textSize.cy, sizeDefault.cy };
+    }
+
+    void OnDraw(CDC* pDC, const CRect& rect, CMFCToolBarImages* /*pImages*/, BOOL /*bHorz*/,
+        BOOL /*bCustomizeMode*/, BOOL /*bHighlight*/, BOOL /*bDrawBorder*/, BOOL /*bGrayDisabledButtons*/) override
+    {
+        CRect textRect(rect);
+        CFont* oldFont = pDC->SelectObject(&GetGlobalData()->fontRegular);
+        pDC->SetBkMode(TRANSPARENT);
+        pDC->SetTextColor(Icons::NeutralRef());
+        pDC->DrawText(m_strText, textRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_NOPREFIX);
+        pDC->SelectObject(oldFont);
+    }
+};
+
+IMPLEMENT_DYNCREATE(CToolBarLabel, CMFCToolBarButton)
+
+static void PaintWatcherAutoScroll(Gdiplus::Graphics& g)
+{
+    const bool enabled = COptions::WatcherAutoScroll;
+    Icons::PaintCharacter(g, L'⤓', enabled ? RGB(0, 156, 221) : Icons::NeutralRef());
+    if (!enabled)
+    {
+        Gdiplus::Pen slash(Icons::C(204, 0, 0), 6);
+        slash.SetStartCap(Gdiplus::LineCapRound);
+        slash.SetEndCap(Gdiplus::LineCapRound);
+        g.DrawLine(&slash, 12, 52, 52, 12);
+    }
+}
+
 void CMainFrame::RebuildToolBar()
 {
     const auto imageSize = COptions::LargeToolBar ? 32 : 20;
@@ -1611,6 +1673,12 @@ void CMainFrame::RebuildToolBar()
         { ID_SEPARATOR,               {},{}},
         { ID_CONFIGURE,               IDS_MENU_SETTINGS,           Icons::PaintGear},
         { ID_HELP_MANUAL,             IDS_HELP_MANUAL,             Icons::PaintHelp},
+        { ID_SEPARATOR,               {},{}},
+        { ID_WATCHER_LABEL,           IDS_WATCHER,                 {}},
+        { ID_WATCHER_START,           {},                          Icons::Char(L'▶', RGB( 50, 205,  50))},
+        { ID_WATCHER_PAUSE,           {},                          Icons::PaintPause},
+        { ID_WATCHER_AUTOSCROLL,      {},                          PaintWatcherAutoScroll},
+        { ID_WATCHER_CLEAR,           {},                          Icons::PaintDelete},
     };
 
     for (const auto& [id, text, painter] : toolbarButtons)
@@ -1618,6 +1686,12 @@ void CMainFrame::RebuildToolBar()
         if (id == ID_SEPARATOR)
         {
             m_wndToolBar.InsertSeparator();
+            continue;
+        }
+
+        if (id == ID_WATCHER_LABEL)
+        {
+            m_wndToolBar.InsertButton(CToolBarLabel(id, Localization::Lookup(text) + L":"));
             continue;
         }
 
@@ -1632,11 +1706,83 @@ void CMainFrame::RebuildToolBar()
         CMFCToolBarButton button(id, index, nullptr, TRUE, TRUE);
         button.m_bText = FALSE;
         button.m_nStyle = TBBS_DISABLED;
-        button.m_strText = Localization::Lookup(text).c_str();
+        if (!text.empty()) button.m_strText = Localization::Lookup(text).c_str();
         m_wndToolBar.InsertButton(button);
     }
 
+    // The watcher buttons are contextual and only shown while its tab is active
+    SetWatcherToolBarButtons(m_fileTabbedView != nullptr &&
+        m_fileTabbedView->IsFileWatcherViewTabActive());
+
     m_wndToolBar.AdjustLayout();
+}
+
+void CMainFrame::SetWatcherToolBarButtons(const bool visible)
+{
+    if (m_wndToolBar.GetSafeHwnd() == nullptr) return;
+
+    // The group spans the separator before the caption label through the last button
+    const int labelIndex = m_wndToolBar.CommandToIndex(ID_WATCHER_LABEL);
+    if (labelIndex < 1) return;
+
+    bool changed = false;
+    for (const int index : std::views::iota(labelIndex - 1, labelIndex + 5))
+    {
+        CMFCToolBarButton* button = m_wndToolBar.GetButton(index);
+        if (button == nullptr || (button->IsVisible() != FALSE) == visible) continue;
+        button->SetVisible(visible);
+        changed = true;
+    }
+
+    // Recompute button locations and repaint; a size-only adjustment does
+    // not refresh the layout when the docked toolbar extents are unchanged
+    if (changed) m_wndToolBar.AdjustLayout();
+}
+
+void CMainFrame::OnWatcherStart()
+{
+    CFileWatcherControl::Get()->StartMonitoring();
+}
+
+void CMainFrame::OnUpdateWatcherStart(CCmdUI* pCmdUI)
+{
+    const auto* watcher = CFileWatcherControl::Get();
+    pCmdUI->Enable(watcher != nullptr && !watcher->IsMonitoring() &&
+        CWinDirStatModel::Get()->HasRootItem());
+}
+
+void CMainFrame::OnWatcherPause()
+{
+    CFileWatcherControl::Get()->StopMonitoring();
+}
+
+void CMainFrame::OnUpdateWatcherPause(CCmdUI* pCmdUI)
+{
+    const auto* watcher = CFileWatcherControl::Get();
+    pCmdUI->Enable(watcher != nullptr && watcher->IsMonitoring());
+}
+
+void CMainFrame::OnWatcherAutoScroll()
+{
+    COptions::WatcherAutoScroll = !COptions::WatcherAutoScroll;
+    RebuildToolBar();
+}
+
+void CMainFrame::OnUpdateWatcherAutoScroll(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(TRUE);
+    pCmdUI->SetCheck(FALSE);
+}
+
+void CMainFrame::OnWatcherClear()
+{
+    CFileWatcherControl::Get()->ClearResults();
+}
+
+void CMainFrame::OnUpdateWatcherClear(CCmdUI* pCmdUI)
+{
+    const auto* watcher = CFileWatcherControl::Get();
+    pCmdUI->Enable(watcher != nullptr && watcher->GetItemCount() > 0);
 }
 
 void CMainFrame::OnViewLargeToolBar()

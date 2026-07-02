@@ -281,6 +281,14 @@ protected:
     afx_msg void OnAdvancedDefrag(UINT nID);
     afx_msg void OnAdvancedChkdsk(UINT nID);
     afx_msg void OnToolsWatcher();
+    afx_msg void OnWatcherStart();
+    afx_msg void OnUpdateWatcherStart(CCmdUI* pCmdUI);
+    afx_msg void OnWatcherPause();
+    afx_msg void OnUpdateWatcherPause(CCmdUI* pCmdUI);
+    afx_msg void OnWatcherAutoScroll();
+    afx_msg void OnUpdateWatcherAutoScroll(CCmdUI* pCmdUI);
+    afx_msg void OnWatcherClear();
+    afx_msg void OnUpdateWatcherClear(CCmdUI* pCmdUI);
     afx_msg void OnToolsPermissions();
     afx_msg void OnUpdateToolsPermissions(CCmdUI* pCmdUI);
     afx_msg void OnToolsStorageAnalytics();
@@ -301,6 +309,7 @@ public:
     void UpdateFrameTitleForScan(LPCWSTR scanName);
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item);
     void RebuildToolBar();
+    void SetWatcherToolBarButtons(bool visible);
     void RebuildLayout(bool resetPositions = false);
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
 

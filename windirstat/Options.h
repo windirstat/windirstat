@@ -177,6 +177,7 @@ public:
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<bool> ProcessHardlinks;
+    static Setting<bool> WatcherAutoScroll;
     static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT];
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;

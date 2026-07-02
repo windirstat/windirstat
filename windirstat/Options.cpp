@@ -163,6 +163,7 @@ Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"ColumnO
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"ColumnWidths");
 Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"ColumnOrder");
 Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"ColumnWidths");
+Setting<bool> COptions::WatcherAutoScroll(OptionsWatcher, L"AutoScroll", true);
 Setting<std::vector<int>> COptions::WatcherColumnOrder(OptionsWatcher, L"ColumnOrder");
 Setting<std::vector<int>> COptions::WatcherColumnWidths(OptionsWatcher, L"ColumnWidths");
 Setting<std::vector<int>> COptions::PermsViewColumnOrder(OptionsPerms, L"ColumnOrder");
