@@ -526,7 +526,10 @@
     <Text Include="res\langs\lang_nl.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\lang_zh.txt">
+    <Text Include="res\langs\lang_zh-Hans.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_zh-Hant.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ko.txt">
