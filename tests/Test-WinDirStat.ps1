@@ -1600,7 +1600,7 @@ function Find-MenuItem {
     if ($item) { return $item }
     $cleanName = ($Name -split "`t")[0].Trim()
     $items = Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem)
-    $items | Where-Object { 
+    $items | Where-Object {
         $n = ($_.Current.Name -split "`t")[0].Trim()
         $n -eq $cleanName
     } | Select-Object -First 1
@@ -5159,7 +5159,7 @@ function Find-TreeRow {
     $items = Get-TreePathItems $Window
     $row = $items | Where-Object { (Normalize-ComparePath $_.Current.Name) -ieq $norm } | Select-Object -First 1
     if (!$row) { $row = $items | Where-Object { $_.Current.Name -ilike "*\$leaf" } | Select-Object -First 1 }
-    
+
     if (!$row) {
         # Programmatic targeted path expansion
         Expand-PathToItem -Window $Window -FullPath $FullPath
