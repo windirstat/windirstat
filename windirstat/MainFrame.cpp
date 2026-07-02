@@ -900,6 +900,9 @@ void CMainFrame::MinimizeExtensionView()
     // LT_COLS_THREE perm 0/1 and LT_COLS_SUB_ROWS: ExtV is in m_splitter col 1
     else if (topo == LT_COLS_THREE || topo == LT_COLS_SUB_ROWS)
         m_splitter.SetSplitterPos(1.0);
+    // LT_COLS_TM_FULL: ExtV is in m_subSplitter row 0 (perm 0/2) or row 1 (perm 1/3)
+    else if (topo == LT_COLS_TM_FULL)
+        m_subSplitter.SetSplitterPos(perm == 0 || perm == 2 ? 0.0 : 1.0);
     // LT_ROWS_SUB_COLS: ExtV is in m_subSplitter col 1
     else
         m_subSplitter.SetSplitterPos(1.0);
@@ -918,6 +921,8 @@ void CMainFrame::RestoreExtensionView()
         m_splitter.RestoreSplitterPos(0.75);
     else if (topo == LT_COLS_THREE)
         m_splitter.RestoreSplitterPos(0.80);
+    else if (topo == LT_COLS_TM_FULL)
+        m_subSplitter.RestoreSplitterPos(0.50);
     else
         m_subSplitter.RestoreSplitterPos(0.75);  // LT_ROWS_SUB_COLS
 
@@ -931,7 +936,8 @@ void CMainFrame::ExpandFileTabbedView()
 
     // Collapse whichever main-splitter pane doesn't contain FTV.
     const bool ftvInPane1 = (topo == LT_ROWS_SUB_COLS && perm == 1) ||
-                             (topo == LT_COLS_THREE   && perm == 3);
+                             (topo == LT_COLS_THREE   && perm == 3) ||
+                             (topo == LT_COLS_TM_FULL && (perm == 0 || perm == 1));
     m_splitter.SetSplitterPos(ftvInPane1 ? 0.0 : 1.0);
 
     // LT_COLS_THREE perm 2: FTV is directly in main splitter, no sub-splitter needed.
@@ -940,7 +946,8 @@ void CMainFrame::ExpandFileTabbedView()
 
     // Collapse whichever sub-splitter pane doesn't contain FTV.
     const bool ftvInSubPane1 = (topo == LT_COLS_THREE    && (perm == 1 || perm == 3)) ||
-                                (topo == LT_COLS_SUB_ROWS && perm == 0);
+                                (topo == LT_COLS_SUB_ROWS && perm == 0) ||
+                                (topo == LT_COLS_TM_FULL  && (perm == 0 || perm == 2));
     m_subSplitter.SetSplitterPos(ftvInSubPane1 ? 0.0 : 1.0);
 }
 
@@ -953,6 +960,8 @@ void CMainFrame::MinimizeTreeMapView()
         m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0);
     else if (topo == LT_COLS_THREE && perm == 3)
         m_splitter.SetSplitterPos(0.0);
+    else if (topo == LT_COLS_TM_FULL)
+        m_splitter.SetSplitterPos(perm == 0 || perm == 1 ? 0.0 : 1.0);
     else
     {
         // TM in m_subSplitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
@@ -972,6 +981,8 @@ void CMainFrame::RestoreTreeMapView(bool force)
 
     if (topo == LT_ROWS_SUB_COLS)
         m_splitter.RestoreSplitterPos(0.5);
+    else if (topo == LT_COLS_TM_FULL)
+        m_splitter.RestoreSplitterPos(0.50);
     else if (topo == LT_COLS_THREE && perm == 3)
         m_splitter.RestoreSplitterPos(0.40);
     else if (topo == LT_COLS_THREE && perm == 2)
@@ -1817,6 +1828,17 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
         m_subSplitter.TrackPane(perm == 0 ? 0 : 1, showTreeMap,
             [this, perm]() { m_subSplitter.SetSplitterPos(perm == 0 ? 0.0 : 1.0); });
         break;
+
+    case LT_COLS_TM_FULL:
+    {
+        const int tmPane  = (perm == 0 || perm == 1) ? 0 : 1;
+        const int extPane = (perm == 0 || perm == 2) ? 0 : 1;
+        m_splitter.TrackPane(tmPane, showTreeMap,
+            [this, tmPane]() { m_splitter.SetSplitterPos(tmPane == 0 ? 0.0 : 1.0); });
+        m_subSplitter.TrackPane(extPane, showFileTypes,
+            [this, extPane]() { m_subSplitter.SetSplitterPos(extPane == 0 ? 0.0 : 1.0); });
+        break;
+    }
     }
 }
 
@@ -1902,6 +1924,19 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
         }
         AttachView(m_splitter, 0, 1, hExtV);
         break;
+
+    case LT_COLS_TM_FULL:
+    {
+        m_splitter.CreateStatic(this, 1, 2);
+        const int tmCol  = (perm == 0 || perm == 1) ? 0 : 1; // TM fills col 0 (perm 0/1) or col 1 (perm 2/3)
+        const int extRow = (perm == 0 || perm == 2) ? 0 : 1; // ExtV on top (perm 0/2) or bottom (perm 1/3)
+        AttachView(m_splitter, 0, tmCol, hTMV);
+        m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                   m_splitter.IdFromRowCol(0, 1 - tmCol));
+        AttachView(m_subSplitter, extRow, 0, hExtV);
+        AttachView(m_subSplitter, 1 - extRow, 0, hFTV);
+        break;
+    }
     }
 }
 
@@ -1964,6 +1999,10 @@ void CMainFrame::RebuildLayout(bool resetPositions)
         break;
     case LT_COLS_SUB_ROWS:
         m_splitter.RestoreSplitterPos(0.75);
+        m_subSplitter.RestoreSplitterPos(0.50);
+        break;
+    case LT_COLS_TM_FULL:
+        m_splitter.RestoreSplitterPos(0.50);
         m_subSplitter.RestoreSplitterPos(0.50);
         break;
     }

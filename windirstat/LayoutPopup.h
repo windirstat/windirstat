@@ -20,11 +20,11 @@
 #include "pch.h"
 #include "Options.h"
 
-// CLayoutPopup - 2x4 grid of layout cards, anchored to a toolbar button.
+// CLayoutPopup - 3x4 grid of layout cards, anchored to a toolbar button.
 class CLayoutPopup final : public CWnd
 {
 public:
-    static constexpr int LAYOUT_COUNT = 8;
+    static constexpr int LAYOUT_COUNT = 12;
 
     struct Pane
     {
@@ -55,7 +55,7 @@ protected:
     static constexpr int CARD_H_BASE = CARD_W_BASE * 9 / 16;
     static constexpr int GAP_BASE    =  12;
     static constexpr int MARGIN_BASE =  14;
-    static constexpr int COLS        =   2;
+    static constexpr int COLS        =   3;
     static constexpr int ROWS        =   4;
 
     CRect CardRect(int idx) const;
