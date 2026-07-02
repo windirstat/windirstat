@@ -136,6 +136,7 @@ public:
         STYLE style;         // Squarification method
         bool grid;           // Whether to draw grid lines
         bool showExtensions; // Whether to show file extensions in treemap
+        bool showFolderFrames; // Whether to draw folder borders and headers
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
@@ -165,6 +166,9 @@ public:
 
     // Get a good palette of 18 colors
     static void GetDefaultPalette(std::vector<COLORREF>& palette);
+
+    // Build the small demo tree used by treemap previews.
+    [[nodiscard]] static std::unique_ptr<CItem> BuildDemoTree();
 
     // Good values
     static Options GetDefaults();
@@ -215,14 +219,15 @@ protected:
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
-    // Draws file extension labels on leaf items
-    void DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) const;
+    // Draws file extension/filename labels on leaf items
+    void DrawTreeMapLabels(CDC* pdc, CItem* root, const CPoint& offset) const;
 
     // Default tree map options
     static constexpr Options DefaultOptions = {
         .style = KDirStatStyle,
         .grid = false,
         .showExtensions = false,
+        .showFolderFrames = false,
         .gridColor = RGB(0, 0, 0),
         .brightness = 0.88,
         .height = 0.38,
@@ -275,9 +280,7 @@ public:
 
 protected:
     void BuildDemoData();
-    COLORREF GetNextColor(int& i) const;
 
-    std::vector<COLORREF> m_colors; // Our color palette
     CItem* m_root;                  // Demo tree
     CTreeMap m_treeMap;             // Our treemap creator
 

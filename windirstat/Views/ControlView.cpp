@@ -18,9 +18,9 @@
 #include "pch.h"
 #include "ControlView.h"
 
-IMPLEMENT_DYNAMIC(CControlView, CView)
+IMPLEMENT_DYNAMIC(CControlView, CWinDirStatPane)
 
-BEGIN_MESSAGE_MAP(CControlView, CView)
+BEGIN_MESSAGE_MAP(CControlView, CWinDirStatPane)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
     ON_WM_ERASEBKGND()
@@ -39,22 +39,22 @@ void CControlView::OnDraw(CDC*)
 {
 }
 
-void CControlView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CControlView::OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item)
 {
     ASSERT(AfxGetThread() != nullptr);
 
     auto& control = GetControl();
 
-    switch (lHint)
+    switch (change)
     {
-    case HINT_NEWROOT:
+    case MODEL_CHANGE_NEW_ROOT:
     {
-        control.SetRootItem(reinterpret_cast<CTreeListItem*>(pHint));
+        control.SetRootItem(item);
         control.Invalidate();
     }
     break;
 
-    case HINT_LISTSTYLECHANGED:
+    case MODEL_CHANGE_LIST_STYLE:
     {
         control.ShowGrid(COptions::ListGrid);
         control.ShowStripes(COptions::ListStripes);
@@ -62,9 +62,9 @@ void CControlView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
     break;
 
-    case HINT_NULL:
+    case MODEL_CHANGE_NONE:
     {
-        CView::OnUpdate(pSender, lHint, pHint);
+        CWinDirStatPane::OnUpdate(sender, change, item);
     }
     break;
 
@@ -80,7 +80,7 @@ void CControlView::SysColorChanged()
 
 void CControlView::OnSize(UINT nType, int cx, int cy)
 {
-    CView::OnSize(nType, cx, cy);
+    CWinDirStatPane::OnSize(nType, cx, cy);
     if (IsWindow(GetControl().m_hWnd))
     {
         CRect rc(0, 0, cx, cy);

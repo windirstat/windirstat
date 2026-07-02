@@ -30,7 +30,7 @@ CIconHandler* GetIconHandler()
 
 BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
-    ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
+    ON_COMMAND(ID_FILE_SELECT, OnSelectScanRoots)
     ON_COMMAND(ID_FILTER, OnFilter)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
     ON_UPDATE_COMMAND_UI(ID_RUN_ELEVATED, OnUpdateRunElevated)
@@ -45,6 +45,8 @@ CDirStatApp::CDirStatApp()
     m_altColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
     m_altEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
+
+CDirStatApp::~CDirStatApp() = default;
 
 CIconHandler* CDirStatApp::GetIconHandler()
 {
@@ -231,6 +233,7 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
     std::wstring m_pendingFlag;
     const std::wstring saveToFlag = L"saveto";
     const std::wstring saveDupesToFlag = L"savedupesto";
+    const std::wstring savePermsToFlag = L"savepermsto";
     const std::wstring loadFromFlag = L"loadfrom";
     const std::wstring legacyUninstallFlag = L"legacyuninstall";
 
@@ -258,6 +261,10 @@ public:
                 CDirStatApp::Get()->m_saveDupesToPath = param;
                 COptions::ScanForDuplicates = true;
             }
+            else if (m_pendingFlag == savePermsToFlag)
+            {
+                CDirStatApp::Get()->m_savePermsToPath = param;
+            }
             else if (m_pendingFlag == loadFromFlag)
             {
                 CDirStatApp::Get()->m_loadFromPath = param;
@@ -282,7 +289,7 @@ public:
 
         // Handle flags
         param = MakeLower(param);
-        if (param == saveToFlag || param == saveDupesToFlag || param == loadFromFlag)
+        if (param == saveToFlag || param == saveDupesToFlag || param == savePermsToFlag || param == loadFromFlag)
         {
             m_pendingFlag = param;
         }
@@ -296,7 +303,12 @@ public:
 BOOL CDirStatApp::InitInstance()
 {
     // Restrict DLL search to System32 — prevents DLL hijacking from CWD or PATH
-    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (const auto pSetDefaultDllDirectories = reinterpret_cast<decltype(&SetDefaultDllDirectories)>(
+        GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetDefaultDllDirectories"));
+        pSetDefaultDllDirectories && IsWindows8OrGreater())
+    {
+        pSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+    }
 
     // Prevent state saving
     m_bSaveState = FALSE;
@@ -334,24 +346,27 @@ BOOL CDirStatApp::InitInstance()
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
-    m_pDocTemplate = new CSingleDocTemplate(
-        IDR_MAINFRAME,
-        RUNTIME_CLASS(CDirStatDoc),
-        RUNTIME_CLASS(CMainFrame),
-        RUNTIME_CLASS(CTreeMapView));
-    AddDocTemplate(m_pDocTemplate);
-
     // Parse command line arguments
     CWinDirStatCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
-    ProcessShellCommand(cmdInfo);
 
     // Check if we should hide the app window
-    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty();
+    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
     if (hideApp) m_nCmdShow = SW_HIDE;
 
+    m_model = std::make_unique<CWinDirStatModel>();
+
+    m_pMainWnd = DYNAMIC_DOWNCAST(CMainFrame, RUNTIME_CLASS(CMainFrame)->CreateObject());
+    if (m_pMainWnd == nullptr || !static_cast<CMainFrame*>(m_pMainWnd)->LoadFrame(IDR_MAINFRAME))
+    {
+        m_pMainWnd = nullptr;
+        return FALSE;
+    }
+
+    CWinDirStatModel::Get()->ResetScan();
     CMainFrame::Get()->InitialShowWindow();
     CMainFrame::Get()->RebuildToolBar();
+    m_pMainWnd->ShowWindow(m_nCmdShow);
     m_pMainWnd->Invalidate();
     m_pMainWnd->UpdateWindow();
 
@@ -395,14 +410,14 @@ BOOL CDirStatApp::InitInstance()
     {
         if (CItem* newroot = LoadResults(m_loadFromPath); newroot != nullptr)
         {
-            CDirStatDoc::Get()->OnOpenDocument(newroot);
+            CWinDirStatModel::Get()->OpenLoadedScan(newroot);
         }
         return TRUE;
     }
 
     // Either open the file names or open file selection dialog
-    cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
-        (void)m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+    cmdInfo.m_strFileName.IsEmpty() ? OnSelectScanRoots() :
+        (void)CWinDirStatModel::Get()->StartScan(cmdInfo.m_strFileName.GetString());
 
     return TRUE;
 }
@@ -418,17 +433,18 @@ BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
 
 void CDirStatApp::OnAppAbout()
 {
-    CAboutDlg().DoModal();
+    auto dlg = std::make_unique<CAboutDlg>();
+    dlg->DoModal();
 }
 
-void CDirStatApp::OnFileOpen()
+void CDirStatApp::OnSelectScanRoots()
 {
     CopyAllDriveMappings();
 
-    if (CSelectDrivesDlg dlg; IDOK == dlg.DoModal())
+    if (auto dlg = std::make_unique<CSelectDrivesDlg>(); IDOK == dlg->DoModal())
     {
-        const std::wstring path = JoinString(dlg.GetSelectedItems());
-        m_pDocTemplate->OpenDocumentFile(path.c_str(), true);
+        const std::wstring path = JoinString(dlg->GetSelectedItems());
+        CWinDirStatModel::Get()->StartScan(path);
     }
 }
 
@@ -439,7 +455,7 @@ void CDirStatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 
 void CDirStatApp::OnRunElevated()
 {
-    RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
+    RunElevated(CWinDirStatModel::Get()->GetScanPathSpec());
 }
 
 void CDirStatApp::OnFilter()

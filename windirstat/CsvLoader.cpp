@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "ItemDupe.h"
 #include "CsvLoader.h"
 
 static bool IsJsonPath(const std::wstring& path)
@@ -211,6 +210,10 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAt
         displayName[0] = wds::chrNull;
         displayName = &displayName[1];
     }
+    else
+    {
+        displayName = lookupPath;
+    }
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
@@ -257,6 +260,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
     bool headerProcessed = false;
+    size_t maxRequiredField = 0;
     for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
     {
         if (linebuf.empty()) continue;
@@ -301,14 +305,19 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             // Validate all necessary fields are present
             for (const auto i : std::views::iota(0u, orderMap.size()))
             {
-                if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX)
+                if (i == FIELD_OWNER) continue;
+                if (orderMap[i] == UCHAR_MAX)
                 {
                     delete newroot;
                     return nullptr;
                 }
+                maxRequiredField = std::max<size_t>(maxRequiredField, orderMap[i]);
             }
             continue;
         }
+
+        // Skip malformed rows that do not cover all required columns
+        if (fields.size() <= maxRequiredField) continue;
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
         BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
@@ -318,8 +327,9 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap);
     }
 
+    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
     for (const auto& val : parentMap | std::views::values)
-        val->SortItemsBySizePhysical();
+        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
 
     return newroot;
 }
@@ -376,8 +386,9 @@ static CItem* LoadResultsJson(std::ifstream& reader)
             fieldValues[FIELD_FOLDERS], newroot, parentMap);
     }
 
+    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
     for (const auto& val : parentMap | std::views::values)
-        val->SortItemsBySizePhysical();
+        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
 
     return newroot;
 }
@@ -385,7 +396,17 @@ static CItem* LoadResultsJson(std::ifstream& reader)
 CItem* LoadResults(const std::wstring& path)
 {
     std::ifstream reader(path);
+    std::vector<char> buffer(1ul * wds::Mi);
+    reader.rdbuf()->pubsetbuf(buffer.data(), buffer.size());
     if (!reader.is_open()) return nullptr;
+
+    char bom[3] = {};
+    if (reader.read(bom, 3); std::string_view(bom, 3) != "\xEF\xBB\xBF")
+    {
+        reader.clear();
+        reader.seekg(0);
+    }
+
     return IsJsonPath(path) ? LoadResultsJson(reader) : LoadResultsCsv(reader);
 }
 
@@ -436,7 +457,6 @@ static std::unordered_map<const CItem*, LONGLONG>
         for (const CItem* p = item->GetParent(); p != nullptr; p = p->GetParent())
         {
             adjustedSizes[p] += item->GetSizePhysicalRaw();
-            if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
         }
     }
     return adjustedSizes;
@@ -561,7 +581,7 @@ static std::vector<std::tuple<std::wstring, const CItem*>>
         const auto sizeB = itemB->GetSizeLogical();
         if (sizeA != sizeB) return sizeA > sizeB;
         if (const int hashCmp = hashA.compare(hashB); hashCmp != 0) return hashCmp < 0;
-        return _wcsicmp(itemA->GetPath().c_str(), itemB->GetPath().c_str()) < 0;
+        return itemA->ComparePath(itemB) < 0;
     });
     return dupeItems;
 }
@@ -642,4 +662,82 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
     return IsJsonPath(path)
         ? SaveDuplicatesJson(outf, cols, dupeItems)
         : SaveDuplicatesCsv (outf, cols, dupeItems);
+}
+
+// ── permissions save ──────────────────────────────────────────────────────────
+
+static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
+    const std::vector<const CItemPerm*>& items)
+{
+    for (size_t i = 0; i < cols.size(); ++i)
+        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
+    outf << "\r\n";
+
+    for (const auto* item : items)
+    {
+        std::format_to(std::ostreambuf_iterator<char>(outf), "{},{},{},{},{},0x{:08X},{}\r\n",
+            QuoteAndConvert(item->GetPath()),
+            QuoteAndConvert(item->GetAccount()),
+            QuoteAndConvert(CItemPerm::GetAccessTypeName(item->IsDeny())),
+            QuoteAndConvert(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))),
+            QuoteAndConvert(item->GetAppliesText()),
+            item->GetAccessMask(),
+            QuoteAndConvert(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())));
+    }
+    outf.flush();
+    return outf.good();
+}
+
+static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
+    const std::vector<const CItemPerm*>& items)
+{
+    // cols order: NAME, ACCOUNT, ACCESS, RIGHTS, APPLIES_TO, MASK, INHERITED
+    const auto jName    = JsonQuoteW(cols[0]);
+    const auto jAccount = JsonQuoteW(cols[1]);
+    const auto jAccess  = JsonQuoteW(cols[2]);
+    const auto jRights  = JsonQuoteW(cols[3]);
+    const auto jApplies = JsonQuoteW(cols[4]);
+    const auto jMask    = JsonQuoteW(cols[5]);
+    const auto jInherited = JsonQuoteW(cols[6]);
+
+    outf << "[\r\n";
+    bool first = true;
+    for (const auto* item : items)
+    {
+        if (!first) outf << ",\r\n";
+        first = false;
+        outf << "{\r\n";
+        outf << "  " << jName    << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
+        outf << "  " << jAccount << ": " << JsonQuoteW(item->GetAccount()) << ",\r\n";
+        outf << "  " << jAccess  << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
+        outf << "  " << jRights  << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
+        outf << "  " << jApplies << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
+        std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n", jMask, item->GetAccessMask());
+        outf << "  " << jInherited << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
+        outf << "}";
+    }
+    outf << "\r\n]\r\n";
+    outf.flush();
+    return outf.good();
+}
+
+bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm*>& items)
+{
+    std::ofstream outf(path, std::ios::binary);
+    if (!outf.is_open()) return false;
+
+    const std::vector<std::wstring> cols =
+    {
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_ACCOUNT),
+        Localization::Lookup(IDS_COL_ACCESS),
+        Localization::Lookup(IDS_COL_RIGHTS),
+        Localization::Lookup(IDS_COL_APPLIES_TO),
+        Localization::Lookup(IDS_COL_MASK),
+        Localization::Lookup(IDS_COL_INHERITANCE)
+    };
+
+    return IsJsonPath(path)
+        ? SavePermissionsJson(outf, cols, items)
+        : SavePermissionsCsv (outf, cols, items);
 }

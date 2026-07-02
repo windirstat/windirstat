@@ -85,9 +85,11 @@ public:
 
     void StartMonitoring();
     void StopMonitoring();
+    bool IsMonitoring() const { return !m_watchThreads.empty(); }
+    void ClearResults();
 
 protected:
-    static CFileWatcherControl* m_singleton;
+    inline static CFileWatcherControl* m_singleton = nullptr;
 
     std::vector<std::jthread> m_watchThreads;
     SingleConsumerQueue<CWatcherItem*> m_pendingItems;

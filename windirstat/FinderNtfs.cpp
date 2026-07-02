@@ -122,7 +122,7 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
     {
         return {
             ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset),
-            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset + TotalLength)
+            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, TotalLength)
         };
     }
 };
@@ -186,45 +186,57 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     std::vector<BYTE> dataRunsBuffer(sizeof(RETRIEVAL_POINTERS_BUFFER) + 32 * sizeof(LARGE_INTEGER));
     STARTING_VCN_INPUT_BUFFER input = {};
-    while (!DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
-        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr) && GetLastError() == ERROR_MORE_DATA)
+    BOOL pointersFetched = FALSE;
+    while ((pointersFetched = DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
+        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr)) == FALSE && GetLastError() == ERROR_MORE_DATA)
     {
         dataRunsBuffer.resize(dataRunsBuffer.size() * 2);
     }
-    if (GetLastError() != ERROR_SUCCESS && GetLastError() != ERROR_MORE_DATA)
+    if (pointersFetched == FALSE)
     {
         return false;
     }
 
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
-    std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    auto vcnStart = retrievalBuffer->StartingVcn.QuadPart;
     for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
     {
-        dataRuns[i] = { retrievalBuffer->Extents[i].Lcn.QuadPart,
-            retrievalBuffer->Extents[i].NextVcn.QuadPart - (i == 0
-                ? retrievalBuffer->StartingVcn.QuadPart : retrievalBuffer->Extents[i - 1].NextVcn.QuadPart) };
+        const auto vcnNext = retrievalBuffer->Extents[i].NextVcn.QuadPart;
+        dataRuns[i] = std::make_tuple(
+            static_cast<ULONGLONG>(vcnStart),
+            retrievalBuffer->Extents[i].Lcn.QuadPart,
+            static_cast<ULONGLONG>(vcnNext - vcnStart)
+        );
+        vcnStart = vcnNext;
     }
 
     // Process MFT records
     std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
+        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size
         constexpr size_t bufferSize = 4ull * wds::Mi;
+        constexpr size_t bufferAlignment = 4ull * wds::Ki;
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
-            static_cast<UCHAR*>(_aligned_malloc(bufferSize, volumeInfo.BytesPerSector)), &_aligned_free);
+            static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
 
-        const auto& [clusterStart, clusterCount] = dataRun;
+        const auto& [runVcnStart, clusterStart, clusterCount] = dataRun;
 
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
         thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
-        for (ULONG bytesRead = 0; bytesToRead > 0; bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
+        const ULONGLONG mftRunOffset = runVcnStart * volumeInfo.BytesPerCluster;
+        ULONG bytesRead = 0;
+        for (ULONGLONG bytesReadFromRun = 0; bytesToRead > 0;
+            bytesReadFromRun += bytesRead, bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
             // Animate pacman
             driveitem->UpwardDrivePacman();
 
             // Set file pointer for synchronous read
+            bytesRead = 0;
             const ULONG bytesThisRead = static_cast<ULONG>(std::min<ULONGLONG>(bytesToRead, bufferSize));
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0)
@@ -266,7 +278,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
                 // Only process records with valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
-                const auto currentRecord = fileRecord->SegmentNumber();
+                const auto currentRecord = (mftRunOffset + bytesReadFromRun + offset) / volumeInfo.BytesPerFileRecordSegment;
                 const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
                 FileRecordBase* baseRecordPtr = nullptr;
                 if (std::scoped_lock lock(m_baseFileRecordMutex); true)
@@ -276,7 +288,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 auto& baseRecord = *baseRecordPtr;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
-                    endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
+                    endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
                 {
                     if (curAttribute->TypeCode == AttributeStandardInformation)
                     {
@@ -291,9 +303,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        // FileName is not null-terminated so compare by length and characters
                         if (fn->IsShortNameRecord() ||
-                            (fn->FileNameLength == 1 && wcscmp(fn->FileName, L".") == 0) ||
-                            (fn->FileNameLength == 2 && wcscmp(fn->FileName, L"..") == 0)) continue;
+                            (fn->FileNameLength == 1 && fn->FileName[0] == L'.') ||
+                            (fn->FileNameLength == 2 && fn->FileName[0] == L'.' && fn->FileName[1] == L'.')) continue;
 
                         std::scoped_lock lock(m_parentToChildMutex);
                         auto& children = m_parentToChildMap.try_emplace(fn->ParentDirectory).first->second;

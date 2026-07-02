@@ -560,7 +560,7 @@ void CSelectDrivesDlg::OnBnClickedFastScanCheckbox()
             wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
-            RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
+            RunElevated(CWinDirStatModel::Get()->GetScanPathSpec());
             return;
         }
     }
@@ -733,7 +733,7 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
 void CSelectDrivesDlg::OnBnClickedFilterButton()
 {
-    COptionsPropertySheet::ShowSettings(1); // 1 = Filtering tab
+    COptionsPropertySheet::ShowSettings(1, false); // 1 = Filtering tab
     UpdateFilterButton();
 }
 

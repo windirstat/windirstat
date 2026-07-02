@@ -25,6 +25,7 @@ class COptions;
 
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
 constexpr auto TREELISTCOLORCOUNT = 8;
+constexpr auto PERMSRULECOUNT = 5;
 
 enum REFRESHPOLICY : std::uint8_t
 {
@@ -38,6 +39,15 @@ enum DARKMODE : std::uint8_t
     DM_DISABLED,
     DM_ENABLED,
     DM_USE_WINDOWS
+};
+
+// Layout topology: the structural arrangement of the two splitters
+enum LAYOUT_TOPOLOGY : int
+{
+    LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
+    LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)
+    LT_COLS_SUB_ROWS = 3, // Main = 2 cols; sub-splitter = 2 rows in col 0
+    LT_COLS_TM_FULL  = 4, // Main = 2 cols; treemap fills one col; sub-splitter = 2 rows in the other
 };
 
 struct USERDEFINEDCLEANUP
@@ -108,6 +118,7 @@ class COptions final
     static LPCWSTR OptionsTopView;
     static LPCWSTR OptionsSearch;
     static LPCWSTR OptionsWatcher;
+    static LPCWSTR OptionsPerms;
     static LPCWSTR OptionsDriveSelect;
 
 public:
@@ -146,6 +157,7 @@ public:
     static Setting<bool> ShowElevationPrompt;
     static Setting<bool> ShowMicrosoftProgress;
     static Setting<bool> ShowFileTypes;
+    static Setting<bool> GroupUnregisteredTypes;
     static Setting<bool> ShowFreeSpace;
     static Setting<bool> ShowStatusBar;
     static Setting<bool> ShowTimeSpent;
@@ -158,26 +170,26 @@ public:
     static Setting<bool> AutoElevate;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapShowExtensions;
+    static Setting<bool> TreeMapShowFolderFrames;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseDrawTextCache;
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<bool> ProcessHardlinks;
-    static Setting<COLORREF> FileTreeColor0;
-    static Setting<COLORREF> FileTreeColor1;
-    static Setting<COLORREF> FileTreeColor2;
-    static Setting<COLORREF> FileTreeColor3;
-    static Setting<COLORREF> FileTreeColor4;
-    static Setting<COLORREF> FileTreeColor5;
-    static Setting<COLORREF> FileTreeColor6;
-    static Setting<COLORREF> FileTreeColor7;
+    static Setting<bool> WatcherAutoScroll;
+    static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT];
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;
+    static Setting<std::wstring> PermsColorAccount[PERMSRULECOUNT];
+    static Setting<int> PermsColorLevel[PERMSRULECOUNT];
+    static Setting<COLORREF> PermsColor[PERMSRULECOUNT];
+    static Setting<std::wstring> PermsExcludeRegex;
     static Setting<double> MainSplitterPos;
     static Setting<double> SubSplitterPos;
+    static Setting<int> LayoutTopology;
+    static Setting<int> LayoutPermutation;
     static Setting<int> ConfigPage;
-    static Setting<int> FollowReparsePointMask;
     static Setting<int> LanguageId;
     static Setting<int> FileHashAlgorithm;
     static Setting<int> LargeFileCount;
@@ -215,6 +227,8 @@ public:
     static Setting<std::vector<int>> TopViewColumnWidths;
     static Setting<std::vector<int>> WatcherColumnOrder;
     static Setting<std::vector<int>> WatcherColumnWidths;
+    static Setting<std::vector<int>> PermsViewColumnOrder;
+    static Setting<std::vector<int>> PermsViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;

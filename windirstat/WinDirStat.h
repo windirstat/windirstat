@@ -21,6 +21,7 @@
 #include "IconHandler.h"
 
 class CMainFrame;
+class CWinDirStatModel;
 class CDirStatApp;
 
 // Frequently used "globals"
@@ -37,6 +38,7 @@ class CDirStatApp final : public CWinAppEx
 public:
 
     CDirStatApp();
+    ~CDirStatApp() override;
     BOOL InitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
     BOOL IsIdleMessage(MSG* pMsg) override;
@@ -60,13 +62,14 @@ public:
     static CDirStatApp* Get() { return &s_singleton; }
     std::wstring GetSaveToPath() const { return m_saveToPath; }
     std::wstring GetSaveDupesToPath() const { return m_saveDupesToPath; }
+    std::wstring GetSavePermsToPath() const { return m_savePermsToPath; }
 
 protected:
 
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which) const;
 
-    CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
+    std::unique_ptr<CWinDirStatModel> m_model;
 
     CIconHandler m_iconList;        // Central icon list
     COLORREF m_altColor;            // Coloring of compressed items
@@ -74,13 +77,14 @@ protected:
     std::wstring m_loadFromPath;    // Path to load results from
     std::wstring m_saveToPath;      // Path to save results to
     std::wstring m_saveDupesToPath; // Path to save duplicates to
+    std::wstring m_savePermsToPath; // Path to save permissions to
     static CDirStatApp s_singleton; // Singleton application instance
 #ifdef _DEBUG
     CWDSTracerConsole m_vtraceConsole;
 #endif
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnFileOpen();
+    afx_msg void OnSelectScanRoots();
     afx_msg void OnRunElevated();
     afx_msg void OnFilter();
     afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);

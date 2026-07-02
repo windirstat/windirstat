@@ -333,7 +333,7 @@ void CTreeListControl::OnItemDoubleClick(const int i)
     // If it's a file, open it
     if (item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
-        CDirStatDoc::OpenItem(item);
+        CWinDirStatModel::OpenItem(item);
     }
     else
     {
@@ -401,6 +401,8 @@ END_MESSAGE_MAP()
 
 void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
 {
+    if (item == nullptr) return;
+
     const int rowHeight = GetRowHeight();
     const int indentStep = rowHeight * 7 / 8;
     const int indentationLevel = item->GetIndent();
@@ -680,7 +682,10 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
     CWaitCursor wc;
 
-    int maxwidth = GetSubItemWidth(item, 0);
+    CClientDC dc(this);
+    CSelectObject sofont(&dc, GetFont());
+
+    int maxwidth = GetSubItemWidth(item, 0, &dc);
     const auto childCount = item->GetTreeListChildCount();
     std::vector<CWdsListItem*> children;
     for (const int c : std::views::iota(0, childCount))
@@ -694,7 +699,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         // first few bunch of visible items
         if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
         {
-            maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0));
+            maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0, &dc));
         }
     }
 

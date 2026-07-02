@@ -46,29 +46,43 @@ bool FinderBasic::FindNext()
 
         std::call_once(m_context->InitOnce, [&]
         {
-            const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
-                FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
-            m_context->SupportsFileId = (Status == 0);
-
-            DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
-            if (GetDiskFreeSpace(m_base.c_str(), &sectorsPerCluster, &bytesPerSector,
-                &numberOfFreeClusters, &totalNumberOfClusters))
+            if (!m_isUncPath)
             {
-                m_context->ClusterSize = sectorsPerCluster * bytesPerSector;
-            }
+                const NTSTATUS status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+                    m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
+                    FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
+                m_context->SupportsFileId = (status == 0);
 
-            m_context->Initialized = true;
+                DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
+                if (GetDiskFreeSpace(m_base.c_str(), &sectorsPerCluster, &bytesPerSector,
+                    &numberOfFreeClusters, &totalNumberOfClusters))
+                {
+                    m_context->ClusterSize = sectorsPerCluster * bytesPerSector;
+                }
+            }
         });
 
-        // Query directory with appropriate information class
-        const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(
-                m_context->SupportsFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
-            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_firstRun) ? TRUE : FALSE);
+        const auto QueryDirectory = [&](const FILE_INFORMATION_CLASS infoClass)
+        {
+            return NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+                m_directoryInfo.data(), BUFFER_SIZE, infoClass, FALSE,
+                (uSearch.Length > 0) ? &uSearch : nullptr, (m_firstRun) ? TRUE : FALSE);
+        };
 
-        success = (Status == 0);
+        constexpr NTSTATUS STATUS_INVALID_INFO_CLASS = static_cast<NTSTATUS>(0xC0000003L);
+        constexpr NTSTATUS STATUS_NOT_SUPPORTED = static_cast<NTSTATUS>(0xC00000BBL);
+
+        NTSTATUS status = QueryDirectory(static_cast<FILE_INFORMATION_CLASS>(
+            m_context->SupportsFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation));
+
+        if (status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_SUPPORTED)
+        {
+            m_context->SupportsFileId = false;
+            status = QueryDirectory(static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation));
+        }
+
         m_currentInfo = std::assume_aligned<8>(reinterpret_cast<FILE_DIR_INFORMATION*>(m_directoryInfo.data()));
+        success = (status == 0);
     }
     else
     {
@@ -139,22 +153,25 @@ bool FinderBasic::FindNext()
                 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
                 handle != INVALID_HANDLE_VALUE)
             {
-                std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE> buf;
                 DWORD returned = 0;
-                if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
-                    buf.data(), static_cast<DWORD>(buf.size()), &returned, nullptr))
+                if (auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
+                    DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
+                        buf->data(), static_cast<DWORD>(buf->size()), &returned, nullptr))
                 {
-                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf.data());
+                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf->data());
                     if (Finder::IsJunction(rp))
                         m_reparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
                 }
             }
         }
 
-        // Correct physical size
+        // Correct physical size. Skip for UNC paths: GetCompressedFileSize issues
+        // IOCTLs (e.g. FileCompressionInformation) that some redirectors (RDP
+        // tsclient) do not implement and may block indefinitely.
         if (m_currentInfo->FileAttributes != INVALID_FILE_ATTRIBUTES &&
             !(m_currentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
             m_currentInfo->AllocationSize.QuadPart == 0 &&
+            !m_isUncPath &&
             ((m_currentInfo->EndOfFile.QuadPart > m_context->ClusterSize ||
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
@@ -199,6 +216,8 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     // initialize run
     m_firstRun = true;
     m_initialAttributes = attr;
+    m_currentInfo = nullptr;
+    m_reparseTag = 0;
     m_base = strFolder;
     m_search = strName;
 
@@ -206,19 +225,29 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     if (m_statMode && strName.empty())
     {
         const std::filesystem::path path(strFolder);
-        m_base = path.parent_path();
-        m_search = path.filename();
+        m_base = path.parent_path().wstring();
+        m_search = path.filename().wstring();
     }
 
-    // convert the path to a long path that is compatible with the other call
-    if (m_base.find(L":\\", 1) == 1) m_base = s_dosPath.data() + m_base;
-    else if (m_base.starts_with(L"\\\\?\\")) m_base = s_dosPath.data() + m_base.substr(4) + L"\\";
-    else if (m_base.starts_with(L"\\\\")) m_base = s_dosUNCPath.data() + m_base.substr(2);
+    // normalize any long-path prefix back to a clean Win32 path so m_base stays
+    // canonical for display and concatenation; the NT form is derived below
+    if (m_base.starts_with(s_longUNCPath)) m_base = L"\\\\" + m_base.substr(s_longUNCPath.length());
+    else if (m_base.starts_with(s_longPath)) m_base.erase(0, s_longPath.length());
+
+    // ensure base ends with a separator so concatenation with the name is exact
+    if (m_base.empty() || m_base.back() != L'\\') m_base += L'\\';
+
+    // derive the NT-namespace path used to open the directory
+    m_isUncPath = m_base.starts_with(L"\\\\");
+    if (m_isUncPath) m_baseNt = s_dosUNCPath.data() + m_base.substr(2);
+    else if (m_base.find(L":\\", 1) == 1) m_baseNt = s_dosPath.data() + m_base;
+    else m_baseNt = m_base;
+
     UNICODE_STRING path
     {
-        .Length = static_cast<USHORT>(m_base.size() * sizeof(WCHAR)),
-        .MaximumLength = static_cast<USHORT>((m_base.size() + 1) * sizeof(WCHAR)),
-        .Buffer = m_base.data()
+        .Length = static_cast<USHORT>(m_baseNt.size() * sizeof(WCHAR)),
+        .MaximumLength = static_cast<USHORT>((m_baseNt.size() + 1) * sizeof(WCHAR)),
+        .Buffer = m_baseNt.data()
     };
 
     // update object attributes object
@@ -235,7 +264,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
         &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
-        VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_base.data());
+        VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_baseNt.data());
         return FALSE;
     }
 
@@ -276,15 +305,9 @@ FILETIME FinderBasic::GetLastWriteTime() const
 
 std::wstring FinderBasic::GetFilePath() const
 {
-    // Get full path to folder or file
-    std::wstring path = m_base.back() == L'\\'
-        ? (m_base + m_name)
-        : (m_base + L"\\" + m_name);
-
-    // Strip special DOS chars
-    if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.length());
-    if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.length());
-    return path;
+    // m_base is kept in clean Win32 form (the NT \??\ form lives only in
+    // m_baseNt), so the full path is a direct concatenation with the name
+    return m_base + m_name;
 }
 
 DWORD FinderBasic::GetReparseTag() const
@@ -295,8 +318,8 @@ DWORD FinderBasic::GetReparseTag() const
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     const std::filesystem::path p = file.empty()
-        ? std::filesystem::path::path(folder)
-        : std::filesystem::path::path(folder) / file;
+        ? std::filesystem::path(folder)
+        : std::filesystem::path(folder) / file;
 
     // Use this method over GetFileAttributes() as GetFileAttributes() will
     // return valid INVALID_FILE_ATTRIBUTES on locked files

@@ -140,15 +140,15 @@ void CPageAdvanced::OnOK()
 
     if (refreshAll)
     {
-        CDirStatDoc::Get()->OnOpenDocument(
-            CDirStatDoc::Get()->GetPathName().GetString());
+        CWinDirStatModel::Get()->StartScan(
+            CWinDirStatModel::Get()->GetScanPathSpec());
     }
     else if (refreshReparsepoints)
     {
-        CDirStatDoc::Get()->RefreshReparsePointItems();
+        CWinDirStatModel::Get()->RefreshReparsePointItems();
     }
 
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     CMFCPropertyPage::OnOK();
 }
 

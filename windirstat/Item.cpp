@@ -246,7 +246,7 @@ void CItem::RemoveAllChildren()
 {
     if (IsRootItem())
     {
-        CDirStatDoc::Get()->GetExtensionData()->clear();
+        CWinDirStatModel::Get()->GetExtensionData()->clear();
     }
 
     if (IsLeaf()) return;
@@ -439,7 +439,7 @@ ULONGLONG CItem::GetItemsCount() const noexcept
 void CItem::ExtensionDataAdd()
 {
     if (!IsTypeOrFlag(IT_FILE) || IsTypeOrFlag(ITF_EXTDATA)) return;
-    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
+    const auto record = CWinDirStatModel::Get()->GetExtensionDataRecord(GetExtension());
     record->AddFile(GetSizeLogical());
     SetFlag(ITF_EXTDATA);
 }
@@ -447,9 +447,9 @@ void CItem::ExtensionDataAdd()
 void CItem::ExtensionDataRemove()
 {
     if (!IsTypeOrFlag(IT_FILE) || !IsTypeOrFlag(ITF_EXTDATA)) return;
-    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
+    const auto record = CWinDirStatModel::Get()->GetExtensionDataRecord(GetExtension());
     record->RemoveFile(GetSizeLogical());
-    if (record->GetFiles() == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
+    if (record->GetFiles() == 0) CWinDirStatModel::Get()->GetExtensionData()->erase(GetExtension());
     SetFlag(ITF_EXTDATA, true);
 }
 
@@ -538,8 +538,7 @@ DWORD CItem::GetReparseTag() const noexcept
 
 void CItem::SetReparseTag(const DWORD reparseType) noexcept
 {
-    if (reparseType == 0) (void) false;
-    else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
+    if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetReparseType(ITRP_MOUNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetReparseType(ITRP_JUNCTION);
     else if ((reparseType & ~IO_REPARSE_TAG_CLOUD_MASK) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
@@ -643,6 +642,72 @@ std::wstring CItem::GetPath() const
         path += L"\\";
     }
     return path;
+}
+
+int CItem::ComparePath(const CItem* other) const
+{
+    if (!other) return 1;
+
+    auto getValid = [](const CItem* item) -> const CItem*
+    {
+        while (item && item->IsTypeOrFlag(IT_MYCOMPUTER, IT_HLINKS_SET, IT_HLINKS_IDX))
+        {
+            item = item->GetParent();
+        }
+
+        return item;
+    };
+
+    const CItem* leftRoot = getValid(this);
+    const CItem* rightRoot = getValid(other);
+
+    if (!leftRoot || !rightRoot) return (leftRoot > rightRoot) - (leftRoot < rightRoot);
+
+    thread_local std::vector<const CItem*> leftPath;
+    thread_local std::vector<const CItem*> rightPath;
+
+    leftPath.clear();
+    rightPath.clear();
+
+    for (const CItem* p = leftRoot; p; p = getValid(p->GetParent())) leftPath.push_back(p);
+    for (const CItem* p = rightRoot; p; p = getValid(p->GetParent())) rightPath.push_back(p);
+
+    size_t leftIdx = leftPath.size();
+    size_t rightIdx = rightPath.size();
+
+    // Walk from root toward leaves by indexing backwards.
+    while (leftIdx > 0 && rightIdx > 0 && leftPath[leftIdx - 1] == rightPath[rightIdx - 1])
+    {
+        --leftIdx;
+        --rightIdx;
+    }
+
+    // One path is an ancestor of the other.
+    if (leftIdx == 0 || rightIdx == 0)
+    {
+        if (leftIdx == 0 && rightIdx == 0) return 0;
+        return leftIdx == 0 ? -1 : 1;
+    }
+
+    const CItem* left = leftPath[leftIdx - 1];
+    const CItem* right = rightPath[rightIdx - 1];
+    auto getSlice = [](const CItem* item)
+    {
+        auto view = item->GetNameView();
+        if (item->IsTypeOrFlag(IT_DRIVE)) return view.substr(0, 2);
+        return view;
+    };
+
+    auto leftView = getSlice(left);
+    auto rightView = getSlice(right);
+
+    const size_t minLen = (std::min)(leftView.size(), rightView.size());
+    if (int cmp = _wcsnicmp(leftView.data(), rightView.data(), minLen))
+    {
+        return (cmp > 0) - (cmp < 0);
+    }
+
+    return (leftView.size() > rightView.size()) - (leftView.size() < rightView.size());
 }
 
 std::wstring CItem::GetPathLong() const
@@ -810,8 +875,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        const ULONG previous = p->m_folderInfo->m_jobs.fetch_sub(count);
-        if (previous >= count && previous - count == 0)
+        if (p->m_folderInfo->m_jobs.fetch_sub(count) == count)
         {
             p->SetDone();
         }

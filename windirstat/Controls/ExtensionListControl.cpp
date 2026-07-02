@@ -24,13 +24,16 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r, const bool aggregate)
     : m_extension(std::move(extension))
     , m_extensionList(list)
     , m_bytes(r.GetBytes())
     , m_files(r.GetFiles())
     , m_color(r.color)
+    , m_aggregate(aggregate)
 {
+    // The aggregate row has no shell type, so give it a fixed description
+    if (aggregate) m_description = Localization::Lookup(IDS_EXTENSION_GROUPED);
 }
 
 bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -92,6 +95,13 @@ HICON CExtensionListControl::CListItem::GetIcon()
 {
     if (m_icon != nullptr) return m_icon;
 
+    // The aggregate row covers many extensions, so use a generic icon and skip the shell lookup
+    if (m_aggregate)
+    {
+        m_icon = GetIconHandler()->GetUnknownImage();
+        return m_icon;
+    }
+
     GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CListItem*>(this),
         m_extensionList, m_extension, FILE_ATTRIBUTE_NORMAL, &m_icon, &m_description));
 
@@ -101,7 +111,7 @@ HICON CExtensionListControl::CListItem::GetIcon()
 const std::wstring& CExtensionListControl::CListItem::GetDescription() const
 {
     static const std::wstring empty;
-    return m_icon == nullptr ? empty : m_description;
+    return (m_aggregate || m_icon != nullptr) ? m_description : empty;
 }
 
 std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
@@ -140,6 +150,7 @@ int CExtensionListControl::CListItem::Compare(const CWdsListItem* baseOther, con
 
 BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
+    ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_CONTEXTMENU()
@@ -188,17 +199,46 @@ void CExtensionListControl::Initialize()
 
 void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
-    // Cleanup visual nodes
+    // Replace all existing rows
     const CSetRedrawLock lock(this);
     DeleteAllItems();
 
-    // Insert new items
     if (ed != nullptr)
     {
+        const bool group = COptions::GroupUnregisteredTypes;
+
+        // Running totals for the single "unregistered types" row
+        ULONGLONG groupBytes = 0, groupFiles = 0, largestBytes = 0;
+        COLORREF groupColor = 0;
+
         std::vector<CWdsListItem*> items;
         items.reserve(ed->size());
         for (const auto& [ext, rec] : *ed)
+        {
+            // Fold unregistered extensions together; "no extension" (empty key) stays separate
+            if (group && !ext.empty() && !CWinDirStatModel::Get()->IsExtensionRegistered(ext))
+            {
+                const ULONGLONG bytes = rec.GetBytes();
+                groupBytes += bytes;
+                groupFiles += rec.GetFiles();
+
+                // Show the group with its largest contributor's color
+                if (bytes >= largestBytes) { largestBytes = bytes; groupColor = rec.color; }
+                continue;
+            }
+
             items.emplace_back(new CListItem(this, ext, rec));
+        }
+
+        // Append the aggregate row only if any unregistered extensions were folded in
+        if (groupFiles > 0)
+        {
+            SExtensionRecord r;
+            r.bytes = groupBytes;
+            r.files = groupFiles;
+            r.color = groupColor;
+            items.emplace_back(new CListItem(this, L"⋯", r, true));
+        }
 
         InsertListItem(0, items);
     }
@@ -220,7 +260,12 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
     auto view = std::views::iota(0, GetItemCount());
     auto it = std::ranges::find_if(view, [&](int i) {
-        return _wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0;
+        const CListItem* item = GetListItem(i);
+        if (item->IsAggregate())
+        {
+            return !ext.empty() && !CWinDirStatModel::Get()->IsExtensionRegistered(ext);
+        }
+        return _wcsicmp(item->GetExtension().c_str(), ext.c_str()) == 0;
     });
 
     if (it != view.end())
@@ -248,11 +293,25 @@ CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i
     return static_cast<CListItem*>(GetItem(i));
 }
 
+bool CExtensionListControl::IsSelectedAggregate() const
+{
+    // The synthetic aggregate row has no concrete extension to act on
+    POSITION pos = GetFirstSelectedItemPosition();
+    return pos != nullptr && GetListItem(GetNextSelectedItem(pos))->IsAggregate();
+}
+
 void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete std::bit_cast<CListItem*>(lv->lParam);
     *pResult = FALSE;
+}
+
+void CExtensionListControl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    const auto pNMListView = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+    if (pNMListView->iItem != -1) OnSearchExtension();
+    *pResult = 0;
 }
 
 void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
@@ -266,7 +325,8 @@ void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if ((pNMLV->uNewState & LVIS_SELECTED) != 0)
     {
-        m_extensionView->SetHighlightExtension(GetSelectedExtension());
+        // The aggregate row highlights every unregistered extension at once
+        m_extensionView->SetHighlightExtension(GetSelectedExtension(), IsSelectedAggregate());
     }
     *pResult = FALSE;
 }
@@ -321,11 +381,15 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
         ClientToScreen(&point);
     }
 
+    // Searching and excluding need a concrete extension; disable them on the aggregate row
+    const UINT aggregateFlags = IsSelectedAggregate() ? MF_GRAYED : 0;
+
     CMenu menu;
     menu.CreatePopupMenu();
-    menu.AppendMenu(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
+    menu.AppendMenu(MF_STRING | aggregateFlags, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
-    menu.AppendMenu(MF_STRING, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
+    menu.AppendMenu(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
+    SetMenuDefaultItem(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE);
 
     // Add search bitmap to menu
     if (m_searchBitmap.GetSafeHandle() == nullptr)
@@ -344,9 +408,11 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 void CExtensionListControl::OnSearchExtension()
 {
+    if (IsSelectedAggregate()) return;
+
     const auto searchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
         (GlobToRegex(GetSelectedExtension(), false) + L"$");
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(),
+    CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         searchTerm, false, false, true, true);
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
@@ -354,6 +420,8 @@ void CExtensionListControl::OnSearchExtension()
 
 void CExtensionListControl::OnExcludeExtension()
 {
+    if (IsSelectedAggregate()) return;
+
     const std::wstring ext = GetSelectedExtension();
     if (ext.empty()) return;
 

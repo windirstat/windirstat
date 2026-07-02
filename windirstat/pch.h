@@ -99,6 +99,9 @@
 #include <utility>
 #include <vector>
 
+// Third-party libraries
+#include <contrib/xxhash/xxhash.h>
+
 // Common WinDirStat headers
 #include "resource.h"
 #include "Tracer.h"
@@ -109,7 +112,7 @@
 #include "BlockingQueue.h"
 #include "Options.h"
 #include "WinDirStat.h"
-#include "DirStatDoc.h"
+#include "WinDirStatModel.h"
 #include "Item.h"
 #include "SmartPointer.h"
 #include "Localization.h"

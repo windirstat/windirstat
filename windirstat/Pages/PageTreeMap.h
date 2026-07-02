@@ -45,10 +45,10 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    CTreeMap::Options m_options; // Current options
+    CTreeMap::Options m_options{}; // Current options
 
     bool m_altered = false;   // Values have been altered. Button reads "Reset to defaults".
-    CTreeMap::Options m_undo; // Valid, if m_altered = false
+    CTreeMap::Options m_undo{}; // Valid, if m_altered = false
 
     CTreeMapPreview m_preview;
 

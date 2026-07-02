@@ -76,6 +76,12 @@
     <Filter Include="Header Files\User Interface\Controls">
       <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Contrib">
+      <UniqueIdentifier>{c4f0a2d1-8b3e-4a6f-9d52-7e1c9a0b4f33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Contrib">
+      <UniqueIdentifier>{a87d04f4-5518-4f28-8d78-5c42d1d673af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\windirstat.manifest">
@@ -113,6 +119,9 @@
     <ClInclude Include="Pages\PageFileTree.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PagePermissions.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Pages\PageFiltering.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
@@ -120,6 +129,12 @@
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\WinDirStatPane.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\StorageAnalyticsView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\FileTabbedView.h">
@@ -185,6 +200,9 @@
     <ClInclude Include="resource.h">
       <Filter>Resource Files\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\FilePermsControl.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\FileWatcherControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -200,7 +218,7 @@
     <ClInclude Include="CsvLoader.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="DirStatDoc.h">
+    <ClInclude Include="WinDirStatModel.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Options.h">
@@ -236,6 +254,9 @@
     <ClInclude Include="Layout.h">
       <Filter>Header Files\User Interface</Filter>
     </ClInclude>
+    <ClInclude Include="LayoutPopup.h">
+      <Filter>Header Files\User Interface</Filter>
+    </ClInclude>
     <ClInclude Include="MainFrame.h">
       <Filter>Header Files\User Interface</Filter>
     </ClInclude>
@@ -260,6 +281,9 @@
     <ClInclude Include="ItemDupe.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
+    <ClInclude Include="ItemPerm.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
     <ClInclude Include="ItemSearch.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
@@ -271,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="Filtering.h">
       <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\contrib\xxhash\xxhash.h">
+      <Filter>Header Files\Contrib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -289,6 +316,9 @@
     <ClCompile Include="Pages\PageFileTree.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Pages\PagePermissions.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
@@ -302,6 +332,12 @@
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\ExtensionView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\WinDirStatPane.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\StorageAnalyticsView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\TreeMapView.cpp">
@@ -358,6 +394,9 @@
     <ClCompile Include="Pages\PagePrompts.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\FilePermsControl.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\FileWatcherControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
@@ -382,7 +421,10 @@
     <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="DirStatDoc.cpp">
+    <ClCompile Include="WinDirStatModel.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="WinDirStatModel.Actions.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Property.cpp">
@@ -398,6 +440,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemPerm.cpp">
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemSearch.cpp">
@@ -421,11 +466,20 @@
     <ClCompile Include="MainFrame.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
+    <ClCompile Include="MainFrame.Commands.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="LayoutPopup.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
     <ClCompile Include="Localization.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
     <ClCompile Include="Filtering.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\contrib\xxhash\xxhash.c">
+      <Filter>Source Files\Contrib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

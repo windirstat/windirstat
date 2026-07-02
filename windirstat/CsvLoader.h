@@ -17,6 +17,11 @@
 
 #pragma once
 
+#include "pch.h"
+#include "ItemDupe.h"
+#include "ItemPerm.h"
+
 bool SaveResults(const std::wstring& path, CItem* rootItem);
 CItem* LoadResults(const std::wstring& path);
 bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe);
+bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm*>& items);

@@ -18,13 +18,14 @@
 #pragma once
 
 #include "pch.h"
+#include "WinDirStatPane.h"
 #include "ExtensionListControl.h"
 
 //
 // CExtensionView. The upper right view, which shows the extensions and their
 // cushion colors.
 //
-class CExtensionView final : public CView
+class CExtensionView final : public CWinDirStatPane
 {
 protected:
     CExtensionView();
@@ -36,9 +37,9 @@ protected:
     bool IsShowTypes() const;
     void ShowTypes(bool show);
 
-    void SetHighlightExtension(const std::wstring& ext);
+    void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
 
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     void OnDraw(CDC* pDC) override;
     void SetSelection();
 

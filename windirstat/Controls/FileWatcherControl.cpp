@@ -19,8 +19,6 @@
 #include "FileWatcherControl.h"
 #include "FinderBasic.h"
 
-CFileWatcherControl* CFileWatcherControl::m_singleton = nullptr;
-
 CFileWatcherControl::CFileWatcherControl()
     : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), LF_WATCHERLIST, false)
 {
@@ -53,10 +51,10 @@ void CFileWatcherControl::StartMonitoring()
 {
     StopMonitoring();
 
-    const auto* doc = CDirStatDoc::Get();
-    if (!doc || !doc->HasRootItem()) return;
+    const auto* model = CWinDirStatModel::Get();
+    if (!model || !model->HasRootItem()) return;
 
-    if (CItem* root = doc->GetRootItem(); root != nullptr)
+    if (CItem* root = model->GetRootItem(); root != nullptr)
     {
         auto children = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
             std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
@@ -151,6 +149,13 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     PostMessage(WM_WATCHER_CHANGE, 0, 0);
 }
 
+void CFileWatcherControl::ClearResults()
+{
+    ClearPendingItems();
+    DeleteAllItems();
+    Invalidate();
+}
+
 void CFileWatcherControl::ClearPendingItems()
 {
     CWatcherItem* item = nullptr;
@@ -175,6 +180,12 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
     const CSetRedrawLock lock(this);
     InsertListItem(GetItemCount(), items);
     SortItems();
+
+    // Keep the most recent change in view when autoscroll is enabled
+    if (COptions::WatcherAutoScroll)
+    {
+        EnsureItemVisible(static_cast<CTreeListItem*>(items.back()));
+    }
     return 0;
 }
 

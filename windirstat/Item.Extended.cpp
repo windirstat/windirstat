@@ -19,6 +19,7 @@
 #include "Item.h"
 
 static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
@@ -67,6 +68,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     {
         rc.DeflateRect(2, 4);
         rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
+        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
@@ -100,11 +102,16 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
         const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
 
-        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
+        const auto drawRoundRect = [&](CRect r, COLORREF fill, COLORREF border) {
+            pdc->SetDCBrushColor(fill);
+            pdc->SetDCPenColor(border);
+            CSelectStockObject sb(pdc, DC_BRUSH);
+            CSelectStockObject sp(pdc, DC_PEN);
+            pdc->RoundRect(r, CPoint(3, 3));
+        };
 
         // Draw the track background and border
-        pdc->FillSolidRect(rc, trackFill);
-        pdc->Draw3dRect(rc, trackBorder, trackBorder);
+        drawRoundRect(rc, trackFill, trackBorder);
         rc.DeflateRect(1, 1);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
@@ -119,9 +126,9 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         {
             CRect rcSubtree = rc;
             rcSubtree.right = subtreeRight;
-            pdc->FillSolidRect(rcSubtree, subtreeFill);
-            if (rcSubtree.Height() >= 3)
-                pdc->FillSolidRect(rcSubtree.left, rcSubtree.top, rcSubtree.Width(), 1, subtreeGlow);
+            drawRoundRect(rcSubtree, subtreeFill, subtreeFill);
+            if (rcSubtree.Height() >= 3 && rcSubtree.Width() >= 2)
+                pdc->FillSolidRect(rcSubtree.left + 1, rcSubtree.top, rcSubtree.Width() - 2, 1, subtreeGlow);
             if (subtreeRight < rc.right)
                 pdc->FillSolidRect(subtreeRight, rc.top, 1, rc.Height(), trackBorder);
         }
@@ -132,10 +139,11 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rcAbsolute.DeflateRect(0, 2);
         if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
         {
-            pdc->FillSolidRect(rcAbsolute, absoluteFill);
-            if (rcAbsolute.Height() >= 3)
-                pdc->FillSolidRect(rcAbsolute.left, rcAbsolute.top, rcAbsolute.Width(), 1, absoluteGlow);
-            pdc->FillSolidRect(rcAbsolute.right - 1, rcAbsolute.top, 1, rcAbsolute.Height(), absoluteEdge);
+            drawRoundRect(rcAbsolute, absoluteFill, absoluteFill);
+            if (rcAbsolute.Height() >= 3 && rcAbsolute.Width() >= 2)
+                pdc->FillSolidRect(rcAbsolute.left + 1, rcAbsolute.top, rcAbsolute.Width() - 2, 1, absoluteGlow);
+            if (rcAbsolute.Height() >= 2)
+                pdc->FillSolidRect(rcAbsolute.right - 1, rcAbsolute.top + 1, 1, rcAbsolute.Height() - 2, absoluteEdge);
         }
     }
     return true;
@@ -407,14 +415,14 @@ HICON CItem::GetIcon()
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 {
-    if (!IsRootItem() && this == CDirStatDoc::Get()->GetZoomItem())
+    if (!IsRootItem() && this == CWinDirStatModel::Get()->GetZoomItem())
     {
         CRect rc = rcLabel;
         rc.InflateRect(1, 0);
         rc.bottom++;
 
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, CDirStatDoc::Get()->GetZoomColor());
+        CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
         CSelectObject sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
@@ -601,7 +609,7 @@ void CItem::UpdateFreeSpaceItem()
         SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
             FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
                 IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
-            FormatDouble(100.0 * free / total)));
+            FormatDouble(total == 0 ? 0.0 : 100.0 * free / total)));
 
         // Update freespace item if it exists
         if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
@@ -703,7 +711,7 @@ void CItem::CreateHardlinksItem()
 
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
     // On file systems with many hardlinks, this helps reduce the items
-    // to expand in the interface on when viewing hardlink structures
+    // to expand in the interface when viewing hardlink structures
     constexpr char INDEX_SET_COUNT = 20;
     for (const int i : std::views::iota(1, INDEX_SET_COUNT + 1))
     {
@@ -944,15 +952,25 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
+    const bool useXxHash = hashAlgorithm == HASH_XXHASH;
 
     thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
     thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
     thread_local SmartPointer hashAlgHandle(CloseBCryptAlgHandle, BCRYPT_ALG_HANDLE{});
     thread_local SmartPointer hashHandle(BCryptDestroyHash, BCRYPT_HASH_HANDLE{});
+    thread_local SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHasher(FreeXxHashState, nullptr);
 
-    // Initialize shared structures once per thread and selected algorithm.
-    if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
+    if (useXxHash)
+    {
+        if (!xxHasher.IsValid())
+        {
+            xxHasher = XXH3_createState();
+            if (!xxHasher.IsValid()) return {};
+        }
+        XXH3_64bits_reset(xxHasher);
+    }
+    else if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
     {
         hashHandle.Release();
         hashAlgHandle.Release();
@@ -978,7 +996,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Check if initialization succeeded
-    if (hashBuffer.empty())
+    if (!useXxHash && hashBuffer.empty())
     {
         return {};
     }
@@ -1005,8 +1023,12 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         UpwardDrivePacman();
 
         // Hash the data
-        iHashResult = BCryptHashData(hashHandle, fileBuffer.data(), iReadBytes, 0);
-        if (iHashResult != 0) break;
+        if (useXxHash) XXH3_64bits_update(xxHasher, fileBuffer.data(), iReadBytes);
+        else
+        {
+            iHashResult = BCryptHashData(hashHandle, fileBuffer.data(), iReadBytes, 0);
+            if (iHashResult != 0) break;
+        }
 
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
@@ -1015,10 +1037,20 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         queue->WaitIfSuspended();
     }
 
-    // Complete the hashing process and check on errors
+    // Complete the hashing process and check on errors.
+    if (useXxHash)
+    {
+        if (iReadResult == 0) return {};
+        XXH64_canonical_t canonical;
+        XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(xxHasher));
+        return { canonical.digest, canonical.digest + sizeof(canonical.digest) };
+    }
+
+    // BCryptFinishHash must run even after a read failure
+    // so the reusable hash handle is reset for the next call.
     if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
         hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
-        iReadResult == 0 || iHashResult != 0 || iFinishResult != 0)
+        iFinishResult != 0 || iReadResult == 0 || iHashResult != 0)
     {
         return {};
     }
@@ -1077,7 +1109,7 @@ COLORREF CItem::GetGraphColor() const
 
     if (IsTypeOrFlag(IT_FILE))
     {
-        return CDirStatDoc::Get()->GetCushionColor(GetExtension());
+        return CWinDirStatModel::Get()->GetCushionColor(GetExtension());
     }
 
     return RGB(0, 0, 0);
@@ -1095,17 +1127,6 @@ bool CItem::MustShowReadJobs() const noexcept
 
 COLORREF CItem::GetPercentageColor() const noexcept
 {
-    static const COLORREF* const kColors[] =
-    {
-        &COptions::FileTreeColor0.Obj(),
-        &COptions::FileTreeColor1.Obj(),
-        &COptions::FileTreeColor2.Obj(),
-        &COptions::FileTreeColor3.Obj(),
-        &COptions::FileTreeColor4.Obj(),
-        &COptions::FileTreeColor5.Obj(),
-        &COptions::FileTreeColor6.Obj(),
-        &COptions::FileTreeColor7.Obj()
-    };
     const int i = GetIndent() % COptions::FileTreeColorCount;
-    return *kColors[i];
+    return COptions::FileTreeColors[i];
 }

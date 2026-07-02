@@ -29,7 +29,7 @@
 class CSelectObject final
 {
 public:
-    CSelectObject(CDC* pdc, CGdiObject* pObject)
+    CSelectObject(CDC* pdc, CGdiObject* pObject) noexcept
     {
         m_pOldObject = pdc->SelectObject(pObject);
         m_pdc        = pdc;
@@ -40,7 +40,7 @@ public:
     CSelectObject(CSelectObject&&) = delete;
     CSelectObject& operator=(CSelectObject&&) = delete;
 
-    ~CSelectObject()
+    ~CSelectObject() noexcept
     {
         if (m_pdc != nullptr && m_pOldObject != nullptr)
         {
@@ -56,7 +56,7 @@ protected:
 class CSelectStockObject final
 {
 public:
-    CSelectStockObject(CDC* pdc, const int nIndex)
+    CSelectStockObject(CDC* pdc, const int nIndex) noexcept
     {
         m_pOldObject = pdc->SelectStockObject(nIndex);
         m_pdc = pdc;
@@ -67,7 +67,7 @@ public:
     CSelectStockObject(CSelectStockObject&&) = delete;
     CSelectStockObject& operator=(CSelectStockObject&&) = delete;
 
-    ~CSelectStockObject()
+    ~CSelectStockObject() noexcept
     {
         if (m_pdc != nullptr && m_pOldObject != nullptr)
         {
@@ -80,91 +80,43 @@ protected:
     CGdiObject* m_pOldObject = nullptr;
 };
 
-class CSetBkMode final
+// Sets a DC attribute in the constructor and restores the previous
+// value in the destructor (e.g. SetBkMode, SetTextColor, SetBkColor).
+template <typename V, V (CDC::* Setter)(V)>
+class CSetDCAttribute final
 {
 public:
-    CSetBkMode(CDC* pdc, const int mode)
+    CSetDCAttribute(CDC* pdc, const V value) noexcept : m_pdc(pdc)
     {
-        m_pdc = pdc;
-        m_oldMode = pdc->SetBkMode(mode);
+        m_oldValue = (pdc->*Setter)(value);
     }
 
-    CSetBkMode(const CSetBkMode&) = delete;
-    CSetBkMode& operator=(const CSetBkMode&) = delete;
-    CSetBkMode(CSetBkMode&&) = delete;
-    CSetBkMode& operator=(CSetBkMode&&) = delete;
+    CSetDCAttribute(const CSetDCAttribute&) = delete;
+    CSetDCAttribute& operator=(const CSetDCAttribute&) = delete;
+    CSetDCAttribute(CSetDCAttribute&&) = delete;
+    CSetDCAttribute& operator=(CSetDCAttribute&&) = delete;
 
-    ~CSetBkMode()
+    ~CSetDCAttribute() noexcept
     {
         if (m_pdc != nullptr)
         {
-            m_pdc->SetBkMode(m_oldMode);
+            (m_pdc->*Setter)(m_oldValue);
         }
     }
 
 protected:
     CDC* m_pdc = nullptr;
-    int m_oldMode = 0;
+    V m_oldValue{};
 };
 
-class CSetTextColor final
-{
-public:
-    CSetTextColor(CDC* pdc, const COLORREF color)
-    {
-        m_pdc = pdc;
-        m_oldColor = pdc->SetTextColor(color);
-    }
-
-    CSetTextColor(const CSetTextColor&) = delete;
-    CSetTextColor& operator=(const CSetTextColor&) = delete;
-    CSetTextColor(CSetTextColor&&) = delete;
-    CSetTextColor& operator=(CSetTextColor&&) = delete;
-
-    ~CSetTextColor()
-    {
-        if (m_pdc != nullptr)
-        {
-            m_pdc->SetTextColor(m_oldColor);
-        }
-    }
-
-protected:
-    CDC* m_pdc = nullptr;
-    COLORREF m_oldColor = CLR_NONE;
-};
-
-class CSetBkColor final
-{
-public:
-    CSetBkColor(CDC* pdc, const COLORREF color)
-    {
-        m_pdc = pdc;
-        m_oldColor = pdc->SetBkColor(color);
-    }
-
-    CSetBkColor(const CSetBkColor&) = delete;
-    CSetBkColor& operator=(const CSetBkColor&) = delete;
-    CSetBkColor(CSetBkColor&&) = delete;
-    CSetBkColor& operator=(CSetBkColor&&) = delete;
-
-    ~CSetBkColor()
-    {
-        if (m_pdc != nullptr)
-        {
-            m_pdc->SetBkColor(m_oldColor);
-        }
-    }
-
-protected:
-    CDC* m_pdc = nullptr;
-    COLORREF m_oldColor = CLR_NONE;
-};
+using CSetBkMode = CSetDCAttribute<int, &CDC::SetBkMode>;
+using CSetTextColor = CSetDCAttribute<COLORREF, &CDC::SetTextColor>;
+using CSetBkColor = CSetDCAttribute<COLORREF, &CDC::SetBkColor>;
 
 class CSaveDC final
 {
 public:
-    CSaveDC(CDC* pdc)
+    CSaveDC(CDC* pdc) noexcept
     {
         m_pdc = pdc;
         m_save = pdc->SaveDC();
@@ -175,7 +127,7 @@ public:
     CSaveDC(CSaveDC&&) = delete;
     CSaveDC& operator=(CSaveDC&&) = delete;
 
-    ~CSaveDC()
+    ~CSaveDC() noexcept
     {
         if (m_pdc != nullptr)
         {

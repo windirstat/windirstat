@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Drives an instrumented WinDirStat build through a representative set of
     workloads to produce Profile Guided Optimization (PGO) data.
@@ -23,7 +23,7 @@
       * regex-mode filtering, size and age filters
       * hidden / protected / unknown inclusion
       * single- vs many-thread scanning
-      * hash-algorithm variations for the dupe engine
+      * xxHash/default plus BCrypt hash-algorithm variations for the dupe engine
       * CSV and JSON save round-trips, plus load-from-file paths
       * privilege / reparse / hardlink toggles
 
@@ -128,6 +128,81 @@ $ErrorActionPreference = 'Stop'
 # as the inter-pattern delimiter inside the .ini.
 $RS = [char] 0x1E
 $ScenarioStart = [DateTime]::UtcNow
+$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$HashAlgorithmHeaderPath = Join-Path $RepoRoot 'windirstat\HelpersTasks.h'
+$DefaultSearchMaxResults = 10000
+
+function Convert-CIntegerLiteral {
+    param([Parameter(Mandatory)] [string] $Value)
+
+    $trimmed = $Value.Trim()
+    if ($trimmed -match '^0[xX](?<hex>[0-9A-Fa-f]+)$') {
+        return [Convert]::ToInt32($Matches.hex, 16)
+    }
+    return [int] $trimmed
+}
+
+function Read-CSequentialEnum {
+    param(
+        [Parameter(Mandatory)] [string] $Path,
+        [Parameter(Mandatory)] [string] $EnumName
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Required header not found: $Path"
+    }
+
+    $text = [System.IO.File]::ReadAllText($Path)
+    $pattern = "enum\s+$([regex]::Escape($EnumName))\s*\{(?<body>.*?)\};"
+    $match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $match.Success) {
+        throw "Enum '$EnumName' was not found in $Path"
+    }
+
+    $values = [ordered] @{}
+    $nextValue = 0
+    foreach ($rawLine in ($match.Groups['body'].Value -split '\r?\n')) {
+        $line = ($rawLine -replace '//.*$', '').Trim().TrimEnd(',')
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+
+        if ($line -match '^(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+))?$') {
+            if ($Matches.ContainsKey('value') -and $Matches['value']) {
+                $nextValue = Convert-CIntegerLiteral $Matches['value']
+            }
+            $values[$Matches.name] = $nextValue
+            $nextValue++
+        }
+    }
+    return $values
+}
+
+function Get-RequiredMapValue {
+    param(
+        [Parameter(Mandatory)] [System.Collections.IDictionary] $Map,
+        [Parameter(Mandatory)] [string] $Name,
+        [Parameter(Mandatory)] [string] $Source
+    )
+
+    if (-not $Map.Contains($Name)) {
+        throw "Required symbol '$Name' was not found in $Source"
+    }
+    return [int] $Map[$Name]
+}
+
+$script:HashAlgorithmIds = Read-CSequentialEnum -Path $HashAlgorithmHeaderPath -EnumName 'HashAlgorithm'
+function Get-HashAlgorithmId {
+    param([Parameter(Mandatory)] [string] $Name)
+    Get-RequiredMapValue -Map $script:HashAlgorithmIds -Name $Name -Source $HashAlgorithmHeaderPath
+}
+
+$script:HashAlgorithm = [ordered] @{
+    MD5    = Get-HashAlgorithmId 'HASH_MD5'
+    SHA1   = Get-HashAlgorithmId 'HASH_SHA1'
+    SHA256 = Get-HashAlgorithmId 'HASH_SHA256'
+    SHA384 = Get-HashAlgorithmId 'HASH_SHA384'
+    SHA512 = Get-HashAlgorithmId 'HASH_SHA512'
+    XXHASH = Get-HashAlgorithmId 'HASH_XXHASH'
+}
 
 # --- Logging helpers -------------------------------------------------------
 
@@ -352,8 +427,8 @@ function New-BaselineSettings {
             UseWindowsLocaleSetting    = '1'
             PacmanAnimation            = '1'
 
-            # Hash algorithm: HASH_SHA512 default (3 in the enum range MD5..SHA512)
-            FileHashAlgorithm          = '3'
+            # Hash algorithm: current default HASH_XXHASH.
+            FileHashAlgorithm          = [string] $script:HashAlgorithm.XXHASH
 
             LanguageId                 = '0'
             LargeFileCount             = '50'
@@ -396,7 +471,7 @@ function New-BaselineSettings {
             SearchWholePhrase          = '0'
             SearchCase                 = '0'
             SearchRegex                = '0'
-            SearchMaxResults           = '10000'
+            SearchMaxResults           = [string] $DefaultSearchMaxResults
         }
     }
 }
@@ -583,6 +658,7 @@ function New-ScenarioList {
     $artifactCsv2 = Join-Path $script:ArtifactDir 'scan-legacy.csv'
     $artifactJson = Join-Path $script:ArtifactDir 'scan-fast.json'
     $dupeJson     = Join-Path $script:ArtifactDir 'dupes-windows.json'
+    $dupeSha512Csv = Join-Path $script:ArtifactDir 'dupes-windows-sha512.csv'
     $dupeCsv      = Join-Path $script:ArtifactDir 'dupes-windows.csv'
 
     @(
@@ -754,31 +830,43 @@ function New-ScenarioList {
             Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-reparse.csv'))
         }
 
-        # 14. Duplicate scan of C:\Windows → JSON (heavy hashing + dupe-tree
-        # construction).
+        # 14. Duplicate scan of C:\Windows → JSON. Covers the current default
+        # xxHash path plus dupe-tree construction.
         @{
             Name = 'DupeScanWindowsJson'
-            Description = "Duplicate scan of $DupeRoot (SHA-512) → JSON"
+            Description = "Duplicate scan of $DupeRoot (xxHash/default) → JSON"
             Settings = @{
-                $SectionGeneral = @{ FileHashAlgorithm = '3' }
+                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.XXHASH }
                 $SectionDupeTree = @{ ScanForDuplicates = '1' }
             }
             Arguments = @($dupeRootArg, '/savedupesto', $dupeJson)
         }
 
-        # 15. Same dupe scan with the cheaper MD5 hash (different code path
-        # in the hashing pipeline).
+        # 15. SHA-512 goes through the BCrypt hashing pipeline and stores the
+        # reduced 16-byte duplicate fingerprint.
+        @{
+            Name = 'DupeScanWindowsSha512Csv'
+            Description = "Duplicate scan of $DupeRoot (SHA-512) → CSV"
+            Settings = @{
+                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.SHA512 }
+                $SectionDupeTree = @{ ScanForDuplicates = '1' }
+            }
+            Arguments = @($dupeRootArg, '/savedupesto', $dupeSha512Csv)
+        }
+
+        # 16. Same dupe scan with the cheaper MD5 hash (different BCrypt
+        # algorithm path in the hashing pipeline).
         @{
             Name = 'DupeScanWindowsMd5Csv'
             Description = "Duplicate scan of $DupeRoot (MD5) → CSV"
             Settings = @{
-                $SectionGeneral = @{ FileHashAlgorithm = '0' }
+                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.MD5 }
                 $SectionDupeTree = @{ ScanForDuplicates = '1' }
             }
             Arguments = @($dupeRootArg, '/savedupesto', $dupeCsv)
         }
 
-        # 16. Reload the CSV produced earlier. /loadfrom does not auto-exit,
+        # 17. Reload the CSV produced earlier. /loadfrom does not auto-exit,
         # so the launcher kills the process after a short settle.
         @{
             Name = 'LoadFromCsv'
@@ -789,7 +877,7 @@ function New-ScenarioList {
             RequiresArtifact = $artifactCsv
         }
 
-        # 17. Reload the JSON produced earlier (different parser path).
+        # 18. Reload the JSON produced earlier (different parser path).
         @{
             Name = 'LoadFromJson'
             Description = "Load JSON produced by ScanFastEngineJson (UI load path, killed after $LoadSettleSeconds s)"
@@ -799,7 +887,7 @@ function New-ScenarioList {
             RequiresArtifact = $artifactJson
         }
 
-        # 18. Reload the dupe JSON. Touches the dupe-tree deserializer.
+        # 19. Reload the dupe JSON. Touches the dupe-tree deserializer.
         @{
             Name = 'LoadDupeJson'
             Description = "Load dupe JSON produced by DupeScanWindowsJson (killed after $LoadSettleSeconds s)"

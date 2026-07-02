@@ -35,7 +35,7 @@ class BlockingQueue final
     bool m_cancelled = false;
     bool m_exitOnAllIdle = true;
 
-    bool AllThreadsIdling() const
+    bool AllThreadsIdling() const noexcept
     {
         return m_totalWorkerThreads == m_workersWaiting;
     }
@@ -173,6 +173,16 @@ public:
         return m_stopReason;
     }
 
+    void CancelThreadIo()
+    {
+        std::scoped_lock lock(m_mutex);
+        for (auto& thread : m_threads)
+        {
+            if (thread.joinable())
+                CancelSynchronousIo(thread.native_handle());
+        }
+    }
+
     void CancelExecution(const int stopReason = -1)
     {
         // Start cancellation process
@@ -230,7 +240,7 @@ public:
 };
 
 template<typename T>
-class SingleConsumerQueue
+class SingleConsumerQueue final
 {
     struct Node
     {

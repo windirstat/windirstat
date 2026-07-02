@@ -40,6 +40,11 @@ void CFileTopControl::ProcessTop(CItem * item)
     m_queuedSet.push(item);
 }
 
+void CFileTopControl::ClearPendingItems()
+{
+    m_queuedSet.clear();
+}
+
 void CFileTopControl::SortItems()
 {
     ASSERT(AfxGetThread() != nullptr);
@@ -117,6 +122,14 @@ void CFileTopControl::SortItems()
 
 void CFileTopControl::RemoveItem(CItem* item)
 {
+    // Fold pending scan results into the tracked list before calculating
+    // removals so queued descendants do not get re-added by SortItems().
+    CItem* newItem = nullptr;
+    while (m_queuedSet.pop(newItem))
+    {
+        m_sizeMap.push_back(newItem);
+    }
+
     // Create list of all items to remove
     std::unordered_set<CItem*> toRemove;
     std::vector<CItem*> queue{ item };

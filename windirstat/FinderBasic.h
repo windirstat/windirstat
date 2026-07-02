@@ -24,8 +24,7 @@
 class FinderBasicContext final
 {
 public:
-    bool Initialized = false;
-    bool SupportsFileId = false;
+    std::atomic<bool> SupportsFileId = false;
     ULONG ClusterSize = 0;
     std::once_flag InitOnce;
 };
@@ -67,6 +66,7 @@ class FinderBasic final : public Finder
 
     std::wstring m_search;
     std::wstring m_base;
+    std::wstring m_baseNt;
     std::wstring m_name;
     FILE_DIR_INFORMATION* m_currentInfo = nullptr;
     FinderBasicContext m_default{};
@@ -76,6 +76,7 @@ class FinderBasic final : public Finder
     DWORD m_reparseTag = 0;
     bool m_firstRun = true;
     bool m_statMode = false;
+    bool m_isUncPath = false;
 
 public:
 

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Path = $PSScriptRoot
 )
 
@@ -6,7 +6,8 @@ param(
 $Utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 
 # Find all .cpp and .h files recursively
-$Files = Get-ChildItem -Path $Path -Include *.cpp, *.h -Recurse
+$ProjectRoot = (Get-Item "$PSScriptRoot\..\..").FullName
+$Files = @(Get-ChildItem -Path $ProjectRoot -Include *.cpp,*.h,*.ps1 -Recurse)
 
 foreach ($File in $Files) {
     $FilePath = $File.FullName

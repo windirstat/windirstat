@@ -24,6 +24,7 @@ class CItem;
 class CItemDupe;
 class CItemTop;
 class CItemSearch;
+class CWinDirStatPane;
 enum LOGICAL_FOCUS : uint8_t;
 
 //
@@ -58,48 +59,50 @@ struct alignas(std::hardware_destructive_interference_size) SExtensionRecord
 using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 
 //
-// Hints for UpdateAllViews()
+// Model changes that panes can respond to.
 //
-using VIEW_HINT = enum VIEW_HINT : std::uint8_t
+enum MODEL_CHANGE : std::uint8_t
 {
-    HINT_NULL,                      // General update
-    HINT_NEWROOT,                   // Root item has changed - clear everything.
-    HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
-    HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
-    HINT_SELECTIONSTYLECHANGED,     // Only update selection in TreeMapView
-    HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
-    HINT_ZOOMCHANGED,               // Only zoom item has changed.
-    HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
-    HINT_TREEMAPSTYLECHANGED        // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_NONE,                // General update
+    MODEL_CHANGE_NEW_ROOT,            // Root item has changed - clear everything.
+    MODEL_CHANGE_SELECTION_ACTION,    // Inform central selection handler to update selection (uses item)
+    MODEL_CHANGE_SELECTION_REFRESH,   // Inform all views to redraw based on current selections
+    MODEL_CHANGE_SELECTION_STYLE,     // Only update selection in TreeMapView
+    MODEL_CHANGE_EXTENSION_SELECTION, // Type list selected a new extension
+    MODEL_CHANGE_ZOOM,                // Only zoom item has changed.
+    MODEL_CHANGE_LIST_STYLE,          // Options: List style (grid/stripes) or treelist colors changed
+    MODEL_CHANGE_TREEMAP_STYLE        // Options: Treemap style (grid, colors etc.) changed
 };
 
 //
-// CDirStatDoc. The "Document" class.
+// CWinDirStatModel. The application model.
 // Owner of the root item and various other data (see data members).
 //
-class CDirStatDoc final : public CDocument
+class CWinDirStatModel final : public CCmdTarget
 {
+    friend class CWinDirStatPane;
+
 public:
-    static CDirStatDoc* Get() { return s_singleton; }
+    static CWinDirStatModel* Get() { return s_singleton; }
+    CWinDirStatModel();
+    ~CWinDirStatModel() override;
 
-protected:
-    CDirStatDoc(); // Created by MFC only
-    DECLARE_DYNCREATE(CDirStatDoc)
-
-    ~CDirStatDoc() override;
-
-    void DeleteContents() override;
-    BOOL OnNewDocument() override;
-    BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
-    BOOL OnOpenDocument(CItem* newroot);
-    void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
-    void SetTitlePrefix(const std::wstring& prefix) const;
+    void ClearScanState();
+    BOOL ResetScan();
+    BOOL StartScan(const std::wstring& pathSpec);
+    BOOL OpenLoadedScan(CItem* loadedRoot);
+    void SetScanPathSpec(const std::wstring& pathSpec);
+    const std::wstring& GetScanPathSpec() const { return m_scanPathSpec; }
+    const std::wstring& GetScanTitle() const { return m_scanTitle; }
+    void SetScanTitle(const std::wstring& title) { m_scanTitle = title; }
+    void SetScanTitlePrefix(const std::wstring& prefix) const;
 
     COLORREF GetCushionColor(const std::wstring& ext);
     COLORREF GetZoomColor() const;
 
     CExtensionData* GetExtensionData();
     SExtensionRecord* GetExtensionDataRecord(const std::wstring& ext);
+    bool IsExtensionRegistered(const std::wstring& ext) const;
     ULONGLONG GetRootSize() const;
 
     void RefreshReparsePointItems();
@@ -111,8 +114,10 @@ protected:
     CItem* GetZoomItem() const;
     bool IsZoomed() const;
 
-    void SetHighlightExtension(const std::wstring& ext);
+    void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
     std::wstring GetHighlightExtension() const;
+    bool IsHighlightUnregistered() const;
+    const std::unordered_set<std::wstring>& GetHighlightExtensions() const;
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
@@ -126,6 +131,7 @@ protected:
 
     void RecurseRefreshReparsePoints(CItem* items) const;
     void RebuildExtensionData();
+    void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
@@ -138,22 +144,33 @@ protected:
     CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable() const;
-    static constexpr CompressionAlgorithm CompressionIdToAlg(UINT id);
+    static CompressionAlgorithm CompressionIdToAlg(UINT id);
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
     static bool WatcherListHasFocus();
+    static bool PermsListHasFocus();
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
-    void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CItem* pHint = nullptr);
+    void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
-    static CDirStatDoc* s_singleton;
+private:
+    void RemoveLocalProfiles(std::wstring_view whereClause);
+    void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
+
+    static CWinDirStatModel* s_singleton;
+
+    std::wstring m_scanPathSpec;
+    std::wstring m_scanTitle;
 
     CItem* m_rootItem = nullptr; // The very root item
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
     std::wstring m_highlightExtension; // Currently highlighted extension
+    bool m_highlightUnregistered = false; // Highlight all unregistered extensions instead of one
+    std::unordered_set<std::wstring> m_highlightExtensions; // Precomputed unregistered set for the treemap highlight
+    std::unordered_set<std::wstring> m_registeredExtensions; // Snapshot of HKEY_CLASSES_ROOT extensions, rebuilt per scan
 
     std::mutex m_extensionMutex;
     CExtensionData m_extensionData;    // Base for the extension view and cushion colors
@@ -168,14 +185,15 @@ protected:
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
 
-    bool m_showFreeSpace; // Whether to show the <Free Space> item
-    bool m_showUnknown;   // Whether to show the <Unknown> item
+    bool m_showFreeSpace = COptions::ShowFreeSpace; // Whether to show the <Free Space> item
+    bool m_showUnknown = COptions::ShowUnknown;   // Whether to show the <Unknown> item
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();
     afx_msg void OnRefreshAll();
     afx_msg void OnSaveResults();
     afx_msg void OnSaveDuplicates();
+    afx_msg void OnSavePermissions();
     afx_msg void OnLoadResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
@@ -192,6 +210,7 @@ protected:
     afx_msg void OnRemoveLocalProfiles();
     afx_msg void OnDisableHibernateFile();
     afx_msg void OnExecuteDiskCleanupUtility();
+    afx_msg void OnLaunchStorageSense();
     afx_msg void OnExecuteProgramsFeatures();
     afx_msg void OnExecuteDismAnalyze();
     afx_msg void OnExecuteDismReset();
@@ -213,6 +232,8 @@ protected:
     afx_msg void OnCleanupCompress(UINT id);
     afx_msg void OnCleanupOptimizeVhd();
     afx_msg void OnCleanupSparsifyFile();
+    afx_msg void OnToolsSetDates();
+    afx_msg void OnToolsRemoveEmpty();
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();

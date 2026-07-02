@@ -14,6 +14,7 @@
 #define IDD_SEARCH                      111
 #define IDD_PROGRESS                    112
 #define IDD_PAGE_PROMPTS                113
+#define IDD_PAGE_PERMISSIONS            114
 #define IDR_MAINFRAME                   128
 #define IDR_POPUP_TREE                  129
 #define IDR_POPUP_MAP                   130
@@ -138,6 +139,17 @@
 #define IDC_HASH_ALGORITHM              1121
 #define IDC_FILTER_BUTTON               1122
 #define IDC_FILTERING_MAX_AGE_DAYS      1124
+#define IDC_PERMS_ACCOUNT0              1125
+#define IDC_PERMS_ACCOUNT1              1126
+#define IDC_PERMS_ACCOUNT2              1127
+#define IDC_PERMS_ACCOUNT3              1128
+#define IDC_PERMS_ACCOUNT4              1129
+#define IDC_PERMS_LEVEL0                1130
+#define IDC_PERMS_LEVEL1                1131
+#define IDC_PERMS_LEVEL2                1132
+#define IDC_PERMS_LEVEL3                1133
+#define IDC_PERMS_LEVEL4                1134
+#define IDC_PERMS_EXCLUDE               1135
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -159,6 +171,7 @@
 #define ID_VIEW_SHOWFREESPACE           32784
 #define ID_VIEW_SHOWUNKNOWN             32785
 #define ID_VIEW_SHOWFILETYPES           32786
+#define ID_VIEW_GROUP_TYPES             32949
 #define ID_USERDEFINEDCLEANUP0          32787
 #define ID_USERDEFINEDCLEANUP1          32788
 #define ID_USERDEFINEDCLEANUP2          32789
@@ -216,13 +229,26 @@
 #define ID_CLEANUP_REMOVE_MOTW          32842
 #define ID_CLEANUP_CREATE_HARDLINK      32843
 #define ID_CLEANUP_SPARSIFY_FILE        32844
+#define ID_TOOLS_SET_DATES              32845
+#define ID_TOOLS_REMOVE_EMPTY           32846
 #define ID_TOOLS_SHADOW_COPY_BASE       32850
 #define ID_TOOLS_DEFRAG_BASE            32880
 #define ID_TOOLS_CHKDSK_BASE            32910
 #define ID_TOOLS_WATCHER                32940
 #define ID_TREEMAP_SHOW_EXTENSIONS      32941
+#define ID_TREEMAP_SHOW_FOLDER_FRAMES   32947
 #define ID_VIEW_LARGE_TOOLBAR           32942
 #define ID_FILTER_EXCLUDE_ITEM          32943
+#define ID_TOOLS_PERMISSIONS            32944
+#define ID_SAVE_PERMISSIONS             32945
+#define ID_TOOLS_STORAGE_ANALYTICS      32946
+#define ID_VIEW_WINDOW_LAYOUT           32948
+#define ID_CLEANUP_STORAGE_SENSE        32950
+#define ID_WATCHER_START                32951
+#define ID_WATCHER_PAUSE                32952
+#define ID_WATCHER_AUTOSCROLL           32953
+#define ID_WATCHER_CLEAR                32954
+#define ID_WATCHER_LABEL                32955
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -237,8 +263,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32943
-#define _APS_NEXT_CONTROL_VALUE         1123
+#define _APS_NEXT_COMMAND_VALUE         32956
+#define _APS_NEXT_CONTROL_VALUE         1136
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

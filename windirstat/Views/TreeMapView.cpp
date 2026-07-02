@@ -19,9 +19,9 @@
 #include "FileTreeView.h"
 #include "TreeMapView.h"
 
-IMPLEMENT_DYNCREATE(CTreeMapView, CView)
+IMPLEMENT_DYNCREATE(CTreeMapView, CWinDirStatPane)
 
-BEGIN_MESSAGE_MAP(CTreeMapView, CView)
+BEGIN_MESSAGE_MAP(CTreeMapView, CWinDirStatPane)
     ON_WM_SIZE()
     ON_WM_LBUTTONDBLCLK()
     ON_WM_LBUTTONDOWN()
@@ -53,7 +53,7 @@ void CTreeMapView::ShowTreeMap(const bool show)
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
 {
-    CView::PreCreateWindow(cs);
+    CWinDirStatPane::PreCreateWindow(cs);
 
     WNDCLASS wc;
     if (!::GetClassInfo(AfxGetInstanceHandle(), L"WinDirStatTreeMapClass", &wc))
@@ -76,14 +76,39 @@ void CTreeMapView::DrawEmptyView()
 
 void CTreeMapView::DrawEmptyView(CDC* pDC)
 {
-    constexpr COLORREF gray = RGB(160, 160, 160);
+    constexpr COLORREF emptyBg = RGB(15, 15, 15);
 
     Inactivate();
 
     const CRect rc = ClientRectOf(this);
     if (m_dimmed.m_hObject == nullptr)
     {
-        pDC->FillSolidRect(rc, gray);
+        pDC->FillSolidRect(rc, emptyBg);
+
+        CTreeMap::Options options = COptions::TreeMapOptions;
+        options.showExtensions = false;
+        options.showFolderFrames = false;
+
+        struct Tile { int x, y, w, h, shade; };
+        static constexpr Tile tiles[] = {
+            {  0,  0, 25, 58, 58 }, { 25,  0, 13, 34, 72 }, { 25, 34, 13, 24, 48 },
+            {  0, 58, 18, 42, 76 }, { 18, 58, 20, 25, 54 }, { 18, 83, 20, 17, 88 },
+            { 38,  0, 28, 44, 66 }, { 38, 44, 14, 31, 82 }, { 52, 44, 14, 31, 52 },
+            { 38, 75, 28, 25, 92 }, { 66,  0, 19, 62, 60 }, { 85,  0, 15, 38, 78 },
+            { 66, 62, 16, 38, 50 }, { 82, 38, 18, 36, 86 }, { 82, 74, 18, 26, 68 },
+        };
+
+        for (const Tile& t : tiles)
+        {
+            CRect tile(
+                rc.left + rc.Width()  * t.x / 100,
+                rc.top  + rc.Height() * t.y / 100,
+                rc.left + rc.Width()  * (t.x + t.w) / 100,
+                rc.top  + rc.Height() * (t.y + t.h) / 100);
+
+            if (tile.Width() > 0 && tile.Height() > 0)
+                m_treeMap.DrawColorPreview(pDC, tile, RGB(t.shade, t.shade, t.shade), &options);
+        }
     }
     else
     {
@@ -96,21 +121,21 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
         {
             CRect r = rc;
             r.left  = r.left + m_dimmedSize.cx;
-            pDC->FillSolidRect(r, gray);
+            pDC->FillSolidRect(r, emptyBg);
         }
 
         if (rc.Height() > m_dimmedSize.cy)
         {
             CRect r = rc;
             r.top   = r.top + m_dimmedSize.cy;
-            pDC->FillSolidRect(r, gray);
+            pDC->FillSolidRect(r, emptyBg);
         }
     }
 }
 
 void CTreeMapView::OnDraw(CDC * pDC)
 {
-    const CItem* root = CDirStatDoc::Get()->GetRootItem();
+    const CItem* root = CWinDirStatModel::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone() || m_drawingSuspended || !m_showTreeMap)
     {
         DrawEmptyView(pDC);
@@ -132,12 +157,12 @@ void CTreeMapView::OnDraw(CDC * pDC)
 
         CSelectObject sobmp(&dcmem, &m_bitmap);
 
-        if (CDirStatDoc::Get()->IsZoomed())
+        if (CWinDirStatModel::Get()->IsZoomed())
         {
             DrawZoomFrame(&dcmem, rc);
         }
 
-        m_treeMap.DrawTreeMap(&dcmem, rc, CDirStatDoc::Get()->GetZoomItem(), &COptions::TreeMapOptions);
+        m_treeMap.DrawTreeMap(&dcmem, rc, CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
     }
 
     CSelectObject sobmp2(&dcmem, &m_bitmap);
@@ -151,19 +176,19 @@ void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
 {
     CRect r  = rc;
     r.bottom = r.top + ZoomFrameWidth;
-    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
+    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
     r = rc;
     r.top = r.bottom - ZoomFrameWidth;
-    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
+    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
     r = rc;
     r.right = r.left + ZoomFrameWidth;
-    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
+    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
     r = rc;
     r.left = r.right - ZoomFrameWidth;
-    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
+    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
     rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
 }
@@ -186,6 +211,12 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
     }
 }
 
+// True if the leaf is a file whose extension is in the highlighted (unregistered) set
+static bool IsUnregisteredLeaf(const CItem* item, const std::unordered_set<std::wstring>& set)
+{
+    return item->IsTypeOrFlag(IT_FILE) && set.contains(item->GetExtension());
+}
+
 void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
@@ -194,13 +225,15 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
     CSelectObject sopen(pdc, &pen);
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
 
-    const CDirStatDoc* doc = CDirStatDoc::Get();
-    const std::wstring& highlightExt = doc->GetHighlightExtension();
-    const bool isZoomed = doc->IsZoomed();
+    const CWinDirStatModel* model = CWinDirStatModel::Get();
+    const std::wstring& highlightExt = model->GetHighlightExtension();
+    const bool unregistered = model->IsHighlightUnregistered();
+    const auto& highlightExtensions = model->GetHighlightExtensions();
+    const bool isZoomed = model->IsZoomed();
 
     std::vector<const CItem*> stack;
     stack.reserve(128);
-    stack.push_back(doc->GetZoomItem());
+    stack.push_back(model->GetZoomItem());
 
     while (!stack.empty())
     {
@@ -220,7 +253,7 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 
         if (item->TmiIsLeaf())
         {
-            if (item->HasExtension(highlightExt))
+            if (unregistered ? IsUnregisteredLeaf(item, highlightExtensions) : item->HasExtension(highlightExt))
             {
                 RenderHighlightRectangle(pdc, rc);
             }
@@ -241,11 +274,11 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
 
-    const auto& items = CDirStatDoc::Get()->GetAllSelected();
+    const auto& items = CWinDirStatModel::Get()->GetAllSelected();
     for (const auto& item : items)
     {
         // Ignore if not a child of the current zoomed item
-        if (!CDirStatDoc::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
+        if (!CWinDirStatModel::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
 
         const auto itemToSelect = item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
         HighlightSelectedItem(pdc, itemToSelect, items.size() == 1);
@@ -261,7 +294,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     CRect rc(item->TmiGetRectangle());
 
     // Offset the display rectangle if zoomed
-    if (CDirStatDoc::Get()->IsZoomed())
+    if (CWinDirStatModel::Get()->IsZoomed())
     {
         rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
     }
@@ -317,7 +350,7 @@ void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
 CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
 {
     // Validate that the document and root are in a ready state
-    const CItem* root = CDirStatDoc::Get()->GetRootItem();
+    const CItem* root = CWinDirStatModel::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone() || !IsDrawn())
     {
         return nullptr;
@@ -327,19 +360,19 @@ CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
     CPoint pointClicked = point;
     if (isScreenCoords) ScreenToClient(&pointClicked);
 
-    if (CDirStatDoc::Get()->IsZoomed())
+    if (CWinDirStatModel::Get()->IsZoomed())
     {
         pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
     }
 
     // Perform the hit-test against the current tree map projection
     return static_cast<CItem*>(m_treeMap.FindItemByPoint(
-        CDirStatDoc::Get()->GetZoomItem(), pointClicked));
+        CWinDirStatModel::Get()->GetZoomItem(), pointClicked));
 }
 
 void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 {
-    CView::OnSize(nType, cx, cy);
+    CWinDirStatPane::OnSize(nType, cx, cy);
     const CSize sz(cx, cy);
     if (sz != m_size)
     {
@@ -350,22 +383,22 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 
 void CTreeMapView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-    if (CItem* item = ResolveItemAtPoint(point); item && item != CDirStatDoc::Get()->GetZoomItem())
+    if (CItem* item = ResolveItemAtPoint(point); item && item != CWinDirStatModel::Get()->GetZoomItem())
     {
-        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
+        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
         AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
     }
-    CView::OnLButtonDblClk(nFlags, point);
+    CWinDirStatPane::OnLButtonDblClk(nFlags, point);
 }
 
 void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     if (auto* item = ResolveItemAtPoint(point))
     {
-        CDirStatDoc::Get()->ClearReselectChildStack();
-        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
+        CWinDirStatModel::Get()->ClearReselectChildStack();
+        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
     }
-    CView::OnLButtonDown(nFlags, point);
+    CWinDirStatPane::OnLButtonDown(nFlags, point);
 }
 
 void CTreeMapView::OnMButtonDown(UINT nFlags, CPoint point)
@@ -375,7 +408,7 @@ void CTreeMapView::OnMButtonDown(UINT nFlags, CPoint point)
         AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMRESET);
     }
 
-    CView::OnMButtonDown(nFlags, point);
+    CWinDirStatPane::OnMButtonDown(nFlags, point);
 }
 
 bool CTreeMapView::IsDrawn() const
@@ -425,44 +458,44 @@ void CTreeMapView::OnSetFocus(CWnd* /*pOldWnd*/)
     CMainFrame::Get()->GetFileTreeView()->SetFocus();
 }
 
-void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
+void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
-    if (!CDirStatDoc::Get()->IsRootDone())
+    if (!CWinDirStatModel::Get()->IsRootDone())
     {
         Inactivate();
     }
 
-    switch (lHint)
+    switch (change)
     {
-    case HINT_NEWROOT:
+    case MODEL_CHANGE_NEW_ROOT:
         {
             EmptyView();
-            CView::OnUpdate(pSender, lHint, pHint);
+            CWinDirStatPane::OnUpdate(sender, change, item);
             CMainFrame::Get()->UpdatePaneText();
         }
         break;
 
-    case HINT_SELECTIONACTION:
-    case HINT_SELECTIONREFRESH:
-    case HINT_SELECTIONSTYLECHANGED:
-    case HINT_EXTENSIONSELECTIONCHANGED:
+    case MODEL_CHANGE_SELECTION_ACTION:
+    case MODEL_CHANGE_SELECTION_REFRESH:
+    case MODEL_CHANGE_SELECTION_STYLE:
+    case MODEL_CHANGE_EXTENSION_SELECTION:
         {
-            CView::OnUpdate(pSender, lHint, pHint);
+            CWinDirStatPane::OnUpdate(sender, change, item);
             CMainFrame::Get()->UpdatePaneText();
         }
         break;
 
-    case HINT_TREEMAPSTYLECHANGED:
-    case HINT_ZOOMCHANGED:
+    case MODEL_CHANGE_TREEMAP_STYLE:
+    case MODEL_CHANGE_ZOOM:
         {
             Inactivate();
-            CView::OnUpdate(pSender, lHint, pHint);
+            CWinDirStatPane::OnUpdate(sender, change, item);
         }
         break;
 
-    case HINT_NULL:
+    case MODEL_CHANGE_NONE:
         {
-            CView::OnUpdate(pSender, lHint, pHint);
+            CWinDirStatPane::OnUpdate(sender, change, item);
         }
         break;
 
@@ -515,11 +548,11 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
     auto* clickedItem = ResolveItemAtPoint(point, true);
     if (clickedItem == nullptr) return;
 
-    if (!std::ranges::any_of(CDirStatDoc::Get()->GetAllSelected(), [&](auto* s)
+    if (!std::ranges::any_of(CWinDirStatModel::Get()->GetAllSelected(), [&](auto* s)
         { return s == clickedItem || s->IsAncestorOf(clickedItem); }))
     {
-        CDirStatDoc::Get()->ClearReselectChildStack();
-        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, clickedItem);
+        CWinDirStatModel::Get()->ClearReselectChildStack();
+        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, clickedItem);
     }
 
     if (CMenu menu; menu.LoadMenu(IDR_POPUP_MAP))
@@ -550,7 +583,7 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 BOOL CTreeMapView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
     if (!CMainFrame::Get())
-        return CView::OnMouseWheel(nFlags, zDelta, pt);
+        return CWinDirStatPane::OnMouseWheel(nFlags, zDelta, pt);
 
     const int clicks = zDelta / WHEEL_DELTA;
     if (clicks == 0) return TRUE;

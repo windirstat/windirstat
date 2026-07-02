@@ -29,6 +29,7 @@ static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG Proc
         reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
 static void CloseAlgProvider(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
@@ -82,6 +83,35 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
             if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR || ret == 0) break;
         }
     }
+}
+
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause)
+{
+    std::vector<std::wstring> results;
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"),
+            CComBSTR(std::format(L"SELECT {} FROM {} WHERE {}", property, wmiClass, whereClause).c_str()),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        return results;
+    }
+
+    while (true)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
+
+        CComVariant vtVal;
+        if (SUCCEEDED(pObj->Get(property.c_str(), 0, &vtVal, nullptr, nullptr)) && vtVal.vt == VT_BSTR)
+        {
+            results.emplace_back(vtVal.bstrVal);
+        }
+    }
+
+    return results;
 }
 
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause)
@@ -281,6 +311,15 @@ void DisableHibernate() noexcept
     }
 }
 
+bool IsStorageSenseAvailable() noexcept
+{
+    static const bool result = []() noexcept -> bool {
+        CRegKey key;
+        return key.Open(HKEY_CLASSES_ROOT, L"ms-settings", KEY_READ) == ERROR_SUCCESS;
+    }();
+    return result;
+}
+
 bool IsHibernateEnabled() noexcept
 {
     WCHAR drive[3];
@@ -400,43 +439,47 @@ bool EnableReadPrivileges() noexcept
 }
 
 // SID helpers
-static constexpr DWORD SidGetLength(const PSID x)
-{
-    return sizeof(SID) + (static_cast<SID*>(x)->SubAuthorityCount - 1) * sizeof(static_cast<SID*>(x)->SubAuthority);
-}
-
 std::wstring GetNameFromSid(const PSID sid)
 {
     // return immediately if sid is null or invalid
     if (sid == nullptr || !IsValidSid(sid)) return {};
 
-    // attempt to lookup sid in cache
-    const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, SidGetLength(sid)));
+    // attempt to lookup sid in cache (guarded since callers may be on worker threads)
+    const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, GetLengthSid(sid)));
+    static std::mutex nameMapMutex;
+    std::scoped_lock lock(nameMapMutex);
     static std::map<std::vector<BYTE>, std::wstring> nameMap;
     if (const auto iter = nameMap.find(sidVec); iter != nameMap.end())
     {
         return iter->second;
     }
 
-    // lookup the name for this sid
+    // query required buffer sizes first so long domains (e.g. APPLICATION PACKAGE AUTHORITY) resolve
     SID_NAME_USE nameUse;
-    std::array<WCHAR, UNLEN + 1> accountName;
-    std::array<WCHAR, DNLEN + 1> domainName;
-    DWORD iAccountNameSize = static_cast<DWORD>(accountName.size());
-    DWORD iDomainName = static_cast<DWORD>(domainName.size());
-    std::wstring result;
-    if (LookupAccountSid(nullptr, sid, accountName.data(),
-        &iAccountNameSize, domainName.data(), &iDomainName, &nameUse) != 0)
+    DWORD accountSize = 0;
+    DWORD domainSize = 0;
+    LookupAccountSid(nullptr, sid, nullptr, &accountSize, nullptr, &domainSize, &nameUse);
+    if (accountSize > 0)
     {
-        // generate full name in domain\name format
-        return nameMap.try_emplace(sidVec, std::format(L"{}\\{}",
-            domainName.data(), accountName.data())).first->second;
+        std::wstring accountName(accountSize, L'\0');
+        std::wstring domainName(domainSize, L'\0');
+        if (LookupAccountSid(nullptr, sid, accountName.data(), &accountSize,
+            domainName.data(), &domainSize, &nameUse) != 0)
+        {
+            accountName.resize(accountSize);
+            domainName.resize(domainSize);
+
+            // omit the domain prefix for well-known identities with none (e.g. Everyone)
+            return nameMap.try_emplace(sidVec, domainName.empty() ? accountName :
+                std::format(L"{}\\{}", domainName, accountName)).first->second;
+        }
     }
 
     // fallback: return sid string
     SmartPointer sidBuff(LocalFree, static_cast<LPWSTR>(nullptr));
     ConvertSidToStringSid(sid, &sidBuff);
-    return nameMap.try_emplace(sidVec, sidBuff).first->second;
+    return nameMap.try_emplace(sidVec, sidBuff != nullptr ?
+        std::wstring(sidBuff) : std::wstring()).first->second;
 }
 
 // Compression
@@ -495,7 +538,8 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
         return false;
     }
 
-    DWORD status = 0;
+    DWORD bytesReturned = 0;
+    BOOL status = FALSE;
     if (modernAlgorithm)
     {
         struct
@@ -515,30 +559,32 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
             },
         };
 
-        DWORD bytesReturned;
         status = DeviceIoControl(handle, FSCTL_SET_EXTERNAL_BACKING,
             &info, sizeof(info), nullptr, 0, &bytesReturned, nullptr);
     }
     else if (numericAlgorithm == COMPRESSION_FORMAT_LZNT1)
     {
-        DWORD bytesReturned = 0;
         status = DeviceIoControl(
             handle, FSCTL_SET_COMPRESSION, &numericAlgorithm,
             sizeof(numericAlgorithm), nullptr, 0, &bytesReturned, nullptr);
     }
     else
     {
-        DWORD bytesReturned = 0;
-        DeviceIoControl(
+        // Decompress: clearing standard compression also prompts the WOF
+        // driver to fully expand an externally backed file, so the explicit
+        // backing removal below is a fallback that typically reports
+        // ERROR_OBJECT_NOT_EXTERNALLY_BACKED
+        status = DeviceIoControl(
             handle, FSCTL_SET_COMPRESSION, &numericAlgorithm,
             sizeof(numericAlgorithm), nullptr, 0, &bytesReturned, nullptr);
 
-        DeviceIoControl(
+        if (DeviceIoControl(
             handle, FSCTL_DELETE_EXTERNAL_BACKING, nullptr,
-            0, nullptr, 0, nullptr, nullptr);
+            0, nullptr, 0, &bytesReturned, nullptr)) status = TRUE;
     }
 
-    return status == 1 || status == 0xC000046F;
+    // WOF refuses files that would not shrink - treat as success
+    return status != FALSE || GetLastError() == ERROR_COMPRESSION_NOT_BENEFICIAL;
 }
 
 bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, const ULONGLONG chunkSize)
@@ -643,10 +689,14 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
     std::array<WCHAR, GUIDSTRING_MAX> guidStr;
     (void) StringFromGUID2(guid, guidStr.data(), static_cast<int>(guidStr.size()));
 
-    // Create hardlink to source
+    // Create hardlink to source and move it over the target
     const std::wstring tempPath = pathTwo + guidStr.data();
-    return CreateHardLink(tempPath.c_str(), pathOne.c_str(), nullptr) != 0 &&
-        MoveFileEx(tempPath.c_str(), pathTwo.c_str(), MOVEFILE_REPLACE_EXISTING) != 0;
+    if (CreateHardLink(tempPath.c_str(), pathOne.c_str(), nullptr) == 0) return false;
+    if (MoveFileEx(tempPath.c_str(), pathTwo.c_str(), MOVEFILE_REPLACE_EXISTING) != 0) return true;
+
+    // Do not leave the temporary link behind on failure
+    DeleteFile(tempPath.c_str());
+    return false;
 }
 
 // File hashing
@@ -667,31 +717,42 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
+        bool isXxHash = false;
+        SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHash = { FreeXxHashState, nullptr };
         SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
     };
 
-    // Define algorithms to compute
-    using AlgSet = struct { LPCWSTR id; LPCWSTR name; DWORD hashLen; };
-    constexpr std::array algos = {
-        AlgSet{BCRYPT_MD5_ALGORITHM, L"MD5", 16},
-        AlgSet{BCRYPT_SHA1_ALGORITHM, L"SHA1", 20},
-        AlgSet{BCRYPT_SHA256_ALGORITHM, L"SHA256", 32},
-        AlgSet{BCRYPT_SHA384_ALGORITHM, L"SHA384", 48},
-        AlgSet{BCRYPT_SHA512_ALGORITHM, L"SHA512", 64}
-    };
-
     // Setup all algorithms
     std::vector<HashContext> contexts;
-    for (const auto& [id, name, hashLen] : algos)
+    for (const auto& [algorithm, id, name] : HashAlgorithms)
     {
         HashContext ctx;
+
+        // xxHash is not provided by BCrypt; use the bundled implementation
+        if (algorithm == HASH_XXHASH)
+        {
+            ctx.name = name;
+            ctx.isXxHash = true;
+            ctx.xxHash = XXH3_createState();
+            if (ctx.xxHash.IsValid())
+            {
+                XXH3_64bits_reset(ctx.xxHash);
+            }
+            contexts.emplace_back(std::move(ctx));
+            continue;
+        }
+
         BCRYPT_ALG_HANDLE hAlg = nullptr;
         if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer(CloseAlgProvider, hAlg);
 
-        if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
-            reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
+        DWORD bytesWritten = 0;
+        DWORD hashLen = 0;
+        if (BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
+            reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS ||
+            BCryptGetProperty(ctx.hAlg, BCRYPT_HASH_LENGTH,
+            reinterpret_cast<PBYTE>(&hashLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
         {
             continue;
         }
@@ -720,7 +781,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
-                (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+                if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
+                else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
         pProgressDlg->Increment();
     }
@@ -729,7 +791,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     std::wstring result = filePath + L"\n\n";
     for (auto& ctx : contexts)
     {
-        if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
+        if (ctx.isXxHash)
+        {
+            XXH64_canonical_t canonical;
+            XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(ctx.xxHash));
+            ctx.hash.assign(canonical.digest, canonical.digest + sizeof(canonical.digest));
+        }
+        else if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
             static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;
 
         // Add to result

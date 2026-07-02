@@ -40,7 +40,7 @@ protected:
     class CListItem final : public CWdsListItem
     {
     public:
-        CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r);
+        CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r, bool aggregate = false);
         ~CListItem() override = default;
 
         bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
@@ -49,6 +49,9 @@ protected:
         const std::wstring& GetExtension() const;
         HICON GetIcon() override;
         int Compare(const CWdsListItem* baseOther, int subitem) const override;
+
+        // True for the synthetic entry that aggregates all unregistered extensions.
+        bool IsAggregate() const { return m_aggregate; }
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;
@@ -65,6 +68,7 @@ protected:
         ULONGLONG m_bytes = 0;
         ULONGLONG m_files = 0;
         COLORREF m_color = 0;
+        bool m_aggregate = false;
     };
 
 public:
@@ -79,6 +83,7 @@ public:
 
 protected:
     CListItem* GetListItem(int i) const;
+    bool IsSelectedAggregate() const;
 
     CBitmap m_searchBitmap;
     CExtensionView* m_extensionView;
@@ -86,6 +91,7 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
