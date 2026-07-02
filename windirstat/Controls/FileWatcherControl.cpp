@@ -149,6 +149,13 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     PostMessage(WM_WATCHER_CHANGE, 0, 0);
 }
 
+void CFileWatcherControl::ClearResults()
+{
+    ClearPendingItems();
+    DeleteAllItems();
+    Invalidate();
+}
+
 void CFileWatcherControl::ClearPendingItems()
 {
     CWatcherItem* item = nullptr;
@@ -173,6 +180,12 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
     const CSetRedrawLock lock(this);
     InsertListItem(GetItemCount(), items);
     SortItems();
+
+    // Keep the most recent change in view when autoscroll is enabled
+    if (COptions::WatcherAutoScroll)
+    {
+        EnsureItemVisible(static_cast<CTreeListItem*>(items.back()));
+    }
     return 0;
 }
 

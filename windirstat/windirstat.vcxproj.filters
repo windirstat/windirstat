@@ -430,6 +430,9 @@
     <ClCompile Include="WinDirStatModel.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="WinDirStatModel.Actions.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Property.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
@@ -467,6 +470,9 @@
       <Filter>Source Files\Core\Helpers</Filter>
     </ClCompile>
     <ClCompile Include="MainFrame.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrame.Commands.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
     <ClCompile Include="LayoutPopup.cpp">

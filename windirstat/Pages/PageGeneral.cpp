@@ -67,29 +67,35 @@ HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
     return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
-bool CPageGeneral::IsContextMenuRegistered()
+bool CPageGeneral::IsContextMenuRegistered(HKEY root)
 {
-    return CRegKey().Open(HKEY_CLASSES_ROOT, std::format(L"Drive\\shell\\{}",
+    return CRegKey().Open(root, std::format(LR"(Software\Classes\Drive\shell\{})",
         wds::strWinDirStat).c_str(), KEY_READ) == ERROR_SUCCESS;
 }
 
 bool CPageGeneral::SetContextMenuRegistration(bool enable)
 {
+    // Elevated instances manage the system-level entry; otherwise use a per-user entry
+    const HKEY root = IsElevationActive() ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
+
     for (const std::wstring& rootSubKey : { L"Drive", L"Directory" })
     {
-        const std::wstring baseKey = rootSubKey + L"\\shell\\" + wds::strWinDirStat;
+        const std::wstring baseKey = std::format(LR"(Software\Classes\{}\shell\{})",
+            rootSubKey, wds::strWinDirStat);
 
         if (!enable)
         {
-            // Remove the context menu entries
-            RegDeleteTree(HKEY_CLASSES_ROOT, baseKey.c_str());
+            // Remove the context menu entries, including any per-user entry
+            // so the menu item does not linger after an elevated removal
+            RegDeleteTree(root, baseKey.c_str());
+            RegDeleteTree(HKEY_CURRENT_USER, baseKey.c_str());
             continue;
         }
 
         // Create/open the base key
         CRegKey key;
         const std::wstring exePath = GetAppFileName();
-        if (key.Create(HKEY_CLASSES_ROOT, baseKey.c_str()) != ERROR_SUCCESS ||
+        if (key.Create(root, baseKey.c_str()) != ERROR_SUCCESS ||
             key.SetStringValue(nullptr, wds::strWinDirStat) != ERROR_SUCCESS ||
             key.SetStringValue(L"Icon", exePath.c_str()) != ERROR_SUCCESS)
         {
@@ -100,7 +106,7 @@ bool CPageGeneral::SetContextMenuRegistration(bool enable)
         // Create/open the command key
         const std::wstring cmdKey = baseKey + L"\\command";
         const std::wstring cmdVal = std::format(LR"("{}" "%1")", exePath);
-        if (key.Create(HKEY_CLASSES_ROOT, cmdKey.c_str()) != ERROR_SUCCESS ||
+        if (key.Create(root, cmdKey.c_str()) != ERROR_SUCCESS ||
             key.SetStringValue(nullptr, cmdVal.c_str()) != ERROR_SUCCESS)
         {
             SetContextMenuRegistration(false);
@@ -128,9 +134,12 @@ BOOL CPageGeneral::OnInitDialog()
     m_portableMode = CDirStatApp::InPortableMode();
     m_darkModeRadio = COptions::DarkMode;
 
-    // Query checkbox status and then gray out if not elevated
-    m_contextMenuIntegration = IsContextMenuRegistered() ? TRUE : FALSE;
-    if (CWnd* pWnd = GetDlgItem(IDC_CONTEXT_MENU); pWnd != nullptr && !IsElevationActive())
+    // Query checkbox status and then gray out if a system-level entry
+    // exists that cannot be changed without elevation
+    m_contextMenuIntegration = IsContextMenuRegistered(HKEY_LOCAL_MACHINE) ||
+        IsContextMenuRegistered(HKEY_CURRENT_USER) ? TRUE : FALSE;
+    if (CWnd* pWnd = GetDlgItem(IDC_CONTEXT_MENU); pWnd != nullptr &&
+        !IsElevationActive() && IsContextMenuRegistered(HKEY_LOCAL_MACHINE))
     {
         pWnd->EnableWindow(FALSE);
     }
@@ -173,9 +182,12 @@ void CPageGeneral::OnOK()
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
 
-    // Update context menu registration if elevated
+    // Update context menu registration; non-elevated instances may only
+    // manage the per-user entry when no system-level entry exists
     const bool shouldBeRegistered = (m_contextMenuIntegration != FALSE);
-    if (IsContextMenuRegistered() != shouldBeRegistered && IsElevationActive())
+    const bool systemRegistered = IsContextMenuRegistered(HKEY_LOCAL_MACHINE);
+    const bool isRegistered = systemRegistered || IsContextMenuRegistered(HKEY_CURRENT_USER);
+    if (isRegistered != shouldBeRegistered && (IsElevationActive() || !systemRegistered))
     {
         SetContextMenuRegistration(shouldBeRegistered);
     }

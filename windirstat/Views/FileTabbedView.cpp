@@ -132,8 +132,15 @@ void CFileTabbedView::SetSearchTabVisibility(const bool show)
 void CFileTabbedView::SetWatcherTabVisibility(const bool show)
 {
     GetTabControl().ShowTab(m_fileWatcherViewIndex, show);
-    if (show) CFileWatcherControl::Get()->StartMonitoring();
-    else CFileWatcherControl::Get()->StopMonitoring();
+    if (show)
+    {
+        CFileWatcherControl::Get()->StartMonitoring();
+    }
+    else
+    {
+        CFileWatcherControl::Get()->StopMonitoring();
+        CFileWatcherControl::Get()->DeleteAllItems();
+    }
 }
 
 void CFileTabbedView::SetPermsTabVisibility(const bool show)
@@ -168,6 +175,13 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
         // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;
         CFileDupeControl::Get()->SortItems();
+    }
+
+    // Show the contextual watcher toolbar buttons only while its tab is active;
+    // this message is sent before the switch, so compare against the new index
+    if (CMainFrame::Get() != nullptr)
+    {
+        CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(m_fileWatcherViewIndex));
     }
 
     // Route keyboard focus to the newly-active tab's content when focus is

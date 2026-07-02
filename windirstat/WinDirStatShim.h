@@ -3931,7 +3931,19 @@ struct AFX_GLOBAL_DATA
     COLORREF clrGrayedText = ::GetSysColor(COLOR_GRAYTEXT);
     CBrush brBarFace;
     CBrush brBtnFace;
-    AFX_GLOBAL_DATA() { brBarFace.CreateSolidBrush(clrBarFace); brBtnFace.CreateSolidBrush(clrBtnFace); }
+    CFont fontRegular;
+    AFX_GLOBAL_DATA()
+    {
+        brBarFace.CreateSolidBrush(clrBarFace);
+        brBtnFace.CreateSolidBrush(clrBtnFace);
+
+        LOGFONTW lf = {};
+        const auto hFont = static_cast<HFONT>(::GetStockObject(DEFAULT_GUI_FONT));
+        if (hFont != nullptr && ::GetObjectW(hFont, sizeof(lf), &lf) > 0)
+        {
+            fontRegular.CreateFontIndirect(&lf);
+        }
+    }
 };
 inline AFX_GLOBAL_DATA& WdsGlobalData() { static AFX_GLOBAL_DATA d; return d; }
 inline AFX_GLOBAL_DATA* AFXAPI GetGlobalData() { return &WdsGlobalData(); }
@@ -4255,18 +4267,48 @@ public:
     }
 };
 
-class CMFCToolBarButton final : public CObject
+class CMFCToolBarButton : public CObject
 {
 public:
+    static const CRuntimeClass classCMFCToolBarButton;
+    CRuntimeClass* GetRuntimeClass() const override;
+
     UINT    m_nID = 0;
     int     m_iImage = -1;
     CString m_strText;
     BOOL    m_bText = FALSE;
+    BOOL    m_bImage = TRUE;
     UINT    m_nStyle = 0;
     CMFCToolBarButton() = default;
     CMFCToolBarButton(UINT uiId, int iImage, LPCWSTR lpszText = nullptr, BOOL = FALSE, BOOL = FALSE)
         : m_nID(uiId), m_iImage(iImage) { if (lpszText) m_strText = lpszText; }
+
+    virtual SIZE OnCalculateSize(CDC*, const CSize& sizeDefault, BOOL) { return sizeDefault; }
+    virtual void OnDraw(CDC*, const CRect&, CMFCToolBarImages*, BOOL, BOOL, BOOL, BOOL, BOOL) {}
+    BOOL IsVisible() const
+    {
+        if (m_hToolbar != nullptr && m_nID != 0)
+        {
+            return static_cast<BOOL>(::SendMessageW(m_hToolbar, TB_ISBUTTONHIDDEN, m_nID, 0) == 0);
+        }
+        return m_bVisible;
+    }
+    void SetVisible(BOOL visible)
+    {
+        m_bVisible = visible;
+        if (m_hToolbar != nullptr && m_nID != 0)
+        {
+            ::SendMessageW(m_hToolbar, TB_HIDEBUTTON, m_nID, MAKELPARAM(!visible, 0));
+        }
+    }
+
+private:
+    friend class CMFCToolBar;
+    HWND m_hToolbar = nullptr;
+    int m_toolbarIndex = -1;
+    BOOL m_bVisible = TRUE;
 };
+SHIM_IMPLEMENT_DYNAMIC_INLINE(CMFCToolBarButton, RUNTIME_CLASS(CObject))
 
 class CMFCToolBar : public CBasePane
 {
@@ -4297,14 +4339,23 @@ public:
 
     int  GetCount() const { return static_cast<int>(SendSelf(TB_BUTTONCOUNT)); }
     void RemoveButton(int i) { SendSelf(TB_DELETEBUTTON, static_cast<WPARAM>(i)); m_tips.clear(); }
-    void InsertSeparator(int i = -1) { TBBUTTON b{}; b.fsStyle = BTNS_SEP; b.iBitmap = WdsDpiScale(8, m_hWnd); SendSelf(TB_INSERTBUTTONW, i < 0 ? GetCount() : i, reinterpret_cast<LPARAM>(&b)); }
+    void InsertSeparator(int i = -1)
+    {
+        TBBUTTON b{};
+        b.idCommand = static_cast<int>(m_nextSeparatorId++);
+        b.fsStyle = BTNS_SEP;
+        b.iBitmap = WdsDpiScale(8, m_hWnd);
+        SendSelf(TB_INSERTBUTTONW, i < 0 ? GetCount() : i, reinterpret_cast<LPARAM>(&b));
+    }
     void InsertButton(const CMFCToolBarButton& btn, int i = -1)
     {
         TBBUTTON b{};
-        b.iBitmap = btn.m_iImage;
+        b.iBitmap = btn.m_bImage ? btn.m_iImage : I_IMAGENONE;
         b.idCommand = static_cast<int>(btn.m_nID);
         b.fsState = (btn.m_nStyle & TBBS_DISABLED) ? 0 : TBSTATE_ENABLED;
+        if (!btn.IsVisible()) b.fsState |= TBSTATE_HIDDEN;
         b.fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+        if (btn.m_bText) b.fsStyle |= BTNS_SHOWTEXT;
         if (!btn.m_strText.IsEmpty())
         {
             std::wstring wstr = btn.m_strText.GetString();
@@ -4329,6 +4380,23 @@ public:
     }
     int  CommandToIndex(UINT nID) const { return static_cast<int>(SendSelf(TB_COMMANDTOINDEX, nID)); }
     BOOL GetItemRect(int i, LPRECT rc) const { return static_cast<BOOL>(SendSelf(TB_GETITEMRECT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(rc))); }
+    CMFCToolBarButton* GetButton(int i)
+    {
+        if (i < 0 || i >= GetCount()) return nullptr;
+
+        TBBUTTON button = {};
+        if (!SendSelf(TB_GETBUTTON, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&button))) return nullptr;
+
+        m_buttonProxy.m_nID = static_cast<UINT>(button.idCommand);
+        m_buttonProxy.m_iImage = button.iBitmap;
+        m_buttonProxy.m_strText.Empty();
+        m_buttonProxy.m_nStyle = (button.fsState & TBSTATE_ENABLED) ? 0 : TBBS_DISABLED;
+        m_buttonProxy.m_bVisible = (button.fsState & TBSTATE_HIDDEN) == 0;
+        m_buttonProxy.m_bImage = button.iBitmap != I_IMAGENONE;
+        m_buttonProxy.m_hToolbar = m_hWnd;
+        m_buttonProxy.m_toolbarIndex = i;
+        return &m_buttonProxy;
+    }
     CSize GetButtonSize() const
     {
         if (GetCount() == 0) return s_ButtonSize();
@@ -4412,6 +4480,8 @@ public:
 
 private:
     int m_height = 0;
+    UINT m_nextSeparatorId = 0x70000000;
+    CMFCToolBarButton m_buttonProxy;
     std::map<UINT, std::wstring> m_tips;
 };
 SHIM_IMPLEMENT_DYNAMIC_INLINE(CMFCToolBar, RUNTIME_CLASS(CBasePane))

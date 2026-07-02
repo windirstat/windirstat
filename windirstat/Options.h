@@ -47,6 +47,7 @@ enum LAYOUT_TOPOLOGY : int
     LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
     LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)
     LT_COLS_SUB_ROWS = 3, // Main = 2 cols; sub-splitter = 2 rows in col 0
+    LT_COLS_TM_FULL  = 4, // Main = 2 cols; treemap fills one col; sub-splitter = 2 rows in the other
 };
 
 struct USERDEFINEDCLEANUP
@@ -176,6 +177,7 @@ public:
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<bool> ProcessHardlinks;
+    static Setting<bool> WatcherAutoScroll;
     static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT];
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;

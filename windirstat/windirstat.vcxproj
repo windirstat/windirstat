@@ -571,6 +571,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
     <ClCompile Include="WinDirStatModel.cpp">
     </ClCompile>
+    <ClCompile Include="WinDirStatModel.Actions.cpp" />
     <ClCompile Include="Filtering.cpp" />
     <ClCompile Include="Item.Extended.cpp" />
     <ClCompile Include="Pages\PagePrompts.cpp" />
@@ -596,6 +597,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Localization.cpp" />
     <ClCompile Include="MainFrame.cpp">
     </ClCompile>
+    <ClCompile Include="MainFrame.Commands.cpp" />
     <ClCompile Include="Options.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageAdvanced.cpp" />

@@ -244,6 +244,11 @@
 #define ID_TOOLS_STORAGE_ANALYTICS      32946
 #define ID_VIEW_WINDOW_LAYOUT           32948
 #define ID_CLEANUP_STORAGE_SENSE        32950
+#define ID_WATCHER_START                32951
+#define ID_WATCHER_PAUSE                32952
+#define ID_WATCHER_AUTOSCROLL           32953
+#define ID_WATCHER_CLEAR                32954
+#define ID_WATCHER_LABEL                32955
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -258,7 +263,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32951
+#define _APS_NEXT_COMMAND_VALUE         32956
 #define _APS_NEXT_CONTROL_VALUE         1136
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

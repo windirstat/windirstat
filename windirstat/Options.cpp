@@ -146,7 +146,7 @@ Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
-Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_SUB_ROWS);
+Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL);
 Setting<int> COptions::LayoutPermutation(OptionsGeneral, L"LayoutPermutation", 0, 0, 3);
 Setting<RECT> COptions::AboutWindowRect(OptionsGeneral, L"AboutWindowRect");
 Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"WindowRect");
@@ -163,6 +163,7 @@ Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"ColumnO
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"ColumnWidths");
 Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"ColumnOrder");
 Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"ColumnWidths");
+Setting<bool> COptions::WatcherAutoScroll(OptionsWatcher, L"AutoScroll", true);
 Setting<std::vector<int>> COptions::WatcherColumnOrder(OptionsWatcher, L"ColumnOrder");
 Setting<std::vector<int>> COptions::WatcherColumnWidths(OptionsWatcher, L"ColumnWidths");
 Setting<std::vector<int>> COptions::PermsViewColumnOrder(OptionsPerms, L"ColumnOrder");

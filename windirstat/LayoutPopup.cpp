@@ -63,6 +63,26 @@ const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
     { { {0, 0.00f, 0.00f, 0.60f, 0.50f},
         {2, 0.00f, 0.50f, 0.60f, 0.50f},
         {1, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 1 },
+
+    // 8: left=TM, right=[FT(top)/AF(bot)]
+    { { {2, 0.00f, 0.00f, 0.50f, 1.00f},
+        {1, 0.50f, 0.00f, 0.50f, 0.50f},
+        {0, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL, 0 },
+
+    // 9: left=TM, right=[AF(top)/FT(bot)]
+    { { {2, 0.00f, 0.00f, 0.50f, 1.00f},
+        {0, 0.50f, 0.00f, 0.50f, 0.50f},
+        {1, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL, 1 },
+
+    // 10: left=[FT(top)/AF(bot)], right=TM
+    { { {1, 0.00f, 0.00f, 0.50f, 0.50f},
+        {0, 0.00f, 0.50f, 0.50f, 0.50f},
+        {2, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL, 2 },
+
+    // 11: left=[AF(top)/FT(bot)], right=TM
+    { { {0, 0.00f, 0.00f, 0.50f, 0.50f},
+        {1, 0.00f, 0.50f, 0.50f, 0.50f},
+        {2, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL, 3 },
 };
 
 int CLayoutPopup::LayoutIndex(int topology, int permutation)
