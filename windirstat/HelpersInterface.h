@@ -23,6 +23,7 @@
 
 // Locale and formatting
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
+std::wstring GetLocaleStringByName(LCTYPE lctype, const std::wstring& localeName);
 std::wstring GetLocaleLanguage(LANGID langid);
 wchar_t GetLocaleThousandSeparator() noexcept;
 wchar_t GetLocaleDecimalSeparator() noexcept;

@@ -108,15 +108,17 @@ bool Localization::LoadResource(const WORD language)
     const std::wstring sResourceData = GetTextResource(IDR_LANGS);
     CrackStrings(sResourceData, L"en");
 
+    // Resolve with LOCALE_ALLOW_NEUTRAL_NAMES so neutral scripts (e.g. zh-Hans, zh-Hant)
+    // resolve to their own BCP 47 name instead of being collapsed to an anchor region.
     const LCID lcid = MAKELCID(language, SORT_DEFAULT);
     std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
-    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return true;
+    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, LOCALE_ALLOW_NEUTRAL_NAMES) == 0) return true;
 
     // Short-circuit language resource loading sequence, first successful load will return true and exit the function
     return
-        LoadExternalLanguage(LOCALE_SNAME, language) ||                                 // External BCP 47 language file
+        LoadExternalLanguage(std::wstring(name.data())) ||                              // External BCP 47 language file
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||                       // External ISO 639-1 language file
-        CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||         // Built-in BCP 47 resource
+        CrackStrings(sResourceData, name.data()) ||                                     // Built-in BCP 47 resource
         CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)); // Built-in ISO 639-1 resource
 }
 
@@ -199,10 +201,16 @@ void Localization::UpdateDialogs(CWnd& wnd)
 // Try to find and load external language file, return false if failed.
 bool Localization::LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid)
 {
-    const std::wstring name = L"lang_" + GetLocaleString(lcttype, lcid) + L".txt";
+    return LoadExternalLanguage(GetLocaleString(lcttype, lcid));
+}
+
+// Try to find and load external language file by BCP 47 / ISO 639-1 name, return false if failed.
+bool Localization::LoadExternalLanguage(const std::wstring& name)
+{
+    const std::wstring fileName = L"lang_" + name + L".txt";
     const std::wstring langFolder = GetAppFolder() + L"\\";
 
-    return FinderBasic::DoesFileExist(langFolder, name) && LoadFile(langFolder + name);
+    return FinderBasic::DoesFileExist(langFolder, fileName) && LoadFile(langFolder + fileName);
 }
 
 bool Localization::LoadFile(const std::wstring& file)

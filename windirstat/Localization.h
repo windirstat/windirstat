@@ -72,6 +72,7 @@ public:
     static void UpdateTabControl(CMFCTabCtrl& tab);
     static void UpdateDialogs(CWnd& wnd);
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
+    static bool LoadExternalLanguage(const std::wstring& name);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);
     static std::wstring ConvertToWideString(const std::string_view& sv);
