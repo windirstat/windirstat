@@ -132,8 +132,15 @@ void CFileTabbedView::SetSearchTabVisibility(const bool show)
 void CFileTabbedView::SetWatcherTabVisibility(const bool show)
 {
     GetTabControl().ShowTab(m_fileWatcherViewIndex, show);
-    if (show) CFileWatcherControl::Get()->StartMonitoring();
-    else CFileWatcherControl::Get()->StopMonitoring();
+    if (show)
+    {
+        CFileWatcherControl::Get()->StartMonitoring();
+    }
+    else
+    {
+        CFileWatcherControl::Get()->StopMonitoring();
+        CFileWatcherControl::Get()->DeleteAllItems();
+    }
 }
 
 void CFileTabbedView::SetPermsTabVisibility(const bool show)
