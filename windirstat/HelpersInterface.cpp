@@ -52,19 +52,42 @@ std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
     return s;
 }
 
+std::wstring GetLocaleStringByName(const LCTYPE lctype, const std::wstring& localeName)
+{
+    const int len = ::GetLocaleInfoEx(localeName.c_str(), lctype, nullptr, 0);
+    if (len <= 0) return {};
+
+    std::wstring s(len - 1, L'\0');
+    ::GetLocaleInfoEx(localeName.c_str(), lctype, s.data(), len);
+    return s;
+}
+
 std::wstring GetLocaleLanguage(const LANGID langid)
 {
+    // Resolve the LANGID to a locale name, allowing neutral script names (e.g. zh-Hans,
+    // zh-Hant). The legacy LCID-based GetLocaleString below collapses those neutral
+    // scripts to an arbitrary anchor region (e.g. zh-CN, zh-TW), so the name-based
+    // GetLocaleInfoEx lookup is used instead wherever the name resolves successfully.
+    const LCID lcid = MAKELCID(langid, SORT_DEFAULT);
+    std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
+    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, LOCALE_ALLOW_NEUTRAL_NAMES) == 0)
+    {
+        const std::wstring s = GetLocaleString(LOCALE_SENGLISHDISPLAYNAME, langid);
+        const std::wstring n = GetLocaleString(LOCALE_SNATIVEDISPLAYNAME, langid);
+        return s + L" - " + n;
+    }
+
     // Check if this is a neutral language (no specific region)
     if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
     {
         // Use just the language name without the full display name
-        const std::wstring s = GetLocaleString(LOCALE_SENGLISHLANGUAGENAME, langid);
-        const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGUAGENAME, langid);
+        const std::wstring s = GetLocaleStringByName(LOCALE_SENGLISHLANGUAGENAME, name.data());
+        const std::wstring n = GetLocaleStringByName(LOCALE_SNATIVELANGUAGENAME, name.data());
         return s + L" - " + n;
     }
 
-    const std::wstring s = GetLocaleString(LOCALE_SENGLISHDISPLAYNAME, langid);
-    const std::wstring n = GetLocaleString(LOCALE_SNATIVEDISPLAYNAME, langid);
+    const std::wstring s = GetLocaleStringByName(LOCALE_SENGLISHDISPLAYNAME, name.data());
+    const std::wstring n = GetLocaleStringByName(LOCALE_SNATIVEDISPLAYNAME, name.data());
     return s + L" - " + n;
 }
 
