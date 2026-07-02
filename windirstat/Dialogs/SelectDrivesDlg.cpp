@@ -733,7 +733,7 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
 void CSelectDrivesDlg::OnBnClickedFilterButton()
 {
-    COptionsPropertySheet::ShowSettings(1); // 1 = Filtering tab
+    COptionsPropertySheet::ShowSettings(1, false); // 1 = Filtering tab
     UpdateFilterButton();
 }
 

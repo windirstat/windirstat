@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)][string]$DemoPath,
     [string]$OutputDir = (Join-Path $PSScriptRoot "screenshots"),
     [string]$ExeSource = "V:\Code\windirstat\publish\x64\WinDirStat.exe",

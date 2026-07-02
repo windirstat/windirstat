@@ -157,6 +157,7 @@ public:
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
 private:
+    void RemoveLocalProfiles(std::wstring_view whereClause);
     void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
     static CWinDirStatModel* s_singleton;

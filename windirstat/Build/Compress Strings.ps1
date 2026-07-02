@@ -1,4 +1,4 @@
-param($Path)
+﻿param($Path)
 
 # Normalize module path issues
 $env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsPowerShell\v1.0\Modules'
