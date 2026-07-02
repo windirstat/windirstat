@@ -7,7 +7,7 @@ $env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsP
 $Encoding = [System.Text.UTF8Encoding]::new($false)
 $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
 $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
-    Where-Object Name -match '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$' | ForEach-Object `
+    Where-Object Name -match '^lang_([a-z]{2}(?:-(?:[A-Z]{2}|[A-Z][a-z]{3}))?)\.txt$' | ForEach-Object `
 {
     $Content = $_ | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { $_ }
     [System.IO.File]::WriteAllLines($_.FullName, $Content, $Encoding)

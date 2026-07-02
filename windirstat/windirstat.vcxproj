@@ -670,8 +670,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <Text Include="res\langs\lang_sv.txt" />
     <Text Include="res\langs\lang_tr.txt" />
     <Text Include="res\langs\lang_uk.txt" />
-    <Text Include="res\langs\lang_zh-HK.txt" />
-    <Text Include="res\langs\lang_zh.txt" />
+    <Text Include="res\langs\lang_zh-Hant.txt" />
+    <Text Include="res\langs\lang_zh-Hans.txt" />
   </ItemGroup>
   <PropertyGroup Label="XXHash">
     <XXHashHeaderPath>$(MSBuildThisFileDirectory)..\contrib\xxhash\xxhash.h</XXHashHeaderPath>

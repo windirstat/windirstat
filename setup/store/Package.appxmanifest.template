@@ -36,8 +36,8 @@
     <Resource Language="sv" />
     <Resource Language="tr" />
     <Resource Language="uk" />
-    <Resource Language="zh-HK" />
-    <Resource Language="zh-CN" />
+    <Resource Language="zh-Hant" />
+    <Resource Language="zh-Hans" />
   </Resources>
 
   <Dependencies>

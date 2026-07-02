@@ -192,8 +192,8 @@ $languages = @(
     [pscustomobject]@{ Code = "sv";    LangId = 29 },
     [pscustomobject]@{ Code = "tr";    LangId = 31 },
     [pscustomobject]@{ Code = "uk";    LangId = 34 },
-    [pscustomobject]@{ Code = "zh-hk"; LangId = 3076 },
-    [pscustomobject]@{ Code = "zh";    LangId = 30724 }
+    [pscustomobject]@{ Code = "zh-hant"; LangId = 31748 },
+    [pscustomobject]@{ Code = "zh-hans"; LangId = 4 }
 )
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
