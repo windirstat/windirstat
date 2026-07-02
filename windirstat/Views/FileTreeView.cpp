@@ -95,10 +95,10 @@ int CFileWatcherView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     // Columns should be in enumeration order so initial sort will work
     InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 500, COL_ITEMWATCH_NAME);
-    InsertCol(IDS_COL_TIME, LVCFMT_LEFT, 110, COL_ITEMWATCH_TIME);
+    InsertCol(IDS_COL_TIME, LVCFMT_LEFT, 150, COL_ITEMWATCH_TIME);
     InsertCol(IDS_COL_OPERATION, LVCFMT_LEFT, 100, COL_ITEMWATCH_ACTION);
     InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_ITEMWATCH_SIZE_LOGICAL);
-    m_control.SetSorting(COL_ITEMWATCH_TIME, false);
+    m_control.SetSorting(COL_ITEMWATCH_TIME, true);
 
     m_control.OnColumnsInserted();
 
