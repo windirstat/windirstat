@@ -817,19 +817,34 @@ std::wstring CWinDirStatModel::BuildUserDefinedCleanupCommandLine(const std::wst
     ReplaceString(s, L"%sp", L">sp");
     ReplaceString(s, L"%sn", L">sn");
 
+    // A value substituted right before a literal '"' (ours or the user's own,
+    // see below) must not end in an odd run of backslashes: CommandLineToArgvW-style
+    // parsers treat a backslash immediately before a quote as escaping that quote
+    // rather than closing it, so e.g. a drive root "C:\" would swallow the closing
+    // quote and merge the rest of the command line into one argument. Doubling the
+    // trailing backslash run keeps the visible path unchanged while restoring the
+    // closing quote.
+    auto EscapeTrailingBackslashes = [](const std::wstring& value)
+    {
+        size_t count = 0;
+        while (count < value.size() && value[value.size() - 1 - count] == L'\\') ++count;
+        return value + std::wstring(count, L'\\');
+    };
+
     // Substitute each marker, adding surrounding quotes unless the user's command
     // template already wraps the placeholder in double quotes (e.g. "%p").
     // Quoting prevents CMD metacharacter injection (&, |, ^, etc.) from path
     // components. Windows paths cannot contain '"', so no inner-quote escaping
     // is needed.
-    auto SubstQuoted = [&s](const std::wstring& marker, const std::wstring& value)
+    auto SubstQuoted = [&s, &EscapeTrailingBackslashes](const std::wstring& marker, const std::wstring& value)
     {
         size_t pos = 0;
         while ((pos = s.find(marker, pos)) != std::wstring::npos)
         {
             const bool alreadyQuoted = pos > 0 && s[pos - 1] == L'"' &&
                 pos + marker.size() < s.size() && s[pos + marker.size()] == L'"';
-            const std::wstring repl = alreadyQuoted ? value : (L'"' + value + L'"');
+            const std::wstring escaped = EscapeTrailingBackslashes(value);
+            const std::wstring repl = alreadyQuoted ? escaped : (L'"' + escaped + L'"');
             s.replace(pos, marker.size(), repl);
             pos += repl.size();
         }
