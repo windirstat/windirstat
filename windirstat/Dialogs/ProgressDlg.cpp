@@ -189,7 +189,7 @@ void CWdsProgressCtrl::OnPaint()
     progRect.DeflateRect(1, 1);
 
     CRgn clipRgn;
-    clipRgn.CreateRoundRectRgn(rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1, 2, 2);
+    clipRgn.CreateRoundRectRgn(rect.left + 2, rect.top + 2, rect.right - 1, rect.bottom - 1, 2, 2);
     dc.SelectClipRgn(&clipRgn);
 
     if (GetStyle() & PBS_MARQUEE)
