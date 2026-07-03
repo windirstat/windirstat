@@ -44,11 +44,21 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
 {
-    const int len = ::GetLocaleInfo(lcid, lctype, nullptr, 0);
+    wchar_t name[LOCALE_NAME_MAX_LENGTH]{};
+    if (LCIDToLocaleName(lcid, name, LOCALE_NAME_MAX_LENGTH, LOCALE_ALLOW_NEUTRAL_NAMES) == 0) return {};
+
+    return GetLocaleString(lctype, name);
+}
+
+std::wstring GetLocaleString(const LCTYPE lctype, const std::wstring& localeName)
+{
+    if (localeName.empty()) return {};
+
+    const int len = GetLocaleInfoEx(localeName.c_str(), lctype, nullptr, 0);
     if (len <= 0) return {};
 
     std::wstring s(len - 1, L'\0');
-    ::GetLocaleInfo(lcid, lctype, s.data(), len);
+    GetLocaleInfoEx(localeName.c_str(), lctype, s.data(), len);
     return s;
 }
 
