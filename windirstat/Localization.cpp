@@ -102,15 +102,15 @@ std::set<LANGID> Localization::GetLanguageList()
     return results;
 }
 
-bool Localization::LoadResource(const WORD language)
+bool Localization::LoadResource(const LANGID language)
 {
-    // Load English strings first as a baseline fallback
+    const LCID lcid = MAKELCID(language, SORT_DEFAULT);
     const std::wstring sResourceData = GetTextResource(IDR_LANGS);
+
+    // Load English strings first as a baseline fallback
     CrackStrings(sResourceData, L"en");
 
-    const LCID lcid = MAKELCID(language, SORT_DEFAULT);
-    std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
-    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return true;
+    if (GetLocaleInfo(lcid, LOCALE_SLANGUAGE, nullptr, 0) == 0) return true;
 
     // Short-circuit language resource loading sequence, first successful load will return true and exit the function
     return
@@ -199,10 +199,10 @@ void Localization::UpdateDialogs(CWnd& wnd)
 // Try to find and load external language file, return false if failed.
 bool Localization::LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid)
 {
-    const std::wstring name = L"lang_" + GetLocaleString(lcttype, lcid) + L".txt";
+    const std::wstring filename = L"lang_" + GetLocaleString(lcttype, lcid) + L".txt";
     const std::wstring langFolder = GetAppFolder() + L"\\";
 
-    return FinderBasic::DoesFileExist(langFolder, name) && LoadFile(langFolder + name);
+    return FinderBasic::DoesFileExist(langFolder, filename) && LoadFile(langFolder + filename);
 }
 
 bool Localization::LoadFile(const std::wstring& file)
