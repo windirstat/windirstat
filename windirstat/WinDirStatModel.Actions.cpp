@@ -1450,12 +1450,17 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
     const bool recycleBinAvailable = std::ranges::all_of(emptyDirs,
         [](const CItem* item) { return IsLocalDrive(item->GetPath()); });
 
+    // The Recycle Bin menu command's label ("Delete (to Recycle Bin)") already says exactly
+    // what checking this box will do, so reuse it instead of adding another string for it.
+    const auto trashLabelParts = SplitString(Localization::Lookup(IDS_CLEANUP_DELETE_BIN), L'\n');
+    const std::wstring& trashCheckboxText = trashLabelParts.back();
+
     bool toTrashBin;
     if (recycleBinAvailable)
     {
         const auto result = CMessageBoxDlg::Show(
-            Localization::Format(IDS_REMOVE_EMPTY_TRASHs, FormatCount(emptyDirs.size())), emptyPaths,
-            Localization::Lookup(IDS_REMOVE_EMPTY_USE_TRASH), true,
+            Localization::Format(IDS_REMOVE_EMPTY_FOLDER_WARNING, FormatCount(emptyDirs.size())), emptyPaths,
+            trashCheckboxText, true,
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
         if (result.nID != IDYES) return;
 
@@ -1465,10 +1470,10 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
         }
         else
         {
-            // Permanent deletion cannot be undone, so ask again with a dedicated warning
-            // rather than treating the checkbox choice above as if it were that confirmation.
-            const auto permanentResult = CMessageBoxDlg::Show(
-                Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())),
+            // Permanent deletion cannot be undone, so ask again with the same dedicated
+            // warning normal file deletion already uses, rather than treating the checkbox
+            // choice above as if it were that confirmation.
+            const auto permanentResult = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING),
                 MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), {}, Localization::Lookup(IDS_DELETE_TITLE));
             if (permanentResult != IDYES) return;
             toTrashBin = false;
@@ -1478,8 +1483,7 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
     {
         // No Recycle Bin option to offer here, so the only choice is the permanent-delete
         // warning itself, with the affected paths attached since this is the first dialog shown.
-        const auto result = CMessageBoxDlg::Show(
-            Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())), emptyPaths, {}, false,
+        const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING), emptyPaths, {}, false,
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
         if (result.nID != IDYES) return;
         toTrashBin = false;
