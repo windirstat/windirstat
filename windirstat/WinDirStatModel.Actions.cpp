@@ -1107,6 +1107,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 return;
             }
 
+            // Move the zoom off this item before it is freed below - it may still be
+            // the zoom target here if it turned out not to have survived the rescan
+            // (e.g. it was deleted), since the ancestor check above only guards
+            // against descendants being torn down by RemoveAllChildren.
+            if (GetZoomItem() == item)
+            {
+                SetZoomItem(item->GetParent());
+            }
+
             // Handle non-root item by removing from parent
             item->GetParent()->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
             item->GetParent()->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
@@ -1436,29 +1445,53 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
     emptyPaths.reserve(emptyDirs.size());
     for (const auto& item : emptyDirs) emptyPaths.emplace_back(item->GetPath());
 
-    const auto trashResult = CMessageBoxDlg::Show(
-        Localization::Format(IDS_REMOVE_EMPTY_TRASHs, FormatCount(emptyDirs.size())), emptyPaths, {}, false,
-        MB_YESNOCANCEL | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+    // The Recycle Bin does not exist for network locations, so offering it there would be
+    // misleading - the shell would silently fall through to a permanent delete instead.
+    const bool recycleBinAvailable = std::ranges::all_of(emptyDirs,
+        [](const CItem* item) { return IsLocalDrive(item->GetPath()); });
 
     bool toTrashBin;
-    if (trashResult.nID == IDYES)
+    if (recycleBinAvailable)
     {
-        toTrashBin = true;
-    }
-    else if (trashResult.nID == IDNO)
-    {
-        // Permanent deletion cannot be undone, so ask again with a dedicated warning
-        // rather than treating "No" above as if it were already that confirmation.
-        const auto permanentResult = CMessageBoxDlg::Show(
-            Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())),
-            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), {}, Localization::Lookup(IDS_DELETE_TITLE));
-        if (permanentResult != IDYES) return;
-        toTrashBin = false;
+        const auto result = CMessageBoxDlg::Show(
+            Localization::Format(IDS_REMOVE_EMPTY_TRASHs, FormatCount(emptyDirs.size())), emptyPaths,
+            Localization::Lookup(IDS_REMOVE_EMPTY_USE_TRASH), true,
+            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+        if (result.nID != IDYES) return;
+
+        if (result.isChecked)
+        {
+            toTrashBin = true;
+        }
+        else
+        {
+            // Permanent deletion cannot be undone, so ask again with a dedicated warning
+            // rather than treating the checkbox choice above as if it were that confirmation.
+            const auto permanentResult = CMessageBoxDlg::Show(
+                Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())),
+                MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), {}, Localization::Lookup(IDS_DELETE_TITLE));
+            if (permanentResult != IDYES) return;
+            toTrashBin = false;
+        }
     }
     else
     {
-        return;
+        // No Recycle Bin option to offer here, so the only choice is the permanent-delete
+        // warning itself, with the affected paths attached since this is the first dialog shown.
+        const auto result = CMessageBoxDlg::Show(
+            Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())), emptyPaths, {}, false,
+            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+        if (result.nID != IDYES) return;
+        toTrashBin = false;
     }
+
+    // Re-check emptiness right before deleting: time has passed since the folders were
+    // scanned (the user had to read and respond to the dialogs above), and DeletePhysicalItems
+    // deletes whatever currently exists under each path rather than failing on non-empty
+    // folders the way a direct RemoveDirectory call would. Anything that gained content in
+    // the meantime is left alone instead of being swept up as part of its former-empty parent.
+    std::erase_if(emptyDirs, [](const CItem* item) { return !PathIsDirectoryEmpty(item->GetPathLong().c_str()); });
+    if (emptyDirs.empty()) return;
 
     // The confirmation above already covers this deletion, so skip DeletePhysicalItems'
     // own warning dialog.
