@@ -153,7 +153,7 @@ bool CFilePermsControl::StartScan()
 
     // Scan in parallel under a modal progress dialog so large trees show progress
     std::vector<CItemPerm*> rows;
-    CProgressDlg progress(items.size(), false, CMainFrame::Get(), [&](CProgressDlg* pdlg)
+    CProgressDlg progress(items.size(), CProgressDlg::Flags::None, CMainFrame::Get(), [&](CProgressDlg* pdlg)
     {
         rows = ScanItems(items, roots, [pdlg] { return pdlg->IsCancelled(); }, [pdlg] { pdlg->Increment(); });
     });

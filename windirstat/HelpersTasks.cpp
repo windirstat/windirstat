@@ -700,7 +700,7 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 }
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath)
+std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProgressDlg)
 {
     // Open file with smart pointer
     const SmartPointer hFile(CloseHandle, CreateFile(filePath.c_str(),
@@ -778,11 +778,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     // Update all valid hashes with the same buffer in parallel
     while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
     {
+        if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
                 if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
                 else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
+        pProgressDlg->Increment();
     }
 
     // Finalize all hashes and convert to hex strings
@@ -882,7 +884,7 @@ void CopyAllDriveMappings() noexcept
 
     // Wait for all mappings to complete with a progress dialog
     if (futures.empty()) return;
-    CProgressDlg(futures.size(), true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         constexpr auto timeout = std::chrono::seconds(5);
         for (auto& f : futures)

@@ -550,7 +550,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
     }
 
     bool cancelled = false;
-    if (!toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    if (!toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(totalItems, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
         {
             // Collect items depth-first and separate into files and directories
             std::vector<const CItem*> files;
@@ -632,7 +632,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         if (COptions::ShowMicrosoftProgress)
             doDelete(*AfxGetMainWnd(), flags);
         else
-            CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
+            CProgressDlg(0, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
                 { doDelete(*pdlg, flags | FOF_NO_UI); }).DoModal();
     }
 
