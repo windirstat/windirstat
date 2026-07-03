@@ -249,7 +249,7 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
 {
     // Only sparsify files (no recursion)
     const auto& itemsSelected = GetAllSelected();
-    CProgressDlg(itemsSelected.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(itemsSelected.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto* item : itemsSelected)
         {
@@ -288,7 +288,7 @@ void CWinDirStatModel::OnSaveResults()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SaveResults(dlg.GetPathName().GetString(), GetRootItem());
     }).DoModal();
@@ -302,7 +302,7 @@ void CWinDirStatModel::OnSaveDuplicates()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SaveDuplicates(dlg.GetPathName().GetString(), CFileDupeControl::Get()->GetRootItem());
     }).DoModal();
@@ -316,7 +316,7 @@ void CWinDirStatModel::OnSavePermissions()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SavePermissions(dlg.GetPathName().GetString(), CFilePermsControl::Get()->GetPermItems());
     }).DoModal();
@@ -331,7 +331,7 @@ void CWinDirStatModel::OnLoadResults()
     if (dlg.DoModal() != IDOK) return;
 
     CItem* newroot = nullptr;
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
@@ -354,7 +354,7 @@ void CWinDirStatModel::OnEditCopy()
 
 void CWinDirStatModel::OnCleanupEmptyRecycleBin()
 {
-    CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [](CProgressDlg*)
     {
         SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr,
             SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
@@ -380,7 +380,7 @@ void CWinDirStatModel::OnRemoveShadowCopies()
     ULONGLONG count = 0, bytesUsed = 0;
     QueryShadowCopies(count, bytesUsed);
 
-    CProgressDlg(static_cast<size_t>(count), false, AfxGetMainWnd(), [](CProgressDlg* pdlg)
+    CProgressDlg(static_cast<size_t>(count), CProgressDlg::Flags::None, AfxGetMainWnd(), [](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_ShadowCopy", pdlg);
     }).DoModal();
@@ -620,7 +620,7 @@ void CWinDirStatModel::OnCleanupMoveTo()
     if (!FolderExists(destFolder)) return;
 
     // Show progress dialog and move files
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
+    CProgressDlg(0, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
     {
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
@@ -708,7 +708,7 @@ void CWinDirStatModel::RemoveLocalProfiles(const std::wstring_view whereClause)
         Localization::Lookup(IDS_DELETE_TITLE));
     if (result.nID != IDYES) return;
 
-    CProgressDlg(paths.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(paths.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_UserProfile", pdlg, whereClause.data());
     }).DoModal();
@@ -843,15 +843,20 @@ void CWinDirStatModel::OnComputeHash()
     // Compute the hash in the message thread
     std::wstring hashResult;
     const auto& items = GetAllSelected();
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg*)
+    const ULONGLONG logicalSize = items.front()->GetSizeLogical();
+    const size_t totalBlocks = static_cast<size_t>(logicalSize / wds::Mi + (logicalSize % wds::Mi != 0));
+    CProgressDlg(totalBlocks, CProgressDlg::Flags::PercentageOnly, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        hashResult = ComputeFileHashes(items.front()->GetPath());
+        hashResult = ComputeFileHashes(items.front()->GetPath(), pdlg);
     }).DoModal();
 
-    // Display result in message box
-    CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
-    dlg.SetWidthAuto();
-    dlg.DoModal();
+    if (!hashResult.empty())
+    {
+        // Display result in message box
+        CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
+        dlg.SetWidthAuto();
+        dlg.DoModal();
+    }
 }
 
 CompressionAlgorithm CWinDirStatModel::CompressionIdToAlg(const UINT id)
@@ -876,7 +881,7 @@ void CWinDirStatModel::OnCleanupCompress(UINT id)
 
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto & item : items)
         {
@@ -898,7 +903,7 @@ void CWinDirStatModel::OnCleanupOptimizeVhd()
         return item->IsTypeOrFlag(IT_FILE) && item->HasExtension(L".vhdx"); });
 
     // Show progress dialog and optimize VHD files
-    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto item : items)
         {
@@ -1286,7 +1291,7 @@ void CWinDirStatModel::OnRemoveMarkOfTheWebTags()
     const auto& itemsSelected = GetAllSelected();
     const auto& items = CItem::GetItemsRecursive(itemsSelected);
 
-    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto item : items)
         {
@@ -1362,7 +1367,7 @@ void CWinDirStatModel::OnToolsSetDates()
         }
     }
 
-    CProgressDlg(directories.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(directories.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (CItem* item : directories)
         {
@@ -1421,7 +1426,7 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
     std::unordered_set<const CItem*> deletedDirs;
     std::unordered_set<CItem*> parentsToRefresh;
 
-    CProgressDlg(emptyDirs.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(emptyDirs.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (CItem* item : emptyDirs)
         {

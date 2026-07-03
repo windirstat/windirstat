@@ -230,7 +230,7 @@ void CMainFrame::OnAdvancedShadowCopy(const UINT nID)
     const std::wstring drive = std::format(L"{:c}:", driveLetter);
 
     bool success = false;
-    CProgressDlg dlg(0, true, this, [&](CProgressDlg*)
+    CProgressDlg dlg(0, CProgressDlg::Flags::NoCancel, this, [&](CProgressDlg*)
     {
         success = CreateShadowCopy(drive);
     });

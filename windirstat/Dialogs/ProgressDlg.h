@@ -38,7 +38,13 @@ class CProgressDlg final : public CDialogEx
     DECLARE_DYNAMIC(CProgressDlg)
 
 public:
-    CProgressDlg(size_t total, bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task);
+    enum class Flags : std::uint8_t { None = 0, NoCancel = 1, PercentageOnly = 2 };
+    friend constexpr Flags operator|(const Flags lhs, const Flags rhs) noexcept
+    {
+        return static_cast<Flags>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+    }
+
+    CProgressDlg(size_t total, Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task);
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
@@ -48,6 +54,10 @@ public:
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
     size_t Increment() noexcept { return ++m_current; }
     size_t GetTotal() const noexcept { return m_total; }
+    bool HasFlag(const Flags flag) const noexcept
+    {
+        return (static_cast<std::uint8_t>(m_flags) & static_cast<std::uint8_t>(flag)) != 0;
+    }
 
 protected:
     enum : std::uint8_t { IDD = IDD_PROGRESS };
@@ -73,8 +83,8 @@ private:
     std::atomic<bool> m_cancelRequested = false;
     std::atomic<size_t> m_current = 0;
     const size_t m_total = 0;
+    const Flags m_flags = Flags::None;
     bool m_cancelled = false;
-    const bool m_noCancel = false;
 
     std::optional<std::jthread> m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
