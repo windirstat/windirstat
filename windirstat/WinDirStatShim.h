@@ -4756,15 +4756,19 @@ public:
     void OnSize(UINT, int, int) { Default(); LayoutPanes(); Invalidate(FALSE); }
     BOOL OnEraseBkgnd(CDC*) { return TRUE; }
 
-    void OnLButtonDown(UINT, CPoint)
+    void OnLButtonDown(UINT, CPoint point)
     {
-        Default();
+        m_handledPaintedTabMouseDown = SelectPaintedTabFromPoint(point);
+        if (!m_handledPaintedTabMouseDown)
+            Default();
         RedirectFocusAwayFromTabControl();
     }
 
     void OnLButtonUp(UINT, CPoint)
     {
-        Default();
+        if (!m_handledPaintedTabMouseDown)
+            Default();
+        m_handledPaintedTabMouseDown = false;
         RedirectFocusAwayFromTabControl();
     }
 
@@ -4858,33 +4862,15 @@ public:
         TabPaintInfo activeTab;
         bool hasActiveTab = false;
 
+        UpdatePaintedTabRects(rcStrip, bottomTabs, labelOnlyTabs);
+
         for (int native = 0; native < static_cast<int>(m_visibleToLogical.size()); ++native)
         {
             const int logical = m_visibleToLogical[static_cast<size_t>(native)];
             if (logical < 0 || logical >= GetTabsNum()) continue;
 
-            CRect rcTab;
-            if (!GetNativeItemRect(native, rcTab)) continue;
-
-            const int verticalInset = WdsDpiScale(labelOnlyTabs ? 2 : 7, m_hWnd);
-            const int tabVisualHeight = labelOnlyTabs ?
-                std::max(0, rcStrip.Height() - verticalInset) :
-                std::min(WdsDpiScale(18, m_hWnd), std::max(0, rcStrip.Height() - WdsDpiScale(8, m_hWnd)));
-            if (bottomTabs)
-            {
-                rcTab.bottom = rcStrip.bottom - verticalInset;
-                rcTab.top = std::max(rcStrip.top, rcTab.bottom - tabVisualHeight);
-            }
-            else
-            {
-                rcTab.top = rcStrip.top + verticalInset;
-                rcTab.bottom = std::min(rcTab.top + tabVisualHeight, rcStrip.bottom);
-            }
-            const int leftInset = WdsDpiScale(labelOnlyTabs ? 2 : 3, m_hWnd);
-            const int overlap = WdsDpiScale(labelOnlyTabs ? 1 : 2, m_hWnd);
-            rcTab.left = std::max(rcStrip.left + leftInset, rcTab.left - (native == 0 ? 0 : overlap));
-            rcTab.right += WdsDpiScale(labelOnlyTabs ? 2 : 4, m_hWnd);
-            m_tabs[logical].rcTab = rcTab;
+            const CRect rcTab = m_tabs[logical].rcTab;
+            if (rcTab.IsRectEmpty()) continue;
 
             if (logical == m_activeTab)
             {
@@ -4946,6 +4932,7 @@ public:
 
 private:
     std::vector<int> m_visibleToLogical;
+    bool m_handledPaintedTabMouseDown = false;
 
     static bool IsKeyboardMessage(UINT message)
     {
@@ -5130,6 +5117,82 @@ private:
         RECT r{};
         if (SendSelf(TCM_GETITEMRECT, static_cast<WPARAM>(native), reinterpret_cast<LPARAM>(&r)) == 0) return false;
         rc = r;
+        return true;
+    }
+
+    CRect TabStripRect() const
+    {
+        CRect rcClient;
+        GetClientRect(&rcClient);
+        const int tabH = TabStripHeight();
+        return (m_location == LOCATION_BOTTOM) ?
+            CRect(rcClient.left, std::max(rcClient.top, rcClient.bottom - tabH), rcClient.right, rcClient.bottom) :
+            CRect(rcClient.left, rcClient.top, rcClient.right, std::min(rcClient.bottom, rcClient.top + tabH));
+    }
+
+    void UpdatePaintedTabRects()
+    {
+        const CRect rcStrip = TabStripRect();
+        UpdatePaintedTabRects(rcStrip, m_location == LOCATION_BOTTOM, IsLabelOnlyTabControl());
+    }
+
+    void UpdatePaintedTabRects(const CRect& rcStrip, bool bottomTabs, bool labelOnlyTabs)
+    {
+        for (TabInfo& tab : m_tabs)
+            tab.rcTab.SetRectEmpty();
+
+        for (int native = 0; native < static_cast<int>(m_visibleToLogical.size()); ++native)
+        {
+            const int logical = m_visibleToLogical[static_cast<size_t>(native)];
+            if (logical < 0 || logical >= GetTabsNum()) continue;
+
+            CRect rcTab;
+            if (!GetNativeItemRect(native, rcTab)) continue;
+
+            const int verticalInset = WdsDpiScale(labelOnlyTabs ? 2 : 7, m_hWnd);
+            const int tabVisualHeight = labelOnlyTabs ?
+                std::max(0, rcStrip.Height() - verticalInset) :
+                std::min(WdsDpiScale(18, m_hWnd), std::max(0, rcStrip.Height() - WdsDpiScale(8, m_hWnd)));
+            if (bottomTabs)
+            {
+                rcTab.bottom = rcStrip.bottom - verticalInset;
+                rcTab.top = std::max(rcStrip.top, rcTab.bottom - tabVisualHeight);
+            }
+            else
+            {
+                rcTab.top = rcStrip.top + verticalInset;
+                rcTab.bottom = std::min(rcTab.top + tabVisualHeight, rcStrip.bottom);
+            }
+            const int leftInset = WdsDpiScale(labelOnlyTabs ? 2 : 3, m_hWnd);
+            const int overlap = WdsDpiScale(labelOnlyTabs ? 1 : 2, m_hWnd);
+            rcTab.left = std::max(rcStrip.left + leftInset, rcTab.left - (native == 0 ? 0 : overlap));
+            rcTab.right += WdsDpiScale(labelOnlyTabs ? 2 : 4, m_hWnd);
+            m_tabs[logical].rcTab = rcTab;
+        }
+    }
+
+    int PaintedTabFromPoint(CPoint point)
+    {
+        UpdatePaintedTabRects();
+
+        if (m_activeTab >= 0 && m_activeTab < GetTabsNum() && m_tabs[m_activeTab].rcTab.PtInRect(point))
+            return m_activeTab;
+
+        for (int native = static_cast<int>(m_visibleToLogical.size()) - 1; native >= 0; --native)
+        {
+            const int logical = m_visibleToLogical[static_cast<size_t>(native)];
+            if (logical < 0 || logical >= GetTabsNum() || logical == m_activeTab) continue;
+            if (m_tabs[logical].rcTab.PtInRect(point)) return logical;
+        }
+
+        return -1;
+    }
+
+    bool SelectPaintedTabFromPoint(CPoint point)
+    {
+        const int logical = PaintedTabFromPoint(point);
+        if (logical < 0) return false;
+        if (logical != m_activeTab) ActivateTab(logical, true, true);
         return true;
     }
 
