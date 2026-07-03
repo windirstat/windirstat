@@ -57,13 +57,11 @@ BOOL CProgressDlg::OnInitDialog()
     // Configure cancel button
     if (HasFlag(Flags::NoCancel)) m_cancelButton.ShowWindow(SW_HIDE);
 
+    // Start timer for progress updates or marquee repaints.
+    SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
+
     // Configure progress bar
-    if (m_total > 0)
-    {
-        // Start timer for progress updates
-        SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
-    }
-    else
+    if (m_total == 0)
     {
         m_progressCtrl.ModifyStyle(0, PBS_MARQUEE);
         m_progressCtrl.SetMarquee(TRUE, 30);
@@ -100,6 +98,13 @@ void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_ID)
     {
+        if (m_total == 0)
+        {
+            m_progressCtrl.Invalidate(FALSE);
+            CDialogEx::OnTimer(nIDEvent);
+            return;
+        }
+
         const size_t current = m_current.load();
         const double percent = (static_cast<double>(current) * 100) / m_total;
 
