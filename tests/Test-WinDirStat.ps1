@@ -7407,6 +7407,7 @@ $visualSettings = @(
     'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
+    'WatcherAutoScroll',
     'WatcherColumnOrder',
     'WatcherColumnWidths'
 )

@@ -5059,9 +5059,14 @@ private:
     bool ActivateTab(int i, bool notifyParent, bool syncNative)
     {
         if (i < 0 || i >= GetTabsNum() || !m_tabs[i].visible) return false;
+        const int previousActiveTab = m_activeTab;
+        const bool moveFocusToActiveTab = ShouldMoveFocusOnTabActivation(previousActiveTab);
+
         m_activeTab = i;
         if (syncNative) SyncNativeSelection();
         LayoutPanes();
+        if (moveFocusToActiveTab) FocusActiveTabWindow();
+
         if (notifyParent)
         {
             if (CWnd* p = GetParent())
@@ -5072,6 +5077,17 @@ private:
         }
         Invalidate(FALSE);
         return true;
+    }
+
+    bool ShouldMoveFocusOnTabActivation(int previousActiveTab) const
+    {
+        const HWND focus = ::GetFocus();
+        if (focus == nullptr) return false;
+        if (focus == m_hWnd || ::IsChild(m_hWnd, focus)) return true;
+
+        CWnd* previous = GetTabWnd(previousActiveTab);
+        return previous != nullptr && ::IsWindow(previous->m_hWnd) &&
+            (focus == previous->m_hWnd || ::IsChild(previous->m_hWnd, focus));
     }
 
     bool ForwardKeyboardMessageToActiveTab(const MSG& msg)
