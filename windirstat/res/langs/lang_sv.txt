@@ -277,6 +277,8 @@ IDS_RAMUSAGEs=Minnesanvändning: {}
 IDS_RECALCULATE=Beräkna om
 IDS_REFRESH_ALL=Sök om hela katalogträdet.\nUppdatera alla
 IDS_REFRESH_SELECTED=Sök om det valda underträdet.\nUppdatera vald
+IDS_REMOVE_EMPTY_PERMANENTs=Detta kommer permanent att ta bort {} tomma mappar. Denna åtgärd kan inte ångras.\n\nÄr du säker på att du vill fortsätta?
+IDS_REMOVE_EMPTY_TRASHs=Hittade {} tomma mappar. Flytta dem till papperskorgen?\n\nVälj "Nej" för att radera dem permanent istället, eller "Avbryt" för att avbryta.
 IDS_RESET_ALL_PREFERENCES=Återställ alla inställningar
 IDS_RESET_DEFAULTS=Ange &standard
 IDS_RESTART_REQUEST=WinDirStat måste startas om för att inställningsändringarna ska tillämpas.\n\nStarta om WinDirStat nu?

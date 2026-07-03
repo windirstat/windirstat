@@ -133,7 +133,7 @@ public:
     void RecurseRefreshReparsePoints(CItem* items) const;
     void RebuildExtensionData();
     void RebuildRegisteredExtensions();
-    void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
+    void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false, bool skipWarning = false) const;
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);

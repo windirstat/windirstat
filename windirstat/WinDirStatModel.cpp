@@ -510,9 +510,9 @@ void CWinDirStatModel::RebuildExtensionData()
     }
 }
 
-void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
+void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly, const bool skipWarning) const
 {
-    if (COptions::ShowDeleteWarning)
+    if (COptions::ShowDeleteWarning && !skipWarning)
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;

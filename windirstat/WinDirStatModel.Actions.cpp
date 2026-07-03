@@ -1405,10 +1405,7 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
         std::vector<CItem*>{ GetRootItem() } : itemsSelected;
 
     // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
-    // Such a directory is wholly empty, so all of its descendants qualify as well. Each item is
-    // recorded before its children are pushed, so ancestors precede descendants; reversing then
-    // yields a bottom-up order suitable for RemoveDirectory, which only removes empty folders and
-    // so is guaranteed to find each parent empty once its children have been processed.
+    // Such a directory is wholly empty, so all of its descendants qualify as well.
     std::vector<CItem*> emptyDirs;
     std::vector<CItem*> stack(roots.begin(), roots.end());
     while (!stack.empty())
@@ -1431,40 +1428,39 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
         return;
     }
 
-    size_t deletedCount = 0;
-    std::unordered_set<const CItem*> deletedDirs;
-    std::unordered_set<CItem*> parentsToRefresh;
+    // Build the list of paths for the confirmation dialogs so the user can see
+    // exactly what is about to be removed before anything happens - this can
+    // otherwise reach far beyond what was explicitly selected (e.g. the whole
+    // scanned tree when nothing is selected), so an accurate preview matters.
+    std::vector<std::wstring> emptyPaths;
+    emptyPaths.reserve(emptyDirs.size());
+    for (const auto& item : emptyDirs) emptyPaths.emplace_back(item->GetPath());
 
-    CProgressDlg(emptyDirs.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    const auto trashResult = CMessageBoxDlg::Show(
+        Localization::Format(IDS_REMOVE_EMPTY_TRASHs, FormatCount(emptyDirs.size())), emptyPaths, {}, false,
+        MB_YESNOCANCEL | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+
+    bool toTrashBin;
+    if (trashResult.nID == IDYES)
     {
-        for (CItem* item : emptyDirs)
-        {
-            if (pdlg->IsCancelled()) break;
-
-            if (RemoveDirectory(item->GetPathLong().c_str()))
-            {
-                deletedCount++;
-                deletedDirs.insert(item);
-                if (CItem* parent = item->GetParent())
-                {
-                    parentsToRefresh.insert(parent);
-                }
-                pdlg->Increment();
-            }
-        }
-    }).DoModal();
-
-    // Refresh parents of deleted items that were not themselves deleted
-    std::erase_if(parentsToRefresh, [&](const CItem* parent) {
-        return deletedDirs.contains(parent);
-    });
-
-    if (!parentsToRefresh.empty())
-    {
-        RefreshItem(std::vector<CItem*>(parentsToRefresh.begin(), parentsToRefresh.end()));
+        toTrashBin = true;
     }
-    else if (deletedCount > 0)
+    else if (trashResult.nID == IDNO)
     {
-        RefreshItem(roots);
+        // Permanent deletion cannot be undone, so ask again with a dedicated warning
+        // rather than treating "No" above as if it were already that confirmation.
+        const auto permanentResult = CMessageBoxDlg::Show(
+            Localization::Format(IDS_REMOVE_EMPTY_PERMANENTs, FormatCount(emptyDirs.size())),
+            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), {}, Localization::Lookup(IDS_DELETE_TITLE));
+        if (permanentResult != IDYES) return;
+        toTrashBin = false;
     }
+    else
+    {
+        return;
+    }
+
+    // The confirmation above already covers this deletion, so skip DeletePhysicalItems'
+    // own warning dialog.
+    DeletePhysicalItems(emptyDirs, toTrashBin, false, true);
 }
