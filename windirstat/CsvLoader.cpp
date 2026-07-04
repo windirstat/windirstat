@@ -200,7 +200,7 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAt
 
     const auto itType = IT_MASK & type;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
-    const bool isInRoot  = itType == IT_DRIVE;
+    const bool isInRoot  = itType == IT_DRIVE || (type & ITF_MULTIROOT) != 0;
     const bool useFullPath = isRoot || isInRoot;
 
     LPWSTR lookupPath = namePath.data();

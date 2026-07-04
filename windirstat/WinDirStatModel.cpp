@@ -134,8 +134,9 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         for (const auto& rootFolder : selections)
         {
             const ITEMTYPE childType = std::regex_match(rootFolder, driveMatch) ? IT_DRIVE : IT_DIRECTORY;
-            const auto drive = new CItem(childType, rootFolder);
+            const auto drive = new CItem(childType | ITF_MULTIROOT, rootFolder);
             m_rootItem->AddChild(drive);
+            drive->UpdateStatsFromDisk();
         }
     }
     else
@@ -166,7 +167,10 @@ BOOL CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
-            [](const CItem* obj) -> std::wstring { return GetDrive(obj->GetNameView()); });
+            [](const CItem* obj) -> std::wstring
+            {
+                return obj->IsTypeOrFlag(IT_DRIVE) ? GetDrive(obj->GetNameView()) : std::wstring(obj->GetNameView());
+            });
         spec = JoinString(folders);
     }
     else if (loadedRoot->IsTypeOrFlag(IT_DRIVE))
