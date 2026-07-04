@@ -1408,28 +1408,47 @@ void CWinDirStatModel::OnToolsSetDates()
 
 void CWinDirStatModel::OnToolsRemoveEmpty()
 {
-    CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
     const std::vector<CItem*> roots = itemsSelected.empty() ?
         std::vector<CItem*>{ GetRootItem() } : itemsSelected;
 
+    // Calculate total item count for progress tracking
+    size_t totalItems = 0;
+    for (const auto& item : roots) totalItems += static_cast<size_t>(1 + item->GetItemsCount());
+
     // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
     // Such a directory is wholly empty, so all of its descendants qualify as well.
+    // Wrapped in a progress dialog since walking a huge tree (e.g. the whole C: drive)
+    // can take long enough to look like a hang otherwise, with no way to cancel it.
     std::vector<CItem*> emptyDirs;
-    std::vector<CItem*> stack(roots.begin(), roots.end());
-    while (!stack.empty())
-    {
-        CItem* item = stack.back();
-        stack.pop_back();
-        if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
+    bool cancelled = false;
+    CProgressDlg(totalItems, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
         {
-            emptyDirs.push_back(item);
-        }
-        if (item->HasChildren())
-        {
-            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
-        }
-    }
+            std::vector<CItem*> stack(roots.begin(), roots.end());
+            while (!stack.empty())
+            {
+                if (pdlg->IsCancelled())
+                {
+                    cancelled = true;
+                    return;
+                }
+
+                CItem* item = stack.back();
+                stack.pop_back();
+                if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
+                {
+                    emptyDirs.push_back(item);
+                }
+                if (item->HasChildren())
+                {
+                    stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+                }
+                pdlg->Increment();
+            }
+        }).DoModal();
+
+    if (cancelled) return;
+
     std::reverse(emptyDirs.begin(), emptyDirs.end());
 
     if (emptyDirs.empty())
