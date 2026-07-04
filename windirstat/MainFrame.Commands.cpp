@@ -175,6 +175,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
 void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 {
     const auto& items = CWinDirStatModel::Get()->GetAllSelected();
+    const bool scanReady = CWinDirStatModel::Get()->IsScanSettled();
 
     // get list of paths from items
     std::vector<std::wstring> paths;
@@ -209,7 +210,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         std::wstring string = std::vformat(Localization::Lookup(IDS_UDCsCTRLd),
             std::make_wformat_args(udc.Title.Obj(), iCurrent));
 
-        bool udcValid = GetLogicalFocus() == LF_FILETREE && !items.empty();
+        bool udcValid = scanReady && GetLogicalFocus() == LF_FILETREE && !items.empty();
         if (udcValid) for (const auto& item : items)
         {
             udcValid &= CWinDirStatModel::Get()->UserDefinedCleanupWorksForItem(&udc, item);
@@ -221,7 +222,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 
     // conditionally disable menu if empty
     if (customMenu) SetMenuItem(menu,
-        customMenuPos, customMenu->GetMenuItemCount() > 0);
+        customMenuPos, customMenu->GetMenuItemCount() > 0 && scanReady);
 }
 
 void CMainFrame::OnAdvancedShadowCopy(const UINT nID)
@@ -334,7 +335,7 @@ void CMainFrame::UpdatePaneText()
     }
 
     // Only get the data if the scan model is not actively updating
-    else if (CWinDirStatModel::Get()->IsRootDone())
+    else if (CWinDirStatModel::Get()->IsScanSettled())
     {
         if (focus != LF_EXTLIST)
         {
@@ -415,11 +416,13 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 
 void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(GetTreeMapView()->IsShowTreeMap());
 }
 
 void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
 {
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapUseLogical);
 }
 
@@ -432,7 +435,7 @@ void CMainFrame::OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI)
 {
     // Only allow regrouping when types are shown and the scan has finished
     const CWinDirStatModel* model = CWinDirStatModel::Get();
-    pCmdUI->Enable(GetExtensionView()->IsShowTypes() && model->IsRootDone() && !model->IsScanRunning());
+    pCmdUI->Enable(GetExtensionView()->IsShowTypes() && model->IsScanSettled());
     pCmdUI->SetCheck(COptions::GroupUnregisteredTypes);
 }
 
@@ -495,6 +498,7 @@ void CMainFrame::OnViewShowExtensionsOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
 {
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
 }
 
@@ -507,6 +511,7 @@ void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
 {
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
 }
 
@@ -829,8 +834,7 @@ void CMainFrame::OnUpdateToolsPermissions(CCmdUI* pCmdUI)
     // Only allow launching a scan once the file tree has been fully populated
     const auto* model = CWinDirStatModel::Get();
     pCmdUI->SetCheck(GetFileTabbedView()->IsPermsTabVisible());
-    pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() ||
-        (model->HasRootItem() && model->IsRootDone() && !model->IsScanRunning()));
+    pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() || model->IsScanSettled());
 }
 
 void CMainFrame::OnToolsStorageAnalytics()
@@ -847,8 +851,7 @@ void CMainFrame::OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI)
 {
     const auto* model = CWinDirStatModel::Get();
     pCmdUI->SetCheck(GetFileTabbedView()->IsStorageAnalyticsTabVisible());
-    pCmdUI->Enable(GetFileTabbedView()->IsStorageAnalyticsTabVisible() ||
-        (model->HasRootItem() && model->IsRootDone() && !model->IsScanRunning()));
+    pCmdUI->Enable(GetFileTabbedView()->IsStorageAnalyticsTabVisible() || model->IsScanSettled());
 }
 
 void CMainFrame::OnViewWindowLayout()

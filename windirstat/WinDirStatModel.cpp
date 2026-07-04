@@ -297,6 +297,11 @@ bool CWinDirStatModel::IsScanRunning() const
     return (exitCode == STILL_ACTIVE);
 }
 
+bool CWinDirStatModel::IsScanSettled() const
+{
+    return IsRootDone() && !IsScanRunning();
+}
+
 CItem* CWinDirStatModel::GetRootItem() const
 {
     return m_rootItem;

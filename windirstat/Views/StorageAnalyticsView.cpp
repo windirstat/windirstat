@@ -398,7 +398,7 @@ void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change
     if (change == MODEL_CHANGE_NEW_ROOT || change == MODEL_CHANGE_NONE)
     {
         const auto* model = CWinDirStatModel::Get();
-        if (model && model->HasRootItem() && model->IsRootDone() && !model->IsScanRunning())
+        if (model->IsScanSettled())
         {
             Recalculate();
         }
@@ -413,7 +413,7 @@ void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change
 void CStorageAnalyticsView::Recalculate()
 {
     const auto* model = CWinDirStatModel::Get();
-    if (!model || !model->HasRootItem())
+    if (!model->IsScanSettled())
     {
         m_hasData = false;
         InvalidateRect(nullptr);

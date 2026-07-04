@@ -857,8 +857,7 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
         return TRUE;
     }
 
-    if (CWinDirStatModel::Get() != nullptr &&
-        CWinDirStatModel::Get()->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+    if (CWinDirStatModel::Get()->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
     {
         return TRUE;
     }
