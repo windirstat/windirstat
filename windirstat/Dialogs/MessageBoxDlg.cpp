@@ -186,10 +186,22 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_iconCtrl.SetIcon(m_icon);
 
     // Add strings to optional listview
-    m_listView.ShowWindow(m_listViewItems.empty() ? SW_HIDE : SW_SHOW);
-    for (const auto& item : m_listViewItems)
+    if (!m_listViewItems.empty())
     {
-        m_listView.AddString(item.c_str());
+        CWaitCursor wait;
+        CSetRedrawLock redrawLock(&m_listView);
+        m_listView.ShowWindow(SW_SHOW);
+        m_listView.InitStorage(static_cast<int>(m_listViewItems.size()),
+            static_cast<UINT>(m_listViewItems.size() * MAX_PATH * sizeof(wchar_t)));
+
+        for (const auto& item : m_listViewItems)
+        {
+            m_listView.AddString(item.c_str());
+        }
+    }
+    else
+    {
+        m_listView.ShowWindow(SW_HIDE);
     }
 
     // Hide checkbox if no text set
