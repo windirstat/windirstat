@@ -164,6 +164,33 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
     ShiftControls(controlsToShift, -shiftAmount);
 }
 
+// Populate the list view with progress dialog
+bool CMessageBoxDlg::PopulateListViewWithProgress()
+{
+    const CSetRedrawLock redrawLock(&m_listView);
+    INT_PTR progressResult = IDCANCEL;
+
+    CProgressDlg progressDlg(m_listViewItems.size(), CProgressDlg::Flags::PercentageOnly,
+        this->m_pParentWnd, [&](CProgressDlg* pdlg)
+        {
+            m_listView.InitStorage(static_cast<int>(m_listViewItems.size()),
+                static_cast<UINT>(m_listViewItems.size() * MAX_PATH * sizeof(wchar_t)));
+
+            for (const auto& item : m_listViewItems)
+            {
+                if (pdlg->IsCancelled())
+                {
+                    break;
+                }
+                m_listView.AddString(item.c_str());
+                pdlg->Increment();
+            }
+        });
+
+    progressResult = progressDlg.DoModal();
+    return (progressResult != IDCANCEL);
+}
+
 BOOL CMessageBoxDlg::OnInitDialog()
 {
     CLayoutDialogEx::OnInitDialog();
@@ -186,22 +213,12 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_iconCtrl.SetIcon(m_icon);
 
     // Add strings to optional listview
-    if (!m_listViewItems.empty())
-    {
-        CWaitCursor wait;
-        CSetRedrawLock redrawLock(&m_listView);
-        m_listView.ShowWindow(SW_SHOW);
-        m_listView.InitStorage(static_cast<int>(m_listViewItems.size()),
-            static_cast<UINT>(m_listViewItems.size() * MAX_PATH * sizeof(wchar_t)));
+    m_listView.ShowWindow(m_listViewItems.empty() ? SW_HIDE : SW_SHOW);
 
-        for (const auto& item : m_listViewItems)
-        {
-            m_listView.AddString(item.c_str());
-        }
-    }
-    else
+    if ((m_listView.GetStyle() & WS_VISIBLE) && !PopulateListViewWithProgress())
     {
-        m_listView.ShowWindow(SW_HIDE);
+        EndDialog(IDNO);
+        return FALSE;
     }
 
     // Hide checkbox if no text set
