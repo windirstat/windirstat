@@ -29,12 +29,12 @@ const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
         {1, 0.58f, 0.00f, 0.42f, 0.50f},
         {2, 0.00f, 0.50f, 1.00f, 0.50f} }, LT_ROWS_SUB_COLS, 0 },
 
-    // 04: AF(40) | FT(20) | TM(40) columns
+    // 01: AF(40) | FT(20) | TM(40) columns
     { { {0, 0.00f, 0.00f, 0.40f, 1.00f},
         {1, 0.40f, 0.00f, 0.20f, 1.00f},
         {2, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE, 2 },
 
-    // 05: TM(40) | AF(40) | FT(20) columns
+    // 02: TM(40) | AF(40) | FT(20) columns
     { { {2, 0.00f, 0.00f, 0.40f, 1.00f},
         {0, 0.40f, 0.00f, 0.40f, 1.00f},
         {1, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE, 1 },
@@ -44,12 +44,12 @@ const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
         {0, 0.00f, 0.50f, 0.58f, 0.50f},
         {1, 0.58f, 0.50f, 0.42f, 0.50f} }, LT_ROWS_SUB_COLS, 1 },
 
-    // 01: AF(40) | TM(40) | FT(20) columns
+    // 04: AF(40) | TM(40) | FT(20) columns
     { { {0, 0.00f, 0.00f, 0.40f, 1.00f},
         {2, 0.40f, 0.00f, 0.40f, 1.00f},
         {1, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE, 0 },
 
-    // 02: TM(40) | FT(20) | AF(40) columns
+    // 05: TM(40) | FT(20) | AF(40) columns
     { { {2, 0.00f, 0.00f, 0.40f, 1.00f},
         {1, 0.40f, 0.00f, 0.20f, 1.00f},
         {0, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE, 3 },
