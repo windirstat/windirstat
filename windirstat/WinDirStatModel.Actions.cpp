@@ -1408,47 +1408,28 @@ void CWinDirStatModel::OnToolsSetDates()
 
 void CWinDirStatModel::OnToolsRemoveEmpty()
 {
+    CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
     const std::vector<CItem*> roots = itemsSelected.empty() ?
         std::vector<CItem*>{ GetRootItem() } : itemsSelected;
 
-    // Calculate total item count for progress tracking
-    size_t totalItems = 0;
-    for (const auto& item : roots) totalItems += static_cast<size_t>(1 + item->GetItemsCount());
-
     // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
     // Such a directory is wholly empty, so all of its descendants qualify as well.
-    // Wrapped in a progress dialog since walking a huge tree (e.g. the whole C: drive)
-    // can take long enough to look like a hang otherwise, with no way to cancel it.
     std::vector<CItem*> emptyDirs;
-    bool cancelled = false;
-    CProgressDlg(totalItems, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    std::vector<CItem*> stack(roots.begin(), roots.end());
+    while (!stack.empty())
+    {
+        CItem* item = stack.back();
+        stack.pop_back();
+        if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
         {
-            std::vector<CItem*> stack(roots.begin(), roots.end());
-            while (!stack.empty())
-            {
-                if (pdlg->IsCancelled())
-                {
-                    cancelled = true;
-                    return;
-                }
-
-                CItem* item = stack.back();
-                stack.pop_back();
-                if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
-                {
-                    emptyDirs.push_back(item);
-                }
-                if (item->HasChildren())
-                {
-                    stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
-                }
-                pdlg->Increment();
-            }
-        }).DoModal();
-
-    if (cancelled) return;
-
+            emptyDirs.push_back(item);
+        }
+        if (item->HasChildren())
+        {
+            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+        }
+    }
     std::reverse(emptyDirs.begin(), emptyDirs.end());
 
     if (emptyDirs.empty())
@@ -1469,25 +1450,17 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
     const bool recycleBinAvailable = std::ranges::all_of(emptyDirs,
         [](const CItem* item) { return IsLocalDrive(item->GetPath()); });
 
-    // The Recycle Bin menu command's label ("Delete (to Recycle Bin)") already says exactly
-    // what checking this box will do, so reuse it instead of adding another string for it.
-    const auto trashLabelParts = SplitString(Localization::Lookup(IDS_CLEANUP_DELETE_BIN), L'\n');
-    const std::wstring& trashCheckboxText = trashLabelParts.back();
-
-    bool toTrashBin;
+    bool toTrashBin = false;
     if (recycleBinAvailable)
     {
-        const auto result = CMessageBoxDlg::Show(
+        const auto [nID, isChecked] = CMessageBoxDlg::Show(
             Localization::Format(IDS_REMOVE_EMPTY_FOLDER_WARNING, FormatCount(emptyDirs.size())), emptyPaths,
-            trashCheckboxText, true,
+            Localization::Lookup(IDS_MENU_DELETE_BIN), true,
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
-        if (result.nID != IDYES) return;
+        if (nID != IDYES) return;
 
-        if (result.isChecked)
-        {
-            toTrashBin = true;
-        }
-        else
+        toTrashBin = isChecked;
+        if (!isChecked)
         {
             // Permanent deletion cannot be undone, so ask again with the same dedicated
             // warning normal file deletion already uses, rather than treating the checkbox
@@ -1495,7 +1468,6 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
             const auto permanentResult = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING),
                 MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), {}, Localization::Lookup(IDS_DELETE_TITLE));
             if (permanentResult != IDYES) return;
-            toTrashBin = false;
         }
     }
     else
@@ -1505,7 +1477,6 @@ void CWinDirStatModel::OnToolsRemoveEmpty()
         const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING), emptyPaths, {}, false,
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
         if (result.nID != IDYES) return;
-        toTrashBin = false;
     }
 
     // Re-check emptiness right before deleting: time has passed since the folders were
