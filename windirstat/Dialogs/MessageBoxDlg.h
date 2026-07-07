@@ -57,11 +57,15 @@ protected:
     afx_msg void OnButtonRight();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult);
 
     // Helper methods for control layout
     void ShiftControls(const std::vector<CWnd*>& controls, int shiftAmount);
     void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding = 0);
-    bool PopulateListViewWithProgress();
+    void UpdateListViewColumnWidth();
 
 private:
 
@@ -93,7 +97,7 @@ private:
     // Optional controls
     CButton m_checkbox;
     CBrush m_checkboxBrush{ DarkMode::WdsSysColor(COLOR_BTNFACE) };
-    CListBox m_listView;
+    CListCtrl m_listView;
     std::wstring m_checkboxText;
     std::vector<std::wstring> m_listViewItems;
     BOOL m_checkboxChecked = FALSE;
