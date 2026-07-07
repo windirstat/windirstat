@@ -140,6 +140,8 @@ Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits",
 Setting<int> COptions::FilteringMaxAgeDays(OptionsGeneral, L"FilteringMaxAgeDays", 0);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
 Setting<int> COptions::TreeMapBrightness(OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100);
+Setting<int> COptions::TreeMapFolderFramesDrawThreshold(OptionsTreeMap, L"TreeMapFolderFramesDrawThreshold",
+    CTreeMap::GetDefaults().folderFramesDrawThreshold, 3, 128);
 Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100);
 Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200);
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
@@ -228,6 +230,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
     TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
+    TreeMapFolderFramesDrawThreshold = TreeMapOptions.folderFramesDrawThreshold;
     TreeMapGridColor = TreeMapOptions.gridColor;
     TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
     TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
@@ -277,6 +280,7 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
     TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;
+    TreeMapOptions.folderFramesDrawThreshold = TreeMapFolderFramesDrawThreshold;
     TreeMapOptions.gridColor = TreeMapGridColor;
     TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
     TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);
