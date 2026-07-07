@@ -794,16 +794,3 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     // Plus sign
     if (showPlus) pdc->MoveTo(centerX, boxTop + margin), pdc->LineTo(centerX, boxBottom - margin);
 }
-
-// Dims a color by a floating-point scalar factor
-COLORREF DimColor(COLORREF rgb, float factor)
-{
-    ASSERT(factor >= 0.0f && factor <= 1.0f);
-    const float clampedFactor = std::clamp(factor, 0.0f, 1.0f);
-
-    return RGB(
-        static_cast<BYTE>(GetRValue(rgb) * clampedFactor),
-        static_cast<BYTE>(GetGValue(rgb) * clampedFactor),
-        static_cast<BYTE>(GetBValue(rgb) * clampedFactor)
-    );
-}

@@ -106,9 +106,6 @@ inline bool IsShiftKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_
 void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, COLORREF bgColor,
     bool toTop, bool toBottom, bool toRight, bool showPlus = false, bool showMinus = false);
 
-// Color manipulation
-COLORREF DimColor(COLORREF rgb, float factor = 0.9f);
-
 // Rect struct
 using CSmallRect = struct CSmallRect
 {

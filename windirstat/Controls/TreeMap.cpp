@@ -24,6 +24,16 @@ static constexpr COLORREF BGR(auto b, auto g, auto r)
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
 
+static constexpr COLORREF DimColor(COLORREF rgb, float factor = 0.9f) noexcept
+{
+    factor = std::clamp(factor, 0.0f, 1.0f);
+    return RGB(
+        static_cast<BYTE>(GetRValue(rgb) * factor),
+        static_cast<BYTE>(GetGValue(rgb) * factor),
+        static_cast<BYTE>(GetBValue(rgb) * factor)
+    );
+}
+
 // Define the "brightness" of an RBG value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
 // all having the same brightness of 0.6
@@ -584,7 +594,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
         // Draw folder frames and headers if the rectangle is large enough
         if (m_options.showFolderFrames && !state.asRoot &&
-            std::min(state.rc.Width(), state.rc.Height()) >= COptions::TreeMapFolderFramesDrawThreshold)
+            std::min(state.rc.Width(), state.rc.Height()) >= m_options.folderFramesDrawThreshold)
         {
             std::wstring name = item->GetName();
             const int textWidth = state.rc.Width() - 8;
