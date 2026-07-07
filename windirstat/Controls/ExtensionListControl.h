@@ -98,4 +98,5 @@ protected:
     afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg void OnSearchExtension();
     afx_msg void OnExcludeExtension();
+    afx_msg void OnGroupTypes();
 };

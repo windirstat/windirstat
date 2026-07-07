@@ -527,15 +527,19 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
         UINT id;
         bool isPersistent;
     } contextMenuPersistent[] = {
-        { ID_TREEMAP_ZOOMIN,            true  },
-        { ID_TREEMAP_ZOOMOUT,           true  },
-        { ID_TREEMAP_SELECT_PARENT,     true  },
-        { ID_TREEMAP_RESELECT_CHILD,    true  },
-        { ID_EDIT_COPY_CLIPBOARD,       false },
-        { ID_CLEANUP_EXPLORER_SELECT,   false },
-        { ID_CLEANUP_OPEN_IN_CONSOLE,   false },
-        { ID_CLEANUP_OPEN_IN_PWSH,      false },
-        { ID_POPUP_CANCEL,              false }
+        { ID_TREEMAP_ZOOMIN,             true  },
+        { ID_TREEMAP_ZOOMOUT,            true  },
+        { ID_TREEMAP_SELECT_PARENT,      true  },
+        { ID_TREEMAP_RESELECT_CHILD,     true  },
+        { ID_VIEW_GROUP_TYPES,           true  },
+        { ID_TREEMAP_SHOW_FOLDER_FRAMES, true  },
+        { ID_TREEMAP_SHOW_EXTENSIONS,    true  },
+        { ID_TREEMAP_LOGICAL_SIZE,       true  },
+        { ID_EDIT_COPY_CLIPBOARD,        false },
+        { ID_CLEANUP_EXPLORER_SELECT,    false },
+        { ID_CLEANUP_OPEN_IN_CONSOLE,    false },
+        { ID_CLEANUP_OPEN_IN_PWSH,       false },
+        { ID_POPUP_CANCEL,               false }
     };
 
     // Helper lambda to check if a command ID is in the list of persistent context menu commands
