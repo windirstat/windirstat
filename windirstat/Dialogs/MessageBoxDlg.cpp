@@ -410,6 +410,9 @@ INT_PTR CMessageBoxDlg::DoModal()
 
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
+    // Let DarkMode handle setting the colors first
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+
     // Set checkbox background to match dialog background in dark mode
     const int nID = pWnd->GetDlgCtrlID();
     if (nID == IDC_MESSAGE_CHECKBOX)
@@ -425,7 +428,6 @@ HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
         return (HBRUSH)GetStockObject(WHITE_BRUSH);
     }
 
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
     return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
