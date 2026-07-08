@@ -107,8 +107,5 @@ BOOL CWinDirStatPane::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 void CWinDirStatPane::NotifyOtherPanes(MODEL_CHANGE change, CItem* item)
 {
-    if (CWinDirStatModel::Get() != nullptr)
-    {
-        CWinDirStatModel::Get()->NotifyPanesExcept(this, change, item);
-    }
+    CWinDirStatModel::Get()->NotifyPanesExcept(this, change, item);
 }

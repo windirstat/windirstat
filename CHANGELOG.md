@@ -1,3 +1,20 @@
+<a name="windirstat-2.7.x"></a>
+# WinDirStat 2.7.X (Upcoming)
+
+Enhancements
+- Added additional window layouts
+- Added per-user Explorer context menu registration
+- Added File Watcher toolbar controls
+- Added cancellable file hashing progress (thanks @harryytm)
+- Improved File Watcher defaults and autoscroll behavior (thanks @harryytm)
+- Improved percentage progress messages
+
+Bug Fixes
+- Corrected indeterminate progress dialog repainting
+
+Miscellaneous
+- Split large MainFrame and WinDirStatModel source files
+
 <a name="windirstat-2.7.0"></a>
 # WinDirStat 2.7.0
 

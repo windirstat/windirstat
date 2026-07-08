@@ -146,7 +146,7 @@ bool CFilePermsControl::StartScan()
     DeleteAllItems();
 
     const auto* model = CWinDirStatModel::Get();
-    if (model == nullptr || !model->HasRootItem() || !model->IsRootDone()) return false;
+    if (!model->IsScanSettled()) return false;
 
     std::unordered_set<const CItem*> roots;
     const auto items = BuildScanList(model->GetRootItem(), roots);

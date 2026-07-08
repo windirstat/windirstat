@@ -110,6 +110,7 @@ public:
     bool HasRootItem() const;
     bool IsRootDone() const;
     bool IsScanRunning() const;
+    bool IsScanSettled() const;
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
     bool IsZoomed() const;

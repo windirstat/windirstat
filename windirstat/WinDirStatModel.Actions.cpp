@@ -114,8 +114,8 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
         { ID_TOOLS_REMOVE_EMPTY,      { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, ITF_ANY, reselectAvail } },
-        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, ITF_ANY, parentNotNull } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE, ITF_ANY, reselectAvail } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE, ITF_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE, ITF_ANY, isZoomed } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE, canZoomIn } },
         { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, ITF_ANY, canZoomOut } },
@@ -132,7 +132,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     const auto& filter = it->second;
     bool allow = filter.focus == LF_NONE || (CMainFrame::Get()->GetLogicalFocus() & filter.focus) > 0;
-    allow &= filter.allowEarly || (IsRootDone() && !IsScanRunning());
+    allow &= filter.allowEarly || IsScanSettled();
     if (!allow) { pCmdUI->Enable(false); return; }
 
     const auto items = (!filter.allowNone || filter.extra != nullptr) ? GetAllSelected() : std::vector<CItem*>{};
@@ -757,6 +757,11 @@ void CWinDirStatModel::OnExecuteDism()
 void CWinDirStatModel::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
+    if (!IsScanSettled())
+    {
+        return pCmdUI->Enable(FALSE);
+    }
+
     const auto & items = GetAllSelected();
     bool allowControl = (FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus()) &&
         COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
@@ -770,6 +775,11 @@ void CWinDirStatModel::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 
 void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
 {
+    if (!IsScanSettled())
+    {
+        return;
+    }
+
     USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
     const auto & items = GetAllSelected();
     std::vector<CItem*> refreshQueue;
@@ -1231,7 +1241,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         {
             // Get the model and root item
             const auto* model = CWinDirStatModel::Get();
-            if (model == nullptr || !model->HasRootItem()) ExitProcess(1);
+            if (!model->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
             ExitProcess(SaveResults(savePath, model->GetRootItem()) ? 0 : 1);
@@ -1307,8 +1317,8 @@ void CWinDirStatModel::OnRemoveMarkOfTheWebTags()
 
 void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
 {
-    // Only allow when focused on duplicate list
-    if (!DupeListHasFocus())
+    // Only allow when focused on duplicate list after scanning has settled
+    if (!IsScanSettled() || !DupeListHasFocus())
     {
         return pCmdUI->Enable(FALSE);
     }
@@ -1336,7 +1346,6 @@ void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
 
 void CWinDirStatModel::OnCreateHardlink()
 {
-    // Validate all items are on same logical volume
     const auto selected = GetAllSelected();
     for (const auto* item : selected)
     {

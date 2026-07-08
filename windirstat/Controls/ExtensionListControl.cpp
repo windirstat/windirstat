@@ -388,6 +388,8 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     menu.CreatePopupMenu();
     menu.AppendMenu(MF_STRING | aggregateFlags, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
+    menu.AppendMenu(MF_STRING | MF_ENABLED | (COptions::GroupUnregisteredTypes ? MF_CHECKED : 0),
+        ID_VIEW_GROUP_TYPES, Localization::Lookup(IDS_MENU_GROUP_TYPES).c_str());
     menu.AppendMenu(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
     SetMenuDefaultItem(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE);
 
@@ -403,7 +405,11 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
         .hbmpItem = static_cast<HBITMAP>(m_searchBitmap.GetSafeHandle())
     };
     SetMenuItemInfo(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE, &mii);
-    menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+    if (UINT id = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this))
+    {
+        (id == ID_VIEW_GROUP_TYPES) ? AfxGetMainWnd()->OnCmdMsg(ID_VIEW_GROUP_TYPES, CN_COMMAND, nullptr, nullptr)
+            : OnCmdMsg(id, CN_COMMAND, nullptr, nullptr);
+    }
 }
 
 void CExtensionListControl::OnSearchExtension()

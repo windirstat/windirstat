@@ -96,6 +96,10 @@ BEGIN_MESSAGE_MAP(CMessageBoxDlg, CLayoutDialogEx)
     ON_BN_CLICKED(IDC_MESSAGE_BUTTONRIGHT, OnButtonRight)
     ON_WM_CTLCOLOR()
     ON_WM_ERASEBKGND()
+    ON_WM_SIZE()
+    ON_NOTIFY(NM_CUSTOMDRAW, IDC_MESSAGE_LISTVIEW, OnListViewCustomDraw)
+    ON_NOTIFY(LVN_GETDISPINFO, IDC_MESSAGE_LISTVIEW, OnListViewGetDispInfo)
+    ON_NOTIFY(LVN_ITEMCHANGING, IDC_MESSAGE_LISTVIEW, OnListViewItemChanging)
 END_MESSAGE_MAP()
 
 void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int shiftAmount)
@@ -185,11 +189,14 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Set display icon
     m_iconCtrl.SetIcon(m_icon);
 
-    // Add strings to optional listview
+    // Configure optional owner-data list view
     m_listView.ShowWindow(m_listViewItems.empty() ? SW_HIDE : SW_SHOW);
-    for (const auto& item : m_listViewItems)
+    if (!m_listViewItems.empty())
     {
-        m_listView.AddString(item.c_str());
+        std::ranges::sort(m_listViewItems);
+        m_listView.SetExtendedStyle(m_listView.GetExtendedStyle() | LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT);
+        m_listView.InsertColumn(0, L"");
+        m_listView.SetItemCountEx(static_cast<int>(m_listViewItems.size()), LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
     }
 
     // Hide checkbox if no text set
@@ -198,6 +205,13 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
     // Apply dark mode
     DarkMode::AdjustControls(*this);
+    if (DarkMode::IsDarkModeActive())
+    {
+        const COLORREF listBackColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+        m_listView.SetBkColor(listBackColor);
+        m_listView.SetTextBkColor(listBackColor);
+        m_listView.SetTextColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+    }
 
     // Collapse hidden controls vertically and add padding to vertically center the message area
     ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, 16);
@@ -287,6 +301,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     {
         SetWindowPos(nullptr, 0, 0, newWidth, newHeight, SWP_NOMOVE | SWP_NOZORDER);
     }
+    UpdateListViewColumnWidth();
 
     // Remove resizable border
     if (m_autoWidth) ModifyStyle(WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
@@ -303,6 +318,71 @@ BOOL CMessageBoxDlg::OnInitDialog()
     }
 
     return TRUE;
+}
+
+void CMessageBoxDlg::UpdateListViewColumnWidth()
+{
+    LVCOLUMN column{ .mask = LVCF_WIDTH };
+    if (!m_listView.GetSafeHwnd() || !m_listView.GetColumn(0, &column))
+    {
+        return;
+    }
+
+    CRect rect;
+    m_listView.GetClientRect(&rect);
+    m_listView.SetColumnWidth(0, rect.Width());
+}
+
+void CMessageBoxDlg::OnSize(const UINT nType, const int cx, const int cy)
+{
+    CLayoutDialogEx::OnSize(nType, cx, cy);
+    UpdateListViewColumnWidth();
+}
+
+void CMessageBoxDlg::OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    *pResult = CDRF_DODEFAULT;
+
+    if (!DarkMode::IsDarkModeActive())
+    {
+        return;
+    }
+
+    auto* customDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+    if (customDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
+    {
+        *pResult = CDRF_NOTIFYITEMDRAW;
+    }
+    else if (customDraw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
+    {
+        customDraw->clrText = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+        customDraw->clrTextBk = DarkMode::WdsSysColor(COLOR_WINDOW);
+        *pResult = CDRF_DODEFAULT;
+    }
+}
+
+void CMessageBoxDlg::OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    *pResult = FALSE;
+
+    auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    const int item = displayInfo->item.iItem;
+    if ((displayInfo->item.mask & LVIF_TEXT) == 0 || displayInfo->item.iSubItem != 0 ||
+        item < 0 || item >= static_cast<int>(m_listViewItems.size()) ||
+        displayInfo->item.pszText == nullptr || displayInfo->item.cchTextMax <= 0)
+    {
+        return;
+    }
+
+    wcsncpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax,
+        m_listViewItems[item].c_str(), _TRUNCATE);
+}
+
+void CMessageBoxDlg::OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    const auto* listView = reinterpret_cast<NMLISTVIEW*>(pNMHDR);
+    *pResult = ((listView->uChanged & LVIF_STATE) != 0 &&
+        ((listView->uNewState ^ listView->uOldState) & LVIS_SELECTED) != 0);
 }
 
 void CMessageBoxDlg::OnButtonLeft()
@@ -330,10 +410,11 @@ INT_PTR CMessageBoxDlg::DoModal()
 
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
+    // Let DarkMode handle setting the colors first
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    const int nID = pWnd->GetDlgCtrlID();
 
     // Set checkbox background to match dialog background in dark mode
+    const int nID = pWnd->GetDlgCtrlID();
     if (nID == IDC_MESSAGE_CHECKBOX)
     {
         pDC->SetBkColor(DarkMode::WdsSysColor(COLOR_BTNFACE));

@@ -193,6 +193,7 @@ $script:SettingsLowOutOfRangeValue = -99
 $script:SettingsHighOutOfRangeValue = 999999
 $script:SettingsSearchHighOutOfRangeValue = 9999999
 $script:SettingsDefaultSearchMaxResults = 10000
+$script:SettingsDefaultTreeMapFolderFramesDrawThreshold = 5
 $script:SettingsMaxBoundedCount = 10000
 $script:SettingsMaxSearchResults = 1000000
 $script:WindowsLocaleUserDefaultLcid = 0x0400
@@ -224,6 +225,8 @@ $script:SettingsMaxSelectDrivesRadio = 2
 $script:SettingsMinFolderHistoryCount = 0
 $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
+$script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
+$script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -7156,6 +7159,7 @@ namespace WdsSettingsTest
         IntField(out, first, "FilteringMaxAgeDays", COptions::FilteringMaxAgeDays.Obj());
         IntField(out, first, "TreeMapAmbientLightPercent", COptions::TreeMapAmbientLightPercent.Obj());
         IntField(out, first, "TreeMapBrightness", COptions::TreeMapBrightness.Obj());
+        IntField(out, first, "TreeMapFolderFramesDrawThreshold", COptions::TreeMapFolderFramesDrawThreshold.Obj());
         IntField(out, first, "TreeMapHeightFactor", COptions::TreeMapHeightFactor.Obj());
         IntField(out, first, "TreeMapLightSourceX", COptions::TreeMapLightSourceX.Obj());
         IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
@@ -7396,6 +7400,7 @@ $visualSettings = @(
     'TopViewColumnWidths',
     'TreeMapAmbientLightPercent',
     'TreeMapBrightness',
+    'TreeMapFolderFramesDrawThreshold',
     'TreeMapGrid',
     'TreeMapGridColor',
     'TreeMapHeightFactor',
@@ -7741,6 +7746,7 @@ try {
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 4
+        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold' $s.TreeMapFolderFramesDrawThreshold $script:SettingsDefaultTreeMapFolderFramesDrawThreshold
         Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 0
         Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 10
         Assert-True $ctx 'LanguageId is available' ([int] $s.LanguageId -in @($s.LanguageList))
@@ -7805,6 +7811,7 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchCase' 1
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
+        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
         Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
         $sections['Cleanups\UserDefinedCleanup00'] = [ordered] @{
             Title = 'Custom cleanup'
@@ -7859,6 +7866,7 @@ try {
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex '^BUILTIN\\Users$'
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 7
+        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold' $s.TreeMapFolderFramesDrawThreshold 17
         Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 2
         Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 3
         Assert-ArrayEqual $ctx 'SelectDrivesDrives' @($s.SelectDrivesDrives) @('C:\', 'D:\')
@@ -7901,6 +7909,7 @@ try {
         Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
         $s = $dump.Dump
@@ -7913,6 +7922,7 @@ try {
         Assert-Equal $ctx 'SelectDrivesRadio minimum' $s.SelectDrivesRadio $script:SettingsMinSelectDrivesRadio
         Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
+        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
 
         $dump
     }))
@@ -7929,6 +7939,7 @@ try {
         Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
@@ -7941,6 +7952,7 @@ try {
         Assert-Equal $ctx 'SelectDrivesRadio maximum' $s.SelectDrivesRadio $script:SettingsMaxSelectDrivesRadio
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
+        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
 
         $dump
     }))
