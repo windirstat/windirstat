@@ -63,6 +63,7 @@ public:
     std::wstring GetSaveToPath() const { return m_saveToPath; }
     std::wstring GetSaveDupesToPath() const { return m_saveDupesToPath; }
     std::wstring GetSavePermsToPath() const { return m_savePermsToPath; }
+    std::wstring GetAppTitle() const;
 
 protected:
 

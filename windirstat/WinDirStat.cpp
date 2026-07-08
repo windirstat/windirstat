@@ -20,6 +20,7 @@
 #include "AboutDlg.h"
 #include "TreeMapView.h"
 #include "CsvLoader.h"
+#include "Version.h"
 
 CIconHandler* GetIconHandler()
 {
@@ -113,6 +114,12 @@ std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstrin
 
     ASSERT(u64free.QuadPart <= u64total.QuadPart);
     return { u64total.QuadPart, u64free.QuadPart };
+}
+
+std::wstring CDirStatApp::GetAppTitle() const
+{
+    return std::format(L"{} {}{}.{}.{}", Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+        PRODUCTION == 0 ? L"Beta " : L"", PRD_MAJVER, PRD_MINVER, PRD_PATCH);
 }
 
 bool CDirStatApp::IsFollowingAllowed(const DWORD reparseTag) const

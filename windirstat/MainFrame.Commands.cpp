@@ -836,7 +836,7 @@ BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, C
 
     Localization::UpdateMenu(*GetMenu());
     Localization::UpdateDialogs(*this);
-    SetTitle(wds::strWinDirStat);
+    SetTitle(CDirStatApp::Get()->GetAppTitle().c_str());
 
     return TRUE;
 }
