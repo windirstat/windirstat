@@ -17,11 +17,11 @@
 
 #include "pch.h"
 #include "FileTreeView.h"
-#include "TreeMapView.h"
+#include "FlameGraphView.h"
 
-IMPLEMENT_DYNCREATE(CTreeMapView, CWinDirStatPane)
+IMPLEMENT_DYNCREATE(CFlameGraphView, CWinDirStatPane)
 
-BEGIN_MESSAGE_MAP(CTreeMapView, CWinDirStatPane)
+BEGIN_MESSAGE_MAP(CFlameGraphView, CWinDirStatPane)
     ON_WM_SIZE()
     ON_WM_LBUTTONDBLCLK()
     ON_WM_LBUTTONDOWN()
@@ -30,9 +30,10 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CWinDirStatPane)
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
     ON_WM_MOUSEWHEEL()
+    ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
-void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
+void CFlameGraphView::SuspendRecalculationDrawing(const bool suspend)
 {
     m_drawingSuspended = suspend;
     if (!suspend)
@@ -41,26 +42,26 @@ void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
     }
 }
 
-bool CTreeMapView::IsShowTreeMap() const
+bool CFlameGraphView::IsShowTreeMap() const
 {
     return m_showTreeMap;
 }
 
-void CTreeMapView::ShowTreeMap(const bool show)
+void CFlameGraphView::ShowTreeMap(const bool show)
 {
     m_showTreeMap = show;
 }
 
-BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CFlameGraphView::PreCreateWindow(CREATESTRUCT& cs)
 {
     CWinDirStatPane::PreCreateWindow(cs);
 
     WNDCLASS wc;
-    if (!::GetClassInfo(AfxGetInstanceHandle(), L"WinDirStatTreeMapClass", &wc))
+    if (!::GetClassInfo(AfxGetInstanceHandle(), L"WinDirStatFlameGraphClass", &wc))
     {
         ::GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc);
         wc.hbrBackground = nullptr;
-        wc.lpszClassName = L"WinDirStatTreeMapClass";
+        wc.lpszClassName = L"WinDirStatFlameGraphClass";
         ::RegisterClass(&wc);
     }
 
@@ -68,13 +69,13 @@ BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
     return TRUE;
 }
 
-void CTreeMapView::DrawEmptyView()
+void CFlameGraphView::DrawEmptyView()
 {
     CClientDC dc(this);
     DrawEmptyView(&dc);
 }
 
-void CTreeMapView::DrawEmptyView(CDC* pDC)
+void CFlameGraphView::DrawEmptyView(CDC* pDC)
 {
     constexpr COLORREF emptyBg = RGB(15, 15, 15);
 
@@ -85,29 +86,38 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     {
         pDC->FillSolidRect(rc, emptyBg);
 
-        CTreeMap::Options options = COptions::TreeMapOptions;
-        options.showExtensions = false;
-        options.showFolderFrames = false;
+        // Draw a simple flame graph-like placeholder with demo rectangles
+        const int cols = 8;
+        const int rows = 5;
+        const int cellW = rc.Width() / cols;
+        const int cellH = rc.Height() / rows;
 
-        struct Tile { int x, y, w, h, shade; };
-        static constexpr Tile tiles[] = {
-            {  0,  0, 25, 58, 58 }, { 25,  0, 13, 34, 72 }, { 25, 34, 13, 24, 48 },
-            {  0, 58, 18, 42, 76 }, { 18, 58, 20, 25, 54 }, { 18, 83, 20, 17, 88 },
-            { 38,  0, 28, 44, 66 }, { 38, 44, 14, 31, 82 }, { 52, 44, 14, 31, 52 },
-            { 38, 75, 28, 25, 92 }, { 66,  0, 19, 62, 60 }, { 85,  0, 15, 38, 78 },
-            { 66, 62, 16, 38, 50 }, { 82, 38, 18, 36, 86 }, { 82, 74, 18, 26, 68 },
-        };
-
-        for (const Tile& t : tiles)
+        for (int r = 0; r < rows; r++)
         {
-            CRect tile(
-                rc.left + rc.Width()  * t.x / 100,
-                rc.top  + rc.Height() * t.y / 100,
-                rc.left + rc.Width()  * (t.x + t.w) / 100,
-                rc.top  + rc.Height() * (t.y + t.h) / 100);
+            const int y = rc.top + r * cellH;
+            const int height = (r == rows - 1) ? rc.bottom - y : cellH;
 
-            if (tile.Width() > 0 && tile.Height() > 0)
-                m_treeMap.DrawColorPreview(pDC, tile, RGB(t.shade, t.shade, t.shade), &options);
+            // Draw row label
+            CRect labelRc(rc.left, y, rc.left + 30, y + height);
+            if (labelRc.Height() >= 10)
+            {
+                pDC->FillSolidRect(labelRc, RGB(30, 30, 30));
+            }
+
+            int x = rc.left + 30;
+            const int colsThisRow = cols - r;
+            for (int c = 0; c < colsThisRow; c++)
+            {
+                const int shade = 40 + r * 30 + c * 10;
+                const int w = (c == colsThisRow - 1) ? rc.right - x : cellW;
+
+                CRect tile(x, y, x + w, y + height);
+                if (tile.Width() > 0 && tile.Height() > 0)
+                {
+                    pDC->FillSolidRect(tile, RGB(shade, shade, shade));
+                }
+                x += w;
+            }
         }
     }
     else
@@ -120,20 +130,20 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
         if (rc.Width() > m_dimmedSize.cx)
         {
             CRect r = rc;
-            r.left  = r.left + m_dimmedSize.cx;
+            r.left = r.left + m_dimmedSize.cx;
             pDC->FillSolidRect(r, emptyBg);
         }
 
         if (rc.Height() > m_dimmedSize.cy)
         {
             CRect r = rc;
-            r.top   = r.top + m_dimmedSize.cy;
+            r.top = r.top + m_dimmedSize.cy;
             pDC->FillSolidRect(r, emptyBg);
         }
     }
 }
 
-void CTreeMapView::OnDraw(CDC * pDC)
+void CFlameGraphView::OnDraw(CDC* pDC)
 {
     const CItem* root = CWinDirStatModel::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone() || m_drawingSuspended || !m_showTreeMap)
@@ -149,32 +159,46 @@ void CTreeMapView::OnDraw(CDC * pDC)
     CDC dcmem;
     dcmem.CreateCompatibleDC(pDC);
 
-    if (!IsDrawn())
+    const CItem* zoomItem = CWinDirStatModel::Get()->GetZoomItem();
+    const int fullHeight = ComputeFlameFullHeight();
+
+    // Clamp scroll position
+    const int maxScroll = std::max(0, fullHeight - static_cast<int>(m_size.cy));
+    m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
+
+    // Update scroll bar
+    SCROLLINFO si = { sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE | SIF_POS };
+    si.nMin = 0;
+    si.nMax = fullHeight - 1;
+    si.nPage = m_size.cy;
+    si.nPos = m_scrollPos;
+    SetScrollInfo(SB_VERT, &si, TRUE);
+
+    // Render flame graph at full height into a temporary buffer
+    CBitmap fullBmp;
+    fullBmp.CreateCompatibleBitmap(pDC, m_size.cx, fullHeight);
+    CSelectObject sobmp(&dcmem, &fullBmp);
+
+    m_flameGraph.DrawFlameGraph(&dcmem, CRect(0, 0, m_size.cx, fullHeight), const_cast<CItem*>(zoomItem));
+
+    // BitBlt visible portion to screen with scroll offset
+    const int copyHeight = std::min(static_cast<int>(m_size.cy), fullHeight - m_scrollPos);
+    if (copyHeight > 0)
     {
-        CWaitCursor wc;
-
-        m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
-
-        CSelectObject sobmp(&dcmem, &m_bitmap);
-
-        if (CWinDirStatModel::Get()->IsZoomed())
-        {
-            DrawZoomFrame(&dcmem, rc);
-        }
-
-        m_treeMap.DrawTreeMap(&dcmem, rc, CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
+        pDC->BitBlt(0, 0, m_size.cx, copyHeight, &dcmem, 0, m_scrollPos, SRCCOPY);
     }
 
-    CSelectObject sobmp2(&dcmem, &m_bitmap);
+    // Fill area below the flame graph content with background
+    if (m_size.cy > copyHeight)
+    {
+        pDC->FillSolidRect(CRect(0, copyHeight, m_size.cx, m_size.cy), CFlameGraph::BACKGROUND_COLOR);
+    }
 
-    pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
-
-    DrawHighlights(pDC);
 }
 
-void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
+void CFlameGraphView::DrawZoomFrame(CDC* pdc, CRect& rc) const
 {
-    CRect r  = rc;
+    CRect r = rc;
     r.bottom = r.top + ZoomFrameWidth;
     pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
@@ -193,7 +217,7 @@ void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
     rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
 }
 
-void CTreeMapView::DrawHighlights(CDC* pdc)
+void CFlameGraphView::DrawHighlights(CDC* pdc)
 {
     switch (CMainFrame::Get()->GetLogicalFocus())
     {
@@ -211,13 +235,12 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
     }
 }
 
-// True if the leaf is a file whose extension is in the highlighted (unregistered) set
 static bool IsUnregisteredLeaf(const CItem* item, const std::unordered_set<std::wstring>& set)
 {
     return item->IsTypeOrFlag(IT_FILE) && set.contains(item->GetExtension());
 }
 
-void CTreeMapView::DrawHighlightExtension(CDC* pdc)
+void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
 
@@ -267,7 +290,7 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
     }
 }
 
-void CTreeMapView::DrawSelection(CDC* pdc) const
+void CFlameGraphView::DrawSelection(CDC* pdc) const
 {
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
 
@@ -277,7 +300,6 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     const auto& items = CWinDirStatModel::Get()->GetAllSelected();
     for (const auto& item : items)
     {
-        // Ignore if not a child of the current zoomed item
         if (!CWinDirStatModel::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
 
         const auto itemToSelect = item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
@@ -285,15 +307,10 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     }
 }
 
-// A pen and the null brush must be selected.
-// Draws the highlight rectangle of item. If single, the rectangle is slightly
-// bigger than the item rect, else it fits inside.
-//
-void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
+void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
 {
     CRect rc(item->TmiGetRectangle());
 
-    // Offset the display rectangle if zoomed
     if (CWinDirStatModel::Get()->IsZoomed())
     {
         rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
@@ -302,11 +319,6 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     if (single)
     {
         CRect rcClient = ClientRectOf(this);
-        if (m_treeMap.GetOptions().grid)
-        {
-            rc.right++;
-            rc.bottom++;
-        }
 
         if (rcClient.left < rc.left) rc.left--;
         if (rcClient.top < rc.top) rc.top--;
@@ -322,24 +334,18 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     RenderHighlightRectangle(pdc, rc);
 }
 
-// A pen and the null brush must be selected.
-//
-void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
+void CFlameGraphView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
 {
     ASSERT(rc.Width() >= 0);
     ASSERT(rc.Height() >= 0);
 
-    // The documentation of CDC::Rectangle() says that the width
-    // and height must be greater than 2. Experiment says that
-    // it must be greater than 1. We follow the documentation.
-
     if (rc.Width() >= 7 && rc.Height() >= 7)
     {
-        pdc->Rectangle(rc); // w = 7
+        pdc->Rectangle(rc);
         rc.DeflateRect(1, 1);
-        pdc->Rectangle(rc); // w = 5
+        pdc->Rectangle(rc);
         rc.DeflateRect(1, 1);
-        pdc->Rectangle(rc); // w = 3
+        pdc->Rectangle(rc);
     }
     else
     {
@@ -347,16 +353,14 @@ void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
     }
 }
 
-CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
+CItem* CFlameGraphView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
 {
-    // Validate that the document and root are in a ready state
     const CItem* root = CWinDirStatModel::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone())
     {
         return nullptr;
     }
 
-    // Offset the click point if zoomed
     CPoint pointClicked = point;
     if (isScreenCoords) ScreenToClient(&pointClicked);
 
@@ -365,13 +369,35 @@ CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
         pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
     }
 
-    if (!IsDrawn()) return nullptr;
+    // Account for scroll offset: the layout is at full height,
+    // and the screen shows a portion starting at m_scrollPos
+    pointClicked.y += m_scrollPos;
 
-    return static_cast<CItem*>(m_treeMap.FindItemByPoint(
+    return static_cast<CItem*>(m_flameGraph.FindItemByPoint(
         CWinDirStatModel::Get()->GetZoomItem(), pointClicked));
 }
 
-void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
+int CFlameGraphView::ComputeFlameFullHeight() const
+{
+    const CItem* zoomItem = CWinDirStatModel::Get()->GetZoomItem();
+    const CItem* rootItem = CWinDirStatModel::Get()->GetRootItem();
+
+    // Count breadcrumb rows (ancestors of zoom item up to root)
+    int breadcrumbRows = 0;
+    if (zoomItem != rootItem)
+    {
+        for (const CItem* p = zoomItem->GetParent(); p != nullptr; p = p->GetParent())
+        {
+            breadcrumbRows++;
+            if (p == rootItem) break;
+        }
+    }
+
+    const int maxDepth = CFlameGraph::ComputeMaxDepth(const_cast<CItem*>(zoomItem), 0);
+    return (breadcrumbRows + std::max(1, maxDepth)) * CFlameGraph::ROW_HEIGHT;
+}
+
+void CFlameGraphView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CWinDirStatPane::OnSize(nType, cx, cy);
     const CSize sz(cx, cy);
@@ -379,33 +405,71 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
     {
         Inactivate();
         m_size = sz;
+        if (!m_drawingSuspended) Invalidate();
     }
 }
 
-void CTreeMapView::OnLButtonDblClk(UINT nFlags, CPoint point)
+void CFlameGraphView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-    if (CItem* item = ResolveItemAtPoint(point); item && item != CWinDirStatModel::Get()->GetZoomItem())
-    {
-        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
-        AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
-    }
-    CWinDirStatPane::OnLButtonDblClk(nFlags, point);
+    // Treat double-click as a regular click in flame graph mode
+    OnLButtonDown(nFlags, point);
 }
 
-void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
+void CFlameGraphView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     m_hoverItem = nullptr;
     if (auto* item = ResolveItemAtPoint(point))
     {
+        m_flameGraph.SetHoverItem(nullptr);
+
+        // Check if clicked item is a breadcrumb ancestor
+        bool isBreadcrumb = false;
+        for (const auto* b : m_flameGraph.GetBreadcrumbs())
+        {
+            if (b == item) { isBreadcrumb = true; break; }
+        }
+
+        // Update tree view selection before changing zoom
         CWinDirStatModel::Get()->ClearReselectChildStack();
         NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
+
+        if (isBreadcrumb)
+        {
+            // Navigate back to breadcrumb ancestor
+            m_scrollPos = 0;
+            CWinDirStatModel::Get()->SetZoomItem(item);
+        }
+        else if (item == CWinDirStatModel::Get()->GetZoomItem() || item == CWinDirStatModel::Get()->GetRootItem())
+        {
+            // Clicking the current zoom item or root → reset to full tree
+            m_scrollPos = 0;
+            CWinDirStatModel::Get()->SetZoomItem(CWinDirStatModel::Get()->GetRootItem());
+        }
+        else
+        {
+            // Zoom into clicked item
+            m_scrollPos = 0;
+            if (item->IsTypeOrFlag(IT_FILE))
+            {
+                CWinDirStatModel::Get()->SetZoomItem(item->GetParent());
+            }
+            else
+            {
+                CWinDirStatModel::Get()->SetZoomItem(item);
+            }
+        }
     }
     CWinDirStatPane::OnLButtonDown(nFlags, point);
 }
 
-void CTreeMapView::OnMButtonDown(UINT nFlags, CPoint point)
+void CFlameGraphView::OnMButtonDown(UINT nFlags, CPoint point)
 {
-    if (ResolveItemAtPoint(point))
+    if (CWinDirStatModel::Get()->IsZoomed())
+    {
+        m_scrollPos = 0;
+        CWinDirStatModel::Get()->SetZoomItem(CWinDirStatModel::Get()->GetRootItem());
+    }
+    else if (ResolveItemAtPoint(point))
     {
         AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMRESET);
     }
@@ -413,27 +477,24 @@ void CTreeMapView::OnMButtonDown(UINT nFlags, CPoint point)
     CWinDirStatPane::OnMButtonDown(nFlags, point);
 }
 
-bool CTreeMapView::IsDrawn() const
+bool CFlameGraphView::IsDrawn() const
 {
     return m_bitmap.m_hObject != nullptr;
 }
 
-void CTreeMapView::Inactivate()
+void CFlameGraphView::Inactivate()
 {
     if (m_bitmap.m_hObject == nullptr) return;
 
-    // Move the old bitmap to m_dimmed for later dimmed display
     m_dimmed.DeleteObject();
     m_dimmed.Attach(m_bitmap.Detach());
     m_dimmedSize = m_size;
 
-    // Dim m_dimmed contents to indicate inactive/refresh state
     CClientDC dc(this);
     CDC dcmem;
     dcmem.CreateCompatibleDC(&dc);
     CSelectObject sobmp(&dcmem, &m_dimmed);
 
-    // Apply the dimming overlay
     constexpr BLENDFUNCTION blendFunc{
         .BlendOp = AC_SRC_OVER, .BlendFlags = 0,
         .SourceConstantAlpha = 175, .AlphaFormat = 0 };
@@ -442,7 +503,7 @@ void CTreeMapView::Inactivate()
         0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunc);
 }
 
-void CTreeMapView::EmptyView()
+void CFlameGraphView::EmptyView()
 {
     if (m_bitmap.m_hObject != nullptr)
     {
@@ -455,12 +516,12 @@ void CTreeMapView::EmptyView()
     }
 }
 
-void CTreeMapView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CFlameGraphView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     CMainFrame::Get()->GetFileTreeView()->SetFocus();
 }
 
-void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
+void CFlameGraphView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
     if (!CWinDirStatModel::Get()->IsRootDone())
     {
@@ -490,6 +551,7 @@ void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
     case MODEL_CHANGE_TREEMAP_STYLE:
     case MODEL_CHANGE_ZOOM:
         {
+            m_scrollPos = 0;
             Inactivate();
             CWinDirStatPane::OnUpdate(sender, change, item);
         }
@@ -506,7 +568,7 @@ void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
     }
 }
 
-HoverInfo CTreeMapView::GetHoverInfo() const
+HoverInfo CFlameGraphView::GetHoverInfo() const
 {
     CPoint point;
     GetCursorPos(&point);
@@ -520,10 +582,8 @@ HoverInfo CTreeMapView::GetHoverInfo() const
     return { m_paneTextOverride, m_paneSizeOverride };
 }
 
-void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
+void CFlameGraphView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    // List of context menu command IDs and whether the menu
-    // should remain open after executing the command
     static constexpr struct {
         UINT id;
         bool isPersistent;
@@ -533,7 +593,6 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
         { ID_TREEMAP_SELECT_PARENT,      true  },
         { ID_TREEMAP_RESELECT_CHILD,     true  },
         { ID_VIEW_GROUP_TYPES,           true  },
-        { ID_TREEMAP_SHOW_FOLDER_FRAMES, true  },
         { ID_TREEMAP_SHOW_EXTENSIONS,    true  },
         { ID_TREEMAP_LOGICAL_SIZE,       true  },
         { ID_EDIT_COPY_CLIPBOARD,        false },
@@ -543,7 +602,6 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
         { ID_POPUP_CANCEL,               false }
     };
 
-    // Helper lambda to check if a command ID is in the list of persistent context menu commands
     [[msvc::flatten]] static constexpr auto IsContextMenuPersistent = [](UINT id) -> bool {
         return std::ranges::any_of(contextMenuPersistent, [id](const auto& cmd) {
             return cmd.id == id && cmd.isPersistent;
@@ -575,7 +633,7 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
     }
 }
 
-void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
+void CFlameGraphView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
     auto* item = ResolveItemAtPoint(point);
     if (item != nullptr)
@@ -584,35 +642,52 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
         m_paneSizeOverride = item->GetSizeLogical();
         CMainFrame::Get()->UpdatePaneText();
     }
-    if (item != m_hoverItem)
+    if (item != m_flameGraph.GetHoverItem())
     {
-        m_hoverItem = item;
+        m_flameGraph.SetHoverItem(item);
         Invalidate();
     }
 }
 
-BOOL CTreeMapView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+BOOL CFlameGraphView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
     if (!CMainFrame::Get())
         return CWinDirStatPane::OnMouseWheel(nFlags, zDelta, pt);
 
     const int clicks = zDelta / WHEEL_DELTA;
     if (clicks == 0) return TRUE;
+    m_scrollPos -= clicks * CFlameGraph::ROW_HEIGHT * 3;
+    const int maxScroll = ComputeFlameFullHeight() - static_cast<int>(m_size.cy);
+    m_scrollPos = std::clamp(m_scrollPos, 0, std::max(0, maxScroll));
+    SetScrollPos(SB_VERT, m_scrollPos, TRUE);
+    Invalidate();
+    return TRUE;
+}
 
-    // Determine the Command IDs based on the Modifier State
-    // Use the Ctrl key to toggle between Navigation and Zooming
-    const UINT cmdUp = (nFlags & MK_CONTROL) ? ID_TREEMAP_ZOOMIN : ID_TREEMAP_SELECT_PARENT;
-    const UINT cmdDown = (nFlags & MK_CONTROL) ? ID_TREEMAP_ZOOMOUT : ID_TREEMAP_RESELECT_CHILD;
+void CFlameGraphView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* /*pScrollBar*/)
+{
+    const int cy = static_cast<int>(m_size.cy);
+    const int oldPos = m_scrollPos;
 
-    // Resolve the active command based on scroll direction
-    const UINT targetCmd = (clicks > 0) ? cmdUp : cmdDown;
-    const int absoluteClicks = std::abs(clicks);
-
-    // Dispatch the commands through the central routing engine
-    for (int i = 0; i < absoluteClicks; ++i)
+    switch (nSBCode)
     {
-        CMainFrame::Get()->SendMessage(WM_COMMAND, targetCmd);
+    case SB_LINEUP:        m_scrollPos -= CFlameGraph::ROW_HEIGHT; break;
+    case SB_LINEDOWN:      m_scrollPos += CFlameGraph::ROW_HEIGHT; break;
+    case SB_PAGEUP:        m_scrollPos -= cy; break;
+    case SB_PAGEDOWN:      m_scrollPos += cy; break;
+    case SB_THUMBTRACK:
+    case SB_THUMBPOSITION: m_scrollPos = static_cast<int>(nPos); break;
+    case SB_TOP:           m_scrollPos = 0; break;
+    case SB_BOTTOM:        m_scrollPos = INT_MAX; break;
     }
 
-    return TRUE;
+    // Clamp to valid range
+    const int maxScroll = ComputeFlameFullHeight() - cy;
+    m_scrollPos = std::clamp(m_scrollPos, 0, std::max(0, maxScroll));
+
+    if (m_scrollPos != oldPos)
+    {
+        SetScrollPos(SB_VERT, m_scrollPos, TRUE);
+        Invalidate();
+    }
 }

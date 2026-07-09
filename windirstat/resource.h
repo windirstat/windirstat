@@ -249,6 +249,7 @@
 #define ID_WATCHER_AUTOSCROLL           32953
 #define ID_WATCHER_CLEAR                32954
 #define ID_WATCHER_LABEL                32955
+#define ID_VIEW_FLAMEGRAPH              32956
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347

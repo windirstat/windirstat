@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "Filtering.h"
 #include "TreeMapView.h"
+#include "FlameGraphView.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
 #include "DrawTextCache.h"
@@ -326,12 +327,11 @@ void CMainFrame::UpdatePaneText()
         Localization::Lookup(IDS_IDLEMESSAGE) : wds::strEmpty;
     ULONGLONG size = MAXULONGLONG;
 
-    // Allow override on hover
-    if (const auto [hoverPath, hoverSize] =
-        m_treeMapView->GetTreeMapHoverInfo(); !hoverPath.empty())
+    // Allow override on hover (check active graph pane)
+    if (const auto hoverInfo = GetActiveGraphPane()->GetHoverInfo(); !hoverInfo.IsEmpty())
     {
-        fileSelectionText = hoverPath;
-        size = hoverSize;
+        fileSelectionText = hoverInfo.path;
+        size = hoverInfo.size;
     }
 
     // Only get the data if the scan model is not actively updating
@@ -417,7 +417,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetCheck(GetTreeMapView()->IsShowTreeMap());
+    pCmdUI->SetRadio(!COptions::UseFlameGraph);
 }
 
 void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
@@ -433,7 +433,6 @@ void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
 
 void CMainFrame::OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI)
 {
-    // Only allow regrouping when types are shown and the scan has finished
     const CWinDirStatModel* model = CWinDirStatModel::Get();
     pCmdUI->Enable(GetExtensionView()->IsShowTypes() && model->IsScanSettled());
     pCmdUI->SetCheck(COptions::GroupUnregisteredTypes);
@@ -446,21 +445,30 @@ void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
 
 void CMainFrame::OnViewShowTreeMap()
 {
-    GetTreeMapView()->ShowTreeMap(!GetTreeMapView()->IsShowTreeMap());
-    if (GetTreeMapView()->IsShowTreeMap())
-    {
-        RestoreTreeMapView();
-    }
-    else
-    {
-        MinimizeTreeMapView();
-    }
+    if (!COptions::UseFlameGraph && IsActiveGraphPaneShown()) return;
+    COptions::UseFlameGraph = false;
+    ShowActiveGraphPane(true);
+    RebuildLayout();
+}
+
+void CMainFrame::OnViewFlameGraph()
+{
+    if (COptions::UseFlameGraph) return;
+    COptions::UseFlameGraph = true;
+    ShowActiveGraphPane(true);
+    RebuildLayout();
+}
+
+void CMainFrame::OnUpdateViewFlameGraph(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetRadio(COptions::UseFlameGraph);
 }
 
 void CMainFrame::OnViewTreeMapUseLogical()
 {
     COptions::TreeMapUseLogical = !COptions::TreeMapUseLogical;
-    if (GetTreeMapView()->IsShowTreeMap())
+    if (IsActiveGraphPaneShown())
     {
         CWinDirStatModel::Get()->RefreshItem(CWinDirStatModel::Get()->GetRootItem());
     }
@@ -868,7 +876,7 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
     m_splitter.ClearPaneTracking();
     m_subSplitter.ClearPaneTracking();
 
-    auto showTreeMap = [this](bool visible) { GetTreeMapView()->ShowTreeMap(visible); };
+    auto showTreeMap = [this](bool visible) { ShowActiveGraphPane(visible); };
     auto showFileTypes = [this](bool visible) { GetExtensionView()->ShowTypes(visible); };
 
     switch (topo)
@@ -1045,10 +1053,12 @@ void CMainFrame::RebuildLayout(bool resetPositions)
     const HWND hFTV   = GetFileTabbedView()->GetSafeHwnd();
     const HWND hExtV  = GetExtensionView()->GetSafeHwnd();
     const HWND hTMV   = GetTreeMapView()->GetSafeHwnd();
+    const HWND hFGV   = GetFlameGraphView()->GetSafeHwnd();
     const HWND hFrame = GetSafeHwnd();
     ::SetParent(hFTV,  hFrame);
     ::SetParent(hExtV, hFrame);
     ::SetParent(hTMV,  hFrame);
+    ::SetParent(hFGV,  hFrame);
 
     if (m_splitter.GetSafeHwnd())
         m_splitter.DestroyWindow();
@@ -1059,7 +1069,11 @@ void CMainFrame::RebuildLayout(bool resetPositions)
         COptions::SubSplitterPos  = -1.0;
     }
 
-    BuildSplitterLayout(topo, perm, hFTV, hExtV, hTMV);
+    const HWND hActiveGraph = COptions::UseFlameGraph ? hFGV : hTMV;
+    const HWND hInactiveGraph = COptions::UseFlameGraph ? hTMV : hFGV;
+    BuildSplitterLayout(topo, perm, hFTV, hExtV, hActiveGraph);
+    ::ShowWindow(hActiveGraph, SW_SHOW);
+    ::ShowWindow(hInactiveGraph, SW_HIDE);
     ::ShowWindow(hExtV, SW_SHOW);
 
     ConfigureSplitterCallbacks(topo, perm);
@@ -1097,11 +1111,11 @@ void CMainFrame::RebuildLayout(bool resetPositions)
 
     if (!GetExtensionView()->IsShowTypes())
         MinimizeExtensionView();
-    if (!GetTreeMapView()->IsShowTreeMap())
-        MinimizeTreeMapView();
+    if (!IsActiveGraphPaneShown())
+        MinimizeGraphPane();
 
     DarkMode::AdjustControls(GetSafeHwnd());
     GetFileTabbedView()->RedrawWindow();
-    GetTreeMapView()->RedrawWindow();
+    GetActiveGraphPane()->RedrawWindow();
     GetExtensionView()->RedrawWindow();
 }

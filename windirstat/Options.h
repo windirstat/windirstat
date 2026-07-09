@@ -164,6 +164,7 @@ public:
     static Setting<bool> ShowToolBar;
     static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
+    static Setting<bool> UseFlameGraph;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;

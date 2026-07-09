@@ -70,6 +70,7 @@ Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
 Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
 Setting<bool> COptions::LargeToolBar(OptionsGeneral, L"LargeToolBar", false);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
+Setting<bool> COptions::UseFlameGraph(OptionsGeneral, L"UseFlameGraph", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);

@@ -19,21 +19,24 @@
 
 #include "pch.h"
 #include "WinDirStatPane.h"
-#include "TreeMap.h"
+#include "FlameGraph.h"
 
 class CWinDirStatModel;
 class CItem;
 
 //
-// CTreeMapView. The treemap window.
+// CFlameGraphView. The flame graph (icicle plot) window.
+// A standalone pane that parallels CTreeMapView.
 //
-class CTreeMapView final : public CWinDirStatPane
+class CFlameGraphView final : public CWinDirStatPane
 {
 protected:
-    CTreeMapView() = default;
-    DECLARE_DYNCREATE(CTreeMapView)
+    DECLARE_DYNCREATE(CFlameGraphView)
 
-    ~CTreeMapView() override = default;
+public:
+    CFlameGraphView() = default;
+
+    ~CFlameGraphView() override = default;
 
     void SuspendRecalculationDrawing(bool suspend);
     bool IsShowTreeMap() const;
@@ -52,7 +55,6 @@ protected:
 
     void DrawZoomFrame(CDC* pdc, CRect& rc) const;
     void DrawHighlights(CDC* pdc);
-
     void DrawHighlightExtension(CDC* pdc);
 
     void DrawSelection(CDC* pdc) const;
@@ -61,19 +63,21 @@ protected:
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
     CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
+    int ComputeFlameFullHeight() const;
 
     static constexpr int ZoomFrameWidth = 4;
 
-    std::wstring m_paneTextOverride;  // Populated with the last hovered item for a period of time
-    ULONGLONG m_paneSizeOverride = 0; // Size of the last hovered item for display in the pane text
-    bool m_drawingSuspended = false;  // True while the user is resizing the window.
-    bool m_showTreeMap = true;        // False, if the user switched off the treemap (by F9).
-    const CItem* m_hoverItem = nullptr; // Item under cursor for hover highlighting
-    CSize m_size{ 0, 0 };             // Current size of view
-    CTreeMap m_treeMap;               // Treemap generator
-    CBitmap m_bitmap;                 // Cached view. If m_hObject is nullptr, the view must be recalculated.
-    CSize m_dimmedSize{ 0,0 };        // Size of bitmap m_dimmed
-    CBitmap m_dimmed;                 // Dimmed view. Used during refresh to avoid the ooops-effect.
+    std::wstring m_paneTextOverride;
+    ULONGLONG m_paneSizeOverride = 0;
+    bool m_drawingSuspended = false;
+    bool m_showTreeMap = true;
+    const CItem* m_hoverItem = nullptr;
+    int m_scrollPos = 0;
+    CSize m_size{ 0, 0 };
+    CFlameGraph m_flameGraph;
+    CBitmap m_bitmap;
+    CSize m_dimmedSize{ 0, 0 };
+    CBitmap m_dimmed;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -84,4 +88,5 @@ protected:
     afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 };

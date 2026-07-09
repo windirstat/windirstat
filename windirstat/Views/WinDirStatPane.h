@@ -22,6 +22,13 @@
 class CItem;
 enum MODEL_CHANGE : std::uint8_t;
 
+struct HoverInfo
+{
+    std::wstring path;
+    ULONGLONG size = 0;
+    bool IsEmpty() const { return path.empty(); }
+};
+
 //
 // CWinDirStatPane. A plain child window base for splitter/tab panes.
 // It supplies the small subset of pane behavior this UI uses.
@@ -41,6 +48,8 @@ protected:
 
 public:
     virtual void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item);
+    virtual HoverInfo GetHoverInfo() const { return {}; }
+    virtual void SuspendRecalculationDrawing(bool /*suspend*/) {};
 
 protected:
     DECLARE_MESSAGE_MAP()
