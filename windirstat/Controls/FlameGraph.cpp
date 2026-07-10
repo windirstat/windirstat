@@ -412,6 +412,18 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     {
         RenderLabel(pdc, item, rc, drawColor);
     }
+
+    // 1px gap at right and bottom edges — each item draws its own right/bottom
+    // separator, so adjacent items have exactly 1px of background between them
+    if (rc.Width() >= 2 && rc.Height() >= 2)
+    {
+        CPen gapPen(PS_SOLID, 1, BACKGROUND_COLOR);
+        CSelectObject soPen(pdc, &gapPen);
+        pdc->MoveTo(rc.right - 1, rc.top);
+        pdc->LineTo(rc.right - 1, rc.bottom);
+        pdc->MoveTo(rc.left, rc.bottom - 1);
+        pdc->LineTo(rc.right, rc.bottom - 1);
+    }
 }
 
 void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
