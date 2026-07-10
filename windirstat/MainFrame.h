@@ -192,6 +192,7 @@ protected:
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
     CFlameGraphView* GetFlameGraphView() const { return m_flameGraphView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
+    void SelectGraphPane(bool useFlameGraph);
     void ShowActiveGraphPane(bool show);
     bool IsActiveGraphPaneShown() const;
     CWinDirStatPane* GetActiveGraphPane() const;
@@ -269,7 +270,7 @@ protected:
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowTreeMap();
+    afx_msg void OnViewTreeMap();
     afx_msg void OnViewFlameGraph();
     afx_msg void OnUpdateViewFlameGraph(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMapUseLogical();
@@ -322,6 +323,6 @@ public:
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
 
 private:
-    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hTMV);
+    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hGraph);
     void ConfigureSplitterCallbacks(int topology, int permutation);
 };

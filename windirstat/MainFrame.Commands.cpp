@@ -36,6 +36,21 @@
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
 constexpr auto ID_STATUSPANE_SIZE_INDEX = 1;
 constexpr auto ID_STATUSPANE_RAM_INDEX = 2;
+constexpr auto ID_INACTIVE_GRAPH_PANE = 0xEB00; // Outside MFC's control-bar and splitter-pane ID ranges.
+
+static void SetNativeMenuRadio(CCmdUI* command, const bool checked)
+{
+    command->SetCheck(checked);
+    if (command->m_pMenu == nullptr || command->m_pSubMenu != nullptr) return;
+
+    MENUITEMINFO info{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_FTYPE | MIIM_CHECKMARKS };
+    if (!command->m_pMenu->GetMenuItemInfo(command->m_nIndex, &info, TRUE)) return;
+
+    info.fType |= MFT_RADIOCHECK;
+    info.hbmpChecked = nullptr;
+    info.hbmpUnchecked = nullptr;
+    command->m_pMenu->SetMenuItemInfo(command->m_nIndex, &info, TRUE);
+}
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOOL bSysMenu)
 {
@@ -328,7 +343,7 @@ void CMainFrame::UpdatePaneText()
     ULONGLONG size = MAXULONGLONG;
 
     // Allow override on hover (check active graph pane)
-    if (const auto hoverInfo = GetActiveGraphPane()->GetHoverInfo(); !hoverInfo.IsEmpty())
+    if (const auto hoverInfo = GetActiveGraphPane()->GetHoverInfo(); !hoverInfo.path.empty())
     {
         fileSelectionText = hoverInfo.path;
         size = hoverInfo.size;
@@ -417,7 +432,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(!COptions::UseFlameGraph);
+    SetNativeMenuRadio(pCmdUI, !COptions::UseFlameGraph);
 }
 
 void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
@@ -443,26 +458,32 @@ void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(GetFileTabbedView()->IsWatcherTabVisible());
 }
 
-void CMainFrame::OnViewShowTreeMap()
+void CMainFrame::SelectGraphPane(const bool useFlameGraph)
 {
-    if (!COptions::UseFlameGraph && IsActiveGraphPaneShown()) return;
-    COptions::UseFlameGraph = false;
+    // Accelerators still dispatch WM_COMMAND while the corresponding menu
+    // item is disabled. Do not switch away from the pane suspended for a scan.
+    if (CWinDirStatModel::Get()->IsScanRunning()) return;
+    if (COptions::UseFlameGraph == useFlameGraph && IsActiveGraphPaneShown()) return;
+
+    COptions::UseFlameGraph = useFlameGraph;
     ShowActiveGraphPane(true);
     RebuildLayout();
 }
 
+void CMainFrame::OnViewTreeMap()
+{
+    SelectGraphPane(false);
+}
+
 void CMainFrame::OnViewFlameGraph()
 {
-    if (COptions::UseFlameGraph) return;
-    COptions::UseFlameGraph = true;
-    ShowActiveGraphPane(true);
-    RebuildLayout();
+    SelectGraphPane(true);
 }
 
 void CMainFrame::OnUpdateViewFlameGraph(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(COptions::UseFlameGraph);
+    SetNativeMenuRadio(pCmdUI, COptions::UseFlameGraph);
 }
 
 void CMainFrame::OnViewTreeMapUseLogical()
@@ -491,7 +512,7 @@ void CMainFrame::OnViewGroupUnregisteredTypes()
 {
     COptions::GroupUnregisteredTypes = !COptions::GroupUnregisteredTypes;
 
-    // Recolor extensions so the unregistered group shares one color, then refresh the list and treemap
+    // Recolor extensions so the unregistered group shares one color, then refresh the list and graph
     CWinDirStatModel::Get()->RebuildExtensionData();
     GetExtensionView()->OnUpdate(nullptr, MODEL_CHANGE_NONE, nullptr);
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
@@ -499,6 +520,8 @@ void CMainFrame::OnViewGroupUnregisteredTypes()
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()
 {
+    if (COptions::UseFlameGraph) return;
+
     COptions::TreeMapShowExtensions = !static_cast<bool>(COptions::TreeMapShowExtensions);
     COptions::TreeMapOptions.showExtensions = COptions::TreeMapShowExtensions;
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
@@ -506,12 +529,14 @@ void CMainFrame::OnViewShowExtensionsOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->Enable(!COptions::UseFlameGraph && !CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
 }
 
 void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 {
+    if (COptions::UseFlameGraph) return;
+
     COptions::TreeMapShowFolderFrames = !static_cast<bool>(COptions::TreeMapShowFolderFrames);
     COptions::TreeMapOptions.showFolderFrames = COptions::TreeMapShowFolderFrames;
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
@@ -519,7 +544,7 @@ void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->Enable(!COptions::UseFlameGraph && !CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
 }
 
@@ -876,13 +901,13 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
     m_splitter.ClearPaneTracking();
     m_subSplitter.ClearPaneTracking();
 
-    auto showTreeMap = [this](bool visible) { ShowActiveGraphPane(visible); };
+    auto showGraph = [this](bool visible) { ShowActiveGraphPane(visible); };
     auto showFileTypes = [this](bool visible) { GetExtensionView()->ShowTypes(visible); };
 
     switch (topo)
     {
     case LT_ROWS_SUB_COLS:
-        m_splitter.TrackPane(perm == 0 ? 1 : 0, showTreeMap,
+        m_splitter.TrackPane(perm == 0 ? 1 : 0, showGraph,
             [this, perm]() { m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0); });
         m_subSplitter.TrackPane(1, showFileTypes,
             [this]() { m_subSplitter.SetSplitterPos(1.0); });
@@ -891,26 +916,26 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
     case LT_COLS_THREE:
         switch (perm)
         {
-        case 0: // [FTV|TM] | ExtV
+        case 0: // [FTV|graph] | ExtV
             m_splitter.TrackPane(1, showFileTypes,
                 [this]() { m_splitter.SetSplitterPos(1.0); });
-            m_subSplitter.TrackPane(1, showTreeMap,
+            m_subSplitter.TrackPane(1, showGraph,
                 [this]() { m_subSplitter.SetSplitterPos(1.0); });
             break;
-        case 1: // [TM|FTV] | ExtV
+        case 1: // [graph|FTV] | ExtV
             m_splitter.TrackPane(1, showFileTypes,
                 [this]() { m_splitter.SetSplitterPos(1.0); });
-            m_subSplitter.TrackPane(0, showTreeMap,
+            m_subSplitter.TrackPane(0, showGraph,
                 [this]() { m_subSplitter.SetSplitterPos(0.0); });
             break;
-        case 2: // FTV | [ExtV|TM]
+        case 2: // FTV | [ExtV|graph]
             m_subSplitter.TrackPane(0, showFileTypes,
                 [this]() { m_subSplitter.SetSplitterPos(0.0); });
-            m_subSplitter.TrackPane(1, showTreeMap,
+            m_subSplitter.TrackPane(1, showGraph,
                 [this]() { m_subSplitter.SetSplitterPos(1.0); });
             break;
-        case 3: // TM | [ExtV|FTV]
-            m_splitter.TrackPane(0, showTreeMap,
+        case 3: // graph | [ExtV|FTV]
+            m_splitter.TrackPane(0, showGraph,
                 [this]() { m_splitter.SetSplitterPos(0.0); });
             m_subSplitter.TrackPane(0, showFileTypes,
                 [this]() { m_subSplitter.SetSplitterPos(0.0); });
@@ -921,16 +946,16 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
     case LT_COLS_SUB_ROWS:
         m_splitter.TrackPane(1, showFileTypes,
             [this]() { m_splitter.SetSplitterPos(1.0); });
-        m_subSplitter.TrackPane(perm == 0 ? 0 : 1, showTreeMap,
+        m_subSplitter.TrackPane(perm == 0 ? 0 : 1, showGraph,
             [this, perm]() { m_subSplitter.SetSplitterPos(perm == 0 ? 0.0 : 1.0); });
         break;
 
     case LT_COLS_TM_FULL:
     {
-        const int tmPane  = (perm == 0 || perm == 1) ? 0 : 1;
+        const int graphPane = (perm == 0 || perm == 1) ? 0 : 1;
         const int extPane = (perm == 0 || perm == 2) ? 0 : 1;
-        m_splitter.TrackPane(tmPane, showTreeMap,
-            [this, tmPane]() { m_splitter.SetSplitterPos(tmPane == 0 ? 0.0 : 1.0); });
+        m_splitter.TrackPane(graphPane, showGraph,
+            [this, graphPane]() { m_splitter.SetSplitterPos(graphPane == 0 ? 0.0 : 1.0); });
         m_subSplitter.TrackPane(extPane, showFileTypes,
             [this, extPane]() { m_subSplitter.SetSplitterPos(extPane == 0 ? 0.0 : 1.0); });
         break;
@@ -938,7 +963,7 @@ void CMainFrame::ConfigureSplitterCallbacks(int topo, int perm)
     }
 }
 
-void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hTMV)
+void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hGraph)
 {
     auto AttachView = [](CWdsSplitterWnd& splitter, int row, int col, HWND hView)
     {
@@ -950,17 +975,17 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
     {
     case LT_ROWS_SUB_COLS:
         m_splitter.CreateStatic(this, 2, 1);
-        if (perm == 0) // top: [FTV|ExtV], bottom: TM
+        if (perm == 0) // top: [FTV|ExtV], bottom: graph
         {
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(0, 0));
             AttachView(m_subSplitter, 0, 0, hFTV);
             AttachView(m_subSplitter, 0, 1, hExtV);
-            AttachView(m_splitter, 1, 0, hTMV);
+            AttachView(m_splitter, 1, 0, hGraph);
         }
-        else // perm == 1: TM top, [FTV|ExtV] bottom
+        else // perm == 1: graph top, [FTV|ExtV] bottom
         {
-            AttachView(m_splitter, 0, 0, hTMV);
+            AttachView(m_splitter, 0, 0, hGraph);
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(1, 0));
             AttachView(m_subSplitter, 0, 0, hFTV);
@@ -970,33 +995,33 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
 
     case LT_COLS_THREE:
         m_splitter.CreateStatic(this, 1, 2);
-        if (perm == 0) // [FTV|TM] in col 0, ExtV in col 1
+        if (perm == 0) // [FTV|graph] in col 0, ExtV in col 1
         {
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(0, 0));
             AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 0, 1, hTMV);
+            AttachView(m_subSplitter, 0, 1, hGraph);
             AttachView(m_splitter, 0, 1, hExtV);
         }
-        else if (perm == 1) // [TM|FTV] in col 0, ExtV in col 1
+        else if (perm == 1) // [graph|FTV] in col 0, ExtV in col 1
         {
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(0, 0));
-            AttachView(m_subSplitter, 0, 0, hTMV);
+            AttachView(m_subSplitter, 0, 0, hGraph);
             AttachView(m_subSplitter, 0, 1, hFTV);
             AttachView(m_splitter, 0, 1, hExtV);
         }
-        else if (perm == 2) // FTV in col 0, [ExtV|TM] in col 1
+        else if (perm == 2) // FTV in col 0, [ExtV|graph] in col 1
         {
             AttachView(m_splitter, 0, 0, hFTV);
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(0, 1));
             AttachView(m_subSplitter, 0, 0, hExtV);
-            AttachView(m_subSplitter, 0, 1, hTMV);
+            AttachView(m_subSplitter, 0, 1, hGraph);
         }
-        else // perm 3: TM in col 0, [ExtV|FTV] in col 1
+        else // perm 3: graph in col 0, [ExtV|FTV] in col 1
         {
-            AttachView(m_splitter, 0, 0, hTMV);
+            AttachView(m_splitter, 0, 0, hGraph);
             m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        m_splitter.IdFromRowCol(0, 1));
             AttachView(m_subSplitter, 0, 0, hExtV);
@@ -1008,15 +1033,15 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
         m_splitter.CreateStatic(this, 1, 2);
         m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER,
                                    m_splitter.IdFromRowCol(0, 0));
-        if (perm == 0) // left: TM/FTV; right: ExtV
+        if (perm == 0) // left: graph/FTV; right: ExtV
         {
-            AttachView(m_subSplitter, 0, 0, hTMV);
+            AttachView(m_subSplitter, 0, 0, hGraph);
             AttachView(m_subSplitter, 1, 0, hFTV);
         }
-        else // perm 1: left: FTV/TM; right: ExtV
+        else // perm 1: left: FTV/graph; right: ExtV
         {
             AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 1, 0, hTMV);
+            AttachView(m_subSplitter, 1, 0, hGraph);
         }
         AttachView(m_splitter, 0, 1, hExtV);
         break;
@@ -1024,11 +1049,11 @@ void CMainFrame::BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, 
     case LT_COLS_TM_FULL:
     {
         m_splitter.CreateStatic(this, 1, 2);
-        const int tmCol  = (perm == 0 || perm == 1) ? 0 : 1; // TM fills col 0 (perm 0/1) or col 1 (perm 2/3)
+        const int graphCol = (perm == 0 || perm == 1) ? 0 : 1;
         const int extRow = (perm == 0 || perm == 2) ? 0 : 1; // ExtV on top (perm 0/2) or bottom (perm 1/3)
-        AttachView(m_splitter, 0, tmCol, hTMV);
+        AttachView(m_splitter, 0, graphCol, hGraph);
         m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                   m_splitter.IdFromRowCol(0, 1 - tmCol));
+                                   m_splitter.IdFromRowCol(0, 1 - graphCol));
         AttachView(m_subSplitter, extRow, 0, hExtV);
         AttachView(m_subSplitter, 1 - extRow, 0, hFTV);
         break;
@@ -1055,10 +1080,13 @@ void CMainFrame::RebuildLayout(bool resetPositions)
     const HWND hTMV   = GetTreeMapView()->GetSafeHwnd();
     const HWND hFGV   = GetFlameGraphView()->GetSafeHwnd();
     const HWND hFrame = GetSafeHwnd();
+    const HWND hActiveGraph = COptions::UseFlameGraph ? hFGV : hTMV;
+    const HWND hInactiveGraph = COptions::UseFlameGraph ? hTMV : hFGV;
     ::SetParent(hFTV,  hFrame);
     ::SetParent(hExtV, hFrame);
     ::SetParent(hTMV,  hFrame);
     ::SetParent(hFGV,  hFrame);
+    ::SetWindowLongPtr(hInactiveGraph, GWLP_ID, ID_INACTIVE_GRAPH_PANE);
 
     if (m_splitter.GetSafeHwnd())
         m_splitter.DestroyWindow();
@@ -1069,8 +1097,6 @@ void CMainFrame::RebuildLayout(bool resetPositions)
         COptions::SubSplitterPos  = -1.0;
     }
 
-    const HWND hActiveGraph = COptions::UseFlameGraph ? hFGV : hTMV;
-    const HWND hInactiveGraph = COptions::UseFlameGraph ? hTMV : hFGV;
     BuildSplitterLayout(topo, perm, hFTV, hExtV, hActiveGraph);
     ::ShowWindow(hActiveGraph, SW_SHOW);
     ::ShowWindow(hInactiveGraph, SW_HIDE);

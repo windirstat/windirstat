@@ -18,6 +18,7 @@
 #pragma once
 
 #include "pch.h"
+#include <concepts>
 
 //
 // CFlameGraph. Creates a flame graph (icicle plot) visualization.
@@ -28,41 +29,133 @@
 class CFlameGraph final
 {
 public:
+    // Logical row height at 96 DPI. The view scales this before drawing.
     static constexpr int ROW_HEIGHT = 18;
     static constexpr COLORREF BACKGROUND_COLOR = RGB(15, 15, 15);
 
-    CFlameGraph() = default;
-
-    // Create and draw a flame graph
-    void DrawFlameGraph(CDC* pdc, CRect rc, CItem* root);
+    // Create and draw a flame graph. Logical geometry is reused when the root,
+    // render rectangle, and DPI-scaled row height have not changed.
+    void DrawFlameGraph(CDC* pdc, CRect rc, const CItem* root, int rowHeight);
 
     // In the resulting layout, find the item below a given coordinate.
     CItem* FindItemByPoint(CItem* item, CPoint point) const;
 
-    // Compute the maximum depth of the tree
-    static int ComputeMaxDepth(CItem* item, int depth = 0);
+    // Access the most recently computed flame-graph layout without using the
+    // rectangle cache owned by the treemap projection.
+    bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
+    void ClearLayout();
 
-    // Active / hover item for visual state
-    void SetActiveItem(const CItem* item) { m_activeItem = item; }
-    void SetHoverItem(const CItem* item) { m_hoverItem = item; }
-    const CItem* GetActiveItem() const { return m_activeItem; }
-    const CItem* GetHoverItem() const { return m_hoverItem; }
-    const std::vector<CItem*>& GetBreadcrumbs() const { return m_breadcrumbs; }
-    int GetBreadcrumbHeight() const { return m_breadcrumbHeight; }
+    // Redraw one laid-out item with the hover treatment. The offset
+    // translates logical layout coordinates to the destination DC.
+    void DrawHoverItem(CDC* pdc, const CItem* item, CPoint offset) const;
 
-protected:
-    // Walk the tree assigning rectangles (icicle layout)
-    void LayoutItem(CItem* item, const CRect& rc, int depth, int rowHeight, bool isRoot);
+    // Compute the maximum depth that can actually receive pixels at the
+    // supplied width. This uses the same cumulative rounding as layout.
+    static int ComputeVisibleMaxDepth(const CItem* item, int width, int depth = 0);
 
-    // Render all items (fill and label)
-    void RenderAll(CDC* pdc, CItem* root, const CPoint& offset) const;
+    // Visit only laid-out items intersecting a destination-space clip. The
+    // callback receives the item and its full destination rectangle. Iteration
+    // is allocation-free and uses row and horizontal indexes.
+    template<typename Visitor>
+        requires std::invocable<Visitor&, const CItem*, const CRect&>
+    void VisitItemsIntersecting(const CRect clip, const CPoint offset, Visitor&& visitor) const
+    {
+        VisitRowItems(clip, offset, [&visitor](const auto& entry, const CRect& rectangle)
+        {
+            std::invoke(visitor, entry.item, rectangle);
+        });
+    }
 
-    // Check if test is a descendant of ancestor
-    static bool IsDescendantOf(const CItem* test, const CItem* ancestor);
+private:
+    struct LayoutEntry
+    {
+        CRect rectangle;
+        int depth = 0;
+        bool breadcrumb = false;
+        std::size_t firstChild = 0;
+        std::size_t childCount = 0;
+    };
 
+    struct ChildSpan
+    {
+        CItem* item = nullptr;
+        LONG left = 0;
+        LONG right = 0;
+    };
+
+    struct LaidOutChild
+    {
+        CItem* item = nullptr;
+        LONG right = 0;
+    };
+
+    struct RowItem
+    {
+        const CItem* item = nullptr;
+        CRect rectangle;
+        int depth = 0;
+        bool breadcrumb = false;
+    };
+
+    // Build the logical layout independently from viewport rendering.
+    void BuildLayout(const CItem* root, CRect rc, int rowHeight);
+    void LayoutItem(const CItem* item, const CRect& rc, int depth);
+    LayoutEntry& AddLayoutEntry(const CItem* item, CRect rectangle, int depth,
+        bool breadcrumb);
+
+    // Allocate positive-width child spans with cumulative rounded boundaries.
+    static int GetDrawableChildCount(const CItem* item);
+    static void ComputeChildSpans(const CItem* item, LONG left, LONG right,
+        std::vector<ChildSpan>& spans);
+
+    void RenderLayout(CDC* pdc) const;
+    void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle,
+        int depth, bool hover) const;
+    void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
+        int depth, bool hover) const;
+    void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
+        COLORREF color) const;
+
+    template<typename Visitor>
+        requires std::invocable<Visitor&, const RowItem&, const CRect&>
+    void VisitRowItems(CRect clip, const CPoint offset, Visitor&& visitor) const
+    {
+        clip.OffsetRect(-offset.x, -offset.y);
+        CRect logicalClip;
+        if (!logicalClip.IntersectRect(clip, m_renderArea) || m_rows.empty()) return;
+
+        const auto firstRow = static_cast<std::size_t>(
+            (logicalClip.top - m_renderArea.top) / m_rowHeight);
+        const auto lastRow = std::min(m_rows.size() - 1, static_cast<std::size_t>(
+            (logicalClip.bottom - 1 - m_renderArea.top) / m_rowHeight));
+
+        for (std::size_t rowIndex = firstRow; rowIndex <= lastRow; rowIndex++)
+        {
+            const auto& row = m_rows[rowIndex];
+            auto entry = std::ranges::upper_bound(row, logicalClip.left,
+                std::ranges::less{}, [](const RowItem& item) {
+                    return item.rectangle.right;
+                });
+            for (; entry != row.end() && entry->rectangle.left < logicalClip.right; ++entry)
+            {
+                CRect rectangle = entry->rectangle;
+                rectangle.OffsetRect(offset);
+                std::invoke(visitor, *entry, rectangle);
+            }
+        }
+    }
+
+    const CItem* m_layoutRoot = nullptr;
     CRect m_renderArea;
-    const CItem* m_activeItem = nullptr;
-    const CItem* m_hoverItem = nullptr;
+    int m_rowHeight = ROW_HEIGHT;
+    int m_minLabelWidth = 40;
+    int m_minLabelHeight = 14;
+    int m_itemInset = 1;
+    int m_textInsetX = 3;
+    int m_textInsetY = 1;
+    int m_borderThreshold = 4;
+    std::unordered_map<const CItem*, LayoutEntry> m_layout;
+    std::vector<LaidOutChild> m_laidOutChildren;
+    std::vector<std::vector<RowItem>> m_rows;
     std::vector<CItem*> m_breadcrumbs;
-    int m_breadcrumbHeight = 0;
 };

@@ -392,7 +392,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_GROUP_TYPES, OnViewGroupUnregisteredTypes)
-    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
+    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewTreeMap)
     ON_COMMAND(ID_VIEW_FLAMEGRAPH, OnViewFlameGraph)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
@@ -813,10 +813,13 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
     m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
     m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(0, 1));
 
-    // Create flame graph view (hidden, attached to frame; placed in splitter when active)
     m_flameGraphView = new CFlameGraphView();
-    m_flameGraphView->Create(nullptr, nullptr, WS_CHILD, CRect(0, 0, 0, 0), this, 0);
-    m_flameGraphView->ShowWindow(SW_HIDE);
+    if (!m_flameGraphView->Create(nullptr, nullptr, WS_CHILD | WS_VSCROLL, CRect{}, this, 0))
+    {
+        // Create invokes PostNcDestroy on failure, which deletes the view.
+        m_flameGraphView = nullptr;
+        return FALSE;
+    }
 
     GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
     GetTreeMapView()->ShowTreeMap(COptions::ShowTreeMap);
@@ -829,21 +832,15 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 void CMainFrame::UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item)
 {
-    if (m_fileTabbedView != nullptr && m_fileTabbedView != sender)
+    const std::array<CWinDirStatPane*, 4> panes{
+        m_fileTabbedView, m_extensionView, m_treeMapView, m_flameGraphView
+    };
+    for (CWinDirStatPane* pane : panes)
     {
-        static_cast<CWinDirStatPane*>(m_fileTabbedView)->OnUpdate(sender, change, item);
-    }
-    if (m_extensionView != nullptr && m_extensionView != sender)
-    {
-        static_cast<CWinDirStatPane*>(m_extensionView)->OnUpdate(sender, change, item);
-    }
-    if (m_treeMapView != nullptr && m_treeMapView != sender)
-    {
-        static_cast<CWinDirStatPane*>(m_treeMapView)->OnUpdate(sender, change, item);
-    }
-    if (m_flameGraphView != nullptr && m_flameGraphView != sender)
-    {
-        static_cast<CWinDirStatPane*>(m_flameGraphView)->OnUpdate(sender, change, item);
+        if (pane != nullptr && pane != sender)
+        {
+            pane->OnUpdate(sender, change, item);
+        }
     }
 }
 
@@ -984,10 +981,10 @@ void CMainFrame::MinimizeGraphPane()
         m_splitter.SetSplitterPos(perm == 0 || perm == 1 ? 0.0 : 1.0);
     else
     {
-        // TM in m_subSplitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
-        const bool tmInPane0 = (topo == LT_COLS_THREE && perm == 1) ||
-                               (topo == LT_COLS_SUB_ROWS && perm == 0);
-        m_subSplitter.SetSplitterPos(tmInPane0 ? 0.0 : 1.0);
+        // Graph in m_subSplitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
+        const bool graphInPane0 = (topo == LT_COLS_THREE && perm == 1) ||
+                                  (topo == LT_COLS_SUB_ROWS && perm == 0);
+        m_subSplitter.SetSplitterPos(graphInPane0 ? 0.0 : 1.0);
     }
 }
 
@@ -1048,19 +1045,13 @@ CWinDirStatPane* CMainFrame::GetActiveGraphPane() const
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
 {
-    if (COptions::UseFlameGraph)
-        GetFlameGraphView()->SuspendRecalculationDrawing(true);
-    else
-        GetTreeMapView()->SuspendRecalculationDrawing(true);
+    GetActiveGraphPane()->SuspendRecalculationDrawing(true);
     return 0;
 }
 
 LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 {
-    if (COptions::UseFlameGraph)
-        GetFlameGraphView()->SuspendRecalculationDrawing(false);
-    else
-        GetTreeMapView()->SuspendRecalculationDrawing(false);
+    GetActiveGraphPane()->SuspendRecalculationDrawing(false);
     return 0;
 }
 

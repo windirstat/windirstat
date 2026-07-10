@@ -18,15 +18,15 @@
 #pragma once
 
 #include "pch.h"
+#include <span>
 
 class CItem;
 enum MODEL_CHANGE : std::uint8_t;
 
 struct HoverInfo
 {
-    std::wstring path;
+    std::wstring_view path;
     ULONGLONG size = 0;
-    bool IsEmpty() const { return path.empty(); }
 };
 
 //
@@ -49,7 +49,7 @@ protected:
 public:
     virtual void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item);
     virtual HoverInfo GetHoverInfo() const { return {}; }
-    virtual void SuspendRecalculationDrawing(bool /*suspend*/) {};
+    virtual void SuspendRecalculationDrawing(bool /*suspend*/) {}
 
 protected:
     DECLARE_MESSAGE_MAP()
@@ -63,4 +63,6 @@ protected:
     afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 
     void NotifyOtherPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
+    void ShowGraphContextMenu(CItem* clickedItem, CPoint point,
+        std::span<const UINT> persistentCommands);
 };

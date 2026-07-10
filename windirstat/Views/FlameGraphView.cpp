@@ -29,12 +29,23 @@ BEGIN_MESSAGE_MAP(CFlameGraphView, CWinDirStatPane)
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
+    ON_WM_MOUSELEAVE()
     ON_WM_MOUSEWHEEL()
     ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 void CFlameGraphView::SuspendRecalculationDrawing(const bool suspend)
 {
+    if (suspend == m_drawingSuspended) return;
+
+    if (suspend)
+    {
+        // Refresh scans can remove items immediately after this call. Drop all
+        // cached item pointers and geometry before the model starts mutating.
+        m_wheelDeltaRemainder = 0;
+        m_forceScrollBarVisible = false;
+        Inactivate();
+    }
     m_drawingSuspended = suspend;
     if (!suspend)
     {
@@ -86,7 +97,6 @@ void CFlameGraphView::DrawEmptyView(CDC* pDC)
     {
         pDC->FillSolidRect(rc, emptyBg);
 
-        // Draw a simple flame graph-like placeholder with demo rectangles
         const int cols = 8;
         const int rows = 5;
         const int cellW = rc.Width() / cols;
@@ -97,7 +107,6 @@ void CFlameGraphView::DrawEmptyView(CDC* pDC)
             const int y = rc.top + r * cellH;
             const int height = (r == rows - 1) ? rc.bottom - y : cellH;
 
-            // Draw row label
             CRect labelRc(rc.left, y, rc.left + 30, y + height);
             if (labelRc.Height() >= 10)
             {
@@ -155,66 +164,130 @@ void CFlameGraphView::OnDraw(CDC* pDC)
     CRect rc = ClientRectOf(this);
     ASSERT(m_size == rc.Size());
     ASSERT(rc.TopLeft() == CPoint(0, 0));
-
-    CDC dcmem;
-    dcmem.CreateCompatibleDC(pDC);
+    if (rc.IsRectEmpty()) return;
 
     const CItem* zoomItem = CWinDirStatModel::Get()->GetZoomItem();
-    const int fullHeight = ComputeFlameFullHeight();
-
-    // Clamp scroll position
-    const int maxScroll = std::max(0, fullHeight - static_cast<int>(m_size.cy));
-    m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
-
-    // Update scroll bar
-    SCROLLINFO si = { sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE | SIF_POS };
-    si.nMin = 0;
-    si.nMax = fullHeight - 1;
-    si.nPage = m_size.cy;
-    si.nPos = m_scrollPos;
-    SetScrollInfo(SB_VERT, &si, TRUE);
-
-    // Render flame graph at full height into a temporary buffer
-    CBitmap fullBmp;
-    fullBmp.CreateCompatibleBitmap(pDC, m_size.cx, fullHeight);
-    CSelectObject sobmp(&dcmem, &fullBmp);
-
-    m_flameGraph.DrawFlameGraph(&dcmem, CRect(0, 0, m_size.cx, fullHeight), const_cast<CItem*>(zoomItem));
-
-    // BitBlt visible portion to screen with scroll offset
-    const int copyHeight = std::min(static_cast<int>(m_size.cy), fullHeight - m_scrollPos);
-    if (copyHeight > 0)
+    const int rowHeight = ComputeRowHeight(pDC);
+    if (rowHeight != m_rowHeight)
     {
-        pDC->BitBlt(0, 0, m_size.cx, copyHeight, &dcmem, 0, m_scrollPos, SRCCOPY);
+        ClearHover();
+        if (m_scrollPos > 0)
+        {
+            m_scrollPos = ::MulDiv(m_scrollPos, rowHeight, m_rowHeight);
+        }
+        m_rowHeight = rowHeight;
+        DiscardBase(true);
     }
 
-    // Fill area below the flame graph content with background
-    if (m_size.cy > copyHeight)
+    int fullHeight = m_fullHeight;
+    if (fullHeight == 0)
     {
-        pDC->FillSolidRect(CRect(0, copyHeight, m_size.cx, m_size.cy), CFlameGraph::BACKGROUND_COLOR);
+        fullHeight = ComputeFlameFullHeight(rc.Width());
     }
 
-}
+    // A standard WS_VSCROLL bar changes the client width when SetScrollInfo
+    // shows or hides it, and Windows delivers the resulting WM_SIZE
+    // synchronously. Let that geometry settle before allocating the cached
+    // bitmap or computing horizontal layout. Keep fullHeight local because
+    // OnSize invalidates the member cache during that synchronous callback.
+    bool scrollInfoCurrent = false;
+    for (int pass = 0; pass < 2; pass++)
+    {
+        const int maxScroll = std::max(0, fullHeight - rc.Height());
+        m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
+        UpdateScrollBar(fullHeight, rc.Height());
+        scrollInfoCurrent = true;
 
-void CFlameGraphView::DrawZoomFrame(CDC* pdc, CRect& rc) const
-{
-    CRect r = rc;
-    r.bottom = r.top + ZoomFrameWidth;
-    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
+        const CRect updatedRc = ClientRectOf(this);
+        if (updatedRc == rc) break;
+        const bool scrollBarAppeared = updatedRc.Width() < rc.Width();
+        rc = updatedRc;
+        scrollInfoCurrent = false;
+        if (rc.IsRectEmpty())
+        {
+            m_fullHeight = fullHeight;
+            return;
+        }
 
-    r = rc;
-    r.top = r.bottom - ZoomFrameWidth;
-    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
+        // Visible depth depends on pixel width, so a scrollbar transition must
+        // recompute height for the width that will actually be laid out.
+        fullHeight = ComputeFlameFullHeight(rc.Width());
 
-    r = rc;
-    r.right = r.left + ZoomFrameWidth;
-    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
+        // A narrow layout can lose the deep one-pixel branch that made the
+        // scrollbar necessary at the wider width. Keep a disabled scrollbar
+        // in that boundary case; otherwise hide/show would oscillate forever.
+        if (scrollBarAppeared && fullHeight <= rc.Height())
+        {
+            m_forceScrollBarVisible = true;
+            break;
+        }
+    }
 
-    r = rc;
-    r.left = r.right - ZoomFrameWidth;
-    pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
+    if (!scrollInfoCurrent)
+    {
+        const int maxScroll = std::max(0, fullHeight - rc.Height());
+        m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
+        UpdateScrollBar(fullHeight, rc.Height());
+        ASSERT(ClientRectOf(this) == rc);
+    }
 
-    rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
+    const CSize size = rc.Size();
+    if (m_size != size)
+    {
+        // OnSize normally keeps this synchronized. This fallback also ensures
+        // a cache can never survive an unexpected non-client geometry change.
+        ClearHover();
+        DiscardBase(false);
+        m_size = size;
+    }
+    m_fullHeight = fullHeight;
+
+    CDC dcmem;
+    if (!dcmem.CreateCompatibleDC(pDC))
+    {
+        ClearHover();
+        DiscardBase(false);
+        pDC->FillSolidRect(rc, CFlameGraph::BACKGROUND_COLOR);
+        return;
+    }
+
+    if (!IsDrawn())
+    {
+        CWaitCursor wc;
+        if (!m_bitmap.CreateCompatibleBitmap(pDC, size.cx, size.cy))
+        {
+            ClearHover();
+            DiscardBase(false);
+            pDC->FillSolidRect(rc, CFlameGraph::BACKGROUND_COLOR);
+            return;
+        }
+
+        CSelectObject sobmp(&dcmem, &m_bitmap);
+        dcmem.FillSolidRect(rc, CFlameGraph::BACKGROUND_COLOR);
+
+        // Layout coordinates cover the full graph; the cached bitmap contains
+        // only the currently visible client-sized viewport.
+        const CPoint oldViewportOrg = dcmem.SetViewportOrg(0, -m_scrollPos);
+        m_flameGraph.DrawFlameGraph(&dcmem, CRect(0, 0, size.cx, m_fullHeight),
+            zoomItem, m_rowHeight);
+        dcmem.SetViewportOrg(oldViewportOrg);
+
+        m_dimmed.DeleteObject();
+        m_dimmedSize = { 0, 0 };
+    }
+
+    {
+        CSelectObject sobmp(&dcmem, &m_bitmap);
+        pDC->BitBlt(0, 0, size.cx, size.cy, &dcmem, 0, 0, SRCCOPY);
+    }
+
+    if (m_hoverItem != nullptr)
+    {
+        m_flameGraph.DrawHoverItem(pDC, m_hoverItem, CPoint(0, -m_scrollPos));
+    }
+
+    // Persistent selection overlays take precedence over transient hover.
+    DrawHighlights(pDC);
 }
 
 void CFlameGraphView::DrawHighlights(CDC* pdc)
@@ -252,42 +325,24 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
     const std::wstring& highlightExt = model->GetHighlightExtension();
     const bool unregistered = model->IsHighlightUnregistered();
     const auto& highlightExtensions = model->GetHighlightExtensions();
-    const bool isZoomed = model->IsZoomed();
-
-    std::vector<const CItem*> stack;
-    stack.reserve(128);
-    stack.push_back(model->GetZoomItem());
-
-    while (!stack.empty())
+    CRect rcClip;
+    if (pdc->GetClipBox(&rcClip) == ERROR)
     {
-        const CItem* item = stack.back();
-        stack.pop_back();
-
-        CRect rc(item->TmiGetRectangle());
-        if (isZoomed)
-        {
-            rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
-        }
-
-        if (rc.Width() <= 0 || rc.Height() <= 0)
-        {
-            continue;
-        }
-
-        if (item->TmiIsLeaf())
-        {
-            if (unregistered ? IsUnregisteredLeaf(item, highlightExtensions) : item->HasExtension(highlightExt))
-            {
-                RenderHighlightRectangle(pdc, rc);
-            }
-        }
-        else for (const auto& child : item->GetChildren())
-        {
-            if (child->TmiGetSize() == 0) break;
-            if (child->TmiGetRectangle().left == -1) break;
-            stack.push_back(child);
-        }
+        rcClip = ClientRectOf(this);
     }
+
+    m_flameGraph.VisitItemsIntersecting(rcClip, CPoint(0, -m_scrollPos),
+        [&](const CItem* item, const CRect& itemRectangle)
+    {
+        if (item->TmiIsLeaf()
+            && (unregistered
+                ? IsUnregisteredLeaf(item, highlightExtensions)
+                : item->HasExtension(highlightExt)))
+        {
+            CRect rc = itemRectangle;
+            RenderHighlightRectangle(pdc, rc);
+        }
+    });
 }
 
 void CFlameGraphView::DrawSelection(CDC* pdc) const
@@ -300,8 +355,6 @@ void CFlameGraphView::DrawSelection(CDC* pdc) const
     const auto& items = CWinDirStatModel::Get()->GetAllSelected();
     for (const auto& item : items)
     {
-        if (!CWinDirStatModel::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
-
         const auto itemToSelect = item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
         HighlightSelectedItem(pdc, itemToSelect, items.size() == 1);
     }
@@ -309,12 +362,12 @@ void CFlameGraphView::DrawSelection(CDC* pdc) const
 
 void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
 {
-    CRect rc(item->TmiGetRectangle());
-
-    if (CWinDirStatModel::Get()->IsZoomed())
+    CRect rc;
+    if (!m_flameGraph.TryGetItemRectangle(item, rc))
     {
-        rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
+        return;
     }
+    rc.OffsetRect(0, -m_scrollPos);
 
     if (single)
     {
@@ -326,7 +379,8 @@ void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const b
         if (rc.bottom < rcClient.bottom) rc.bottom++;
     }
 
-    if (rc.Width() <= 0 || rc.Height() <= 0)
+    CRect visible;
+    if (rc.Width() <= 0 || rc.Height() <= 0 || !visible.IntersectRect(rc, ClientRectOf(this)))
     {
         return;
     }
@@ -364,25 +418,128 @@ CItem* CFlameGraphView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
     CPoint pointClicked = point;
     if (isScreenCoords) ScreenToClient(&pointClicked);
 
-    if (CWinDirStatModel::Get()->IsZoomed())
+    if (!ClientRectOf(this).PtInRect(pointClicked))
     {
-        pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
+        return nullptr;
     }
 
-    // Account for scroll offset: the layout is at full height,
-    // and the screen shows a portion starting at m_scrollPos
     pointClicked.y += m_scrollPos;
 
-    return static_cast<CItem*>(m_flameGraph.FindItemByPoint(
-        CWinDirStatModel::Get()->GetZoomItem(), pointClicked));
+    return m_flameGraph.FindItemByPoint(CWinDirStatModel::Get()->GetZoomItem(), pointClicked);
 }
 
-int CFlameGraphView::ComputeFlameFullHeight() const
+void CFlameGraphView::ClearHover()
+{
+    SetHoverItem(nullptr);
+
+    if (!m_paneTextOverride.empty() || m_paneSizeOverride != 0)
+    {
+        m_paneTextOverride.clear();
+        m_paneSizeOverride = 0;
+        if (CMainFrame::Get() != nullptr)
+        {
+            CMainFrame::Get()->UpdatePaneText();
+        }
+    }
+}
+
+void CFlameGraphView::SetHoverItem(const CItem* item)
+{
+    if (item == m_hoverItem) return;
+
+    InvalidateItem(m_hoverItem);
+    m_hoverItem = item;
+    InvalidateItem(m_hoverItem);
+}
+
+void CFlameGraphView::InvalidateItem(const CItem* item)
+{
+    if (item == nullptr) return;
+
+    CRect rc;
+    if (!m_flameGraph.TryGetItemRectangle(item, rc)) return;
+
+    rc.OffsetRect(0, -m_scrollPos);
+    rc.InflateRect(1, 1);
+    CRect visible;
+    if (visible.IntersectRect(rc, ClientRectOf(this)))
+    {
+        InvalidateRect(visible, FALSE);
+    }
+}
+
+void CFlameGraphView::DiscardBase(const bool invalidateFullHeight)
+{
+    m_bitmap.DeleteObject();
+    m_flameGraph.ClearLayout();
+    if (invalidateFullHeight)
+    {
+        m_fullHeight = 0;
+        m_forceScrollBarVisible = false;
+    }
+}
+
+void CFlameGraphView::UpdateScrollBar(const int fullHeight, const int pageHeight)
+{
+    SCROLLINFO si{
+        .cbSize = sizeof(SCROLLINFO),
+        .fMask = SIF_RANGE | SIF_PAGE | SIF_POS,
+    };
+    si.nMin = 0;
+    si.nMax = std::max(0, fullHeight - 1);
+    si.nPage = static_cast<UINT>(std::max(0, pageHeight));
+    si.nPos = m_scrollPos;
+    if (m_forceScrollBarVisible) si.fMask |= SIF_DISABLENOSCROLL;
+
+    m_updatingScrollBar = true;
+    SetScrollInfo(SB_VERT, &si, TRUE);
+    if (!m_forceScrollBarVisible && fullHeight <= pageHeight)
+    {
+        // SIF_DISABLENOSCROLL is sticky for a standard window scrollbar:
+        // a later ordinary SetScrollInfo does not remove the disabled bar.
+        // Explicitly hide it when a resize/model change leaves forcing mode.
+        ShowScrollBar(SB_VERT, FALSE);
+    }
+    m_updatingScrollBar = false;
+}
+
+bool CFlameGraphView::EnsureFullHeightForInput()
+{
+    const auto* model = CWinDirStatModel::Get();
+    if (m_drawingSuspended || !m_showTreeMap || model == nullptr || !model->IsRootDone())
+    {
+        return false;
+    }
+    if (m_fullHeight > 0) return true;
+
+    // Paint messages have lower priority than queued input. Recompute here so
+    // the first wheel or scrollbar action after a resize/model update is not
+    // discarded merely because OnDraw has not rebuilt the cached height yet.
+    m_fullHeight = ComputeFlameFullHeight(m_size.cx);
+    return m_fullHeight > 0;
+}
+
+int CFlameGraphView::ComputeRowHeight(CDC* pDC) const
+{
+    int rowHeight = DpiRest(CFlameGraph::ROW_HEIGHT, this);
+
+    CSelectStockObject soFont(pDC, DEFAULT_GUI_FONT);
+    TEXTMETRIC tm{};
+    if (pDC->GetTextMetrics(&tm))
+    {
+        // Breadcrumbs have one scaled fill inset and one text inset on each edge.
+        const int verticalPadding = DpiRest(1, this) * 4;
+        rowHeight = std::max(rowHeight, static_cast<int>(tm.tmHeight) + verticalPadding);
+    }
+
+    return std::max(1, rowHeight);
+}
+
+int CFlameGraphView::ComputeFlameFullHeight(const int width) const
 {
     const CItem* zoomItem = CWinDirStatModel::Get()->GetZoomItem();
     const CItem* rootItem = CWinDirStatModel::Get()->GetRootItem();
 
-    // Count breadcrumb rows (ancestors of zoom item up to root)
     int breadcrumbRows = 0;
     if (zoomItem != rootItem)
     {
@@ -393,8 +550,9 @@ int CFlameGraphView::ComputeFlameFullHeight() const
         }
     }
 
-    const int maxDepth = CFlameGraph::ComputeMaxDepth(const_cast<CItem*>(zoomItem), 0);
-    return (breadcrumbRows + std::max(1, maxDepth)) * CFlameGraph::ROW_HEIGHT;
+    const int maxDepth = CFlameGraph::ComputeVisibleMaxDepth(
+        zoomItem, std::max(0, width), 0);
+    return (breadcrumbRows + maxDepth + 1) * m_rowHeight;
 }
 
 void CFlameGraphView::OnSize(const UINT nType, const int cx, const int cy)
@@ -403,6 +561,7 @@ void CFlameGraphView::OnSize(const UINT nType, const int cx, const int cy)
     const CSize sz(cx, cy);
     if (sz != m_size)
     {
+        if (!m_updatingScrollBar) m_forceScrollBarVisible = false;
         Inactivate();
         m_size = sz;
         if (!m_drawingSuspended) Invalidate();
@@ -411,55 +570,41 @@ void CFlameGraphView::OnSize(const UINT nType, const int cx, const int cy)
 
 void CFlameGraphView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-    // Treat double-click as a regular click in flame graph mode
-    OnLButtonDown(nFlags, point);
+    if (auto* item = ResolveItemAtPoint(point)) DrillDown(item);
+    CWinDirStatPane::OnLButtonDblClk(nFlags, point);
 }
 
 void CFlameGraphView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
-    m_hoverItem = nullptr;
     if (auto* item = ResolveItemAtPoint(point))
     {
-        m_flameGraph.SetHoverItem(nullptr);
-
-        // Check if clicked item is a breadcrumb ancestor
-        bool isBreadcrumb = false;
-        for (const auto* b : m_flameGraph.GetBreadcrumbs())
-        {
-            if (b == item) { isBreadcrumb = true; break; }
-        }
-
-        // Update tree view selection before changing zoom
         CWinDirStatModel::Get()->ClearReselectChildStack();
         NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
-
-        if (isBreadcrumb)
-        {
-            // Navigate back to breadcrumb ancestor
-            m_scrollPos = 0;
-            CWinDirStatModel::Get()->SetZoomItem(item);
-        }
-        else if (item == CWinDirStatModel::Get()->GetZoomItem() || item == CWinDirStatModel::Get()->GetRootItem())
-        {
-            // Clicking the current zoom item or root → reset to full tree
-            m_scrollPos = 0;
-            CWinDirStatModel::Get()->SetZoomItem(CWinDirStatModel::Get()->GetRootItem());
-        }
-        else
-        {
-            // Zoom into clicked item
-            m_scrollPos = 0;
-            if (item->IsTypeOrFlag(IT_FILE))
-            {
-                CWinDirStatModel::Get()->SetZoomItem(item->GetParent());
-            }
-            else
-            {
-                CWinDirStatModel::Get()->SetZoomItem(item);
-            }
-        }
     }
     CWinDirStatPane::OnLButtonDown(nFlags, point);
+}
+
+void CFlameGraphView::DrillDown(CItem* item)
+{
+    ClearHover();
+
+    auto* model = CWinDirStatModel::Get();
+
+    CItem* target;
+    if (item == model->GetZoomItem())
+    {
+        target = model->GetRootItem();
+    }
+    else
+    {
+        target = item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
+    }
+
+    if (target != model->GetZoomItem())
+    {
+        m_scrollPos = 0;
+        model->SetZoomItem(target);
+    }
 }
 
 void CFlameGraphView::OnMButtonDown(UINT nFlags, CPoint point)
@@ -484,36 +629,43 @@ bool CFlameGraphView::IsDrawn() const
 
 void CFlameGraphView::Inactivate()
 {
-    if (m_bitmap.m_hObject == nullptr) return;
+    ClearHover();
 
-    m_dimmed.DeleteObject();
-    m_dimmed.Attach(m_bitmap.Detach());
-    m_dimmedSize = m_size;
+    if (m_bitmap.m_hObject != nullptr)
+    {
+        m_dimmed.DeleteObject();
+        m_dimmed.Attach(m_bitmap.Detach());
+        m_dimmedSize = m_size;
 
-    CClientDC dc(this);
-    CDC dcmem;
-    dcmem.CreateCompatibleDC(&dc);
-    CSelectObject sobmp(&dcmem, &m_dimmed);
+        CClientDC dc(this);
+        CDC dcmem;
+        dcmem.CreateCompatibleDC(&dc);
+        CSelectObject sobmp(&dcmem, &m_dimmed);
 
-    constexpr BLENDFUNCTION blendFunc{
-        .BlendOp = AC_SRC_OVER, .BlendFlags = 0,
-        .SourceConstantAlpha = 175, .AlphaFormat = 0 };
-    dcmem.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));
-    dcmem.AlphaBlend(0, 0, m_dimmedSize.cx, m_dimmedSize.cy, &dc,
-        0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunc);
+        constexpr BLENDFUNCTION blendFunc{
+            .BlendOp = AC_SRC_OVER, .BlendFlags = 0,
+            .SourceConstantAlpha = 175, .AlphaFormat = 0 };
+        dcmem.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));
+        dcmem.AlphaBlend(0, 0, m_dimmedSize.cx, m_dimmedSize.cy, &dc,
+            0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunc);
+    }
+
+    m_flameGraph.ClearLayout();
+    m_fullHeight = 0;
 }
 
 void CFlameGraphView::EmptyView()
 {
-    if (m_bitmap.m_hObject != nullptr)
-    {
-        m_bitmap.DeleteObject();
-    }
-
-    if (m_dimmed.m_hObject != nullptr)
-    {
-        m_dimmed.DeleteObject();
-    }
+    ClearHover();
+    m_bitmap.DeleteObject();
+    m_dimmed.DeleteObject();
+    m_dimmedSize = { 0, 0 };
+    m_flameGraph.ClearLayout();
+    m_fullHeight = 0;
+    m_scrollPos = 0;
+    m_wheelDeltaRemainder = 0;
+    m_forceScrollBarVisible = false;
+    UpdateScrollBar(m_fullHeight, m_size.cy);
 }
 
 void CFlameGraphView::OnSetFocus(CWnd* /*pOldWnd*/)
@@ -549,16 +701,27 @@ void CFlameGraphView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
         break;
 
     case MODEL_CHANGE_TREEMAP_STYLE:
+        {
+            ClearHover();
+            DiscardBase(false);
+            CWinDirStatPane::OnUpdate(sender, change, item);
+        }
+        break;
+
     case MODEL_CHANGE_ZOOM:
         {
+            ClearHover();
             m_scrollPos = 0;
-            Inactivate();
+            m_wheelDeltaRemainder = 0;
+            DiscardBase(true);
             CWinDirStatPane::OnUpdate(sender, change, item);
         }
         break;
 
     case MODEL_CHANGE_NONE:
         {
+            ClearHover();
+            DiscardBase(true);
             CWinDirStatPane::OnUpdate(sender, change, item);
         }
         break;
@@ -584,110 +747,117 @@ HoverInfo CFlameGraphView::GetHoverInfo() const
 
 void CFlameGraphView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    static constexpr struct {
-        UINT id;
-        bool isPersistent;
-    } contextMenuPersistent[] = {
-        { ID_TREEMAP_ZOOMIN,             true  },
-        { ID_TREEMAP_ZOOMOUT,            true  },
-        { ID_TREEMAP_SELECT_PARENT,      true  },
-        { ID_TREEMAP_RESELECT_CHILD,     true  },
-        { ID_VIEW_GROUP_TYPES,           true  },
-        { ID_TREEMAP_SHOW_EXTENSIONS,    true  },
-        { ID_TREEMAP_LOGICAL_SIZE,       true  },
-        { ID_EDIT_COPY_CLIPBOARD,        false },
-        { ID_CLEANUP_EXPLORER_SELECT,    false },
-        { ID_CLEANUP_OPEN_IN_CONSOLE,    false },
-        { ID_CLEANUP_OPEN_IN_PWSH,       false },
-        { ID_POPUP_CANCEL,               false }
+    static constexpr std::array<UINT, 7> persistentCommands{
+        ID_TREEMAP_ZOOMIN,
+        ID_TREEMAP_ZOOMOUT,
+        ID_TREEMAP_SELECT_PARENT,
+        ID_TREEMAP_RESELECT_CHILD,
+        ID_VIEW_GROUP_TYPES,
+        ID_TREEMAP_SHOW_EXTENSIONS,
+        ID_TREEMAP_LOGICAL_SIZE,
     };
-
-    [[msvc::flatten]] static constexpr auto IsContextMenuPersistent = [](UINT id) -> bool {
-        return std::ranges::any_of(contextMenuPersistent, [id](const auto& cmd) {
-            return cmd.id == id && cmd.isPersistent;
-        });
-    };
-
-    auto* clickedItem = ResolveItemAtPoint(point, true);
-    if (clickedItem == nullptr) return;
-
-    if (!std::ranges::any_of(CWinDirStatModel::Get()->GetAllSelected(), [&](auto* s)
-        { return s == clickedItem || s->IsAncestorOf(clickedItem); }))
-    {
-        CWinDirStatModel::Get()->ClearReselectChildStack();
-        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, clickedItem);
-    }
-
-    if (CMenu menu; menu.LoadMenu(IDR_POPUP_MAP))
-    {
-        Localization::UpdateMenu(menu);
-        if (CMenu* sub = menu.GetSubMenu(0))
-        {
-            UINT cmdId = 0;
-            do {
-                cmdId = sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-                    point.x, point.y, AfxGetMainWnd());
-                if (cmdId > 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, cmdId);
-            } while (cmdId > 0 && IsContextMenuPersistent(cmdId));
-        }
-    }
+    ShowGraphContextMenu(ResolveItemAtPoint(point, true), point, persistentCommands);
 }
 
 void CFlameGraphView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
+    if (!m_trackingMouse)
+    {
+        TRACKMOUSEEVENT tme{
+            .cbSize = sizeof(TRACKMOUSEEVENT),
+            .dwFlags = TME_LEAVE,
+            .hwndTrack = m_hWnd,
+        };
+        m_trackingMouse = ::TrackMouseEvent(&tme) != FALSE;
+    }
+
     auto* item = ResolveItemAtPoint(point);
-    if (item != nullptr)
+    if (item == nullptr)
     {
-        m_paneTextOverride = item->GetPath();
-        m_paneSizeOverride = item->GetSizeLogical();
-        CMainFrame::Get()->UpdatePaneText();
+        ClearHover();
+        return;
     }
-    if (item != m_flameGraph.GetHoverItem())
-    {
-        m_flameGraph.SetHoverItem(item);
-        Invalidate();
-    }
+    if (item == m_hoverItem) return;
+
+    SetHoverItem(item);
+    m_paneTextOverride = item->GetPath();
+    m_paneSizeOverride = item->GetSizeLogical();
+    CMainFrame::Get()->UpdatePaneText();
+}
+
+void CFlameGraphView::OnMouseLeave()
+{
+    m_trackingMouse = false;
+    ClearHover();
 }
 
 BOOL CFlameGraphView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
     if (!CMainFrame::Get())
         return CWinDirStatPane::OnMouseWheel(nFlags, zDelta, pt);
+    if (!EnsureFullHeightForInput()) return TRUE;
 
-    const int clicks = zDelta / WHEEL_DELTA;
+    const int totalDelta = m_wheelDeltaRemainder + static_cast<int>(zDelta);
+    const int clicks = totalDelta / WHEEL_DELTA;
+    m_wheelDeltaRemainder = totalDelta % WHEEL_DELTA;
     if (clicks == 0) return TRUE;
-    m_scrollPos -= clicks * CFlameGraph::ROW_HEIGHT * 3;
-    const int maxScroll = ComputeFlameFullHeight() - static_cast<int>(m_size.cy);
-    m_scrollPos = std::clamp(m_scrollPos, 0, std::max(0, maxScroll));
-    SetScrollPos(SB_VERT, m_scrollPos, TRUE);
-    Invalidate();
+
+    const int oldPos = m_scrollPos;
+    const int requested = m_scrollPos - clicks * m_rowHeight * 3;
+    const int maxScroll = std::max(0, m_fullHeight - static_cast<int>(m_size.cy));
+    m_scrollPos = std::clamp(requested, 0, maxScroll);
+    if (m_scrollPos != oldPos)
+    {
+        ClearHover();
+        // Scrolling changes only the cached viewport. Reuse logical geometry
+        // for hit testing and the repaint that rebuilds the bitmap.
+        m_bitmap.DeleteObject();
+        UpdateScrollBar(m_fullHeight, m_size.cy);
+        Invalidate(FALSE);
+    }
     return TRUE;
 }
 
 void CFlameGraphView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* /*pScrollBar*/)
 {
+    // A direct scrollbar action starts a new input sequence; do not carry a
+    // fractional high-resolution wheel delta into a later wheel gesture.
+    m_wheelDeltaRemainder = 0;
+    if (nSBCode == SB_ENDSCROLL) return;
+    if (!EnsureFullHeightForInput()) return;
+
     const int cy = static_cast<int>(m_size.cy);
     const int oldPos = m_scrollPos;
 
     switch (nSBCode)
     {
-    case SB_LINEUP:        m_scrollPos -= CFlameGraph::ROW_HEIGHT; break;
-    case SB_LINEDOWN:      m_scrollPos += CFlameGraph::ROW_HEIGHT; break;
+    case SB_LINEUP:        m_scrollPos -= m_rowHeight; break;
+    case SB_LINEDOWN:      m_scrollPos += m_rowHeight; break;
     case SB_PAGEUP:        m_scrollPos -= cy; break;
     case SB_PAGEDOWN:      m_scrollPos += cy; break;
     case SB_THUMBTRACK:
-    case SB_THUMBPOSITION: m_scrollPos = static_cast<int>(nPos); break;
+    case SB_THUMBPOSITION:
+        {
+            SCROLLINFO si{
+                .cbSize = sizeof(SCROLLINFO),
+                .fMask = SIF_TRACKPOS,
+            };
+            m_scrollPos = GetScrollInfo(SB_VERT, &si) ? si.nTrackPos : static_cast<int>(nPos);
+        }
+        break;
     case SB_TOP:           m_scrollPos = 0; break;
     case SB_BOTTOM:        m_scrollPos = INT_MAX; break;
     }
 
-    // Clamp to valid range
-    const int maxScroll = ComputeFlameFullHeight() - cy;
-    m_scrollPos = std::clamp(m_scrollPos, 0, std::max(0, maxScroll));
+    const int maxScroll = std::max(0, m_fullHeight - cy);
+    m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
 
     if (m_scrollPos != oldPos)
     {
-        SetScrollPos(SB_VERT, m_scrollPos, TRUE);
-        Invalidate();
+        ClearHover();
+        // Reuse logical geometry for hit testing and the newly scrolled paint.
+        m_bitmap.DeleteObject();
+        UpdateScrollBar(m_fullHeight, m_size.cy);
+        Invalidate(FALSE);
     }
 }

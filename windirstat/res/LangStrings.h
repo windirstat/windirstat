@@ -164,7 +164,6 @@ constexpr std::wstring_view IDS_MENU_STORAGE_ANALYTICS = L"IDS_MENU_STORAGE_ANAL
 constexpr std::wstring_view IDS_MENU_STORAGE_SENSE = L"IDS_MENU_STORAGE_SENSE";
 constexpr std::wstring_view IDS_MENU_TOOL_BAR = L"IDS_MENU_TOOL_BAR";
 constexpr std::wstring_view IDS_MENU_TOOLS = L"IDS_MENU_TOOLS";
-constexpr std::wstring_view IDS_MENU_TREEMAP = L"IDS_MENU_TREEMAP";
 constexpr std::wstring_view IDS_MENU_TREEMAP_SHOW_EXTENSIONS = L"IDS_MENU_TREEMAP_SHOW_EXTENSIONS";
 constexpr std::wstring_view IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES = L"IDS_MENU_TREEMAP_SHOW_FOLDER_FRAMES";
 constexpr std::wstring_view IDS_MENU_VIEW = L"IDS_MENU_VIEW";
