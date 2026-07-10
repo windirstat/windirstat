@@ -21,68 +21,69 @@
 #include "HelpersInterface.h"
 #include "MainFrame.h"
 
-// Pane viewType: 0=AllFiles  1=FileTypes  2=TreeMap  -1=absent; x,y,w,h are fractions of card area
+// Coordinate definitions and view-type tokens used to render the visual layout preview cards.
+// Note: Spatial parameters (x, y, w, h) represent fractional ratios of the total card area.
 const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
 {
     // 00: [AF|FT] top half / TM bottom half
-    { { {0, 0.00f, 0.00f, 0.58f, 0.50f},
-        {1, 0.58f, 0.00f, 0.42f, 0.50f},
-        {2, 0.00f, 0.50f, 1.00f, 0.50f} }, LT_ROWS_SUB_COLS, 0 },
+    { { {VT_ALLFILES,  0.00f, 0.00f, 0.58f, 0.50f},
+        {VT_FILETYPES, 0.58f, 0.00f, 0.42f, 0.50f},
+        {VT_TREEMAP,   0.00f, 0.50f, 1.00f, 0.50f} }, LT_ROWS_SUB_COLS, 0 },
 
     // 01: AF(40) | FT(20) | TM(40) columns
-    { { {0, 0.00f, 0.00f, 0.40f, 1.00f},
-        {1, 0.40f, 0.00f, 0.20f, 1.00f},
-        {2, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE, 2 },
+    { { {VT_ALLFILES,  0.00f, 0.00f, 0.40f, 1.00f},
+        {VT_FILETYPES, 0.40f, 0.00f, 0.20f, 1.00f},
+        {VT_TREEMAP,   0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE,    2 },
 
     // 02: TM(40) | AF(40) | FT(20) columns
-    { { {2, 0.00f, 0.00f, 0.40f, 1.00f},
-        {0, 0.40f, 0.00f, 0.40f, 1.00f},
-        {1, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE, 1 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 0.40f, 1.00f},
+        {VT_ALLFILES,  0.40f, 0.00f, 0.40f, 1.00f},
+        {VT_FILETYPES, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE,    1 },
 
     // 03: TM top half / [AF|FT] bottom half
-    { { {2, 0.00f, 0.00f, 1.00f, 0.50f},
-        {0, 0.00f, 0.50f, 0.58f, 0.50f},
-        {1, 0.58f, 0.50f, 0.42f, 0.50f} }, LT_ROWS_SUB_COLS, 1 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 1.00f, 0.50f},
+        {VT_ALLFILES,  0.00f, 0.50f, 0.58f, 0.50f},
+        {VT_FILETYPES, 0.58f, 0.50f, 0.42f, 0.50f} }, LT_ROWS_SUB_COLS, 1 },
 
     // 04: AF(40) | TM(40) | FT(20) columns
-    { { {0, 0.00f, 0.00f, 0.40f, 1.00f},
-        {2, 0.40f, 0.00f, 0.40f, 1.00f},
-        {1, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE, 0 },
+    { { {VT_ALLFILES,  0.00f, 0.00f, 0.40f, 1.00f},
+        {VT_TREEMAP,   0.40f, 0.00f, 0.40f, 1.00f},
+        {VT_FILETYPES, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE,    0 },
 
     // 05: TM(40) | FT(20) | AF(40) columns
-    { { {2, 0.00f, 0.00f, 0.40f, 1.00f},
-        {1, 0.40f, 0.00f, 0.20f, 1.00f},
-        {0, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE, 3 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 0.40f, 1.00f},
+        {VT_FILETYPES, 0.40f, 0.00f, 0.20f, 1.00f},
+        {VT_ALLFILES,  0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE,    3 },
 
     // 06: left=[AF(top)/TM(bot)], right=FT
-    { { {0, 0.00f, 0.00f, 0.60f, 0.50f},
-        {2, 0.00f, 0.50f, 0.60f, 0.50f},
-        {1, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 1 },
+    { { {VT_ALLFILES,  0.00f, 0.00f, 0.60f, 0.50f},
+        {VT_TREEMAP,   0.00f, 0.50f, 0.60f, 0.50f},
+        {VT_FILETYPES, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 1 },
 
     // 07: left=[AF(top)/FT(bot)], right=TM
-    { { {0, 0.00f, 0.00f, 0.50f, 0.50f},
-        {1, 0.00f, 0.50f, 0.50f, 0.50f},
-        {2, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL, 3 },
+    { { {VT_ALLFILES,  0.00f, 0.00f, 0.50f, 0.50f},
+        {VT_FILETYPES, 0.00f, 0.50f, 0.50f, 0.50f},
+        {VT_TREEMAP,   0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL,  3 },
 
     // 08: left=TM, right=[AF(top)/FT(bot)]
-    { { {2, 0.00f, 0.00f, 0.50f, 1.00f},
-        {0, 0.50f, 0.00f, 0.50f, 0.50f},
-        {1, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL, 1 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 0.50f, 1.00f},
+        {VT_ALLFILES,  0.50f, 0.00f, 0.50f, 0.50f},
+        {VT_FILETYPES, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL,  1 },
 
     // 09: left=[TM(top)/AF(bot)], right=FT
-    { { {2, 0.00f, 0.00f, 0.60f, 0.50f},
-        {0, 0.00f, 0.50f, 0.60f, 0.50f},
-        {1, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 0 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 0.60f, 0.50f},
+        {VT_ALLFILES,  0.00f, 0.50f, 0.60f, 0.50f},
+        {VT_FILETYPES, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 0 },
 
     // 10: left=[FT(top)/AF(bot)], right=TM
-    { { {1, 0.00f, 0.00f, 0.50f, 0.50f},
-        {0, 0.00f, 0.50f, 0.50f, 0.50f},
-        {2, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL, 2 },
+    { { {VT_FILETYPES, 0.00f, 0.00f, 0.50f, 0.50f},
+        {VT_ALLFILES,  0.00f, 0.50f, 0.50f, 0.50f},
+        {VT_TREEMAP,   0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_TM_FULL,  2 },
 
     // 11: left=TM, right=[FT(top)/AF(bot)]
-    { { {2, 0.00f, 0.00f, 0.50f, 1.00f},
-        {1, 0.50f, 0.00f, 0.50f, 0.50f},
-        {0, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL, 0 },
+    { { {VT_TREEMAP,   0.00f, 0.00f, 0.50f, 1.00f},
+        {VT_FILETYPES, 0.50f, 0.00f, 0.50f, 0.50f},
+        {VT_ALLFILES,  0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_TM_FULL,  0 },
 };
 
 int CLayoutPopup::LayoutIndex(int topology, int permutation)
@@ -442,9 +443,9 @@ void CLayoutPopup::PaintCard(CDC& dc, int idx) const
 
         switch (pn.viewType)
         {
-        case 0: DrawAllFilesPane (dc, pr);       break;
-        case 1: DrawFileTypesPane(dc, pr);       break;
-        case 2: DrawTreeMapPane  (dc, pr, idx);  break;
+        case VT_ALLFILES : DrawAllFilesPane (dc, pr);       break;
+        case VT_FILETYPES: DrawFileTypesPane(dc, pr);       break;
+        case VT_TREEMAP  : DrawTreeMapPane  (dc, pr, idx);  break;
         }
     }
 
