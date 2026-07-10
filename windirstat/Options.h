@@ -41,6 +41,15 @@ enum DARKMODE : std::uint8_t
     DM_USE_WINDOWS
 };
 
+// Layout view types
+enum LAYOUT_VIEW_TYPE : int
+{
+    VT_ABSENT    = -1,
+    VT_ALLFILES  = 0,
+    VT_FILETYPES = 1,
+    VT_TREEMAP   = 2
+};
+
 // Layout topology: the structural arrangement of the two splitters
 enum LAYOUT_TOPOLOGY : int
 {
