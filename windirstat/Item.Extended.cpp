@@ -170,11 +170,7 @@ std::wstring CItem::GetText(const int subitem) const
     }
 
     case COL_NAME:
-        if (IsTypeOrFlag(IT_DRIVE))
-        {
-            return std::wstring(GetNameView().substr(std::size(L"?:")));
-        }
-        return GetName();
+        return GetName(true);
 
     case COL_OWNER:
         if (IsTypeOrFlag(IT_FILE, IT_DIRECTORY))

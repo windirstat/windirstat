@@ -597,13 +597,17 @@ void CItem::SetName(const std::wstring_view name)
     m_name[m_nameLen] = L'\0';
 }
 
-std::wstring CItem::GetName() const noexcept
+std::wstring CItem::GetName(const bool stripDrivePrefix) const noexcept
 {
-    return { m_name.get(), m_nameLen };
+    return std::wstring(GetNameView(stripDrivePrefix));
 }
 
-std::wstring_view CItem::GetNameView() const noexcept
+std::wstring_view CItem::GetNameView(const bool stripDrivePrefix) const noexcept
 {
+    if (stripDrivePrefix && IsTypeOrFlag(IT_DRIVE))
+    {
+        return std::wstring_view(m_name.get(), m_nameLen).substr(std::size(L"?:"));
+    }
     return { m_name.get(), m_nameLen };
 }
 
