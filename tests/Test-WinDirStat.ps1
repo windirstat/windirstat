@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+﻿#Requires -Version 7.6
 <#
 .SYNOPSIS
     WinDirStat combined test suite.
@@ -9,7 +9,7 @@
     set of common, robust helpers and one unified result registry:
 
         1. Filtering / CSV / regex / glob / size  (headless, CLI scans)
-        2. Non-visual settings load/save round-trips (auto-builds an instrumented
+        2. Non-visual settings load, clamping, and derived behavior (auto-builds an instrumented
            binary when MSBuild is available, otherwise skips)
         3. UI automation / end-to-end navigation, including the file-operation
            verifications (Compress / Sparsify / Deduplicate-with-Hardlink /
@@ -23,6 +23,9 @@
            \\tsclient), through redirected roots (subst, junction, symlink),
            and across FAT32 / ReFS / NTFS, each compared against a PowerShell
            ground truth
+        7. UNC share-root scanning regression coverage
+        8. Permissions export (CSV and JSON)
+        9. Command-line parsing, validation, and quiet-mode termination
 
     EVERY suite runs by default; no opt-in switches are required.  Suites whose
     prerequisites are not met (no MSBuild, not elevated, scratch drives absent,
@@ -178,6 +181,7 @@ function Get-HashAlgorithmId {
 $script:WM_CLOSE         = 0x0010
 $script:WM_COMMAND       = 0x0111
 $script:WM_INITMENUPOPUP = 0x0117
+$script:BM_GETCHECK      = 0x00F0
 $script:BM_SETCHECK      = 0x00F1
 $script:BM_CLICK         = 0x00F5
 $script:MF_GRAYED        = 0x0001
@@ -238,7 +242,13 @@ Add-Type -AssemblyName System.Windows.Forms
 # standard LZNT1 compression tests un-runnable.  The system temp directory is
 # ordinary NTFS with full compression + sparse + ADS support, so every file
 # operation can be exercised.
-$BuildRoot  = Join-Path ([System.IO.Path]::GetTempPath()) 'WinDirStatTests'
+# Give every invocation its own root.  The suite is often sharded by -Only in CI;
+# a fixed directory lets concurrent processes delete each other's runner, INI,
+# CSV, and fixture files, producing intermittent false failures (or false passes
+# when one process happens to consume another process's output).
+$BuildRoot = Join-Path ([System.IO.Path]::GetTempPath()) (
+    'WinDirStatTests-{0}-{1}' -f $PID, [guid]::NewGuid().ToString('N').Substring(0, 8)
+)
 
 $symbolPass = [string][char]0x2713   # check mark
 $symbolFail = [string][char]0x2717   # ballot X
@@ -645,31 +655,40 @@ function Invoke-ProcessWithTimeout {
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $process = [System.Diagnostics.Process]::Start($startInfo)
+    try {
+        # Begin draining BOTH redirected pipes asynchronously *before* waiting on the
+        # process.  A child that writes more than the pipe buffer (~4 KB) blocks until
+        # the reader drains it; if we instead blocked in WaitForExit first, that child
+        # would deadlock and surface as a bogus timeout + killed process.  The async
+        # readers keep the pipes empty so the child always runs to completion.
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
 
-    # Begin draining BOTH redirected pipes asynchronously *before* waiting on the
-    # process.  A child that writes more than the pipe buffer (~4 KB) blocks until
-    # the reader drains it; if we instead blocked in WaitForExit first, that child
-    # would deadlock and surface as a bogus timeout + killed process.  The async
-    # readers keep the pipes empty so the child always runs to completion.
-    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-    $stderrTask = $process.StandardError.ReadToEndAsync()
+        if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
+            # Kill the complete tree, then reap it before fixture cleanup begins.
+            # Without the second wait a surviving child can retain handles to the
+            # runner/CSV and race the suite's recursive cleanup.
+            try { $process.Kill($true) } catch {}
+            try { [void] $process.WaitForExit(5000) } catch {}
+            throw "$([System.IO.Path]::GetFileName($FileName)) did not finish within $TimeoutSeconds seconds."
+        }
+        # The process has exited; the readers see EOF momentarily — GetResult() blocks
+        # only until the final buffered bytes are drained, so no output is lost.
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
+        $sw.Stop()
 
-    if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-        try { $process.Kill($true) } catch {}
-        throw "$([System.IO.Path]::GetFileName($FileName)) did not finish within $TimeoutSeconds seconds."
+        [pscustomobject]@{
+            CommandLine    = "`"$FileName`" $(Join-ProcessArguments -Arguments $Arguments)"
+            ExitCode       = $process.ExitCode
+            StdOut         = $stdout
+            StdErr         = $stderr
+            ElapsedSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 3)
+        }
     }
-    # The process has exited; the readers see EOF momentarily — GetResult() blocks
-    # only until the final buffered bytes are drained, so no output is lost.
-    $stdout = $stdoutTask.GetAwaiter().GetResult()
-    $stderr = $stderrTask.GetAwaiter().GetResult()
-    $sw.Stop()
-
-    [pscustomobject]@{
-        CommandLine    = "`"$FileName`" $(Join-ProcessArguments -Arguments $Arguments)"
-        ExitCode       = $process.ExitCode
-        StdOut         = $stdout
-        StdErr         = $stderr
-        ElapsedSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 3)
+    finally {
+        if ($sw.IsRunning) { $sw.Stop() }
+        $process.Dispose()
     }
 }
 
@@ -1000,6 +1019,88 @@ function Test-ScratchDrivesUnderSizeLimit {
     }
 }
 
+# Return every reason a drive must not be treated as disposable test media.
+# Checking only literal C: is unsafe on non-C Windows installations and when a
+# small recovery/system partition or the repository volume has another letter.
+function Get-ScratchDriveProtectionReasons {
+    param([Parameter(Mandatory)] [string] $Letter)
+
+    $l = ($Letter -replace ':.*', '').ToUpperInvariant()
+    $reasons = [System.Collections.Generic.List[string]]::new()
+    if ($l -notmatch '^[A-Z]$') {
+        [void] $reasons.Add('not a single drive letter')
+        return @($reasons)
+    }
+
+    $driveRoot = "${l}:\"
+    $protectedPaths = [ordered]@{
+        'Windows'         = $env:SystemRoot
+        'system temp'     = [System.IO.Path]::GetTempPath()
+        'repository'      = $RepoRoot
+        'test executable' = $ExePath
+    }
+    foreach ($entry in $protectedPaths.GetEnumerator()) {
+        if ([string]::IsNullOrWhiteSpace([string]$entry.Value)) { continue }
+        try {
+            $root = [System.IO.Path]::GetPathRoot([System.IO.Path]::GetFullPath([string]$entry.Value))
+            if ($root -and $root.TrimEnd('\') -ieq $driveRoot.TrimEnd('\')) {
+                [void] $reasons.Add("hosts $($entry.Key)")
+            }
+        }
+        catch {}
+    }
+
+    try {
+        $partition = Get-Partition -DriveLetter $l -ErrorAction Stop
+        if ($partition.IsBoot)   { [void] $reasons.Add('is a boot partition') }
+        if ($partition.IsSystem) { [void] $reasons.Add('is a system partition') }
+        if ([string]$partition.GptType -ieq '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}') {
+            [void] $reasons.Add('is a Windows recovery partition')
+        }
+        if ([int]$partition.MbrType -eq 0x27) {
+            [void] $reasons.Add('is a Windows recovery partition')
+        }
+    }
+    catch {}
+
+    try {
+        $pageFiles = @(Get-CimInstance -ClassName Win32_PageFileUsage -ErrorAction Stop)
+        if ($pageFiles | Where-Object { $_.Name -like "${l}:\*" }) {
+            [void] $reasons.Add('hosts a page file')
+        }
+    }
+    catch {}
+
+    @($reasons | Select-Object -Unique)
+}
+
+# Serialize destructive suites across concurrently-sharded test processes.
+function Enter-ScratchDriveLock {
+    param([Parameter(Mandatory)] [string[]] $Letters)
+
+    # One global lock is intentionally conservative.  Pair-keyed locks allow
+    # E:-F: and F:-G: runs to overlap and race while both format F:.
+    $mutex = [System.Threading.Mutex]::new($false, 'Global\WinDirStat-E2E-Scratch-Formatting')
+    try {
+        $acquired = $mutex.WaitOne(0)
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $acquired = $true
+    }
+    if (-not $acquired) {
+        $mutex.Dispose()
+        return $null
+    }
+    return $mutex
+}
+
+function Exit-ScratchDriveLock {
+    param([AllowNull()] [System.Threading.Mutex] $Mutex)
+    if (!$Mutex) { return }
+    try { $Mutex.ReleaseMutex() } catch {}
+    $Mutex.Dispose()
+}
+
 # #############################################################################
 # UI AUTOMATION SUITE  (UIAutomation-driven end-to-end navigation + file ops)
 # #############################################################################
@@ -1008,12 +1109,37 @@ function Test-ScratchDrivesUnderSizeLimit {
 
 Add-Type -TypeDefinition @'
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 public static class Win32Helper {
+    public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);
+    [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")] private static extern uint GetWindowProcessId(IntPtr hWnd, out uint processId);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+
+    public static IntPtr[] GetProcessWindowHandles(uint targetProcessId) {
+        var handles = new HashSet<IntPtr>();
+        EnumWindows(delegate (IntPtr hwnd, IntPtr unused) {
+            uint processId;
+            GetWindowProcessId(hwnd, out processId);
+            if (processId != targetProcessId) return true;
+            handles.Add(hwnd);
+            EnumChildWindows(hwnd, delegate (IntPtr child, IntPtr childUnused) {
+                uint childProcessId;
+                GetWindowProcessId(child, out childProcessId);
+                if (childProcessId == targetProcessId) handles.Add(child);
+                return true;
+            }, IntPtr.Zero);
+            return true;
+        }, IntPtr.Zero);
+        var result = new IntPtr[handles.Count];
+        handles.CopyTo(result);
+        return result;
+    }
 }
 '@
 
@@ -1045,10 +1171,389 @@ public static class Win32MenuHelper {
     public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
+    public static extern bool IsWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
     public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr GetDlgItem(IntPtr hDlg, int nIDDlgItem);
+}
+'@
+
+# The All Files hierarchy is a virtual SysListView32.  Its MFC accessibility
+# provider exposes file rows through UIA, but can omit directory rows entirely.
+# This helper reads and selects native list-view rows in the target process so
+# Refresh Selected can be tested against an actual directory without falling
+# back to Refresh All.  The remote LVITEM layout requires equal process bitness;
+# callers catch a mismatch and retain the UIA/skip path.
+Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public static class NativeListViewHelper
+{
+    private const uint LVM_FIRST = 0x1000;
+    private const uint LVM_GETITEMCOUNT = LVM_FIRST + 4;
+    private const uint LVM_GETITEMW = LVM_FIRST + 75;
+    private const uint LVM_GETITEMSTATE = LVM_FIRST + 44;
+    private const uint LVM_GETSELECTEDCOUNT = LVM_FIRST + 50;
+    private const uint LVM_SETITEMSTATE = LVM_FIRST + 43;
+    private const uint LVM_ENSUREVISIBLE = LVM_FIRST + 19;
+    private const uint LVIF_TEXT = 0x0001;
+    private const uint LVIS_FOCUSED = 0x0001;
+    private const uint LVIS_SELECTED = 0x0002;
+
+    private const uint PROCESS_VM_OPERATION = 0x0008;
+    private const uint PROCESS_VM_READ = 0x0010;
+    private const uint PROCESS_VM_WRITE = 0x0020;
+    private const uint PROCESS_QUERY_INFORMATION = 0x0400;
+    private const uint MEM_COMMIT = 0x1000;
+    private const uint MEM_RESERVE = 0x2000;
+    private const uint MEM_RELEASE = 0x8000;
+    private const uint PAGE_READWRITE = 0x0004;
+    private const uint SMTO_BLOCK = 0x0001;
+    private const uint SMTO_ABORTIFHUNG = 0x0002;
+    private const uint SMTO_ERRORONEXIT = 0x0020;
+    private const uint MESSAGE_TIMEOUT_MS = 5000;
+
+    public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LVITEM
+    {
+        public uint mask;
+        public int iItem;
+        public int iSubItem;
+        public uint state;
+        public uint stateMask;
+        public IntPtr pszText;
+        public int cchTextMax;
+        public int iImage;
+        public IntPtr lParam;
+        public int iIndent;
+        public int iGroupId;
+        public uint cColumns;
+        public IntPtr puColumns;
+        public IntPtr piColFmt;
+        public int iGroup;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr hwnd, StringBuilder className, int maxCount);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr SendMessageTimeout(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam,
+                                                     uint flags, uint timeoutMilliseconds, out UIntPtr result);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool AttachThreadInput(uint attachThread, uint attachToThread, bool attach);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetFocus(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetFocus();
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inheritHandle, uint processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr VirtualAllocEx(IntPtr process, IntPtr address, UIntPtr size, uint allocationType, uint protect);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool VirtualFreeEx(IntPtr process, IntPtr address, UIntPtr size, uint freeType);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool WriteProcessMemory(IntPtr process, IntPtr address, IntPtr buffer, UIntPtr size, out UIntPtr written);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool ReadProcessMemory(IntPtr process, IntPtr address, byte[] buffer, UIntPtr size, out UIntPtr read);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool IsWow64Process(IntPtr process, out bool wow64);
+
+    public static IntPtr[] GetVisibleListViews(IntPtr root)
+    {
+        var result = new List<IntPtr>();
+        EnumChildWindows(root, delegate (IntPtr hwnd, IntPtr unused)
+        {
+            var className = new StringBuilder(64);
+            GetClassName(hwnd, className, className.Capacity);
+            if (className.ToString() == "SysListView32" && IsWindowVisible(hwnd))
+                result.Add(hwnd);
+            return true;
+        }, IntPtr.Zero);
+        // Keep bounded message calls on the managed side of the callback so a
+        // timeout becomes a normal exception instead of crossing a native frame.
+        result.RemoveAll(delegate (IntPtr hwnd) { return GetItemCount(hwnd) <= 0; });
+        return result.ToArray();
+    }
+
+    public static int GetItemCount(IntPtr listView)
+    {
+        return SendBounded(listView, LVM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
+    public static string[] GetItemTexts(IntPtr listView)
+    {
+        int count = GetItemCount(listView);
+        if (count < 0 || count > 1000000)
+            throw new InvalidOperationException("Invalid list-view item count: " + count);
+
+        uint processId;
+        GetWindowThreadProcessId(listView, out processId);
+        IntPtr process = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION,
+                                     false, processId);
+        if (process == IntPtr.Zero)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not open the list-view process.");
+
+        IntPtr remoteItem = IntPtr.Zero;
+        IntPtr remoteText = IntPtr.Zero;
+        IntPtr localItem = IntPtr.Zero;
+        bool releaseRemote = true;
+        try
+        {
+            EnsureSameBitness(process);
+            int structSize = Marshal.SizeOf(typeof(LVITEM));
+            const int textBytes = 8192;
+            remoteItem = AllocateRemote(process, structSize);
+            remoteText = AllocateRemote(process, textBytes);
+            localItem = Marshal.AllocHGlobal(structSize);
+            var result = new string[count];
+
+            for (int index = 0; index < count; ++index)
+            {
+                var item = new LVITEM
+                {
+                    mask = LVIF_TEXT,
+                    iItem = index,
+                    iSubItem = 0,
+                    pszText = remoteText,
+                    cchTextMax = textBytes / 2
+                };
+                Marshal.StructureToPtr(item, localItem, false);
+                WriteRemote(process, remoteItem, localItem, structSize);
+
+                if (SendBounded(listView, LVM_GETITEMW, IntPtr.Zero, remoteItem) == IntPtr.Zero)
+                    throw new InvalidOperationException("LVM_GETITEMW failed for list-view row " + index + ".");
+
+                // An owner-data provider may replace pszText while servicing
+                // LVIF_TEXT. Read the returned LVITEM and follow its pointer
+                // rather than assuming our exchange buffer was retained.
+                var returnedBytes = new byte[structSize];
+                UIntPtr bytesRead;
+                if (!ReadProcessMemory(process, remoteItem, returnedBytes, (UIntPtr)structSize, out bytesRead) ||
+                    bytesRead.ToUInt64() != (ulong)structSize)
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not read the returned LVITEM.");
+                Marshal.Copy(returnedBytes, 0, localItem, structSize);
+                var returned = (LVITEM)Marshal.PtrToStructure(localItem, typeof(LVITEM));
+                result[index] = ReadRemoteUnicodeString(process, returned.pszText, textBytes / 2);
+            }
+            return result;
+        }
+        catch (TimeoutException)
+        {
+            // A timed-out receiver may still own the LVITEM pointers. Leave the
+            // tiny allocations in the target process; Windows reclaims them
+            // when the harness terminates that hung process.
+            releaseRemote = false;
+            throw;
+        }
+        finally
+        {
+            if (localItem != IntPtr.Zero) Marshal.FreeHGlobal(localItem);
+            if (releaseRemote && remoteItem != IntPtr.Zero) VirtualFreeEx(process, remoteItem, UIntPtr.Zero, MEM_RELEASE);
+            if (releaseRemote && remoteText != IntPtr.Zero) VirtualFreeEx(process, remoteText, UIntPtr.Zero, MEM_RELEASE);
+            CloseHandle(process);
+        }
+    }
+
+    public static bool SelectSingleItem(IntPtr listView, int index)
+    {
+        return SelectItems(listView, new int[] { index });
+    }
+
+    public static bool SelectItems(IntPtr listView, int[] indices)
+    {
+        int count = GetItemCount(listView);
+        if (indices == null || indices.Length == 0) return false;
+        var unique = new HashSet<int>(indices);
+        if (unique.Count != indices.Length) return false;
+        foreach (int index in indices)
+            if (index < 0 || index >= count) return false;
+
+        uint processId;
+        GetWindowThreadProcessId(listView, out processId);
+        IntPtr process = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION,
+                                     false, processId);
+        if (process == IntPtr.Zero)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not open the list-view process.");
+
+        IntPtr remoteItem = IntPtr.Zero;
+        IntPtr localItem = IntPtr.Zero;
+        bool releaseRemote = true;
+        try
+        {
+            EnsureSameBitness(process);
+            int structSize = Marshal.SizeOf(typeof(LVITEM));
+            remoteItem = AllocateRemote(process, structSize);
+            localItem = Marshal.AllocHGlobal(structSize);
+
+            var clear = new LVITEM { state = 0, stateMask = LVIS_SELECTED | LVIS_FOCUSED };
+            Marshal.StructureToPtr(clear, localItem, false);
+            WriteRemote(process, remoteItem, localItem, structSize);
+            if (SendBounded(listView, LVM_SETITEMSTATE, new IntPtr(-1), remoteItem) == IntPtr.Zero)
+                return false;
+
+            for (int position = 0; position < indices.Length; ++position)
+            {
+                int index = indices[position];
+                uint desiredState = LVIS_SELECTED | (position == 0 ? LVIS_FOCUSED : 0);
+                var select = new LVITEM
+                {
+                    iItem = index,
+                    state = desiredState,
+                    stateMask = LVIS_SELECTED | LVIS_FOCUSED
+                };
+                Marshal.StructureToPtr(select, localItem, false);
+                WriteRemote(process, remoteItem, localItem, structSize);
+                if (SendBounded(listView, LVM_SETITEMSTATE, (IntPtr)index, remoteItem) == IntPtr.Zero)
+                    return false;
+            }
+            SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
+
+            int selectedCount = SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+            if (selectedCount != indices.Length) return false;
+            for (int position = 0; position < indices.Length; ++position)
+            {
+                uint requiredState = LVIS_SELECTED | (position == 0 ? LVIS_FOCUSED : 0);
+                uint state = unchecked((uint)SendBounded(listView, LVM_GETITEMSTATE, (IntPtr)indices[position],
+                                                          (IntPtr)(LVIS_SELECTED | LVIS_FOCUSED)).ToInt64());
+                if ((state & requiredState) != requiredState) return false;
+            }
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            releaseRemote = false;
+            throw;
+        }
+        finally
+        {
+            if (localItem != IntPtr.Zero) Marshal.FreeHGlobal(localItem);
+            if (releaseRemote && remoteItem != IntPtr.Zero) VirtualFreeEx(process, remoteItem, UIntPtr.Zero, MEM_RELEASE);
+            CloseHandle(process);
+        }
+    }
+
+    public static bool FocusListView(IntPtr listView)
+    {
+        uint processId;
+        uint targetThread = GetWindowThreadProcessId(listView, out processId);
+        uint currentThread = GetCurrentThreadId();
+        bool attached = false;
+        try
+        {
+            if (targetThread != currentThread)
+            {
+                attached = AttachThreadInput(currentThread, targetThread, true);
+                if (!attached) return false;
+            }
+            SetFocus(listView);
+            return GetFocus() == listView;
+        }
+        finally
+        {
+            if (attached) AttachThreadInput(currentThread, targetThread, false);
+        }
+    }
+
+    private static void EnsureSameBitness(IntPtr targetProcess)
+    {
+        if (!Environment.Is64BitOperatingSystem) return;
+        bool targetWow64;
+        if (!IsWow64Process(targetProcess, out targetWow64))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not determine target process bitness.");
+        bool currentWow64 = !Environment.Is64BitProcess;
+        if (targetWow64 != currentWow64)
+            throw new InvalidOperationException("Native list-view access requires PowerShell and WinDirStat to have equal bitness.");
+    }
+
+    private static IntPtr AllocateRemote(IntPtr process, int bytes)
+    {
+        IntPtr result = VirtualAllocEx(process, IntPtr.Zero, (UIntPtr)bytes,
+                                       MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (result == IntPtr.Zero)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not allocate list-view exchange memory.");
+        return result;
+    }
+
+    private static void WriteRemote(IntPtr process, IntPtr remote, IntPtr local, int bytes)
+    {
+        UIntPtr written;
+        if (!WriteProcessMemory(process, remote, local, (UIntPtr)bytes, out written) ||
+            written.ToUInt64() != (ulong)bytes)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not write list-view exchange memory.");
+    }
+
+    private static IntPtr SendBounded(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam)
+    {
+        UIntPtr result;
+        // SendMessageTimeout may return zero on timeout without setting an
+        // error. Clear the P/Invoke slot so a stale error cannot make us free
+        // remote buffers that the receiver might still reference.
+        Marshal.SetLastPInvokeError(0);
+        IntPtr succeeded = SendMessageTimeout(hwnd, message, wParam, lParam,
+                                               SMTO_BLOCK | SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT,
+                                               MESSAGE_TIMEOUT_MS, out result);
+        if (succeeded == IntPtr.Zero)
+        {
+            int error = Marshal.GetLastWin32Error();
+            if (error == 0 || error == 1460) // ERROR_TIMEOUT is not guaranteed to be set.
+                throw new TimeoutException("List-view message 0x" + message.ToString("X") +
+                                           " timed out after " + MESSAGE_TIMEOUT_MS + " ms.");
+            throw new Win32Exception(error, "Could not send a bounded list-view message.");
+        }
+        return new IntPtr(unchecked((long)result.ToUInt64()));
+    }
+
+    private static string ReadRemoteUnicodeString(IntPtr process, IntPtr address, int maxCharacters)
+    {
+        if (address == IntPtr.Zero) return String.Empty;
+        var result = new StringBuilder();
+        var bytes = new byte[2];
+        for (int index = 0; index < maxCharacters; ++index)
+        {
+            UIntPtr bytesRead;
+            IntPtr current = new IntPtr(address.ToInt64() + index * 2L);
+            if (!ReadProcessMemory(process, current, bytes, (UIntPtr)2, out bytesRead) ||
+                bytesRead.ToUInt64() != 2)
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not read list-view text.");
+            char character = (char)(bytes[0] | (bytes[1] << 8));
+            if (character == '\0') break;
+            result.Append(character);
+        }
+        return result.ToString();
+    }
 }
 '@
 
@@ -1237,6 +1742,41 @@ function Invoke-Win32CommandId {
 
 # -- UIAutomation helpers ------------------------------------------------------
 
+function Test-IsTransientUiaRpcFailure {
+    param([System.Exception] $Exception)
+    $current = $Exception
+    while ($current) {
+        $hresult = ([long] $current.HResult) -band 0xFFFFFFFFL
+        if ($hresult -in @(
+            0x80010105L, # RPC_E_SERVERFAULT
+            0x80010001L, # RPC_E_CALL_REJECTED
+            0x8001010AL  # RPC_E_SERVERCALL_RETRYLATER
+        )) { return $true }
+        $current = $current.InnerException
+    }
+    return $false
+}
+
+function Invoke-UiaQueryWithRetry {
+    param(
+        [Parameter(Mandatory)] [scriptblock] $Action,
+        [string] $Operation = 'UI Automation query',
+        [int] $Attempts = 6
+    )
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        try { return & $Action }
+        catch {
+            if (-not (Test-IsTransientUiaRpcFailure -Exception $_.Exception) -or $attempt -eq $Attempts) {
+                throw
+            }
+            if ($Details) {
+                Write-ColoredLine "    $Operation hit a transient UIA RPC failure; retry $attempt/$Attempts" DarkGray
+            }
+            Start-Sleep -Milliseconds (100 * $attempt)
+        }
+    }
+}
+
 function Find-UiaFirst {
     param(
         [System.Windows.Automation.AutomationElement] $Root,
@@ -1254,7 +1794,7 @@ function Find-UiaFirst {
     $cond = if ($conds.Count -eq 0) { [System.Windows.Automation.Condition]::TrueCondition }
              elseif ($conds.Count -eq 1) { $conds[0] }
              else { [System.Windows.Automation.AndCondition]::new($conds.ToArray()) }
-    $Root.FindFirst($Scope, $cond)
+    Invoke-UiaQueryWithRetry -Operation 'FindFirst' -Action { $Root.FindFirst($Scope, $cond) }
 }
 
 function Find-UiaAll {
@@ -1270,7 +1810,7 @@ function Find-UiaAll {
     $cond = if ($conds.Count -eq 0) { [System.Windows.Automation.Condition]::TrueCondition }
              elseif ($conds.Count -eq 1) { $conds[0] }
              else { [System.Windows.Automation.AndCondition]::new($conds.ToArray()) }
-    @($Root.FindAll($Scope, $cond))
+    @(Invoke-UiaQueryWithRetry -Operation 'FindAll' -Action { $Root.FindAll($Scope, $cond) })
 }
 
 function Get-AllDescendantsByType {
@@ -1352,8 +1892,10 @@ function Wait-Window {
         $winC = [System.Windows.Automation.PropertyCondition]::new(
             [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
             [System.Windows.Automation.ControlType]::Window)
-        $wins = @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
-            [System.Windows.Automation.AndCondition]::new($pidC, $winC)))
+        $wins = @(Invoke-UiaQueryWithRetry -Operation 'Find process windows' -Action {
+            $root.FindAll([System.Windows.Automation.TreeScope]::Children,
+                [System.Windows.Automation.AndCondition]::new($pidC, $winC))
+        })
         foreach ($w in $wins) {
             if (!$TitleContains -or $w.Current.Name -like "*$TitleContains*") { return $w }
         }
@@ -1370,8 +1912,10 @@ function Get-ChildWindows {
     $winC = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Window)
-    @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
-        [System.Windows.Automation.AndCondition]::new($pidC, $winC)))
+    @(Invoke-UiaQueryWithRetry -Operation 'Find child windows' -Action {
+        $root.FindAll([System.Windows.Automation.TreeScope]::Children,
+            [System.Windows.Automation.AndCondition]::new($pidC, $winC))
+    })
 }
 
 # Wait for a new window to appear by snapshotting existing HWNDs first
@@ -1398,11 +1942,13 @@ function Wait-NewWindow {
             try {
                 $pidC = [System.Windows.Automation.PropertyCondition]::new(
                     [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
-                $win = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
-                    [System.Windows.Automation.TreeScope]::Children,
-                    [System.Windows.Automation.PropertyCondition]::new(
-                        [System.Windows.Automation.AutomationElement]::NativeWindowHandleProperty,
-                        [int]$excl))
+                $handleCondition = [System.Windows.Automation.PropertyCondition]::new(
+                    [System.Windows.Automation.AutomationElement]::NativeWindowHandleProperty,
+                    [int]$excl)
+                $win = Invoke-UiaQueryWithRetry -Operation 'Find window by handle' -Action {
+                    [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
+                        [System.Windows.Automation.TreeScope]::Children, $handleCondition)
+                }
                 if ($win) {
                     $dlg = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
                         -Scope ([System.Windows.Automation.TreeScope]::Descendants)
@@ -1421,11 +1967,13 @@ function Wait-NewWindow {
 # Snapshot the current set of window HWNDs for a process
 function Get-CurrentWindowHwnds {
     param([int] $ProcessId)
-    $root = [System.Windows.Automation.AutomationElement]::RootElement
-    $cond = [System.Windows.Automation.PropertyCondition]::new(
-        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
-    $wins = @($root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond))
-    [IntPtr[]]@($wins | ForEach-Object { [IntPtr]$_.Current.NativeWindowHandle })
+    # Avoid a desktop-wide UIA Descendants query. A higher-integrity window on
+    # the same desktop can make that traversal fail with RPC_E_SERVERFAULT even
+    # when the requested process is unrelated. Native enumeration filters by PID
+    # without crossing accessibility-provider integrity boundaries.
+    [IntPtr[]]@([Win32Helper]::GetProcessWindowHandles([uint32] $ProcessId) |
+        Where-Object { $_ -ne [IntPtr]::Zero } |
+        Select-Object -Unique)
 }
 
 # Close any open child dialogs of the main window and wait until clean
@@ -1531,31 +2079,90 @@ function Get-ElementClickPoint {
 
 function Click-Element {
     param([System.Windows.Automation.AutomationElement] $El)
+
+    if (!$El) {
+        throw [System.ArgumentNullException]::new('El')
+    }
+
     $cp = Get-ElementClickPoint $El
     if ($cp) {
-        [MouseHelper]::LeftClick($cp.X, $cp.Y)
-    }
-    else {
-        # Last resort when no screen coordinates are available: InvokePattern
-        try {
-            $p = $El.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-            $p.Invoke()
+        if (-not [MouseHelper]::SetCursorPos($cp.X, $cp.Y)) {
+            throw "Could not move the mouse to the element's clickable point ($($cp.X), $($cp.Y))."
         }
-        catch {}
+        [MouseHelper]::LeftClick($cp.X, $cp.Y)
+        return
+    }
+
+    # Last resort when no screen coordinates are available: InvokePattern.
+    # Do not swallow the error: callers use an exception to distinguish a real
+    # interaction from an element that could not be clicked at all.
+    try {
+        $p = $El.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+        $p.Invoke()
+    }
+    catch {
+        throw [System.InvalidOperationException]::new(
+            'The UI Automation element has no clickable point and could not be invoked.',
+            $_.Exception)
     }
 }
 
 function Select-TabItem {
     param([System.Windows.Automation.AutomationElement] $Tab)
-    # MFC tabs expose InvokePattern, not SelectionItemPattern
+
+    if (!$Tab) { return $false }
+
+    # Some providers expose SelectionItemPattern even though MFC tabs commonly
+    # expose only InvokePattern.  When selection state is available, require the
+    # requested tab to actually become selected instead of treating a click that
+    # merely did not throw as success.  A $null result means the provider offers
+    # no readable selection state, so successful invocation is the best signal.
+    $readSelected = {
+        try {
+            $selection = $Tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+            return [bool] $selection.Current.IsSelected
+        }
+        catch {
+            return $null
+        }
+    }
+
+    $selectedBefore = & $readSelected
+    if ($selectedBefore -eq $true) { return $true }
+
+    $actionSucceeded = $false
+    # MFC's tab provider can expose an InvokePattern that returns successfully
+    # without changing the active page. Prefer the real tab's clickable point;
+    # Click-Element itself falls back to InvokePattern when no point is exposed.
     try {
-        $p = $Tab.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-        $p.Invoke()
-        return $true
+        Click-Element $Tab
+        $actionSucceeded = $true
     }
     catch {}
-    # Fallback: click by coordinate
-    try { Click-Element $Tab; return $true } catch {}
+
+    # Explicit Invoke fallback for providers whose coordinate lookup failed
+    # before Click-Element could reach its own pattern fallback.
+    if (!$actionSucceeded) {
+        try {
+            $p = $Tab.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+            $p.Invoke()
+            $actionSucceeded = $true
+        }
+        catch {
+            return $false
+        }
+    }
+
+    # Give providers that expose selection state a short window to publish the
+    # change. If state is unavailable, successful invocation remains the only
+    # observable outcome; if it is available and stays false, report failure.
+    $selectedAfter = $null
+    foreach ($attempt in 1..5) {
+        Start-Sleep -Milliseconds 100
+        $selectedAfter = & $readSelected
+        if ($selectedAfter -eq $true) { return $true }
+        if ($null -eq $selectedAfter) { return $actionSucceeded }
+    }
     return $false
 }
 
@@ -1603,12 +2210,34 @@ function Get-AllMenuItems {
         [System.Windows.Automation.AutomationElement]::ClassNameProperty,
         '#32768')
     $menuC = [System.Windows.Automation.OrCondition]::new($menuTypeC, $menuClassC)
-    $popups = @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
-        [System.Windows.Automation.AndCondition]::new($pidC, $menuC)))
+    $popupCondition = [System.Windows.Automation.AndCondition]::new($pidC, $menuC)
+    $popups = @(Invoke-UiaQueryWithRetry -Operation 'Find popup menus' -Action {
+        $root.FindAll([System.Windows.Automation.TreeScope]::Children, $popupCondition)
+    })
     foreach ($popup in $popups) {
         $items += @(Find-UiaAll -Root $popup -Type ([System.Windows.Automation.ControlType]::MenuItem))
     }
     $items
+}
+
+function Find-ProcessPopupMenu {
+    param([Parameter(Mandatory)] [int] $ProcessId)
+
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $pidCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
+    $menuTypeCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Menu)
+    $menuClassCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ClassNameProperty, '#32768')
+    $popupCondition = [System.Windows.Automation.AndCondition]::new(
+        $pidCondition,
+        [System.Windows.Automation.OrCondition]::new($menuTypeCondition, $menuClassCondition)
+    )
+    Invoke-UiaQueryWithRetry -Operation 'Find process popup menu' -Action {
+        $root.FindFirst([System.Windows.Automation.TreeScope]::Children, $popupCondition)
+    }
 }
 
 function Open-Menu {
@@ -1796,8 +2425,10 @@ function Invoke-ScanViaDialog {
             $winC = [System.Windows.Automation.PropertyCondition]::new(
                 [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
                 [System.Windows.Automation.ControlType]::Window)
-            $wins = @($root.FindAll([System.Windows.Automation.TreeScope]::Children,
-                [System.Windows.Automation.AndCondition]::new($pidC, $winC)))
+            $desktopWindowCondition = [System.Windows.Automation.AndCondition]::new($pidC, $winC)
+            $wins = @(Invoke-UiaQueryWithRetry -Operation 'Find scan dialog windows' -Action {
+                $root.FindAll([System.Windows.Automation.TreeScope]::Children, $desktopWindowCondition)
+            })
             $dialog = $wins | Where-Object { $_.Current.Name -like '*Select*' } | Select-Object -First 1
         }
         if (!$dialog) { Start-Sleep -Milliseconds 250 }
@@ -1810,10 +2441,24 @@ function Invoke-ScanViaDialog {
     # --- Step 1: Select "Individual Folder" radio via Win32 messages ---
     $targetFolderRadioId = Get-ResourceId 'IDC_RADIO_TARGET_FOLDER'
     $radioHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, $targetFolderRadioId)
-    if ($radioHwnd -ne [IntPtr]::Zero) {
-        [Win32MenuHelper]::PostMessage($radioHwnd, $script:BM_SETCHECK, [IntPtr]$script:ButtonChecked, [IntPtr]::Zero) | Out-Null
-        [Win32MenuHelper]::PostMessage($dlgHwnd, $script:WM_COMMAND, [IntPtr]$targetFolderRadioId, [IntPtr]::Zero) | Out-Null
-        Start-Sleep -Milliseconds 300
+    if ($radioHwnd -eq [IntPtr]::Zero) { return $false }
+    # BM_CLICK follows the radio group's native auto-uncheck behavior and sends
+    # BN_CLICKED. BM_SETCHECK alone can leave both All Drives and Folder checked,
+    # after which DDX_Radio may still choose All Drives.
+    [Win32MenuHelper]::SendMessage($radioHwnd, $script:BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+    Start-Sleep -Milliseconds 300
+    if ([Win32MenuHelper]::SendMessage($radioHwnd, $script:BM_GETCHECK, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32() -ne $script:ButtonChecked) {
+        return $false
+    }
+    foreach ($otherId in @(
+        (Get-ResourceId 'IDC_RADIO_TARGET_DRIVES_ALL'),
+        (Get-ResourceId 'IDC_RADIO_TARGET_DRIVES_SUBSET')
+    )) {
+        $otherHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, $otherId)
+        if ($otherHwnd -ne [IntPtr]::Zero -and
+            [Win32MenuHelper]::SendMessage($otherHwnd, $script:BM_GETCHECK, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32() -eq $script:ButtonChecked) {
+            return $false
+        }
     }
 
     # --- Step 2: Set folder path in the ComboBox edit field ---
@@ -1825,6 +2470,7 @@ function Invoke-ScanViaDialog {
                 $vp = $folderEdit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
                 $vp.SetValue($ScanPath)
                 Start-Sleep -Milliseconds 300
+                if ($vp.Current.Value -ine $ScanPath) { return $false }
             } catch {
                 return $false
             }
@@ -1836,24 +2482,39 @@ function Invoke-ScanViaDialog {
     }
 
     # --- Step 3: Ensure Scan Duplicates is checked ---
-    $checkboxes = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox))
-    $dupeCheck = $checkboxes | Where-Object {
-        $_.Current.Name -like '*duplicate*' -or $_.Current.Name -like '*Scan*'
-    } | Select-Object -First 1
-    if ($dupeCheck) {
-        try {
-            $toggle = $dupeCheck.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
-            if ($toggle.Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On) {
-                $toggle.Toggle()
-                Start-Sleep -Milliseconds 200
-            }
-        } catch {}
+    $scanDuplicatesId = Get-ResourceId 'IDC_SCAN_DUPLICATES'
+    $dupeHwnd = [Win32MenuHelper]::GetDlgItem($dlgHwnd, $scanDuplicatesId)
+    if ($dupeHwnd -eq [IntPtr]::Zero) { return $false }
+    [Win32MenuHelper]::SendMessage($dupeHwnd, $script:BM_SETCHECK, [IntPtr]$script:ButtonChecked, [IntPtr]::Zero) | Out-Null
+    if ([Win32MenuHelper]::SendMessage($dupeHwnd, $script:BM_GETCHECK, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32() -ne $script:ButtonChecked) {
+        return $false
     }
 
     # --- Step 4: Click OK via Win32 message ---
-    [Win32MenuHelper]::PostMessage($dlgHwnd, $script:WM_COMMAND, [IntPtr]$script:IDOK, [IntPtr]::Zero) | Out-Null
-    Start-Sleep -Milliseconds 600
-    return $true
+    if (-not [Win32MenuHelper]::PostMessage($dlgHwnd, $script:WM_COMMAND, [IntPtr]$script:IDOK, [IntPtr]::Zero)) {
+        return $false
+    }
+
+    # Acceptance is observable: the dialog must close and the duplicate-enabled
+    # model must publish its Duplicate Files tab.  Returning true immediately
+    # after PostMessage used to let a rejected dialog become a false scan pass.
+    $acceptedDeadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+    while ([System.DateTime]::UtcNow -lt $acceptedDeadline -and [Win32MenuHelper]::IsWindow($dlgHwnd)) {
+        Start-Sleep -Milliseconds 100
+    }
+    if ([Win32MenuHelper]::IsWindow($dlgHwnd)) { return $false }
+
+    while ([System.DateTime]::UtcNow -lt $acceptedDeadline) {
+        $tab = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Tab)
+        if ($tab) {
+            $dupeTab = @(Find-UiaAll -Root $tab -Type ([System.Windows.Automation.ControlType]::TabItem)) |
+                Where-Object { $_.Current.Name -like '*Duplicate*' } |
+                Select-Object -First 1
+            if ($dupeTab) { return $true }
+        }
+        Start-Sleep -Milliseconds 150
+    }
+    return $false
 }
 
 # ---------------------------------------------------------------------------
@@ -2150,8 +2811,15 @@ function Start-App {
 }
 
 function Stop-App {
-    if ($script:proc -and !$script:proc.HasExited) {
-        try { $script:proc.Kill(); $script:proc.WaitForExit(3000) | Out-Null } catch {}
+    if ($script:proc) {
+        try {
+            if (!$script:proc.HasExited) {
+                $script:proc.Kill($true)
+                $script:proc.WaitForExit(3000) | Out-Null
+            }
+        }
+        catch {}
+        finally { $script:proc.Dispose() }
     }
     $script:proc = $null; $script:win = $null
     Start-Sleep -Milliseconds 400
@@ -2160,13 +2828,21 @@ function Stop-App {
 function Wait-ScanDone {
     param([int] $TimeoutMs = 30000)
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+    $readySince = $null
     while ([System.DateTime]::UtcNow -lt $deadline) {
-        $title = $script:win.Current.Name
-        if ($title -notlike '*Scanning*' -and $title -notlike '* %*') {
-            Start-Sleep -Milliseconds 600
+        if (!$script:proc -or $script:proc.HasExited -or !$script:win) { return $false }
+        try { $title = $script:win.Current.Name } catch { return $false }
+        $isScanning = $title -like '*Scanning*' -or $title -like '* %*'
+        if ($isScanning) {
+            $readySince = $null
+        }
+        elseif ($null -eq $readySince) {
+            $readySince = [System.DateTime]::UtcNow
+        }
+        elseif (([System.DateTime]::UtcNow - $readySince).TotalMilliseconds -ge 600) {
             return $true
         }
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds 150
     }
     return $false
 }
@@ -2514,7 +3190,7 @@ function Test-Toolbar {
     $filterBtn = Find-ToolbarButton -Toolbar $tb -NameContains 'Filter'
     if ($filterBtn) {
         $snap = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
-        Click-Element $filterBtn
+        try { Invoke-Button $filterBtn } catch { Click-Element $filterBtn }
         Start-Sleep -Milliseconds 800
         $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 5000 -MainWindow $Window
         if ($dlg) {
@@ -2533,7 +3209,7 @@ function Test-Toolbar {
             if ($cancelBtn) { try { Invoke-Button $cancelBtn } catch { Send-Keys '{ESC}' } } else { Send-Keys '{ESC}' }
             Start-Sleep -Milliseconds 400
         } else {
-            Assert-Skip $g 'Filter button opens Filtering dialog' 'No new window appeared after click'
+            Assert-Fail $g 'Filter button opens Filtering dialog' 'No new window appeared after invoking the enabled toolbar button'
         }
     } else {
         Assert-Skip $g 'Filter toolbar button' 'Not found in toolbar'
@@ -2951,7 +3627,7 @@ function Test-FilteringDialog {
     $filterBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Filter' } else { $null }
 
     if ($filterBtn) {
-        Click-Element $filterBtn
+        try { Invoke-Button $filterBtn } catch { Click-Element $filterBtn }
         Start-Sleep -Milliseconds 800
     }
     else {
@@ -3068,11 +3744,7 @@ function Test-ScanAndViews {
             }
             else {
                 if ($tabName -eq 'Duplicate Files') {
-                    # [Pre-Scan / Control-Not-Found] The Duplicate Files tab is hidden
-                    # until ScanForDuplicates=1 is set AND the scan has completed.
-                    # OnInitialUpdate hides it when root is null; it is re-shown only
-                    # via dialog-based scans (CLI-arg launch bypasses the re-show path).
-                    Assert-Skip $g "'$tabName' tab" 'Not found (ScanForDuplicates may not be active)'
+                    Assert-Fail $g "'$tabName' tab" 'Not found after the duplicate-enabled dialog scan completed'
                 }
                 else {
                     Assert-Fail $g "'$tabName' tab" 'Not found by name'
@@ -3288,9 +3960,7 @@ function Test-DuplicateDetection {
     Assert-WindowReady $Window
 
     if (!$script:tabCtrl) {
-        # [Event-Timing] Tab control reference is set by Test-ScanAndViews; if that
-        # function returned early (scan failed or window lost), $tabCtrl is null.
-        Assert-Skip $g 'Duplicate Files tab' 'Tab control reference not available'
+        Assert-Fail $g 'Duplicate Files tab' 'Tab control reference not available after the scan'
         return
     }
 
@@ -3298,17 +3968,13 @@ function Test-DuplicateDetection {
     $dupeTab = $tabItems | Where-Object { $_.Current.Name -like '*Duplicate*' } | Select-Object -First 1
 
     if (!$dupeTab) {
-        # [Pre-Scan / Control-Not-Found] Tab is hidden when ScanForDuplicates=0 or
-        # when the scan was started via CLI arg (root null at OnInitialUpdate).
-        # Elevation note: duplicate hashing requires read access to all files; on
-        # restricted systems the tab may be suppressed if hashing was skipped.
-        Assert-Skip $g 'Duplicate Files tab present' 'Tab not found (ScanForDuplicates may require elevation)'
+        Assert-Fail $g 'Duplicate Files tab present' 'Tab not found after the duplicate-enabled dialog scan'
         return
     }
     Assert-Pass $g 'Duplicate Files tab present'
 
     if (!(Select-TabItem $dupeTab)) {
-        Assert-Skip $g 'Duplicate Files tab selectable' 'Could not invoke tab'
+        Assert-Fail $g 'Duplicate Files tab selectable' 'Could not select tab'
         return
     }
     Start-Sleep -Milliseconds 700
@@ -3370,29 +4036,27 @@ function Test-SearchAfterScan {
     $searchBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Search' } else { $null }
 
     if (!$searchBtn) {
-        Assert-Skip $g 'Search toolbar button found' 'Button not in toolbar'
+        Assert-Fail $g 'Search toolbar button found' 'Button not in toolbar after scan'
         return
     }
     Assert-Pass $g 'Search toolbar button found'
 
     if (!$searchBtn.Current.IsEnabled) {
-        # [Pre-Scan] Search button remains disabled if the scan did not complete
-        # successfully, or if the scan data was cleared between Phase 2 calls.
-        Assert-Skip $g 'Search toolbar button enabled after scan' 'Still disabled'
+        Assert-Fail $g 'Search toolbar button enabled after scan' 'Still disabled after a successful populated scan'
         return
     }
     Assert-Pass $g 'Search toolbar button enabled after scan'
 
     # Open the search dialog
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
-    Click-Element $searchBtn
+    try { Invoke-Button $searchBtn } catch { Click-Element $searchBtn }
     Start-Sleep -Milliseconds 1000
 
     $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
         -TimeoutMs 6000 -MainWindow $Window
 
     if (!$dialog) {
-        Assert-Skip $g 'Search dialog opens after scan' 'No new window found (search may be inline)'
+        Assert-Fail $g 'Search dialog opens after scan' 'No dialog appeared after invoking the enabled Search button'
         return
     }
     Assert-Pass $g 'Search dialog opens'
@@ -3453,7 +4117,7 @@ function Test-SearchAfterScan {
                     Assert-Pass $g "$($matchedLogs.Count) expected .log files in search results"
                 }
                 else {
-                    Assert-Skip $g 'Expected .log files in results' "$($matchedLogs.Count) matched"
+                    Assert-Fail $g 'Expected .log files in results' "$($matchedLogs.Count) matched"
                 }
             }
             else {
@@ -3465,7 +4129,7 @@ function Test-SearchAfterScan {
             if ($allFiles) { Select-TabItem $allFiles | Out-Null; Start-Sleep -Milliseconds 400 }
         }
         else {
-            Assert-Skip $g 'Search Results tab appeared' 'Tab not found after search'
+            Assert-Fail $g 'Search Results tab appeared' 'Tab not found after executing a valid search'
         }
     }
     else {
@@ -3516,10 +4180,6 @@ public static class RightClickHelper {
 }
 '@ -ErrorAction SilentlyContinue
 
-    $root     = [System.Windows.Automation.AutomationElement]::RootElement
-    $menuCond = [System.Windows.Automation.PropertyCondition]::new(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-        [System.Windows.Automation.ControlType]::Menu)
     $ctxMenu = $null
 
     # --- Attempt 1: mouse right-click (GetClickablePoint with BoundingRect fallback) ---
@@ -3533,7 +4193,7 @@ public static class RightClickHelper {
 
             $deadline = [System.DateTime]::UtcNow.AddSeconds(3)
             while ([System.DateTime]::UtcNow -lt $deadline -and !$ctxMenu) {
-                $ctxMenu = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $menuCond)
+                $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
                 if (!$ctxMenu) { Start-Sleep -Milliseconds 200 }
             }
         }
@@ -3546,7 +4206,7 @@ public static class RightClickHelper {
             $item.SetFocus()
             Start-Sleep -Milliseconds 200
             Send-Keys '+{F10}' 700
-            $ctxMenu = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $menuCond)
+            $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
         }
         catch {}
     }
@@ -4169,37 +4829,120 @@ function Test-CleanUpMenuDelete {
         if ($allTab) { Select-TabItem $allTab | Out-Null; Start-Sleep -Milliseconds 400 }
     }
 
-    # Select an actual filesystem item in the tree as the CleanUp target.
-    # Collect all candidate UIA items first, then filter to those whose Name
-    # contains a backslash — these are real file/directory entries in the scan
-    # tree (shown with their full path), rather than tab headers, group labels,
-    # or file-type pane category items (which have short names like "Largest
-    # Files", ".mp4", etc. and no backslash).
-    $allCandidates = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($allCandidates.Count -eq 0) { $allCandidates = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($allCandidates.Count -eq 0) { $allCandidates = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
-
-    # Path-like items (containing '\') represent real filesystem objects
-    $pathItems = @($allCandidates | Where-Object { $_.Current.Name -match '\\' })
-
-    # Prefer a file inside 'deletable\' (created specifically for this test)
-    $item = $pathItems | Where-Object { $_.Current.Name -like '*deletable*' } | Select-Object -First 1
-    if (!$item) { $item = $pathItems | Select-Object -First 1 }
-    if (!$item) {
-        # [UIA-OwnerDraw] No path-like items found; tree may be collapsed or fully owner-drawn
-        Assert-Skip $g 'Filesystem item found in tree for CleanUp' 'No path-like (backslash-containing) items in UIA tree'
-        return
-    }
-    Assert-Pass $g "$($pathItems.Count) path-like item(s) found; selected: '$($item.Current.Name)'"
-
+    # Expand the exact parent directory in the actual All Files hierarchy.
+    # The scan root is already expanded to show its top-level directories; Right
+    # on the selected deletable node reveals the fixture files deterministically.
+    $targetPath = Join-Path $opsScanRoot 'deletable\target_alpha.dat'
+    $targetParent = Split-Path -Parent $targetPath
+    $collateralPaths = @(
+        (Join-Path $targetParent 'target_beta.txt'),
+        (Join-Path $targetParent 'retain.cfg')
+    )
+    $collateralHashes = @{}
     try {
-        Click-Element $item
-        Start-Sleep -Milliseconds 400
-        Assert-Pass $g "Filesystem item clicked (CleanUp target): '$($item.Current.Name)'"
+        foreach ($path in $collateralPaths) {
+            $collateralHashes[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        }
+        Assert-Pass $g 'CleanUp sibling controls exist before deletion'
     }
     catch {
-        Assert-Skip $g 'Filesystem item clicked' "Click failed: $_"
+        Assert-Fail $g 'CleanUp sibling controls exist before deletion' $_.Exception.Message
         return
+    }
+    $nativeParent = $null
+    try {
+        $nativeParent = Find-NativeAllFilesRow -Window $Window -ScanRoot $opsScanRoot -TargetPath $targetParent
+    }
+    catch {
+        $cause = $_.Exception
+        while ($cause -and $cause -isnot [System.TimeoutException]) { $cause = $cause.InnerException }
+        if ($cause -is [System.TimeoutException]) {
+            Assert-Fail $g 'Native All Files list remains responsive while expanding CleanUp target' $_.Exception.Message
+            return
+        }
+    }
+    if ($nativeParent) {
+        try {
+            Focus-Window $Window
+            if (-not [NativeListViewHelper]::SelectSingleItem(
+                    [IntPtr] $nativeParent.ListView, [int] $nativeParent.Index)) {
+                throw 'Could not select only the deletable directory row.'
+            }
+            if (-not [NativeListViewHelper]::FocusListView([IntPtr] $nativeParent.ListView)) {
+                throw 'Could not give keyboard focus to the All Files list.'
+            }
+            Start-Sleep -Milliseconds 200
+            Send-Keys '{RIGHT}' 700
+        }
+        catch {
+            Assert-Skip $g 'All Files hierarchy expanded for CleanUp' $_.Exception.Message
+            return
+        }
+    }
+    else {
+        $parentNorm = Normalize-ComparePath $targetParent
+        $parentItem = @(Get-UiaRowItems -Root $Window) | Where-Object {
+            try { (Normalize-ComparePath $_.Current.Name) -ieq $parentNorm } catch { $false }
+        } | Select-Object -First 1
+        if ($parentItem) {
+            try {
+                Click-Element $parentItem
+                $parentItem.SetFocus()
+                Send-Keys '{RIGHT}' 700
+            }
+            catch {}
+        }
+    }
+
+    # Prefer the native virtual-list row so single selection is independently
+    # verified. UIA remains a fallback for providers that expose the exact file.
+    $nativeTarget = $null
+    try {
+        $nativeTarget = Find-NativeAllFilesRow -Window $Window -ScanRoot $opsScanRoot -TargetPath $targetPath
+    }
+    catch {
+        $cause = $_.Exception
+        while ($cause -and $cause -isnot [System.TimeoutException]) { $cause = $cause.InnerException }
+        if ($cause -is [System.TimeoutException]) {
+            Assert-Fail $g 'Native All Files list remains responsive while selecting CleanUp target' $_.Exception.Message
+            return
+        }
+        if ($Details) { Write-ColoredLine "    Native CleanUp target lookup unavailable: $($_.Exception.Message)" DarkGray }
+    }
+
+    $item = $null
+    if ($nativeTarget) {
+        try {
+            if (-not [NativeListViewHelper]::SelectSingleItem(
+                    [IntPtr] $nativeTarget.ListView, [int] $nativeTarget.Index)) {
+                throw 'The native list did not report exactly one selected target row.'
+            }
+            Assert-Pass $g "Exact CleanUp file selected: '$targetPath'"
+        }
+        catch {
+            Assert-Fail $g 'Exact CleanUp file selected' $_.Exception.Message
+            return
+        }
+    }
+    else {
+        $targetNorm = Normalize-ComparePath $targetPath
+        $matches = @(Get-UiaRowItems -Root $Window | Where-Object {
+            try { (Normalize-ComparePath $_.Current.Name) -ieq $targetNorm } catch { $false }
+        })
+        if ($matches.Count -ne 1) {
+            Assert-Skip $g 'Exact CleanUp file available in All Files' "Found $($matches.Count) matching UIA row(s) and no native row"
+            return
+        }
+        $item = $matches[0]
+        try {
+            Click-Element $item
+            Start-Sleep -Milliseconds 400
+            Assert-Pass $g "Exact CleanUp file selected: '$targetPath'"
+        }
+        catch {
+            Assert-Skip $g 'Exact CleanUp file selected through UI Automation' $_.Exception.Message
+            return
+        }
     }
 
     $hwnd = [IntPtr]$Window.Current.NativeWindowHandle
@@ -4215,34 +4958,41 @@ function Test-CleanUpMenuDelete {
         return
     }
 
-    # Find the first enabled delete/recycle-related menu item
-    $deleteKeywords = @('Delete', 'Recycle', 'Remove', 'Trash')
-    $deleteItem     = $null
-    foreach ($kw in $deleteKeywords) {
+    # Use only the commands that delete the selected item. A generic keyword
+    # match previously accepted "Empty Recycle Bin", which can pass without
+    # touching the fixture at all.
+    $deleteItem = $allMenuItems |
+        Where-Object {
+            $_.MenuName -eq 'Clean Up' -and
+            $_.ItemName -eq 'Delete Permanently' -and
+            $_.IsEnabled
+        } |
+        Select-Object -First 1
+    if (!$deleteItem) {
         $deleteItem = $allMenuItems |
-            Where-Object { $_.MenuName -eq 'Clean Up' -and $_.ItemName -like "*$kw*" -and $_.IsEnabled } |
+            Where-Object {
+                $_.MenuName -eq 'Clean Up' -and
+                $_.ItemName -like 'Delete (to Recycle Bin)*' -and
+                $_.IsEnabled
+            } |
             Select-Object -First 1
-        if ($deleteItem) { break }
     }
 
     if (!$deleteItem) {
-        Assert-Skip $g 'Delete/Recycle menu item found and enabled' 'No delete-related enabled item in Clean Up menu'
+        Assert-Fail $g 'Selected-file delete command found and enabled' 'Neither Delete Permanently nor Delete (to Recycle Bin) is enabled for the exact fixture file'
         return
     }
-    Assert-Pass $g "Delete-related menu item accessible: '$($deleteItem.ItemName)'"
+    Assert-Pass $g "Selected-file delete command accessible: '$($deleteItem.ItemName)'"
 
     # Snapshot existing windows before invoking (to detect confirmation dialogs)
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
 
-    # Record the deletable-folder file count before the delete so we can verify
-    # afterward that the file was actually removed from the filesystem.
-    $deletableDir  = Join-Path $opsScanRoot 'deletable'
-    $countBeforeDel = if (Test-Path -LiteralPath $deletableDir) {
-        @(Get-ChildItem -LiteralPath $deletableDir -File -ErrorAction SilentlyContinue).Count
-    } else { 0 }
-
     # Invoke the delete cleanup action
-    [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$deleteItem.CommandId, [IntPtr]::Zero) | Out-Null
+    if (-not [Win32MenuHelper]::PostMessage(
+            $hwnd, $script:WM_COMMAND, [IntPtr]$deleteItem.CommandId, [IntPtr]::Zero)) {
+        Assert-Fail $g 'Selected-file delete command posted' 'PostMessage returned false'
+        return
+    }
     Start-Sleep -Milliseconds 800
     Assert-Pass $g "CleanUp delete action invoked: '$($deleteItem.ItemName)'"
 
@@ -4267,28 +5017,35 @@ function Test-CleanUpMenuDelete {
         Assert-Pass $g 'No confirmation dialog (cleanup acted immediately or was already complete)'
     }
 
-    # Verify the deletion was reflected on disk — file count in deletable\ should have dropped.
-    # If the target was in deletable\ and went to Recycle Bin the file still exists but is
-    # removed from the scan root's directory listing after a Refresh; either way the count
-    # check distinguishes "WinDirStat invoked the action" from "action silently did nothing".
-    Start-Sleep -Milliseconds 600
-    $countAfterDel = if (Test-Path -LiteralPath $deletableDir) {
-        @(Get-ChildItem -LiteralPath $deletableDir -File -ErrorAction SilentlyContinue).Count
-    } else { 0 }
-
-    if ($item.Current.Name -like '*deletable*') {
-        if ($countAfterDel -lt $countBeforeDel) {
-            Assert-Pass $g "File removed from deletable\ folder ($countBeforeDel → $countAfterDel files) — CleanUp delete confirmed on disk"
-            $script:deletedFilePath = $opsScanRoot   # signal Test-RefreshAll to run CSV verification
-        } else {
-            # File may have gone to Recycle Bin (still on disk, but outside scan root after refresh)
-            Assert-Pass $g "File count in deletable\ unchanged ($countBeforeDel) — file likely moved to Recycle Bin (will not appear in scan after Refresh All)"
-            $script:deletedFilePath = $opsScanRoot
-        }
-    } else {
-        # Delete targeted an item outside deletable\ — still record for CSV verification
-        $script:deletedFilePath = $opsScanRoot
+    # Verify the exact selected path disappeared. A folder-wide count can fall
+    # for the wrong file, while an unchanged count was previously treated as a
+    # pass despite proving nothing.
+    $deleteDeadline = [System.DateTime]::UtcNow.AddSeconds(5)
+    while ((Test-Path -LiteralPath $targetPath) -and
+           [System.DateTime]::UtcNow -lt $deleteDeadline) {
+        Start-Sleep -Milliseconds 200
     }
+    if (Test-Path -LiteralPath $targetPath) {
+        Assert-Fail $g "Exact CleanUp file removed: '$targetPath'" 'The selected path still exists after the delete command and confirmation'
+        return
+    }
+    Assert-Pass $g "Exact CleanUp file removed: '$targetPath'"
+
+    $collateralErrors = @(foreach ($path in $collateralPaths) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            "$path was deleted"
+        }
+        elseif ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -cne $collateralHashes[$path]) {
+            "$path content changed"
+        }
+    })
+    if ($collateralErrors.Count -eq 0) {
+        Assert-Pass $g 'CleanUp preserves both unselected sibling files and their contents'
+    }
+    else {
+        Assert-Fail $g 'CleanUp preserves both unselected sibling files and their contents' ($collateralErrors -join '; ')
+    }
+    $script:deletedFilePath = $targetPath
 
     Assert-WindowReady $Window
 }
@@ -4305,6 +5062,28 @@ function Test-RefreshAll {
 
     Assert-WindowReady $Window
 
+    if (-not (Wait-ScanDone -TimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 30000)))) {
+        Assert-Fail $g 'Delete-triggered model refresh settles before Refresh All sentinel' 'Timed out waiting for the post-delete refresh'
+        return
+    }
+    Assert-Pass $g 'Delete-triggered model refresh settled before Refresh All sentinel'
+
+    # Stage a file only after the initial scan and delete operation. Deleting a
+    # selected item refreshes that item internally, so the deleted row's absence
+    # cannot by itself prove Refresh All performed a whole-root rescan.
+    $refreshAllSentinel = Join-Path $opsScanRoot 'stable\refresh_all_sentinel.bin'
+    try {
+        if (Test-Path -LiteralPath $refreshAllSentinel) {
+            Remove-Item -LiteralPath $refreshAllSentinel -Force
+        }
+        New-TestFile -Path $refreshAllSentinel -Size 4101 -Seed 175
+        Assert-Pass $g "External Refresh All sentinel staged: '$refreshAllSentinel'"
+    }
+    catch {
+        Assert-Fail $g 'External Refresh All sentinel staged' $_.Exception.Message
+        return
+    }
+
     # Ensure All Files tab is active
     if ($script:tabCtrl) {
         $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
@@ -4313,20 +5092,44 @@ function Test-RefreshAll {
     }
 
     # Locate the Refresh All toolbar button
-    $tb         = Find-ToolbarPane -Window $Window
-    $refreshBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Refresh' } else { $null }
+    $tb = Find-ToolbarPane -Window $Window
+    $refreshBtn = if ($tb) {
+        @(Find-UiaAll -Root $tb -Type ([System.Windows.Automation.ControlType]::Button)) |
+            Where-Object {
+                $_.Current.Name -like '*Refresh*' -and
+                $_.Current.Name -like '*All*' -and
+                $_.Current.Name -notlike '*Selected*'
+            } |
+            Select-Object -First 1
+    } else { $null }
 
-    if (!$refreshBtn) {
-        Assert-Skip $g 'Refresh All toolbar button found' 'Button not in toolbar'
+    $mainHwnd = [IntPtr] $Window.Current.NativeWindowHandle
+    $refreshMenuItem = $null
+    if (!$refreshBtn -or !$refreshBtn.Current.IsEnabled) {
+        $refreshMenuItem = @(Get-Win32MenuItems -hwnd $mainHwnd) |
+            Where-Object {
+                $_.MenuName -eq 'File' -and
+                $_.ItemName -eq 'Refresh All' -and
+                $_.IsEnabled
+            } |
+            Select-Object -First 1
+    }
+
+    if ($refreshBtn -and $refreshBtn.Current.IsEnabled) {
+        Assert-Pass $g 'Exact Refresh All toolbar button found and enabled'
+    }
+    elseif ($refreshMenuItem) {
+        Assert-Pass $g 'Exact Refresh All File-menu command found and enabled as toolbar fallback'
+    }
+    else {
+        $reason = if (!$refreshBtn) {
+            'Toolbar button is absent and the exact File-menu command is unavailable'
+        } else {
+            'Toolbar button is disabled and the exact File-menu command is unavailable'
+        }
+        Assert-Fail $g 'Exact Refresh All command found and enabled after delete refresh settled' $reason
         return
     }
-    Assert-Pass $g 'Refresh All toolbar button found'
-
-    if (!$refreshBtn.Current.IsEnabled) {
-        Assert-Skip $g 'Refresh All button enabled' 'Button is disabled (scan may not have completed)'
-        return
-    }
-    Assert-Pass $g 'Refresh All button enabled'
 
     # Capture item count before refresh for before/after comparison
     $itemsBefore = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
@@ -4337,14 +5140,20 @@ function Test-RefreshAll {
     $titleBefore = $Window.Current.Name
     Assert-Pass $g "Pre-refresh window title: '$titleBefore'"
 
-    # Click Refresh All
+    # Invoke the exact Refresh All command.
     try {
-        Click-Element $refreshBtn
+        if ($refreshBtn -and $refreshBtn.Current.IsEnabled) {
+            Click-Element $refreshBtn
+        }
+        elseif (-not [Win32MenuHelper]::PostMessage(
+                $mainHwnd, $script:WM_COMMAND, [IntPtr]$refreshMenuItem.CommandId, [IntPtr]::Zero)) {
+            throw 'PostMessage returned false for the exact File-menu command.'
+        }
         Start-Sleep -Milliseconds 800
-        Assert-Pass $g 'Refresh All button clicked'
+        Assert-Pass $g 'Exact Refresh All command invoked'
     }
     catch {
-        Assert-Skip $g 'Refresh All button clicked' "Click failed: $_"
+        Assert-Fail $g 'Exact Refresh All command invoked' $_.Exception.Message
         return
     }
 
@@ -4387,31 +5196,63 @@ function Test-RefreshAll {
             $csvRows = Import-Csv -LiteralPath $exportedCsv -Encoding UTF8 -ErrorAction Stop
             Assert-Pass $g "WinDirStat exported $($csvRows.Count) row(s) to CSV after Refresh All"
 
-            # Verify known stable files are present (they should not have been deleted)
-            $stableFiles = @('document_a.pdf', 'document_b.docx', 'report.xlsx')
-            $foundStable = @($stableFiles | Where-Object {
-                $n = $_; $csvRows | Where-Object { $_.Name -like "*$n*" }
+            $sentinelNorm = Normalize-ComparePath $refreshAllSentinel
+            $sentinelRows = @($csvRows | Where-Object {
+                try { (Normalize-ComparePath $_.Name) -ieq $sentinelNorm } catch { $false }
             })
-            if ($foundStable.Count -ge 2) {
-                Assert-Pass $g "$($foundStable.Count)/$($stableFiles.Count) stable files confirmed in CSV after Refresh All (scan data is coherent)"
-            } else {
-                Assert-Skip $g 'Stable files in CSV after Refresh All' "$($foundStable.Count)/$($stableFiles.Count) matched"
+            if ($sentinelRows.Count -eq 1) {
+                Assert-Pass $g "Refresh All model contains external sentinel exactly once: '$refreshAllSentinel'"
+            }
+            else {
+                Assert-Fail $g "Refresh All model contains external sentinel exactly once: '$refreshAllSentinel'" (
+                    "Found $($sentinelRows.Count) row(s)"
+                )
             }
 
-            # Verify the baseline file in refresh_subdir is still present (not yet added_by_test)
-            $baselineRow = $csvRows | Where-Object { $_.Name -like '*baseline.log*' }
-            if ($baselineRow) {
-                Assert-Pass $g "'baseline.log' present in CSV after Refresh All (refresh_subdir intact)"
-            } else {
-                Assert-Skip $g "'baseline.log' in CSV after Refresh All" 'Not found in exported CSV'
+            if ($script:deletedFilePath) {
+                $deletedNorm = Normalize-ComparePath $script:deletedFilePath
+                $deletedRows = @($csvRows | Where-Object {
+                    try { (Normalize-ComparePath $_.Name) -ieq $deletedNorm } catch { $false }
+                })
+                if ($deletedRows.Count -eq 0) {
+                    Assert-Pass $g "Refresh All model excludes deleted file: '$($script:deletedFilePath)'"
+                }
+                else {
+                    Assert-Fail $g "Refresh All model excludes deleted file: '$($script:deletedFilePath)'" (
+                        "Found $($deletedRows.Count) stale row(s)"
+                    )
+                }
+            }
+
+            # Controlled fixtures must all survive exactly once. Substring and
+            # threshold checks can hide data loss, duplicates, or a same-named
+            # row from another directory.
+            $requiredPaths = @(
+                (Join-Path $opsScanRoot 'stable\document_a.pdf'),
+                (Join-Path $opsScanRoot 'stable\document_b.docx'),
+                (Join-Path $opsScanRoot 'stable\report.xlsx'),
+                (Join-Path $opsScanRoot 'refresh_subdir\baseline.log')
+            )
+            $requiredErrors = @(foreach ($requiredPath in $requiredPaths) {
+                $requiredNorm = Normalize-ComparePath $requiredPath
+                $occurrences = @($csvRows | Where-Object {
+                    try { (Normalize-ComparePath $_.Name) -ieq $requiredNorm } catch { $false }
+                }).Count
+                if ($occurrences -ne 1) { "$requiredPath ($occurrences rows)" }
+            })
+            if ($requiredErrors.Count -eq 0) {
+                Assert-Pass $g 'All four stable Refresh All fixtures remain exactly once'
+            }
+            else {
+                Assert-Fail $g 'All four stable Refresh All fixtures remain exactly once' ($requiredErrors -join '; ')
             }
         }
         catch {
-            Assert-Skip $g 'CSV verification after Refresh All' "CSV parse error: $_"
+            Assert-Fail $g 'CSV verification after Refresh All' "CSV parse error: $_"
         }
     }
     else {
-        Assert-Skip $g 'CSV export after Refresh All' 'Invoke-CsvExportFromMenu returned null or file not created'
+        Assert-Fail $g 'CSV export after Refresh All' 'Invoke-CsvExportFromMenu returned null or file not created'
     }
 
     Assert-WindowReady $script:win
@@ -4419,11 +5260,11 @@ function Test-RefreshAll {
     # Verify tabs are still present and accessible
     if ($script:tabCtrl) {
         $tabItems2 = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
-        if ($tabItems2.Count -ge 2) {
+        if ($tabItems2.Count -ge 3) {
             Assert-Pass $g "$($tabItems2.Count) tab(s) still accessible after Refresh All"
         }
         else {
-            Assert-Skip $g 'Tabs still accessible after Refresh All' "Only $($tabItems2.Count) tab(s) found"
+            Assert-Fail $g 'All three scan-result tabs still accessible after Refresh All' "Only $($tabItems2.Count) tab(s) found"
         }
 
         # Cycle through All Files, Largest Files, and Duplicate Files tabs to
@@ -4440,12 +5281,7 @@ function Test-RefreshAll {
                 }
             }
             else {
-                if ($tabName -eq 'Duplicate Files') {
-                    Assert-Skip $g "'$tabName' tab after Refresh All" 'Tab absent (ScanForDuplicates may be off)'
-                }
-                else {
-                    Assert-Fail $g "'$tabName' tab after Refresh All" 'Tab not found'
-                }
+                Assert-Fail $g "'$tabName' tab after Refresh All" 'Tab not found despite the controlled duplicate-enabled scan'
             }
         }
 
@@ -4457,10 +5293,77 @@ function Test-RefreshAll {
     Focus-Window $script:win
 }
 
+# Find one exact fixture path in the native All Files list. The list is
+# identified by its exact scan-root row, which excludes the simultaneously
+# visible extension list. Requiring one unique row prevents an unrelated
+# leaf-name match.
+function Find-NativeAllFilesRow {
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [string] $ScanRoot,
+        [string] $TargetPath
+    )
+
+    $mainHwnd = [IntPtr] $Window.Current.NativeWindowHandle
+    if ($mainHwnd -eq [IntPtr]::Zero) { return $null }
+
+    $targetNorm = Normalize-ComparePath $TargetPath
+    $targetLeaf = Split-Path -Leaf $TargetPath
+    $scanRootNorm = Normalize-ComparePath $ScanRoot
+    $scanRootLeaf = Split-Path -Leaf $ScanRoot
+    $matches = [System.Collections.Generic.List[object]]::new()
+
+    foreach ($listView in [NativeListViewHelper]::GetVisibleListViews($mainHwnd)) {
+        $texts = @([NativeListViewHelper]::GetItemTexts($listView))
+        if ($Details) {
+            Write-ColoredLine (
+                "    Native list 0x$($listView.ToInt64().ToString('X')) rows: " +
+                (($texts | ForEach-Object { "<$_>" }) -join ', ')
+            ) DarkGray
+        }
+        $containsScanRoot = $false
+        foreach ($text in $texts) {
+            if (!$text) { continue }
+            try {
+                if ($text -ieq $scanRootLeaf -or
+                    (Normalize-ComparePath $text) -ieq $scanRootNorm) {
+                    $containsScanRoot = $true
+                    break
+                }
+            }
+            catch {}
+        }
+        if (!$containsScanRoot) { continue }
+
+        for ($index = 0; $index -lt $texts.Count; $index++) {
+            $text = $texts[$index]
+            if (!$text) { continue }
+            $isTarget = $text -ieq $targetLeaf
+            if (!$isTarget) {
+                try { $isTarget = (Normalize-ComparePath $text) -ieq $targetNorm }
+                catch { $isTarget = $false }
+            }
+            if ($isTarget) {
+                [void] $matches.Add([pscustomobject]@{
+                    ListView = [IntPtr] $listView
+                    Index    = $index
+                    Text     = $text
+                })
+            }
+        }
+    }
+
+    if ($matches.Count -gt 1) {
+        throw "The native All Files list exposed $($matches.Count) rows matching '$TargetPath'."
+    }
+    if ($matches.Count -eq 1) { return $matches[0] }
+    return $null
+}
+
 # ---------------------------------------------------------------------------
 # Test-RefreshSelected: add a new file to the refresh_subdir on disk (simulating
-# an external filesystem change), select that directory in the tree, then trigger
-# Refresh Selected via context menu.  Verifies the new file becomes visible.
+# an external filesystem change), select that directory in the All Files list,
+# then trigger Refresh Selected. Verifies the new file becomes visible.
 # ---------------------------------------------------------------------------
 function Test-RefreshSelected {
     param(
@@ -4472,6 +5375,25 @@ function Test-RefreshSelected {
 
     Assert-WindowReady $Window
 
+    # Stage the external change only after the initial scan and Refresh All have
+    # completed.  The previous test described this fixture but never created it,
+    # so it could report a green Refresh Selected without checking any model
+    # change at all.
+    $addedFile = Join-Path $RefreshTargetDir 'added_by_test.bin'
+    $controlFile = Join-Path $opsScanRoot 'stable\outside_refresh_control.bin'
+    try {
+        if (Test-Path -LiteralPath $addedFile) { Remove-Item -LiteralPath $addedFile -Force }
+        if (Test-Path -LiteralPath $controlFile) { Remove-Item -LiteralPath $controlFile -Force }
+        New-TestFile -Path $addedFile -Size 4097 -Seed 173
+        New-TestFile -Path $controlFile -Size 4099 -Seed 174
+        Assert-Pass $g "External file staged: '$addedFile'"
+        Assert-Pass $g "Out-of-subtree control file staged: '$controlFile'"
+    }
+    catch {
+        Assert-Fail $g 'Stage external file before Refresh Selected' $_.Exception.Message
+        return
+    }
+
     # Ensure All Files tab is active
     if ($script:tabCtrl) {
         $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
@@ -4479,70 +5401,111 @@ function Test-RefreshSelected {
         if ($allTab) { Select-TabItem $allTab | Out-Null; Start-Sleep -Milliseconds 300 }
     }
 
-    # Locate a directory node to select before invoking Refresh Selected.
-    # CRITICAL: Refresh Selected on a file only refreshes that file's metadata;
-    # it does NOT scan the parent directory for new siblings.  We must select a
-    # DIRECTORY that is an ancestor of refresh_subdir so that added_by_test.bin
-    # is included in the rescan.  Extension-list items (.exe, .dll, …) contain
-    # no backslash and are explicitly excluded — they are not filesystem objects.
-    $allItems  = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($allItems.Count -eq 0) { $allItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($allItems.Count -eq 0) { $allItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    # Locate the exact directory node before invoking Refresh Selected.
+    # Refreshing a file cannot discover a new sibling, while selecting the scan
+    # root redirects to Refresh All inside the product.  Neither is a valid
+    # substitute for selecting refresh_subdir itself.
+    $allItems = @(Get-UiaRowItems -Root $Window)
+    $targetNorm = Normalize-ComparePath $RefreshTargetDir
+    $targetLeaf = Split-Path -Leaf $RefreshTargetDir
 
-    # Only real filesystem objects have a backslash in their UIA name.
-    $pathItems  = @($allItems | Where-Object { $_.Current.Name -match '\\' })
-
-    # Priority 1: refresh_subdir itself — direct rescan of the target directory.
-    $targetItem = $pathItems | Where-Object { $_.Current.Name -like '*refresh_subdir*' } | Select-Object -First 1
-
-    # Priority 2: the scan root — covers every child directory including refresh_subdir.
-    if (!$targetItem) {
-        $scanRootLeaf = Split-Path -Leaf $opsScanRoot
-        $targetItem   = $pathItems | Where-Object { $_.Current.Name -like "*$scanRootLeaf*" } | Select-Object -First 1
+    $nativeTarget = $null
+    try {
+        $nativeTarget = Find-NativeAllFilesRow -Window $Window -ScanRoot $opsScanRoot -TargetPath $RefreshTargetDir
+    }
+    catch {
+        $cause = $_.Exception
+        $timedOut = $false
+        while ($cause) {
+            if ($cause -is [System.TimeoutException]) { $timedOut = $true; break }
+            $cause = $cause.InnerException
+        }
+        if ($timedOut) {
+            Assert-Fail $g 'Native All Files list remains responsive during Refresh Selected' $_.Exception.Message
+            return
+        }
+        if ($Details) { Write-ColoredLine "    Native directory lookup unavailable: $($_.Exception.Message)" DarkGray }
     }
 
-    # Priority 3: any path item, preferring the shallowest (fewest backslashes = highest
-    # ancestor in the tree = widest subtree coverage for Refresh Selected).
-    if (!$targetItem -and $pathItems.Count -gt 0) {
-        $targetItem = $pathItems | Sort-Object { ($_.Current.Name -split '\\').Count } | Select-Object -First 1
-        Write-ColoredLine "    refresh_subdir not in UIA tree; using shallowest path item: '$($targetItem.Current.Name)'" DarkGray
-    }
-
-    if (!$targetItem) {
-        # [UIA-OwnerDraw] Absolutely no path items in the UIA tree — tree rows are not
-        # exposed at all.  Navigate via keyboard: press Home to select the scan root in
-        # the tree (which covers refresh_subdir), then use the Refresh Selected toolbar
-        # button instead of a context menu (no UIA reference needed for the toolbar).
-        Assert-Skip $g 'Directory item found in UIA tree for Refresh Selected' 'No path items — using keyboard Home to select scan root'
-        Focus-Window $Window
-        Send-Keys '{HOME}' 500   # jumps to root item in the tree view
-        # Fall through to the toolbar-button trigger below; $targetItem stays $null.
-    }
-
-    if ($targetItem) {
+    $targetItem = $null
+    if ($nativeTarget) {
         try {
-            Click-Element $targetItem
+            Focus-Window $Window
+            if (-not [NativeListViewHelper]::SelectSingleItem(
+                    [IntPtr] $nativeTarget.ListView, [int] $nativeTarget.Index)) {
+                throw "The native list view did not report row $($nativeTarget.Index) selected and focused."
+            }
             Start-Sleep -Milliseconds 400
-            Assert-Pass $g "Directory node selected for Refresh Selected: '$($targetItem.Current.Name)'"
+            Assert-Pass $g "Exact directory selected for Refresh Selected: '$($nativeTarget.Text)'"
         }
         catch {
-            Assert-Skip $g 'Directory node clicked' "Click failed: $_"
+            Assert-Fail $g 'Exact directory selected for Refresh Selected' $_.Exception.Message
+            return
+        }
+    }
+    else {
+        # UIA fallback: accept either the exact full directory path, or one
+        # unique, visible TreeItem with the fixture's unique leaf name.  In both
+        # cases SelectionItemPattern must prove that selection actually changed.
+        $exactItems = @($allItems | Where-Object {
+            $candidate = $_.Current.Name
+            try {
+                -not $_.Current.IsOffscreen -and
+                (Test-Path -LiteralPath $candidate -PathType Container) -and
+                (Normalize-ComparePath $candidate) -ieq $targetNorm
+            }
+            catch { $false }
+        })
+        $leafItems = @($allItems | Where-Object {
+            try {
+                -not $_.Current.IsOffscreen -and
+                $_.Current.ControlType -eq [System.Windows.Automation.ControlType]::TreeItem -and
+                $_.Current.Name -ieq $targetLeaf
+            }
+            catch { $false }
+        })
+        $candidates = @(if ($exactItems.Count -gt 0) { $exactItems } else { $leafItems })
+
+        if ($candidates.Count -ne 1) {
+            $reason = if ($candidates.Count -eq 0) {
+                'The directory is absent from both the native All Files rows and verifiable UI Automation rows'
+            } else {
+                "$($candidates.Count) ambiguous UI Automation rows matched the directory"
+            }
+            Assert-Skip $g 'Exact directory available for Refresh Selected' $reason
+            return
+        }
+
+        $targetItem = $candidates[0]
+        try {
+            $selection = $targetItem.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+            $selection.Select()
+            Start-Sleep -Milliseconds 400
+            if (-not $selection.Current.IsSelected) {
+                throw 'SelectionItemPattern did not report the directory selected.'
+            }
+            Assert-Pass $g "Exact directory selected for Refresh Selected: '$($targetItem.Current.Name)'"
+        }
+        catch {
+            Assert-Skip $g 'Exact directory selected through UI Automation' $_.Exception.Message
             return
         }
     }
 
     # -- Trigger Refresh Selected -----------------------------------------------
     # Strategy 1 (preferred): Refresh Selected toolbar button.
-    # Acts on whatever is currently selected in the tree — no right-click or UIA
-    # item reference needed.  This also handles the keyboard-Home fallback path
-    # where $targetItem is $null but the scan root is selected in the tree.
+    # Acts on the directory item selected above.
     $refreshTriggered = $false
 
     $tb2 = Find-ToolbarPane -Window $Window
     $allTbBtns = if ($tb2) { @(Find-UiaAll -Root $tb2 -Type ([System.Windows.Automation.ControlType]::Button)) } else { @() }
     # Match "Refresh Selected" but not "Refresh All" (both contain "Refresh")
     $refreshSelBtn = $allTbBtns |
-        Where-Object { $_.Current.Name -like '*Refresh*' -and $_.Current.Name -notlike '*All*' } |
+        Where-Object {
+            $_.Current.Name -like '*Refresh*' -and
+            $_.Current.Name -like '*Selected*' -and
+            $_.Current.Name -notlike '*All*'
+        } |
         Select-Object -First 1
 
     if ($refreshSelBtn -and $refreshSelBtn.Current.IsEnabled) {
@@ -4578,10 +5541,6 @@ public static class RightClickHelper {
 }
 '@ -ErrorAction SilentlyContinue
 
-        $root     = [System.Windows.Automation.AutomationElement]::RootElement
-        $menuCond = [System.Windows.Automation.PropertyCondition]::new(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::Menu)
         $ctxMenu  = $null
 
         $cp = Get-ElementClickPoint $targetItem
@@ -4593,7 +5552,7 @@ public static class RightClickHelper {
                 Start-Sleep -Milliseconds 700
                 $ctxDeadline = [System.DateTime]::UtcNow.AddSeconds(3)
                 while ([System.DateTime]::UtcNow -lt $ctxDeadline -and !$ctxMenu) {
-                    $ctxMenu = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $menuCond)
+                    $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
                     if (!$ctxMenu) { Start-Sleep -Milliseconds 200 }
                 }
             }
@@ -4604,7 +5563,7 @@ public static class RightClickHelper {
             try {
                 $targetItem.SetFocus(); Start-Sleep -Milliseconds 200
                 Send-Keys '+{F10}' 700
-                $ctxMenu = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $menuCond)
+                $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
             }
             catch {}
         }
@@ -4615,7 +5574,12 @@ public static class RightClickHelper {
                 Write-ColoredLine "    Context items: $(($menuItems | ForEach-Object { $_.Current.Name }) -join ', ')" DarkGray
             }
             $refreshItem = $menuItems |
-                Where-Object { $_.Current.Name -like '*Refresh*' -and $_.Current.IsEnabled } |
+                Where-Object {
+                    $_.Current.Name -like '*Refresh*' -and
+                    $_.Current.Name -like '*Selected*' -and
+                    $_.Current.Name -notlike '*All*' -and
+                    $_.Current.IsEnabled
+                } |
                 Select-Object -First 1
             if ($refreshItem) {
                 Assert-Pass $g "Refresh Selected found in context menu: '$($refreshItem.Current.Name)'"
@@ -4640,13 +5604,11 @@ public static class RightClickHelper {
         }
     }
 
-    # Last resort: F5 (Refresh All) — exercises the refresh path but not specifically
-    # Refresh Selected.  Logged as a skip so it stands out from a proper pass.
+    # Refresh All is not a valid fallback: it would make the new file visible
+    # while leaving Refresh Selected completely untested.
     if (!$refreshTriggered) {
-        Assert-Skip $g 'Refresh Selected triggered' 'Toolbar button and context menu both failed — falling back to F5 (Refresh All)'
-        Focus-Window $Window
-        Send-Keys '{F5}' 500
-        $refreshTriggered = $true
+        Assert-Fail $g 'Refresh Selected triggered' 'Toolbar button and context menu both failed'
+        return
     }
 
     # -- Wait for the rescan to complete ----------------------------------------
@@ -4655,7 +5617,46 @@ public static class RightClickHelper {
         Assert-Pass $g 'Refresh Selected rescan completed'
     }
     else {
-        Assert-Skip $g 'Refresh Selected rescan completed' 'Timeout waiting for partial rescan'
+        Assert-Fail $g 'Refresh Selected rescan completed' 'Timeout waiting for partial rescan'
+        return
+    }
+
+    # Export the refreshed model and compare the exact normalized path.  Merely
+    # clicking a toolbar button proves no behavior; this is the end-to-end
+    # assertion that the newly-created sibling entered WinDirStat's model.
+    $verifyCsv = Join-Path $opsWorkRoot 'refresh-selected.csv'
+    $exportedCsv = Invoke-CsvExportFromMenu -Window $Window -OutPath $verifyCsv
+    if (!$exportedCsv) {
+        Assert-Fail $g 'Export model after Refresh Selected' 'CSV export did not produce a file'
+        return
+    }
+    try {
+        $refreshedPaths = @(Read-CsvPaths -Csv $exportedCsv)
+        $addedNorm = Normalize-ComparePath $addedFile
+        $addedOccurrences = @($refreshedPaths | Where-Object { $_ -ieq $addedNorm }).Count
+        if ($addedOccurrences -eq 1) {
+            Assert-Pass $g "Refreshed model contains '$addedFile' exactly once"
+        }
+        else {
+            Assert-Fail $g "Refreshed model contains '$addedFile' exactly once" "Found $addedOccurrences occurrence(s)"
+        }
+
+        # A Refresh Selected implementation that accidentally rescans the root
+        # would also discover the unrelated control file.  Its continued absence
+        # proves the command remained scoped to refresh_subdir.
+        $controlNorm = Normalize-ComparePath $controlFile
+        $controlOccurrences = @($refreshedPaths | Where-Object { $_ -ieq $controlNorm }).Count
+        if ($controlOccurrences -eq 0) {
+            Assert-Pass $g 'Refresh Selected excludes an out-of-subtree filesystem change'
+        }
+        else {
+            Assert-Fail $g 'Refresh Selected excludes an out-of-subtree filesystem change' (
+                "The control file appeared $controlOccurrences time(s), indicating a whole-root refresh"
+            )
+        }
+    }
+    catch {
+        Assert-Fail $g 'Parse model export after Refresh Selected' $_.Exception.Message
     }
 
     Focus-Window $script:win
@@ -4802,11 +5803,14 @@ function Test-MarkOfWebPresent {
 function Wait-NoChildDialog {
     param([System.Windows.Automation.AutomationElement] $Window, [int] $TimeoutMs = 15000)
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+    $clearSince = $null
     while ([System.DateTime]::UtcNow -lt $deadline) {
         $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
             -Scope ([System.Windows.Automation.TreeScope]::Descendants)
-        if (!$d) { return $true }
-        Start-Sleep -Milliseconds 200
+        if ($d) { $clearSince = $null }
+        elseif ($null -eq $clearSince) { $clearSince = [System.DateTime]::UtcNow }
+        elseif (([System.DateTime]::UtcNow - $clearSince).TotalMilliseconds -ge 500) { return $true }
+        Start-Sleep -Milliseconds 100
     }
     return $false
 }
@@ -4817,11 +5821,14 @@ function Wait-OpComplete {
     param([System.Windows.Automation.AutomationElement] $Window, [int] $TimeoutMs = 30000)
     Start-Sleep -Milliseconds 400
     if (!(Wait-NoChildDialog -Window $Window -TimeoutMs $TimeoutMs)) {
-        Close-OpenDialogs -Window $Window -TimeoutMs 4000
+        throw "File operation progress dialog did not close within $TimeoutMs ms."
     }
-    Wait-ScanDone -TimeoutMs $TimeoutMs | Out-Null
+    if (!(Wait-ScanDone -TimeoutMs $TimeoutMs)) {
+        throw "Post-operation refresh did not settle within $TimeoutMs ms."
+    }
     $w = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
-    if ($w) { $script:win = $w }
+    if (!$w) { throw 'Main window was not available after the file operation.' }
+    $script:win = $w
     Start-Sleep -Milliseconds 300
 }
 
@@ -4854,15 +5861,18 @@ function Show-AllFilesExpanded {
 
 function Get-UiaRowItems {
     param([System.Windows.Automation.AutomationElement] $Root)
+
+    $items = [System.Collections.Generic.List[System.Windows.Automation.AutomationElement]]::new()
     foreach ($type in @(
         [System.Windows.Automation.ControlType]::DataItem,
         [System.Windows.Automation.ControlType]::ListItem,
         [System.Windows.Automation.ControlType]::TreeItem
     )) {
-        $items = @(Find-UiaAll -Root $Root -Type $type)
-        if ($items.Count -gt 0) { return $items }
+        foreach ($item in @(Find-UiaAll -Root $Root -Type $type)) {
+            [void] $items.Add($item)
+        }
     }
-    return @()
+    return @($items)
 }
 
 function Get-UiaRowsAllTypes {
@@ -4918,11 +5928,86 @@ function Find-TreeRow {
     return $row
 }
 
-# Select one or more files in the tree (first plain-click, rest Ctrl-click).
-# Returns $true when every requested file was found and clicked.
+# Select one or more exact files in the All Files hierarchy. Native virtual-list
+# selection keeps this coverage available when MFC omits collapsed file rows
+# from UIA; coordinate/Ctrl-click remains a cross-bitness fallback.
 function Select-TreeFiles {
     param([System.Windows.Automation.AutomationElement] $Window, [string[]] $FullPaths)
-    Show-AllFilesExpanded -Window $Window
+
+    if (!$FullPaths -or $FullPaths.Count -eq 0) { return $false }
+
+    if ($script:tabCtrl) {
+        $allTab = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem)) |
+            Where-Object { $_.Current.Name -like '*All Files*' } |
+            Select-Object -First 1
+        if ($allTab -and -not (Select-TabItem $allTab)) { return $false }
+        Start-Sleep -Milliseconds 250
+    }
+
+    $scanRoots = @(
+        (Get-Variable -Scope Script -Name opsVerifyScan -ValueOnly -ErrorAction SilentlyContinue),
+        (Get-Variable -Scope Script -Name opsScanRoot -ValueOnly -ErrorAction SilentlyContinue)
+    ) | Where-Object { $_ }
+    $scanRoot = $scanRoots | Where-Object {
+        $candidate = $_
+        @($FullPaths | Where-Object { Test-PathUnder -Path $_ -Root $candidate }).Count -eq $FullPaths.Count
+    } | Select-Object -First 1
+
+    if ($scanRoot) {
+        try {
+            # Expand every ancestor from the scan root down to each file's
+            # parent. Right-arrow on an already-visible directory reveals its
+            # immediate children in WinDirStat's flattened virtual list.
+            $expanded = [System.Collections.Generic.HashSet[string]]::new(
+                [System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($path in $FullPaths) {
+                $chain = [System.Collections.Generic.List[string]]::new()
+                $current = Split-Path -Parent $path
+                while ($current -and
+                       (Test-PathUnder -Path $current -Root $scanRoot) -and
+                       (Normalize-ComparePath $current) -ine (Normalize-ComparePath $scanRoot)) {
+                    [void] $chain.Add($current)
+                    $current = Split-Path -Parent $current
+                }
+                for ($index = $chain.Count - 1; $index -ge 0; $index--) {
+                    $directory = $chain[$index]
+                    $directoryNorm = Normalize-ComparePath $directory
+                    if (-not $expanded.Add($directoryNorm)) { continue }
+                    $directoryRow = Find-NativeAllFilesRow -Window $Window -ScanRoot $scanRoot -TargetPath $directory
+                    if (!$directoryRow) { throw "Native directory row not found: $directory" }
+                    if (-not [NativeListViewHelper]::SelectSingleItem(
+                            [IntPtr] $directoryRow.ListView, [int] $directoryRow.Index)) {
+                        throw "Could not select native directory row: $directory"
+                    }
+                    if (-not [NativeListViewHelper]::FocusListView([IntPtr] $directoryRow.ListView)) {
+                        throw 'Could not focus the native All Files list.'
+                    }
+                    Send-Keys '{RIGHT}' 250
+                }
+            }
+
+            $nativeRows = @(foreach ($path in $FullPaths) {
+                Find-NativeAllFilesRow -Window $Window -ScanRoot $scanRoot -TargetPath $path
+            })
+            if ($nativeRows.Count -eq $FullPaths.Count -and
+                @($nativeRows | Select-Object -ExpandProperty ListView -Unique).Count -eq 1) {
+                [int[]] $indices = @($nativeRows | ForEach-Object { [int] $_.Index })
+                if ([NativeListViewHelper]::SelectItems([IntPtr] $nativeRows[0].ListView, $indices)) {
+                    Start-Sleep -Milliseconds 250
+                    return $true
+                }
+            }
+        }
+        catch {
+            $cause = $_.Exception
+            while ($cause -and $cause -isnot [System.TimeoutException]) { $cause = $cause.InnerException }
+            if ($cause -is [System.TimeoutException]) { throw }
+            if ($Details) { Write-ColoredLine "    Native file selection unavailable: $($_.Exception.Message)" DarkGray }
+        }
+    }
+
+    # UIA fallback for a provider/architecture where native exchange is not
+    # available but path-bearing rows are exposed.
     $first = $true
     foreach ($p in $FullPaths) {
         $row = Find-TreeRow -Window $Window -FullPath $p
@@ -5012,10 +6097,14 @@ function Test-CompressionOps {
             return
         }
         Assert-Pass $g "${Label}: $($Files.Count) file(s) selected"
+        $beforeHashes = @{}
+        foreach ($file in $Files) {
+            $beforeHashes[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+        }
         $r = Invoke-CleanUpMenuItem -Window $Window -SubmenuName 'Compress' -LeafName $Leaf
         if ($r -ne $true) {
             $why = if ($r -eq 'disabled') { "WinDirStat disabled Compress > $Leaf for this selection/volume" } else { "Compress > $Leaf not found in menu" }
-            Assert-Skip $g "$Label apply" $why
+            Assert-Fail $g "$Label apply" $why
             return
         }
         Wait-OpComplete -Window $Window
@@ -5034,6 +6123,15 @@ function Test-CompressionOps {
                 else { Assert-Warn $g "$Label COMPRESSED attribute" 'WOF unexpectedly set FILE_ATTRIBUTE_COMPRESSED' }
             }
             else { Assert-Fail $g "$Label sets WOF backing" "Wrong/absent WOF algorithm on: $($bad -join ', ')" }
+        }
+        $contentChanged = @($Files | Where-Object {
+            (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $beforeHashes[$_]
+        })
+        if ($contentChanged.Count -eq 0) {
+            Assert-Pass $g "${Label}: file contents unchanged"
+        }
+        else {
+            Assert-Fail $g "${Label}: file contents unchanged" ($contentChanged -join ', ')
         }
     }
 
@@ -5059,11 +6157,15 @@ function Test-CompressionOps {
     $rtKind = if ($cap.Standard) { 'lznt1' } else { 'XPRESS4K' }
     $rtLeaf = if ($cap.Standard) { 'LZNT1' } else { 'XPRESS4K' }
     $dec = Join-Path $dir 'c_decompress.bin'
+    $decHashBefore = (Get-FileHash -LiteralPath $dec -Algorithm SHA256).Hash
     if (Select-TreeFiles -Window $Window -FullPaths @($dec)) {
         $r1 = Invoke-CleanUpMenuItem -Window $Window -SubmenuName 'Compress' -LeafName $rtLeaf
         if ($r1 -eq $true) {
             Wait-OpComplete -Window $Window
             $wasCompressed = if ($rtKind -eq 'lznt1') { Get-FileCompressedAttr -Path $dec } else { (Get-FileWofAlgorithm -Path $dec) -ge 0 }
+            if (-not $wasCompressed) {
+                Assert-Fail $g "Compress($rtLeaf) establishes compressed pre-state" 'The file remained uncompressed'
+            }
             if (Select-TreeFiles -Window $Window -FullPaths @($dec)) {
                 $r2 = Invoke-CleanUpMenuItem -Window $Window -SubmenuName 'Compress' -LeafName 'No compression'
                 if ($r2 -eq $true) {
@@ -5074,16 +6176,19 @@ function Test-CompressionOps {
                         Assert-Pass $g "Compress($rtLeaf)->None round trip: compression set then fully cleared (verified on disk)"
                     }
                     elseif (-not $stillAttr -and -not $stillWof) {
-                        Assert-Pass $g 'Compress->None: file is uncompressed after applying None (verified on disk)'
+                        Assert-Fail $g 'Compress->None round trip had a compressed pre-state' 'None left the file uncompressed, but the preceding compression never took effect'
                     }
                     else {
                         Assert-Fail $g 'None clears compression' "After None: COMPRESSED=$stillAttr, WOF=$stillWof"
                     }
+                    $decHashAfter = (Get-FileHash -LiteralPath $dec -Algorithm SHA256).Hash
+                    if ($decHashAfter -ceq $decHashBefore) { Assert-Pass $g 'Compress->None preserves file contents' }
+                    else { Assert-Fail $g 'Compress->None preserves file contents' 'SHA-256 changed across the round trip' }
                 }
-                else { Assert-Skip $g 'No-compression menu item' 'Not found/disabled' }
+                else { Assert-Fail $g 'No-compression menu item' 'Not found/disabled for a compressed file' }
             }
         }
-        else { Assert-Skip $g 'Compress for round-trip' "$rtLeaf item not found/disabled" }
+        else { Assert-Fail $g 'Compress for round-trip' "$rtLeaf item not found/disabled on a supported volume" }
     }
     else { Assert-Skip $g 'Decompress selection' 'c_decompress.bin not found as a UIA tree row' }
 }
@@ -5098,6 +6203,7 @@ function Test-SparsifyOps {
     $single = Join-Path $dir 's_single.bin'
     if (Select-TreeFiles -Window $Window -FullPaths @($single)) {
         Assert-Pass $g 'Single file selected for sparsify'
+        $singleHashBefore = (Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash
         $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Sparsify'
         if ($r -eq $true) {
             Wait-OpComplete -Window $Window
@@ -5107,14 +6213,18 @@ function Test-SparsifyOps {
                 Assert-Pass $g "Sparsify single: SPARSE_FILE set, allocated $alloc < logical $logical (verified on disk)"
             }
             elseif (Get-FileSparseAttr -Path $single) {
-                Assert-Warn $g 'Sparsify single allocated < logical' "SPARSE set but allocated=$alloc logical=$logical"
+                Assert-Fail $g 'Sparsify single allocated < logical' "SPARSE set but allocated=$alloc logical=$logical"
             }
             else {
                 Assert-Fail $g 'Sparsify single sets SPARSE_FILE attribute' "Attribute not set on $single"
             }
+            if ((Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash -ceq $singleHashBefore) {
+                Assert-Pass $g 'Sparsify single preserves file contents'
+            }
+            else { Assert-Fail $g 'Sparsify single preserves file contents' 'SHA-256 changed' }
         }
-        elseif ($r -eq 'disabled') { Assert-Skip $g 'Sparsify menu item' 'Item present but disabled' }
-        else { Assert-Skip $g 'Sparsify menu item' 'Sparsify File not found in Clean Up menu' }
+        elseif ($r -eq 'disabled') { Assert-Fail $g 'Sparsify menu item' 'Item present but disabled for a valid file selection' }
+        else { Assert-Fail $g 'Sparsify menu item' 'Sparsify File not found in Clean Up menu' }
     }
     else { Assert-Skip $g 'Single file selection for sparsify' 's_single.bin not found as a UIA tree row' }
 
@@ -5122,6 +6232,8 @@ function Test-SparsifyOps {
     $multi = @((Join-Path $dir 's_multi_1.bin'), (Join-Path $dir 's_multi_2.bin'))
     if (Select-TreeFiles -Window $Window -FullPaths $multi) {
         Assert-Pass $g 'Two files selected for sparsify (multi-selection)'
+        $multiHashesBefore = @{}
+        foreach ($file in $multi) { $multiHashesBefore[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }
         $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Sparsify'
         if ($r -eq $true) {
             Wait-OpComplete -Window $Window
@@ -5131,9 +6243,14 @@ function Test-SparsifyOps {
             } else {
                 Assert-Fail $g 'Sparsify multi sets SPARSE on all selected' "Not sparse: $($bad -join ', ')"
             }
+            $changed = @($multi | Where-Object {
+                (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $multiHashesBefore[$_]
+            })
+            if ($changed.Count -eq 0) { Assert-Pass $g 'Sparsify multi preserves all file contents' }
+            else { Assert-Fail $g 'Sparsify multi preserves all file contents' ($changed -join ', ') }
         }
-        elseif ($r -eq 'disabled') { Assert-Skip $g 'Sparsify multi' 'Menu item disabled for multi-selection' }
-        else { Assert-Skip $g 'Sparsify multi' 'Menu item not found' }
+        elseif ($r -eq 'disabled') { Assert-Fail $g 'Sparsify multi' 'Menu item disabled for a valid multi-selection' }
+        else { Assert-Fail $g 'Sparsify multi' 'Menu item not found' }
     }
     else { Assert-Skip $g 'Multi file selection for sparsify' 's_multi_*.bin not found as UIA tree rows' }
 }
@@ -5151,6 +6268,7 @@ function Test-MotwOps {
     }
     elseif (Select-TreeFiles -Window $Window -FullPaths @($single)) {
         Assert-Pass $g 'Single file selected for MOTW removal (Zone.Identifier present)'
+        $singleHashBefore = (Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash
         $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Mark-Of-The-Web'
         if ($r -eq $true) {
             Wait-OpComplete -Window $Window
@@ -5159,9 +6277,13 @@ function Test-MotwOps {
             } else {
                 Assert-Fail $g 'MOTW single removes Zone.Identifier' "Stream still present on $single"
             }
+            if ((Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash -ceq $singleHashBefore) {
+                Assert-Pass $g 'MOTW single preserves primary-stream contents'
+            }
+            else { Assert-Fail $g 'MOTW single preserves primary-stream contents' 'SHA-256 changed' }
         }
-        elseif ($r -eq 'disabled') { Assert-Skip $g 'MOTW menu item' 'Item present but disabled' }
-        else { Assert-Skip $g 'MOTW menu item' 'Remove Mark-Of-The-Web not found in Clean Up menu' }
+        elseif ($r -eq 'disabled') { Assert-Fail $g 'MOTW menu item' 'Item present but disabled for a file carrying Zone.Identifier' }
+        else { Assert-Fail $g 'MOTW menu item' 'Remove Mark-Of-The-Web not found in Clean Up menu' }
     }
     else { Assert-Skip $g 'Single file selection for MOTW' 'm_single.txt not found as a UIA tree row' }
 
@@ -5173,6 +6295,8 @@ function Test-MotwOps {
     }
     elseif (Select-TreeFiles -Window $Window -FullPaths $multi) {
         Assert-Pass $g 'Two files selected for MOTW removal (multi-selection)'
+        $multiHashesBefore = @{}
+        foreach ($file in $multi) { $multiHashesBefore[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }
         $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Mark-Of-The-Web'
         if ($r -eq $true) {
             Wait-OpComplete -Window $Window
@@ -5182,9 +6306,14 @@ function Test-MotwOps {
             } else {
                 Assert-Fail $g 'MOTW multi removes Zone.Identifier from all selected' "Stream remains on: $($bad -join ', ')"
             }
+            $changed = @($multi | Where-Object {
+                (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $multiHashesBefore[$_]
+            })
+            if ($changed.Count -eq 0) { Assert-Pass $g 'MOTW multi preserves all primary-stream contents' }
+            else { Assert-Fail $g 'MOTW multi preserves all primary-stream contents' ($changed -join ', ') }
         }
-        elseif ($r -eq 'disabled') { Assert-Skip $g 'MOTW multi' 'Menu item disabled for multi-selection' }
-        else { Assert-Skip $g 'MOTW multi' 'Menu item not found' }
+        elseif ($r -eq 'disabled') { Assert-Fail $g 'MOTW multi' 'Menu item disabled for a valid multi-selection' }
+        else { Assert-Fail $g 'MOTW multi' 'Menu item not found' }
     }
     else { Assert-Skip $g 'Multi file selection for MOTW' 'm_multi_*.txt not found as UIA tree rows' }
 }
@@ -5210,16 +6339,15 @@ function Test-DedupOps {
     $g = 'OpDedup'
     $dir = Join-Path $ScanRoot 'dedup'
     $viewDuplicateFilesCommandId = Get-ResourceId 'ID_VIEW_DUPLICATE_FILES'
-    $createHardlinkCommandId = Get-ResourceId 'ID_CLEANUP_CREATE_HARDLINK'
 
-    if (!$script:tabCtrl) { Assert-Skip $g 'Duplicate Files tab' 'Tab control reference not available'; return }
+    if (!$script:tabCtrl) { Assert-Fail $g 'Duplicate Files tab' 'Tab control reference not available after a duplicate-enabled scan'; return }
     $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
     $dupeTab = $tabItems | Where-Object { $_.Current.Name -like '*Duplicate*' } | Select-Object -First 1
     if (!$dupeTab) {
-        Assert-Skip $g 'Duplicate Files tab present' 'Tab not found (ScanForDuplicates may not have activated)'
+        Assert-Fail $g 'Duplicate Files tab present' 'Tab not found after a duplicate-enabled scan'
         return
     }
-    if (!(Select-TabItem $dupeTab)) { Assert-Skip $g 'Duplicate Files tab selectable' 'Could not invoke tab'; return }
+    if (!(Select-TabItem $dupeTab)) { Assert-Fail $g 'Duplicate Files tab selectable' 'Could not select tab'; return }
     Start-Sleep -Milliseconds 900
     Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
     Start-Sleep -Milliseconds 600
@@ -5259,10 +6387,13 @@ function Test-DedupOps {
 
     $idBefore1 = Get-FileIdentity -Path $f1
     $idBefore2 = Get-FileIdentity -Path $f2
+    $hashBefore1 = (Get-FileHash -LiteralPath $f1 -Algorithm SHA256).Hash
+    $hashBefore2 = (Get-FileHash -LiteralPath $f2 -Algorithm SHA256).Hash
     if ($idBefore1.Id -and $idBefore2.Id -and $idBefore1.Id -ne $idBefore2.Id) {
         Assert-Pass $g 'Duplicate pair are distinct files before dedup (different NTFS file ids)'
     } else {
-        Assert-Skip $g 'Duplicate pair distinct before dedup' "Could not read distinct ids (1=$($idBefore1.Id), 2=$($idBefore2.Id))"
+        Assert-Fail $g 'Duplicate pair distinct before dedup' "Expected distinct native ids (1=$($idBefore1.Id), 2=$($idBefore2.Id))"
+        return
     }
 
     $selectedViaUia = $false
@@ -5290,27 +6421,16 @@ function Test-DedupOps {
     Assert-Pass $g "Duplicate pair selected (d_src.bin + d_copy.bin; $selCount/2 confirmed selected via UIA)"
 
     $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Deduplicate'
-    $probeReason = $null
     if ($r -eq $true) {
         Assert-Pass $g 'Deduplicate with Hardlink menu item invoked'
     }
     elseif ($r -eq 'disabled') {
-        if (Invoke-Win32CommandId -Window $Window -CommandId $createHardlinkCommandId) {
-            $probeReason = 'disabled'
-        }
-        else {
-            Assert-Warn $g 'Deduplicate with Hardlink enabled' "2 duplicate files selected with the dupe list focused, but WinDirStat left 'Deduplicate with Hardlink' disabled and ID_CLEANUP_CREATE_HARDLINK could not be posted (check OnUpdateCreateHardlink: focus=LF_DUPELIST, >=2 IT_FILE on same volume)."
-            return
-        }
+        Assert-Fail $g 'Deduplicate with Hardlink enabled' "Two same-volume duplicate files are selected, but the menu action is disabled"
+        return
     }
     else {
-        if (Invoke-Win32CommandId -Window $Window -CommandId $createHardlinkCommandId) {
-            $probeReason = 'missing'
-        }
-        else {
-            Assert-Skip $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu and ID_CLEANUP_CREATE_HARDLINK probe failed'
-            return
-        }
+        Assert-Fail $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu'
+        return
     }
     Wait-OpComplete -Window $Window
 
@@ -5318,20 +6438,19 @@ function Test-DedupOps {
     $idAfter2 = Get-FileIdentity -Path $f2
     if ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id -and $idAfter1.Links -ge 2) {
         Assert-Pass $g "Dedup: d_src.bin and d_copy.bin are now one hardlink (shared id, $($idAfter1.Links) links) (verified on disk)"
-        if ($probeReason) {
-            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but ID_CLEANUP_CREATE_HARDLINK executed and dedup succeeded."
-        }
     }
     elseif ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id) {
         Assert-Pass $g 'Dedup: duplicate pair now share the same NTFS file id (verified on disk)'
-        if ($probeReason) {
-            Assert-Warn $g 'Deduplicate with Hardlink menu state' "Menu reported '$probeReason' for Deduplicate, but ID_CLEANUP_CREATE_HARDLINK executed and dedup succeeded."
-        }
     }
     else {
-        $extra = if ($probeReason) { " (menuState=$probeReason; invoked via ID_CLEANUP_CREATE_HARDLINK probe)" } else { '' }
-        Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))$extra"
+        Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))"
     }
+    $hashAfter1 = (Get-FileHash -LiteralPath $f1 -Algorithm SHA256).Hash
+    $hashAfter2 = (Get-FileHash -LiteralPath $f2 -Algorithm SHA256).Hash
+    if ($hashAfter1 -ceq $hashBefore1 -and $hashAfter2 -ceq $hashBefore2) {
+        Assert-Pass $g 'Dedup preserves both file contents'
+    }
+    else { Assert-Fail $g 'Dedup preserves both file contents' 'SHA-256 changed after hardlink creation' }
 }
 
 # Orchestrates file-operation verification in two scans:
@@ -5624,6 +6743,17 @@ function Test-LoadResults {
         return
     }
 
+    $expectedRows = @(Read-CsvRows -Csv $csvPath)
+    $expectedByPath = @{}
+    $sourceDuplicatePaths = [System.Collections.Generic.List[string]]::new()
+    foreach ($row in $expectedRows) {
+        $path = Normalize-ComparePath $row.Name
+        if ($expectedByPath.ContainsKey($path)) { [void] $sourceDuplicatePaths.Add($path) }
+        else { $expectedByPath[$path] = $row }
+    }
+    if ($sourceDuplicatePaths.Count -eq 0) { Assert-Pass $g 'Source export contains every path exactly once' }
+    else { Assert-Fail $g 'Source export contains every path exactly once' ($sourceDuplicatePaths -join ', ') }
+
     # 3. Test loading each of the 4 files
     foreach ($testFile in @($jsonPath, $jsonBomPath, $csvPath, $csvBomPath)) {
         $desc = [System.IO.Path]::GetFileName($testFile)
@@ -5658,6 +6788,56 @@ function Test-LoadResults {
             Assert-Fail $g "Load $desc completed without crash" 'Process exited or window closed'
         }
 
+        # Export the loaded in-memory model again.  A responsive empty window is
+        # not evidence that /loadfrom parsed anything; exact path and metadata
+        # parity proves the CSV/JSON (with or without BOM) actually populated it.
+        try {
+            $roundTripPath = Join-Path $script:workRoot ("roundtrip-$desc.csv")
+            $roundTrip = Invoke-CsvExportFromMenu -Window $win -OutPath $roundTripPath
+            if (!$roundTrip) {
+                Assert-Fail $g "Load $desc populates an exportable model" 'Save Results did not create a CSV'
+            }
+            else {
+                $actualRows = @(Read-CsvRows -Csv $roundTrip)
+                $actualByPath = @{}
+                $duplicatePaths = [System.Collections.Generic.List[string]]::new()
+                foreach ($row in $actualRows) {
+                    $path = Normalize-ComparePath $row.Name
+                    if ($actualByPath.ContainsKey($path)) { [void] $duplicatePaths.Add($path) }
+                    else { $actualByPath[$path] = $row }
+                }
+
+                $missing = @($expectedByPath.Keys | Where-Object { -not $actualByPath.ContainsKey($_) })
+                $unexpected = @($actualByPath.Keys | Where-Object { -not $expectedByPath.ContainsKey($_) })
+                if ($missing.Count -eq 0 -and $unexpected.Count -eq 0 -and $duplicatePaths.Count -eq 0) {
+                    Assert-Pass $g "Load $desc restores every path exactly once"
+                }
+                else {
+                    Assert-Fail $g "Load $desc restores every path exactly once" (
+                        "missing=$($missing.Count); unexpected=$($unexpected.Count); duplicated=$($duplicatePaths.Count)"
+                    )
+                }
+
+                $metadataDiffs = @(foreach ($path in $expectedByPath.Keys) {
+                    if (-not $actualByPath.ContainsKey($path)) { continue }
+                    foreach ($column in @('Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change', 'WinDirStat Attributes', 'Index')) {
+                        if ($expectedByPath[$path].$column -ne $actualByPath[$path].$column) {
+                            "$path [${column}: '$($expectedByPath[$path].$column)' -> '$($actualByPath[$path].$column)']"
+                        }
+                    }
+                })
+                if ($metadataDiffs.Count -eq 0) {
+                    Assert-Pass $g "Load $desc preserves exported metadata"
+                }
+                else {
+                    Assert-Fail $g "Load $desc preserves exported metadata" "$(($metadataDiffs | Select-Object -First 5) -join '; ')"
+                }
+            }
+        }
+        catch {
+            Assert-Fail $g "Verify loaded content for $desc" $_.Exception.Message
+        }
+
         # Stop the app before next test
         Stop-App
     }
@@ -5667,6 +6847,24 @@ function Test-LoadResults {
 # UI SUITE ORCHESTRATION
 # =============================================================================
 function Invoke-UiSuite {
+    # UIA element lookup is process-scoped, but coordinate clicks and SendKeys
+    # share the interactive desktop. Concurrent UI shards can steal focus from
+    # each other and turn real operation checks into intermittent selection
+    # skips. Serialize the complete UI suite across harness processes.
+    $uiMutex = [System.Threading.Mutex]::new($false, 'Global\WinDirStat-E2E-UI-Automation')
+    $uiLockHeld = $false
+    try {
+        $uiLockHeld = $uiMutex.WaitOne([System.TimeSpan]::FromMinutes(15))
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $uiLockHeld = $true
+    }
+    if (-not $uiLockHeld) {
+        $uiMutex.Dispose()
+        Assert-Fail 'UiHarness' 'Acquire global UI-automation lock' 'Timed out waiting for another UI suite to leave the interactive desktop'
+        return
+    }
+
     $script:workRoot      = Join-Path $BuildRoot 'ui-nav-test'
     $script:scanRoot      = Join-Path $script:workRoot 'scan-root'
     $script:largeScanRoot = Join-Path $script:workRoot 'large-scan-root'
@@ -5758,6 +6956,10 @@ function Invoke-UiSuite {
         Remove-TestArtifacts -Path $script:workRoot
         Remove-TestArtifacts -Path $script:opsWorkRoot
         Remove-TestArtifacts -Path $script:opsVerifyRoot
+        if ($uiLockHeld) {
+            try { $uiMutex.ReleaseMutex() } catch {}
+        }
+        $uiMutex.Dispose()
     }
 }
 
@@ -5874,6 +7076,8 @@ function Invoke-FilteringSuite {
             [string[]] $ExcludeFiles = @(),
             [int] $SizeMinimum = 0,
             [int] $SizeUnits = 0,
+            [int] $MaxAgeDays = 0,
+            [ValidateSet(0, 1)] [int] $ScanEngine = 1,
             [string[]] $ExpectedRows = @()
         )
 
@@ -5887,6 +7091,8 @@ function Invoke-FilteringSuite {
             ExcludeFiles = @($ExcludeFiles)
             SizeMinimum = $SizeMinimum
             SizeUnits = $SizeUnits
+            MaxAgeDays = $MaxAgeDays
+            ScanEngine = $ScanEngine
             ExpectedRows = @($ExpectedRows | ForEach-Object { Normalize-ComparePath $_ } | Sort-Object)
             AllRows = @()
         }
@@ -5906,7 +7112,8 @@ function Invoke-FilteringSuite {
             "FilteringUseRegex=$useRegexInt",
             "FilteringSizeMinimum=$($Scenario.SizeMinimum)",
             "FilteringSizeUnits=$($Scenario.SizeUnits)",
-            'UseFastScanEngine=1',
+            "FilteringMaxAgeDays=$($Scenario.MaxAgeDays)",
+            "UseFastScanEngine=$($Scenario.ScanEngine)",
             'UseBackupRestore=0',
             'ShowElevationPrompt=0',
             'AutoElevate=0',
@@ -5937,35 +7144,17 @@ function Invoke-FilteringSuite {
             [Parameter(Mandatory)] [string] $Root
         )
 
-        $arguments = "/saveto `"$Csv`" `"$Root`""
-        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-        $startInfo.FileName = $Exe
-        $startInfo.Arguments = $arguments
-        $startInfo.WorkingDirectory = Split-Path -Parent $Exe
-        $startInfo.UseShellExecute = $false
-        $startInfo.CreateNoWindow = $true
-
-        $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        $process = [System.Diagnostics.Process]::Start($startInfo)
-        if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-            try { $process.Kill() } catch {}
-            throw "WinDirStat did not finish within $TimeoutSeconds seconds."
-        }
-        $sw.Stop()
-
-        if ($process.ExitCode -ne 0) {
-            throw "WinDirStat exited with code $($process.ExitCode)."
+        $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @('/saveto', $Csv, $Root) `
+            -WorkingDirectory (Split-Path -Parent $Exe)
+        if ($run.ExitCode -ne 0) {
+            throw "WinDirStat exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
         }
 
         if (!(Test-Path -LiteralPath $Csv)) {
             throw "WinDirStat exited successfully but did not create CSV: $Csv"
         }
 
-        [pscustomobject] @{
-            CommandLine = "`"$Exe`" $arguments"
-            ExitCode = $process.ExitCode
-            ElapsedSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 3)
-        }
+        return $run
     }
 
     function Write-PathVerificationTable {
@@ -6088,7 +7277,7 @@ function Invoke-FilteringSuite {
             if ($name.Length -gt $scenarioWidth) {
                 $name = $name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
             }
-            $mode = if ($result.UseRegex) { 'regex' } else { 'glob' }
+            $mode = "$(if ($result.UseRegex) { 'regex' } else { 'glob' })-$(if ($result.ScanEngine -eq 1) { 'fast' } else { 'basic' })"
             $rowsText = "$(@($result.ActualRows).Count)/$(@($result.ExpectedRows).Count)"
             $elapsedText = if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
 
@@ -6113,11 +7302,13 @@ function Invoke-FilteringSuite {
         $actualBehavior = if ($Result.Error) {
             "Scan failed before validation completed: $($Result.Error)"
         }
-        elseif (@($Result.MissingRows).Count -eq 0 -and @($Result.UnexpectedRows).Count -eq 0) {
+        elseif (@($Result.MissingRows).Count -eq 0 -and
+                @($Result.UnexpectedRows).Count -eq 0 -and
+                @($Result.DuplicateRows).Count -eq 0) {
             'CSV output matched the expected paths exactly.'
         }
         else {
-            "CSV output differed from expectation: $(@($Result.MissingRows).Count) missing path(s), $(@($Result.UnexpectedRows).Count) unexpected path(s)."
+            "CSV output differed from expectation: $(@($Result.MissingRows).Count) missing path(s), $(@($Result.UnexpectedRows).Count) unexpected path(s), $(@($Result.DuplicateRows).Count) duplicated path(s)."
         }
 
         Write-Host ''
@@ -6125,8 +7316,9 @@ function Invoke-FilteringSuite {
         Write-LabelValue 'Result' $Result.Status $statusColor
         Write-LabelValue 'Command' $Result.CommandLine
         Write-LabelValue 'Test base' $Result.ScanRoot
-        Write-LabelValue 'Mode' $(if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' })
+        Write-LabelValue 'Mode' "$(if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' }), $(if ($Result.ScanEngine -eq 1) { 'fast engine' } else { 'basic engine' })"
         Write-LabelValue 'Size minimum' "$($Result.SizeMinimum) unit index $($Result.SizeUnits)"
+        Write-LabelValue 'Maximum age' "$($Result.MaxAgeDays) day(s)"
         Format-ListBlock 'Input include directories' $Result.IncludeDirs
         Format-ListBlock 'Input exclude directories' $Result.ExcludeDirs
         Format-ListBlock 'Input include files' $Result.IncludeFiles
@@ -6139,6 +7331,9 @@ function Invoke-FilteringSuite {
         }
         if (@($Result.UnexpectedRows).Count -gt 0) {
             Format-ListBlock 'Unexpected actual paths' $Result.UnexpectedRows
+        }
+        if (@($Result.DuplicateRows).Count -gt 0) {
+            Format-ListBlock 'Duplicated actual paths' $Result.DuplicateRows
         }
         if ($Result.Error) {
             Write-LabelValue 'Error' $Result.Error Red
@@ -6166,6 +7361,7 @@ function Invoke-FilteringSuite {
         $actualRows = @()
         $missingRows = @()
         $unexpectedRows = @()
+        $duplicateRows = @()
         $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$Root`""
         $exitCode = $null
         $elapsedSeconds = $null
@@ -6187,13 +7383,20 @@ function Invoke-FilteringSuite {
             $actualRows = @($csv)
             $missingRows = Get-SetDifference -Left $Scenario.ExpectedRows -Right $actualRows
             $unexpectedRows = Get-SetDifference -Left $actualRows -Right $Scenario.ExpectedRows
+            $duplicateRows = @($actualRows |
+                Group-Object |
+                Where-Object Count -gt 1 |
+                ForEach-Object { "$($_.Name) ($($_.Count)x)" })
         }
         catch {
             $errorText = $_.Exception.Message
             $missingRows = @($Scenario.ExpectedRows)
         }
 
-        $status = if (!$errorText -and @($missingRows).Count -eq 0 -and @($unexpectedRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
+        $status = if (!$errorText -and
+                     @($missingRows).Count -eq 0 -and
+                     @($unexpectedRows).Count -eq 0 -and
+                     @($duplicateRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
 
         [pscustomobject] @{
             Name = $Scenario.Name
@@ -6202,6 +7405,8 @@ function Invoke-FilteringSuite {
             UseRegex = $Scenario.UseRegex
             SizeMinimum = $Scenario.SizeMinimum
             SizeUnits = $Scenario.SizeUnits
+            MaxAgeDays = $Scenario.MaxAgeDays
+            ScanEngine = $Scenario.ScanEngine
             IncludeDirs = @($Scenario.IncludeDirs)
             ExcludeDirs = @($Scenario.ExcludeDirs)
             IncludeFiles = @($Scenario.IncludeFiles)
@@ -6212,6 +7417,7 @@ function Invoke-FilteringSuite {
             ActualRows = @($actualRows)
             MissingRows = @($missingRows)
             UnexpectedRows = @($unexpectedRows)
+            DuplicateRows = @($duplicateRows)
             ExitCode = $exitCode
             ElapsedSeconds = $elapsedSeconds
             Error = $errorText
@@ -6226,13 +7432,16 @@ function Invoke-FilteringSuite {
             [string[]] $AllDirs,
             [string[]] $AllFiles,
             [hashtable] $FileSizes,
+            [hashtable] $FileTimes,
             [string[]] $IncludeDirRoots = @(),
             [string[]] $ExcludeDirRoots = @(),
             [switch] $IncludeFilePatterns,
             [switch] $ExcludeFilePatterns,
             [string[]] $IncludeFileNames = @(),
             [string[]] $ExcludeFileNames = @(),
-            [int] $SizeMinimum = 0
+            [int] $SizeMinimum = 0,
+            [int] $SizeUnits = 0,
+            [int] $MaxAgeDays = 0
         )
 
         $includeRoots = @($IncludeDirRoots)
@@ -6241,6 +7450,8 @@ function Invoke-FilteringSuite {
         $excludeNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($name in @($IncludeFileNames)) { [void] $includeNames.Add($name) }
         foreach ($name in @($ExcludeFileNames)) { [void] $excludeNames.Add($name) }
+        $minimumBytes = [uint64]$SizeMinimum * [uint64](1L -shl (10 * $SizeUnits))
+        $ageCutoffUtc = if ($MaxAgeDays -gt 0) { [datetime]::UtcNow.AddDays(-$MaxAgeDays) } else { $null }
 
         function IsExcludedPath([string] $Path) {
             foreach ($root in $excludeRoots) {
@@ -6274,7 +7485,8 @@ function Invoke-FilteringSuite {
                 ($includeNames.Count -eq 0 -or $includeNames.Contains($name)) -and
                 (!$ExcludeFilePatterns -or !($name -eq 'include-blocked.keep' -or $name -like '*.skip')) -and
                 ($excludeNames.Count -eq 0 -or !$excludeNames.Contains($name)) -and
-                ($SizeMinimum -le 0 -or $FileSizes[$_] -ge $SizeMinimum)
+                ($minimumBytes -eq 0 -or [uint64]$FileSizes[$_] -ge $minimumBytes) -and
+                ($null -eq $ageCutoffUtc -or $FileTimes[$_] -ge $ageCutoffUtc)
         })
 
         @(@($candidateDirs) + @($candidateFiles) | ForEach-Object { Normalize-ComparePath $_ } | Sort-Object)
@@ -6305,7 +7517,7 @@ function Invoke-FilteringSuite {
         }
 
         function Expected([hashtable] $Spec = @{}) {
-            Get-ExpectedRows -AllDirs $allDirs -AllFiles $allFiles -FileSizes $fileSizes @Spec
+            Get-ExpectedRows -AllDirs $allDirs -AllFiles $allFiles -FileSizes $fileSizes -FileTimes $fileTimes @Spec
         }
 
         function Scenario([hashtable] $Spec) {
@@ -6320,6 +7532,7 @@ function Invoke-FilteringSuite {
                 IncludeDirs = 'IncludeDirs'; ExcludeDirs = 'ExcludeDirs'
                 IncludeFiles = 'IncludeFiles'; ExcludeFiles = 'ExcludeFiles'
                 SizeMinimum = 'SizeMinimum'; SizeUnits = 'SizeUnits'
+                MaxAgeDays = 'MaxAgeDays'; ScanEngine = 'ScanEngine'
             }.GetEnumerator()) {
                 if ($Spec.ContainsKey($entry.Value)) { $args[$entry.Key] = $Spec[$entry.Value] }
             }
@@ -6376,14 +7589,24 @@ function Invoke-FilteringSuite {
             OutsideKeep = @('OutsideSibling\include-outside.keep', 64)
             OutsideTxt = @('OutsideSibling\outside.txt', 64)
             OutsideDeepKeep = @('OutsideSibling\Deep1\Deep2\Deep3\include-outside-deep.keep', 64)
+            UnitExactKiB = @('unit-exact-kib.bin', 1KB)
+            UnitExactMiB = @('unit-exact-mib.bin', 1MB)
+            AgeWithin = @('age-within-seven-days.bin', 64)
+            AgeBeyond = @('age-beyond-seven-days.bin', 64)
         }
         $F = @{}
         $fileSizes = @{}
+        $fileTimes = @{}
         foreach ($file in $fileRel.GetEnumerator()) {
             $path = UnderTest $file.Value[0]
             $F[$file.Key] = $path
             New-TestFile -Path $path -Size $file.Value[1]
             $fileSizes[$path] = $file.Value[1]
+        }
+        [System.IO.File]::SetLastWriteTimeUtc($F.AgeWithin, [datetime]::UtcNow.AddDays(-6))
+        [System.IO.File]::SetLastWriteTimeUtc($F.AgeBeyond, [datetime]::UtcNow.AddDays(-8))
+        foreach ($path in $F.Values) {
+            $fileTimes[$path] = [System.IO.File]::GetLastWriteTimeUtc($path)
         }
         $allFiles = @($fileRel.Keys | ForEach-Object { $F[$_] })
 
@@ -6447,6 +7670,11 @@ function Invoke-FilteringSuite {
         $scenarioSpecs = @(
             @{ Name = 'Baseline_NoFilters'; Regex = $false; Behavior = 'With no filters, every directory and file in the generated scan tree should be exported.' }
             @{ Name = 'Regex_SizeOnly'; Regex = $true; SizeMinimum = 2; Expected = @{ SizeMinimum = 2 }; Behavior = 'Regex mode with only a size minimum should keep every directory but omit files smaller than two bytes.' }
+            @{ Name = 'Glob_SizeUnits_KiB'; Regex = $false; SizeMinimum = 1; SizeUnits = 1; Expected = @{ SizeMinimum = 1; SizeUnits = 1 }; Behavior = 'A 1 KiB minimum should include files exactly at 1 KiB and above while excluding smaller files.' }
+            @{ Name = 'Glob_SizeUnits_MiB'; Regex = $false; SizeMinimum = 1; SizeUnits = 2; Expected = @{ SizeMinimum = 1; SizeUnits = 2 }; Behavior = 'A 1 MiB minimum should include the file exactly at 1 MiB while excluding the 1 KiB boundary file.' }
+            @{ Name = 'Glob_SizeUnits_GiB'; Regex = $false; SizeMinimum = 1; SizeUnits = 3; Expected = @{ SizeMinimum = 1; SizeUnits = 3 }; Behavior = 'A 1 GiB minimum should preserve directory rows but exclude every smaller fixture file.' }
+            @{ Name = 'Glob_MaxAge_Fast'; Regex = $false; MaxAgeDays = 7; Expected = @{ MaxAgeDays = 7 }; Behavior = 'The fast engine should retain files newer than seven days and exclude a file older than seven days.' }
+            @{ Name = 'Glob_MaxAge_Basic'; Regex = $false; MaxAgeDays = 7; ScanEngine = 0; Expected = @{ MaxAgeDays = 7 }; Behavior = 'The basic engine should apply the same seven-day age cutoff as the fast engine.' }
             @{ Name = 'Regex_IncludeDirs_TopLevel'; Regex = $true; IncludeDirs = $rx.IncludeTop; Expected = @{ IncludeDirRoots = $roots.Top }; Behavior = 'Only IncludedAlpha and EscapedBeta, plus their descendants, should be scanned; root files and unrelated siblings should be absent.' }
             @{ Name = 'Regex_IncludeDirs_ExactPrefixCollision'; Regex = $true; IncludeDirs = $rx.IncludeAlpha; Expected = @{ IncludeDirRoots = $roots.Alpha }; Behavior = 'An exact regex include for IncludedAlpha should not include the same-prefix sibling IncludedAlphaSibling.' }
             @{ Name = 'Regex_IncludeDirs_RootTrailingSlash'; Regex = $true; IncludeDirs = $rx.IncludeRootTrailing; Expected = @{ IncludeDirRoots = $roots.Root }; Behavior = 'A regex include for the scan root with a trailing slash should include the whole scan tree.' }
@@ -6473,6 +7701,7 @@ function Invoke-FilteringSuite {
             @{ Name = 'Glob_IncludeDirsAndFiles'; Regex = $false; IncludeDirs = $glob.IncludeTop; IncludeFiles = $glob.IncludeFiles; Expected = @{ IncludeDirRoots = $roots.GlobTop; IncludeFilePatterns = $true }; Behavior = 'Glob directory includes and file includes should combine so only selected branches and selected file names appear.' }
             @{ Name = 'Glob_ExcludeDirsAndFiles'; Regex = $false; ExcludeDirs = $glob.ExcludeDirs; ExcludeFiles = $glob.ExcludeFiles; Expected = @{ ExcludeDirRoots = $roots.Excluded; ExcludeFilePatterns = $true }; Behavior = 'Glob directory excludes and file excludes should both apply, with directory excludes removing whole branches first.' }
             @{ Name = 'Glob_AllFilters_PrecedenceAndSize'; Regex = $false; IncludeDirs = $glob.IncludeTopAndConflict; ExcludeDirs = $glob.ExcludeDirs; IncludeFiles = $glob.IncludeFiles; ExcludeFiles = $glob.ExcludeFiles; SizeMinimum = 2; Expected = @{ IncludeDirRoots = $roots.GlobTopAndConflict; ExcludeDirRoots = $roots.Excluded; IncludeFilePatterns = $true; ExcludeFilePatterns = $true; SizeMinimum = 2 }; Behavior = 'Glob mode should match regex-mode all-filter behavior: excludes override includes, and the size minimum removes small files.' }
+            @{ Name = 'Glob_AllFilters_BasicEngine'; Regex = $false; ScanEngine = 0; IncludeDirs = $glob.IncludeTopAndConflict; ExcludeDirs = $glob.ExcludeDirs; IncludeFiles = $glob.IncludeFiles; ExcludeFiles = $glob.ExcludeFiles; SizeMinimum = 2; Expected = @{ IncludeDirRoots = $roots.GlobTopAndConflict; ExcludeDirRoots = $roots.Excluded; IncludeFilePatterns = $true; ExcludeFilePatterns = $true; SizeMinimum = 2 }; Behavior = 'The basic scan engine should apply the same include/exclude precedence and size filtering as the fast engine.' }
             @{ Name = 'Glob_IncludeExcludeSameDirectory'; Regex = $false; IncludeDirs = $glob.IncludeConflict; ExcludeDirs = $glob.ExcludeConflict; Expected = @{ IncludeDirRoots = $roots.Conflict; ExcludeDirRoots = $roots.Conflict }; Behavior = 'When the same directory is both included and excluded, the exclude should win and only the scan root ancestor should remain.' }
             @{ Name = 'Glob_FileExcludeOverridesSameInclude'; Regex = $false; IncludeFiles = $glob.IncludeBlocked; ExcludeFiles = $glob.ExcludeBlocked; Expected = @{ IncludeFileNames = @('include-blocked.keep'); ExcludeFileNames = @('include-blocked.keep') }; Behavior = 'When the same file name is both included and excluded, the exclude should win and no files should be exported.' }
             @{ Name = 'Glob_CaseInsensitive_DirAndFile'; Regex = $false; IncludeDirs = $glob.IncludeAlphaLower; IncludeFiles = $glob.IncludeAlphaUpper; Expected = @{ IncludeDirRoots = $roots.Alpha; IncludeFileNames = @('include-alpha.keep') }; Behavior = 'Glob matching should be case-insensitive for both directory paths and file names.' }
@@ -6490,7 +7719,7 @@ function Invoke-FilteringSuite {
             }
             else {
                 $detail = if ($result.Error) { $result.Error }
-                          else { "$(@($result.MissingRows).Count) missing, $(@($result.UnexpectedRows).Count) unexpected path(s)" }
+                          else { "$(@($result.MissingRows).Count) missing, $(@($result.UnexpectedRows).Count) unexpected, $(@($result.DuplicateRows).Count) duplicated path(s)" }
                 Assert-Fail $result.Name 'CSV output matches expected paths' $detail
             }
         }
@@ -6536,7 +7765,7 @@ function Invoke-FilteringSuite {
 }
 
 # #############################################################################
-# SETTINGS SUITE  (non-visual settings load/save; auto-builds instrumented exe)
+# SETTINGS SUITE  (non-visual settings load/clamping; auto-builds instrumented exe)
 # #############################################################################
 function Invoke-SettingsSuite {
     $repoRoot          = $RepoRoot
@@ -6565,7 +7794,7 @@ function Find-MSBuild {
         if ($match) { return $match.FullName }
     }
 
-    throw 'MSBuild.exe was not found. Pass -SkipBuild -ExePath <path-to-settingstest-WinDirStat.exe> to test an existing settings-test build.'
+    throw 'MSBuild.exe was not found. Pass -SettingsExePath <path-to-settingstest-WinDirStat.exe> to test an existing settings-test build.'
 }
 
 function Remove-TestBuildArtifacts {
@@ -7914,13 +9143,18 @@ try {
         Assert-True $ctx 'JSON array is non-empty' ($items.Count -gt 0)
 
         $requiredProps = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change', 'WinDirStat Attributes', 'Index')
-        foreach ($prop in $requiredProps) {
-            Assert-True $ctx "First item has '$prop' property" ($null -ne $items[0].PSObject.Properties[$prop])
-        }
+        $missingProperties = @(foreach ($item in $items) {
+            foreach ($prop in $requiredProps) {
+                if ($null -eq $item.PSObject.Properties[$prop]) { "$($item.Name): $prop" }
+            }
+        })
+        Assert-True $ctx 'Every JSON item has every required property' ($missingProperties.Count -eq 0)
 
         $scanRootNorm = Normalize-ComparePath $scanRoot
         $jsonNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
         Assert-True $ctx 'Scan root appears in results' ($scanRootNorm -in $jsonNames)
+        $duplicateNames = @($jsonNames | Group-Object | Where-Object Count -gt 1)
+        Assert-True $ctx 'JSON contains no duplicate paths' ($duplicateNames.Count -eq 0)
 
         $badWdsAttr = @($items | Where-Object { $_.'WinDirStat Attributes' -notmatch '^0x[0-9A-Fa-f]{8}$' })
         Assert-True $ctx 'All WinDirStat Attributes are 0x-prefixed hex' ($badWdsAttr.Count -eq 0)
@@ -7930,16 +9164,26 @@ try {
 
         $badTimestamp = @($items | Where-Object {
             $v = $_.'Last Change'
-            if ($v -is [datetime]) { return $false }
+            if ($null -eq $v) { return $true }
+            if ($v -is [datetime]) { return $v.Kind -ne [DateTimeKind]::Utc }
+            if ($v -isnot [string]) { return $true }
             $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
         })
         Assert-True $ctx 'All Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
 
-        $badFiles = @($items | Where-Object { $_.'Files' -is [string] })
-        Assert-True $ctx 'All Files values are numeric' ($badFiles.Count -eq 0)
-
-        $badFolders = @($items | Where-Object { $_.'Folders' -is [string] })
-        Assert-True $ctx 'All Folders values are numeric' ($badFolders.Count -eq 0)
+        $integralTypeCodes = @(
+            [System.TypeCode]::Byte, [System.TypeCode]::SByte,
+            [System.TypeCode]::Int16, [System.TypeCode]::UInt16,
+            [System.TypeCode]::Int32, [System.TypeCode]::UInt32,
+            [System.TypeCode]::Int64, [System.TypeCode]::UInt64
+        )
+        foreach ($field in @('Files', 'Folders', 'Logical Size', 'Physical Size')) {
+            $badNumbers = @($items | Where-Object {
+                $value = $_.$field
+                $null -eq $value -or [System.Type]::GetTypeCode($value.GetType()) -notin $integralTypeCodes
+            })
+            Assert-True $ctx "All '$field' values are integral JSON numbers" ($badNumbers.Count -eq 0)
+        }
 
         [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
     }))
@@ -7964,6 +9208,10 @@ try {
             try { $n = Normalize-ComparePath $_.Name; if (Test-PathUnder -Path $n -Root $scanRoot) { $n } } catch {}
         } | Where-Object { $_ })
 
+        $csvDuplicates = @($csvPaths | Group-Object | Where-Object Count -gt 1)
+        $jsonDuplicates = @($jsonPaths | Group-Object | Where-Object Count -gt 1)
+        Assert-True $ctx 'CSV comparison export contains no duplicate paths' ($csvDuplicates.Count -eq 0)
+        Assert-True $ctx 'JSON comparison export contains no duplicate paths' ($jsonDuplicates.Count -eq 0)
         Assert-SetEqual $ctx 'JSON and CSV report the same paths' -Actual $jsonPaths -Expected $csvPaths
 
         [pscustomobject] @{
@@ -7988,11 +9236,18 @@ try {
         Assert-Equal $ctx 'Duplicate JSON entry count' $items.Count 2
 
         $requiredDupeProps = @('Hash Prefix', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes')
-        if ($items.Count -gt 0) {
+        $missingDupeProperties = @(foreach ($item in $items) {
             foreach ($prop in $requiredDupeProps) {
-                Assert-True $ctx "Dupe entry has '$prop' property" ($null -ne $items[0].PSObject.Properties[$prop])
+                if ($null -eq $item.PSObject.Properties[$prop]) { "$($item.Name): $prop" }
             }
-        }
+        })
+        Assert-True $ctx 'Every dupe entry has every required property' ($missingDupeProperties.Count -eq 0)
+
+        $dupeNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
+        Assert-SetEqual $ctx 'Duplicate JSON contains the exact fixture pair' -Actual $dupeNames -Expected @(
+            (Normalize-ComparePath (Join-Path $dupeRoot 'duplicate-a.bin')),
+            (Normalize-ComparePath (Join-Path $dupeRoot 'duplicate-b.bin'))
+        )
 
         if ($items.Count -eq 2) {
             Assert-Equal $ctx 'Duplicates share the same Hash Prefix' $items[0].'Hash Prefix' $items[1].'Hash Prefix'
@@ -8001,13 +9256,26 @@ try {
 
         $badTimestamp = @($items | Where-Object {
             $v = $_.'Last Change'
-            if ($v -is [datetime]) { return $false }
+            if ($null -eq $v) { return $true }
+            if ($v -is [datetime]) { return $v.Kind -ne [DateTimeKind]::Utc }
+            if ($v -isnot [string]) { return $true }
             $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
         })
         Assert-True $ctx 'All dupe Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
 
-        $badSizes = @($items | Where-Object { $_.'Logical Size' -is [string] })
-        Assert-True $ctx 'All dupe Logical Size values are numeric' ($badSizes.Count -eq 0)
+        $dupeIntegralTypes = @(
+            [System.TypeCode]::Byte, [System.TypeCode]::SByte,
+            [System.TypeCode]::Int16, [System.TypeCode]::UInt16,
+            [System.TypeCode]::Int32, [System.TypeCode]::UInt32,
+            [System.TypeCode]::Int64, [System.TypeCode]::UInt64
+        )
+        foreach ($field in @('Logical Size', 'Physical Size')) {
+            $badSizes = @($items | Where-Object {
+                $value = $_.$field
+                $null -eq $value -or [System.Type]::GetTypeCode($value.GetType()) -notin $dupeIntegralTypes
+            })
+            Assert-True $ctx "All dupe '$field' values are integral JSON numbers" ($badSizes.Count -eq 0)
+        }
 
         [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
     }))
@@ -8377,6 +9645,7 @@ function Invoke-ScanWithIni {
 $sourceExe       = [System.IO.Path]::GetFullPath($ExePath)
 $suiteSucceeded  = $false
 $fixtureInfo     = $null
+$scratchLock     = $null
 
 try {
     # Prerequisite gates: this suite FORMATS the two scratch drives, so it only
@@ -8388,6 +9657,22 @@ try {
     }
     if ($driveOneLetter -eq 'C' -or $driveTwoLetter -eq 'C') {
         Assert-Skip 'Reparse' 'Scratch drive selection' "Refusing to use C: as a scratch drive (configured: ${driveOneLetter}: / ${driveTwoLetter}:)"
+        $suiteSucceeded = $true
+        return
+    }
+    if ($driveOneLetter -eq $driveTwoLetter) {
+        Assert-Skip 'Reparse' 'Scratch drives are distinct' "Both parameters resolve to ${driveOneLetter}:"
+        $suiteSucceeded = $true
+        return
+    }
+
+    $protected = @(foreach ($letter in @($driveOneLetter, $driveTwoLetter)) {
+        foreach ($reason in @(Get-ScratchDriveProtectionReasons -Letter $letter)) {
+            "${letter}: $reason"
+        }
+    })
+    if ($protected.Count -gt 0) {
+        Assert-Skip 'Reparse' 'Scratch drives are disposable' ($protected -join '; ')
         $suiteSucceeded = $true
         return
     }
@@ -8412,11 +9697,15 @@ try {
     # Validate parameters.
     Assert-ValidTestDrive -Letter $driveOneLetter
     Assert-ValidTestDrive -Letter $driveTwoLetter
-    if ($driveOneLetter -eq $driveTwoLetter) {
-        throw "DriveOne and DriveTwo must be different drives."
-    }
     if (-not (Test-Path -LiteralPath $sourceExe)) {
         throw "WinDirStat executable not found: $sourceExe"
+    }
+
+    $scratchLock = Enter-ScratchDriveLock -Letters @($driveOneLetter, $driveTwoLetter)
+    if (!$scratchLock) {
+        Assert-Skip 'Reparse' 'Scratch-drive lock' 'Another WinDirStat E2E process is formatting these drives'
+        $suiteSucceeded = $true
+        return
     }
 
     Write-ColoredLine "Reparse/link behavior suite" Cyan
@@ -8925,6 +10214,7 @@ finally {
     if (-not $suiteSucceeded) {
         Write-ColoredLine 'Reparse/link behavior suite FAILED.' Red
     }
+    Exit-ScratchDriveLock -Mutex $scratchLock
 }
 
 }
@@ -8954,46 +10244,75 @@ function Write-TestIni {
 }
 
 function Invoke-WinDirStatCsvScan {
-    $arguments = "/saveto `"$csvOut`" `"$scanRoot`""
-    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = $runnerExe
-    $startInfo.Arguments = $arguments
-    $startInfo.WorkingDirectory = $runRoot
-    $startInfo.UseShellExecute = $false
-    $startInfo.CreateNoWindow = $true
-
     Write-ColoredLine "Running WinDirStat..." Cyan
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $process = [System.Diagnostics.Process]::Start($startInfo)
-    if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-        try { $process.Kill() } catch {}
-        throw "WinDirStat did not finish within $TimeoutSeconds seconds."
-    }
-    $sw.Stop()
-
-    if ($process.ExitCode -ne 0) {
-        throw "WinDirStat exited with code $($process.ExitCode)."
+    $run = Invoke-ProcessWithTimeout -FileName $runnerExe -Arguments @('/saveto', $csvOut, $scanRoot) `
+        -WorkingDirectory $runRoot
+    if ($run.ExitCode -ne 0) {
+        throw "WinDirStat exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
     }
 
     if (!(Test-Path -LiteralPath $csvOut)) {
         throw "WinDirStat exited successfully but did not create CSV: $csvOut"
     }
 
-    Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $sw.Elapsed.TotalSeconds) DarkGray
+    Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $run.ElapsedSeconds) DarkGray
 }
 
     function Assert-CsvHasRow {
-        param([string] $MatchName, [string] $MatchAttr = '')
+        param(
+            [string] $ExpectedPath,
+            [string] $MatchAttr = '',
+            [Nullable[long]] $ExpectedLogicalSize = $null,
+            [Nullable[datetime]] $ExpectedLastWriteUtc = $null
+        )
         $g = 'EdgeCases'
-        $row = $csvRows | Where-Object { $_.Name -match [regex]::Escape($MatchName) } | Select-Object -First 1
-        if (!$row) { Assert-Fail $g "Find '$MatchName'" 'Not present in CSV output'; return }
-        Assert-Pass $g "Find '$MatchName'"
-        if ($MatchAttr) {
-            if ($row.Attributes -notmatch $MatchAttr) { Assert-Fail $g "Attribute '$MatchAttr' for '$MatchName'" "Got '$($row.Attributes)'" }
-            else { Assert-Pass $g "Attribute '$MatchAttr' for '$MatchName'" }
+        $expectedNorm = Normalize-ComparePath $ExpectedPath
+        $displayName = Split-Path -Leaf $ExpectedPath
+        $matches = @($csvRows | Where-Object {
+            try { (Normalize-ComparePath $_.Name) -ieq $expectedNorm } catch { $false }
+        })
+        if ($matches.Count -ne 1) {
+            Assert-Fail $g "Find exact path '$displayName'" "Expected one row for '$expectedNorm', got $($matches.Count)"
+            return
         }
-        if ([string]::IsNullOrWhiteSpace($row.Owner)) { Assert-Fail $g "Owner for '$MatchName'" 'Owner column empty' }
-        else { Assert-Pass $g "Owner for '$MatchName'" }
+        $row = $matches[0]
+        Assert-Pass $g "Find exact path '$displayName'"
+        if ($MatchAttr) {
+            if ($row.Attributes -notmatch $MatchAttr) { Assert-Fail $g "Attribute '$MatchAttr' for '$displayName'" "Got '$($row.Attributes)'" }
+            else { Assert-Pass $g "Attribute '$MatchAttr' for '$displayName'" }
+        }
+        if ($null -ne $ExpectedLogicalSize) {
+            $actualSize = 0L
+            if (-not [long]::TryParse([string]$row.'Logical Size', [ref]$actualSize)) {
+                Assert-Fail $g "Logical size for '$displayName'" "Not an integer: '$($row.'Logical Size')'"
+            }
+            elseif ($actualSize -ne [long]$ExpectedLogicalSize) {
+                Assert-Fail $g "Logical size for '$displayName'" "Expected $ExpectedLogicalSize, got $actualSize"
+            }
+            else {
+                Assert-Pass $g "Logical size for '$displayName' = $actualSize"
+            }
+        }
+        if ($null -ne $ExpectedLastWriteUtc) {
+            $actualTimestamp = [datetimeoffset]::MinValue
+            $styles = [System.Globalization.DateTimeStyles]::AssumeUniversal -bor
+                [System.Globalization.DateTimeStyles]::AdjustToUniversal
+            if (-not [datetimeoffset]::TryParse(
+                [string]$row.'Last Change',
+                [System.Globalization.CultureInfo]::InvariantCulture,
+                $styles,
+                [ref]$actualTimestamp)) {
+                Assert-Fail $g "Last Change for '$displayName'" "Not an ISO timestamp: '$($row.'Last Change')'"
+            }
+            elseif ($actualTimestamp.UtcDateTime -ne ([datetime]$ExpectedLastWriteUtc).ToUniversalTime()) {
+                Assert-Fail $g "Last Change for '$displayName'" "Expected $ExpectedLastWriteUtc, got $($actualTimestamp.UtcDateTime)"
+            }
+            else {
+                Assert-Pass $g "Last Change for '$displayName' round-trips exactly"
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace($row.Owner)) { Assert-Fail $g "Owner for '$displayName'" 'Owner column empty' }
+        else { Assert-Pass $g "Owner for '$displayName'" }
     }
 
     try {
@@ -9010,7 +10329,18 @@ for ($i = 1; $i -le 15; $i++) {
 New-TestFile (Join-Path $deepPath "deep_file.txt") 1024
 
 $unicodePathResult = Join-Path $scanRoot "test_unicode_😀_ñæö_こんにちは"
-New-TestFile (Join-Path $unicodePathResult "file_with_unicode.dat") 512
+$unicodeFile = Join-Path $unicodePathResult "file_😀_é_日本語.dat"
+New-TestFile $unicodeFile 512
+
+# A comma forces RFC-style CSV field quoting; the non-ASCII characters verify
+# that the quoted field still round-trips through the UTF-8 export/import path.
+$quotedCsvFile = Join-Path $scanRoot 'csv,emoji_😀_é.txt'
+New-TestFile $quotedCsvFile 333
+
+$timestampFile = Join-Path $scanRoot 'fixed-timestamp.bin'
+$expectedLastWriteUtc = [datetime]::SpecifyKind([datetime]'2020-02-03T04:05:06', [DateTimeKind]::Utc)
+New-TestFile $timestampFile 257
+[System.IO.File]::SetLastWriteTimeUtc($timestampFile, $expectedLastWriteUtc)
 
 $attributesFolder = Join-Path $scanRoot "Attrs"
 $hiddenFile = Join-Path $attributesFolder "hidden.tmp"
@@ -9033,14 +10363,20 @@ New-TestFile (Join-Path $scanRoot $longFileName) 1024
 
 Write-TestIni
 Invoke-WinDirStatCsvScan
-        $csvRows = Import-Csv -LiteralPath $csvOut -Encoding UTF8
+        $csvRows = @(Read-CsvRows -Csv $csvOut)
 
-        Assert-CsvHasRow 'deep_file.txt'
-        Assert-CsvHasRow (Split-Path -Leaf $unicodePathResult)
-        Assert-CsvHasRow $longFileName
-        Assert-CsvHasRow 'hidden.tmp' 'H'
-        Assert-CsvHasRow 'system.sys' 'S'
-        Assert-CsvHasRow 'readonly.rd' 'R'
+        if ($deepPath.Length -gt 260) { Assert-Pass 'EdgeCases' 'Deep fixture exceeds MAX_PATH' "$($deepPath.Length) characters" }
+        else { Assert-Fail 'EdgeCases' 'Deep fixture exceeds MAX_PATH' "Only $($deepPath.Length) characters" }
+
+        Assert-CsvHasRow -ExpectedPath (Join-Path $deepPath 'deep_file.txt') -ExpectedLogicalSize 1024
+        Assert-CsvHasRow -ExpectedPath $unicodePathResult
+        Assert-CsvHasRow -ExpectedPath $unicodeFile -ExpectedLogicalSize 512
+        Assert-CsvHasRow -ExpectedPath $quotedCsvFile -ExpectedLogicalSize 333
+        Assert-CsvHasRow -ExpectedPath $timestampFile -ExpectedLogicalSize 257 -ExpectedLastWriteUtc $expectedLastWriteUtc
+        Assert-CsvHasRow -ExpectedPath (Join-Path $scanRoot $longFileName) -ExpectedLogicalSize 1024
+        Assert-CsvHasRow -ExpectedPath $hiddenFile -MatchAttr 'H' -ExpectedLogicalSize 1024
+        Assert-CsvHasRow -ExpectedPath $systemFile -MatchAttr 'S' -ExpectedLogicalSize 1024
+        Assert-CsvHasRow -ExpectedPath $readonlyFile -MatchAttr 'R' -ExpectedLogicalSize 1024
     }
     finally {
         Remove-TestArtifacts -Path $workRoot
@@ -9270,13 +10606,18 @@ function Invoke-EnumerationSuite {
         Remove-Item -LiteralPath $csv -Force -ErrorAction SilentlyContinue
         $missing = @($Expected | Where-Object { $actual -notcontains $_ })
         $extra   = @($actual   | Where-Object { $Expected -notcontains $_ })
-        if ($missing.Count -eq 0 -and $extra.Count -eq 0) {
+        $duplicates = @($actual |
+            Group-Object |
+            Where-Object Count -gt 1 |
+            ForEach-Object { "$($_.Name) ($($_.Count)x)" })
+        if ($missing.Count -eq 0 -and $extra.Count -eq 0 -and $duplicates.Count -eq 0) {
             Assert-Pass $Group $Label "$($actual.Count) entries"
         }
         else {
             $m = ($missing | Select-Object -First 4) -join ', '
             $x = ($extra   | Select-Object -First 4) -join ', '
-            Assert-Fail $Group $Label "missing $($missing.Count) [$m]; extra $($extra.Count) [$x]"
+            $d = ($duplicates | Select-Object -First 4) -join ', '
+            Assert-Fail $Group $Label "missing $($missing.Count) [$m]; extra $($extra.Count) [$x]; duplicated $($duplicates.Count) [$d]"
         }
     }
 
@@ -9452,6 +10793,19 @@ function Invoke-EnumerationSuite {
             $csv1 = Invoke-EnumScanCsv -Root $Root -FastEngine 1
         }
         catch { Assert-Fail $g 'scan under both engines' $_.Exception.Message; return }
+        $relative0 = @(Get-EnumCsvRelative -Csv $csv0)
+        $relative1 = @(Get-EnumCsvRelative -Csv $csv1)
+        $duplicates0 = @($relative0 | Group-Object | Where-Object Count -gt 1)
+        $duplicates1 = @($relative1 | Group-Object | Where-Object Count -gt 1)
+        if ($duplicates0.Count -eq 0 -and $duplicates1.Count -eq 0) {
+            Assert-Pass $g 'neither engine emits duplicate entries'
+        }
+        else {
+            $basicDetail = @($duplicates0 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
+            $fastDetail = @($duplicates1 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
+            Assert-Fail $g 'neither engine emits duplicate entries' "basic=[$basicDetail]; fast=[$fastDetail]"
+        }
+
         $m0 = Get-EnumRowMap $csv0; $m1 = Get-EnumRowMap $csv1
         Remove-Item $csv0, $csv1 -Force -ErrorAction SilentlyContinue
 
@@ -9529,16 +10883,39 @@ function Invoke-EnumerationSuite {
         # so at least one buffer refill happens.  Created via \\?\ for the length.
         $pad   = 'p' * 190
         $empty = [byte[]]::new(1)
+        $expectedNames = [System.Collections.Generic.List[string]]::new($count)
         for ($i = 0; $i -lt $count; $i++) {
-            [System.IO.File]::WriteAllBytes(('\\?\' + $big + '\f' + ('{0:D6}' -f $i) + "_$pad.bin"), $empty)
+            $leaf = 'f' + ('{0:D6}' -f $i) + "_$pad.bin"
+            [void] $expectedNames.Add($leaf)
+            [System.IO.File]::WriteAllBytes(('\\?\' + $big + '\' + $leaf), $empty)
         }
         $gt = @([System.IO.Directory]::EnumerateFiles('\\?\' + $big)).Count
         try {
             $csv = Invoke-EnumScanCsv -Root ('\\?\' + $big) -FastEngine 0
-            $entries = (@(Read-CsvRows -Csv $csv)).Count - 1     # minus the root row
+            $actualNames = @(Get-EnumCsvRelative -Csv $csv)
             Remove-Item $csv -Force -ErrorAction SilentlyContinue
-            if ($entries -eq $count -and $gt -eq $count) { Assert-Pass $g "single directory of $count entries enumerated exactly (buffer-refill path)" }
-            else { Assert-Fail $g "single directory of $count entries" "created $count, ground truth $gt, scan saw $entries" }
+
+            $expectedSet = [System.Collections.Generic.HashSet[string]]::new(
+                $expectedNames, [System.StringComparer]::Ordinal
+            )
+            $actualSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+            $duplicates = [System.Collections.Generic.List[string]]::new()
+            foreach ($name in $actualNames) {
+                if (-not $actualSet.Add($name)) { [void] $duplicates.Add($name) }
+            }
+            $missing = @($expectedNames | Where-Object { -not $actualSet.Contains($_) })
+            $unexpected = @($actualSet | Where-Object { -not $expectedSet.Contains($_) })
+
+            if ($gt -eq $count -and $missing.Count -eq 0 -and
+                $unexpected.Count -eq 0 -and $duplicates.Count -eq 0) {
+                Assert-Pass $g "single directory of $count exact names enumerated once (buffer-refill path)"
+            }
+            else {
+                Assert-Fail $g "single directory of $count exact names" (
+                    "created=$count; ground truth=$gt; scan=$($actualNames.Count); " +
+                    "missing=$($missing.Count); unexpected=$($unexpected.Count); duplicated=$($duplicates.Count)"
+                )
+            }
         }
         catch { Assert-Fail $g "single directory of $count entries" $_.Exception.Message }
         finally { try { [System.IO.Directory]::Delete('\\?\' + $big, $true) } catch {} }
@@ -9591,10 +10968,11 @@ function Invoke-EnumerationSuite {
         if ($identity.Id) {
             $gtIndex = '0x' + ($identity.Id -split ':')[1]
             if ($idxA -ieq $gtIndex) { Assert-Pass $g 'Index matches the NTFS file id' $idxA }
-            else { Assert-Warn $g 'Index matches the NTFS file id' "scan=$idxA native=$gtIndex" }
+            else { Assert-Fail $g 'Index matches the NTFS file id' "scan=$idxA native=$gtIndex" }
         }
+        else { Assert-Fail $g 'Read native NTFS file id' 'GetFileInformationByHandle returned no identity' }
         if ($identity.Links -ge ($names.Count)) { Assert-Pass $g "NTFS link count = $($identity.Links) (>= $($names.Count))" }
-        else { Assert-Warn $g 'NTFS link count' "$($identity.Links) (expected >= $($names.Count))" }
+        else { Assert-Fail $g 'NTFS link count' "$($identity.Links) (expected >= $($names.Count))" }
     }
 
     # #6 — an unreadable subdirectory must be skipped gracefully mid-scan.
@@ -9637,10 +11015,19 @@ function Invoke-EnumerationSuite {
         if ($made.Count -eq $ntNames.Count) {
             try {
                 $csv = Invoke-EnumScanCsv -Root "\\?\$root" -FastEngine 0
-                $entries = (@(Read-CsvRows -Csv $csv)).Count - 1
+                $actualNames = @(Get-EnumCsvRelative -Csv $csv)
                 Remove-Item $csv -Force -ErrorAction SilentlyContinue
-                if ($entries -eq $ntNames.Count) { Assert-Pass $g 'trailing dot/space names enumerated' "$entries/$($ntNames.Count)" }
-                else { Assert-Fail $g 'trailing dot/space names enumerated' "saw $entries of $($ntNames.Count)" }
+                $diff = @(Compare-Object -ReferenceObject $ntNames -DifferenceObject $actualNames -CaseSensitive)
+                $duplicates = @($actualNames | Group-Object -CaseSensitive | Where-Object Count -gt 1)
+                if ($diff.Count -eq 0 -and $duplicates.Count -eq 0) {
+                    Assert-Pass $g 'trailing dot/space names preserved exactly and enumerated once'
+                }
+                else {
+                    Assert-Fail $g 'trailing dot/space names preserved exactly and enumerated once' (
+                        "expected=[$($ntNames -join ', ')]; actual=[$($actualNames -join ', ')]; " +
+                        "duplicates=$($duplicates.Count)"
+                    )
+                }
             }
             catch { Assert-Fail $g 'trailing dot/space names enumerated' $_.Exception.Message }
         }
@@ -9699,6 +11086,19 @@ function Invoke-EnumerationSuite {
             Assert-Skip $g 'Scratch drive selection' "Refusing C: as a scratch drive (configured: ${oneLetter}: / ${twoLetter}:)"
             return
         }
+        if ($oneLetter -eq $twoLetter) {
+            Assert-Fail $g 'Scratch drives are distinct' "Both scratch-drive parameters resolve to ${oneLetter}:"
+            return
+        }
+        $protected = @(foreach ($letter in @($oneLetter, $twoLetter)) {
+            foreach ($reason in @(Get-ScratchDriveProtectionReasons -Letter $letter)) {
+                "${letter}: $reason"
+            }
+        })
+        if ($protected.Count -gt 0) {
+            Assert-Skip $g 'Scratch drives are disposable' ($protected -join '; ')
+            return
+        }
         if (-not (Test-Path "${oneLetter}:\") -or -not (Test-Path "${twoLetter}:\")) {
             Assert-Skip $g 'Scratch drives present' "Drives ${oneLetter}: and ${twoLetter}: must both exist; set LINK_TEST_DRIVE_ONE/TWO"
             return
@@ -9719,6 +11119,12 @@ function Invoke-EnumerationSuite {
             return
         }
 
+        $scratchLock = Enter-ScratchDriveLock -Letters @($oneLetter, $twoLetter)
+        if (!$scratchLock) {
+            Assert-Skip $g 'Scratch-drive lock' 'Another WinDirStat E2E process is formatting these drives'
+            return
+        }
+
         # (drive, file system) plan covering all three systems across the two
         # scratch drives, finishing with NTFS so both are left clean.
         $plan = @(
@@ -9727,14 +11133,24 @@ function Invoke-EnumerationSuite {
             [pscustomobject]@{ Letter = $oneLetter; Fs = 'NTFS'  },
             [pscustomobject]@{ Letter = $twoLetter; Fs = 'NTFS'  }
         )
+        $formattedLetters = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::OrdinalIgnoreCase
+        )
+        try {
         foreach ($step in $plan) {
             $label = "$($step.Fs) on $($step.Letter):"
             try {
                 Write-ColoredLine "  Formatting $($step.Letter): as $($step.Fs) ..." DarkGray
                 Format-Volume -DriveLetter $step.Letter -FileSystem $step.Fs -NewFileSystemLabel "WdsEnum$($step.Fs)" -Force -Confirm:$false -ErrorAction Stop | Out-Null
+                [void] $formattedLetters.Add($step.Letter)
             }
             catch {
-                Assert-Pass $g $label "ReFS format not supported on this drive (expected on some configurations): $($_.Exception.Message)"
+                if ($step.Fs -eq 'ReFS') {
+                    Assert-Skip $g $label "ReFS format is not supported on this drive: $($_.Exception.Message)"
+                }
+                else {
+                    Assert-Fail $g $label "Required $($step.Fs) format failed: $($_.Exception.Message)"
+                }
                 continue
             }
 
@@ -9764,13 +11180,17 @@ function Invoke-EnumerationSuite {
                     $gtIndex = if ($native.Id) { '0x' + ($native.Id -split ':')[1] } else { $null }
                     if ($idx -notmatch '^0x0+$') {
                         if ($gtIndex -and ($idx -ieq $gtIndex)) { Assert-Pass $g "$label Index is a non-zero file id matching the OS ($idx)" }
+                        elseif ($gtIndex) { Assert-Fail $g "$label Index matches the OS" "scan reported $idx but the OS file id is $gtIndex" }
                         else { Assert-Pass $g "$label Index is a non-zero file id ($idx)" }
                     }
                     elseif (-not $gtIndex) { Assert-Pass $g "$label Index = 0 (OS exposes no file id)" }
                     else { Assert-Fail $g "$label Index" "scan reported 0 but the OS file id is $gtIndex" }
                 }
+                else {
+                    Assert-Fail $g "$label Index check" 'root file.txt was missing from the scan output'
+                }
             }
-            catch { Assert-Warn $g "$label Index check" $_.Exception.Message }
+            catch { Assert-Fail $g "$label Index check" $_.Exception.Message }
 
             # #8 — scan the volume ROOT (system/reserved entries like System Volume
             # Information / $RECYCLE.BIN) and confirm it enumerates cleanly.
@@ -9784,6 +11204,27 @@ function Invoke-EnumerationSuite {
             catch { Assert-Fail $g "$label volume-root scan" $_.Exception.Message }
 
             Remove-Item -LiteralPath "$($step.Letter):\wds-enum-fs" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        }
+        finally {
+            # A test failure or Ctrl+C must not strand a scratch volume as FAT32
+            # or ReFS.  Query first to avoid an unnecessary second NTFS format
+            # after the normal final steps completed successfully.
+            foreach ($letter in $formattedLetters) {
+                $currentFs = $null
+                try { $currentFs = (Get-Volume -DriveLetter $letter -ErrorAction Stop).FileSystem } catch {}
+                if ($currentFs -eq 'NTFS') { continue }
+
+                try {
+                    Write-ColoredLine "  Restoring ${letter}: to NTFS ..." DarkGray
+                    Format-Volume -DriveLetter $letter -FileSystem NTFS -NewFileSystemLabel 'WdsEnumNTFS' -Force -Confirm:$false -ErrorAction Stop | Out-Null
+                    Assert-Pass $g "Restore ${letter}: to NTFS"
+                }
+                catch {
+                    Assert-Fail $g "Restore ${letter}: to NTFS" $_.Exception.Message
+                }
+            }
+            Exit-ScratchDriveLock -Mutex $scratchLock
         }
     }
 
@@ -10211,6 +11652,349 @@ function Invoke-PermissionsSuite {
     }
 }
 
+# #############################################################################
+# CLI SUITE  (command-line parsing / quiet-mode error handling)
+# #############################################################################
+function Invoke-CliSuite {
+    $workRoot = Join-Path $BuildRoot 'cli-contract-test'
+    $runRoot  = Join-Path $workRoot 'runner'
+    $rootOne  = Join-Path $workRoot 'root one'
+    $rootTwo  = Join-Path $workRoot 'root two'
+    $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
+
+    # Unlike the normal scan helper, this returns a timeout as data.  Invalid
+    # quiet-mode invocations must be tested with a short bound because the bug
+    # being guarded against is a hidden target-selection dialog that never exits.
+    function Invoke-CliProbe {
+        param(
+            [Parameter(Mandatory)] [AllowEmptyString()] [string[]] $Arguments,
+            [int] $TimeoutMs = 15000
+        )
+
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $runnerExe
+        $startInfo.WorkingDirectory = $runRoot
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        foreach ($argument in $Arguments) {
+            [void] $startInfo.ArgumentList.Add($argument)
+        }
+
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $process = [System.Diagnostics.Process]::Start($startInfo)
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $completed = $process.WaitForExit($TimeoutMs)
+        if (-not $completed) {
+            try {
+                $process.Kill($true)
+                [void] $process.WaitForExit(2000)
+            }
+            catch {}
+        }
+
+        # A failed process-tree kill (or a descendant that inherited the pipe
+        # handles) must not turn this timeout probe into an unbounded wait while
+        # draining redirected output. Give completed processes a short drain
+        # window, then close our readers and return the timeout as data.
+        $streamsDrained = $false
+        try {
+            if ($process.HasExited) {
+                $streamsDrained = [System.Threading.Tasks.Task]::WaitAll(
+                    [System.Threading.Tasks.Task[]] @($stdoutTask, $stderrTask), 2000)
+            }
+        }
+        catch {}
+
+        $stdout = if ($stdoutTask.IsCompletedSuccessfully) {
+            $stdoutTask.GetAwaiter().GetResult()
+        } else { '' }
+        $stderr = if ($stderrTask.IsCompletedSuccessfully) {
+            $stderrTask.GetAwaiter().GetResult()
+        } else { '' }
+        if (-not $streamsDrained) {
+            try { $process.StandardOutput.Close() } catch {}
+            try { $process.StandardError.Close() } catch {}
+        }
+        $sw.Stop()
+        $exitCode = if ($completed) { $process.ExitCode } else { $null }
+        $process.Dispose()
+
+        [pscustomobject] @{
+            CommandLine = "`"$runnerExe`" $(Join-ProcessArguments -Arguments $Arguments)"
+            Completed = $completed
+            TimedOut = -not $completed
+            ExitCode = $exitCode
+            StdOut = $stdout
+            StdErr = $stderr
+            ElapsedSeconds = [math]::Round($sw.Elapsed.TotalSeconds, 3)
+        }
+    }
+
+    try {
+        if (Test-Path -LiteralPath $workRoot) {
+            Remove-Item -LiteralPath $workRoot -Recurse -Force
+        }
+        New-Item -ItemType Directory -Force -Path $runRoot, $rootOne, $rootTwo | Out-Null
+        Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
+
+        $langBin = Join-Path (Split-Path -Parent $ExePath) 'lang_combined.bin'
+        if (Test-Path -LiteralPath $langBin) {
+            Copy-Item -LiteralPath $langBin -Destination $runRoot -Force
+        }
+
+        $sections = [ordered] @{
+            Options = [ordered] @{
+                LanguageId          = 9
+                UseFastScanEngine   = 0
+                UseBackupRestore    = 0
+                ShowElevationPrompt = 0
+                AutoElevate         = 0
+                ShowFreeSpace       = 0
+                ShowUnknown         = 0
+                ProcessHardlinks    = 0
+            }
+            DupeView = [ordered] @{
+                ScanForDuplicates = 0
+            }
+        }
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+
+        $fileOne = Join-Path $rootOne 'one.txt'
+        $fileTwo = Join-Path $rootTwo 'two.txt'
+        New-TestFile -Path $fileOne -Size 31 -Seed 11
+        New-TestFile -Path $fileTwo -Size 47 -Seed 23
+
+        # MFC accepts both '-' and '/' flag prefixes, the app lower-cases flag
+        # names, and output flags may follow their positional scan target.
+        Write-GroupHeader 'CLI parsing'
+        $g = 'Cli/Parsing'
+        $orderedOut = Join-Path $workRoot 'target-before-flag.csv'
+        try {
+            $probe = Invoke-CliProbe -Arguments @($rootOne, '-SaVeTo', $orderedOut)
+            if ($probe.TimedOut) {
+                Assert-Fail $g 'Target-before-flag mixed-case dash form terminates' "Timed out after $($probe.ElapsedSeconds)s: $($probe.CommandLine)"
+            }
+            elseif ($probe.ExitCode -ne 0) {
+                Assert-Fail $g 'Target-before-flag mixed-case dash form succeeds' "Exit $($probe.ExitCode). StdErr: $($probe.StdErr)"
+            }
+            elseif (-not (Test-Path -LiteralPath $orderedOut)) {
+                Assert-Fail $g 'Target-before-flag mixed-case dash form creates output' 'Process exited 0 without creating the CSV'
+            }
+            else {
+                Assert-Pass $g 'Target-before-flag mixed-case dash form succeeds'
+                $paths = @(Read-CsvPaths -Csv $orderedOut)
+                if ((Normalize-ComparePath $fileOne) -in $paths) {
+                    Assert-Pass $g 'Parsed target is the directory preceding the flag'
+                }
+                else {
+                    Assert-Fail $g 'Parsed target is the directory preceding the flag' "Seed file missing from CSV: $fileOne"
+                }
+            }
+        }
+        catch {
+            Assert-Fail $g 'Target-before-flag mixed-case dash form executes' $_.Exception.Message
+        }
+
+        # A valid target with an output path whose parent does not exist reaches
+        # SaveResults and must propagate its failure as exit code 1.
+        Write-GroupHeader 'CLI output failure'
+        $g = 'Cli/OutputFailure'
+        $badOut = Join-Path $workRoot 'missing-parent\cannot-write.csv'
+        try {
+            $probe = Invoke-CliProbe -Arguments @('/saveto', $badOut, $rootOne)
+            if ($probe.TimedOut) {
+                Assert-Fail $g 'Uncreatable output path terminates' "Timed out after $($probe.ElapsedSeconds)s"
+            }
+            elseif ($probe.ExitCode -eq 1) {
+                Assert-Pass $g 'Uncreatable output path returns exit code 1'
+            }
+            else {
+                Assert-Fail $g 'Uncreatable output path returns exit code 1' "Exit code: $($probe.ExitCode)"
+            }
+            if (Test-Path -LiteralPath $badOut) {
+                Assert-Fail $g 'Failed export leaves no output file' "Unexpected file: $badOut"
+            }
+            else {
+                Assert-Pass $g 'Failed export leaves no output file'
+            }
+        }
+        catch {
+            Assert-Fail $g 'Uncreatable output path is reported' $_.Exception.Message
+        }
+
+        # Regression: invalid quiet targets once opened a hidden picker and hung.
+        Write-GroupHeader 'CLI invalid target'
+        $g = 'Cli/InvalidTarget'
+        $missingRoot = Join-Path $workRoot 'does-not-exist'
+        $missingOut = Join-Path $workRoot 'missing-target.csv'
+        try {
+            $probe = Invoke-CliProbe -Arguments @('/saveto', $missingOut, $missingRoot) -TimeoutMs 5000
+            if ($probe.TimedOut) {
+                Assert-Fail $g 'Nonexistent quiet target terminates with an error' "Process hung for $($probe.ElapsedSeconds)s and was killed; no scan root survived command-line parsing"
+            }
+            elseif ($probe.ExitCode -eq 1) {
+                Assert-Pass $g 'Nonexistent quiet target terminates with an error' 'Exit code 1'
+            }
+            else {
+                Assert-Fail $g 'Nonexistent quiet target terminates with exit code 1' "Unexpected exit code $($probe.ExitCode) (a crash is not a valid rejection)"
+            }
+            if (Test-Path -LiteralPath $missingOut) {
+                Assert-Fail $g 'Nonexistent target creates no export' "Unexpected file: $missingOut"
+            }
+        }
+        catch {
+            Assert-Fail $g 'Nonexistent quiet target is handled' $_.Exception.Message
+        }
+
+        # Malformed quiet commands must exit without UI or partial output.
+        Write-GroupHeader 'CLI malformed quiet invocations'
+        $g = 'Cli/Malformed'
+        $noRootOut = Join-Path $workRoot 'no-root.csv'
+        $noRootDupesOut = Join-Path $workRoot 'no-root-dupes.csv'
+        $noRootPermsOut = Join-Path $workRoot 'no-root-perms.csv'
+        $mixedOut = Join-Path $workRoot 'mixed-valid-invalid.csv'
+        $mixedReverseOut = Join-Path $workRoot 'mixed-invalid-valid.csv'
+        $mixedModeOut = Join-Path $workRoot 'mixed-load-export.csv'
+        $multipleModeOut = Join-Path $workRoot 'multiple-export.csv'
+        $multipleModeDupesOut = Join-Path $workRoot 'multiple-export-dupes.csv'
+        $interveningFlagOut = Join-Path $workRoot 'intervening-flag.csv'
+        $missingLoad = Join-Path $workRoot 'missing-load.csv'
+        $ignoredLoadRoot = Join-Path $workRoot 'ignored-load-root.csv'
+        $emptyRootOut = Join-Path $workRoot 'empty-root.csv'
+        $rejectedInvocations = @(
+            [pscustomobject] @{
+                Label = 'Quiet file export without a scan root'
+                Arguments = @('/saveto', $noRootOut)
+                Outputs = @($noRootOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet duplicate export without a scan root'
+                Arguments = @('/savedupesto', $noRootDupesOut)
+                Outputs = @($noRootDupesOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet permissions export without a scan root'
+                Arguments = @('/savepermsto', $noRootPermsOut)
+                Outputs = @($noRootPermsOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export flag without an output value'
+                Arguments = @($rootOne, '/saveto')
+                Outputs = @()
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export with valid then nonexistent roots'
+                Arguments = @('/saveto', $mixedOut, $rootOne, $missingRoot)
+                Outputs = @($mixedOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export with nonexistent then valid roots'
+                Arguments = @('/saveto', $mixedReverseOut, $missingRoot, $rootOne)
+                Outputs = @($mixedReverseOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export combined with load-from'
+                Arguments = @('/saveto', $mixedModeOut, $rootOne, '/loadfrom', $missingLoad)
+                Outputs = @($mixedModeOut)
+            },
+            [pscustomobject] @{
+                Label = 'Multiple quiet export modes'
+                Arguments = @('/saveto', $multipleModeOut, '/savedupesto', $multipleModeDupesOut, $rootOne)
+                Outputs = @($multipleModeOut, $multipleModeDupesOut)
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export flag interrupted before its value'
+                Arguments = @('/saveto', '/bogus', $interveningFlagOut, $rootOne)
+                Outputs = @($interveningFlagOut)
+            },
+            [pscustomobject] @{
+                Label = 'Load-from combined with a positional scan root'
+                Arguments = @('/loadfrom', $ignoredLoadRoot, $rootOne)
+                Outputs = @()
+            },
+            [pscustomobject] @{
+                Label = 'Load-from combined with a nonexistent positional root'
+                Arguments = @('/loadfrom', $ignoredLoadRoot, $missingRoot)
+                Outputs = @()
+            },
+            [pscustomobject] @{
+                Label = 'Quiet export with an empty positional root'
+                Arguments = @('/saveto', $emptyRootOut, '', $rootOne)
+                Outputs = @($emptyRootOut)
+            }
+        )
+        foreach ($invocation in $rejectedInvocations) {
+            try {
+                $probe = Invoke-CliProbe -Arguments $invocation.Arguments -TimeoutMs 5000
+                if ($probe.TimedOut) {
+                    Assert-Fail $g "$($invocation.Label) terminates" "Timed out after $($probe.ElapsedSeconds)s"
+                }
+                elseif ($probe.ExitCode -eq 1) {
+                    Assert-Pass $g "$($invocation.Label) returns exit code 1"
+                }
+                else {
+                    Assert-Fail $g "$($invocation.Label) returns exit code 1" "Unexpected exit code $($probe.ExitCode)"
+                }
+                foreach ($output in $invocation.Outputs) {
+                    if (Test-Path -LiteralPath $output) {
+                        Assert-Fail $g "$($invocation.Label) leaves no output" "Unexpected file: $output"
+                    }
+                }
+            }
+            catch {
+                Assert-Fail $g "$($invocation.Label) is handled" $_.Exception.Message
+            }
+        }
+
+        # The parser combines positional targets into a pipe-separated spec.
+        # Multiple folders may either be supported or rejected explicitly, but
+        # a quiet invocation must never disappear into a hidden idle window.
+        Write-GroupHeader 'CLI multiple folder targets'
+        $g = 'Cli/MultipleFolders'
+        $multiOut = Join-Path $workRoot 'multiple-folders.csv'
+        try {
+            $probe = Invoke-CliProbe -Arguments @('/saveto', $multiOut, $rootOne, $rootTwo) -TimeoutMs 5000
+            if ($probe.TimedOut) {
+                Assert-Fail $g 'Multiple-folder quiet invocation terminates' "Process hung for $($probe.ElapsedSeconds)s and was killed after accepting both positional targets"
+            }
+            elseif ($probe.ExitCode -eq 0) {
+                if (-not (Test-Path -LiteralPath $multiOut)) {
+                    Assert-Fail $g 'Successful multiple-folder invocation creates output' 'Process exited 0 without creating the CSV'
+                }
+                else {
+                    $paths = @(Read-CsvPaths -Csv $multiOut)
+                    $missingSeeds = @(@($fileOne, $fileTwo) |
+                        Where-Object { (Normalize-ComparePath $_) -notin $paths })
+                    if ($missingSeeds.Count -eq 0) {
+                        Assert-Pass $g 'Multiple-folder export contains both targets'
+                    }
+                    else {
+                        Assert-Fail $g 'Multiple-folder export contains both targets' "Missing: $($missingSeeds -join ', ')"
+                    }
+                }
+            }
+            elseif ($probe.ExitCode -eq 1) {
+                Assert-Pass $g 'Unsupported multiple-folder targets are rejected promptly' 'Exit code 1'
+                if (Test-Path -LiteralPath $multiOut) {
+                    Assert-Fail $g 'Rejected multiple-folder invocation leaves no output' "Unexpected file: $multiOut"
+                }
+            }
+            else {
+                Assert-Fail $g 'Unsupported multiple-folder targets reject with exit code 1' "Unexpected exit code $($probe.ExitCode) (a crash is not a valid rejection)"
+            }
+        }
+        catch {
+            Assert-Fail $g 'Multiple-folder quiet invocation is handled' $_.Exception.Message
+        }
+    }
+    finally {
+        Remove-TestArtifacts -Path $workRoot
+    }
+}
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -10233,6 +12017,25 @@ Write-LabelValue 'Executable' $ExePath DarkCyan
 Write-LabelValue 'Timeout'    "${TimeoutSeconds}s per CLI scan / UI op" DarkCyan
 Write-LabelValue 'Elevated'   $(if (Test-IsElevated) { 'yes' } else { 'no' }) DarkCyan
 
+# A green E2E run against yesterday's binary says nothing about today's source.
+# Timestamps are not strong enough to reject an explicitly supplied historical
+# build, but surfacing the mismatch in the unified results prevents the default
+# publish path from silently looking authoritative when it is stale.
+try {
+    $latestSource = Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'windirstat') -Recurse -File |
+        Where-Object { $_.Extension -in @('.cpp', '.h', '.rc', '.vcxproj', '.props', '.targets') } |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1
+    $exeInfo = Get-Item -LiteralPath $ExePath
+    if ($latestSource -and $exeInfo.LastWriteTimeUtc -lt $latestSource.LastWriteTimeUtc) {
+        Set-Suite 'Harness'
+        Assert-Warn 'Executable' 'Binary may be stale' (
+            "exe=$($exeInfo.LastWriteTimeUtc.ToString('u')); newest source=$($latestSource.LastWriteTimeUtc.ToString('u')) ($($latestSource.Name))"
+        )
+    }
+}
+catch {}
+
 # Suite registry — name -> function.  All run unless narrowed by -Only / -Skip.
 $allSuites = [ordered]@{
     Filtering   = 'Invoke-FilteringSuite'
@@ -10243,18 +12046,25 @@ $allSuites = [ordered]@{
     Enumeration = 'Invoke-EnumerationSuite'
     Unc         = 'Invoke-UncSuite'
     Permissions = 'Invoke-PermissionsSuite'
+    Cli         = 'Invoke-CliSuite'
 }
 
 $onlySet = @($Only -split '[,;\s]+' | Where-Object { $_ })
 $skipSet = @($Skip -split '[,;\s]+' | Where-Object { $_ })
-foreach ($n in @($onlySet + $skipSet)) {
-    if ($n -notin $allSuites.Keys) {
-        Write-ColoredLine "WARNING: unknown suite '$n' ignored (valid: $($allSuites.Keys -join ', '))" Yellow
-    }
+$unknownSuites = @(@($onlySet + $skipSet) |
+    Where-Object { $_ -notin $allSuites.Keys } |
+    Select-Object -Unique)
+if ($unknownSuites.Count -gt 0) {
+    Write-ColoredLine "ERROR: unknown suite name(s): $($unknownSuites -join ', '). Valid suites: $($allSuites.Keys -join ', ')" Red
+    exit 2
 }
 $toRun = @($allSuites.Keys | Where-Object {
     ($onlySet.Count -eq 0 -or $_ -in $onlySet) -and ($_ -notin $skipSet)
 })
+if ($toRun.Count -eq 0) {
+    Write-ColoredLine 'ERROR: -Only / -Skip selected no suites; refusing to report a zero-check pass.' Red
+    exit 2
+}
 
 foreach ($suiteName in $toRun) {
     Set-Suite $suiteName
