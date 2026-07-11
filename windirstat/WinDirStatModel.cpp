@@ -112,11 +112,11 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         return std::regex_match(str, driveMatch);
     }));
 
-    // Return if no paths were passed
-    if (selections.empty()) return true;
+    // Reject an empty path list
+    if (selections.empty()) return false;
 
-    // Return if multiple selections but they are not all drives
-    if (selections.size() >= 2 && selections.size() != driveCount) return true;
+    // Multiple selections are supported only when every selection is a drive
+    if (selections.size() >= 2 && selections.size() != driveCount) return false;
 
     // Determine if we should add multiple drives under a single node
     if (selections.size() >= 2)

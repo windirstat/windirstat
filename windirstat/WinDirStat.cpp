@@ -231,6 +231,12 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 class CWinDirStatCommandLineInfo final : public CCommandLineInfo
 {
     std::wstring m_pendingFlag;
+    std::wstring m_operationFlag;
+    bool m_hasParsedParam = false;
+    bool m_hasPathParam = false;
+    bool m_legacyUninstallRequested = false;
+    bool m_malformedFlag = false;
+    bool m_invalidPath = false;
     const std::wstring saveToFlag = L"saveto";
     const std::wstring saveDupesToFlag = L"savedupesto";
     const std::wstring savePermsToFlag = L"savepermsto";
@@ -239,9 +245,18 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
 
 public:
 
+    bool HasMalformedCommandLine() const noexcept
+    {
+        return m_malformedFlag || !m_pendingFlag.empty() ||
+            (m_operationFlag == loadFromFlag && m_hasPathParam);
+    }
+    bool HasInvalidPath() const noexcept { return m_invalidPath; }
+    bool IsLegacyUninstallRequested() const noexcept { return m_legacyUninstallRequested; }
+
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
-        UNREFERENCED_PARAMETER(bLast);
+        const bool hadPriorParam = m_hasParsedParam;
+        m_hasParsedParam = true;
 
         // Normalize string for parsing
         std::wstring param{ pszParam };
@@ -251,7 +266,11 @@ public:
         // If we have a pending flag, this non-flag param is its value
         if (!m_pendingFlag.empty() && !bFlag)
         {
-            if (m_pendingFlag == saveToFlag)
+            if (param.empty())
+            {
+                m_malformedFlag = true;
+            }
+            else if (m_pendingFlag == saveToFlag)
             {
                 CDirStatApp::Get()->m_saveToPath = param;
                 COptions::ScanForDuplicates = false;
@@ -277,25 +296,59 @@ public:
         // Handle any non-flags as paths
         if (!bFlag)
         {
+            m_hasPathParam = true;
+            if (param.empty())
+            {
+                m_invalidPath = true;
+                m_malformedFlag = true;
+                return;
+            }
             for (const auto& paramSpilt : SplitString(param))
             {
-                if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
+                if (paramSpilt.empty())
+                {
+                    m_invalidPath = true;
+                    continue;
+                }
                 std::error_code ec;
                 const std::wstring fullPath = std::filesystem::absolute(paramSpilt + L"\\", ec).wstring();
-                if (FolderExists(fullPath)) m_strFileName += fullPath.c_str();
+                if (!ec && FolderExists(fullPath))
+                {
+                    if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
+                    m_strFileName += fullPath.c_str();
+                }
+                else
+                {
+                    m_invalidPath = true;
+                }
             }
             return;
         }
 
         // Handle flags
+        // Value-taking flags require an immediate non-flag value.
+        if (!m_pendingFlag.empty())
+        {
+            m_malformedFlag = true;
+            return;
+        }
         param = MakeLower(param);
         if (param == saveToFlag || param == saveDupesToFlag || param == savePermsToFlag || param == loadFromFlag)
         {
+            if (!m_operationFlag.empty()) m_malformedFlag = true;
+            else m_operationFlag = param;
             m_pendingFlag = param;
+            if (bLast) m_malformedFlag = true;
         }
         else if (param == legacyUninstallFlag)
         {
-            CDirStatApp::LegacyUninstall();
+            // Defer this destructive standalone action until parsing is validated.
+            if (hadPriorParam || !bLast || !m_operationFlag.empty()) m_malformedFlag = true;
+            else
+            {
+                m_operationFlag = param;
+                m_legacyUninstallRequested = true;
+            }
         }
     }
 };
@@ -346,12 +399,20 @@ BOOL CDirStatApp::InitInstance()
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
-    // Parse command line arguments
     CWinDirStatCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
+    if (cmdInfo.HasMalformedCommandLine()) ExitProcess(1);
+
+    if (cmdInfo.IsLegacyUninstallRequested())
+    {
+        LegacyUninstall();
+        // Terminate even if cleanup returned early.
+        ExitProcess(0);
+    }
 
     // Check if we should hide the app window
     const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
+    if (hideApp && (cmdInfo.m_strFileName.IsEmpty() || cmdInfo.HasInvalidPath())) ExitProcess(1);
     if (hideApp) m_nCmdShow = SW_HIDE;
 
     m_model = std::make_unique<CWinDirStatModel>();
@@ -415,9 +476,16 @@ BOOL CDirStatApp::InitInstance()
         return TRUE;
     }
 
-    // Either open the file names or open file selection dialog
-    cmdInfo.m_strFileName.IsEmpty() ? OnSelectScanRoots() :
-        (void)CWinDirStatModel::Get()->StartScan(cmdInfo.m_strFileName.GetString());
+    // Reject unsupported quiet roots instead of leaving a hidden process idle.
+    if (cmdInfo.m_strFileName.IsEmpty())
+    {
+        OnSelectScanRoots();
+    }
+    else if (!CWinDirStatModel::Get()->StartScan(cmdInfo.m_strFileName.GetString()))
+    {
+        if (hideApp) ExitProcess(1);
+        OnSelectScanRoots();
+    }
 
     return TRUE;
 }
