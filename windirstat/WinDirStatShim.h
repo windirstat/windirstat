@@ -68,8 +68,11 @@
 #include <gdiplus.h>
 
 #include <cstdarg>
+#include <cctype>
 #include <cstdint>
+#include <cstdlib>
 #include <cwchar>
+#include <cwctype>
 #include <cstring>
 #include <string>
 #include <string_view>
@@ -158,6 +161,18 @@
 
 inline int WdsDpiForWindow(HWND hWnd) noexcept
 {
+    // GetDpiForWindow is available on Windows 10 1607 and later. Resolve it at
+    // runtime so the Win7 build remains loadable, while avoiding a GetDC pair
+    // for every scaled coordinate on current Windows releases.
+    using GetDpiForWindowFn = UINT (WINAPI*)(HWND);
+    static const auto getDpiForWindow = reinterpret_cast<GetDpiForWindowFn>(
+        ::GetProcAddress(::GetModuleHandleW(L"user32.dll"), "GetDpiForWindow"));
+    if (hWnd != nullptr && getDpiForWindow != nullptr)
+    {
+        if (const UINT dpi = getDpiForWindow(hWnd); dpi != 0)
+            return static_cast<int>(dpi);
+    }
+
     HDC hdc = ::GetDC(hWnd);
     const int dpi = hdc != nullptr ? ::GetDeviceCaps(hdc, LOGPIXELSX) : 96;
     if (hdc != nullptr) ::ReleaseDC(hWnd, hdc);
@@ -295,8 +310,26 @@ public:
     int Find(CharT ch, int start = 0) const { const auto p = m_str.find(ch, static_cast<size_t>(std::max(0, start))); return p == std::basic_string<CharT>::npos ? -1 : static_cast<int>(p); }
     int Find(PCXSTR psz, int start = 0) const { if (!psz) return -1; const auto p = m_str.find(psz, static_cast<size_t>(std::max(0, start))); return p == std::basic_string<CharT>::npos ? -1 : static_cast<int>(p); }
 
-    void MakeLower() { std::transform(m_str.begin(), m_str.end(), m_str.begin(), [](CharT c){ return static_cast<CharT>(::tolower(c)); }); }
-    void MakeUpper() { std::transform(m_str.begin(), m_str.end(), m_str.begin(), [](CharT c){ return static_cast<CharT>(::toupper(c)); }); }
+    void MakeLower()
+    {
+        std::transform(m_str.begin(), m_str.end(), m_str.begin(), [](CharT c)
+        {
+            if constexpr (std::is_same_v<CharT, wchar_t>)
+                return static_cast<CharT>(std::towlower(c));
+            else
+                return static_cast<CharT>(std::tolower(static_cast<unsigned char>(c)));
+        });
+    }
+    void MakeUpper()
+    {
+        std::transform(m_str.begin(), m_str.end(), m_str.begin(), [](CharT c)
+        {
+            if constexpr (std::is_same_v<CharT, wchar_t>)
+                return static_cast<CharT>(std::towupper(c));
+            else
+                return static_cast<CharT>(std::toupper(static_cast<unsigned char>(c)));
+        });
+    }
 
     void TrimRight() { while (!m_str.empty() && (m_str.back() == ' ' || m_str.back() == '\t' || m_str.back() == '\r' || m_str.back() == '\n')) m_str.pop_back(); }
     void TrimRight(CharT ch) { while (!m_str.empty() && m_str.back() == ch) m_str.pop_back(); }
@@ -651,8 +684,14 @@ struct AFX_MSGMAP
 struct AFX_CMDHANDLERINFO { CCmdTarget* pTarget; void* pmf; };
 
 // Command-UI notification code (matches MFC's CN_UPDATE_COMMAND_UI sentinel).
-constexpr UINT WdsCN_COMMAND = 0;
-constexpr UINT WdsCN_UPDATE_COMMAND_UI = static_cast<UINT>(-1);
+#ifndef CN_COMMAND
+inline constexpr int CN_COMMAND = 0;
+#endif
+#ifndef CN_UPDATE_COMMAND_UI
+inline constexpr int CN_UPDATE_COMMAND_UI = -1;
+#endif
+constexpr UINT WdsCN_COMMAND = static_cast<UINT>(CN_COMMAND);
+constexpr UINT WdsCN_UPDATE_COMMAND_UI = static_cast<UINT>(CN_UPDATE_COMMAND_UI);
 constexpr UINT WdsReflectID = static_cast<UINT>(-1);   // nID sentinel for reflected handlers
 
 #define DECLARE_MESSAGE_MAP() \
@@ -926,6 +965,26 @@ public:
 // ExitProcess is called while borrowed handles are still in the map below.
 struct WdsGdiHandleRef final : CGdiObject { ~WdsGdiHandleRef() override { m_hObject = nullptr; } };
 
+struct WdsGdiHandleCache final
+{
+    HGDIOBJ mruKey = nullptr;
+    CGdiObject* mruVal = nullptr;
+    std::unordered_map<HGDIOBJ, std::unique_ptr<CGdiObject>> map;
+
+    void Clear()
+    {
+        mruKey = nullptr;
+        mruVal = nullptr;
+        map.clear();
+    }
+};
+
+inline WdsGdiHandleCache& WdsGetGdiHandleCache()
+{
+    thread_local WdsGdiHandleCache cache;
+    return cache;
+}
+
 // Per-handle stable wrapper map (mirrors MFC's GDI handle map) so nested
 // CSelectObject/CSelectStockObject don't clobber each other's saved object.
 // Uses a thread_local MRU single-slot cache to avoid hash lookups in the
@@ -933,15 +992,13 @@ struct WdsGdiHandleRef final : CGdiObject { ~WdsGdiHandleRef() override { m_hObj
 inline CGdiObject* WdsWrapGdiHandle(HGDIOBJ h)
 {
     if (h == nullptr) return nullptr;
-    thread_local HGDIOBJ              s_mruKey = nullptr;
-    thread_local CGdiObject*          s_mruVal = nullptr;
-    thread_local std::unordered_map<HGDIOBJ, std::unique_ptr<CGdiObject>> map;
-    if (h == s_mruKey) return s_mruVal;
-    auto& slot = map[h];
+    auto& cache = WdsGetGdiHandleCache();
+    if (h == cache.mruKey) return cache.mruVal;
+    auto& slot = cache.map[h];
     if (!slot) { slot = std::make_unique<WdsGdiHandleRef>(); slot->m_hObject = h; }
-    s_mruKey = h;
-    s_mruVal = slot.get();
-    return s_mruVal;
+    cache.mruKey = h;
+    cache.mruVal = slot.get();
+    return cache.mruVal;
 }
 inline CGdiObject* CGdiObject::FromHandle(HGDIOBJ h) { return WdsWrapGdiHandle(h); }
 
@@ -1203,19 +1260,37 @@ protected:
     bool m_bOwned = false;
 };
 
+struct WdsDcHandleCache final
+{
+    HDC mruKey = nullptr;
+    CDC* mruVal = nullptr;
+    std::unordered_map<HDC, std::unique_ptr<CDC>> map;
+
+    void Clear()
+    {
+        mruKey = nullptr;
+        mruVal = nullptr;
+        map.clear();
+    }
+};
+
+inline WdsDcHandleCache& WdsGetDcHandleCache()
+{
+    thread_local WdsDcHandleCache cache;
+    return cache;
+}
+
 inline CDC* CDC::FromHandle(HDC hDC)
 {
     if (hDC == nullptr) return nullptr;
-    thread_local HDC                s_mruKey = nullptr;
-    thread_local CDC*               s_mruVal = nullptr;
-    thread_local std::unordered_map<HDC, std::unique_ptr<CDC>> map;
-    if (hDC == s_mruKey) { s_mruVal->m_hDC = s_mruVal->m_hAttribDC = hDC; return s_mruVal; }
-    auto& slot = map[hDC];
+    auto& cache = WdsGetDcHandleCache();
+    if (hDC == cache.mruKey) { cache.mruVal->m_hDC = cache.mruVal->m_hAttribDC = hDC; return cache.mruVal; }
+    auto& slot = cache.map[hDC];
     if (!slot) slot = std::make_unique<CDC>();
     slot->m_hDC = slot->m_hAttribDC = hDC;
-    s_mruKey = hDC;
-    s_mruVal = slot.get();
-    return s_mruVal;
+    cache.mruKey = hDC;
+    cache.mruVal = slot.get();
+    return cache.mruVal;
 }
 
 inline BOOL CBrush::CreatePatternBrush(CBitmap* pBitmap)
@@ -1266,7 +1341,9 @@ struct AfxDrawItemCtx
     HWND hWnd{};
     int  item = -1;
     RECT rcItem{};
-    int  colX[17]{};  // cumulative X offsets: colX[c] = left edge of column c from item left
+    int  colLeft[16]{};
+    int  colRight[16]{};
+    bool colValid[16]{};
     int  colCount = 0;
 };
 inline thread_local AfxDrawItemCtx g_drawItemCtx;
@@ -1294,6 +1371,7 @@ public:
     void Attach(HWND hWnd)
     {
         m_hWnd = hWnd;
+        m_ownerThreadId = hWnd ? ::GetWindowThreadProcessId(hWnd, nullptr) : 0;
         if (hWnd) ::SetPropW(hWnd, kProp(), this);
     }
     HWND Detach()
@@ -1301,6 +1379,7 @@ public:
         HWND h = m_hWnd;
         if (h) ::RemovePropW(h, kProp());
         m_hWnd = nullptr;
+        m_ownerThreadId = 0;
         return h;
     }
 
@@ -1467,7 +1546,7 @@ public:
     // matching real MFC's CWnd::SendMessage which always goes through ::SendMessage.
     LRESULT SendSelf(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) const
     {
-        if (m_pfnSuper && ::GetWindowThreadProcessId(m_hWnd, nullptr) == ::GetCurrentThreadId())
+        if (m_pfnSuper && m_ownerThreadId == ::GetCurrentThreadId())
             return ::CallWindowProcW(m_pfnSuper, m_hWnd, msg, wParam, lParam);
         return ::SendMessageW(m_hWnd, msg, wParam, lParam);
     }
@@ -1624,6 +1703,7 @@ public:
 
 protected:
     WNDPROC m_pfnSuper = nullptr;
+    DWORD   m_ownerThreadId = 0;
     int     m_bAutoDelete = 0;
     static LPCWSTR kProp() { return L"_WdsShimCWnd"; }
 };
@@ -1631,20 +1711,38 @@ protected:
 SHIM_IMPLEMENT_DYNAMIC_INLINE(CWnd, const_cast<CRuntimeClass*>(&CCmdTarget::classCCmdTarget))
 inline CObject* __stdcall CWnd::CreateObject() { return new CWnd; }
 
+struct WdsWndHandleCache final
+{
+    HWND mruKey = nullptr;
+    CWnd* mruVal = nullptr;
+    std::unordered_map<HWND, std::unique_ptr<CWnd>> map;
+
+    void Clear()
+    {
+        mruKey = nullptr;
+        mruVal = nullptr;
+        map.clear();
+    }
+};
+
+inline WdsWndHandleCache& WdsGetWndHandleCache()
+{
+    thread_local WdsWndHandleCache cache;
+    return cache;
+}
+
 inline CWnd* CWnd::FromHandle(HWND hWnd)
 {
     if (hWnd == nullptr) return nullptr;
     if (CWnd* p = FromHandlePermanent(hWnd)) return p;
-    thread_local HWND               s_mruKey = nullptr;
-    thread_local CWnd*              s_mruVal = nullptr;
-    thread_local std::unordered_map<HWND, std::unique_ptr<CWnd>> tempMap;
-    if (hWnd == s_mruKey) { s_mruVal->m_hWnd = hWnd; return s_mruVal; }
-    auto& slot = tempMap[hWnd];
+    auto& cache = WdsGetWndHandleCache();
+    if (hWnd == cache.mruKey) { cache.mruVal->m_hWnd = hWnd; return cache.mruVal; }
+    auto& slot = cache.map[hWnd];
     if (!slot) slot = std::make_unique<CWnd>();
     slot->m_hWnd = hWnd;
-    s_mruKey = hWnd;
-    s_mruVal = slot.get();
-    return s_mruVal;
+    cache.mruKey = hWnd;
+    cache.mruVal = slot.get();
+    return cache.mruVal;
 }
 
 inline LRESULT WdsSendSelf(HWND hWnd, UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
@@ -1735,19 +1833,47 @@ protected:
     bool m_bAutoDestroy = false;
 };
 
+struct WdsMenuHandleCache final
+{
+    HMENU mruKey = nullptr;
+    CMenu* mruVal = nullptr;
+    std::unordered_map<HMENU, std::unique_ptr<CMenu>> map;
+
+    void Clear()
+    {
+        mruKey = nullptr;
+        mruVal = nullptr;
+        map.clear();
+    }
+};
+
+inline WdsMenuHandleCache& WdsGetMenuHandleCache()
+{
+    thread_local WdsMenuHandleCache cache;
+    return cache;
+}
+
 inline CMenu* CMenu::FromHandle(HMENU h)
 {
     if (h == nullptr) return nullptr;
-    thread_local HMENU              s_mruKey = nullptr;
-    thread_local CMenu*             s_mruVal = nullptr;
-    thread_local std::unordered_map<HMENU, std::unique_ptr<CMenu>> map;
-    if (h == s_mruKey) { s_mruVal->m_hMenu = h; return s_mruVal; }
-    auto& s = map[h]; if (!s) s = std::make_unique<CMenu>(); s->m_hMenu = h;
-    s_mruKey = h;
-    s_mruVal = s.get();
-    return s_mruVal;
+    auto& cache = WdsGetMenuHandleCache();
+    if (h == cache.mruKey) { cache.mruVal->m_hMenu = h; return cache.mruVal; }
+    auto& slot = cache.map[h];
+    if (!slot) slot = std::make_unique<CMenu>();
+    slot->m_hMenu = h;
+    cache.mruKey = h;
+    cache.mruVal = slot.get();
+    return cache.mruVal;
 }
 inline CMenu* CMenu::GetSubMenu(int pos) const { HMENU h = ::GetSubMenu(m_hMenu, pos); return h ? CMenu::FromHandle(h) : nullptr; }
+
+inline void WdsDeleteTempMaps()
+{
+    WdsGetGdiHandleCache().Clear();
+    WdsGetDcHandleCache().Clear();
+    WdsGetWndHandleCache().Clear();
+    WdsGetMenuHandleCache().Clear();
+}
 
 class CScrollBar final : public CWnd { public: CScrollBar() = default; };
 
@@ -1886,7 +2012,7 @@ inline LRESULT WdsThunk_Create(CCmdTarget* p, AFX_PMSG pfn, WPARAM, LPARAM l, BO
 inline LRESULT WdsThunk_Void(CCmdTarget* p, AFX_PMSG pfn, WPARAM, LPARAM, BOOL&)
 { (p->*reinterpret_cast<void (CCmdTarget::*)()>(pfn))(); return 0; }
 inline LRESULT WdsThunk_Size(CCmdTarget* p, AFX_PMSG pfn, WPARAM w, LPARAM l, BOOL&)
-{ (p->*reinterpret_cast<void (CCmdTarget::*)(UINT, int, int)>(pfn))(static_cast<UINT>(w), static_cast<int>(static_cast<short>(LOWORD(l))), static_cast<int>(static_cast<short>(HIWORD(l)))); return 0; }
+{ (p->*reinterpret_cast<void (CCmdTarget::*)(UINT, int, int)>(pfn))(static_cast<UINT>(w), static_cast<int>(LOWORD(l)), static_cast<int>(HIWORD(l))); return 0; }
 inline LRESULT WdsThunk_EraseBkgnd(CCmdTarget* p, AFX_PMSG pfn, WPARAM w, LPARAM, BOOL&)
 { return (p->*reinterpret_cast<BOOL (CCmdTarget::*)(CDC*)>(pfn))(CDC::FromHandle(reinterpret_cast<HDC>(w))); }
 inline LRESULT WdsThunk_MouseBtn(CCmdTarget* p, AFX_PMSG pfn, WPARAM w, LPARAM l, BOOL&)
@@ -2449,14 +2575,14 @@ public:
             && (code == LVIR_LABEL || code == LVIR_BOUNDS))
         {
             EnsureDrawColCache();
-            if (g_drawItemCtx.colCount > 0)
+            if (g_drawItemCtx.colCount > 0 && g_drawItemCtx.colValid[0])
             {
                 r->top    = g_drawItemCtx.rcItem.top;
                 r->bottom = g_drawItemCtx.rcItem.bottom;
-                r->left   = g_drawItemCtx.rcItem.left;
+                r->left   = (code == LVIR_LABEL) ? g_drawItemCtx.colLeft[0] : g_drawItemCtx.rcItem.left;
                 // LVIR_LABEL = column-0 width; LVIR_BOUNDS = full row
                 r->right  = (code == LVIR_LABEL)
-                            ? g_drawItemCtx.rcItem.left + g_drawItemCtx.colX[1]
+                            ? g_drawItemCtx.colRight[0]
                             : g_drawItemCtx.rcItem.right;
                 return TRUE;
             }
@@ -2469,12 +2595,12 @@ public:
         if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd && code == LVIR_LABEL)
         {
             EnsureDrawColCache();
-            if (sub >= 0 && sub + 1 <= g_drawItemCtx.colCount)
+            if (sub >= 0 && sub < g_drawItemCtx.colCount && g_drawItemCtx.colValid[sub])
             {
                 r.top    = g_drawItemCtx.rcItem.top;
                 r.bottom = g_drawItemCtx.rcItem.bottom;
-                r.left   = g_drawItemCtx.rcItem.left + g_drawItemCtx.colX[sub];
-                r.right  = g_drawItemCtx.rcItem.left + g_drawItemCtx.colX[sub + 1];
+                r.left   = g_drawItemCtx.colLeft[sub];
+                r.right  = g_drawItemCtx.colRight[sub];
                 return TRUE;
             }
         }
@@ -2488,6 +2614,9 @@ public:
     BOOL Scroll(CSize size) { return (BOOL)SendSelf(LVM_SCROLL, (WPARAM)size.cx, (LPARAM)size.cy); }
     DWORD SetExtendedStyle(DWORD ex) { return (DWORD)SendSelf(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)ex); }
     DWORD GetExtendedStyle() const { return (DWORD)SendSelf(LVM_GETEXTENDEDLISTVIEWSTYLE); }
+    BOOL SetBkColor(COLORREF color) { return static_cast<BOOL>(SendSelf(LVM_SETBKCOLOR, 0, static_cast<LPARAM>(color))); }
+    BOOL SetTextBkColor(COLORREF color) { return static_cast<BOOL>(SendSelf(LVM_SETTEXTBKCOLOR, 0, static_cast<LPARAM>(color))); }
+    BOOL SetTextColor(COLORREF color) { return static_cast<BOOL>(SendSelf(LVM_SETTEXTCOLOR, 0, static_cast<LPARAM>(color))); }
     BOOL SetItemCount(int n) { SendSelf(LVM_SETITEMCOUNT, (WPARAM)n); return TRUE; }
     BOOL SetItemCountEx(int n, DWORD flags = LVSICF_NOINVALIDATEALL) { return (BOOL)SendSelf(LVM_SETITEMCOUNT, (WPARAM)n, (LPARAM)flags); }
     CImageList* SetImageList(CImageList* pImageList, int nType) { SendSelf(LVM_SETIMAGELIST, (WPARAM)nType, (LPARAM)(pImageList ? pImageList->m_hImageList : nullptr)); return nullptr; }
@@ -2533,8 +2662,9 @@ public:
 protected:
     mutable CHeaderCtrl m_header;
 
-    // Populate g_drawItemCtx.colX[0..n] from the header control (which is NOT subclassed,
-    // so HDM_GETITEM goes straight to the system proc — no AfxWndProc chain, no LVN_GETDISPINFO).
+    // Cache visual header rectangles by logical subitem. HDM_GETITEMRECT accounts
+    // for both user-reordered columns and horizontal scrolling; accumulating widths
+    // by logical index does not.
     // Called at most once per WM_DRAWITEM dispatch; subsequent calls are no-ops.
     void EnsureDrawColCache() const
     {
@@ -2549,17 +2679,24 @@ protected:
         }
         if (!hdr) return;
         const int n = static_cast<int>(::SendMessageW(hdr, HDM_GETITEMCOUNT, 0, 0));
-        const int cap = static_cast<int>(std::size(g_drawItemCtx.colX)) - 1;
-        const int cols = (n < cap) ? n : cap;
-        int x = 0;
+        const int cap = static_cast<int>(std::size(g_drawItemCtx.colLeft));
+        const int cols = std::clamp(n, 0, cap);
+        POINT headerOrigin{};
+        ::MapWindowPoints(hdr, m_hWnd, &headerOrigin, 1);
         for (int c = 0; c < cols; ++c)
         {
-            g_drawItemCtx.colX[c] = x;
-            HDITEMW hi{ .mask = HDI_WIDTH };
-            ::SendMessageW(hdr, HDM_GETITEMW, static_cast<WPARAM>(c), reinterpret_cast<LPARAM>(&hi));
-            x += hi.cxy;
+            RECT columnRect{};
+            if (::SendMessageW(hdr, HDM_GETITEMRECT, static_cast<WPARAM>(c), reinterpret_cast<LPARAM>(&columnRect)) != 0)
+            {
+                g_drawItemCtx.colLeft[c] = headerOrigin.x + columnRect.left;
+                g_drawItemCtx.colRight[c] = headerOrigin.x + columnRect.right;
+                g_drawItemCtx.colValid[c] = true;
+            }
+            else
+            {
+                g_drawItemCtx.colValid[c] = false;
+            }
         }
-        g_drawItemCtx.colX[cols] = x;
         g_drawItemCtx.colCount   = cols;
     }
 };
@@ -2571,9 +2708,12 @@ SHIM_IMPLEMENT_DYNAMIC_INLINE(CListCtrl, RUNTIME_CLASS(CWnd))
 class CWaitCursor final
 {
 public:
-    CWaitCursor() { ::SetCursor(::LoadCursorW(nullptr, IDC_WAIT)); }
-    ~CWaitCursor() { Restore(); }
-    void Restore() { ::SetCursor(::LoadCursorW(nullptr, IDC_ARROW)); }
+    CWaitCursor() : m_previous(::SetCursor(::LoadCursorW(nullptr, IDC_WAIT))) {}
+    ~CWaitCursor() { ::SetCursor(m_previous); }
+    void Restore() { ::SetCursor(::LoadCursorW(nullptr, IDC_WAIT)); }
+
+private:
+    HCURSOR m_previous = nullptr;
 };
 
 class CMemDC final
@@ -2665,7 +2805,11 @@ public:
         CComPtr<IFileOpenDialog> dlg;
         if (FAILED(dlg.CoCreateInstance(CLSID_FileOpenDialog))) return IDCANCEL;
         DWORD opts = 0; dlg->GetOptions(&opts);
-        dlg->SetOptions(opts | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+        opts |= FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM;
+        if ((m_ofn.Flags & OFN_DONTADDTORECENT) != 0) opts |= FOS_DONTADDTORECENT;
+        if ((m_ofn.Flags & OFN_NOCHANGEDIR) != 0) opts |= FOS_NOCHANGEDIR;
+        if ((m_ofn.Flags & OFN_NODEREFERENCELINKS) != 0) opts |= FOS_NODEREFERENCELINKS;
+        if (FAILED(dlg->SetOptions(opts))) return IDCANCEL;
         if (m_ofn.lpstrTitle) dlg->SetTitle(m_ofn.lpstrTitle);
         if (!m_initial.empty())
         {
@@ -2676,11 +2820,9 @@ public:
         CComPtr<IShellItem> result;
         if (FAILED(dlg->GetResult(&result))) return IDCANCEL;
         PWSTR psz = nullptr;
-        if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &psz)) && psz)
-        {
-            m_path = psz; ::CoTaskMemFree(psz);
-            m_strFile.assign(m_path.begin(), m_path.end()); m_strFile.push_back(L'\0');
-        }
+        if (FAILED(result->GetDisplayName(SIGDN_FILESYSPATH, &psz)) || psz == nullptr) return IDCANCEL;
+        m_path = psz; ::CoTaskMemFree(psz);
+        m_strFile.assign(m_path.begin(), m_path.end()); m_strFile.push_back(L'\0');
         return IDOK;
     }
     CString GetFolderPath() const { return CString(m_path.c_str()); }
@@ -2786,8 +2928,10 @@ public:
         const HWND hParent = m_pParentWnd ? m_pParentWnd->m_hWnd
             : (AfxGetMainWnd() ? AfxGetMainWnd()->m_hWnd : nullptr);
         const WdsModalPreTranslateScope modalPreTranslate(this);
-        return ::DialogBoxParamW(AfxGetResourceHandle(), MAKEINTRESOURCEW(m_nIDTemplate),
+        const INT_PTR result = ::DialogBoxParamW(AfxGetResourceHandle(), MAKEINTRESOURCEW(m_nIDTemplate),
             hParent, AfxDlgProc, reinterpret_cast<LPARAM>(static_cast<CWnd*>(this)));
+        WdsDeleteTempMaps();
+        return result;
     }
     BOOL Create(UINT nIDTemplate, CWnd* pParent = nullptr)
     {
@@ -2878,7 +3022,13 @@ inline INT_PTR CALLBACK AfxDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     CWnd* pDlg = CWnd::FromHandlePermanent(hWnd);
     if (pDlg == nullptr) return FALSE;
     LRESULT lResult = 0;
-    if (pDlg->OnWndMsg(msg, wParam, lParam, &lResult))
+    const BOOL handled = pDlg->OnWndMsg(msg, wParam, lParam, &lResult);
+    if (msg == WM_NCDESTROY)
+    {
+        pDlg->Detach();
+        pDlg->PostNcDestroy();
+    }
+    if (handled)
     {
         if (msg >= WM_CTLCOLORMSGBOX && msg <= WM_CTLCOLORSTATIC)
         {
@@ -3046,7 +3196,12 @@ public:
     virtual int  ExitInstance() { return static_cast<int>(m_msgCur.wParam); }
     virtual BOOL OnIdle(LONG lCount)
     {
-        if (lCount == 0) { if (g_idleCmdUiUpdate) g_idleCmdUiUpdate(); return TRUE; }
+        if (lCount == 0)
+        {
+            if (g_idleCmdUiUpdate) g_idleCmdUiUpdate();
+            WdsDeleteTempMaps();
+            return TRUE;
+        }
         return FALSE;
     }
     virtual BOOL IsIdleMessage(MSG* pMsg)
@@ -3076,13 +3231,22 @@ public:
         m_pszAppName     = m_appNameStorage.c_str();
         m_pszProfileName = nullptr;
     }
+    ~CWinApp() override
+    {
+        std::free(const_cast<wchar_t*>(m_pszRegistryKey));
+        std::free(const_cast<wchar_t*>(m_pszProfileName));
+        if (g_pApp == this) g_pApp = nullptr;
+    }
 
     BOOL InitInstance() override { return TRUE; }
 
     void SetRegistryKey(LPCWSTR lpszRegistryKey)
     {
-        m_regKeyStorage  = lpszRegistryKey ? lpszRegistryKey : L"WinDirStat";
-        m_pszRegistryKey = m_regKeyStorage.c_str();
+        wchar_t* const registryKey = _wcsdup(lpszRegistryKey ? lpszRegistryKey : L"WinDirStat");
+        if (registryKey == nullptr) AfxThrowMemoryException();
+        std::free(const_cast<wchar_t*>(m_pszRegistryKey));
+        std::free(const_cast<wchar_t*>(m_pszProfileName));
+        m_pszRegistryKey = registryKey;
         m_pszProfileName = nullptr;
     }
     void SetRegistryKey(UINT nIDRegistryKey) { CString s; s.LoadString(nIDRegistryKey); SetRegistryKey(s.GetString()); }
@@ -3107,8 +3271,6 @@ public:
 
 private:
     std::wstring m_appNameStorage   = L"WinDirStat";
-    std::wstring m_profileStorage;
-    std::wstring m_regKeyStorage;
 
     std::wstring RegProfilePath(LPCWSTR section) const
     {
@@ -3167,7 +3329,7 @@ inline UINT CWinApp::GetProfileInt(LPCWSTR section, LPCWSTR entry, int nDefault)
             DWORD val = 0, sz = sizeof(val), type = 0;
             const LONG r = ::RegQueryValueExW(hk, entry, nullptr, &type, reinterpret_cast<LPBYTE>(&val), &sz);
             ::RegCloseKey(hk);
-            if (r == ERROR_SUCCESS && type == REG_DWORD) return val;
+            if (r == ERROR_SUCCESS && type == REG_DWORD && sz == sizeof(val)) return val;
         }
         return static_cast<UINT>(nDefault);
     }
@@ -3181,8 +3343,10 @@ inline BOOL CWinApp::WriteProfileInt(LPCWSTR section, LPCWSTR entry, int nValue)
         if (::RegCreateKeyExW(HKEY_CURRENT_USER, RegProfilePath(section).c_str(), 0, nullptr, 0, KEY_WRITE, nullptr, &hk, nullptr) == ERROR_SUCCESS)
         {
             const DWORD v = static_cast<DWORD>(nValue);
-            ::RegSetValueExW(hk, entry, 0, REG_DWORD, reinterpret_cast<const BYTE*>(&v), sizeof(v));
-            ::RegCloseKey(hk); return TRUE;
+            const LONG result = ::RegSetValueExW(hk, entry, 0, REG_DWORD,
+                reinterpret_cast<const BYTE*>(&v), sizeof(v));
+            ::RegCloseKey(hk);
+            return result == ERROR_SUCCESS;
         }
         return FALSE;
     }
@@ -3197,13 +3361,21 @@ inline CString CWinApp::GetProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR
         if (::RegOpenKeyExW(HKEY_CURRENT_USER, RegProfilePath(section).c_str(), 0, KEY_READ, &hk) == ERROR_SUCCESS)
         {
             DWORD type = 0, sz = 0;
-            if (::RegQueryValueExW(hk, entry, nullptr, &type, nullptr, &sz) == ERROR_SUCCESS && type == REG_SZ && sz > 0)
+            if (::RegQueryValueExW(hk, entry, nullptr, &type, nullptr, &sz) == ERROR_SUCCESS &&
+                type == REG_SZ && sz > 0)
             {
-                std::wstring s(sz / sizeof(wchar_t), L'\0');
-                ::RegQueryValueExW(hk, entry, nullptr, nullptr, reinterpret_cast<LPBYTE>(s.data()), &sz);
-                ::RegCloseKey(hk);
-                while (!s.empty() && s.back() == L'\0') s.pop_back();
-                return CString(s.c_str());
+                const size_t chars = (static_cast<size_t>(sz) + sizeof(wchar_t) - 1) / sizeof(wchar_t);
+                std::wstring s(chars + 1, L'\0');
+                DWORD bytesRead = sz;
+                const LONG result = ::RegQueryValueExW(hk, entry, nullptr, &type,
+                    reinterpret_cast<LPBYTE>(s.data()), &bytesRead);
+                if (result == ERROR_SUCCESS && type == REG_SZ)
+                {
+                    ::RegCloseKey(hk);
+                    s.resize(std::min(chars, static_cast<size_t>(bytesRead) / sizeof(wchar_t)));
+                    while (!s.empty() && s.back() == L'\0') s.pop_back();
+                    return CString(std::move(s));
+                }
             }
             ::RegCloseKey(hk);
         }
@@ -3221,9 +3393,12 @@ inline BOOL CWinApp::WriteProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR 
         HKEY hk;
         if (::RegCreateKeyExW(HKEY_CURRENT_USER, RegProfilePath(section).c_str(), 0, nullptr, 0, KEY_WRITE, nullptr, &hk, nullptr) == ERROR_SUCCESS)
         {
-            ::RegSetValueExW(hk, entry, 0, REG_SZ, reinterpret_cast<const BYTE*>(value),
-                static_cast<DWORD>((wcslen(value) + 1) * sizeof(wchar_t)));
-            ::RegCloseKey(hk); return TRUE;
+            const LONG result = value != nullptr
+                ? ::RegSetValueExW(hk, entry, 0, REG_SZ, reinterpret_cast<const BYTE*>(value),
+                    static_cast<DWORD>((wcslen(value) + 1) * sizeof(wchar_t)))
+                : ::RegDeleteValueW(hk, entry);
+            ::RegCloseKey(hk);
+            return result == ERROR_SUCCESS;
         }
         return FALSE;
     }
@@ -3231,6 +3406,7 @@ inline BOOL CWinApp::WriteProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR 
 }
 inline BOOL CWinApp::GetProfileBinary(LPCWSTR section, LPCWSTR entry, LPBYTE* ppData, UINT* pBytes)
 {
+    if (ppData == nullptr || pBytes == nullptr) return FALSE;
     *ppData = nullptr; *pBytes = 0;
     if (m_pszRegistryKey)
     {
@@ -3238,11 +3414,20 @@ inline BOOL CWinApp::GetProfileBinary(LPCWSTR section, LPCWSTR entry, LPBYTE* pp
         if (::RegOpenKeyExW(HKEY_CURRENT_USER, RegProfilePath(section).c_str(), 0, KEY_READ, &hk) == ERROR_SUCCESS)
         {
             DWORD type = 0, sz = 0;
-            if (::RegQueryValueExW(hk, entry, nullptr, &type, nullptr, &sz) == ERROR_SUCCESS && sz > 0)
+            if (::RegQueryValueExW(hk, entry, nullptr, &type, nullptr, &sz) == ERROR_SUCCESS &&
+                type == REG_BINARY && sz > 0)
             {
-                *ppData = new BYTE[sz]; *pBytes = sz;
-                ::RegQueryValueExW(hk, entry, nullptr, nullptr, *ppData, &sz);
-                ::RegCloseKey(hk); return TRUE;
+                auto data = std::make_unique<BYTE[]>(sz);
+                DWORD bytesRead = sz;
+                const LONG result = ::RegQueryValueExW(hk, entry, nullptr, &type,
+                    data.get(), &bytesRead);
+                if (result == ERROR_SUCCESS && type == REG_BINARY)
+                {
+                    ::RegCloseKey(hk);
+                    *ppData = data.release();
+                    *pBytes = bytesRead;
+                    return TRUE;
+                }
             }
             ::RegCloseKey(hk);
         }
@@ -3251,22 +3436,31 @@ inline BOOL CWinApp::GetProfileBinary(LPCWSTR section, LPCWSTR entry, LPBYTE* pp
     std::wstring buf(16384, L'\0');
     const DWORD n = ::GetPrivateProfileStringW(section, entry, L"", buf.data(), static_cast<DWORD>(buf.size()), m_pszProfileName);
     buf.resize(n);
-    if (buf.size() < 2) return FALSE;
+    if (buf.size() < 2 || (buf.size() & 1u) != 0) return FALSE;
     const UINT count = static_cast<UINT>(buf.size() / 2);
-    *ppData = new BYTE[count]; *pBytes = count;
-    auto hexVal = [](wchar_t c) -> int { if (c >= L'0' && c <= L'9') return c - L'0'; if (c >= L'a' && c <= L'f') return c - L'a' + 10; if (c >= L'A' && c <= L'F') return c - L'A' + 10; return 0; };
-    for (UINT i = 0; i < count; ++i) (*ppData)[i] = static_cast<BYTE>((hexVal(buf[i * 2]) << 4) | hexVal(buf[i * 2 + 1]));
+    auto hexVal = [](wchar_t c) -> int { if (c >= L'0' && c <= L'9') return c - L'0'; if (c >= L'a' && c <= L'f') return c - L'a' + 10; if (c >= L'A' && c <= L'F') return c - L'A' + 10; return -1; };
+    auto data = std::make_unique<BYTE[]>(count);
+    for (UINT i = 0; i < count; ++i)
+    {
+        const int high = hexVal(buf[i * 2]);
+        const int low = hexVal(buf[i * 2 + 1]);
+        if (high < 0 || low < 0) return FALSE;
+        data[i] = static_cast<BYTE>((high << 4) | low);
+    }
+    *ppData = data.release(); *pBytes = count;
     return TRUE;
 }
 inline BOOL CWinApp::WriteProfileBinary(LPCWSTR section, LPCWSTR entry, LPBYTE pData, UINT nBytes)
 {
+    if (pData == nullptr && nBytes != 0) return FALSE;
     if (m_pszRegistryKey)
     {
         HKEY hk;
         if (::RegCreateKeyExW(HKEY_CURRENT_USER, RegProfilePath(section).c_str(), 0, nullptr, 0, KEY_WRITE, nullptr, &hk, nullptr) == ERROR_SUCCESS)
         {
-            ::RegSetValueExW(hk, entry, 0, REG_BINARY, pData, nBytes);
-            ::RegCloseKey(hk); return TRUE;
+            const LONG result = ::RegSetValueExW(hk, entry, 0, REG_BINARY, pData, nBytes);
+            ::RegCloseKey(hk);
+            return result == ERROR_SUCCESS;
         }
         return FALSE;
     }
@@ -3293,7 +3487,17 @@ inline BOOL CWinThread::PreTranslateMessage(MSG* pMsg)
 }
 inline BOOL CWinThread::PumpMessage()
 {
-    if (!::GetMessageW(&m_msgCur, nullptr, 0, 0)) return FALSE;
+    const int result = ::GetMessageW(&m_msgCur, nullptr, 0, 0);
+    if (result <= 0)
+    {
+        if (result < 0)
+        {
+            m_msgCur = {};
+            m_msgCur.message = WM_QUIT;
+            m_msgCur.wParam = static_cast<WPARAM>(-1);
+        }
+        return FALSE;
+    }
     if (!PreTranslateMessage(&m_msgCur))
     {
         ::TranslateMessage(&m_msgCur);
@@ -4588,8 +4792,7 @@ public:
 private:
     int DpiScaleHeight() const
     {
-        const HDC hdc = ::GetDC(m_hWnd); const int dpi = hdc ? ::GetDeviceCaps(hdc, LOGPIXELSY) : 96; if (hdc) ::ReleaseDC(m_hWnd, hdc);
-        return MulDiv(22, dpi, 96);
+        return WdsDpiScale(22, m_hWnd);
     }
     std::vector<CRect> LayoutPanes() const
     {
@@ -4741,7 +4944,13 @@ public:
     void ShowTab(int i, BOOL show)
     {
         if (i < 0 || i >= GetTabsNum()) return;
-        m_tabs[i].visible = (show != FALSE);
+        const bool visible = show != FALSE;
+        if (m_tabs[i].visible == visible) return;
+
+        const int previousActiveTab = m_activeTab;
+        const bool moveFocusToActiveTab = previousActiveTab == i &&
+            ShouldMoveFocusOnTabActivation(previousActiveTab);
+        m_tabs[i].visible = visible;
         if (!show && m_activeTab == i)
         {
             m_activeTab = -1;
@@ -4750,6 +4959,8 @@ public:
         else if (show && m_activeTab < 0) m_activeTab = i;
         RebuildNativeTabs();
         LayoutPanes();
+        if (moveFocusToActiveTab) FocusActiveTabWindow();
+        if (m_activeTab != previousActiveTab) NotifyParentOfTabChange(m_activeTab);
         Invalidate(FALSE);
     }
 
@@ -4857,12 +5068,36 @@ public:
             CRect rect;
         };
 
-        std::vector<TabPaintInfo> inactiveTabs;
-        inactiveTabs.reserve(m_visibleToLogical.size());
         TabPaintInfo activeTab;
         bool hasActiveTab = false;
 
         UpdatePaintedTabRects(rcStrip, bottomTabs, labelOnlyTabs);
+
+        const int dpi = WdsDpiForWindow(m_hWnd);
+        const auto scale = [dpi](int value) { return ::MulDiv(value, dpi, 96); };
+        const int textInsetX = scale(5);
+        const int textInsetY = scale(1);
+        const int minSlant = scale(4);
+        const int maxSlant = scale(8);
+        CBrush activeBrush(activeTabBg);
+        CBrush inactiveBrush(inactiveTabBg);
+        CPen borderPen(PS_SOLID, 1, stripBorder);
+
+        auto drawTab = [&](const TabPaintInfo& tab, bool active)
+        {
+            if (tab.logical < 0 || tab.logical >= GetTabsNum()) return;
+            CRect rcTab = tab.rect;
+            DrawAngledTab(dc, rcTab, active, bottomTabs,
+                active ? activeBrush : inactiveBrush, borderPen, minSlant, maxSlant);
+
+            dc.SetTextColor(active ? activeText : inactiveText);
+            CGdiObject* pTextOld = nullptr;
+            if (active && pBoldFont != nullptr) pTextOld = dc.SelectObject(pBoldFont);
+            CRect rcText = rcTab;
+            rcText.DeflateRect(textInsetX, textInsetY, textInsetX, textInsetY);
+            DrawTabText(dc, rcText, m_tabs[tab.logical].label);
+            if (pTextOld != nullptr) dc.SelectObject(pTextOld);
+        };
 
         for (int native = 0; native < static_cast<int>(m_visibleToLogical.size()); ++native)
         {
@@ -4880,26 +5115,7 @@ public:
                 continue;
             }
 
-            inactiveTabs.push_back({ logical, rcTab });
-        }
-
-        auto drawTab = [&](const TabPaintInfo& tab, bool active)
-        {
-            if (tab.logical < 0 || tab.logical >= GetTabsNum()) return;
-            CRect rcTab = tab.rect;
-            DrawAngledTab(dc, rcTab, active, bottomTabs, active ? activeTabBg : inactiveTabBg, stripBorder);
-
-            dc.SetTextColor(active ? activeText : inactiveText);
-            CGdiObject* pTextOld = nullptr;
-            if (active && pBoldFont != nullptr) pTextOld = dc.SelectObject(pBoldFont);
-            CRect rcText = rcTab; rcText.DeflateRect(WdsDpiScale(5, m_hWnd), WdsDpiScale(1, m_hWnd), WdsDpiScale(5, m_hWnd), WdsDpiScale(1, m_hWnd));
-            DrawTabText(dc, rcText, m_tabs[tab.logical].label);
-            if (pTextOld != nullptr) dc.SelectObject(pTextOld);
-        };
-
-        for (const TabPaintInfo& tab : inactiveTabs)
-        {
-            drawTab(tab, false);
+            drawTab({ logical, rcTab }, false);
         }
 
         if (hasActiveTab)
@@ -5054,16 +5270,18 @@ private:
         LayoutPanes();
         if (moveFocusToActiveTab) FocusActiveTabWindow();
 
-        if (notifyParent)
-        {
-            if (CWnd* p = GetParent())
-            {
-                ::SendMessageW(p->m_hWnd, AFX_WM_CHANGING_ACTIVE_TAB, static_cast<WPARAM>(i), 0);
-                ::SendMessageW(p->m_hWnd, AFX_WM_CHANGE_ACTIVE_TAB, static_cast<WPARAM>(i), 0);
-            }
-        }
+        if (notifyParent) NotifyParentOfTabChange(i);
         Invalidate(FALSE);
         return true;
+    }
+
+    void NotifyParentOfTabChange(int activeTab)
+    {
+        if (CWnd* p = GetParent())
+        {
+            ::SendMessageW(p->m_hWnd, AFX_WM_CHANGING_ACTIVE_TAB, static_cast<WPARAM>(activeTab), 0);
+            ::SendMessageW(p->m_hWnd, AFX_WM_CHANGE_ACTIVE_TAB, static_cast<WPARAM>(activeTab), 0);
+        }
     }
 
     bool ShouldMoveFocusOnTabActivation(int previousActiveTab) const
@@ -5141,6 +5359,16 @@ private:
         for (TabInfo& tab : m_tabs)
             tab.rcTab.SetRectEmpty();
 
+        const int dpi = WdsDpiForWindow(m_hWnd);
+        const auto scale = [dpi](int value) { return ::MulDiv(value, dpi, 96); };
+        const int verticalInset = scale(labelOnlyTabs ? 2 : 7);
+        const int tabVisualHeight = labelOnlyTabs ?
+            std::max(0, rcStrip.Height() - verticalInset) :
+            std::min(scale(18), std::max(0, rcStrip.Height() - scale(8)));
+        const int leftInset = scale(labelOnlyTabs ? 2 : 3);
+        const int overlap = scale(labelOnlyTabs ? 1 : 2);
+        const int rightExpansion = scale(labelOnlyTabs ? 2 : 4);
+
         for (int native = 0; native < static_cast<int>(m_visibleToLogical.size()); ++native)
         {
             const int logical = m_visibleToLogical[static_cast<size_t>(native)];
@@ -5149,10 +5377,6 @@ private:
             CRect rcTab;
             if (!GetNativeItemRect(native, rcTab)) continue;
 
-            const int verticalInset = WdsDpiScale(labelOnlyTabs ? 2 : 7, m_hWnd);
-            const int tabVisualHeight = labelOnlyTabs ?
-                std::max(0, rcStrip.Height() - verticalInset) :
-                std::min(WdsDpiScale(18, m_hWnd), std::max(0, rcStrip.Height() - WdsDpiScale(8, m_hWnd)));
             if (bottomTabs)
             {
                 rcTab.bottom = rcStrip.bottom - verticalInset;
@@ -5163,10 +5387,8 @@ private:
                 rcTab.top = rcStrip.top + verticalInset;
                 rcTab.bottom = std::min(rcTab.top + tabVisualHeight, rcStrip.bottom);
             }
-            const int leftInset = WdsDpiScale(labelOnlyTabs ? 2 : 3, m_hWnd);
-            const int overlap = WdsDpiScale(labelOnlyTabs ? 1 : 2, m_hWnd);
             rcTab.left = std::max(rcStrip.left + leftInset, rcTab.left - (native == 0 ? 0 : overlap));
-            rcTab.right += WdsDpiScale(labelOnlyTabs ? 2 : 4, m_hWnd);
+            rcTab.right += rightExpansion;
             m_tabs[logical].rcTab = rcTab;
         }
     }
@@ -5215,9 +5437,10 @@ private:
         return std::max(WdsDpiScale(28, m_hWnd), height + WdsDpiScale(10, m_hWnd));
     }
 
-    void DrawAngledTab(CDC& dc, const CRect& rc, bool active, bool bottomTabs, COLORREF fill, COLORREF border)
+    static void DrawAngledTab(CDC& dc, const CRect& rc, bool active, bool bottomTabs,
+        CBrush& fillBrush, CPen& borderPen, int minSlant, int maxSlant)
     {
-        const int slant = std::min(WdsDpiScale(8, m_hWnd), std::max(WdsDpiScale(4, m_hWnd), rc.Width() / 5));
+        const int slant = std::min(maxSlant, std::max(minSlant, rc.Width() / 5));
         POINT pts[4] = {};
         if (bottomTabs)
         {
@@ -5234,15 +5457,13 @@ private:
             pts[3] = { rc.right, rc.bottom - 1 };
         }
 
-        CBrush brush(fill);
-        CBrush* oldBrush = dc.SelectObject(&brush);
+        CBrush* oldBrush = dc.SelectObject(&fillBrush);
         CGdiObject* oldFillPen = dc.SelectStockObject(NULL_PEN);
         dc.Polygon(pts, 4);
         dc.SelectObject(oldFillPen);
         dc.SelectObject(oldBrush);
 
-        CPen pen(PS_SOLID, 1, border);
-        CPen* oldPen = dc.SelectObject(&pen);
+        CPen* oldPen = dc.SelectObject(&borderPen);
         if (active)
         {
             dc.MoveTo(pts[0]);
@@ -5391,6 +5612,7 @@ public:
     BOOL OnEraseBkgnd(CDC* pDC) { CRect rc; GetClientRect(&rc); pDC->FillSolidRect(rc, afxGlobalData.clrBtnFace); return TRUE; }
     HBRUSH OnCtlColor(CDC*, CWnd*, UINT) { return reinterpret_cast<HBRUSH>(Default()); }
     LRESULT OnTabChanged(WPARAM w, LPARAM) { ShowPage(static_cast<int>(w)); return 0; }
+    void OnClose() { EndDialog(IDCANCEL); }
     void EndDialog(int nResult) { m_modalResult = nResult; }
 
     static const AFX_MSGMAP* __stdcall _GetBaseMessageMap() { return CWnd::GetThisMessageMap(); }
@@ -5398,6 +5620,7 @@ public:
     {
         static const AFX_MSGMAP_ENTRY entries[] = {
             { 0, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<LRESULT (CMFCPropertySheet::*)(WPARAM,LPARAM)>(&CMFCPropertySheet::OnTabChanged)), &WdsThunk_Message, &AFX_WM_CHANGING_ACTIVE_TAB },
+            { WM_CLOSE, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<void (CMFCPropertySheet::*)()>(&CMFCPropertySheet::OnClose)), &WdsThunk_Void, nullptr },
             { 0, 0, 0, 0, nullptr, nullptr, nullptr }
         };
         static const AFX_MSGMAP map = { &CMFCPropertySheet::_GetBaseMessageMap, entries };
@@ -5568,18 +5791,39 @@ inline INT_PTR CMFCPropertySheet::DoModal()
     CenterWindow(CWnd::FromHandle(hOwner));
     ShowWindow(SW_SHOW);
     UpdateWindow();
-    if (hOwner) ::EnableWindow(hOwner, FALSE);
+    const BOOL ownerWasEnabled = hOwner != nullptr && ::IsWindowEnabled(hOwner);
+    if (ownerWasEnabled) ::EnableWindow(hOwner, FALSE);
 
     m_modalResult = -1;
-    MSG msg;
-    while (m_modalResult == -1 && ::GetMessageW(&msg, nullptr, 0, 0))
+    bool repostQuit = false;
+    int quitCode = 0;
+    MSG msg{};
+    while (m_modalResult == -1 && ::IsWindow(m_hWnd))
     {
+        const int result = ::GetMessageW(&msg, nullptr, 0, 0);
+        if (result <= 0)
+        {
+            if (result == 0)
+            {
+                repostQuit = true;
+                quitCode = static_cast<int>(msg.wParam);
+            }
+            m_modalResult = IDCANCEL;
+            break;
+        }
         if (PreTranslateMessage(&msg)) continue;
         if (!::IsDialogMessageW(m_hWnd, &msg)) { ::TranslateMessage(&msg); ::DispatchMessageW(&msg); }
     }
 
-    if (hOwner) { ::EnableWindow(hOwner, TRUE); ::SetForegroundWindow(hOwner); }
-    DestroyWindow();
+    if (m_modalResult == -1) m_modalResult = IDCANCEL;
+    if (ownerWasEnabled && ::IsWindow(hOwner))
+    {
+        ::EnableWindow(hOwner, TRUE);
+        ::SetForegroundWindow(hOwner);
+    }
+    if (::IsWindow(m_hWnd)) DestroyWindow();
+    WdsDeleteTempMaps();
+    if (repostQuit) ::PostQuitMessage(quitCode);
     return m_modalResult;
 }
 
