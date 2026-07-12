@@ -467,8 +467,8 @@ void CWinDirStatModel::OnTreeMapZoomIn()
     {
         SetZoomItem(item->IsRootItem() ? GetRootItem() :
             item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item);
-        if (!CMainFrame::Get()->GetTreeMapView()->IsShowTreeMap())
-            CMainFrame::Get()->RestoreTreeMapView(true);
+        if (!CMainFrame::Get()->IsActiveGraphPaneShown())
+            CMainFrame::Get()->RestoreGraphPane(true);
     }
 }
 
@@ -477,8 +477,8 @@ void CWinDirStatModel::OnTreeMapZoomOut()
     if (GetZoomItem() != nullptr)
     {
         SetZoomItem(GetZoomItem()->GetParent());
-        if (!CMainFrame::Get()->GetTreeMapView()->IsShowTreeMap())
-            CMainFrame::Get()->RestoreTreeMapView(true);
+        if (!CMainFrame::Get()->IsActiveGraphPaneShown())
+            CMainFrame::Get()->RestoreGraphPane(true);
     }
 }
 
@@ -1039,7 +1039,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     ClearReselectChildStack();
 
     // Do not attempt to update graph while scanning
-    CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(true);
+    CMainFrame::Get()->GetActiveGraphPane()->SuspendRecalculationDrawing(true);
 
     // If scanning drive(s) just rescan the child nodes
     if (items.size() == 1 && items.front()->IsTypeOrFlag(IT_MYCOMPUTER))
@@ -1279,8 +1279,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             Get()->NotifyPanes();
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->RestoreExtensionView();
-            CMainFrame::Get()->RestoreTreeMapView();
-            CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(false);
+            CMainFrame::Get()->RestoreGraphPane();
+            CMainFrame::Get()->GetActiveGraphPane()->SuspendRecalculationDrawing(false);
             CMainFrame::Get()->UnlockWindowUpdate();
 
             // Restore pre-scan visual orientation

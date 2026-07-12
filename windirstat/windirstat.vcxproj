@@ -496,6 +496,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Controls\DrawTextCache.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
+    <ClInclude Include="Controls\FlameGraph.h" />
     <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Controls\FileSearchControl.h" />
     <ClInclude Include="DarkMode.h" />
@@ -546,6 +547,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Views\FileTabbedView.h" />
     <ClInclude Include="Views\FileTreeView.h" />
     <ClInclude Include="Views\TreeMapView.h" />
+    <ClInclude Include="Views\FlameGraphView.h" />
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="WinDirStatShim.h" />
     <ClInclude Include="WinDirStatShimRes.h" />
@@ -564,6 +566,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\DrawTextCache.cpp" />
     <ClCompile Include="Controls\TreeListControl.cpp" />
     <ClCompile Include="Controls\TreeMap.cpp" />
+    <ClCompile Include="Controls\FlameGraph.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DarkMode.cpp" />
@@ -627,6 +630,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\FileTabbedView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />
     <ClCompile Include="Views\TreeMapView.cpp" />
+    <ClCompile Include="Views\FlameGraphView.cpp" />
     <ClCompile Include="WinDirStat.cpp">
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">

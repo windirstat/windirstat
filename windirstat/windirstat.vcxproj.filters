@@ -149,6 +149,9 @@
     <ClInclude Include="Controls\TreeMap.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\FlameGraph.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\TreeListControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -177,6 +180,9 @@
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Views\TreeMapView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FlameGraphView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\SearchDlg.h">
@@ -349,6 +355,9 @@
     <ClCompile Include="Views\TreeMapView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="Views\FlameGraphView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="Views\FileTabbedView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
@@ -356,6 +365,9 @@
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeMap.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FlameGraph.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeListControl.cpp">
