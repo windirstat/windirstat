@@ -19,21 +19,24 @@
 
 #include "pch.h"
 #include "WinDirStatPane.h"
-#include "TreeMap.h"
+#include "FlameGraph.h"
 
 class CWinDirStatModel;
 class CItem;
 
 //
-// CTreeMapView. The treemap window.
+// CFlameGraphView. The flame graph (icicle plot) window.
+// A standalone pane that parallels CTreeMapView.
 //
-class CTreeMapView final : public CWinDirStatPane
+class CFlameGraphView final : public CWinDirStatPane
 {
 protected:
-    CTreeMapView() = default;
-    DECLARE_DYNCREATE(CTreeMapView)
+    DECLARE_DYNCREATE(CFlameGraphView)
 
-    ~CTreeMapView() override = default;
+public:
+    CFlameGraphView() = default;
+
+    ~CFlameGraphView() override = default;
 
     void SuspendRecalculationDrawing(bool suspend) override;
     bool IsShowTreeMap() const;
@@ -50,32 +53,40 @@ protected:
     void EmptyView();
     void DrawEmptyView(CDC* pDC);
 
-    void DrawZoomFrame(CDC* pdc, CRect& rc) const;
     void DrawHighlights(CDC* pdc);
-
     void DrawHighlightExtension(CDC* pdc);
-
     void DrawSelection(CDC* pdc) const;
-
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
     CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
+    void DrillDown(CItem* item);
     void ClearHover();
+    void SetHoverItem(const CItem* item);
+    void InvalidateItem(const CItem* item);
+    void DiscardBase(bool invalidateFullHeight);
+    void UpdateScrollBar(int fullHeight, int pageHeight);
+    bool EnsureFullHeightForInput();
+    int ComputeRowHeight(CDC* pDC) const;
+    int ComputeFlameFullHeight(int width) const;
 
-    static constexpr int ZoomFrameWidth = 4;
-
-    std::wstring m_paneTextOverride;  // Populated with the last hovered item for a period of time
-    ULONGLONG m_paneSizeOverride = 0; // Size of the last hovered item for display in the pane text
-    bool m_drawingSuspended = false;  // True while the user is resizing the window.
-    bool m_showTreeMap = true;        // False while the graph pane is collapsed.
+    std::wstring m_paneTextOverride;
+    ULONGLONG m_paneSizeOverride = 0;
+    bool m_drawingSuspended = false;
+    bool m_showTreeMap = true;
     bool m_trackingMouse = false;
+    bool m_updatingScrollBar = false;
+    bool m_forceScrollBarVisible = false;
     const CItem* m_hoverItem = nullptr;
-    CSize m_size{ 0, 0 };             // Current size of view
-    CTreeMap m_treeMap;               // Treemap generator
-    CBitmap m_bitmap;                 // Cached view. If m_hObject is nullptr, the view must be recalculated.
-    CSize m_dimmedSize{ 0,0 };        // Size of bitmap m_dimmed
-    CBitmap m_dimmed;                 // Dimmed view. Used during refresh to avoid the ooops-effect.
+    int m_rowHeight = CFlameGraph::ROW_HEIGHT;
+    int m_scrollPos = 0;
+    int m_wheelDeltaRemainder = 0;
+    int m_fullHeight = 0;
+    CSize m_size{ 0, 0 };
+    CFlameGraph m_flameGraph;
+    CBitmap m_bitmap;
+    CSize m_dimmedSize{ 0, 0 };
+    CBitmap m_dimmed;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -87,4 +98,5 @@ protected:
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnMouseLeave();
     afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 };

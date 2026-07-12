@@ -29,11 +29,13 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CWinDirStatPane)
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
+    ON_WM_MOUSELEAVE()
     ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
 {
+    if (suspend) ClearHover();
     m_drawingSuspended = suspend;
     if (!suspend)
     {
@@ -351,7 +353,7 @@ CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
 {
     // Validate that the document and root are in a ready state
     const CItem* root = CWinDirStatModel::Get()->GetRootItem();
-    if (root == nullptr || !root->IsDone() || !IsDrawn())
+    if (root == nullptr || !root->IsDone())
     {
         return nullptr;
     }
@@ -365,7 +367,8 @@ CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
         pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
     }
 
-    // Perform the hit-test against the current tree map projection
+    if (!IsDrawn()) return nullptr;
+
     return static_cast<CItem*>(m_treeMap.FindItemByPoint(
         CWinDirStatModel::Get()->GetZoomItem(), pointClicked));
 }
@@ -418,6 +421,7 @@ bool CTreeMapView::IsDrawn() const
 
 void CTreeMapView::Inactivate()
 {
+    ClearHover();
     if (m_bitmap.m_hObject == nullptr) return;
 
     // Move the old bitmap to m_dimmed for later dimmed display
@@ -442,6 +446,7 @@ void CTreeMapView::Inactivate()
 
 void CTreeMapView::EmptyView()
 {
+    ClearHover();
     if (m_bitmap.m_hObject != nullptr)
     {
         m_bitmap.DeleteObject();
@@ -495,6 +500,7 @@ void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
 
     case MODEL_CHANGE_NONE:
         {
+            Inactivate();
             CWinDirStatPane::OnUpdate(sender, change, item);
         }
         break;
@@ -504,7 +510,7 @@ void CTreeMapView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
     }
 }
 
-std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
+HoverInfo CTreeMapView::GetHoverInfo() const
 {
     CPoint point;
     GetCursorPos(&point);
@@ -512,76 +518,70 @@ std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
 
     if (const CRect rc = ClientRectOf(this); !rc.PtInRect(point))
     {
-        m_paneTextOverride = {};
-        m_paneSizeOverride = 0;
+        return {};
     }
 
     return { m_paneTextOverride, m_paneSizeOverride };
 }
 
+void CTreeMapView::ClearHover()
+{
+    m_hoverItem = nullptr;
+    if (m_paneTextOverride.empty() && m_paneSizeOverride == 0) return;
+
+    m_paneTextOverride.clear();
+    m_paneSizeOverride = 0;
+    if (CMainFrame::Get() != nullptr)
+    {
+        CMainFrame::Get()->UpdatePaneText();
+    }
+}
+
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    // List of context menu command IDs and whether the menu
-    // should remain open after executing the command
-    static constexpr struct {
-        UINT id;
-        bool isPersistent;
-    } contextMenuPersistent[] = {
-        { ID_TREEMAP_ZOOMIN,             true  },
-        { ID_TREEMAP_ZOOMOUT,            true  },
-        { ID_TREEMAP_SELECT_PARENT,      true  },
-        { ID_TREEMAP_RESELECT_CHILD,     true  },
-        { ID_VIEW_GROUP_TYPES,           true  },
-        { ID_TREEMAP_SHOW_FOLDER_FRAMES, true  },
-        { ID_TREEMAP_SHOW_EXTENSIONS,    true  },
-        { ID_TREEMAP_LOGICAL_SIZE,       true  },
-        { ID_EDIT_COPY_CLIPBOARD,        false },
-        { ID_CLEANUP_EXPLORER_SELECT,    false },
-        { ID_CLEANUP_OPEN_IN_CONSOLE,    false },
-        { ID_CLEANUP_OPEN_IN_PWSH,       false },
-        { ID_POPUP_CANCEL,               false }
+    static constexpr std::array<UINT, 8> persistentCommands{
+        ID_TREEMAP_ZOOMIN,
+        ID_TREEMAP_ZOOMOUT,
+        ID_TREEMAP_SELECT_PARENT,
+        ID_TREEMAP_RESELECT_CHILD,
+        ID_VIEW_GROUP_TYPES,
+        ID_TREEMAP_SHOW_FOLDER_FRAMES,
+        ID_TREEMAP_SHOW_EXTENSIONS,
+        ID_TREEMAP_LOGICAL_SIZE,
     };
-
-    // Helper lambda to check if a command ID is in the list of persistent context menu commands
-    [[msvc::flatten]] static constexpr auto IsContextMenuPersistent = [](UINT id) -> bool {
-        return std::ranges::any_of(contextMenuPersistent, [id](const auto& cmd) {
-            return cmd.id == id && cmd.isPersistent;
-        });
-    };
-
-    auto* clickedItem = ResolveItemAtPoint(point, true);
-    if (clickedItem == nullptr) return;
-
-    if (!std::ranges::any_of(CWinDirStatModel::Get()->GetAllSelected(), [&](auto* s)
-        { return s == clickedItem || s->IsAncestorOf(clickedItem); }))
-    {
-        CWinDirStatModel::Get()->ClearReselectChildStack();
-        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, clickedItem);
-    }
-
-    if (CMenu menu; menu.LoadMenu(IDR_POPUP_MAP))
-    {
-        Localization::UpdateMenu(menu);
-        if (CMenu* sub = menu.GetSubMenu(0))
-        {
-            UINT cmdId = 0;
-            do {
-                cmdId = sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-                    point.x, point.y, AfxGetMainWnd());
-                if (cmdId > 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, cmdId);
-            } while (cmdId > 0 && IsContextMenuPersistent(cmdId));
-        }
-    }
+    ShowGraphContextMenu(ResolveItemAtPoint(point, true), point, persistentCommands);
 }
 
 void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
-    if (auto* item = ResolveItemAtPoint(point))
+    if (!m_trackingMouse)
     {
-        m_paneTextOverride = item->GetPath();
-        m_paneSizeOverride = item->GetSizeLogical();
-        CMainFrame::Get()->UpdatePaneText();
+        TRACKMOUSEEVENT tme{
+            .cbSize = sizeof(TRACKMOUSEEVENT),
+            .dwFlags = TME_LEAVE,
+            .hwndTrack = m_hWnd,
+        };
+        m_trackingMouse = ::TrackMouseEvent(&tme) != FALSE;
     }
+
+    auto* item = ResolveItemAtPoint(point);
+    if (item == nullptr)
+    {
+        ClearHover();
+        return;
+    }
+    if (item == m_hoverItem) return;
+
+    m_hoverItem = item;
+    m_paneTextOverride = item->GetPath();
+    m_paneSizeOverride = item->GetSizeLogical();
+    CMainFrame::Get()->UpdatePaneText();
+}
+
+void CTreeMapView::OnMouseLeave()
+{
+    m_trackingMouse = false;
+    ClearHover();
 }
 
 BOOL CTreeMapView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)

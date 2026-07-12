@@ -186,6 +186,7 @@ $script:BM_SETCHECK      = 0x00F1
 $script:BM_CLICK         = 0x00F5
 $script:MF_GRAYED        = 0x0001
 $script:MF_DISABLED      = 0x0002
+$script:MF_CHECKED       = 0x0008
 $script:MF_BYPOSITION    = 0x0400
 $script:IDOK             = 1
 $script:IDCANCEL         = 2
@@ -1602,6 +1603,7 @@ function Get-Win32MenuItems {
                     RawName  = $name
                     CommandId = $id
                     IsEnabled = ((($state -band $script:MF_GRAYED) -eq 0) -and (($state -band $script:MF_DISABLED) -eq 0))
+                    IsChecked = (($state -band $script:MF_CHECKED) -ne 0)
                     IsSubmenu = $true
                 })
                 $nextParent = if ($ParentMenuName) { "$ParentMenuName -> $cleanName" } else { $cleanName }
@@ -1614,6 +1616,7 @@ function Get-Win32MenuItems {
                     RawName  = $name
                     CommandId = $id
                     IsEnabled = ((($state -band $script:MF_GRAYED) -eq 0) -and (($state -band $script:MF_DISABLED) -eq 0))
+                    IsChecked = (($state -band $script:MF_CHECKED) -ne 0)
                     IsSubmenu = $false
                 })
             }
@@ -2252,7 +2255,7 @@ function Open-Menu {
         'File'     = 0
         'Edit'     = 1
         'Clean Up' = 2
-        'Treemap'  = 3
+        'View'     = 3
         'Tools'    = 4
         'Options'  = 5
         'Help'     = 6
@@ -2932,7 +2935,7 @@ function Test-MenuNavigation {
     }
 
     $foundTopMenus = @($allItems | ForEach-Object { ($_.MenuName -split ' -> ')[0] } | Select-Object -Unique)
-    $expectedMenus = @('File', 'Edit', 'Clean Up', 'Treemap', 'Tools', 'Options', 'Help')
+    $expectedMenus = @('File', 'Edit', 'Clean Up', 'View', 'Tools', 'Options', 'Help')
     $foundCount = 0
     foreach ($name in $expectedMenus) {
         if ($name -in $foundTopMenus) { $foundCount++ }
@@ -2967,20 +2970,32 @@ function Test-MenuNavigation {
         Assert-Skip $g 'Edit menu expected items' 'None of the expected Edit items found by name'
     }
 
-    # -- Treemap menu -----------------------------------------------------------
-    Assert-Pass $g 'Treemap menu opens'
-    $treemapItems = @($allItems | Where-Object { $_.MenuName -eq 'Treemap' })
-    $zoomItems = @($treemapItems | Where-Object { $_.ItemName -like 'Zoom*' })
-    if ($zoomItems.Count -ge 1) {
-        Assert-Pass $g "Treemap Zoom items verified (programmatic)"
+    # -- View menu --------------------------------------------------------------
+    Assert-Pass $g 'View menu opens'
+    $viewItems = @($allItems | Where-Object { $_.MenuName -eq 'View' })
+    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph') })
+    if ($graphModeItems.Count -eq 2) {
+        Assert-Pass $g 'View menu contains Treemap and Flame Graph modes'
+        $checkedGraphModes = @($graphModeItems | Where-Object { $_.IsChecked })
+        if ($checkedGraphModes.Count -eq 1) {
+            Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
+        } else {
+            Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
+        }
     } else {
-        Assert-Skip $g 'Treemap Zoom items' 'No Zoom items found'
+        Assert-Fail $g 'View menu contains Treemap and Flame Graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
     }
-    $folderFramesItem = $treemapItems | Where-Object { $_.ItemName -like '*Folder*Frames*' } | Select-Object -First 1
-    if ($folderFramesItem) {
-        Assert-Pass $g 'Treemap Show Folder Frames item present'
+    $zoomItems = @($viewItems | Where-Object { $_.ItemName -like 'Zoom*' })
+    if ($zoomItems.Count -ge 1) {
+        Assert-Pass $g "View Zoom items verified (programmatic)"
     } else {
-        Assert-Fail $g 'Treemap Show Folder Frames item present' 'Could not find "Show Folder Frames" menu item'
+        Assert-Skip $g 'View Zoom items' 'No Zoom items found'
+    }
+    $folderFramesItem = $viewItems | Where-Object { $_.ItemName -like '*Folder*Frames*' } | Select-Object -First 1
+    if ($folderFramesItem) {
+        Assert-Pass $g 'View Show Folder Frames item present'
+    } else {
+        Assert-Fail $g 'View Show Folder Frames item present' 'Could not find "Show Folder Frames" menu item'
     }
 
     # -- Clean Up menu ----------------------------------------------------------
@@ -3007,10 +3022,13 @@ function Test-MenuNavigation {
     # -- Options menu -----------------------------------------------------------
     Assert-Pass $g 'Options menu opens'
     $optionsItems = @($allItems | Where-Object { $_.MenuName -eq 'Options' } | ForEach-Object { $_.ItemName })
-    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Show Treemap', 'Show Toolbar', 'Show Statusbar')
-    $hit = @($expectedOptions | Where-Object { $_ -in $optionsItems }).Count
-    if ($hit -ge 2) { Assert-Pass $g "Options menu has view-toggle items ($hit/$($expectedOptions.Count))" }
-    else { Assert-Skip $g 'Options view-toggle items' "$hit/$($expectedOptions.Count) found" }
+    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Show Toolbar', 'Show Statusbar')
+    $missingOptions = @($expectedOptions | Where-Object { $_ -notin $optionsItems })
+    if ($missingOptions.Count -eq 0) {
+        Assert-Pass $g "Options menu contains all $($expectedOptions.Count) expected items"
+    } else {
+        Assert-Fail $g 'Options menu contains expected items' "Missing: $($missingOptions -join ', ')"
+    }
 
     # -- Help menu --------------------------------------------------------------
     Assert-Pass $g 'Help menu opens'
@@ -8379,6 +8397,7 @@ $visualSettings = @(
     'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
+    'UseFlameGraph',
     'WatcherAutoScroll',
     'WatcherColumnOrder',
     'WatcherColumnWidths'
