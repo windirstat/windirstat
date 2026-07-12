@@ -109,3 +109,34 @@ void CWinDirStatPane::NotifyOtherPanes(MODEL_CHANGE change, CItem* item)
 {
     CWinDirStatModel::Get()->NotifyPanesExcept(this, change, item);
 }
+
+void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint point,
+    const std::span<const UINT> persistentCommands)
+{
+    if (clickedItem == nullptr) return;
+
+    if (std::ranges::none_of(CWinDirStatModel::Get()->GetAllSelected(),
+        [clickedItem](const CItem* selected) {
+            return selected == clickedItem || selected->IsAncestorOf(clickedItem);
+        }))
+    {
+        CWinDirStatModel::Get()->ClearReselectChildStack();
+        NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, clickedItem);
+    }
+
+    CMenu menu;
+    if (!menu.LoadMenu(IDR_POPUP_MAP)) return;
+    Localization::UpdateMenu(menu);
+
+    CMenu* subMenu = menu.GetSubMenu(0);
+    if (subMenu == nullptr) return;
+
+    UINT command;
+    do
+    {
+        command = subMenu->TrackPopupMenu(
+            TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+            point.x, point.y, AfxGetMainWnd());
+        if (command != 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, command);
+    } while (std::ranges::find(persistentCommands, command) != persistentCommands.end());
+}

@@ -29,6 +29,7 @@ class CMainFrame;
 class CFileTreeView;
 class CTreeMapView;
 class CExtensionView;
+class CFlameGraphView;
 
 //
 // The "logical focus" can be
@@ -169,9 +170,9 @@ protected:
     void InitialShowWindow();
     void InvokeInMessageThread(std::function<void()> callback) const;
 
-    void RestoreTreeMapView(bool forced = false);
+    void RestoreGraphPane(bool forced = false);
     void RestoreExtensionView();
-    void MinimizeTreeMapView();
+    void MinimizeGraphPane();
     void MinimizeExtensionView();
     void ExpandFileTabbedView();
     void CopyToClipboard(const std::wstring& psz);
@@ -180,6 +181,7 @@ protected:
     CFileTabbedView* m_fileTabbedView = nullptr;
     CExtensionView* m_extensionView = nullptr;
     CTreeMapView* m_treeMapView = nullptr;
+    CFlameGraphView* m_flameGraphView = nullptr;
     CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
@@ -188,7 +190,12 @@ protected:
     CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
+    CFlameGraphView* GetFlameGraphView() const { return m_flameGraphView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
+    void SelectGraphPane(bool useFlameGraph);
+    void ShowActiveGraphPane(bool show);
+    bool IsActiveGraphPaneShown() const;
+    CWinDirStatPane* GetActiveGraphPane() const;
 
     void CreateProgress(ULONGLONG range);
     void UpdateProgressRange(ULONGLONG range);
@@ -263,7 +270,9 @@ protected:
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowTreeMap();
+    afx_msg void OnViewTreeMap();
+    afx_msg void OnViewFlameGraph();
+    afx_msg void OnUpdateViewFlameGraph(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnViewGroupUnregisteredTypes();
@@ -314,6 +323,6 @@ public:
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
 
 private:
-    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hTMV);
+    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hGraph);
     void ConfigureSplitterCallbacks(int topology, int permutation);
 };
