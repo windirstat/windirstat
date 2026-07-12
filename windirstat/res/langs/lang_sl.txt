@@ -134,6 +134,7 @@ IDS_MENU_OPEN=&Odpri...
 IDS_MENU_OPTIMIZE_VHD=Optimiziraj VHD datoteke
 IDS_MENU_OPTIONS=&Možnosti
 IDS_MENU_PERMISSIONS=Skeniraj dovoljenja
+IDS_MENU_PHYSICAL_SIZE=Uporabi &fizično velikost
 IDS_MENU_PROPERTIES=&Lastnosti
 IDS_MENU_PWSH=Odpri v Power&Shell...
 IDS_MENU_REFRESH_ALL=Osveži &vse

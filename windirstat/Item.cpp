@@ -410,12 +410,17 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount) noexcept
 
 double CItem::GetFraction() const noexcept
 {
-    if (!GetParent() || GetParent()->GetSizePhysical() == 0)
+    if (!GetParent())
     {
         return 1.0;
     }
-    return static_cast<double>(GetSizePhysical()) /
-        static_cast<double>(GetParent()->GetSizePhysical());
+    const ULONGLONG parentSize = COptions::TreeMapUseLogical ? GetParent()->GetSizeLogical() : GetParent()->GetSizePhysical();
+    if (parentSize == 0)
+    {
+        return 1.0;
+    }
+    const ULONGLONG size = COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+    return static_cast<double>(size) / static_cast<double>(parentSize);
 }
 
 ULONG CItem::GetFilesCount() const noexcept

@@ -267,6 +267,7 @@ protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
@@ -274,6 +275,7 @@ protected:
     afx_msg void OnViewFlameGraph();
     afx_msg void OnUpdateViewFlameGraph(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMapUseLogical();
+    afx_msg void OnViewTreeMapUsePhysical();
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnViewGroupUnregisteredTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();

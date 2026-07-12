@@ -379,7 +379,7 @@ void CMainFrame::UpdatePaneText()
 
             for (size = 0; const auto& item : items)
             {
-                size += item->GetSizePhysical();
+                size += COptions::TreeMapUseLogical ? item->GetSizeLogical() : item->GetSizePhysical();
             }
 
         }
@@ -393,7 +393,7 @@ void CMainFrame::UpdatePaneText()
     const CClientDC dc(this);
     SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
     SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size == MAXULONGLONG) ? wds::strEmpty :
-        std::format(L"{}: \u2211 {}", Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
+        std::format(L"{}: \u2211 {}", Localization::Lookup(COptions::TreeMapUseLogical ? IDS_COL_SIZE_LOGICAL : IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
     SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
@@ -438,7 +438,13 @@ void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetCheck(COptions::TreeMapUseLogical);
+    SetNativeMenuRadio(pCmdUI, COptions::TreeMapUseLogical);
+}
+
+void CMainFrame::OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    SetNativeMenuRadio(pCmdUI, !COptions::TreeMapUseLogical);
 }
 
 void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
@@ -486,12 +492,43 @@ void CMainFrame::OnUpdateViewFlameGraph(CCmdUI* pCmdUI)
     SetNativeMenuRadio(pCmdUI, COptions::UseFlameGraph);
 }
 
+static void SortItemRecursive(CItem* item)
+{
+    if (item == nullptr || item->IsLeaf()) return;
+    COptions::TreeMapUseLogical ? item->SortItemsBySizeLogical() : item->SortItemsBySizePhysical();
+    for (CItem* child : item->GetChildren())
+    {
+        SortItemRecursive(child);
+    }
+}
+
 void CMainFrame::OnViewTreeMapUseLogical()
 {
-    COptions::TreeMapUseLogical = !COptions::TreeMapUseLogical;
-    if (IsActiveGraphPaneShown())
+    if (!COptions::TreeMapUseLogical)
     {
-        CWinDirStatModel::Get()->RefreshItem(CWinDirStatModel::Get()->GetRootItem());
+        COptions::TreeMapUseLogical = true;
+        CItem* root = CWinDirStatModel::Get()->GetRootItem();
+        if (root)
+        {
+            SortItemRecursive(root);
+            CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SIZE_MODE);
+        }
+        UpdatePaneText();
+    }
+}
+
+void CMainFrame::OnViewTreeMapUsePhysical()
+{
+    if (COptions::TreeMapUseLogical)
+    {
+        COptions::TreeMapUseLogical = false;
+        CItem* root = CWinDirStatModel::Get()->GetRootItem();
+        if (root)
+        {
+            SortItemRecursive(root);
+            CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SIZE_MODE);
+        }
+        UpdatePaneText();
     }
 }
 
