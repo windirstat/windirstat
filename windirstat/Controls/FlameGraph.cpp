@@ -454,7 +454,7 @@ void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
 {
     if (rc.Width() < m_minLabelWidth || rc.Height() < m_minLabelHeight) return;
 
-    const auto name = item->GetNameView();
+    const auto name = item->GetNameView(true);
     if (name.empty()) return;
 
     const double brightness = CColorSpace::GetColorBrightness(color);

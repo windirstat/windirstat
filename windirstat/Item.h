@@ -190,8 +190,8 @@ public:
 
     // Paths & Names
     void SetName(std::wstring_view name);
-    std::wstring GetName() const noexcept;
-    std::wstring_view GetNameView() const noexcept;
+    std::wstring GetName(const bool stripDrivePrefix = false) const noexcept;
+    std::wstring_view GetNameView(const bool stripDrivePrefix = false) const noexcept;
     bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
