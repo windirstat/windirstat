@@ -2,18 +2,23 @@
 # WinDirStat 2.7.X (Upcoming)
 
 Enhancements
+- Added flame graph as an alternative visualization view (thanks @P403n1x87)
 - Added additional window layouts
 - Added per-user Explorer context menu registration
 - Added File Watcher toolbar controls
 - Added cancellable file hashing progress (thanks @harryytm)
+- Added folder frames color customization and draw threshold (thanks @harryytm)
+- Improved populating large message box lists (thanks @harryytm)
 - Improved File Watcher defaults and autoscroll behavior (thanks @harryytm)
 - Improved percentage progress messages
+- Improved message box dialog performance for massive lists (thanks @harryytm)
+- Improved logical/physical size menu item generalization
+- Modernized locale string retrieval functions (thanks @harryytm)
 
 Bug Fixes
 - Corrected indeterminate progress dialog repainting
-
-Miscellaneous
-- Split large MainFrame and WinDirStatModel source files
+- Corrected layout view type identifiers (thanks @harryytm)
+- Corrected some argument passing issues
 
 <a name="windirstat-2.7.0"></a>
 # WinDirStat 2.7.0
