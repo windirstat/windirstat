@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <limits>
+
 #include "pch.h"
 #include "TreeListControl.h"
 #include "Finder.h"
@@ -211,6 +213,8 @@ public:
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     ULONGLONG GetTicksWorked() const noexcept;
     void ResetScanStartTime() const noexcept;
+    static void SuspendScanClock() noexcept;
+    static void ResumeScanClock() noexcept;
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
@@ -282,6 +286,13 @@ private:
     bool MustShowReadJobs() const noexcept;
     COLORREF GetPercentageColor() const noexcept;
     std::wstring GetPathWithoutSlash() const;
+
+    static constexpr ULONGLONG SCAN_CLOCK_SUSPENDED =
+        ULONGLONG{ 1 } << (std::numeric_limits<ULONGLONG>::digits - 1);
+
+    // High bit marks suspension; other bits hold paused milliseconds or frozen active milliseconds.
+    inline static std::atomic<ULONGLONG> scanClockState = 0;
+    static ULONG GetScanTickCount() noexcept;
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(const Finder& finder);
 
