@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <string_view>
 constexpr std::wstring_view IDS_ABOUT_ABOUT = L"IDS_ABOUT_ABOUT";
 constexpr std::wstring_view IDS_ABOUT_ABOUT_TEXTss = L"IDS_ABOUT_ABOUT_TEXTss";
 constexpr std::wstring_view IDS_ABOUT_LICENSE = L"IDS_ABOUT_LICENSE";
@@ -93,6 +92,7 @@ constexpr std::wstring_view IDS_IDLEMESSAGE = L"IDS_IDLEMESSAGE";
 constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";
 constexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
 constexpr std::wstring_view IDS_LARGEST_FILES = L"IDS_LARGEST_FILES";
+constexpr std::wstring_view IDS_MENU_ABSOLUTE_PERCENTAGES = L"IDS_MENU_ABSOLUTE_PERCENTAGES";
 constexpr std::wstring_view IDS_MENU_CANCEL = L"IDS_MENU_CANCEL";
 constexpr std::wstring_view IDS_MENU_CHKDSK = L"IDS_MENU_CHKDSK";
 constexpr std::wstring_view IDS_MENU_CLEANUP = L"IDS_MENU_CLEANUP";
@@ -136,6 +136,7 @@ constexpr std::wstring_view IDS_MENU_OPEN = L"IDS_MENU_OPEN";
 constexpr std::wstring_view IDS_MENU_OPTIMIZE_VHD = L"IDS_MENU_OPTIMIZE_VHD";
 constexpr std::wstring_view IDS_MENU_OPTIONS = L"IDS_MENU_OPTIONS";
 constexpr std::wstring_view IDS_MENU_PERMISSIONS = L"IDS_MENU_PERMISSIONS";
+constexpr std::wstring_view IDS_MENU_PHYSICAL_SIZE = L"IDS_MENU_PHYSICAL_SIZE";
 constexpr std::wstring_view IDS_MENU_PROPERTIES = L"IDS_MENU_PROPERTIES";
 constexpr std::wstring_view IDS_MENU_PWSH = L"IDS_MENU_PWSH";
 constexpr std::wstring_view IDS_MENU_REFRESH_ALL = L"IDS_MENU_REFRESH_ALL";

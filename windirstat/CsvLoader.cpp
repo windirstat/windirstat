@@ -463,7 +463,8 @@ static std::unordered_map<const CItem*, LONGLONG>
 }
 
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
-    const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes)
+    const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
+    const bool includeOwner)
 {
     // Header
     for (size_t i = 0; i < cols.size(); ++i)
@@ -486,7 +487,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             ToTimePoint(item->GetLastChange()),
             static_cast<std::uint32_t>(itemType),
             item->GetIndex());
-        if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
+        if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
     }
     outf.flush();
     return outf.good();
@@ -497,12 +498,13 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
 static bool SaveResultsJson(std::ofstream& outf,
     const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols,
-    const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes)
+    const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
+    const bool includeOwner)
 {
     // Pre-quote all column key strings once (cols are in FIELD_* index order)
     std::array<std::string, FIELD_COUNT> jk;
     for (size_t i = 0; i < cols.size(); ++i) jk[i] = JsonQuoteW(cols[i]);
-    const std::string jkOwner = COptions::ShowColumnOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
+    const std::string jkOwner = includeOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
 
     outf << "[\r\n";
     bool firstItem = true;
@@ -528,7 +530,7 @@ static bool SaveResultsJson(std::ofstream& outf,
         std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
             jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType),
             jk[FIELD_INDEX], item->GetIndex());
-        if (COptions::ShowColumnOwner)
+        if (includeOwner)
             outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
         outf << "\r\n}";
     }
@@ -541,6 +543,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
 {
     const std::vector<const CItem*> items       = CollectItems(rootItem);
     const auto                      adjustedSizes = ComputeAdjustedSizes(items);
+    const bool includeOwner = COptions::IsColumnVisible(COptions::FileTreeColumnVisibility.Obj(), COL_OWNER);
 
     std::vector<std::wstring> cols =
     {
@@ -554,14 +557,14 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_INDEX)
     };
-    if (COptions::ShowColumnOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
+    if (includeOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
 
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
     return IsJsonPath(path)
-        ? SaveResultsJson(outf, items, cols, adjustedSizes)
-        : SaveResultsCsv (outf, items, cols, adjustedSizes);
+        ? SaveResultsJson(outf, items, cols, adjustedSizes, includeOwner)
+        : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner);
 }
 
 static std::vector<std::tuple<std::wstring, const CItem*>>

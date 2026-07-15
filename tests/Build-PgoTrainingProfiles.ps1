@@ -440,15 +440,9 @@ function New-BaselineSettings {
         }
 
         $SectionFileTree = [ordered]@{
-            ShowColumnAttributes       = '1'
-            ShowColumnFiles            = '1'
-            ShowColumnFolders          = '1'
-            ShowColumnItems            = '1'
-            ShowColumnLastChange       = '1'
-            ShowColumnOwner            = '0'
-            ShowColumnSizeLogical      = '1'
-            ShowColumnSizePhysical     = '1'
+            ColumnVisibility           = '1,1,1,1,1,1,1,1,1,1,0'
             ShowTimeSpent              = '1'
+            UseAbsolutePercentages     = '1'
         }
 
         $SectionTreeMap = [ordered]@{

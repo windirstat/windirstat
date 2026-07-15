@@ -933,6 +933,9 @@ void CWinDirStatModel::OnScanSuspend()
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
 
+    // Freeze the shared item clock only after every scan worker is idle.
+    CItem::SuspendScanClock();
+
     // Mark as suspended
     if (CMainFrame::Get() != nullptr)
         CMainFrame::Get()->SuspendState(true);
@@ -940,6 +943,9 @@ void CWinDirStatModel::OnScanSuspend()
 
 void CWinDirStatModel::OnScanResume()
 {
+    // Resume the shared clock before allowing any scan worker to continue.
+    CItem::ResumeScanClock();
+
     for (auto& queue : m_queues | std::views::values)
         queue.ResumeExecution();
 
@@ -976,6 +982,9 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
         m_thread.reset();
         m_queues.clear();
     }
+
+    // Resume the shared clock if a scan is stopped or replaced while suspended.
+    CItem::ResumeScanClock();
 }
 
 void CWinDirStatModel::OnContextMenuExplore(UINT nID)

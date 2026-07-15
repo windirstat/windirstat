@@ -719,6 +719,7 @@ void CFlameGraphView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
         break;
 
     case MODEL_CHANGE_NONE:
+    case MODEL_CHANGE_SIZE_MODE:
         {
             ClearHover();
             DiscardBase(true);
@@ -747,7 +748,7 @@ HoverInfo CFlameGraphView::GetHoverInfo() const
 
 void CFlameGraphView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    static constexpr std::array<UINT, 7> persistentCommands{
+    static constexpr std::array<UINT, 8> persistentCommands{
         ID_TREEMAP_ZOOMIN,
         ID_TREEMAP_ZOOMOUT,
         ID_TREEMAP_SELECT_PARENT,
@@ -755,6 +756,7 @@ void CFlameGraphView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
         ID_VIEW_GROUP_TYPES,
         ID_TREEMAP_SHOW_EXTENSIONS,
         ID_TREEMAP_LOGICAL_SIZE,
+        ID_TREEMAP_PHYSICAL_SIZE,
     };
     ShowGraphContextMenu(ResolveItemAtPoint(point, true), point, persistentCommands);
 }

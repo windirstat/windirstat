@@ -71,7 +71,8 @@ enum MODEL_CHANGE : std::uint8_t
     MODEL_CHANGE_EXTENSION_SELECTION, // Type list selected a new extension
     MODEL_CHANGE_ZOOM,                // Only zoom item has changed.
     MODEL_CHANGE_LIST_STYLE,          // Options: List style (grid/stripes) or treelist colors changed
-    MODEL_CHANGE_TREEMAP_STYLE        // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_TREEMAP_STYLE,       // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_SIZE_MODE            // Options: Size mode (logical vs physical) changed
 };
 
 //

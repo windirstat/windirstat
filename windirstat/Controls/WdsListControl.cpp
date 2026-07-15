@@ -268,23 +268,67 @@ void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fractio
 
 IMPLEMENT_DYNAMIC(CWdsListControl, CListCtrl)
 
-CWdsListControl::CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
+CWdsListControl::CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility)
     : m_columnOrder(columnOrder)
     , m_columnWidths(columnWidths)
+    , m_columnVisibility(columnVisibility)
 {
+    ASSERT(m_columnOrder != nullptr);
+    ASSERT(m_columnWidths != nullptr);
+    ASSERT(m_columnVisibility != nullptr);
     InitializeColors();
 }
 
 // This method MUST be called before the Control is shown.
-void CWdsListControl::OnColumnsInserted()
+void CWdsListControl::OnColumnsInserted(
+    const std::initializer_list<int> requiredColumns,
+    const std::initializer_list<int> defaultHiddenColumns)
 {
     // Cache the column count
     m_columnCount = GetHeaderCtrl()->GetItemCount();
+    m_defaultColumnWidths.resize(m_columnCount);
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        m_defaultColumnWidths[column] = GetColumnWidth(column);
+    }
+
+    m_requiredColumns.assign(requiredColumns);
+    if (m_columnCount > 0)
+    {
+        const int first = ColumnToSubItem(0);
+        if (std::ranges::find(m_requiredColumns, first) == m_requiredColumns.end())
+        {
+            m_requiredColumns.push_back(first);
+        }
+    }
+
+    auto& visibility = *m_columnVisibility;
+    const size_t previousSize = visibility.size();
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        const int subitem = ColumnToSubItem(column);
+        if (subitem >= static_cast<int>(visibility.size()))
+        {
+            visibility.resize(subitem + 1, 1);
+        }
+        if (subitem >= static_cast<int>(previousSize))
+        {
+            visibility[subitem] = std::ranges::find(defaultHiddenColumns, subitem) == defaultHiddenColumns.end();
+        }
+        if (IsColumnRequired(subitem))
+        {
+            visibility[subitem] = 1;
+        }
+    }
 
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
     ModifyStyle(0, LVS_OWNERDATA);
     LoadPersistentAttributes();
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        ApplyColumnVisibility(column);
+    }
 
     // Calculate row height now that window is created
     CalculateRowHeight();
@@ -515,6 +559,8 @@ void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         LVCOLUMN colInfo{ .mask = LVCF_SUBITEM | LVCF_FMT };
         GetColumn(i, &colInfo);
         const int subitem = colInfo.iSubItem;
+        if (!IsColumnVisible(subitem)) continue;
+
         const bool leftAlign = (colInfo.fmt & LVCFMT_RIGHT) == 0;
 
         const CRect rc = GetWholeSubitemRect(pdis->itemID, i);
@@ -692,7 +738,10 @@ void CWdsListControl::SavePersistentAttributes() const
     GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
-        (*m_columnWidths)[i] = GetColumnWidth(i);
+        if (IsColumnVisible(ColumnToSubItem(i)))
+        {
+            (*m_columnWidths)[i] = GetColumnWidth(i);
+        }
     }
 }
 
@@ -716,6 +765,78 @@ int CWdsListControl::ColumnToSubItem(const int col) const
     LVCOLUMN column_info{ .mask = LVCF_SUBITEM };
     GetColumn(col, &column_info);
     return column_info.iSubItem;
+}
+
+int CWdsListControl::SubItemToColumn(const int subitem) const
+{
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        if (ColumnToSubItem(column) == subitem) return column;
+    }
+    return -1;
+}
+
+bool CWdsListControl::IsColumnRequired(const int subitem) const
+{
+    return std::ranges::find(m_requiredColumns, subitem) != m_requiredColumns.end();
+}
+
+bool CWdsListControl::IsColumnVisible(const int subitem) const
+{
+    return COptions::IsColumnVisible(*m_columnVisibility, subitem);
+}
+
+void CWdsListControl::ApplyColumnVisibility(const int column)
+{
+    const int subitem = ColumnToSubItem(column);
+    const bool visible = IsColumnRequired(subitem) || IsColumnVisible(subitem);
+    LVCOLUMN columnInfo{ .mask = LVCF_FMT };
+    const bool hasColumnInfo = GetColumn(column, &columnInfo);
+    if (hasColumnInfo)
+    {
+        columnInfo.fmt &= ~LVCFMT_FIXED_WIDTH;
+        SetColumn(column, &columnInfo);
+    }
+
+    const int persistedWidth = column < static_cast<int>(m_columnWidths->size()) ? (*m_columnWidths)[column] : 0;
+    const int width = visible ? (persistedWidth > 0 ? persistedWidth : m_defaultColumnWidths[column]) : 0;
+    SetColumnWidth(column, width);
+
+    if (!visible && hasColumnInfo)
+    {
+        columnInfo.fmt |= LVCFMT_FIXED_WIDTH;
+        SetColumn(column, &columnInfo);
+    }
+}
+
+void CWdsListControl::SetColumnVisible(const int subitem, const bool visible)
+{
+    const int column = SubItemToColumn(subitem);
+    if (column < 0 || (!visible && IsColumnRequired(subitem)) || visible == IsColumnVisible(subitem)) return;
+
+    if (!visible && column < static_cast<int>(m_columnWidths->size()))
+    {
+        (*m_columnWidths)[column] = GetColumnWidth(column);
+    }
+
+    COptions::SetColumnVisible(*m_columnVisibility, subitem, visible);
+    ApplyColumnVisibility(column);
+
+    bool sortingChanged = false;
+    if (!visible && m_sorting.column1 == column)
+    {
+        const bool ascending = GetAscendingDefault(ColumnToSubItem(0));
+        SetSorting(0, ascending, 0, ascending);
+        sortingChanged = true;
+    }
+    else if (!visible && m_sorting.column2 == column)
+    {
+        SetSorting(m_sorting.column1, m_sorting.ascending1);
+        sortingChanged = true;
+    }
+
+    if (sortingChanged) SortItems();
+    else Invalidate();
 }
 
 void CWdsListControl::SetSorting(const SSorting& sorting)
@@ -850,11 +971,62 @@ BEGIN_MESSAGE_MAP(CWdsListControl, CListCtrl)
     ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
     ON_NOTIFY(NM_CUSTOMDRAW, 0, OnCustomDraw)
     ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
+    ON_WM_CONTEXTMENU()
     ON_WM_DESTROY()
     ON_WM_ERASEBKGND()
     ON_WM_SHOWWINDOW()
     ON_MESSAGE(WM_SETFONT, OnSetFont)
 END_MESSAGE_MAP()
+
+void CWdsListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
+{
+    CRect headerRect;
+    if (const auto* header = GetHeaderCtrl();
+        point != CPoint(-1, -1) && header != nullptr)
+    {
+        header->GetWindowRect(headerRect);
+        if (headerRect.PtInRect(point))
+        {
+            ShowColumnContextMenu(point);
+            return;
+        }
+    }
+
+    OnItemContextMenu(point);
+}
+
+void CWdsListControl::ShowColumnContextMenu(const CPoint point)
+{
+    CMenu menu;
+    if (!menu.CreatePopupMenu()) return;
+
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        std::array<wchar_t, 256> text{};
+        LVCOLUMN item{
+            .mask = LVCF_TEXT,
+            .pszText = text.data(),
+            .cchTextMax = static_cast<int>(text.size())
+        };
+        if (!GetColumn(column, &item)) continue;
+
+        const int subitem = ColumnToSubItem(column);
+        const bool required = IsColumnRequired(subitem);
+        const UINT flags = MF_STRING |
+            (required ? MF_GRAYED : MF_ENABLED) |
+            (IsColumnVisible(subitem) ? MF_CHECKED : MF_UNCHECKED);
+        menu.AppendMenu(flags, static_cast<UINT>(column + 1), text.data());
+    }
+
+    const UINT command = menu.TrackPopupMenu(
+        TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+        point.x, point.y, this);
+    if (command > 0 && command <= static_cast<UINT>(m_columnCount))
+    {
+        const int subitem = ColumnToSubItem(command - 1);
+        SetColumnVisible(subitem, !IsColumnVisible(subitem));
+    }
+}
 
 void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 {

@@ -596,10 +596,10 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         if (m_options.showFolderFrames && !state.asRoot &&
             std::min(state.rc.Width(), state.rc.Height()) >= m_options.folderFramesDrawThreshold)
         {
-            std::wstring name = item->GetName();
+            std::wstring_view name = item->GetNameView(true);
             const int textWidth = state.rc.Width() - 8;
             const bool showHeader = (state.rc.Height() > headerHeight) &&
-                (pdc->GetTextExtent(name.c_str(), static_cast<int>(name.size())).cx <= textWidth);
+                (pdc->GetTextExtent(name.data(), static_cast<int>(name.size())).cx <= textWidth);
 
             foldersToDraw.push_back({ item, state.rc, state.depth, showHeader });
             state.rc.left += 1;
@@ -670,9 +670,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
                     pdc->FillSolidRect(&rcHeader, headerColor);
 
                     CRect rcText(rcHeader.left + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
-                    std::wstring name = folder.item->GetName();
+                    std::wstring_view name = folder.item->GetNameView(true);
                     pdc->SetTextColor(RGB(0, 0, 0));
-                    pdc->DrawText(name.c_str(), static_cast<int>(name.size()), &rcText,
+                    pdc->DrawText(name.data(), static_cast<int>(name.size()), &rcText,
                         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
                 }
             }
