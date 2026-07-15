@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Ready
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} Items Selected | {} Files | {} Folders
 IDS_JUNCTIONS=Junctions
 IDS_LARGEST_FILES=Largest Files
+IDS_MENU_ABSOLUTE_PERCENTAGES=Show &Absolute Percentages
 IDS_MENU_CANCEL=C&ancel
 IDS_MENU_CHKDSK=Check Disk
 IDS_MENU_CLEANUP=&Clean Up

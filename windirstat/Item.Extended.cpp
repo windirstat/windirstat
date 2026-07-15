@@ -83,16 +83,10 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
             return dark ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
         };
 
-        // Walk to root and compute this item's fraction of the total tree size
-        const CItem* root = this;
-        while (root->GetParent() != nullptr) root = root->GetParent();
-        const ULONGLONG rootSize = COptions::TreeMapUseLogical ? root->GetSizeLogical() : root->GetSizePhysical();
-        const double absoluteFraction = rootSize == 0 ? 0.0 :
-            (COptions::TreeMapUseLogical ? static_cast<double>(GetSizeLogical()) : static_cast<double>(GetSizePhysical())) / static_cast<double>(rootSize);
-
         // Derive palette for track, subtree bar, and absolute bar
         const COLORREF neutralBack  = dark ? RGB(40, 40, 40) : RGB(225, 225, 225);
         const double subtreeFraction = GetFraction();
+        const double absoluteFraction = GetAbsoluteFraction();
         const COLORREF color         = GetPercentageColor();
         const COLORREF trackFill     = blendDark(neutralBack,  0.10, 0.06);
         const COLORREF trackBorder   = blendDark(trackFill,   0.18, 0.18);
@@ -192,11 +186,12 @@ std::wstring CItem::GetText(const int subitem) const
         break;
 
     case COL_PERCENTAGE:
-        if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
+        if ((COptions::ShowTimeSpent && MustShowReadJobs()) ||
+            (!COptions::UseAbsolutePercentages && IsRootItem()))
         {
             return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
         }
-        return FormatDouble(GetFraction() * 100) + L"%";
+        return FormatDouble((COptions::UseAbsolutePercentages ? GetAbsoluteFraction() : GetFraction()) * 100) + L"%";
 
     case COL_ITEMS:
         if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
@@ -295,6 +290,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
     case COL_PERCENTAGE:
     {
+        // Siblings have the same parent and root, so both percentage modes have identical sort order.
         return signum(GetFraction() - other->GetFraction());
     }
 

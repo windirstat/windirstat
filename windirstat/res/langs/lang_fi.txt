@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Valmis
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} kohdetta valittu | {} tiedostoa | {} kansiota
 IDS_JUNCTIONS=Liitokset
 IDS_LARGEST_FILES=Suurimmat tiedostot
+IDS_MENU_ABSOLUTE_PERCENTAGES=Näytä a&bsoluuttiset prosentit
 IDS_MENU_CANCEL=P&eruuta
 IDS_MENU_CHKDSK=Tarkista levy
 IDS_MENU_CLEANUP=&Siivoa

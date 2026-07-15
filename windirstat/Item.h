@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <limits>
-
 #include "pch.h"
 #include "TreeListControl.h"
 #include "Finder.h"
@@ -33,7 +31,6 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_NAME,
     COL_SIZE_PROPORTION,
     COL_PERCENTAGE,
-    COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
     COL_SIZE_LOGICAL,
     COL_ITEMS,
@@ -169,6 +166,7 @@ public:
     void UpwardAddFiles(ULONG fileCount) noexcept;
     void UpwardSubtractFiles(ULONG fileCount) noexcept;
     double GetFraction() const noexcept;
+    double GetAbsoluteFraction() const noexcept;
     ULONG GetFilesCount() const noexcept;
     ULONG GetFoldersCount() const noexcept;
     ULONGLONG GetItemsCount() const noexcept;

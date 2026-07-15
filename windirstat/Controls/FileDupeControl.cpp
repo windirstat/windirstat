@@ -19,7 +19,7 @@
 #include "ItemDupe.h"
 #include "FileTreeView.h"
 
-CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr(), LF_DUPELIST, false)
+CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr(), COptions::DupeViewColumnVisibility.Ptr(), LF_DUPELIST, false)
 {
     m_singleton = this;
 }

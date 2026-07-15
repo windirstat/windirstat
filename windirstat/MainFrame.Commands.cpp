@@ -447,6 +447,11 @@ void CMainFrame::OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI)
     SetNativeMenuRadio(pCmdUI, !COptions::TreeMapUseLogical);
 }
 
+void CMainFrame::OnUpdateViewAbsolutePercentages(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::UseAbsolutePercentages);
+}
+
 void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(GetExtensionView()->IsShowTypes());
@@ -530,6 +535,12 @@ void CMainFrame::OnViewTreeMapUsePhysical()
         }
         UpdatePaneText();
     }
+}
+
+void CMainFrame::OnViewAbsolutePercentages()
+{
+    COptions::UseAbsolutePercentages = !COptions::UseAbsolutePercentages.Obj();
+    GetFileTreeView()->RefreshPercentages();
 }
 
 void CMainFrame::OnViewShowFileTypes()

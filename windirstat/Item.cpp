@@ -423,6 +423,29 @@ double CItem::GetFraction() const noexcept
     return static_cast<double>(size) / static_cast<double>(parentSize);
 }
 
+double CItem::GetAbsoluteFraction() const noexcept
+{
+    if (!GetParent())
+    {
+        return 1.0;
+    }
+
+    const CItem* root = this;
+    while (root->GetParent() != nullptr)
+    {
+        root = root->GetParent();
+    }
+
+    const ULONGLONG rootSize = COptions::TreeMapUseLogical ? root->GetSizeLogical() : root->GetSizePhysical();
+    if (rootSize == 0)
+    {
+        return 0.0;
+    }
+
+    const ULONGLONG size = COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+    return static_cast<double>(size) / static_cast<double>(rootSize);
+}
+
 ULONG CItem::GetFilesCount() const noexcept
 {
     if (IsLeaf()) return 0;

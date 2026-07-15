@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Klar
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} markerade objekt | {} filer | {} mappar
 IDS_JUNCTIONS=Knutpunkter
 IDS_LARGEST_FILES=Största filerna
+IDS_MENU_ABSOLUTE_PERCENTAGES=Visa &absoluta procenttal
 IDS_MENU_CANCEL=&Avbryt
 IDS_MENU_CHKDSK=Kontrollera disk
 IDS_MENU_CLEANUP=&Rensa upp

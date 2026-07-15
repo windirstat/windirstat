@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include <concepts>
 
 //
 // CFlameGraph. Creates a flame graph (icicle plot) visualization.

@@ -5,6 +5,8 @@ Enhancements
 - Added flame graph as an alternative visualization view (thanks @P403n1x87)
 - Added additional window layouts
 - Added per-user Explorer context menu registration
+- Added absolute/relative percentage display modes
+- Added list-header column choosers
 - Added File Watcher toolbar controls
 - Added cancellable file hashing progress (thanks @harryytm)
 - Added folder frames color customization and draw threshold (thanks @harryytm)

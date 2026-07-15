@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Kész
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elem kijelölve | {} fájl | {} mappa
 IDS_JUNCTIONS=Csomópontok
 IDS_LARGEST_FILES=Legnagyobb fájlok
+IDS_MENU_ABSOLUTE_PERCENTAGES=A&bszolút százalékok megjelenítése
 IDS_MENU_CANCEL=&Mégse
 IDS_MENU_CHKDSK=Lemez ellenőrzése
 IDS_MENU_CLEANUP=&Kitakarítás

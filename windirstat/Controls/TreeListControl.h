@@ -99,7 +99,7 @@ class CTreeListControl : public CWdsListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 
-    CTreeListControl(std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {}, LOGICAL_FOCUS logicalFocus = static_cast<LOGICAL_FOCUS>(0), bool blockFirstColumnReorder = false);
+    CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder);
     ~CTreeListControl() override = default;
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
@@ -144,6 +144,7 @@ class CTreeListControl : public CWdsListControl
     }
 
 protected:
+    void OnItemContextMenu(CPoint point) override;
     void OnItemDoubleClick(int i);
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
@@ -160,7 +161,6 @@ protected:
     bool m_blockFirstColumnReorder = false;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);

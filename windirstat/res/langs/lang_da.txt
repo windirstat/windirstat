@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Parat
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elementer markeret | {} filer | {} mapper
 IDS_JUNCTIONS=Kryds
 IDS_LARGEST_FILES=Største filer
+IDS_MENU_ABSOLUTE_PERCENTAGES=Vis &absolutte procenter
 IDS_MENU_CANCEL=Annuller
 IDS_MENU_CHKDSK=Kontrollér disk
 IDS_MENU_CLEANUP=&Ryd op

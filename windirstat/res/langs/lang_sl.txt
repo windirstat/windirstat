@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Pripravljeno
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} izbranih elementov | {} datotek | {} map
 IDS_JUNCTIONS=Stiki (Junctions)
 IDS_LARGEST_FILES=Največje datoteke
+IDS_MENU_ABSOLUTE_PERCENTAGES=Prikaži &absolutne odstotke
 IDS_MENU_CANCEL=Pre&kliči
 IDS_MENU_CHKDSK=Preveri disk
 IDS_MENU_CLEANUP=Po&čisti

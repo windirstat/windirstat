@@ -46,6 +46,7 @@ protected:
     BOOL m_showColumnAttributes = FALSE;
     BOOL m_showColumnLastChange = FALSE;
     BOOL m_showColumnOwner = FALSE;
+    BOOL m_showColumnPercentage = FALSE;
     BOOL m_showColumnSizePhysical = FALSE;
     BOOL m_showColumnSizeLogical = FALSE;
 

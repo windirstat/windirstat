@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Připraven
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} vybraných položek | {} souborů | {} složek
 IDS_JUNCTIONS=Odkazy složek
 IDS_LARGEST_FILES=Největší soubory
+IDS_MENU_ABSOLUTE_PERCENTAGES=Zobrazit &absolutní podíly
 IDS_MENU_CANCEL=&Zrušit
 IDS_MENU_CHKDSK=Zkontrolovat disk
 IDS_MENU_CLEANUP=Vy&čistit

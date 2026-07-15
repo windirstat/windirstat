@@ -71,6 +71,7 @@
 #include <bit>
 #include <cstdint>
 #include <cmath>
+#include <concepts>
 #include <condition_variable>
 #include <cstdlib>
 #include <execution>
@@ -78,7 +79,9 @@
 #include <format>
 #include <fstream>
 #include <functional>
+#include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -90,6 +93,7 @@
 #include <set>
 #include <shared_mutex>
 #include <source_location>
+#include <span>
 #include <string>
 #include <string_view>
 #include <future>

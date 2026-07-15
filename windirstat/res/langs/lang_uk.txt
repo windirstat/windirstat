@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Готово
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=Вибрано елементів: {} | Файлів: {} | Папок: {}
 IDS_JUNCTIONS=Перехрестя
 IDS_LARGEST_FILES=Найбільші файли
+IDS_MENU_ABSOLUTE_PERCENTAGES=&Показувати абсолютні відсотки
 IDS_MENU_CANCEL=Скасувати
 IDS_MENU_CHKDSK=Перевірити диск
 IDS_MENU_CLEANUP=&Очищення

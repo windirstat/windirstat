@@ -91,6 +91,7 @@ IDS_IDLEMESSAGE=Valmis
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} valitud elementi | {} faili | {} kausta
 IDS_JUNCTIONS=Ümbersuunamised
 IDS_LARGEST_FILES=Suurimad failid
+IDS_MENU_ABSOLUTE_PERCENTAGES=Kuva &absoluutprotsendid
 IDS_MENU_CANCEL=L&õpeta
 IDS_MENU_CHKDSK=Kontrolli ketast
 IDS_MENU_CLEANUP=&Puhastus
