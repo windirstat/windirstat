@@ -836,6 +836,8 @@ LRESULT WdsThunk_MouseActivate(CCmdTarget*, AFX_PMSG, WPARAM, LPARAM, BOOL&); //
     { WM_RBUTTONDOWN, 0, 0, 0, WDS_PMSG(OnRButtonDown, void (ThisClass::*)(UINT, CPoint)), &WdsThunk_MouseBtn, nullptr },
 #define ON_WM_MOUSEMOVE() \
     { WM_MOUSEMOVE, 0, 0, 0, WDS_PMSG(OnMouseMove, void (ThisClass::*)(UINT, CPoint)), &WdsThunk_MouseBtn, nullptr },
+#define ON_WM_MOUSELEAVE() \
+    { WM_MOUSELEAVE, 0, 0, 0, WDS_PMSG(OnMouseLeave, void (ThisClass::*)()), &WdsThunk_Void, nullptr },
 #define ON_WM_MOUSEWHEEL() \
     { WM_MOUSEWHEEL, 0, 0, 0, WDS_PMSG(OnMouseWheel, BOOL (ThisClass::*)(UINT, short, CPoint)), &WdsThunk_MouseWheel, nullptr },
 #define ON_WM_KEYDOWN() \
@@ -1181,6 +1183,7 @@ public:
     HGDIOBJ GetCurrentObject(UINT t) const noexcept { return ::GetCurrentObject(m_hDC, t); }
 
     CPoint SetViewportOrg(int x, int y) noexcept { POINT p; ::SetViewportOrgEx(m_hDC, x, y, &p); return p; }
+    CPoint SetViewportOrg(POINT point) noexcept { return SetViewportOrg(point.x, point.y); }
     CPoint OffsetViewportOrg(int dx, int dy) noexcept { POINT p; ::OffsetViewportOrgEx(m_hDC, dx, dy, &p); return p; }
     CPoint GetViewportOrg() const noexcept { POINT p; ::GetViewportOrgEx(m_hDC, &p); return p; }
 
@@ -1640,6 +1643,7 @@ public:
 
     int GetScrollPos(int bar) const noexcept { return ::GetScrollPos(m_hWnd, bar); }
     int SetScrollPos(int bar, int pos, BOOL bRedraw = TRUE) noexcept { return ::SetScrollPos(m_hWnd, bar, pos, bRedraw); }
+    void ShowScrollBar(UINT bar, BOOL bShow = TRUE) noexcept { ::ShowScrollBar(m_hWnd, bar, bShow); }
     BOOL GetScrollInfo(int bar, SCROLLINFO* psi, UINT mask = SIF_ALL) noexcept { psi->cbSize = sizeof(SCROLLINFO); psi->fMask = mask; return ::GetScrollInfo(m_hWnd, bar, psi); }
     int SetScrollInfo(int bar, SCROLLINFO* psi, BOOL bRedraw = TRUE) { psi->cbSize = sizeof(SCROLLINFO); return ::SetScrollInfo(m_hWnd, bar, psi, bRedraw); }
     BOOL GetScrollRange(int bar, LPINT pMin, LPINT pMax) const { return ::GetScrollRange(m_hWnd, bar, pMin, pMax); }
@@ -1663,6 +1667,7 @@ public:
     void OnMButtonDown(UINT, CPoint) { Default(); }
     void OnRButtonDown(UINT, CPoint) { Default(); }
     void OnMouseMove(UINT, CPoint) { Default(); }
+    void OnMouseLeave() { Default(); }
     BOOL OnMouseWheel(UINT, short, CPoint) { return static_cast<BOOL>(Default()); }
     void OnKeyDown(UINT, UINT, UINT) { Default(); }
     void OnChar(UINT, UINT, UINT) { Default(); }

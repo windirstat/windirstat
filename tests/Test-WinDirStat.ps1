@@ -1,4 +1,4 @@
-#Requires -Version 7.6
+﻿#Requires -Version 7.6
 <#
 .SYNOPSIS
     WinDirStat combined test suite.
