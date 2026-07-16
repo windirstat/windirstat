@@ -121,6 +121,7 @@ Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
 Setting<int> COptions::DarkMode(OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
+Setting<int> COptions::ProcessPriority(OptionsGeneral, L"ProcessPriority", 1, 0, 2);
 Setting<int> COptions::FileHashAlgorithm(OptionsGeneral, L"FileHashAlgorithm", HASH_XXHASH, HASH_MD5, HASH_XXHASH);
 Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 10000);
 Setting<int> COptions::MinimizeViewThreshold(OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000);

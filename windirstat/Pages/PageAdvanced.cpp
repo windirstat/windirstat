@@ -45,6 +45,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_folderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
     DDX_CBIndex(pDX, IDC_HASH_ALGORITHM, m_fileHashAlgorithm);
+    DDX_CBIndex(pDX, IDC_PROCESS_PRIORITY, m_processPriority);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
@@ -53,6 +54,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_HASH_ALGORITHM, OnSettingChanged)
+    ON_CBN_SELENDOK(IDC_PROCESS_PRIORITY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_DIRECTORY, OnSettingChanged)
@@ -95,8 +97,15 @@ BOOL CPageAdvanced::OnInitDialog()
     m_processHardlinks = COptions::ProcessHardlinks;
     m_scanningThreads = COptions::ScanningThreads - 1;
     m_fileHashAlgorithm = COptions::FileHashAlgorithm;
+    m_processPriority = COptions::ProcessPriority;
     m_largestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_folderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
+
+    if (auto* priorityCombo = static_cast<CComboBox*>(GetDlgItem(IDC_PROCESS_PRIORITY)); priorityCombo != nullptr)
+    {
+        for (const auto& priority : SplitString(Localization::Lookup(IDS_PRIORITY_LEVELS), L','))
+            priorityCombo->AddString(priority.c_str());
+    }
 
     UpdateData(FALSE);
     return TRUE;
@@ -131,6 +140,8 @@ void CPageAdvanced::OnOK()
     COptions::ProcessHardlinks = (FALSE != m_processHardlinks);
     COptions::ScanningThreads = m_scanningThreads + 1;
     COptions::FileHashAlgorithm = m_fileHashAlgorithm;
+    COptions::ProcessPriority = m_processPriority;
+    SetProcessPriority(COptions::ProcessPriority);
     COptions::LargeFileCount = std::stoi(m_largestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_folderHistoryCount.GetString());
 

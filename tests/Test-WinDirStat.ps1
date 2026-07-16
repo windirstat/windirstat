@@ -8129,6 +8129,7 @@ namespace WdsSettingsTest
         IntField(out, first, "ConfigPage", COptions::ConfigPage.Obj());
         IntField(out, first, "LanguageId", COptions::LanguageId.Obj());
         IntField(out, first, "FileHashAlgorithm", COptions::FileHashAlgorithm.Obj());
+        IntField(out, first, "ProcessPriority", COptions::ProcessPriority.Obj());
         IntField(out, first, "LargeFileCount", COptions::LargeFileCount.Obj());
         IntField(out, first, "MinimizeViewThreshold", COptions::MinimizeViewThreshold.Obj());
         IntField(out, first, "ScanningThreads", COptions::ScanningThreads.Obj());
@@ -8438,6 +8439,7 @@ $coveredNonVisualSettings = @(
     'LargeFileCount',
     'PermsExcludeRegex',
     'ProcessHardlinks',
+    'ProcessPriority',
     'ScanForDuplicates',
     'ScanningThreads',
     'SearchCase',
@@ -8741,6 +8743,7 @@ try {
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 1
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
@@ -8793,6 +8796,7 @@ try {
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
             FileHashAlgorithm = $script:HashAlgorithm.SHA256
+            ProcessPriority = 2
             FilteringMaxAgeDays = 14
             LargeFileCount = 123
             MinimizeViewThreshold = 42
@@ -8870,6 +8874,7 @@ try {
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 2
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
@@ -8939,6 +8944,7 @@ try {
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsLowOutOfRangeValue
@@ -8955,6 +8961,7 @@ try {
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm $script:SettingsMinHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority minimum' $s.ProcessPriority 0
         Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount $script:SettingsMinLargeFileCount
         Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold $script:SettingsMinMinimizeViewThreshold
         Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads $script:SettingsMinScanningThreads
@@ -8975,6 +8982,7 @@ try {
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsHighOutOfRangeValue
@@ -8991,6 +8999,7 @@ try {
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm $script:SettingsMaxHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority maximum' $s.ProcessPriority 2
         Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads $script:SettingsMaxScanningThreads

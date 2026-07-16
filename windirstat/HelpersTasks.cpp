@@ -809,15 +809,23 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     return result;
 }
 
-// I/O priority and VHD optimization
-void SetProcessIoPriorityHigh() noexcept
+// Process priority and VHD optimization
+void SetProcessPriority(const int level) noexcept
 {
-    // Define I/O priority constants
+    constexpr std::array cpuPriorities = {
+        IDLE_PRIORITY_CLASS,
+        NORMAL_PRIORITY_CLASS,
+        HIGH_PRIORITY_CLASS
+    };
     constexpr ULONG ProcessIoPriority = 33;
-    constexpr ULONG IoPriorityHigh = 3;
+    const auto priority = static_cast<size_t>(std::clamp(level, 0, 2));
 
-    // Set the I/O priority to high for the current process
-    ULONG ioPriority = IoPriorityHigh;
+    if (SetPriorityClass(GetCurrentProcess(), cpuPriorities[priority]) == FALSE)
+    {
+        VTRACE(L"SetPriorityClass() Failed");
+    }
+
+    ULONG ioPriority = static_cast<ULONG>(priority + 1); // Low, Normal, High
     if (NtSetInformationProcess(GetCurrentProcess(),
         ProcessIoPriority, &ioPriority, sizeof(ioPriority)) != 0)
     {
