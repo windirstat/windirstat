@@ -16,9 +16,9 @@
 //
 
 #include "pch.h"
-#include "FileTreeView.h"
+#include "FileTreeControl.h"
 
-CFileTreeControl::CFileTreeControl() : CTreeListControl(COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr(), LF_FILETREE, true)
+CFileTreeControl::CFileTreeControl() : CTreeListControl(COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr(), COptions::FileTreeColumnVisibility.Ptr(), LF_FILETREE, true)
 {
     m_singleton = this;
 }

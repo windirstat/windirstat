@@ -249,7 +249,7 @@ std::wstring CDriveItem::GetDrive() const
 IMPLEMENT_DYNAMIC(CDrivesList, CWdsListControl)
 
 CDrivesList::CDrivesList()
-    : CWdsListControl(COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
+    : CWdsListControl(COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr(), COptions::DriveListColumnVisibility.Ptr())
 {
 }
 

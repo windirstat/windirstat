@@ -423,6 +423,29 @@ double CItem::GetFraction() const noexcept
     return static_cast<double>(size) / static_cast<double>(parentSize);
 }
 
+double CItem::GetAbsoluteFraction() const noexcept
+{
+    if (!GetParent())
+    {
+        return 1.0;
+    }
+
+    const CItem* root = this;
+    while (root->GetParent() != nullptr)
+    {
+        root = root->GetParent();
+    }
+
+    const ULONGLONG rootSize = COptions::TreeMapUseLogical ? root->GetSizeLogical() : root->GetSizePhysical();
+    if (rootSize == 0)
+    {
+        return 0.0;
+    }
+
+    const ULONGLONG size = COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+    return static_cast<double>(size) / static_cast<double>(rootSize);
+}
+
 ULONG CItem::GetFilesCount() const noexcept
 {
     if (IsLeaf()) return 0;
@@ -830,7 +853,7 @@ void CItem::SetDone()
     if (!IsLeaf())
     {
         COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
-        m_folderInfo->m_tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
+        m_folderInfo->m_tfinish = GetScanTickCount();
     }
 
     // Mark as done just so other functions do not sort at the same time
@@ -871,7 +894,7 @@ ULONG CItem::GetReadJobs() const noexcept
 void CItem::UpwardAddReadJobs(const ULONG count) noexcept
 {
     if (IsLeaf() || count == 0) return;
-    if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+    if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = GetScanTickCount();
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
@@ -895,14 +918,41 @@ ULONGLONG CItem::GetTicksWorked() const noexcept
 {
     if (IsLeaf()) return 0;
     return m_folderInfo->m_tfinish > 0 ? (m_folderInfo->m_tfinish - m_folderInfo->m_tstart) :
-        (m_folderInfo->m_tstart > 0) ? ((GetTickCount64() / 1000ull) - m_folderInfo->m_tstart) : 0;
+        (m_folderInfo->m_tstart > 0) ? (GetScanTickCount() - m_folderInfo->m_tstart) : 0;
 }
 
 void CItem::ResetScanStartTime() const noexcept
 {
     if (IsLeaf()) return;
     m_folderInfo->m_tfinish = 0;
-    m_folderInfo->m_tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+    m_folderInfo->m_tstart = GetScanTickCount();
+}
+
+ULONG CItem::GetScanTickCount() noexcept
+{
+    const ULONGLONG state = scanClockState.load(std::memory_order_relaxed);
+    const ULONGLONG activeMilliseconds = (state & SCAN_CLOCK_SUSPENDED) != 0 ?
+        state & ~SCAN_CLOCK_SUSPENDED : GetTickCount64() - state;
+    return static_cast<ULONG>(activeMilliseconds / 1000ull);
+}
+
+void CItem::SuspendScanClock() noexcept
+{
+    const ULONGLONG state = scanClockState.load(std::memory_order_relaxed);
+    if ((state & SCAN_CLOCK_SUSPENDED) != 0) return;
+
+    const ULONGLONG activeMilliseconds = GetTickCount64() - state;
+    ASSERT((activeMilliseconds & SCAN_CLOCK_SUSPENDED) == 0);
+    scanClockState.store(SCAN_CLOCK_SUSPENDED | activeMilliseconds, std::memory_order_relaxed);
+}
+
+void CItem::ResumeScanClock() noexcept
+{
+    const ULONGLONG state = scanClockState.load(std::memory_order_relaxed);
+    if ((state & SCAN_CLOCK_SUSPENDED) == 0) return;
+
+    const ULONGLONG activeMilliseconds = state & ~SCAN_CLOCK_SUSPENDED;
+    scanClockState.store(GetTickCount64() - activeMilliseconds, std::memory_order_relaxed);
 }
 
 void CItem::SortItemsBySizePhysical() const

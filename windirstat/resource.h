@@ -101,6 +101,7 @@
 #define IDC_COMBO_THREADS               1079
 #define IDC_TREECOL_ATTRIBUTES          1080
 #define IDC_BROWSE_FOLDER               1081
+#define IDC_TREECOL_PERCENTAGE          1082
 #define IDC_SCAN_DUPLICATES             1083
 #define IDC_RESET_PREFERENCES           1084
 #define IDC_FILTERING_EXCLUDE_DIRS      1085
@@ -252,6 +253,8 @@
 #define ID_WATCHER_LABEL                32955
 #define ID_VIEW_FLAMEGRAPH              32956
 #define ID_TREEMAP_PHYSICAL_SIZE        32957
+#define ID_VIEW_ABSOLUTE_PERCENTAGES    32958
+#define ID_VIEW_SUNBURST                32959
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -266,8 +269,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32959
-#define _APS_NEXT_CONTROL_VALUE         1138
+#define _APS_NEXT_COMMAND_VALUE         32960
+#define _APS_NEXT_CONTROL_VALUE         1137
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

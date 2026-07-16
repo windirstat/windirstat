@@ -153,14 +153,13 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
-    ON_WM_CONTEXTMENU()
     ON_COMMAND(ID_EXTLIST_SEARCH_EXTENSION, &CExtensionListControl::OnSearchExtension)
     ON_COMMAND(ID_FILTER_EXCLUDE_ITEM, &CExtensionListControl::OnExcludeExtension)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
-    : CWdsListControl(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr())
+    : CWdsListControl(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr(), COptions::ExtViewColumnVisibility.Ptr())
     , m_extensionView(extensionView)
 {
     SetOwnsItems(true);
@@ -367,7 +366,7 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
     CWdsListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
-void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
+void CExtensionListControl::OnItemContextMenu(CPoint point)
 {
     if (point == CPoint(-1, -1))
     {

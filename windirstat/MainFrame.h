@@ -30,6 +30,7 @@ class CFileTreeView;
 class CTreeMapView;
 class CExtensionView;
 class CFlameGraphView;
+class CSunburstView;
 
 //
 // The "logical focus" can be
@@ -182,6 +183,7 @@ protected:
     CExtensionView* m_extensionView = nullptr;
     CTreeMapView* m_treeMapView = nullptr;
     CFlameGraphView* m_flameGraphView = nullptr;
+    CSunburstView* m_sunburstView = nullptr;
     CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
@@ -191,8 +193,10 @@ protected:
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
     CFlameGraphView* GetFlameGraphView() const { return m_flameGraphView; }
+    CSunburstView* GetSunburstView() const { return m_sunburstView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
-    void SelectGraphPane(bool useFlameGraph);
+    [[nodiscard]] GraphPane GetGraphPaneType() const;
+    void SelectGraphPane(GraphPane pane);
     void ShowActiveGraphPane(bool show);
     bool IsActiveGraphPaneShown() const;
     CWinDirStatPane* GetActiveGraphPane() const;
@@ -268,14 +272,18 @@ protected:
     afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateViewAbsolutePercentages(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMap();
     afx_msg void OnViewFlameGraph();
     afx_msg void OnUpdateViewFlameGraph(CCmdUI* pCmdUI);
+    afx_msg void OnViewSunburst();
+    afx_msg void OnUpdateViewSunburst(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewTreeMapUsePhysical();
+    afx_msg void OnViewAbsolutePercentages();
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnViewGroupUnregisteredTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();

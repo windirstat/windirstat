@@ -51,14 +51,6 @@ Setting<bool> COptions::SearchWholePhrase(OptionsSearch, L"SearchWholePhrase", f
 Setting<bool> COptions::SearchRegex(OptionsSearch, L"SearchRegex", false);
 Setting<bool> COptions::SearchCase(OptionsSearch, L"SearchCase", false);
 Setting<int> COptions::SearchMaxResults(OptionsSearch, L"SearchMaxResults", 10000, 1, 1000000);
-Setting<bool> COptions::ShowColumnAttributes(OptionsFileTree, L"ShowColumnAttributes", false);
-Setting<bool> COptions::ShowColumnFiles(OptionsFileTree, L"ShowColumnFiles", true);
-Setting<bool> COptions::ShowColumnFolders(OptionsFileTree, L"ShowColumnFolders", false);
-Setting<bool> COptions::ShowColumnItems(OptionsFileTree, L"ShowColumnItems", false);
-Setting<bool> COptions::ShowColumnLastChange(OptionsFileTree, L"ShowColumnLastChange", true);
-Setting<bool> COptions::ShowColumnOwner(OptionsFileTree, L"ShowColumnOwner", false);
-Setting<bool> COptions::ShowColumnSizeLogical(OptionsFileTree, L"ShowColumnSizeLogical", true);
-Setting<bool> COptions::ShowColumnSizePhysical(OptionsFileTree, L"ShowColumnSizePhysical", true);
 Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", true);
 Setting<bool> COptions::ShowElevationPrompt(OptionsGeneral, L"ShowElevationPrompt", true);
 Setting<bool> COptions::ShowMicrosoftProgress(OptionsGeneral, L"ShowMicrosoftProgress", false);
@@ -70,7 +62,6 @@ Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
 Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
 Setting<bool> COptions::LargeToolBar(OptionsGeneral, L"LargeToolBar", false);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
-Setting<bool> COptions::UseFlameGraph(OptionsGeneral, L"UseFlameGraph", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);
@@ -80,6 +71,7 @@ Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::G
 Setting<bool> COptions::TreeMapShowExtensions(OptionsTreeMap, L"TreeMapShowExtensions", (CTreeMap::GetDefaults().showExtensions));
 Setting<bool> COptions::TreeMapShowFolderFrames(OptionsTreeMap, L"TreeMapShowFolderFrames", (CTreeMap::GetDefaults().showFolderFrames));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
+Setting<bool> COptions::UseAbsolutePercentages(OptionsFileTree, L"UseAbsolutePercentages", true);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", true);
 Setting<bool> COptions::UseFastScanEngine(OptionsGeneral, L"UseFastScanEngine", true);
@@ -148,7 +140,11 @@ Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor
 Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200);
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
-Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
+Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle",
+    CTreeMap::GetDefaults().style, CTreeMap::KDirStatStyle, CTreeMap::SequoiaViewStyle);
+Setting<int> COptions::GraphPaneStyle(OptionsTreeMap, L"GraphPaneStyle", -1,
+    static_cast<int>(GraphPane::KDIRSTAT), static_cast<int>(GraphPane::SUNBURST));
+Setting<int> COptions::TreeMapMaxDepth(OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
 Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL);
 Setting<int> COptions::LayoutPermutation(OptionsGeneral, L"LayoutPermutation", 0, 0, 3);
@@ -157,21 +153,29 @@ Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"WindowRect")
 Setting<RECT> COptions::SearchWindowRect(OptionsSearch, L"WindowRect");
 Setting<std::vector<int>> COptions::DriveListColumnOrder(OptionsDriveSelect, L"ColumnOrder");
 Setting<std::vector<int>> COptions::DriveListColumnWidths(OptionsDriveSelect, L"ColumnWidths");
+Setting<std::vector<int>> COptions::DriveListColumnVisibility(OptionsDriveSelect, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::DupeViewColumnOrder(OptionsDupeTree, L"ColumnOrder");
 Setting<std::vector<int>> COptions::DupeViewColumnWidths(OptionsDupeTree, L"ColumnWidths");
+Setting<std::vector<int>> COptions::DupeViewColumnVisibility(OptionsDupeTree, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::FileTreeColumnOrder(OptionsFileTree, L"ColumnOrder");
 Setting<std::vector<int>> COptions::FileTreeColumnWidths(OptionsFileTree, L"ColumnWidths");
+Setting<std::vector<int>> COptions::FileTreeColumnVisibility(OptionsFileTree, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ColumnOrder");
 Setting<std::vector<int>> COptions::ExtViewColumnWidths(OptionsExtView, L"ColumnWidths");
+Setting<std::vector<int>> COptions::ExtViewColumnVisibility(OptionsExtView, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"ColumnOrder");
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"ColumnWidths");
+Setting<std::vector<int>> COptions::TopViewColumnVisibility(OptionsTopView, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"ColumnOrder");
 Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"ColumnWidths");
+Setting<std::vector<int>> COptions::SearchViewColumnVisibility(OptionsSearch, L"ColumnVisibility");
 Setting<bool> COptions::WatcherAutoScroll(OptionsWatcher, L"AutoScroll", true);
 Setting<std::vector<int>> COptions::WatcherColumnOrder(OptionsWatcher, L"ColumnOrder");
 Setting<std::vector<int>> COptions::WatcherColumnWidths(OptionsWatcher, L"ColumnWidths");
+Setting<std::vector<int>> COptions::WatcherColumnVisibility(OptionsWatcher, L"ColumnVisibility");
 Setting<std::vector<int>> COptions::PermsViewColumnOrder(OptionsPerms, L"ColumnOrder");
 Setting<std::vector<int>> COptions::PermsViewColumnWidths(OptionsPerms, L"ColumnWidths");
+Setting<std::vector<int>> COptions::PermsViewColumnVisibility(OptionsPerms, L"ColumnVisibility");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");
@@ -229,6 +233,8 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapOptions = options;
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
+    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(GraphPaneStyle))))
+        GraphPaneStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
     TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
@@ -256,6 +262,52 @@ void COptions::PreProcessPersistedSettings()
 
 void COptions::PostProcessPersistedSettings()
 {
+    CDirStatApp* app = CDirStatApp::Get();
+    const int persistedTreeMapStyle = app->GetProfileInt(OptionsTreeMap,
+        L"TreeMapStyle", CTreeMap::GetDefaults().style);
+
+    // Builds which temporarily combined graph selection with TreeMapStyle wrote
+    // 2 or 3 here. Preserve that active graph while restoring TreeMapStyle to
+    // its original purpose: remembering the selected treemap layout.
+    if (persistedTreeMapStyle == static_cast<int>(GraphPane::FLAME_GRAPH)
+        || persistedTreeMapStyle == static_cast<int>(GraphPane::SUNBURST))
+    {
+        TreeMapStyle = static_cast<int>(CTreeMap::GetDefaults().style);
+    }
+
+    // Migrate both the former graph-selection flags and the short-lived
+    // combined TreeMapStyle values into the independent graph-pane setting.
+    if (static_cast<int>(GraphPaneStyle) < static_cast<int>(GraphPane::KDIRSTAT))
+    {
+        if (persistedTreeMapStyle == static_cast<int>(GraphPane::FLAME_GRAPH)
+            || persistedTreeMapStyle == static_cast<int>(GraphPane::SUNBURST))
+        {
+            GraphPaneStyle = persistedTreeMapStyle;
+        }
+        else if (app->GetProfileInt(OptionsGeneral, L"UseSunburst", 0) != 0)
+        {
+            GraphPaneStyle = static_cast<int>(GraphPane::SUNBURST);
+        }
+        else if (app->GetProfileInt(OptionsGeneral, L"UseFlameGraph", 0) != 0)
+        {
+            GraphPaneStyle = static_cast<int>(GraphPane::FLAME_GRAPH);
+        }
+        else
+        {
+            GraphPaneStyle = static_cast<int>(TreeMapStyle);
+        }
+    }
+    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(GraphPaneStyle))))
+        GraphPaneStyle = static_cast<int>(TreeMapStyle);
+    (void) app->WriteProfileString(OptionsGeneral, L"UseSunburst", nullptr);
+    (void) app->WriteProfileString(OptionsGeneral, L"UseFlameGraph", nullptr);
+
+    // File-tree visibility is also consumed by non-UI exports, so initialize its defaults before any view exists.
+    if (auto& visibility = FileTreeColumnVisibility.Obj(); visibility.empty())
+    {
+        visibility = { 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0 };
+    }
+
     // Adjust windows for sanity
     SanitizeRect(MainWindowPlacement.Obj().rcNormalPosition);
     SanitizeRect(AboutWindowRect.Obj());
@@ -299,6 +351,23 @@ void COptions::PostProcessPersistedSettings()
             UserDefinedCleanups[i].Title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, i);
         }
     }
+}
+
+bool COptions::IsColumnVisible(const std::vector<int>& visibility, const int subitem) noexcept
+{
+    return subitem >= 0 &&
+        (subitem >= static_cast<int>(visibility.size()) || visibility[subitem] != 0);
+}
+
+void COptions::SetColumnVisible(std::vector<int>& visibility, const int subitem, const bool visible)
+{
+    if (subitem < 0) return;
+
+    if (subitem >= static_cast<int>(visibility.size()))
+    {
+        visibility.resize(subitem + 1, 1);
+    }
+    visibility[subitem] = visible;
 }
 
 LCID COptions::GetLocaleForFormatting()

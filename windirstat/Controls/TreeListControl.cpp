@@ -214,8 +214,8 @@ void CTreeListItem::SetTitleRect(const CRect& rc) const
 
 IMPLEMENT_DYNAMIC(CTreeListControl, CWdsListControl)
 
-CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder)
-    : CWdsListControl(columnOrder, columnWidths)
+CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder)
+    : CWdsListControl(columnOrder, columnWidths, columnVisibility)
     , m_logicalFocus(logicalFocus)
     , m_blockFirstColumnReorder(blockFirstColumnReorder)
 {
@@ -391,7 +391,6 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 }
 
 BEGIN_MESSAGE_MAP(CTreeListControl, CWdsListControl)
-    ON_WM_CONTEXTMENU()
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
     ON_WM_LBUTTONDBLCLK()
@@ -897,7 +896,7 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
     }
 }
 
-void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
+void CTreeListControl::OnItemContextMenu(const CPoint pt)
 {
     CPoint point = pt;
     int i = point == CPoint(-1, -1) ? GetNextItem(-1, LVNI_FOCUSED) : GetSelectionMark();

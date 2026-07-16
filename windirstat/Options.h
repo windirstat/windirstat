@@ -41,6 +41,19 @@ enum DARKMODE : std::uint8_t
     DM_USE_WINDOWS
 };
 
+enum class GraphPane : std::uint8_t
+{
+    KDIRSTAT = CTreeMap::KDirStatStyle,
+    QDIRSTAT = CTreeMap::SequoiaViewStyle,
+    FLAME_GRAPH,
+    SUNBURST,
+};
+
+[[nodiscard]] constexpr bool IsTreeMapPane(const GraphPane pane) noexcept
+{
+    return pane == GraphPane::KDIRSTAT || pane == GraphPane::QDIRSTAT;
+}
+
 // Layout view types
 enum LAYOUT_VIEW_TYPE : int
 {
@@ -154,14 +167,6 @@ public:
     static Setting<bool> SearchCase;
     static Setting<bool> SearchRegex;
     static Setting<int> SearchMaxResults;
-    static Setting<bool> ShowColumnAttributes;
-    static Setting<bool> ShowColumnFiles;
-    static Setting<bool> ShowColumnFolders;
-    static Setting<bool> ShowColumnItems;
-    static Setting<bool> ShowColumnLastChange;
-    static Setting<bool> ShowColumnOwner;
-    static Setting<bool> ShowColumnSizeLogical;
-    static Setting<bool> ShowColumnSizePhysical;
     static Setting<bool> ShowDeleteWarning;
     static Setting<bool> ShowElevationPrompt;
     static Setting<bool> ShowMicrosoftProgress;
@@ -173,7 +178,6 @@ public:
     static Setting<bool> ShowToolBar;
     static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
-    static Setting<bool> UseFlameGraph;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
@@ -182,6 +186,7 @@ public:
     static Setting<bool> TreeMapShowExtensions;
     static Setting<bool> TreeMapShowFolderFrames;
     static Setting<bool> TreeMapUseLogical;
+    static Setting<bool> UseAbsolutePercentages;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseDrawTextCache;
     static Setting<bool> UseFastScanEngine;
@@ -220,6 +225,8 @@ public:
     static Setting<int> TreeMapLightSourceY;
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
+    static Setting<int> GraphPaneStyle;
+    static Setting<int> TreeMapMaxDepth;
     static Setting<int> DarkMode;
     static Setting<int> FolderHistoryCount;
     static Setting<RECT> AboutWindowRect;
@@ -227,20 +234,28 @@ public:
     static Setting<RECT> SearchWindowRect;
     static Setting<std::vector<int>> DriveListColumnOrder;
     static Setting<std::vector<int>> DriveListColumnWidths;
+    static Setting<std::vector<int>> DriveListColumnVisibility;
     static Setting<std::vector<int>> DupeViewColumnOrder;
     static Setting<std::vector<int>> DupeViewColumnWidths;
+    static Setting<std::vector<int>> DupeViewColumnVisibility;
     static Setting<std::vector<int>> FileTreeColumnOrder;
     static Setting<std::vector<int>> FileTreeColumnWidths;
+    static Setting<std::vector<int>> FileTreeColumnVisibility;
     static Setting<std::vector<int>> ExtViewColumnOrder;
     static Setting<std::vector<int>> ExtViewColumnWidths;
+    static Setting<std::vector<int>> ExtViewColumnVisibility;
     static Setting<std::vector<int>> SearchViewColumnOrder;
     static Setting<std::vector<int>> SearchViewColumnWidths;
+    static Setting<std::vector<int>> SearchViewColumnVisibility;
     static Setting<std::vector<int>> TopViewColumnOrder;
     static Setting<std::vector<int>> TopViewColumnWidths;
+    static Setting<std::vector<int>> TopViewColumnVisibility;
     static Setting<std::vector<int>> WatcherColumnOrder;
     static Setting<std::vector<int>> WatcherColumnWidths;
+    static Setting<std::vector<int>> WatcherColumnVisibility;
     static Setting<std::vector<int>> PermsViewColumnOrder;
     static Setting<std::vector<int>> PermsViewColumnWidths;
+    static Setting<std::vector<int>> PermsViewColumnVisibility;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;
@@ -254,6 +269,8 @@ public:
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
 
     static void SanitizeRect(RECT& rect);
+    static bool IsColumnVisible(const std::vector<int>& visibility, int subitem) noexcept;
+    static void SetColumnVisible(std::vector<int>& visibility, int subitem, bool visible);
     static void LoadAppSettings();
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();

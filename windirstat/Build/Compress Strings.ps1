@@ -31,7 +31,6 @@ Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object {
 $TempHeader = (New-TemporaryFile).FullName
 @(
     '#pragma once'
-    '#include <string_view>'
     ($CombinedLines | ForEach-Object { $_ -replace '=.*','' -replace '^.*?:','' } | Sort-Object -Unique | ForEach-Object { "constexpr std::wstring_view $_ = L""$_"";" })
 ) | Out-File $TempHeader -Encoding utf8 -Force
 if ((Get-FileHash "$Path\LangStrings.h").Hash -ne (Get-FileHash $TempHeader).Hash) {
