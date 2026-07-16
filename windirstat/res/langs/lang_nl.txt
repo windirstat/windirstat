@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Bestand spars maken
 IDS_MENU_STATUS_BAR=S&tatusbalk weergeven
 IDS_MENU_STORAGE_ANALYTICS=Opslag&analyse
 IDS_MENU_STORAGE_SENSE=Microsoft-opslaginstellingen
+IDS_MENU_SUNBURST=&Zonnestraalgrafiek
 IDS_MENU_TOOL_BAR=Werk&balk weergeven
 IDS_MENU_TOOLS=Hulpmiddelen
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Extensies weergeven

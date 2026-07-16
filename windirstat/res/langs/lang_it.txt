@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Rendi file sparse
 IDS_MENU_STATUS_BAR=Visualizza barra di s&tato
 IDS_MENU_STORAGE_ANALYTICS=Analisi &archiviazione
 IDS_MENU_STORAGE_SENSE=Impostazioni archiviazione Microsoft
+IDS_MENU_SUNBURST=Grafico &radiale
 IDS_MENU_TOOL_BAR=Visualizza &barra strumenti
 IDS_MENU_TOOLS=Strumenti
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Visualizza estensioni

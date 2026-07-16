@@ -163,6 +163,7 @@ constexpr std::wstring_view IDS_MENU_SPARSIFY_FILE = L"IDS_MENU_SPARSIFY_FILE";
 constexpr std::wstring_view IDS_MENU_STATUS_BAR = L"IDS_MENU_STATUS_BAR";
 constexpr std::wstring_view IDS_MENU_STORAGE_ANALYTICS = L"IDS_MENU_STORAGE_ANALYTICS";
 constexpr std::wstring_view IDS_MENU_STORAGE_SENSE = L"IDS_MENU_STORAGE_SENSE";
+constexpr std::wstring_view IDS_MENU_SUNBURST = L"IDS_MENU_SUNBURST";
 constexpr std::wstring_view IDS_MENU_TOOL_BAR = L"IDS_MENU_TOOL_BAR";
 constexpr std::wstring_view IDS_MENU_TOOLS = L"IDS_MENU_TOOLS";
 constexpr std::wstring_view IDS_MENU_TREEMAP_SHOW_EXTENSIONS = L"IDS_MENU_TREEMAP_SHOW_EXTENSIONS";

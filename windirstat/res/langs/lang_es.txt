@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Convertir archivo a disperso
 IDS_MENU_STATUS_BAR=Mostrar &Barra de Estado
 IDS_MENU_STORAGE_ANALYTICS=Análisis de &almacenamiento
 IDS_MENU_STORAGE_SENSE=Configuración de almacenamiento de Microsoft
+IDS_MENU_SUNBURST=Gráfico de &proyección solar
 IDS_MENU_TOOL_BAR=Mostrar Barra de &Herramientas
 IDS_MENU_TOOLS=Herramientas
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Mostrar extensiones

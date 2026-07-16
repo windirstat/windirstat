@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Fájl ritkítása
 IDS_MENU_STATUS_BAR=Állapo&tsor mutatása
 IDS_MENU_STORAGE_ANALYTICS=Tároló&elemzés
 IDS_MENU_STORAGE_SENSE=Microsoft tárterület-beállítások
+IDS_MENU_SUNBURST=&Többszintű gyűrűdiagram
 IDS_MENU_TOOL_BAR=&Eszköztár mutatása
 IDS_MENU_TOOLS=Eszközök
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Kiterjesztések megjelenítése

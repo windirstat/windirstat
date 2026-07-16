@@ -199,6 +199,7 @@ $script:SettingsHighOutOfRangeValue = 999999
 $script:SettingsSearchHighOutOfRangeValue = 9999999
 $script:SettingsDefaultSearchMaxResults = 10000
 $script:SettingsDefaultTreeMapFolderFramesDrawThreshold = 5
+$script:SettingsDefaultTreeMapMaxDepth = 6
 $script:SettingsMaxBoundedCount = 10000
 $script:SettingsMaxSearchResults = 1000000
 $script:WindowsLocaleUserDefaultLcid = 0x0400
@@ -232,6 +233,8 @@ $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
 $script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
 $script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
+$script:SettingsMinTreeMapMaxDepth = 1
+$script:SettingsMaxTreeMapMaxDepth = 64
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -8121,7 +8124,6 @@ namespace WdsSettingsTest
         BoolField(out, first, "UseBackupRestore", COptions::UseBackupRestore.Obj());
         BoolField(out, first, "UseDrawTextCache", COptions::UseDrawTextCache.Obj());
         BoolField(out, first, "UseFastScanEngine", COptions::UseFastScanEngine.Obj());
-        BoolField(out, first, "UseFlameGraph", COptions::UseFlameGraph.Obj());
         BoolField(out, first, "UseWindowsLocaleSetting", COptions::UseWindowsLocaleSetting.Obj());
         BoolField(out, first, "ProcessHardlinks", COptions::ProcessHardlinks.Obj());
         IntField(out, first, "ConfigPage", COptions::ConfigPage.Obj());
@@ -8144,6 +8146,7 @@ namespace WdsSettingsTest
         IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
         IntField(out, first, "TreeMapScaleFactor", COptions::TreeMapScaleFactor.Obj());
         IntField(out, first, "TreeMapStyle", COptions::TreeMapStyle.Obj());
+        IntField(out, first, "TreeMapMaxDepth", COptions::TreeMapMaxDepth.Obj());
         IntField(out, first, "DarkMode", COptions::DarkMode.Obj());
         IntField(out, first, "FolderHistoryCount", COptions::FolderHistoryCount.Obj());
         RawField(out, first, "DriveListColumnOrder", IntArray(COptions::DriveListColumnOrder.Obj()));
@@ -8400,13 +8403,13 @@ $visualSettings = @(
     'TreeMapHighlightColor',
     'TreeMapLightSourceX',
     'TreeMapLightSourceY',
+    'TreeMapMaxDepth',
     'TreeMapScaleFactor',
     'TreeMapShowExtensions',
     'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
     'UseAbsolutePercentages',
-    'UseFlameGraph',
     'WatcherAutoScroll',
     'WatcherColumnOrder',
     'WatcherColumnWidths',
@@ -8730,7 +8733,8 @@ try {
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $true
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $true
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
-        Assert-Equal $ctx 'UseFlameGraph' $s.UseFlameGraph $false
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth $script:SettingsDefaultTreeMapMaxDepth
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
@@ -8783,7 +8787,6 @@ try {
             UseBackupRestore = 0
             UseDrawTextCache = 0
             UseFastScanEngine = 0
-            UseFlameGraph = 1
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
             FileHashAlgorithm = $script:HashAlgorithm.SHA256
@@ -8805,6 +8808,8 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 3
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' 9
         Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,0,1,1,0,1,0,1,0,0'
         Set-IniValue $sections 'FileTreeView' 'UseAbsolutePercentages' 0
         Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
@@ -8855,7 +8860,8 @@ try {
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $false
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $false
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
-        Assert-Equal $ctx 'UseFlameGraph' $s.UseFlameGraph $true
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth 9
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
@@ -8895,6 +8901,27 @@ try {
         $dump
     }))
 
+    [void] $results.Add((Invoke-Scenario -Name 'TreeMapStyle_MigratesLegacyGraphFlags' -Behavior 'Former graph-selection flags should migrate into the consolidated TreeMapStyle value.' -Body {
+        param($ctx)
+
+        $flameSections = New-BaseIniSections
+        Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
+        $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
+        Assert-Equal $ctx 'Legacy flame graph style' $flame.Dump.TreeMapStyle 2
+
+        $sunburstSections = New-BaseIniSections
+        Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
+        $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
+        Assert-Equal $ctx 'Legacy sunburst style precedence' $sunburst.Dump.TreeMapStyle 3
+
+        [pscustomobject] @{
+            CommandLine = $sunburst.CommandLine
+            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds, 3)
+        }
+    }))
+
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampLowValues' -Behavior 'Out-of-range low numeric settings should clamp to their declared minimums instead of poisoning runtime state.' -Body {
         param($ctx)
 
@@ -8908,6 +8935,8 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
         $s = $dump.Dump
@@ -8921,6 +8950,8 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle minimum' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth minimum' $s.TreeMapMaxDepth $script:SettingsMinTreeMapMaxDepth
 
         $dump
     }))
@@ -8938,6 +8969,8 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
@@ -8951,6 +8984,8 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump
     }))

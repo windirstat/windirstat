@@ -62,7 +62,6 @@ Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
 Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
 Setting<bool> COptions::LargeToolBar(OptionsGeneral, L"LargeToolBar", false);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
-Setting<bool> COptions::UseFlameGraph(OptionsGeneral, L"UseFlameGraph", false);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);
@@ -140,7 +139,10 @@ Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor
 Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200);
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
-Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
+Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle",
+    CTreeMap::GetDefaults().style, static_cast<int>(GraphPane::KDIRSTAT),
+    static_cast<int>(GraphPane::SUNBURST));
+Setting<int> COptions::TreeMapMaxDepth(OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
 Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL);
 Setting<int> COptions::LayoutPermutation(OptionsGeneral, L"LayoutPermutation", 0, 0, 3);
@@ -228,7 +230,8 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 {
     TreeMapOptions = options;
 
-    TreeMapStyle = static_cast<int>(TreeMapOptions.style);
+    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(TreeMapStyle))))
+        TreeMapStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
     TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
@@ -256,6 +259,19 @@ void COptions::PreProcessPersistedSettings()
 
 void COptions::PostProcessPersistedSettings()
 {
+    const int persistedTreeMapStyle = TreeMapStyle;
+
+    // Migrate the former graph-selection flags into TreeMapStyle exactly once.
+    if (IsTreeMapPane(static_cast<GraphPane>(persistedTreeMapStyle)))
+    {
+        if (CDirStatApp::Get()->GetProfileInt(OptionsGeneral, L"UseSunburst", 0) != 0)
+            TreeMapStyle = static_cast<int>(GraphPane::SUNBURST);
+        else if (CDirStatApp::Get()->GetProfileInt(OptionsGeneral, L"UseFlameGraph", 0) != 0)
+            TreeMapStyle = static_cast<int>(GraphPane::FLAME_GRAPH);
+    }
+    (void) CDirStatApp::Get()->WriteProfileString(OptionsGeneral, L"UseSunburst", nullptr);
+    (void) CDirStatApp::Get()->WriteProfileString(OptionsGeneral, L"UseFlameGraph", nullptr);
+
     // File-tree visibility is also consumed by non-UI exports, so initialize its defaults before any view exists.
     if (auto& visibility = FileTreeColumnVisibility.Obj(); visibility.empty())
     {
@@ -284,7 +300,9 @@ void COptions::PostProcessPersistedSettings()
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
     // Load treemap settings
-    TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
+    TreeMapOptions.style = IsTreeMapPane(static_cast<GraphPane>(persistedTreeMapStyle))
+        ? static_cast<CTreeMap::STYLE>(persistedTreeMapStyle)
+        : CTreeMap::GetDefaults().style;
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
     TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;

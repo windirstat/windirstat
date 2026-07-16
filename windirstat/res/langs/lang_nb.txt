@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Konverter til sparsom fil
 IDS_MENU_STATUS_BAR=Vis s&tatuslinje
 IDS_MENU_STORAGE_ANALYTICS=Lagrings&analyse
 IDS_MENU_STORAGE_SENSE=Microsoft-lagringsinnstillinger
+IDS_MENU_SUNBURST=&Ringdiagram
 IDS_MENU_TOOL_BAR=Vis verktøyl&inje
 IDS_MENU_TOOLS=Verktøy
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Vis filendelser

@@ -162,6 +162,7 @@ IDS_MENU_SPARSIFY_FILE=Dosyayı seyrekleştir
 IDS_MENU_STATUS_BAR=Durum Çubuğunu Göster
 IDS_MENU_STORAGE_ANALYTICS=Depolama &Analitiği
 IDS_MENU_STORAGE_SENSE=Microsoft depolama ayarları
+IDS_MENU_SUNBURST=&Güneş ışığı
 IDS_MENU_TOOL_BAR=Araç Çubuğunu Göster
 IDS_MENU_TOOLS=Araçlar
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Uzantıları göster
