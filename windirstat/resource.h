@@ -151,6 +151,7 @@
 #define IDC_PERMS_LEVEL3                1133
 #define IDC_PERMS_LEVEL4                1134
 #define IDC_PERMS_EXCLUDE               1135
+#define IDC_PROCESS_PRIORITY            1136
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -253,6 +254,7 @@
 #define ID_VIEW_FLAMEGRAPH              32956
 #define ID_TREEMAP_PHYSICAL_SIZE        32957
 #define ID_VIEW_ABSOLUTE_PERCENTAGES    32958
+#define ID_VIEW_SUNBURST                32959
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -267,8 +269,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32959
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_COMMAND_VALUE         32960
+#define _APS_NEXT_CONTROL_VALUE         1137
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

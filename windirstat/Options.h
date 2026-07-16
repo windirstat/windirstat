@@ -41,6 +41,19 @@ enum DARKMODE : std::uint8_t
     DM_USE_WINDOWS
 };
 
+enum class GraphPane : std::uint8_t
+{
+    KDIRSTAT = CTreeMap::KDirStatStyle,
+    QDIRSTAT = CTreeMap::SequoiaViewStyle,
+    FLAME_GRAPH,
+    SUNBURST,
+};
+
+[[nodiscard]] constexpr bool IsTreeMapPane(const GraphPane pane) noexcept
+{
+    return pane == GraphPane::KDIRSTAT || pane == GraphPane::QDIRSTAT;
+}
+
 // Layout view types
 enum LAYOUT_VIEW_TYPE : int
 {
@@ -165,7 +178,6 @@ public:
     static Setting<bool> ShowToolBar;
     static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
-    static Setting<bool> UseFlameGraph;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
@@ -195,6 +207,7 @@ public:
     static Setting<int> ConfigPage;
     static Setting<int> LanguageId;
     static Setting<int> FileHashAlgorithm;
+    static Setting<int> ProcessPriority;  // 0=Low, 1=Normal, 2=High
     static Setting<int> LargeFileCount;
     static Setting<int> MinimizeViewThreshold;
     static Setting<int> ScanningThreads;
@@ -212,6 +225,8 @@ public:
     static Setting<int> TreeMapLightSourceY;
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
+    static Setting<int> GraphPaneStyle;
+    static Setting<int> TreeMapMaxDepth;
     static Setting<int> DarkMode;
     static Setting<int> FolderHistoryCount;
     static Setting<RECT> AboutWindowRect;

@@ -199,6 +199,7 @@ $script:SettingsHighOutOfRangeValue = 999999
 $script:SettingsSearchHighOutOfRangeValue = 9999999
 $script:SettingsDefaultSearchMaxResults = 10000
 $script:SettingsDefaultTreeMapFolderFramesDrawThreshold = 5
+$script:SettingsDefaultTreeMapMaxDepth = 6
 $script:SettingsMaxBoundedCount = 10000
 $script:SettingsMaxSearchResults = 1000000
 $script:WindowsLocaleUserDefaultLcid = 0x0400
@@ -232,6 +233,8 @@ $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
 $script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
 $script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
+$script:SettingsMinTreeMapMaxDepth = 1
+$script:SettingsMaxTreeMapMaxDepth = 64
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -8385,12 +8388,12 @@ namespace WdsSettingsTest
         BoolField(out, first, "UseBackupRestore", COptions::UseBackupRestore.Obj());
         BoolField(out, first, "UseDrawTextCache", COptions::UseDrawTextCache.Obj());
         BoolField(out, first, "UseFastScanEngine", COptions::UseFastScanEngine.Obj());
-        BoolField(out, first, "UseFlameGraph", COptions::UseFlameGraph.Obj());
         BoolField(out, first, "UseWindowsLocaleSetting", COptions::UseWindowsLocaleSetting.Obj());
         BoolField(out, first, "ProcessHardlinks", COptions::ProcessHardlinks.Obj());
         IntField(out, first, "ConfigPage", COptions::ConfigPage.Obj());
         IntField(out, first, "LanguageId", COptions::LanguageId.Obj());
         IntField(out, first, "FileHashAlgorithm", COptions::FileHashAlgorithm.Obj());
+        IntField(out, first, "ProcessPriority", COptions::ProcessPriority.Obj());
         IntField(out, first, "LargeFileCount", COptions::LargeFileCount.Obj());
         IntField(out, first, "MinimizeViewThreshold", COptions::MinimizeViewThreshold.Obj());
         IntField(out, first, "ScanningThreads", COptions::ScanningThreads.Obj());
@@ -8408,6 +8411,8 @@ namespace WdsSettingsTest
         IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
         IntField(out, first, "TreeMapScaleFactor", COptions::TreeMapScaleFactor.Obj());
         IntField(out, first, "TreeMapStyle", COptions::TreeMapStyle.Obj());
+        IntField(out, first, "GraphPaneStyle", COptions::GraphPaneStyle.Obj());
+        IntField(out, first, "TreeMapMaxDepth", COptions::TreeMapMaxDepth.Obj());
         IntField(out, first, "DarkMode", COptions::DarkMode.Obj());
         IntField(out, first, "FolderHistoryCount", COptions::FolderHistoryCount.Obj());
         RawField(out, first, "DriveListColumnOrder", IntArray(COptions::DriveListColumnOrder.Obj()));
@@ -8662,15 +8667,16 @@ $visualSettings = @(
     'TreeMapGridColor',
     'TreeMapHeightFactor',
     'TreeMapHighlightColor',
+    'GraphPaneStyle',
     'TreeMapLightSourceX',
     'TreeMapLightSourceY',
+    'TreeMapMaxDepth',
     'TreeMapScaleFactor',
     'TreeMapShowExtensions',
     'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
     'UseAbsolutePercentages',
-    'UseFlameGraph',
     'WatcherAutoScroll',
     'WatcherColumnOrder',
     'WatcherColumnWidths',
@@ -8697,6 +8703,7 @@ $coveredNonVisualSettings = @(
     'LargeFileCount',
     'PermsExcludeRegex',
     'ProcessHardlinks',
+    'ProcessPriority',
     'ScanForDuplicates',
     'ScanningThreads',
     'SearchCase',
@@ -8994,10 +9001,13 @@ try {
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $true
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $true
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
-        Assert-Equal $ctx 'UseFlameGraph' $s.UseFlameGraph $false
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth $script:SettingsDefaultTreeMapMaxDepth
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 1
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
@@ -9047,10 +9057,10 @@ try {
             UseBackupRestore = 0
             UseDrawTextCache = 0
             UseFastScanEngine = 0
-            UseFlameGraph = 1
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
             FileHashAlgorithm = $script:HashAlgorithm.SHA256
+            ProcessPriority = 2
             FilteringMaxAgeDays = 14
             LargeFileCount = 123
             MinimizeViewThreshold = 42
@@ -9069,6 +9079,9 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 1
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' 3
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' 9
         Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,0,1,1,0,1,0,1,0,0'
         Set-IniValue $sections 'FileTreeView' 'UseAbsolutePercentages' 0
         Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
@@ -9119,10 +9132,13 @@ try {
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $false
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $false
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
-        Assert-Equal $ctx 'UseFlameGraph' $s.UseFlameGraph $true
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth 9
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 2
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
@@ -9159,11 +9175,40 @@ try {
         $dump
     }))
 
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_MigratesLegacySettings' -Behavior 'Former graph-selection flags and combined style values should migrate without overwriting the treemap layout.' -Body {
+        param($ctx)
+
+        $flameSections = New-BaseIniSections
+        Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
+        $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
+        Assert-Equal $ctx 'Legacy flame graph pane' $flame.Dump.GraphPaneStyle 2
+        Assert-Equal $ctx 'Legacy flame treemap style preserved' $flame.Dump.TreeMapStyle 1
+
+        $sunburstSections = New-BaseIniSections
+        Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
+        $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
+        Assert-Equal $ctx 'Legacy sunburst pane precedence' $sunburst.Dump.GraphPaneStyle 3
+
+        $combinedSections = New-BaseIniSections
+        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
+        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
+        Assert-Equal $ctx 'Combined sunburst pane migration' $combined.Dump.GraphPaneStyle 3
+        Assert-Equal $ctx 'Combined value restores valid treemap default' $combined.Dump.TreeMapStyle 0
+
+        [pscustomobject] @{
+            CommandLine = $combined.CommandLine
+            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds + $combined.ElapsedSeconds, 3)
+        }
+    }))
+
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampLowValues' -Behavior 'Out-of-range low numeric settings should clamp to their declared minimums instead of poisoning runtime state.' -Body {
         param($ctx)
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsLowOutOfRangeValue
@@ -9172,11 +9217,15 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm $script:SettingsMinHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority minimum' $s.ProcessPriority 0
         Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount $script:SettingsMinLargeFileCount
         Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold $script:SettingsMinMinimizeViewThreshold
         Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads $script:SettingsMinScanningThreads
@@ -9185,6 +9234,9 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle minimum' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle minimum' $s.GraphPaneStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth minimum' $s.TreeMapMaxDepth $script:SettingsMinTreeMapMaxDepth
 
         $dump
     }))
@@ -9194,6 +9246,7 @@ try {
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsHighOutOfRangeValue
@@ -9202,11 +9255,15 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm $script:SettingsMaxHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority maximum' $s.ProcessPriority 2
         Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads $script:SettingsMaxScanningThreads
@@ -9215,6 +9272,9 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump
     }))

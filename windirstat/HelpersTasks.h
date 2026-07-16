@@ -117,8 +117,8 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 // File hashing
 std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pdlg);
 
-// I/O priority and VHD optimization
-void SetProcessIoPriorityHigh() noexcept;
+// Process priority and VHD optimization
+void SetProcessPriority(int level) noexcept;
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept;
 
 // Drive mappings
