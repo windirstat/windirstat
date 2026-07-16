@@ -8146,6 +8146,7 @@ namespace WdsSettingsTest
         IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
         IntField(out, first, "TreeMapScaleFactor", COptions::TreeMapScaleFactor.Obj());
         IntField(out, first, "TreeMapStyle", COptions::TreeMapStyle.Obj());
+        IntField(out, first, "GraphPaneStyle", COptions::GraphPaneStyle.Obj());
         IntField(out, first, "TreeMapMaxDepth", COptions::TreeMapMaxDepth.Obj());
         IntField(out, first, "DarkMode", COptions::DarkMode.Obj());
         IntField(out, first, "FolderHistoryCount", COptions::FolderHistoryCount.Obj());
@@ -8401,6 +8402,7 @@ $visualSettings = @(
     'TreeMapGridColor',
     'TreeMapHeightFactor',
     'TreeMapHighlightColor',
+    'GraphPaneStyle',
     'TreeMapLightSourceX',
     'TreeMapLightSourceY',
     'TreeMapMaxDepth',
@@ -8734,6 +8736,7 @@ try {
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $true
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
         Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 0
         Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth $script:SettingsDefaultTreeMapMaxDepth
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
@@ -8808,7 +8811,8 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
-        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 3
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 1
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' 3
         Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' 9
         Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,0,1,1,0,1,0,1,0,0'
         Set-IniValue $sections 'FileTreeView' 'UseAbsolutePercentages' 0
@@ -8860,7 +8864,8 @@ try {
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $false
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $false
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
-        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 3
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 3
         Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth 9
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
@@ -8901,24 +8906,31 @@ try {
         $dump
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'TreeMapStyle_MigratesLegacyGraphFlags' -Behavior 'Former graph-selection flags should migrate into the consolidated TreeMapStyle value.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_MigratesLegacySettings' -Behavior 'Former graph-selection flags and combined style values should migrate without overwriting the treemap layout.' -Body {
         param($ctx)
 
         $flameSections = New-BaseIniSections
         Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
         $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
-        Assert-Equal $ctx 'Legacy flame graph style' $flame.Dump.TreeMapStyle 2
+        Assert-Equal $ctx 'Legacy flame graph pane' $flame.Dump.GraphPaneStyle 2
+        Assert-Equal $ctx 'Legacy flame treemap style preserved' $flame.Dump.TreeMapStyle 1
 
         $sunburstSections = New-BaseIniSections
         Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
         $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
-        Assert-Equal $ctx 'Legacy sunburst style precedence' $sunburst.Dump.TreeMapStyle 3
+        Assert-Equal $ctx 'Legacy sunburst pane precedence' $sunburst.Dump.GraphPaneStyle 3
+
+        $combinedSections = New-BaseIniSections
+        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
+        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
+        Assert-Equal $ctx 'Combined sunburst pane migration' $combined.Dump.GraphPaneStyle 3
+        Assert-Equal $ctx 'Combined value restores valid treemap default' $combined.Dump.TreeMapStyle 0
 
         [pscustomobject] @{
-            CommandLine = $sunburst.CommandLine
-            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds, 3)
+            CommandLine = $combined.CommandLine
+            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds + $combined.ElapsedSeconds, 3)
         }
     }))
 
@@ -8936,6 +8948,7 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
@@ -8951,6 +8964,7 @@ try {
         Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
         Assert-Equal $ctx 'TreeMapStyle minimum' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle minimum' $s.GraphPaneStyle 0
         Assert-Equal $ctx 'TreeMapMaxDepth minimum' $s.TreeMapMaxDepth $script:SettingsMinTreeMapMaxDepth
 
         $dump
@@ -8970,6 +8984,7 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
@@ -8984,7 +8999,8 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 3
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle 3
         Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump

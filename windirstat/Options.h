@@ -224,6 +224,7 @@ public:
     static Setting<int> TreeMapLightSourceY;
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
+    static Setting<int> GraphPaneStyle;
     static Setting<int> TreeMapMaxDepth;
     static Setting<int> DarkMode;
     static Setting<int> FolderHistoryCount;

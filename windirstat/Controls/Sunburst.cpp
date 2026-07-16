@@ -587,10 +587,8 @@ CItem* CSunburst::FindItemByPoint(const CPoint point) const
     const double dy = static_cast<double>(point.y - m_center.y);
     const double radius = std::hypot(dx, dy);
     if (radius > m_outerRadius) return nullptr;
-    if (radius <= m_centerRadius || m_ringWidth <= 0.0)
-    {
-        return m_layoutRoot;
-    }
+    if (radius <= m_centerRadius) return m_layoutRoot;
+    if (m_ringWidth <= 0.0) return nullptr;
 
     const auto depth = std::min(
         static_cast<std::size_t>((radius - m_centerRadius) / m_ringWidth) + 1,

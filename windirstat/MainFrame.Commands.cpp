@@ -472,7 +472,7 @@ void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
 
 GraphPane CMainFrame::GetGraphPaneType() const
 {
-    return static_cast<GraphPane>(static_cast<int>(COptions::TreeMapStyle));
+    return static_cast<GraphPane>(static_cast<int>(COptions::GraphPaneStyle));
 }
 
 void CMainFrame::SelectGraphPane(const GraphPane pane)
@@ -482,9 +482,12 @@ void CMainFrame::SelectGraphPane(const GraphPane pane)
     if (CWinDirStatModel::Get()->IsScanRunning()) return;
     if (GetGraphPaneType() == pane && IsActiveGraphPaneShown()) return;
 
-    COptions::TreeMapStyle = static_cast<int>(pane);
+    COptions::GraphPaneStyle = static_cast<int>(pane);
     if (IsTreeMapPane(pane))
+    {
+        COptions::TreeMapStyle = static_cast<int>(pane);
         COptions::TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(pane));
+    }
     ShowActiveGraphPane(true);
     RebuildLayout();
 }
