@@ -202,7 +202,7 @@ public:
     static Setting<int> ConfigPage;
     static Setting<int> LanguageId;
     static Setting<int> FileHashAlgorithm;
-    static Setting<int> ScanIoPriority;  // 0=Normal, 1=BelowNormal, 2=Idle
+    static Setting<int> ProcessPriority;  // 0=Low, 1=Normal, 2=High
     static Setting<int> LargeFileCount;
     static Setting<int> MinimizeViewThreshold;
     static Setting<int> ScanningThreads;

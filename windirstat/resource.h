@@ -150,7 +150,7 @@
 #define IDC_PERMS_LEVEL3                1133
 #define IDC_PERMS_LEVEL4                1134
 #define IDC_PERMS_EXCLUDE               1135
-#define IDC_SCAN_IO_PRIORITY            1136
+#define IDC_PROCESS_PRIORITY            1136
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
