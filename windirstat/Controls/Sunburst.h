@@ -40,7 +40,7 @@ public:
     {
         for (const LayoutEntry& entry : m_entries)
         {
-            if (!entry.remainder) std::invoke(visitor, entry.item);
+            if (entry.remainderSize == 0) std::invoke(visitor, entry.item);
         }
     }
 
@@ -56,7 +56,6 @@ private:
         int depth = 0;
         COLORREF branchColor = RGB(78, 86, 99);
         bool visualLeaf = true;
-        bool remainder = false;
     };
 
     struct RingEntry

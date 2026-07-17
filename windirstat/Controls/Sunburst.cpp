@@ -251,12 +251,11 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         int depth;
         COLORREF branchColor;
         ULONGLONG remainderSize;
-        bool remainder;
     };
 
     std::vector<PendingItem> pending;
     pending.reserve(256);
-    pending.push_back({ root, 0.0, FULL_CIRCLE, 0, RGB(78, 86, 99), 0, false });
+    pending.push_back({ root, 0.0, FULL_CIRCLE, 0, RGB(78, 86, 99), 0 });
     std::vector<PendingItem> children;
     children.reserve(256);
     int actualMaxDepth = 0;
@@ -270,10 +269,10 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         const std::size_t entryIndex = m_entries.size();
         m_entries.push_back({ current.item, current.startAngle,
             current.sweepAngle, 0.0, 0.0, current.remainderSize, current.depth,
-            current.branchColor, true, current.remainder });
+            current.branchColor, true });
         actualMaxDepth = std::max(actualMaxDepth, current.depth);
 
-        if (current.remainder || current.depth >= depthLimit || current.item->TmiIsLeaf()
+        if (current.remainderSize != 0 || current.depth >= depthLimit || current.item->TmiIsLeaf()
             || current.item->TmiGetSize() == 0)
         {
             continue;
@@ -312,7 +311,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
                 * static_cast<double>(placedSize) / static_cast<double>(totalSize);
             children.push_back({ child, nextStart,
                 std::max(0.0, childEnd - nextStart), current.depth + 1,
-                branchColor, 0, false });
+                branchColor, 0 });
             nextStart = childEnd;
             ++branchOrdinal;
         }
@@ -322,7 +321,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         if (placedSize < totalSize && remainderSweep > 0.0)
         {
             children.push_back({ current.item, nextStart, remainderSweep, current.depth + 1,
-                current.branchColor, totalSize - placedSize, true });
+                current.branchColor, totalSize - placedSize });
         }
 
         for (const PendingItem& child : children | std::views::reverse)
@@ -363,7 +362,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
             m_rings[static_cast<std::size_t>(depth)].push_back({
                 index, entry.startAngle, entry.startAngle + entry.sweepAngle });
         }
-        (entry.remainder ? m_remainderEntries : m_itemEntries).emplace(entry.item, index);
+        (entry.remainderSize != 0 ? m_remainderEntries : m_itemEntries).emplace(entry.item, index);
     }
 
 #ifdef _DEBUG
@@ -442,7 +441,7 @@ void CSunburst::CreatePath(const LayoutEntry& entry, Gdiplus::GraphicsPath& path
 
 COLORREF CSunburst::GetItemColor(const LayoutEntry& entry) const
 {
-    if (entry.remainder) return RGB(92, 96, 104);
+    if (entry.remainderSize != 0) return RGB(92, 96, 104);
 
     const DWORD rawColor = entry.item->TmiGetGraphColor();
     const DWORD colorFlags = rawColor & CTreeMap::COLORFLAG_MASK;
@@ -594,7 +593,7 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
 {
     if (fontFamily == nullptr || GetLabelPriority(entry) <= 0.0) return false;
 
-    const std::wstring_view name = entry.remainder
+    const std::wstring_view name = entry.remainderSize != 0
         ? std::wstring_view{ L"\u2026" } : entry.item->GetNameView(true);
     if (name.empty()) return false;
 
@@ -815,6 +814,6 @@ CItem* CSunburst::FindItemByPoint(const CPoint point, ULONGLONG* remainderSize) 
         std::ranges::less{}, &RingEntry::endAngle);
     if (found == ring.end() || angle < found->startAngle) return nullptr;
     const LayoutEntry& entry = m_entries[found->entryIndex];
-    if (remainderSize != nullptr && entry.remainder) *remainderSize = entry.remainderSize;
+    if (remainderSize != nullptr && entry.remainderSize != 0) *remainderSize = entry.remainderSize;
     return entry.item;
 }

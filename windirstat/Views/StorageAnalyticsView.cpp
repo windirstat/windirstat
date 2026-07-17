@@ -131,7 +131,6 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     {
         TierInfo tier;
         tier.name = tierNames[i];
-        tier.hasThreshold = (i > 0);
 
         size_t presetIdx = i % numPresets;
         tier.bgLight = presets[presetIdx].bgLight;
@@ -140,7 +139,7 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         tier.borderDark = presets[presetIdx].borderDark;
         tier.accent = presets[presetIdx].accent;
 
-        if (tier.hasThreshold)
+        if (i > 0)
         {
             tier.lblThreshold = std::make_unique<CStatic>();
             std::wstring lblText = tier.name + L" Threshold (Days):";
@@ -193,7 +192,7 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     for (size_t i = 0; i < m_tiers.size(); ++i)
     {
-        if (m_tiers[i].hasThreshold)
+        if (m_tiers[i].editThreshold)
         {
             double defDays = (i < numDefaults) ? defaultThresholds[i] : (defaultThresholds.back() + (i - (numDefaults - 1)) * 100.0);
             m_tiers[i].editThreshold->SetWindowTextW(std::to_wstring(static_cast<int>(defDays)).c_str());
@@ -225,7 +224,7 @@ void CStorageAnalyticsView::OnSize(const UINT nType, const int cx, const int cy)
 
     for (auto& tier : m_tiers)
     {
-        if (tier.hasThreshold && tier.lblThreshold->GetSafeHwnd())
+        if (tier.lblThreshold && tier.editThreshold && tier.lblThreshold->GetSafeHwnd())
         {
             tier.lblThreshold->MoveWindow(panelX, currentY, panelW, labelH);
             currentY += labelH;
@@ -357,7 +356,7 @@ bool CStorageAnalyticsView::AreParametersValid()
     {
         auto& tier = m_tiers[i];
         bool active = (i == 0);
-        if (tier.hasThreshold)
+        if (tier.editThreshold)
         {
             double val = 0.0;
             active = ReadText(*tier.editThreshold);
@@ -430,7 +429,7 @@ void CStorageAnalyticsView::Recalculate()
     for (size_t i = 0; i < m_tiers.size(); ++i)
     {
         auto& tier = m_tiers[i];
-        if (tier.hasThreshold)
+        if (tier.editThreshold)
         {
             tier.editThreshold->GetWindowTextW(text);
             text.Trim();
