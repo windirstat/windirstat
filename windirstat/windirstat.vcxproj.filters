@@ -152,6 +152,12 @@
     <ClInclude Include="Controls\TreeMap.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\TreeMapLayout.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\HilbertMooreTreeMap.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\FlameGraph.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -374,6 +380,12 @@
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeMap.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TreeMapLayout.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\HilbertMooreTreeMap.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FlameGraph.cpp">

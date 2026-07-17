@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "TreeMap.h"
+#include "TreeMapLayout.h"
 #include "Item.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
@@ -52,13 +53,13 @@ struct DrawStateInfo
     double ridgeHeight = 0.0;
     bool asRoot = false;
     int depth = 0;
+    TreeMapLayout::State layoutState;
 };
 
 struct LayoutScratch
 {
-    std::vector<double> childWidth;
-    std::vector<double> rows;
-    std::vector<int> childrenPerRow;
+    std::vector<ULONGLONG> childWeights;
+    std::vector<TreeMapLayout::ChildRegion> childRegions;
 };
 
 struct PreparedColor
@@ -614,153 +615,36 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
     std::vector<FolderDrawInfo> foldersToDraw;
     foldersToDraw.reserve(128);
 
-    auto pushChildState = [this, &stack](CItem* child, const CRect& childRect, const DrawStateInfo& parentState)
+    auto pushChildState = [this, &stack](CItem* child, const CRect& childRect,
+        const DrawStateInfo& parentState,
+        const TreeMapLayout::State layoutState)
     {
         stack.push_back({ parentState.surface, childRect, child,
-            parentState.ridgeHeight * m_options.scaleFactor, false, parentState.depth + 1 });
+            parentState.ridgeHeight * m_options.scaleFactor, false,
+            parentState.depth + 1, layoutState });
     };
 
-    // Lay out children using KDirStat style
-    auto pushKDirStatChildren = [this, &layoutScratch, &pushChildState](CItem* item, const DrawStateInfo& state)
+    auto pushChildren = [this, &layoutScratch, &pushChildState](
+        CItem* item, const DrawStateInfo& state)
     {
-        const bool horizontalRows =
-            KDirStat_ArrangeChildren(item, state.rc, layoutScratch.childWidth,
-                layoutScratch.rows, layoutScratch.childrenPerRow);
+        const int childCount = item->TmiGetChildCount();
+        layoutScratch.childWeights.resize(childCount);
+        for (const int i : std::views::iota(0, childCount))
+            layoutScratch.childWeights[i] = item->TmiGetChild(i)->TmiGetSize();
 
-        const double rowOrigin = horizontalRows ? state.rc.top : state.rc.left;
-        const int rowExtent = horizontalRows ? state.rc.Height() : state.rc.Width();
-        const int columnExtent = horizontalRows ? state.rc.Width() : state.rc.Height();
+        TreeMapLayout::ArrangeChildren({
+            .style = m_options.style,
+            .bounds = state.rc,
+            .parentWeight = item->TmiGetSize(),
+            .weights = layoutScratch.childWeights,
+            .state = state.layoutState,
+        }, layoutScratch.childRegions);
 
-        double top = rowOrigin;
-        size_t childIndex = 0;
-        for (const size_t rowIndex : std::views::iota(0u, layoutScratch.rows.size()))
+        for (const int i : std::views::iota(0, childCount))
         {
-            const double fBottom = top + layoutScratch.rows[rowIndex] * rowExtent;
-            const int bottom = (rowIndex + 1 == layoutScratch.rows.size())
-                ? (horizontalRows ? state.rc.bottom : state.rc.right)
-                : static_cast<int>(fBottom);
-
-            double left = horizontalRows ? state.rc.left : state.rc.top;
-            for (int childInRow = 0; childInRow < layoutScratch.childrenPerRow[rowIndex]; ++childInRow, ++childIndex)
-            {
-                CItem* child = item->TmiGetChild(static_cast<int>(childIndex));
-                const double fRight = left + layoutScratch.childWidth[childIndex] * columnExtent;
-                const bool lastChild = childInRow + 1 == layoutScratch.childrenPerRow[rowIndex]
-                    || (childIndex + 1 < layoutScratch.childWidth.size() && layoutScratch.childWidth[childIndex + 1] == 0.0);
-                const int right = lastChild
-                    ? (horizontalRows ? state.rc.right : state.rc.bottom)
-                    : static_cast<int>(fRight);
-
-                const CRect rcChild = horizontalRows
-                    ? CRect(static_cast<int>(left), static_cast<int>(top), right, bottom)
-                    : CRect(static_cast<int>(top), static_cast<int>(left), bottom, right);
-
-                pushChildState(child, rcChild, state);
-                left = fRight;
-            }
-
-            top = fBottom;
-        }
-    };
-
-    // Lay out children using SequoiaView style
-    auto pushSequoiaViewChildren = [this, &pushChildState](CItem* item, const DrawStateInfo& state)
-    {
-        CRect remaining = state.rc;
-        ULONGLONG remainingSize = item->TmiGetSize();
-        ASSERT(remainingSize > 0);
-
-        const int maxChild = item->TmiGetChildCount();
-        if (maxChild == 0)
-        {
-            return;
-        }
-
-        const double sizePerSquarePixel = static_cast<double>(remainingSize) / remaining.Width() / remaining.Height();
-        int head = 0;
-
-        while (head < maxChild)
-        {
-            ASSERT(remaining.Width() > 0 && remaining.Height() > 0);
-
-            const bool horizontal = remaining.Width() >= remaining.Height();
-            const int rowThickness = horizontal ? remaining.Height() : remaining.Width();
-            const double hh = rowThickness * rowThickness * sizePerSquarePixel;
-            ASSERT(hh > 0);
-
-            const int rowBegin = head;
-            int rowEnd = head;
-
-            double worst = DBL_MAX;
-            const ULONGLONG rmax = item->TmiGetChild(rowBegin)->TmiGetSize();
-            ULONGLONG sum = 0;
-
-            while (rowEnd < maxChild)
-            {
-                const ULONGLONG childSize = item->TmiGetChild(rowEnd)->TmiGetSize();
-                if (childSize == 0)
-                {
-                    rowEnd = maxChild;
-                    break;
-                }
-
-                const double nextSum = static_cast<double>(sum) + childSize;
-                const double ss = nextSum * nextSum;
-                const double nextWorst = std::max(hh * rmax / ss, ss / hh / childSize);
-
-                if (nextWorst > worst)
-                {
-                    break;
-                }
-
-                sum += childSize;
-                ++rowEnd;
-                worst = nextWorst;
-            }
-
-            if (sum == 0)
-            {
-                break;
-            }
-
-            const int remainingExtent = horizontal ? remaining.Width() : remaining.Height();
-            const int rowWidth = (sum < remainingSize)
-                ? std::clamp(static_cast<int>(static_cast<double>(sum) / remainingSize * remainingExtent), 1, remainingExtent)
-                : remainingExtent;
-
-            CRect rcRow = remaining;
-            if (horizontal) rcRow.right = rcRow.left + rowWidth;
-            else rcRow.bottom = rcRow.top + rowWidth;
-
-            double fBegin = horizontal ? rcRow.top : rcRow.left;
-            for (const int i : std::views::iota(rowBegin, rowEnd))
-            {
-                const ULONGLONG childSize = item->TmiGetChild(i)->TmiGetSize();
-                const double fraction = static_cast<double>(childSize) / sum;
-                const double fEnd = fBegin + fraction * (horizontal ? rcRow.Height() : rcRow.Width());
-
-                const bool lastChild = i + 1 == rowEnd
-                    || (i + 1 < item->TmiGetChildCount() && item->TmiGetChild(i + 1)->TmiGetSize() == 0);
-                const int end = lastChild
-                    ? (horizontal ? rcRow.bottom : rcRow.right)
-                    : static_cast<int>(fEnd);
-
-                const CRect rcChild = horizontal
-                    ? CRect(rcRow.left, static_cast<int>(fBegin), rcRow.right, end)
-                    : CRect(static_cast<int>(fBegin), rcRow.top, end, rcRow.bottom);
-
-                pushChildState(item->TmiGetChild(i), rcChild, state);
-                fBegin = fEnd;
-            }
-
-            (horizontal ? remaining.left : remaining.top) += rowWidth;
-            remainingSize -= sum;
-            head += rowEnd - rowBegin;
-
-            if (remaining.Width() <= 0 || remaining.Height() <= 0)
-            {
-                break;
-            }
+            const auto& childRegion = layoutScratch.childRegions[i];
+            if (childRegion.bounds.IsRectEmpty()) continue;
+            pushChildState(item->TmiGetChild(i), childRegion.bounds, state, childRegion.state);
         }
     };
 
@@ -810,17 +694,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
             }
         }
 
-        switch (m_options.style)
-        {
-        case KDirStatStyle:
-            pushKDirStatChildren(item, state);
-            break;
-
-        case SequoiaViewStyle:
-        default:
-            pushSequoiaViewChildren(item, state);
-            break;
-        }
+        pushChildren(item, state);
     }
 
     BuildHitTestIndex();
@@ -971,138 +845,6 @@ void CTreeMap::RenderRectangle(const BitmapView bitmap, const CRect& rc, const s
     {
         DrawSolidRect(bitmap, rc, prepared.color, prepared.brightness);
     }
-}
-
-// Helper functions for KDirStat style
-bool CTreeMap::KDirStat_ArrangeChildren(
-    const CItem* parent,
-    const CRect& parentRect,
-    std::vector<double>& childWidth,
-    std::vector<double>& rows,
-    std::vector<int>& childrenPerRow
-) const
-{
-    ASSERT(!parent->TmiIsLeaf());
-
-    const int childCount = parent->TmiGetChildCount();
-    childWidth.clear();
-    rows.clear();
-    childrenPerRow.clear();
-
-    childWidth.reserve(childCount);
-    rows.reserve(childCount);
-    childrenPerRow.reserve(childCount);
-
-    if (childCount == 0)
-    {
-        return true;
-    }
-
-    if (parent->TmiGetSize() == 0)
-    {
-        rows.emplace_back(1.0);
-        childrenPerRow.emplace_back(childCount);
-        childWidth.resize(childCount, 1.0 / childCount);
-        return true;
-    }
-
-    const bool horizontalRows = parentRect.Width() >= parentRect.Height();
-
-    double width = 1.0;
-    if (horizontalRows)
-    {
-        if (parentRect.Height() > 0)
-        {
-            width = static_cast<double>(parentRect.Width()) / parentRect.Height();
-        }
-    }
-    else if (parentRect.Width() > 0)
-    {
-        width = static_cast<double>(parentRect.Height()) / parentRect.Width();
-    }
-
-    childWidth.resize(childCount);
-    for (int nextChild = 0, childrenUsed = 0; nextChild < childCount; nextChild += childrenUsed)
-    {
-        rows.emplace_back(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
-        childrenPerRow.emplace_back(childrenUsed);
-    }
-
-    return horizontalRows;
-}
-
-double CTreeMap::KDirStat_CalculateNextRow(
-    const CItem* parent,
-    const int nextChild,
-    const double width,
-    int& childrenUsed,
-    std::vector<double>& childWidth
-) const
-{
-    static constexpr double s_minProportion = 0.4;
-    ASSERT(s_minProportion < 1.);
-
-    ASSERT(nextChild < parent->TmiGetChildCount());
-    ASSERT(width >= 1.0);
-
-    const double mySize = static_cast<double>(parent->TmiGetSize());
-    ASSERT(mySize > 0);
-    ULONGLONG sizeUsed = 0;
-    double rowHeight = 0;
-
-    int i = nextChild;
-    const auto childCount = parent->TmiGetChildCount();
-    for (; i < childCount; i++)
-    {
-        const ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
-        if (childSize == 0)
-        {
-            ASSERT(i > nextChild); // first child has size > 0
-            break;
-        }
-
-        sizeUsed += childSize;
-        const double virtualRowHeight = static_cast<double>(sizeUsed) / mySize;
-        ASSERT(virtualRowHeight > 0 && virtualRowHeight <= 1);
-
-        // Rectangle(mySize)    = width * 1.0
-        // Rectangle(childSize) = childWidth * virtualRowHeight
-        // Rectangle(childSize) = childSize / mySize * width / virtualRowHeight;
-
-        const double childWidth_ = childSize / mySize * width / virtualRowHeight;
-
-        if (childWidth_ / virtualRowHeight < s_minProportion)
-        {
-            ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
-            break;
-        }
-        rowHeight = virtualRowHeight;
-    }
-    ASSERT(i > nextChild);
-
-    // Now i-1 is the last child used
-    // and rowHeight is the height of the row.
-
-    // We add the rest of the children, if their size is 0.
-    while (i < childCount && parent->TmiGetChild(i)->TmiGetSize() == 0)
-    {
-        i++;
-    }
-
-    childrenUsed = i - nextChild;
-
-    // Now as we know the rowHeight, we compute the widths of our children
-    for (const int j : std::views::iota(0, childrenUsed))
-    {
-        // Rectangle(1.0 * 1.0) = mySize
-        const double rowSize = mySize * rowHeight;
-        const double childSize = static_cast<double>(parent->TmiGetChild(nextChild + j)->TmiGetSize());
-        const double cw = childSize / rowSize;
-        ASSERT(cw >= 0);
-        childWidth[nextChild + j] = cw;
-    }
-
-    return rowHeight;
 }
 
 bool CTreeMap::IsCushionShading() const

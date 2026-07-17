@@ -19,6 +19,7 @@
 
 #include "pch.h"
 #include "Item.h"
+#include "TreeMapLayout.h"
 
 //
 // CColorSpace. Helper class for manipulating colors. Static members only.
@@ -120,8 +121,7 @@ protected:
 };
 
 //
-// CTreeMap. Can create a treemap. Knows 3 squarification methods:
-// KDirStat-like, SequoiaView-like and Simple.
+// CTreeMap. Can create a treemap using rows, squarified, Hilbert, or Moore layouts.
 //
 // This class is fairly reusable.
 //
@@ -147,20 +147,11 @@ public:
     static constexpr DWORD COLORFLAG_MASK    = 0x03000000;
 
     //
-    // Treemap squarification style.
-    //
-    enum STYLE : std::uint8_t
-    {
-        KDirStatStyle,   // Children are laid out in rows. Similar to the style used by KDirStat.
-        SequoiaViewStyle // The classical squarification as described at https://www.win.tue.nl/~vanwijk/
-    };
-
-    //
     // Collection of all treemap options.
     //
     struct Options
     {
-        STYLE style;         // Squarification method
+        TreeMapLayout::Style style; // Child layout algorithm
         bool grid;           // Whether to draw grid lines
         bool showExtensions; // Whether to show file extensions in treemap
         bool showFolderFrames; // Whether to draw folder borders and headers
@@ -238,12 +229,6 @@ protected:
         std::size_t stride;
     };
 
-    // KDirStat-like squarification
-    bool KDirStat_ArrangeChildren(const CItem* parent, const CRect& parentRect,
-        std::vector<double>& childWidth, std::vector<double>& rows,
-        std::vector<int>& childrenPerRow) const;
-    double KDirStat_CalculateNextRow(const CItem* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
-
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
@@ -271,7 +256,7 @@ protected:
 
     // Default tree map options
     static constexpr Options DefaultOptions = {
-        .style = KDirStatStyle,
+        .style = TreeMapLayout::Style::Rows,
         .grid = false,
         .showExtensions = false,
         .showFolderFrames = false,

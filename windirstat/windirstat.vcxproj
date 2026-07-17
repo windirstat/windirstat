@@ -496,6 +496,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Controls\DrawTextCache.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
+    <ClInclude Include="Controls\TreeMapLayout.h" />
+    <ClInclude Include="Controls\HilbertMooreTreeMap.h" />
     <ClInclude Include="Controls\FlameGraph.h" />
     <ClInclude Include="Controls\Sunburst.h" />
     <ClInclude Include="Controls\XYSlider.h" />
@@ -567,6 +569,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\DrawTextCache.cpp" />
     <ClCompile Include="Controls\TreeListControl.cpp" />
     <ClCompile Include="Controls\TreeMap.cpp" />
+    <ClCompile Include="Controls\TreeMapLayout.cpp" />
+    <ClCompile Include="Controls\HilbertMooreTreeMap.cpp" />
     <ClCompile Include="Controls\FlameGraph.cpp" />
     <ClCompile Include="Controls\Sunburst.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />

@@ -141,10 +141,10 @@ Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle",
-    CTreeMap::GetDefaults().style, CTreeMap::KDirStatStyle, CTreeMap::SequoiaViewStyle);
+    static_cast<int>(CTreeMap::GetDefaults().style),
+    static_cast<int>(TreeMapLayout::Style::Rows), static_cast<int>(TreeMapLayout::Style::Moore));
 Setting<int> COptions::GraphPaneStyle(OptionsTreeMap, L"GraphPaneStyle",
-    static_cast<int>(GraphPane::KDIRSTAT),
-    static_cast<int>(GraphPane::KDIRSTAT), static_cast<int>(GraphPane::SUNBURST));
+    EncodeGraphPane(GraphPane::TreeMap), 0, MaxPersistedGraphPane);
 Setting<int> COptions::TreeMapMaxDepth(OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
 Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL);
@@ -234,8 +234,6 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapOptions = options;
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
-    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(GraphPaneStyle))))
-        GraphPaneStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
     TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
@@ -291,7 +289,7 @@ void COptions::PostProcessPersistedSettings()
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
     // Load treemap settings
-    TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
+    TreeMapOptions.style = static_cast<TreeMapLayout::Style>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
     TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;

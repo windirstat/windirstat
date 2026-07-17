@@ -233,6 +233,8 @@ $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
 $script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
 $script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
+$script:SettingsMaxTreeMapStyle = 3
+$script:SettingsMaxGraphPaneStyle = 5
 $script:SettingsMinTreeMapMaxDepth = 1
 $script:SettingsMaxTreeMapMaxDepth = 64
 
@@ -1611,6 +1613,8 @@ function Get-Win32MenuItems {
 
             $subMenu = [Win32MenuHelper]::GetSubMenu($hMenu, $i)
             if ($subMenu -ne [IntPtr]::Zero) {
+                [Win32MenuHelper]::SendMessage(
+                    $hwnd, $script:WM_INITMENUPOPUP, $subMenu, [IntPtr]$i) | Out-Null
                 [void]$results.Add([PSCustomObject]@{
                     MenuName = $ParentMenuName
                     ItemName = $cleanName
@@ -2989,17 +2993,27 @@ function Test-MenuNavigation {
     # -- View menu --------------------------------------------------------------
     Assert-Pass $g 'View menu opens'
     $viewItems = @($allItems | Where-Object { $_.MenuName -eq 'View' })
-    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph', 'Sunburst') })
-    if ($graphModeItems.Count -eq 3) {
-        Assert-Pass $g 'View menu contains Treemap, Flame Graph, and Sunburst modes'
-        $checkedGraphModes = @($graphModeItems | Where-Object { $_.IsChecked })
+    $treeMapSubmenu = @($viewItems | Where-Object { $_.ItemName -eq 'Treemap' -and $_.IsSubmenu })
+    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Flame Graph', 'Sunburst') })
+    $treeMapStyleItems = @($allItems | Where-Object {
+        $_.MenuName -eq 'View -> Treemap' -and
+        $_.ItemName -in @('Rows', 'Squarified', 'Hilbert', 'Moore')
+    })
+    if ($treeMapSubmenu.Count -eq 1 -and $graphModeItems.Count -eq 2 -and $treeMapStyleItems.Count -eq 4) {
+        Assert-Pass $g 'View menu contains the Treemap submenu, four layouts, Flame Graph, and Sunburst'
+        $checkedGraphModes = @($graphModeItems + $treeMapStyleItems | Where-Object { $_.IsChecked })
         if ($checkedGraphModes.Count -eq 1) {
             Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
         } else {
             Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
         }
     } else {
-        Assert-Fail $g 'View menu contains all graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
+        $foundGraphModes = @(
+            "Treemap submenu: $($treeMapSubmenu.Count)"
+            "styles: $($treeMapStyleItems.ItemName -join ', ')"
+            "modes: $($graphModeItems.ItemName -join ', ')"
+        ) -join '; '
+        Assert-Fail $g 'View menu contains all graph modes' $foundGraphModes
     }
     $zoomItems = @($viewItems | Where-Object { $_.ItemName -like 'Zoom*' })
     if ($zoomItems.Count -ge 1) {
@@ -3823,9 +3837,12 @@ function Test-ScanAndViews {
     # -- Graph renderers: switch every mode against the populated scan ---------
     $g = 'Graphs'
     $graphModes = @(
-        @{ Name = 'Treemap';    Command = 'ID_VIEW_SHOWTREEMAP' },
-        @{ Name = 'Flame Graph'; Command = 'ID_VIEW_FLAMEGRAPH' },
-        @{ Name = 'Sunburst';    Command = 'ID_VIEW_SUNBURST' }
+        @{ Name = 'Rows';        Command = 'ID_VIEW_TREEMAP_ROWS';       MenuName = 'View -> Treemap' },
+        @{ Name = 'Squarified';  Command = 'ID_VIEW_TREEMAP_SQUARIFIED'; MenuName = 'View -> Treemap' },
+        @{ Name = 'Hilbert';     Command = 'ID_VIEW_TREEMAP_HILBERT';    MenuName = 'View -> Treemap' },
+        @{ Name = 'Moore';       Command = 'ID_VIEW_TREEMAP_MOORE';      MenuName = 'View -> Treemap' },
+        @{ Name = 'Flame Graph'; Command = 'ID_VIEW_FLAMEGRAPH';         MenuName = 'View' },
+        @{ Name = 'Sunburst';    Command = 'ID_VIEW_SUNBURST';           MenuName = 'View' }
     )
     foreach ($mode in $graphModes) {
         $commandId = Get-ResourceId $mode.Command
@@ -3837,7 +3854,7 @@ function Test-ScanAndViews {
         if ($script:proc -and !$script:proc.HasExited) {
             $items = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle))
             $selected = $items | Where-Object {
-                $_.MenuName -eq 'View' -and $_.ItemName -eq $mode.Name -and $_.IsChecked
+                $_.MenuName -eq $mode.MenuName -and $_.ItemName -eq $mode.Name -and $_.IsChecked
             } | Select-Object -First 1
             if ($selected) {
                 Assert-Pass $g "$($mode.Name) renders and becomes the selected graph mode"
@@ -9018,7 +9035,9 @@ try {
         $dump
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' -Behavior 'Former graph-selection flags and combined treemap values should have no migration behavior.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' `
+        -Behavior 'Former graph-selection flags and out-of-range treemap values should have no migration behavior.' `
+        -Body {
         param($ctx)
 
         $flameSections = New-BaseIniSections
@@ -9035,10 +9054,11 @@ try {
         Assert-Equal $ctx 'Legacy graph flags ignored' $sunburst.Dump.GraphPaneStyle 0
 
         $combinedSections = New-BaseIniSections
-        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
-        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
+        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 5
+        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'OutOfRangeTreemapStyle'
         Assert-Equal $ctx 'Combined graph value ignored' $combined.Dump.GraphPaneStyle 0
-        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' $combined.Dump.TreeMapStyle 1
+        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' `
+            $combined.Dump.TreeMapStyle $script:SettingsMaxTreeMapStyle
 
         [pscustomobject] @{
             CommandLine = $combined.CommandLine
@@ -9115,8 +9135,8 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 1
-        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle $script:SettingsMaxTreeMapStyle
+        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle $script:SettingsMaxGraphPaneStyle
         Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump

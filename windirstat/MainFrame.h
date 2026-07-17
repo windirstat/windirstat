@@ -277,6 +277,8 @@ protected:
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
     afx_msg void OnViewTreeMap();
+    afx_msg void OnViewTreeMapStyle(UINT commandId);
+    afx_msg void OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI);
     afx_msg void OnViewFlameGraph();
     afx_msg void OnUpdateViewFlameGraph(CCmdUI* pCmdUI);
     afx_msg void OnViewSunburst();

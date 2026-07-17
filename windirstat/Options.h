@@ -43,16 +43,33 @@ enum DARKMODE : std::uint8_t
 
 enum class GraphPane : std::uint8_t
 {
-    KDIRSTAT = CTreeMap::KDirStatStyle,
-    QDIRSTAT = CTreeMap::SequoiaViewStyle,
-    FLAME_GRAPH,
-    SUNBURST,
+    TreeMap,
+    FlameGraph,
+    Sunburst,
 };
 
-[[nodiscard]] constexpr bool IsTreeMapPane(const GraphPane pane) noexcept
+// GraphPaneStyle historically stored treemap layouts (0, 1, 4, 5) alongside
+// flame graph (2) and sunburst (3). Decode those values while keeping the
+// runtime pane model independent from TreeMapLayout::Style.
+[[nodiscard]] constexpr GraphPane DecodeGraphPane(const int persisted) noexcept
 {
-    return pane == GraphPane::KDIRSTAT || pane == GraphPane::QDIRSTAT;
+    if (persisted == 2) return GraphPane::FlameGraph;
+    if (persisted == 3) return GraphPane::Sunburst;
+    return GraphPane::TreeMap;
 }
+
+[[nodiscard]] constexpr int EncodeGraphPane(const GraphPane pane) noexcept
+{
+    switch (pane)
+    {
+    case GraphPane::TreeMap: return 0;
+    case GraphPane::FlameGraph: return 2;
+    case GraphPane::Sunburst: return 3;
+    }
+    return 0;
+}
+
+constexpr int MaxPersistedGraphPane = 5;
 
 // Layout view types
 enum LAYOUT_VIEW_TYPE : int
