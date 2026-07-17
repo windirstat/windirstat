@@ -234,7 +234,6 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
     std::wstring m_operationFlag;
     bool m_hasParsedParam = false;
     bool m_hasPathParam = false;
-    bool m_legacyUninstallRequested = false;
     bool m_malformedFlag = false;
     bool m_invalidPath = false;
     const std::wstring saveToFlag = L"saveto";
@@ -251,7 +250,7 @@ public:
             (m_operationFlag == loadFromFlag && m_hasPathParam);
     }
     bool HasInvalidPath() const noexcept { return m_invalidPath; }
-    bool IsLegacyUninstallRequested() const noexcept { return m_legacyUninstallRequested; }
+    bool IsLegacyUninstallRequested() const noexcept { return m_operationFlag == legacyUninstallFlag; }
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -347,7 +346,6 @@ public:
             else
             {
                 m_operationFlag = param;
-                m_legacyUninstallRequested = true;
             }
         }
     }

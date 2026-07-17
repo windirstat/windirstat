@@ -290,10 +290,10 @@ bool CWinDirStatModel::IsRootDone() const
 
 bool CWinDirStatModel::IsScanRunning() const
 {
-    if (!m_thread.has_value()) return false;
+    if (!m_thread.joinable()) return false;
 
     DWORD exitCode;
-    GetExitCodeThread(const_cast<std::jthread&>(*m_thread).native_handle(), &exitCode);
+    GetExitCodeThread(const_cast<std::jthread&>(m_thread).native_handle(), &exitCode);
     return (exitCode == STILL_ACTIVE);
 }
 

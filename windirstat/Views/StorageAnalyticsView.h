@@ -61,7 +61,6 @@ protected:
 public:
     struct TierInfo {
         std::wstring name;
-        bool hasThreshold = false;
 
         std::unique_ptr<CStatic> lblThreshold;
         std::unique_ptr<CCenteredEdit> editThreshold;
