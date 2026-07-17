@@ -474,9 +474,10 @@ void CWinDirStatModel::OnTreeMapZoomIn()
 
 void CWinDirStatModel::OnTreeMapZoomOut()
 {
-    if (GetZoomItem() != nullptr)
+    CItem* zoomItem = GetZoomItem();
+    if (zoomItem != nullptr && zoomItem->GetParent() != nullptr)
     {
-        SetZoomItem(GetZoomItem()->GetParent());
+        SetZoomItem(zoomItem->GetParent());
         if (!CMainFrame::Get()->IsActiveGraphPaneShown())
             CMainFrame::Get()->RestoreGraphPane(true);
     }
@@ -813,6 +814,8 @@ void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
 void CWinDirStatModel::OnTreeMapSelectParent()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    if (item == nullptr || item->GetParent() == nullptr) return;
+
     PushReselectChild(item);
     CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true, true);
     NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
@@ -821,6 +824,8 @@ void CWinDirStatModel::OnTreeMapSelectParent()
 void CWinDirStatModel::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
+    if (item == nullptr) return;
+
     CFileTreeControl::Get()->ExpandPathToItem(item); // ensure item is visible before selecting
     CFileTreeControl::Get()->SelectItem(item, true, true, true);
     NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);

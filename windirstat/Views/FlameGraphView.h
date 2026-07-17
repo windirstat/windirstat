@@ -46,7 +46,6 @@ protected:
     void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
     [[nodiscard]] bool PrepareDrawing(CDC* pDC, CRect& rect) override;
     void RenderVisualization(CDC* pDC, CRect rect) override;
-    void DrawHoverOverlay(CDC* pDC) override;
 
     void DrawHighlightExtension(CDC* pdc) override;
     void DrawSelection(CDC* pdc) override;
@@ -59,15 +58,18 @@ protected:
     void OnSuspending() override;
     void OnBeforeSizeChanged() override;
     void OnInputStateReset() override;
-    void OnHoverItemChanged(const CItem* oldItem, const CItem* newItem) override;
+    void OnRenderCacheTrimmed() override;
+    [[nodiscard]] bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
     void OnVisualizationChanged(MODEL_CHANGE change) override;
 
-    void InvalidateItem(const CItem* item);
     void DiscardBase(bool invalidateFullHeight);
+    void RenderViewport(CDC* pDC, CRect clip);
+    bool ScrollCachedViewport(int oldPosition);
+    void SetScrollPosition(int position);
     void UpdateScrollBar(int fullHeight, int pageHeight);
     bool EnsureFullHeightForInput();
     int ComputeRowHeight(CDC* pDC) const;
-    int ComputeFlameFullHeight(int width) const;
+    int ComputeFlameFullHeight(int width);
 
     bool m_updatingScrollBar = false;
     bool m_forceScrollBarVisible = false;

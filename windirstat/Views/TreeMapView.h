@@ -40,6 +40,7 @@ protected:
         return L"WinDirStatTreeMapClass";
     }
     void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
+    [[nodiscard]] bool CreateRenderBitmap(CDC* pDC, CSize size) override;
     void RenderVisualization(CDC* pDC, CRect rect) override;
 
     void DrawZoomFrame(CDC* pdc, CRect& rc) const;
@@ -48,6 +49,9 @@ protected:
 
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     [[nodiscard]] CItem* FindItemAtPoint(CPoint point) override;
+    [[nodiscard]] bool HasValidLayout() const override;
+    void ClearVisualizationLayout() override;
+    void OnRenderCacheTrimmed() override;
     void DrillDown(CItem* item) override;
     [[nodiscard]] std::span<const UINT> GetPersistentContextCommands() const override;
 

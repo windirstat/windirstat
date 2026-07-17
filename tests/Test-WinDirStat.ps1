@@ -1317,6 +1317,11 @@ public static class NativeListViewHelper
         return SendBounded(listView, LVM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
     }
 
+    public static int GetSelectedCount(IntPtr listView)
+    {
+        return SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
     public static string[] GetItemTexts(IntPtr listView)
     {
         int count = GetItemCount(listView);
@@ -1396,10 +1401,15 @@ public static class NativeListViewHelper
         return SelectItems(listView, new int[] { index });
     }
 
+    public static bool ClearSelection(IntPtr listView)
+    {
+        return SelectItems(listView, new int[0]);
+    }
+
     public static bool SelectItems(IntPtr listView, int[] indices)
     {
         int count = GetItemCount(listView);
-        if (indices == null || indices.Length == 0) return false;
+        if (indices == null) return false;
         var unique = new HashSet<int>(indices);
         if (unique.Count != indices.Length) return false;
         foreach (int index in indices)
@@ -1443,7 +1453,8 @@ public static class NativeListViewHelper
                 if (SendBounded(listView, LVM_SETITEMSTATE, (IntPtr)index, remoteItem) == IntPtr.Zero)
                     return false;
             }
-            SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
+            if (indices.Length != 0)
+                SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
 
             int selectedCount = SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
             if (selectedCount != indices.Length) return false;
@@ -2976,9 +2987,9 @@ function Test-MenuNavigation {
     # -- View menu --------------------------------------------------------------
     Assert-Pass $g 'View menu opens'
     $viewItems = @($allItems | Where-Object { $_.MenuName -eq 'View' })
-    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph') })
-    if ($graphModeItems.Count -eq 2) {
-        Assert-Pass $g 'View menu contains Treemap and Flame Graph modes'
+    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph', 'Sunburst') })
+    if ($graphModeItems.Count -eq 3) {
+        Assert-Pass $g 'View menu contains Treemap, Flame Graph, and Sunburst modes'
         $checkedGraphModes = @($graphModeItems | Where-Object { $_.IsChecked })
         if ($checkedGraphModes.Count -eq 1) {
             Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
@@ -2986,7 +2997,7 @@ function Test-MenuNavigation {
             Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
         }
     } else {
-        Assert-Fail $g 'View menu contains Treemap and Flame Graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
+        Assert-Fail $g 'View menu contains all graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
     }
     $zoomItems = @($viewItems | Where-Object { $_.ItemName -like 'Zoom*' })
     if ($zoomItems.Count -ge 1) {
@@ -3025,7 +3036,7 @@ function Test-MenuNavigation {
     # -- Options menu -----------------------------------------------------------
     Assert-Pass $g 'Options menu opens'
     $optionsItems = @($allItems | Where-Object { $_.MenuName -eq 'Options' } | ForEach-Object { $_.ItemName })
-    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Show Toolbar', 'Show Statusbar')
+    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Sunburst', 'Show Toolbar', 'Show Statusbar')
     $missingOptions = @($expectedOptions | Where-Object { $_ -notin $optionsItems })
     if ($missingOptions.Count -eq 0) {
         Assert-Pass $g "Options menu contains all $($expectedOptions.Count) expected items"
@@ -3805,6 +3816,100 @@ function Test-ScanAndViews {
         # If no UIA item type (DataItem/ListItem/TreeItem) is found at all, the
         # control has not registered an accessibility provider for individual rows.
         Assert-Skip $g 'File tree items visible' 'No DataItem/ListItem/TreeItem found (custom owner-drawn control)'
+    }
+
+    # -- Graph renderers: switch every mode against the populated scan ---------
+    $g = 'Graphs'
+    $graphModes = @(
+        @{ Name = 'Treemap';    Command = 'ID_VIEW_SHOWTREEMAP' },
+        @{ Name = 'Flame Graph'; Command = 'ID_VIEW_FLAMEGRAPH' },
+        @{ Name = 'Sunburst';    Command = 'ID_VIEW_SUNBURST' }
+    )
+    foreach ($mode in $graphModes) {
+        $commandId = Get-ResourceId $mode.Command
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $commandId)) {
+            Assert-Fail $g "$($mode.Name) command dispatches" "Command ID $commandId could not be posted"
+            continue
+        }
+        Start-Sleep -Milliseconds 500
+        if ($script:proc -and !$script:proc.HasExited) {
+            $items = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle))
+            $selected = $items | Where-Object {
+                $_.MenuName -eq 'View' -and $_.ItemName -eq $mode.Name -and $_.IsChecked
+            } | Select-Object -First 1
+            if ($selected) {
+                Assert-Pass $g "$($mode.Name) renders and becomes the selected graph mode"
+            }
+            else {
+                Assert-Fail $g "$($mode.Name) selected state" 'Renderer remained alive but its View menu item was not checked'
+            }
+        }
+        else {
+            Assert-Fail $g "$($mode.Name) renders" 'Application exited while switching graph modes'
+            break
+        }
+    }
+
+    # Exercise direct graph commands at boundaries where normal menu updates disable them.
+    $selectParentId = Get-ResourceId 'ID_TREEMAP_SELECT_PARENT'
+    for ($i = 0; $i -lt 64; $i++) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 20
+    }
+    Start-Sleep -Milliseconds 300
+    if ($script:proc -and !$script:proc.HasExited) {
+        Assert-Pass $g 'Repeated direct select-parent commands are safe at the root boundary'
+    }
+    else {
+        Assert-Fail $g 'Repeated direct select-parent commands are safe at the root boundary' 'Application exited'
+        return
+    }
+
+    $emptySelectionVerified = $false
+    try {
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $ScanPath -TargetPath $ScanPath
+        if ($nativeRoot -and
+            [NativeListViewHelper]::ClearSelection([IntPtr] $nativeRoot.ListView)) {
+            $emptySelectionVerified = [NativeListViewHelper]::GetSelectedCount([IntPtr] $nativeRoot.ListView) -eq 0
+        }
+    }
+    catch {}
+    if ($emptySelectionVerified) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 300
+        if ($script:proc -and !$script:proc.HasExited) {
+            Assert-Pass $g 'Direct select-parent is safe with a verified empty selection'
+        }
+        else {
+            Assert-Fail $g 'Direct select-parent is safe with a verified empty selection' 'Application exited'
+            return
+        }
+    }
+    else {
+        Assert-Skip $g 'Direct select-parent with an empty selection' 'Native file-tree selection could not be cleared and verified'
+    }
+
+    $zoomResetId = Get-ResourceId 'ID_TREEMAP_ZOOMRESET'
+    $zoomOutId = Get-ResourceId 'ID_TREEMAP_ZOOMOUT'
+    Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    Start-Sleep -Milliseconds 100
+    $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+        Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+    if ($zoomOut -and !$zoomOut.IsEnabled) {
+        Invoke-Win32CommandId -Window $win -CommandId $zoomOutId | Out-Null
+        Start-Sleep -Milliseconds 300
+        $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+            Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+        if ($script:proc -and !$script:proc.HasExited -and $zoomOut -and !$zoomOut.IsEnabled) {
+            Assert-Pass $g 'Direct zoom-out at the global root preserves a valid zoom boundary'
+        }
+        else {
+            Assert-Fail $g 'Direct zoom-out at the global root preserves a valid zoom boundary' 'Command became enabled or application exited'
+        }
+        Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    }
+    else {
+        Assert-Fail $g 'Global zoom boundary established' 'Zoom Out remained enabled after Zoom Reset'
     }
 
     # -- Largest Files tab: verify our large test files appear ------------------
@@ -8911,27 +9016,27 @@ try {
         $dump
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_MigratesLegacySettings' -Behavior 'Former graph-selection flags and combined style values should migrate without overwriting the treemap layout.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' -Behavior 'Former graph-selection flags and combined treemap values should have no migration behavior.' -Body {
         param($ctx)
 
         $flameSections = New-BaseIniSections
         Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
         $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
-        Assert-Equal $ctx 'Legacy flame graph pane' $flame.Dump.GraphPaneStyle 2
-        Assert-Equal $ctx 'Legacy flame treemap style preserved' $flame.Dump.TreeMapStyle 1
+        Assert-Equal $ctx 'Legacy flame flag ignored' $flame.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Independent treemap style preserved' $flame.Dump.TreeMapStyle 1
 
         $sunburstSections = New-BaseIniSections
         Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
         $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
-        Assert-Equal $ctx 'Legacy sunburst pane precedence' $sunburst.Dump.GraphPaneStyle 3
+        Assert-Equal $ctx 'Legacy graph flags ignored' $sunburst.Dump.GraphPaneStyle 0
 
         $combinedSections = New-BaseIniSections
         Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
         $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
-        Assert-Equal $ctx 'Combined sunburst pane migration' $combined.Dump.GraphPaneStyle 3
-        Assert-Equal $ctx 'Combined value restores valid treemap default' $combined.Dump.TreeMapStyle 0
+        Assert-Equal $ctx 'Combined graph value ignored' $combined.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' $combined.Dump.TreeMapStyle 1
 
         [pscustomobject] @{
             CommandLine = $combined.CommandLine

@@ -35,6 +35,7 @@ public:
     void SuspendRecalculationDrawing(bool suspend) final;
     [[nodiscard]] bool IsShowTreeMap() const { return m_showTreeMap; }
     void ShowTreeMap(bool show);
+    void TrimRenderCache();
     void DrawEmptyView();
     HoverInfo GetHoverInfo() const final;
 
@@ -47,9 +48,9 @@ protected:
 
     [[nodiscard]] virtual const wchar_t* GetWindowClassName() const = 0;
     virtual void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) = 0;
+    [[nodiscard]] virtual bool CreateRenderBitmap(CDC* pDC, CSize size);
     [[nodiscard]] virtual bool PrepareDrawing(CDC* pDC, CRect& rect);
     virtual void RenderVisualization(CDC* pDC, CRect rect) = 0;
-    virtual void DrawHoverOverlay(CDC* /*pDC*/) {}
     virtual void DrawSelection(CDC* pDC) = 0;
     virtual void DrawHighlightExtension(CDC* pDC) = 0;
     [[nodiscard]] virtual CItem* FindItemAtPoint(CPoint point) = 0;
@@ -60,7 +61,12 @@ protected:
     virtual void OnSuspending() {}
     virtual void OnBeforeSizeChanged() {}
     virtual void OnInputStateReset() {}
-    virtual void OnHoverItemChanged(const CItem* /*oldItem*/, const CItem* /*newItem*/) {}
+    virtual void OnRenderCacheTrimmed() {}
+    virtual bool UpdateHoverDetails(const CItem* item, bool itemChanged);
+    [[nodiscard]] virtual bool CanReuseVisualizationLayout(MODEL_CHANGE /*change*/) const
+    {
+        return false;
+    }
     virtual void OnVisualizationChanged(MODEL_CHANGE change);
     virtual void DrillDown(CItem* item);
     void ResetZoom(CPoint point);
@@ -69,12 +75,11 @@ protected:
     [[nodiscard]] bool IsReadyToDraw() const;
     [[nodiscard]] bool IsDrawn() const { return m_bitmap.m_hObject != nullptr; }
     void DrawHighlights(CDC* pDC);
-    void Inactivate();
+    void Inactivate(bool clearLayout = true);
     void EmptyView();
 
     [[nodiscard]] CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
     void ClearHover();
-    void SetHoverItem(const CItem* item);
     [[nodiscard]] static bool IsExtensionHighlighted(const CItem* item);
     [[nodiscard]] static const CItem* GetDisplayItem(const CItem* item);
     static void RenderHighlightRectangle(CDC* pDC, CRect& rect);
@@ -82,7 +87,7 @@ protected:
 private:
     void PaintEmptyView(CDC* pDC);
     [[nodiscard]] bool DrawDimmedView(CDC* pDC);
-    void DiscardRenderCache();
+    void DiscardRenderCache(bool clearLayout = true);
     void ResetInputState();
 
 protected:
@@ -91,7 +96,8 @@ protected:
     bool m_drawingSuspended = false;
     bool m_showTreeMap = true;
     bool m_trackingMouse = false;
-    int m_wheelDeltaRemainder = 0;
+    int m_navigationWheelDeltaRemainder = 0;
+    int m_zoomWheelDeltaRemainder = 0;
     const CItem* m_hoverItem = nullptr;
     CSize m_size{ 0, 0 };
     CBitmap m_bitmap;

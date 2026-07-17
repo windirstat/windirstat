@@ -26,12 +26,13 @@ public:
     static constexpr COLORREF BACKGROUND_COLOR = RGB(15, 15, 15);
 
     void DrawSunburst(CDC* pdc, CRect rc, CItem* root, int maxDepth);
-    void DrawHoverItem(CDC* pdc, const CItem* item) const;
     void DrawOutlineItems(CDC* pdc, std::span<const CItem* const> items,
         COLORREF color, float width = 2.0f) const;
 
-    [[nodiscard]] CItem* FindItemByPoint(CPoint point) const;
+    [[nodiscard]] CItem* FindItemByPoint(CPoint point,
+        ULONGLONG* remainderSize = nullptr) const;
     void ClearLayout();
+    void TrimMemory();
 
     template<typename Visitor>
         requires std::invocable<Visitor&, const CItem*>
@@ -39,7 +40,7 @@ public:
     {
         for (const LayoutEntry& entry : m_entries)
         {
-            std::invoke(visitor, entry.item);
+            if (!entry.remainder) std::invoke(visitor, entry.item);
         }
     }
 
@@ -51,27 +52,30 @@ private:
         double sweepAngle = 0.0;
         double innerRadius = 0.0;
         double outerRadius = 0.0;
+        ULONGLONG remainderSize = 0;
         int depth = 0;
+        COLORREF branchColor = RGB(78, 86, 99);
         bool visualLeaf = true;
+        bool remainder = false;
     };
 
     struct RingEntry
     {
-        CItem* item = nullptr;
+        std::size_t entryIndex = 0;
         double startAngle = 0.0;
         double endAngle = 0.0;
     };
 
-    void BuildLayout(CItem* root, const CRect& rc, int maxDepth);
+    void BuildLayout(CItem* root, const CRect& rc, int maxDepth, int dpiX, int dpiY);
     void RenderLayout(CDC* pdc) const;
-    void RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry, bool hover,
+    void RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry,
         Gdiplus::SolidBrush& brush, Gdiplus::Pen& separator) const;
-    void RenderLabel(Gdiplus::Graphics& graphics,
+    [[nodiscard]] bool RenderLabel(Gdiplus::Graphics& graphics,
         const Gdiplus::FontFamily* fontFamily, const LayoutEntry& entry,
-        std::vector<Gdiplus::PointF>& points, std::vector<BYTE>& types,
-        bool hover = false) const;
+        std::vector<Gdiplus::PointF>& points, std::vector<BYTE>& types) const;
     void CreatePath(const LayoutEntry& entry, Gdiplus::GraphicsPath& path) const;
-    [[nodiscard]] COLORREF GetItemColor(const LayoutEntry& entry, bool hover) const;
+    [[nodiscard]] COLORREF GetItemColor(const LayoutEntry& entry) const;
+    [[nodiscard]] double GetLabelPriority(const LayoutEntry& entry) const;
 
     [[nodiscard]] const LayoutEntry* FindLayoutEntry(const CItem* item) const;
 
@@ -81,8 +85,13 @@ private:
     double m_outerRadius = 0.0;
     double m_centerRadius = 0.0;
     double m_ringWidth = 0.0;
+    double m_dpiScale = 1.0;
+    float m_separatorWidth = 1.0f;
+    int m_dpiX = USER_DEFAULT_SCREEN_DPI;
+    int m_dpiY = USER_DEFAULT_SCREEN_DPI;
     int m_maxDepth = 0;
     std::vector<LayoutEntry> m_entries;
     std::unordered_map<const CItem*, std::size_t> m_itemEntries;
+    std::unordered_map<const CItem*, std::size_t> m_remainderEntries;
     std::vector<std::vector<RingEntry>> m_rings;
 };

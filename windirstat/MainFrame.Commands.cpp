@@ -1167,6 +1167,9 @@ void CMainFrame::RebuildLayout(bool resetPositions)
     ::SetParent(hFGV,  hFrame);
     ::SetParent(hSBV,  hFrame);
     const std::array graphWindows{ hTMV, hFGV, hSBV };
+    const std::array<CGraphView*, 3> graphViews{
+        GetTreeMapView(), GetFlameGraphView(), GetSunburstView()
+    };
     for (const HWND graphWindow : graphWindows)
     {
         if (graphWindow != hActiveGraph)
@@ -1184,9 +1187,15 @@ void CMainFrame::RebuildLayout(bool resetPositions)
 
     BuildSplitterLayout(topo, perm, hFTV, hExtV, hActiveGraph);
     ::ShowWindow(hActiveGraph, SW_SHOW);
-    for (const HWND graphWindow : graphWindows)
+    for (std::size_t index = 0; index < graphWindows.size(); ++index)
     {
-        if (graphWindow != hActiveGraph) ::ShowWindow(graphWindow, SW_HIDE);
+        if (graphWindows[index] != hActiveGraph)
+        {
+            ::ShowWindow(graphWindows[index], SW_HIDE);
+            // Hidden panes otherwise retain a full-window bitmap and layout.
+            // Rebuild them on demand instead of keeping three large caches.
+            graphViews[index]->TrimRenderCache();
+        }
     }
     ::ShowWindow(hExtV, SW_SHOW);
 
