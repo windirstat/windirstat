@@ -2881,8 +2881,10 @@ function Test-ApplicationLaunch {
     Assert-Pass $g 'App window appears within timeout'
 
     $title = $win.Current.Name
-    if ($title -like '*WinDirStat*') { Assert-Pass $g 'Window title contains WinDirStat' "Title: '$title'" }
-    else { Assert-Fail $g 'Window title contains WinDirStat' "Got: '$title'" }
+    if ($title -match 'WinDirStat (?:Beta )?\d+\.\d+\.\d+') {
+        Assert-Pass $g 'Window title contains the WinDirStat version' "Title: '$title'"
+    }
+    else { Assert-Fail $g 'Window title contains the WinDirStat version' "Got: '$title'" }
 
     # Menu items are at top-level descendants (UIA exposes them directly)
     $fileItem = Find-MenuItem -Window $win -Name 'File'
