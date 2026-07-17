@@ -53,6 +53,7 @@ protected:
     BOOL m_processHardlinks = TRUE;
     int m_scanningThreads = 0;
     int m_fileHashAlgorithm = HASH_SHA512;
+    int m_processPriority = 1;  // 0=Low, 1=Normal, 2=High
     CStringW m_largestFileCount;
     CStringW m_folderHistoryCount;
 

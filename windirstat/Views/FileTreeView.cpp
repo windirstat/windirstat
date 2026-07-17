@@ -24,34 +24,6 @@ BEGIN_MESSAGE_MAP(CFileTreeView, CControlView)
     ON_WM_CREATE()
 END_MESSAGE_MAP()
 
-void CFileTreeView::CreateColumns(const bool all)
-{
-    if (all)
-    {
-        // Columns should be in enumeration order so initial sort will work
-        InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 250, COL_NAME);
-        InsertCol(IDS_COL_SIZE_PROPORTION, LVCFMT_RIGHT, CItem::GetSizeProportionWidth() + 30, COL_SIZE_PROPORTION);
-        InsertCol(IDS_COL_PERCENTAGE, LVCFMT_RIGHT, 90, COL_PERCENTAGE);
-    }
-
-    // reset sort and remove optional columns
-    m_control.SetSorting(COL_PERCENTAGE, m_control.GetAscendingDefault(COL_PERCENTAGE));
-    m_control.SortItems();
-    while (m_control.DeleteColumn(COL_OPTIONAL_START)) {}
-
-    // add optional columns based on settings
-    if (COptions::ShowColumnSizePhysical) InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 90, COL_SIZE_PHYSICAL);
-    if (COptions::ShowColumnSizeLogical) InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_SIZE_LOGICAL);
-    if (COptions::ShowColumnItems) InsertCol(IDS_COL_ITEMS, LVCFMT_RIGHT, 90, COL_ITEMS);
-    if (COptions::ShowColumnFiles) InsertCol(IDS_COL_FILES, LVCFMT_RIGHT, 90, COL_FILES);
-    if (COptions::ShowColumnFolders) InsertCol(IDS_COL_FOLDERS, LVCFMT_RIGHT, 90, COL_FOLDERS);
-    if (COptions::ShowColumnLastChange) InsertCol(IDS_COL_LAST_CHANGE, LVCFMT_LEFT, 120, COL_LAST_CHANGE);
-    if (COptions::ShowColumnAttributes) InsertCol(IDS_COL_ATTRIBUTES, LVCFMT_LEFT, 90, COL_ATTRIBUTES);
-    if (COptions::ShowColumnOwner) InsertCol(IDS_COL_OWNER, LVCFMT_LEFT, 200, COL_OWNER);
-
-    m_control.OnColumnsInserted();
-}
-
 int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
@@ -62,7 +34,22 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
-    CreateColumns(true);
+    // Columns should be in enumeration order so initial sort will work
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 250, COL_NAME);
+    InsertCol(IDS_COL_SIZE_PROPORTION, LVCFMT_RIGHT, CItem::GetSizeProportionWidth() + 30, COL_SIZE_PROPORTION);
+    InsertCol(IDS_COL_PERCENTAGE, LVCFMT_RIGHT, 90, COL_PERCENTAGE);
+    InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 90, COL_SIZE_PHYSICAL);
+    InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_SIZE_LOGICAL);
+    InsertCol(IDS_COL_ITEMS, LVCFMT_RIGHT, 90, COL_ITEMS);
+    InsertCol(IDS_COL_FILES, LVCFMT_RIGHT, 90, COL_FILES);
+    InsertCol(IDS_COL_FOLDERS, LVCFMT_RIGHT, 90, COL_FOLDERS);
+    InsertCol(IDS_COL_LAST_CHANGE, LVCFMT_LEFT, 120, COL_LAST_CHANGE);
+    InsertCol(IDS_COL_ATTRIBUTES, LVCFMT_LEFT, 90, COL_ATTRIBUTES);
+    InsertCol(IDS_COL_OWNER, LVCFMT_LEFT, 200, COL_OWNER);
+    m_control.SetSorting(COL_SIZE_PROPORTION, m_control.GetAscendingDefault(COL_SIZE_PROPORTION));
+    m_control.OnColumnsInserted(
+        { COL_NAME, COL_SIZE_PROPORTION },
+        { COL_ITEMS, COL_FOLDERS, COL_ATTRIBUTES, COL_OWNER });
 
     return 0;
 }

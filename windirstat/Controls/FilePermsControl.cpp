@@ -20,7 +20,7 @@
 #include "ProgressDlg.h"
 
 CFilePermsControl::CFilePermsControl()
-    : CTreeListControl(COptions::PermsViewColumnOrder.Ptr(), COptions::PermsViewColumnWidths.Ptr(), LF_PERMSLIST, false)
+    : CTreeListControl(COptions::PermsViewColumnOrder.Ptr(), COptions::PermsViewColumnWidths.Ptr(), COptions::PermsViewColumnVisibility.Ptr(), LF_PERMSLIST, false)
 {
     SetOwnsItems(true);
     m_singleton = this;

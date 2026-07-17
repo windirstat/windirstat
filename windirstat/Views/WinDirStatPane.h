@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include <span>
 
 class CItem;
 enum MODEL_CHANGE : std::uint8_t;

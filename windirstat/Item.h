@@ -31,7 +31,6 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_NAME,
     COL_SIZE_PROPORTION,
     COL_PERCENTAGE,
-    COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
     COL_SIZE_LOGICAL,
     COL_ITEMS,
@@ -167,6 +166,7 @@ public:
     void UpwardAddFiles(ULONG fileCount) noexcept;
     void UpwardSubtractFiles(ULONG fileCount) noexcept;
     double GetFraction() const noexcept;
+    double GetAbsoluteFraction() const noexcept;
     ULONG GetFilesCount() const noexcept;
     ULONG GetFoldersCount() const noexcept;
     ULONGLONG GetItemsCount() const noexcept;
@@ -190,8 +190,8 @@ public:
 
     // Paths & Names
     void SetName(std::wstring_view name);
-    std::wstring GetName() const noexcept;
-    std::wstring_view GetNameView() const noexcept;
+    std::wstring GetName(const bool stripDrivePrefix = false) const noexcept;
+    std::wstring_view GetNameView(const bool stripDrivePrefix = false) const noexcept;
     bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
@@ -211,6 +211,8 @@ public:
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     ULONGLONG GetTicksWorked() const noexcept;
     void ResetScanStartTime() const noexcept;
+    static void SuspendScanClock() noexcept;
+    static void ResumeScanClock() noexcept;
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
@@ -282,6 +284,13 @@ private:
     bool MustShowReadJobs() const noexcept;
     COLORREF GetPercentageColor() const noexcept;
     std::wstring GetPathWithoutSlash() const;
+
+    static constexpr ULONGLONG SCAN_CLOCK_SUSPENDED =
+        ULONGLONG{ 1 } << (std::numeric_limits<ULONGLONG>::digits - 1);
+
+    // High bit marks suspension; other bits hold paused milliseconds or frozen active milliseconds.
+    inline static std::atomic<ULONGLONG> scanClockState = 0;
+    static ULONG GetScanTickCount() noexcept;
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(const Finder& finder);
 

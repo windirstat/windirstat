@@ -74,7 +74,6 @@ class FinderBasic final : public Finder
     SmartPointer<HANDLE, decltype(&CloseHandle)> m_handle{CloseHandle, HANDLE{}};
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
-    bool m_firstRun = true;
     bool m_statMode = false;
     bool m_isUncPath = false;
 

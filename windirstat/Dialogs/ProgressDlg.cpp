@@ -78,7 +78,7 @@ BOOL CProgressDlg::OnInitDialog()
 
 void CProgressDlg::StartWorkerThread()
 {
-    m_workerThread.emplace([this]()
+    m_workerThread = std::jthread([this]()
     {
         // Execute the task, passing the dialog pointer
         m_task(this);
@@ -126,19 +126,18 @@ void CProgressDlg::OnCancel()
     // Request cancellation
     CWaitCursor wc;
     m_cancelRequested = true;
-    m_cancelled = true;
 
     // Disable cancel button to prevent multiple clicks
     m_cancelButton.EnableWindow(FALSE);
 
     // Wait for worker thread to complete
-    if (m_workerThread.has_value())
+    if (m_workerThread.joinable())
     {
         ProcessMessagesUntilSignaled([this]
         {
-            if (m_workerThread->joinable()) m_workerThread->join();
+            m_workerThread.join();
         });
-        m_workerThread.reset();
+        m_workerThread = {};
     }
 
     CDialogEx::OnCancel();
@@ -149,10 +148,10 @@ INT_PTR CProgressDlg::DoModal()
     const INT_PTR result = CDialogEx::DoModal();
 
     // Clean up worker thread if still running
-    if (m_workerThread.has_value())
+    if (m_workerThread.joinable())
     {
-        if (m_workerThread->joinable()) m_workerThread->join();
-        m_workerThread.reset();
+        m_workerThread.join();
+        m_workerThread = {};
     }
 
     return result;

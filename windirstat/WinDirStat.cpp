@@ -241,7 +241,6 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
     std::wstring m_operationFlag;
     bool m_hasParsedParam = false;
     bool m_hasPathParam = false;
-    bool m_legacyUninstallRequested = false;
     bool m_malformedFlag = false;
     bool m_invalidPath = false;
     const std::wstring saveToFlag = L"saveto";
@@ -258,7 +257,7 @@ public:
             (m_operationFlag == loadFromFlag && m_hasPathParam);
     }
     bool HasInvalidPath() const noexcept { return m_invalidPath; }
-    bool IsLegacyUninstallRequested() const noexcept { return m_legacyUninstallRequested; }
+    bool IsLegacyUninstallRequested() const noexcept { return m_operationFlag == legacyUninstallFlag; }
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -354,7 +353,6 @@ public:
             else
             {
                 m_operationFlag = param;
-                m_legacyUninstallRequested = true;
             }
         }
     }
@@ -373,9 +371,6 @@ BOOL CDirStatApp::InitInstance()
     // Prevent state saving
     m_bSaveState = FALSE;
 
-    // Set process I/O priority to high for better disk scanning performance
-    SetProcessIoPriorityHigh();
-
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 
@@ -383,6 +378,7 @@ BOOL CDirStatApp::InitInstance()
     SetPortableMode(true, true);
 
     COptions::LoadAppSettings();
+    SetProcessPriority(COptions::ProcessPriority);
     LoadStdProfileSettings(0);
 
     // Silently restart elevated conditionally before any expensive initialization

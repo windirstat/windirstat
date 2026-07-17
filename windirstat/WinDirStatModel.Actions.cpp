@@ -391,14 +391,14 @@ void CWinDirStatModel::OnRemoveShadowCopies()
 void CWinDirStatModel::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(m_showFreeSpace);
+    pCmdUI->SetCheck(COptions::ShowFreeSpace);
 }
 
 void CWinDirStatModel::OnViewShowFreeSpace()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
-        if (m_showFreeSpace)
+        if (COptions::ShowFreeSpace)
         {
             const CItem* free = drive->FindFreeSpaceItem();
             ASSERT(free != nullptr);
@@ -417,8 +417,7 @@ void CWinDirStatModel::OnViewShowFreeSpace()
     }
 
     // Toggle value
-    m_showFreeSpace = !m_showFreeSpace;
-    COptions::ShowFreeSpace = m_showFreeSpace;
+    COptions::ShowFreeSpace = !COptions::ShowFreeSpace;
 
     // Force recalculation and graph refresh
     StartScanningEngine({});
@@ -427,14 +426,14 @@ void CWinDirStatModel::OnViewShowFreeSpace()
 void CWinDirStatModel::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(m_showUnknown);
+    pCmdUI->SetCheck(COptions::ShowUnknown);
 }
 
 void CWinDirStatModel::OnViewShowUnknown()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
-        if (m_showUnknown)
+        if (COptions::ShowUnknown)
         {
             const CItem* unknown = drive->FindUnknownItem();
             ASSERT(unknown != nullptr);
@@ -453,8 +452,7 @@ void CWinDirStatModel::OnViewShowUnknown()
     }
 
     // Toggle value
-    m_showUnknown = !m_showUnknown;
-    COptions::ShowUnknown = m_showUnknown;
+    COptions::ShowUnknown = !COptions::ShowUnknown;
 
     // Force recalculation and graph refresh
     StartScanningEngine({});
@@ -474,9 +472,10 @@ void CWinDirStatModel::OnTreeMapZoomIn()
 
 void CWinDirStatModel::OnTreeMapZoomOut()
 {
-    if (GetZoomItem() != nullptr)
+    CItem* zoomItem = GetZoomItem();
+    if (zoomItem != nullptr && zoomItem->GetParent() != nullptr)
     {
-        SetZoomItem(GetZoomItem()->GetParent());
+        SetZoomItem(zoomItem->GetParent());
         if (!CMainFrame::Get()->IsActiveGraphPaneShown())
             CMainFrame::Get()->RestoreGraphPane(true);
     }
@@ -813,6 +812,8 @@ void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
 void CWinDirStatModel::OnTreeMapSelectParent()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    if (item == nullptr || item->GetParent() == nullptr) return;
+
     PushReselectChild(item);
     CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true, true);
     NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
@@ -821,6 +822,8 @@ void CWinDirStatModel::OnTreeMapSelectParent()
 void CWinDirStatModel::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
+    if (item == nullptr) return;
+
     CFileTreeControl::Get()->ExpandPathToItem(item); // ensure item is visible before selecting
     CFileTreeControl::Get()->SelectItem(item, true, true, true);
     NotifyPanes(MODEL_CHANGE_SELECTION_REFRESH);
@@ -933,6 +936,9 @@ void CWinDirStatModel::OnScanSuspend()
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
 
+    // Freeze the shared item clock only after every scan worker is idle.
+    CItem::SuspendScanClock();
+
     // Mark as suspended
     if (CMainFrame::Get() != nullptr)
         CMainFrame::Get()->SuspendState(true);
@@ -940,6 +946,9 @@ void CWinDirStatModel::OnScanSuspend()
 
 void CWinDirStatModel::OnScanResume()
 {
+    // Resume the shared clock before allowing any scan worker to continue.
+    CItem::ResumeScanClock();
+
     for (auto& queue : m_queues | std::views::values)
         queue.ResumeExecution();
 
@@ -969,13 +978,16 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
         ProcessMessagesUntilSignaled([&queue, &stopReason] { queue.CancelExecution(stopReason); });
 
     // Wait for wrapper thread to complete
-    if (m_thread.has_value())
+    if (m_thread.joinable())
     {
         CWaitCursor waitCursor;
-        ProcessMessagesUntilSignaled([this] { m_thread->join(); });
-        m_thread.reset();
+        ProcessMessagesUntilSignaled([this] { m_thread.join(); });
+        m_thread = {};
         m_queues.clear();
     }
+
+    // Resume the shared clock if a scan is stopped or replaced while suspended.
+    CItem::ResumeScanClock();
 }
 
 void CWinDirStatModel::OnContextMenuExplore(UINT nID)
@@ -1121,7 +1133,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop during inserts.
     // Lambda captures assume the model exists for the duration of the scan.
-    m_thread.emplace([this,items, visualInfo] () mutable
+    m_thread = std::jthread([this,items, visualInfo] () mutable
     {
         // Add items to processing queue
         for (const auto & item : items)

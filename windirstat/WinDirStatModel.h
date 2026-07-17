@@ -71,7 +71,8 @@ enum MODEL_CHANGE : std::uint8_t
     MODEL_CHANGE_EXTENSION_SELECTION, // Type list selected a new extension
     MODEL_CHANGE_ZOOM,                // Only zoom item has changed.
     MODEL_CHANGE_LIST_STYLE,          // Options: List style (grid/stripes) or treelist colors changed
-    MODEL_CHANGE_TREEMAP_STYLE        // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_TREEMAP_STYLE,       // Options: Treemap style (grid, colors etc.) changed
+    MODEL_CHANGE_SIZE_MODE            // Options: Size mode (logical vs physical) changed
 };
 
 //
@@ -179,15 +180,12 @@ private:
     std::vector<CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
-    std::optional<std::jthread> m_thread; // Wrapper thread so we do not occupy the UI thread
+    std::jthread m_thread; // Wrapper thread so we do not occupy the UI thread
 
     // Cache for GetAllSelected to avoid expensive queries
     LOGICAL_FOCUS m_cachedFocus{};
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
-
-    bool m_showFreeSpace = COptions::ShowFreeSpace; // Whether to show the <Free Space> item
-    bool m_showUnknown = COptions::ShowUnknown;   // Whether to show the <Unknown> item
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

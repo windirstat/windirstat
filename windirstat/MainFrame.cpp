@@ -19,6 +19,7 @@
 #include "Filtering.h"
 #include "TreeMapView.h"
 #include "FlameGraphView.h"
+#include "SunburstView.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
 #include "DrawTextCache.h"
@@ -394,7 +395,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_VIEW_GROUP_TYPES, OnViewGroupUnregisteredTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewTreeMap)
     ON_COMMAND(ID_VIEW_FLAMEGRAPH, OnViewFlameGraph)
+    ON_COMMAND(ID_VIEW_SUNBURST, OnViewSunburst)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
+    ON_COMMAND(ID_TREEMAP_PHYSICAL_SIZE, OnViewTreeMapUsePhysical)
+    ON_COMMAND(ID_VIEW_ABSOLUTE_PERCENTAGES, OnViewAbsolutePercentages)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
     ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
@@ -403,9 +407,12 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
     ON_UPDATE_COMMAND_UI(ID_VIEW_FLAMEGRAPH, OnUpdateViewFlameGraph)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SUNBURST, OnUpdateViewSunburst)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_GROUP_TYPES, OnUpdateViewGroupUnregisteredTypes)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
+    ON_UPDATE_COMMAND_UI(ID_TREEMAP_PHYSICAL_SIZE, OnUpdateTreeMapUsePhysical)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_ABSOLUTE_PERCENTAGES, OnUpdateViewAbsolutePercentages)
     ON_COMMAND(ID_TREEMAP_SHOW_EXTENSIONS, OnViewShowExtensionsOnTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_SHOW_EXTENSIONS, OnUpdateViewShowExtensionsOnTreeMap)
     ON_COMMAND(ID_TREEMAP_SHOW_FOLDER_FRAMES, OnViewShowFolderFramesOnTreeMap)
@@ -821,9 +828,18 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
         return FALSE;
     }
 
+    m_sunburstView = new CSunburstView();
+    if (!m_sunburstView->Create(nullptr, nullptr, WS_CHILD, CRect{}, this, 0))
+    {
+        // Create invokes PostNcDestroy on failure, which deletes the view.
+        m_sunburstView = nullptr;
+        return FALSE;
+    }
+
     GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
     GetTreeMapView()->ShowTreeMap(COptions::ShowTreeMap);
     m_flameGraphView->ShowTreeMap(COptions::ShowTreeMap);
+    m_sunburstView->ShowTreeMap(COptions::ShowTreeMap);
 
     m_layoutPopup.Create(this);
     RebuildLayout();
@@ -832,8 +848,9 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 void CMainFrame::UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item)
 {
-    const std::array<CWinDirStatPane*, 4> panes{
-        m_fileTabbedView, m_extensionView, m_treeMapView, m_flameGraphView
+    const std::array<CWinDirStatPane*, 5> panes{
+        m_fileTabbedView, m_extensionView, m_treeMapView, m_flameGraphView,
+        m_sunburstView
     };
     for (CWinDirStatPane* pane : panes)
     {
@@ -1010,38 +1027,63 @@ void CMainFrame::RestoreGraphPane(bool force)
     else  // LT_COLS_SUB_ROWS
         m_subSplitter.RestoreSplitterPos(0.50);
 
-    if (COptions::UseFlameGraph)
+    switch (GetGraphPaneType())
     {
+    case GraphPane::FLAME_GRAPH:
         m_flameGraphView->DrawEmptyView();
         m_flameGraphView->RedrawWindow();
-    }
-    else
-    {
+        break;
+    case GraphPane::SUNBURST:
+        m_sunburstView->DrawEmptyView();
+        m_sunburstView->RedrawWindow();
+        break;
+    case GraphPane::KDIRSTAT:
+    case GraphPane::QDIRSTAT:
         m_treeMapView->DrawEmptyView();
         m_treeMapView->RedrawWindow();
+        break;
     }
 }
 
 void CMainFrame::ShowActiveGraphPane(const bool show)
 {
-    if (COptions::UseFlameGraph)
+    switch (GetGraphPaneType())
+    {
+    case GraphPane::FLAME_GRAPH:
         m_flameGraphView->ShowTreeMap(show);
-    else
+        break;
+    case GraphPane::SUNBURST:
+        m_sunburstView->ShowTreeMap(show);
+        break;
+    case GraphPane::KDIRSTAT:
+    case GraphPane::QDIRSTAT:
         m_treeMapView->ShowTreeMap(show);
+        break;
+    }
 }
 
 bool CMainFrame::IsActiveGraphPaneShown() const
 {
-    return COptions::UseFlameGraph
-        ? m_flameGraphView->IsShowTreeMap()
-        : m_treeMapView->IsShowTreeMap();
+    switch (GetGraphPaneType())
+    {
+    case GraphPane::FLAME_GRAPH: return m_flameGraphView->IsShowTreeMap();
+    case GraphPane::SUNBURST: return m_sunburstView->IsShowTreeMap();
+    case GraphPane::KDIRSTAT:
+    case GraphPane::QDIRSTAT: return m_treeMapView->IsShowTreeMap();
+    }
+    return false;
 }
 
 CWinDirStatPane* CMainFrame::GetActiveGraphPane() const
 {
-    return COptions::UseFlameGraph
-        ? static_cast<CWinDirStatPane*>(m_flameGraphView)
-        : static_cast<CWinDirStatPane*>(m_treeMapView);
+    switch (GetGraphPaneType())
+    {
+    case GraphPane::FLAME_GRAPH: return m_flameGraphView;
+    case GraphPane::SUNBURST: return m_sunburstView;
+    case GraphPane::KDIRSTAT:
+    case GraphPane::QDIRSTAT: return m_treeMapView;
+    }
+    return m_treeMapView;
 }
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)

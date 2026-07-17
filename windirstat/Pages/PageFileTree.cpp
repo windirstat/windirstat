@@ -17,7 +17,7 @@
 
 #include "pch.h"
 #include "PageFileTree.h"
-#include "FileTreeView.h"
+#include "FileTreeControl.h"
 
 IMPLEMENT_DYNAMIC(CPageFileTree, CMFCPropertyPage)
 
@@ -36,6 +36,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_TREECOL_ATTRIBUTES, m_showColumnAttributes);
     DDX_Check(pDX, IDC_TREECOL_LAST_CHANGE, m_showColumnLastChange);
     DDX_Check(pDX, IDC_TREECOL_OWNER, m_showColumnOwner);
+    DDX_Check(pDX, IDC_TREECOL_PERCENTAGE, m_showColumnPercentage);
     for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
     {
         DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_colorButton[i]);
@@ -62,6 +63,7 @@ BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_TREECOL_ATTRIBUTES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_LAST_CHANGE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_OWNER, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_TREECOL_PERCENTAGE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_LOGICAL, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_PHYSICAL, OnBnClickedSetModified)
     ON_WM_CTLCOLOR()
@@ -82,14 +84,16 @@ BOOL CPageFileTree::OnInitDialog()
 
     m_pacmanAnimation = COptions::PacmanAnimation;
     m_showTimeSpent = COptions::ShowTimeSpent;
-    m_showColumnFolders = COptions::ShowColumnFolders;
-    m_showColumnItems = COptions::ShowColumnItems;
-    m_showColumnFiles = COptions::ShowColumnFiles;
-    m_showColumnAttributes = COptions::ShowColumnAttributes;
-    m_showColumnLastChange = COptions::ShowColumnLastChange;
-    m_showColumnOwner = COptions::ShowColumnOwner;
-    m_showColumnSizePhysical = COptions::ShowColumnSizePhysical;
-    m_showColumnSizeLogical = COptions::ShowColumnSizeLogical;
+    const auto& visibility = COptions::FileTreeColumnVisibility.Obj();
+    m_showColumnFolders = COptions::IsColumnVisible(visibility, COL_FOLDERS);
+    m_showColumnItems = COptions::IsColumnVisible(visibility, COL_ITEMS);
+    m_showColumnFiles = COptions::IsColumnVisible(visibility, COL_FILES);
+    m_showColumnAttributes = COptions::IsColumnVisible(visibility, COL_ATTRIBUTES);
+    m_showColumnLastChange = COptions::IsColumnVisible(visibility, COL_LAST_CHANGE);
+    m_showColumnOwner = COptions::IsColumnVisible(visibility, COL_OWNER);
+    m_showColumnPercentage = COptions::IsColumnVisible(visibility, COL_PERCENTAGE);
+    m_showColumnSizePhysical = COptions::IsColumnVisible(visibility, COL_SIZE_PHYSICAL);
+    m_showColumnSizeLogical = COptions::IsColumnVisible(visibility, COL_SIZE_LOGICAL);
 
     m_fileTreeColorCount = COptions::FileTreeColorCount;
     for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
@@ -107,34 +111,35 @@ BOOL CPageFileTree::OnInitDialog()
 
 void CPageFileTree::OnOK()
 {
-    const bool colsChanged =
-        COptions::ShowColumnFolders != (FALSE != m_showColumnFolders) ||
-        COptions::ShowColumnItems != (FALSE != m_showColumnItems) ||
-        COptions::ShowColumnFiles != (FALSE != m_showColumnFiles) ||
-        COptions::ShowColumnAttributes != (FALSE != m_showColumnAttributes) ||
-        COptions::ShowColumnLastChange != (FALSE != m_showColumnLastChange) ||
-        COptions::ShowColumnOwner != (FALSE != m_showColumnOwner) ||
-        COptions::ShowColumnSizePhysical != (FALSE != m_showColumnSizePhysical) ||
-        COptions::ShowColumnSizeLogical != (FALSE != m_showColumnSizeLogical);
-
     UpdateData();
+
     COptions::PacmanAnimation = (FALSE != m_pacmanAnimation);
     COptions::ShowTimeSpent = (FALSE != m_showTimeSpent);
-    COptions::ShowColumnFolders = (FALSE != m_showColumnFolders);
-    COptions::ShowColumnItems = (FALSE != m_showColumnItems);
-    COptions::ShowColumnFiles = (FALSE != m_showColumnFiles);
-    COptions::ShowColumnAttributes = (FALSE != m_showColumnAttributes);
-    COptions::ShowColumnLastChange = (FALSE != m_showColumnLastChange);
-    COptions::ShowColumnOwner = (FALSE != m_showColumnOwner);
-    COptions::ShowColumnSizePhysical = (FALSE != m_showColumnSizePhysical);
-    COptions::ShowColumnSizeLogical = (FALSE != m_showColumnSizeLogical);
+    const auto setColumnVisible = [](const int column, const BOOL visible)
+    {
+        if (auto* control = CFileTreeControl::Get())
+        {
+            control->SetColumnVisible(column, visible != FALSE);
+        }
+        else
+        {
+            COptions::SetColumnVisible(COptions::FileTreeColumnVisibility.Obj(), column, visible != FALSE);
+        }
+    };
+    setColumnVisible(COL_FOLDERS, m_showColumnFolders);
+    setColumnVisible(COL_ITEMS, m_showColumnItems);
+    setColumnVisible(COL_FILES, m_showColumnFiles);
+    setColumnVisible(COL_ATTRIBUTES, m_showColumnAttributes);
+    setColumnVisible(COL_LAST_CHANGE, m_showColumnLastChange);
+    setColumnVisible(COL_OWNER, m_showColumnOwner);
+    setColumnVisible(COL_PERCENTAGE, m_showColumnPercentage);
+    setColumnVisible(COL_SIZE_PHYSICAL, m_showColumnSizePhysical);
+    setColumnVisible(COL_SIZE_LOGICAL, m_showColumnSizeLogical);
     COptions::FileTreeColorCount = m_fileTreeColorCount;
     for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
     {
         COptions::FileTreeColors[i] = m_fileTreeColor[i];
     }
-    if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
-
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     CMFCPropertyPage::OnOK();
 }

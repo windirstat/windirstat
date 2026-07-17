@@ -28,6 +28,9 @@
 
 class CFileTreeView final : public CControlView
 {
+public:
+    void RefreshPercentages() { m_control.Invalidate(); }
+
 protected:
 
     CTreeListControl& GetControl() override { return m_control; }
@@ -37,7 +40,6 @@ protected:
     CFileTreeView() = default;
     ~CFileTreeView() override = default;
 
-    void CreateColumns(bool all = false);
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
     CFileTreeControl m_control;

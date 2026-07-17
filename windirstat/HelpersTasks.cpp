@@ -717,7 +717,6 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        bool isXxHash = false;
         SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHash = { FreeXxHashState, nullptr };
         SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
@@ -732,13 +731,10 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         // xxHash is not provided by BCrypt; use the bundled implementation
         if (algorithm == HASH_XXHASH)
         {
-            ctx.name = name;
-            ctx.isXxHash = true;
             ctx.xxHash = XXH3_createState();
-            if (ctx.xxHash.IsValid())
-            {
-                XXH3_64bits_reset(ctx.xxHash);
-            }
+            if (!ctx.xxHash.IsValid()) continue;
+            ctx.name = name;
+            XXH3_64bits_reset(ctx.xxHash);
             contexts.emplace_back(std::move(ctx));
             continue;
         }
@@ -781,7 +777,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
-                if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
+                if (ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
                 else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
         pProgressDlg->Increment();
@@ -791,7 +787,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     std::wstring result = filePath + L"\n\n";
     for (auto& ctx : contexts)
     {
-        if (ctx.isXxHash)
+        if (ctx.xxHash.IsValid())
         {
             XXH64_canonical_t canonical;
             XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(ctx.xxHash));
@@ -809,15 +805,23 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     return result;
 }
 
-// I/O priority and VHD optimization
-void SetProcessIoPriorityHigh() noexcept
+// Process priority and VHD optimization
+void SetProcessPriority(const int level) noexcept
 {
-    // Define I/O priority constants
+    constexpr std::array cpuPriorities = {
+        IDLE_PRIORITY_CLASS,
+        NORMAL_PRIORITY_CLASS,
+        HIGH_PRIORITY_CLASS
+    };
     constexpr ULONG ProcessIoPriority = 33;
-    constexpr ULONG IoPriorityHigh = 3;
+    const auto priority = static_cast<size_t>(std::clamp(level, 0, 2));
 
-    // Set the I/O priority to high for the current process
-    ULONG ioPriority = IoPriorityHigh;
+    if (SetPriorityClass(GetCurrentProcess(), cpuPriorities[priority]) == FALSE)
+    {
+        VTRACE(L"SetPriorityClass() Failed");
+    }
+
+    ULONG ioPriority = static_cast<ULONG>(priority + 1); // Low, Normal, High
     if (NtSetInformationProcess(GetCurrentProcess(),
         ProcessIoPriority, &ioPriority, sizeof(ioPriority)) != 0)
     {

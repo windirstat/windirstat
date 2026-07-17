@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include <concepts>
 
 //
 // CFlameGraph. Creates a flame graph (icicle plot) visualization.
@@ -33,9 +32,15 @@ public:
     static constexpr int ROW_HEIGHT = 18;
     static constexpr COLORREF BACKGROUND_COLOR = RGB(15, 15, 15);
 
-    // Create and draw a flame graph. Logical geometry is reused when the root,
-    // render rectangle, and DPI-scaled row height have not changed.
-    void DrawFlameGraph(CDC* pdc, CRect rc, const CItem* root, int rowHeight);
+    // Prepare width-dependent geometry and return its full logical height.
+    // Rendering and hit testing reuse this layout until the root, width, or
+    // DPI-scaled row height changes.
+    int PrepareLayout(const CItem* root, int width, int rowHeight);
+
+    // Draw the prepared graph rows. Breadcrumbs are drawn separately so a view
+    // can keep their compact row fixed while the graph scrolls beneath it.
+    void DrawFlameGraph(CDC* pdc) const;
+    void DrawBreadcrumbs(CDC* pdc) const;
 
     // In the resulting layout, find the item below a given coordinate.
     CItem* FindItemByPoint(CItem* item, CPoint point) const;
@@ -43,15 +48,10 @@ public:
     // Access the most recently computed flame-graph layout without using the
     // rectangle cache owned by the treemap projection.
     bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
+    [[nodiscard]] bool IsBreadcrumb(const CItem* item) const;
+    [[nodiscard]] int GetBreadcrumbHeight() const;
     void ClearLayout();
-
-    // Redraw one laid-out item with the hover treatment. The offset
-    // translates logical layout coordinates to the destination DC.
-    void DrawHoverItem(CDC* pdc, const CItem* item, CPoint offset) const;
-
-    // Compute the maximum depth that can actually receive pixels at the
-    // supplied width. This uses the same cumulative rounding as layout.
-    static int ComputeVisibleMaxDepth(const CItem* item, int width, int depth = 0);
+    void TrimMemory();
 
     // Visit only laid-out items intersecting a destination-space clip. The
     // callback receives the item and its full destination rectangle. Iteration
@@ -72,20 +72,12 @@ private:
         CRect rectangle;
         int depth = 0;
         bool breadcrumb = false;
-        std::size_t firstChild = 0;
-        std::size_t childCount = 0;
     };
 
     struct ChildSpan
     {
         CItem* item = nullptr;
         LONG left = 0;
-        LONG right = 0;
-    };
-
-    struct LaidOutChild
-    {
-        CItem* item = nullptr;
         LONG right = 0;
     };
 
@@ -98,7 +90,8 @@ private:
     };
 
     // Build the logical layout independently from viewport rendering.
-    void BuildLayout(const CItem* root, CRect rc, int rowHeight);
+    void BuildLayout(const CItem* root, int width, int rowHeight);
+    void LayoutBreadcrumbs(int width);
     void LayoutItem(const CItem* item, const CRect& rc, int depth);
     LayoutEntry& AddLayoutEntry(const CItem* item, CRect rectangle, int depth,
         bool breadcrumb);
@@ -108,11 +101,11 @@ private:
     static void ComputeChildSpans(const CItem* item, LONG left, LONG right,
         std::vector<ChildSpan>& spans);
 
-    void RenderLayout(CDC* pdc) const;
+    void RenderLayout(CDC* pdc, bool breadcrumbs) const;
     void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle,
-        int depth, bool hover) const;
+        int depth) const;
     void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
-        int depth, bool hover) const;
+        int depth) const;
     void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
         COLORREF color) const;
 
@@ -150,12 +143,11 @@ private:
     int m_rowHeight = ROW_HEIGHT;
     int m_minLabelWidth = 40;
     int m_minLabelHeight = 14;
-    int m_itemInset = 1;
+    int m_separatorThickness = 1;
     int m_textInsetX = 3;
     int m_textInsetY = 1;
     int m_borderThreshold = 4;
     std::unordered_map<const CItem*, LayoutEntry> m_layout;
-    std::vector<LaidOutChild> m_laidOutChildren;
     std::vector<std::vector<RowItem>> m_rows;
     std::vector<CItem*> m_breadcrumbs;
 };

@@ -4,7 +4,7 @@
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 2 of the License, or
-// at your option any later version.
+// (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,45 +19,44 @@
 
 #include "pch.h"
 #include "GraphView.h"
-#include "TreeMap.h"
+#include "Sunburst.h"
 
-class CWinDirStatModel;
-class CItem;
-
-//
-// CTreeMapView. The treemap window.
-//
-class CTreeMapView final : public CGraphView
+// Drill-down view for the multi-layer Sunburst chart.
+class CSunburstView final : public CGraphView
 {
 protected:
-    CTreeMapView() = default;
-    DECLARE_DYNCREATE(CTreeMapView)
+    DECLARE_DYNCREATE(CSunburstView)
 
-    ~CTreeMapView() override = default;
+public:
+    CSunburstView() = default;
+    ~CSunburstView() override = default;
 
+protected:
     [[nodiscard]] const wchar_t* GetWindowClassName() const override
     {
-        return L"WinDirStatTreeMapClass";
+        return L"WinDirStatSunburstClass";
     }
     void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
-    [[nodiscard]] bool CreateRenderBitmap(CDC* pDC, CSize size) override;
     void RenderVisualization(CDC* pDC, CRect rect) override;
-
-    void DrawZoomFrame(CDC* pdc, CRect& rc) const;
-    void DrawHighlightExtension(CDC* pdc) override;
-    void DrawSelection(CDC* pdc) override;
-
-    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
+    void DrawHighlightExtension(CDC* pDC) override;
+    void DrawSelection(CDC* pDC) override;
     [[nodiscard]] CItem* FindItemAtPoint(CPoint point) override;
-    [[nodiscard]] bool HasValidLayout() const override;
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;
-    void DrillDown(CItem* item) override;
-    [[nodiscard]] std::span<const UINT> GetPersistentContextCommands() const override;
+    bool UpdateHoverDetails(const CItem* item, bool itemChanged) override;
+    [[nodiscard]] bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
-    static constexpr int ZoomFrameWidth = 4;
+    CSunburst m_sunburst;
+    std::vector<const CItem*> m_extensionOutlineItems;
+    std::vector<const CItem*> m_selectionOutlineItems;
+    std::wstring m_cachedHighlightExtension;
+    ULONGLONG m_hitRemainderSize = 0;
+    bool m_hoveringRemainder = false;
+    bool m_cachedHighlightUnregistered = false;
+    bool m_extensionOutlineItemsValid = false;
 
-    CTreeMap m_treeMap;               // Treemap generator
+    void ClearExtensionHighlightCache();
 
     DECLARE_MESSAGE_MAP()
 };

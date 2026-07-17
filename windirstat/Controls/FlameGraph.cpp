@@ -52,12 +52,12 @@ static COLORREF GetFlameDepthColor(int depth) noexcept
     return (depth <= 0) ? RGB(200, 200, 200) : palette[static_cast<std::size_t>(depth - 1) % palette.size()];
 }
 
-static constexpr COLORREF ApplyHoverColor(const COLORREF color) noexcept
+static COLORREF GetContrastingTextColor(const COLORREF color) noexcept
 {
-    return RGB(
-        std::min(255, GetRValue(color) + 80),
-        std::max<int>(GetGValue(color), GetBValue(color)),
-        std::min(255, GetBValue(color) + 60));
+    const double luminance = CColorSpace::GetRelativeLuminance(color);
+    const double blackContrast = (luminance + 0.05) / 0.05;
+    const double whiteContrast = 1.05 / (luminance + 0.05);
+    return blackContrast >= whiteContrast ? RGB(0, 0, 0) : RGB(255, 255, 255);
 }
 
 int CFlameGraph::GetDrawableChildCount(const CItem* item)
@@ -68,79 +68,51 @@ int CFlameGraph::GetDrawableChildCount(const CItem* item)
     return static_cast<int>(std::ranges::distance(children.begin(), firstEmpty));
 }
 
-int CFlameGraph::ComputeVisibleMaxDepth(const CItem* item, const int width, const int depth)
+int CFlameGraph::PrepareLayout(const CItem* root, const int width, const int rowHeight)
 {
-    if (item == nullptr || width <= 0)
-    {
-        return depth;
-    }
-
-    struct PendingItem
-    {
-        const CItem* item;
-        int width;
-        int depth;
-    };
-
-    int maxDepth = depth;
-    std::vector<PendingItem> pending;
-    pending.reserve(128);
-    pending.push_back({ item, width, depth });
-
-    std::vector<ChildSpan> childSpans;
-    while (!pending.empty())
-    {
-        const auto current = pending.back();
-        pending.pop_back();
-        maxDepth = std::max(maxDepth, current.depth);
-
-        if (current.item->TmiIsLeaf() || current.item->TmiGetSize() == 0)
-        {
-            continue;
-        }
-
-        ComputeChildSpans(current.item, 0, current.width, childSpans);
-        for (const ChildSpan& span : childSpans | std::views::reverse)
-        {
-            pending.push_back({ span.item, span.right - span.left, current.depth + 1 });
-        }
-    }
-    return maxDepth;
-}
-
-void CFlameGraph::DrawFlameGraph(CDC* pdc, CRect rc, const CItem* root, const int rowHeight)
-{
-    if (pdc == nullptr || root == nullptr || rc.Width() <= 0 || rc.Height() <= 0)
+    if (root == nullptr || width <= 0)
     {
         ClearLayout();
-        return;
+        return 0;
     }
 
     const int effectiveRowHeight = std::max(1, rowHeight);
-    if (m_layoutRoot != root || m_renderArea != rc || m_rowHeight != effectiveRowHeight)
+    if (m_layoutRoot != root || m_renderArea.Width() != width
+        || m_rowHeight != effectiveRowHeight)
     {
-        BuildLayout(root, rc, effectiveRowHeight);
+        BuildLayout(root, width, effectiveRowHeight);
     }
+    return m_renderArea.Height();
+}
+
+void CFlameGraph::DrawFlameGraph(CDC* pdc) const
+{
+    if (pdc == nullptr || m_layoutRoot == nullptr || m_renderArea.IsRectEmpty()) return;
 
     CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
     CSetBkMode soBkMode(pdc, TRANSPARENT);
-
-    // Always paint the background, including for a valid root whose aggregate
-    // size is zero.
-    pdc->FillSolidRect(rc, BACKGROUND_COLOR);
-    RenderLayout(pdc);
+    RenderLayout(pdc, false);
 }
 
-void CFlameGraph::BuildLayout(const CItem* root, const CRect rc, const int rowHeight)
+void CFlameGraph::DrawBreadcrumbs(CDC* pdc) const
+{
+    if (pdc == nullptr || m_breadcrumbs.empty()) return;
+
+    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
+    CSetBkMode soBkMode(pdc, TRANSPARENT);
+    RenderLayout(pdc, true);
+}
+
+void CFlameGraph::BuildLayout(const CItem* root, const int width, const int rowHeight)
 {
     ClearLayout();
 
     m_layoutRoot = root;
-    m_renderArea = rc;
+    m_renderArea.SetRect(0, 0, width, 0);
     m_rowHeight = rowHeight;
     m_minLabelWidth = ScaleMetric(MIN_LABEL_WIDTH, m_rowHeight);
     m_minLabelHeight = ScaleMetric(MIN_LABEL_HEIGHT, m_rowHeight);
-    m_itemInset = ScaleMetric(1, m_rowHeight);
+    m_separatorThickness = ScaleMetric(1, m_rowHeight);
     m_textInsetX = ScaleMetric(3, m_rowHeight);
     m_textInsetY = ScaleMetric(1, m_rowHeight);
     m_borderThreshold = ScaleMetric(4, m_rowHeight);
@@ -156,31 +128,58 @@ void CFlameGraph::BuildLayout(const CItem* root, const CRect rc, const int rowHe
         }
         std::ranges::reverse(m_breadcrumbs);
     }
-    const int breadcrumbHeight = static_cast<int>(m_breadcrumbs.size()) * m_rowHeight;
+    LayoutBreadcrumbs(width);
 
-    // Record breadcrumb ancestors at the top when zoomed.
-    for (std::size_t i = 0; i < m_breadcrumbs.size(); i++)
+    // Keep a zero-sized root interactive as well. This also makes breadcrumb-
+    // only zoom states valid for hover and navigation while a scan is settling.
+    const int graphTop = GetBreadcrumbHeight();
+    LayoutItem(root, CRect(0, graphTop, width, graphTop + m_rowHeight), 0);
+
+    if (!m_rows.empty())
     {
-        CItem* ancestor = m_breadcrumbs[i];
-        const int y = rc.top + static_cast<int>(i) * m_rowHeight;
-        AddLayoutEntry(ancestor, CRect(rc.left, y, rc.right, y + m_rowHeight),
-            static_cast<int>(i), true);
+        m_renderArea.bottom = m_rows.back().front().rectangle.bottom;
+    }
+}
+
+void CFlameGraph::LayoutBreadcrumbs(const int width)
+{
+    if (m_breadcrumbs.empty() || width <= 0) return;
+
+    // One compact sticky row replaces the old full-width row per ancestor.
+    // In the pathological case of more ancestors than horizontal pixels, keep
+    // the nearest ancestors because they are the useful drill-up targets.
+    const std::size_t visibleCount = std::min<std::size_t>(m_breadcrumbs.size(),
+        static_cast<std::size_t>(width));
+    const std::size_t firstVisible = m_breadcrumbs.size() - visibleCount;
+
+    std::size_t totalWeight = 0;
+    for (std::size_t i = firstVisible; i < m_breadcrumbs.size(); i++)
+    {
+        const std::size_t nameLength = m_breadcrumbs[i]->GetNameView(true).size();
+        totalWeight += std::clamp<std::size_t>(nameLength + 2, 4, 32);
     }
 
-    // A zero-sized root has no graph frames, but its breadcrumb layout remains
-    // available for rendering and hit testing.
-    if (root->TmiGetSize() == 0)
+    LONG left = 0;
+    std::size_t cumulativeWeight = 0;
+    for (std::size_t i = 0; i < visibleCount; i++)
     {
-        return;
+        CItem* ancestor = m_breadcrumbs[firstVisible + i];
+        cumulativeWeight += std::clamp<std::size_t>(
+            ancestor->GetNameView(true).size() + 2, 4, 32);
+
+        const LONG remaining = static_cast<LONG>(visibleCount - i - 1);
+        LONG right = width;
+        if (remaining > 0)
+        {
+            right = static_cast<LONG>(std::llround(
+                static_cast<long double>(cumulativeWeight) * width / totalWeight));
+            right = std::clamp<LONG>(right, left + 1, width - remaining);
+        }
+
+        AddLayoutEntry(ancestor, CRect(left, 0, right, m_rowHeight),
+            static_cast<int>(firstVisible + i), true);
+        left = right;
     }
-
-    // Adjust main layout rect to start below breadcrumbs
-    CRect mainRc = rc;
-    mainRc.top += breadcrumbHeight;
-    if (mainRc.Height() < m_rowHeight) return;
-
-    LayoutItem(root,
-        CRect(mainRc.left, mainRc.top, mainRc.right, mainRc.top + m_rowHeight), 0);
 }
 
 void CFlameGraph::ClearLayout()
@@ -188,9 +187,27 @@ void CFlameGraph::ClearLayout()
     m_layoutRoot = nullptr;
     m_renderArea.SetRectEmpty();
     m_layout.clear();
-    m_laidOutChildren.clear();
     m_rows.clear();
     m_breadcrumbs.clear();
+}
+
+void CFlameGraph::TrimMemory()
+{
+    ClearLayout();
+    decltype(m_layout){}.swap(m_layout);
+    decltype(m_rows){}.swap(m_rows);
+    decltype(m_breadcrumbs){}.swap(m_breadcrumbs);
+}
+
+bool CFlameGraph::IsBreadcrumb(const CItem* item) const
+{
+    const auto found = m_layout.find(item);
+    return found != m_layout.end() && found->second.breadcrumb;
+}
+
+int CFlameGraph::GetBreadcrumbHeight() const
+{
+    return m_breadcrumbs.empty() ? 0 : m_rowHeight;
 }
 
 bool CFlameGraph::TryGetItemRectangle(const CItem* item, CRect& rectangle) const
@@ -305,34 +322,25 @@ void CFlameGraph::LayoutItem(const CItem* item, const CRect& rc, const int depth
             continue;
         }
 
-        LayoutEntry& layout = AddLayoutEntry(current.item, current.rectangle,
-            current.depth, false);
+        AddLayoutEntry(current.item, current.rectangle, current.depth, false);
 
         if (current.item->TmiIsLeaf() || current.item->TmiGetSize() == 0)
         {
             continue;
         }
 
-        const LONG childRowTop = current.rectangle.top + m_rowHeight;
-        if (childRowTop >= m_renderArea.bottom)
+        if (current.rectangle.bottom > LONG_MAX - m_rowHeight)
         {
             continue;
         }
-        const LONG childRowBottom = std::min<LONG>(childRowTop + m_rowHeight,
-            m_renderArea.bottom);
+        const LONG childRowTop = current.rectangle.bottom;
+        const LONG childRowBottom = childRowTop + m_rowHeight;
 
         ComputeChildSpans(current.item, current.rectangle.left, current.rectangle.right,
             childSpans);
         if (childSpans.empty())
         {
             continue;
-        }
-
-        layout.firstChild = m_laidOutChildren.size();
-        layout.childCount = childSpans.size();
-        for (const ChildSpan& span : childSpans)
-        {
-            m_laidOutChildren.push_back({ span.item, span.right });
         }
 
         // Reverse insertion preserves the recursive pre-order traversal when
@@ -346,27 +354,28 @@ void CFlameGraph::LayoutItem(const CItem* item, const CRect& rc, const int depth
     }
 }
 
-void CFlameGraph::RenderLayout(CDC* pdc) const
+void CFlameGraph::RenderLayout(CDC* pdc, const bool breadcrumbs) const
 {
     CRect clip;
     if (pdc->GetClipBox(&clip) == ERROR) clip = m_renderArea;
 
-    VisitRowItems(clip, CPoint(0, 0), [this, pdc](const RowItem& entry,
+    VisitRowItems(clip, CPoint(0, 0), [this, pdc, breadcrumbs](const RowItem& entry,
         const CRect& rectangle)
     {
+        if (entry.breadcrumb != breadcrumbs) return;
         if (entry.breadcrumb)
         {
-            RenderBreadcrumb(pdc, entry.item, rectangle, entry.depth, false);
+            RenderBreadcrumb(pdc, entry.item, rectangle, entry.depth);
         }
         else
         {
-            RenderItem(pdc, entry.item, rectangle, entry.depth, false);
+            RenderItem(pdc, entry.item, rectangle, entry.depth);
         }
     });
 }
 
 void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle,
-    const int depth, const bool hover) const
+    const int depth) const
 {
     CRect rc = rectangle;
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
@@ -394,18 +403,16 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
             std::min(255, GetBValue(drawColor) + 60));
     }
 
-    if (hover)
-    {
-        drawColor = ApplyHoverColor(drawColor);
-    }
-
     pdc->FillSolidRect(rc, drawColor);
 
     if (item->IsTypeOrFlag(IT_DIRECTORY)
         && rc.Width() > m_borderThreshold && rc.Height() > m_borderThreshold)
     {
-        CBrush borderBrush(DimColor(drawColor, 0.6f));
-        pdc->FrameRect(&rc, &borderBrush);
+        // Reuse the process-wide DC brush instead of constructing a GDI brush
+        // for every directory tile.
+        ::SetDCBrushColor(pdc->GetSafeHdc(), DimColor(drawColor, 0.6f));
+        ::FrameRect(pdc->GetSafeHdc(), &rc,
+            static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
     }
 
     if (!item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
@@ -413,40 +420,43 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
         RenderLabel(pdc, item, rc, drawColor);
     }
 
-    // 1px gap at right and bottom edges — each item draws its own right/bottom
-    // separator, so adjacent items have exactly 1px of background between them
-    if (rc.Width() >= 2 && rc.Height() >= 2)
+    // Each item owns its right and bottom separators. Solid strips avoid a GDI
+    // pen allocation per tile and remain crisp at every scaled row height.
+    const int separator = std::min({ m_separatorThickness, rc.Width(), rc.Height() });
+    if (separator > 0 && rc.Width() > separator && rc.Height() > separator)
     {
-        CPen gapPen(PS_SOLID, 1, BACKGROUND_COLOR);
-        CSelectObject soPen(pdc, &gapPen);
-        pdc->MoveTo(rc.right - 1, rc.top);
-        pdc->LineTo(rc.right - 1, rc.bottom);
-        pdc->MoveTo(rc.left, rc.bottom - 1);
-        pdc->LineTo(rc.right, rc.bottom - 1);
+        pdc->FillSolidRect(CRect(rc.right - separator, rc.top,
+            rc.right, rc.bottom), BACKGROUND_COLOR);
+        pdc->FillSolidRect(CRect(rc.left, rc.bottom - separator,
+            rc.right, rc.bottom), BACKGROUND_COLOR);
     }
 }
 
 void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
-    const int depth, const bool hover) const
+    const int depth) const
 {
     CRect rc = rectangle;
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
 
+    const int separator = std::min({ m_separatorThickness, rc.Width(), rc.Height() });
     CRect fillRc = rc;
-    fillRc.DeflateRect(m_itemInset, m_itemInset);
+    fillRc.right -= separator;
+    fillRc.bottom -= separator;
     COLORREF color = DimColor(GetFlameDepthColor(depth), 0.35f);
-    if (hover)
+    if (!fillRc.IsRectEmpty())
     {
-        color = ApplyHoverColor(color);
+        pdc->FillSolidRect(fillRc, color);
+        RenderLabel(pdc, item, fillRc, color);
     }
-    pdc->FillSolidRect(fillRc, color);
 
-    RenderLabel(pdc, item, fillRc, color);
-
-    CPen separator(PS_SOLID, 1, RGB(80, 80, 90));
-    CSelectObject soPen(pdc, &separator);
-    pdc->MoveTo(rc.left, rc.bottom - 1);
-    pdc->LineTo(rc.right, rc.bottom - 1);
+    if (separator > 0)
+    {
+        static constexpr COLORREF separatorColor = RGB(80, 80, 90);
+        pdc->FillSolidRect(CRect(rc.right - separator, rc.top,
+            rc.right, rc.bottom), separatorColor);
+        pdc->FillSolidRect(CRect(rc.left, rc.bottom - separator,
+            rc.right, rc.bottom), separatorColor);
+    }
 }
 
 void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
@@ -454,105 +464,31 @@ void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
 {
     if (rc.Width() < m_minLabelWidth || rc.Height() < m_minLabelHeight) return;
 
-    const auto name = item->GetNameView();
+    const auto name = item->GetNameView(true);
     if (name.empty()) return;
 
-    const double brightness = CColorSpace::GetColorBrightness(color);
-    pdc->SetTextColor(brightness > 0.5 ? RGB(0, 0, 0) : RGB(255, 255, 255));
+    pdc->SetTextColor(GetContrastingTextColor(color));
     CRect textRc = rc;
     textRc.DeflateRect(m_textInsetX, m_textInsetY);
     pdc->DrawText(name.data(), static_cast<int>(name.size()), &textRc,
         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
 }
 
-void CFlameGraph::DrawHoverItem(CDC* pdc, const CItem* item, const CPoint offset) const
-{
-    if (pdc == nullptr || item == nullptr) return;
-
-    const auto found = m_layout.find(item);
-    if (found == m_layout.end()) return;
-
-    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
-    CSetBkMode soBkMode(pdc, TRANSPARENT);
-    CRect rectangle = found->second.rectangle;
-    rectangle.OffsetRect(offset);
-    if (found->second.breadcrumb)
-    {
-        RenderBreadcrumb(pdc, item, rectangle, found->second.depth, true);
-    }
-    else
-    {
-        RenderItem(pdc, item, rectangle, found->second.depth, true);
-    }
-}
-
 CItem* CFlameGraph::FindItemByPoint(CItem* item, CPoint point) const
 {
-    if (item == nullptr || !m_renderArea.PtInRect(point)) return nullptr;
+    if (item == nullptr || item != m_layoutRoot || !m_renderArea.PtInRect(point)
+        || m_rows.empty()) return nullptr;
 
-    const LONG breadcrumbRow = (point.y - m_renderArea.top) / m_rowHeight;
-    if (breadcrumbRow < std::ssize(m_breadcrumbs))
-    {
-        return m_breadcrumbs[static_cast<std::size_t>(breadcrumbRow)];
-    }
+    const auto rowIndex = static_cast<std::size_t>(
+        (point.y - m_renderArea.top) / m_rowHeight);
+    if (rowIndex >= m_rows.size()) return nullptr;
 
-    const auto rootFound = m_layout.find(item);
-    if (rootFound == m_layout.end() || rootFound->second.breadcrumb) return nullptr;
-    const CRect& rootRc = rootFound->second.rectangle;
-
-    // Determine which depth row the click falls in based on Y coordinate
-    const int targetDepth = (point.y - rootRc.top) / m_rowHeight;
-    if (targetDepth < 0) return nullptr;
-
-    // Walk down from the starting item to the target depth
-    CItem* current = item;
-    int depth = 0;
-
-    while (current != nullptr && depth < targetDepth)
-    {
-        if (current->TmiIsLeaf() || current->TmiGetSize() == 0)
-        {
-            return nullptr;
-        }
-
-        const auto currentFound = m_layout.find(current);
-        if (currentFound == m_layout.end() || currentFound->second.childCount == 0)
-        {
-            return nullptr;
-        }
-
-        const std::size_t firstIndex = currentFound->second.firstChild;
-        const std::size_t childCount = currentFound->second.childCount;
-        if (firstIndex > m_laidOutChildren.size()
-            || childCount > m_laidOutChildren.size() - firstIndex)
-        {
-            return nullptr;
-        }
-
-        const auto first = m_laidOutChildren.begin() + static_cast<std::ptrdiff_t>(firstIndex);
-        const auto last = first + static_cast<std::ptrdiff_t>(childCount);
-        const auto childPosition = std::ranges::upper_bound(first, last, point.x,
-            std::ranges::less{}, &LaidOutChild::right);
-        if (childPosition == last) return nullptr;
-
-        CItem* next = childPosition->item;
-        const auto childFound = m_layout.find(next);
-        if (childFound == m_layout.end()) return nullptr;
-
-        const CRect& childRectangle = childFound->second.rectangle;
-        if (childFound->second.breadcrumb
-            || childFound->second.depth != currentFound->second.depth + 1
-            || point.x < childRectangle.left || point.x >= childRectangle.right)
-        {
-            return nullptr;
-        }
-
-        current = next;
-        depth++;
-    }
-
-    const auto currentFound = m_layout.find(current);
-    return currentFound != m_layout.end() && currentFound->second.rectangle.PtInRect(point)
-        ? current
+    const auto& row = m_rows[rowIndex];
+    const auto found = std::ranges::upper_bound(row, point.x,
+        std::ranges::less{}, [](const RowItem& entry) {
+            return entry.rectangle.right;
+        });
+    return found != row.end() && found->rectangle.PtInRect(point)
+        ? const_cast<CItem*>(found->item)
         : nullptr;
 }

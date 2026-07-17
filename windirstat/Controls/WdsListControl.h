@@ -16,8 +16,6 @@
 //
 
 #pragma once
-#include <span>
-
 #include "pch.h"
 
 class CWdsListControl;
@@ -101,9 +99,9 @@ class CWdsListControl : public CListCtrl
     DECLARE_DYNAMIC(CWdsListControl)
 
 public:
-    CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
+    CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility);
     ~CWdsListControl() override = default;
-    void OnColumnsInserted();
+    void OnColumnsInserted(std::initializer_list<int> requiredColumns = {}, std::initializer_list<int> defaultHiddenColumns = {});
     virtual void SysColorChanged();
 
     int GetRowHeight() const;
@@ -147,6 +145,9 @@ public:
     // Sorting functionality
     const SSorting& GetSorting() const;
     int ColumnToSubItem(int col) const;
+    int SubItemToColumn(int subitem) const;
+    bool IsColumnVisible(int subitem) const;
+    void SetColumnVisible(int subitem, bool visible);
     void SetSorting(const SSorting& sorting);
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
@@ -162,9 +163,13 @@ public:
 
 protected:
     void InitializeColors();
+    void ApplyColumnVisibility(int column);
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);
+    bool IsColumnRequired(int subitem) const;
+    virtual void OnItemContextMenu(CPoint /*point*/) {}
     void SavePersistentAttributes() const;
+    void ShowColumnContextMenu(CPoint point);
 
     // Owner-drawn related members
     std::vector<CWdsListItem*> m_items;
@@ -181,6 +186,9 @@ protected:
     // Sorting related members (merged from CSortingListControl)
     std::vector<int>* m_columnOrder = nullptr;
     std::vector<int>* m_columnWidths = nullptr;
+    std::vector<int>* m_columnVisibility = nullptr;
+    std::vector<int> m_defaultColumnWidths;
+    std::vector<int> m_requiredColumns;
     SSorting m_sorting;
     int m_indicatedColumn = -1;
 
@@ -188,9 +196,9 @@ protected:
     static constexpr DWORD WM_SELECTION_CHANGED = WM_APP + 1;
     bool m_selectionChangePending = false;
     mutable HFONT m_cachedFont = NULL;
-    mutable bool m_isFontCached = false;
 
     DECLARE_MESSAGE_MAP()
+    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
@@ -199,6 +207,7 @@ protected:
     afx_msg void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
+    afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
     afx_msg virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 };

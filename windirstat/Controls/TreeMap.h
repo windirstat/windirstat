@@ -26,11 +26,28 @@
 class CColorSpace final
 {
 public:
-    // Returns the brightness of color. Brightness is a value between 0 and 1.0.
-    static constexpr double GetColorBrightness(COLORREF color)
+    // Returns the arithmetic brightness used by MakeBrightColor.
+    static constexpr double GetColorBrightness(const COLORREF color)
     {
-        const unsigned int crIndividualIntensitySum = GetRValue(color) + GetGValue(color) + GetBValue(color);
-        return crIndividualIntensitySum / 255.0 / 3.0;
+        const unsigned int intensity = GetRValue(color) + GetGValue(color) + GetBValue(color);
+        return intensity / 255.0 / 3.0;
+    }
+
+    // Returns the WCAG relative luminance of an sRGB color (0.0 .. 1.0).
+    // This tracks perceived brightness and should be used for contrast choices.
+    static double GetRelativeLuminance(const COLORREF color)
+    {
+        const auto toLinear = [](const BYTE component)
+        {
+            const double srgb = component / 255.0;
+            return srgb <= 0.04045
+                ? srgb / 12.92
+                : std::pow((srgb + 0.055) / 1.055, 2.4);
+        };
+
+        return 0.2126 * toLinear(GetRValue(color))
+            + 0.7152 * toLinear(GetGValue(color))
+            + 0.0722 * toLinear(GetBValue(color));
     }
 
     // Gives a color a defined brightness.
@@ -111,6 +128,16 @@ protected:
 class CTreeMap final
 {
 public:
+    // Geometry produced by the most recent layout. This is deliberately kept
+    // outside CItem so hidden/pruned descendants can never expose rectangles
+    // left over from a previous render generation.
+    struct VisibleItem
+    {
+        CItem* item = nullptr;
+        CRect rectangle;
+        int depth = 0;
+    };
+
     // One of these flags can be added to the COLORREF returned
     // by TmiGetGraphColor(). Used for <Free space> (darker)
     // and <Unknown> (brighter).
@@ -191,37 +218,56 @@ public:
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be nullptr, iff point is outside root rect.
-    CItem* FindItemByPoint(CItem* item, CPoint point);
+    CItem* FindItemByPoint(CItem* item, CPoint point) const;
+
+    // Access and clear only geometry from the most recent treemap render.
+    [[nodiscard]] bool HasValidLayout(const CItem* root) const;
+    [[nodiscard]] bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
+    [[nodiscard]] std::span<const VisibleItem> GetVisibleItems() const { return m_visibleItems; }
+    void ClearLayout();
+    void TrimMemory();
 
     // Draws a sample rectangle in the given style (for color legend)
     void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
 
 protected:
 
+    struct BitmapView
+    {
+        COLORREF* bits;
+        std::size_t stride;
+    };
+
     // KDirStat-like squarification
-    bool KDirStat_ArrangeChildren(const CItem* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
+    bool KDirStat_ArrangeChildren(const CItem* parent, const CRect& parentRect,
+        std::vector<double>& childWidth, std::vector<double>& rows,
+        std::vector<int>& childrenPerRow) const;
     double KDirStat_CalculateNextRow(const CItem* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const;
+    void RenderLeaf(BitmapView bitmap, const CItem* item,
+        const CRect& rectangle, const std::array<double, 4>& surface) const;
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const;
+    void RenderRectangle(BitmapView bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const;
 
-    // Draws the surface using SetPixel()
-    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, COLORREF col, double brightness) const;
+    // Renders cushion pixels.
+    void DrawCushion(BitmapView bitmap, const CRect& rc, const std::array<double, 4>& surface, COLORREF col, double brightness) const;
 
-    // Draws the surface using FillSolidRect()
-    void DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, COLORREF col, double brightness) const;
+    // Fills solid pixels.
+    void DrawSolidRect(BitmapView bitmap, const CRect& rc, COLORREF col, double brightness) const;
 
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
     // Draws file extension/filename labels on leaf items
-    void DrawTreeMapLabels(CDC* pdc, CItem* root, const CPoint& offset) const;
+    void DrawTreeMapLabels(CDC* pdc, const CPoint& offset) const;
+
+    void AddVisibleItem(CItem* item, const CRect& rectangle, int depth);
+    void BuildHitTestIndex();
 
     // Default tree map options
     static constexpr Options DefaultOptions = {
@@ -261,7 +307,20 @@ protected:
         RGB(255, 255, 255),  // White
     };
 
-    CRect m_renderArea;
+    static constexpr int HitTestCellSize = 16;
+    const CItem* m_layoutRoot = nullptr;
+    CRect m_layoutArea;
+    int m_hitTestColumns = 0;
+    int m_hitTestRows = 0;
+    std::vector<VisibleItem> m_visibleItems;
+    std::unordered_map<const CItem*, std::size_t> m_itemToVisibleIndex;
+    // Compressed per-cell candidate lists avoid one heap allocation for every
+    // spatial bucket while keeping mouse hit-testing bounded to a 16px cell.
+    std::vector<std::size_t> m_hitTestCellOffsets;
+    std::vector<std::size_t> m_hitTestEntries;
+
+    // Reused for DCs that cannot expose a compatible top-down DIB.
+    std::vector<COLORREF> m_bitmapBits;
 
     Options m_options; // Current options
     double m_lx = 0.0; // Derived parameters

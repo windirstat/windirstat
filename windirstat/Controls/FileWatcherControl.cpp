@@ -20,7 +20,7 @@
 #include "FinderBasic.h"
 
 CFileWatcherControl::CFileWatcherControl()
-    : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), LF_WATCHERLIST, false)
+    : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), COptions::WatcherColumnVisibility.Ptr(), LF_WATCHERLIST, false)
 {
     SetOwnsItems(true);
     m_singleton = this;

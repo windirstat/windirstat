@@ -199,6 +199,7 @@ $script:SettingsHighOutOfRangeValue = 999999
 $script:SettingsSearchHighOutOfRangeValue = 9999999
 $script:SettingsDefaultSearchMaxResults = 10000
 $script:SettingsDefaultTreeMapFolderFramesDrawThreshold = 5
+$script:SettingsDefaultTreeMapMaxDepth = 6
 $script:SettingsMaxBoundedCount = 10000
 $script:SettingsMaxSearchResults = 1000000
 $script:WindowsLocaleUserDefaultLcid = 0x0400
@@ -232,6 +233,8 @@ $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
 $script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
 $script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
+$script:SettingsMinTreeMapMaxDepth = 1
+$script:SettingsMaxTreeMapMaxDepth = 64
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -1314,6 +1317,11 @@ public static class NativeListViewHelper
         return SendBounded(listView, LVM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
     }
 
+    public static int GetSelectedCount(IntPtr listView)
+    {
+        return SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
     public static string[] GetItemTexts(IntPtr listView)
     {
         int count = GetItemCount(listView);
@@ -1393,10 +1401,15 @@ public static class NativeListViewHelper
         return SelectItems(listView, new int[] { index });
     }
 
+    public static bool ClearSelection(IntPtr listView)
+    {
+        return SelectItems(listView, new int[0]);
+    }
+
     public static bool SelectItems(IntPtr listView, int[] indices)
     {
         int count = GetItemCount(listView);
-        if (indices == null || indices.Length == 0) return false;
+        if (indices == null) return false;
         var unique = new HashSet<int>(indices);
         if (unique.Count != indices.Length) return false;
         foreach (int index in indices)
@@ -1440,7 +1453,8 @@ public static class NativeListViewHelper
                 if (SendBounded(listView, LVM_SETITEMSTATE, (IntPtr)index, remoteItem) == IntPtr.Zero)
                     return false;
             }
-            SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
+            if (indices.Length != 0)
+                SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
 
             int selectedCount = SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
             if (selectedCount != indices.Length) return false;
@@ -2778,7 +2792,7 @@ function New-PortableIni {
         'MainWindowPlacement=2C0000000200000003000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF32000000320000003204000032030000',
         '',
         '[FileTreeView]',
-        'ShowColumnFiles=1', 'ShowColumnFolders=1', 'ShowColumnItems=1', 'ShowColumnLastChange=1',
+        'ColumnVisibility=1,1,1,1,1,1,1,1,1,0,0',
         '',
         '[DupeView]',
         'ScanForDuplicates=1',
@@ -2973,9 +2987,9 @@ function Test-MenuNavigation {
     # -- View menu --------------------------------------------------------------
     Assert-Pass $g 'View menu opens'
     $viewItems = @($allItems | Where-Object { $_.MenuName -eq 'View' })
-    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph') })
-    if ($graphModeItems.Count -eq 2) {
-        Assert-Pass $g 'View menu contains Treemap and Flame Graph modes'
+    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph', 'Sunburst') })
+    if ($graphModeItems.Count -eq 3) {
+        Assert-Pass $g 'View menu contains Treemap, Flame Graph, and Sunburst modes'
         $checkedGraphModes = @($graphModeItems | Where-Object { $_.IsChecked })
         if ($checkedGraphModes.Count -eq 1) {
             Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
@@ -2983,7 +2997,7 @@ function Test-MenuNavigation {
             Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
         }
     } else {
-        Assert-Fail $g 'View menu contains Treemap and Flame Graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
+        Assert-Fail $g 'View menu contains all graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
     }
     $zoomItems = @($viewItems | Where-Object { $_.ItemName -like 'Zoom*' })
     if ($zoomItems.Count -ge 1) {
@@ -3022,7 +3036,7 @@ function Test-MenuNavigation {
     # -- Options menu -----------------------------------------------------------
     Assert-Pass $g 'Options menu opens'
     $optionsItems = @($allItems | Where-Object { $_.MenuName -eq 'Options' } | ForEach-Object { $_.ItemName })
-    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Show Toolbar', 'Show Statusbar')
+    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Sunburst', 'Show Toolbar', 'Show Statusbar')
     $missingOptions = @($expectedOptions | Where-Object { $_ -notin $optionsItems })
     if ($missingOptions.Count -eq 0) {
         Assert-Pass $g "Options menu contains all $($expectedOptions.Count) expected items"
@@ -3802,6 +3816,100 @@ function Test-ScanAndViews {
         # If no UIA item type (DataItem/ListItem/TreeItem) is found at all, the
         # control has not registered an accessibility provider for individual rows.
         Assert-Skip $g 'File tree items visible' 'No DataItem/ListItem/TreeItem found (custom owner-drawn control)'
+    }
+
+    # -- Graph renderers: switch every mode against the populated scan ---------
+    $g = 'Graphs'
+    $graphModes = @(
+        @{ Name = 'Treemap';    Command = 'ID_VIEW_SHOWTREEMAP' },
+        @{ Name = 'Flame Graph'; Command = 'ID_VIEW_FLAMEGRAPH' },
+        @{ Name = 'Sunburst';    Command = 'ID_VIEW_SUNBURST' }
+    )
+    foreach ($mode in $graphModes) {
+        $commandId = Get-ResourceId $mode.Command
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $commandId)) {
+            Assert-Fail $g "$($mode.Name) command dispatches" "Command ID $commandId could not be posted"
+            continue
+        }
+        Start-Sleep -Milliseconds 500
+        if ($script:proc -and !$script:proc.HasExited) {
+            $items = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle))
+            $selected = $items | Where-Object {
+                $_.MenuName -eq 'View' -and $_.ItemName -eq $mode.Name -and $_.IsChecked
+            } | Select-Object -First 1
+            if ($selected) {
+                Assert-Pass $g "$($mode.Name) renders and becomes the selected graph mode"
+            }
+            else {
+                Assert-Fail $g "$($mode.Name) selected state" 'Renderer remained alive but its View menu item was not checked'
+            }
+        }
+        else {
+            Assert-Fail $g "$($mode.Name) renders" 'Application exited while switching graph modes'
+            break
+        }
+    }
+
+    # Exercise direct graph commands at boundaries where normal menu updates disable them.
+    $selectParentId = Get-ResourceId 'ID_TREEMAP_SELECT_PARENT'
+    for ($i = 0; $i -lt 64; $i++) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 20
+    }
+    Start-Sleep -Milliseconds 300
+    if ($script:proc -and !$script:proc.HasExited) {
+        Assert-Pass $g 'Repeated direct select-parent commands are safe at the root boundary'
+    }
+    else {
+        Assert-Fail $g 'Repeated direct select-parent commands are safe at the root boundary' 'Application exited'
+        return
+    }
+
+    $emptySelectionVerified = $false
+    try {
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $ScanPath -TargetPath $ScanPath
+        if ($nativeRoot -and
+            [NativeListViewHelper]::ClearSelection([IntPtr] $nativeRoot.ListView)) {
+            $emptySelectionVerified = [NativeListViewHelper]::GetSelectedCount([IntPtr] $nativeRoot.ListView) -eq 0
+        }
+    }
+    catch {}
+    if ($emptySelectionVerified) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 300
+        if ($script:proc -and !$script:proc.HasExited) {
+            Assert-Pass $g 'Direct select-parent is safe with a verified empty selection'
+        }
+        else {
+            Assert-Fail $g 'Direct select-parent is safe with a verified empty selection' 'Application exited'
+            return
+        }
+    }
+    else {
+        Assert-Skip $g 'Direct select-parent with an empty selection' 'Native file-tree selection could not be cleared and verified'
+    }
+
+    $zoomResetId = Get-ResourceId 'ID_TREEMAP_ZOOMRESET'
+    $zoomOutId = Get-ResourceId 'ID_TREEMAP_ZOOMOUT'
+    Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    Start-Sleep -Milliseconds 100
+    $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+        Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+    if ($zoomOut -and !$zoomOut.IsEnabled) {
+        Invoke-Win32CommandId -Window $win -CommandId $zoomOutId | Out-Null
+        Start-Sleep -Milliseconds 300
+        $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+            Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+        if ($script:proc -and !$script:proc.HasExited -and $zoomOut -and !$zoomOut.IsEnabled) {
+            Assert-Pass $g 'Direct zoom-out at the global root preserves a valid zoom boundary'
+        }
+        else {
+            Assert-Fail $g 'Direct zoom-out at the global root preserves a valid zoom boundary' 'Command became enabled or application exited'
+        }
+        Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    }
+    else {
+        Assert-Fail $g 'Global zoom boundary established' 'Zoom Out remained enabled after Zoom Reset'
     }
 
     # -- Largest Files tab: verify our large test files appear ------------------
@@ -8100,14 +8208,6 @@ namespace WdsSettingsTest
         BoolField(out, first, "SearchCase", COptions::SearchCase.Obj());
         BoolField(out, first, "SearchRegex", COptions::SearchRegex.Obj());
         IntField(out, first, "SearchMaxResults", COptions::SearchMaxResults.Obj());
-        BoolField(out, first, "ShowColumnAttributes", COptions::ShowColumnAttributes.Obj());
-        BoolField(out, first, "ShowColumnFiles", COptions::ShowColumnFiles.Obj());
-        BoolField(out, first, "ShowColumnFolders", COptions::ShowColumnFolders.Obj());
-        BoolField(out, first, "ShowColumnItems", COptions::ShowColumnItems.Obj());
-        BoolField(out, first, "ShowColumnLastChange", COptions::ShowColumnLastChange.Obj());
-        BoolField(out, first, "ShowColumnOwner", COptions::ShowColumnOwner.Obj());
-        BoolField(out, first, "ShowColumnSizeLogical", COptions::ShowColumnSizeLogical.Obj());
-        BoolField(out, first, "ShowColumnSizePhysical", COptions::ShowColumnSizePhysical.Obj());
         BoolField(out, first, "ShowDeleteWarning", COptions::ShowDeleteWarning.Obj());
         BoolField(out, first, "ShowElevationPrompt", COptions::ShowElevationPrompt.Obj());
         BoolField(out, first, "ShowMicrosoftProgress", COptions::ShowMicrosoftProgress.Obj());
@@ -8125,6 +8225,7 @@ namespace WdsSettingsTest
         BoolField(out, first, "TreeMapGrid", COptions::TreeMapGrid.Obj());
         BoolField(out, first, "TreeMapShowExtensions", COptions::TreeMapShowExtensions.Obj());
         BoolField(out, first, "TreeMapUseLogical", COptions::TreeMapUseLogical.Obj());
+        BoolField(out, first, "UseAbsolutePercentages", COptions::UseAbsolutePercentages.Obj());
         BoolField(out, first, "UseBackupRestore", COptions::UseBackupRestore.Obj());
         BoolField(out, first, "UseDrawTextCache", COptions::UseDrawTextCache.Obj());
         BoolField(out, first, "UseFastScanEngine", COptions::UseFastScanEngine.Obj());
@@ -8133,6 +8234,7 @@ namespace WdsSettingsTest
         IntField(out, first, "ConfigPage", COptions::ConfigPage.Obj());
         IntField(out, first, "LanguageId", COptions::LanguageId.Obj());
         IntField(out, first, "FileHashAlgorithm", COptions::FileHashAlgorithm.Obj());
+        IntField(out, first, "ProcessPriority", COptions::ProcessPriority.Obj());
         IntField(out, first, "LargeFileCount", COptions::LargeFileCount.Obj());
         IntField(out, first, "MinimizeViewThreshold", COptions::MinimizeViewThreshold.Obj());
         IntField(out, first, "ScanningThreads", COptions::ScanningThreads.Obj());
@@ -8150,22 +8252,32 @@ namespace WdsSettingsTest
         IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
         IntField(out, first, "TreeMapScaleFactor", COptions::TreeMapScaleFactor.Obj());
         IntField(out, first, "TreeMapStyle", COptions::TreeMapStyle.Obj());
+        IntField(out, first, "GraphPaneStyle", COptions::GraphPaneStyle.Obj());
+        IntField(out, first, "TreeMapMaxDepth", COptions::TreeMapMaxDepth.Obj());
         IntField(out, first, "DarkMode", COptions::DarkMode.Obj());
         IntField(out, first, "FolderHistoryCount", COptions::FolderHistoryCount.Obj());
         RawField(out, first, "DriveListColumnOrder", IntArray(COptions::DriveListColumnOrder.Obj()));
         RawField(out, first, "DriveListColumnWidths", IntArray(COptions::DriveListColumnWidths.Obj()));
+        RawField(out, first, "DriveListColumnVisibility", IntArray(COptions::DriveListColumnVisibility.Obj()));
         RawField(out, first, "DupeViewColumnOrder", IntArray(COptions::DupeViewColumnOrder.Obj()));
         RawField(out, first, "DupeViewColumnWidths", IntArray(COptions::DupeViewColumnWidths.Obj()));
+        RawField(out, first, "DupeViewColumnVisibility", IntArray(COptions::DupeViewColumnVisibility.Obj()));
         RawField(out, first, "FileTreeColumnOrder", IntArray(COptions::FileTreeColumnOrder.Obj()));
         RawField(out, first, "FileTreeColumnWidths", IntArray(COptions::FileTreeColumnWidths.Obj()));
+        RawField(out, first, "FileTreeColumnVisibility", IntArray(COptions::FileTreeColumnVisibility.Obj()));
         RawField(out, first, "ExtViewColumnOrder", IntArray(COptions::ExtViewColumnOrder.Obj()));
         RawField(out, first, "ExtViewColumnWidths", IntArray(COptions::ExtViewColumnWidths.Obj()));
+        RawField(out, first, "ExtViewColumnVisibility", IntArray(COptions::ExtViewColumnVisibility.Obj()));
         RawField(out, first, "SearchViewColumnOrder", IntArray(COptions::SearchViewColumnOrder.Obj()));
         RawField(out, first, "SearchViewColumnWidths", IntArray(COptions::SearchViewColumnWidths.Obj()));
+        RawField(out, first, "SearchViewColumnVisibility", IntArray(COptions::SearchViewColumnVisibility.Obj()));
         RawField(out, first, "TopViewColumnOrder", IntArray(COptions::TopViewColumnOrder.Obj()));
         RawField(out, first, "TopViewColumnWidths", IntArray(COptions::TopViewColumnWidths.Obj()));
+        RawField(out, first, "TopViewColumnVisibility", IntArray(COptions::TopViewColumnVisibility.Obj()));
         RawField(out, first, "WatcherColumnOrder", IntArray(COptions::WatcherColumnOrder.Obj()));
         RawField(out, first, "WatcherColumnWidths", IntArray(COptions::WatcherColumnWidths.Obj()));
+        RawField(out, first, "WatcherColumnVisibility", IntArray(COptions::WatcherColumnVisibility.Obj()));
+        RawField(out, first, "PermsViewColumnVisibility", IntArray(COptions::PermsViewColumnVisibility.Obj()));
         RawField(out, first, "SelectDrivesDrives", StringArray(COptions::SelectDrivesDrives.Obj()));
         RawField(out, first, "SelectDrivesFolder", StringArray(COptions::SelectDrivesFolder.Obj()));
         StringField(out, first, "FilteringExcludeDirs", COptions::FilteringExcludeDirs.Obj());
@@ -8346,11 +8458,14 @@ $visualSettings = @(
     'DarkMode',
     'DriveListColumnOrder',
     'DriveListColumnWidths',
+    'DriveListColumnVisibility',
     'DriveSelectWindowRect',
     'DupeViewColumnOrder',
     'DupeViewColumnWidths',
+    'DupeViewColumnVisibility',
     'ExtViewColumnOrder',
     'ExtViewColumnWidths',
+    'ExtViewColumnVisibility',
     'FileTreeColors',
     'FileTreeColorCount',
     'FileTreeColumnOrder',
@@ -8371,8 +8486,10 @@ $visualSettings = @(
     'PermsColorLevel',
     'PermsViewColumnOrder',
     'PermsViewColumnWidths',
+    'PermsViewColumnVisibility',
     'SearchViewColumnOrder',
     'SearchViewColumnWidths',
+    'SearchViewColumnVisibility',
     'SearchWindowRect',
     'ShowFileTypes',
     'ShowStatusBar',
@@ -8383,6 +8500,7 @@ $visualSettings = @(
     'SubSplitterPos',
     'TopViewColumnOrder',
     'TopViewColumnWidths',
+    'TopViewColumnVisibility',
     'TreeMapAmbientLightPercent',
     'TreeMapBrightness',
     'TreeMapFolderFramesDrawThreshold',
@@ -8390,17 +8508,20 @@ $visualSettings = @(
     'TreeMapGridColor',
     'TreeMapHeightFactor',
     'TreeMapHighlightColor',
+    'GraphPaneStyle',
     'TreeMapLightSourceX',
     'TreeMapLightSourceY',
+    'TreeMapMaxDepth',
     'TreeMapScaleFactor',
     'TreeMapShowExtensions',
     'TreeMapShowFolderFrames',
     'TreeMapStyle',
     'TreeMapUseLogical',
-    'UseFlameGraph',
+    'UseAbsolutePercentages',
     'WatcherAutoScroll',
     'WatcherColumnOrder',
-    'WatcherColumnWidths'
+    'WatcherColumnWidths',
+    'WatcherColumnVisibility'
 )
 
 $coveredNonVisualSettings = @(
@@ -8423,6 +8544,7 @@ $coveredNonVisualSettings = @(
     'LargeFileCount',
     'PermsExcludeRegex',
     'ProcessHardlinks',
+    'ProcessPriority',
     'ScanForDuplicates',
     'ScanningThreads',
     'SearchCase',
@@ -8433,14 +8555,7 @@ $coveredNonVisualSettings = @(
     'SelectDrivesDrives',
     'SelectDrivesFolder',
     'SelectDrivesRadio',
-    'ShowColumnAttributes',
-    'ShowColumnFiles',
-    'ShowColumnFolders',
-    'ShowColumnItems',
-    'ShowColumnLastChange',
-    'ShowColumnOwner',
-    'ShowColumnSizeLogical',
-    'ShowColumnSizePhysical',
+    'FileTreeColumnVisibility',
     'ShowDeleteWarning',
     'ShowDupeDetectionCloudLinksWarning',
     'ShowElevationPrompt',
@@ -8719,15 +8834,21 @@ try {
         Assert-Equal $ctx 'ShowDeleteWarning' $s.ShowDeleteWarning $true
         Assert-Equal $ctx 'ShowElevationPrompt' $s.ShowElevationPrompt $true
         Assert-Equal $ctx 'ShowMicrosoftProgress' $s.ShowMicrosoftProgress $false
+        Assert-ArrayEqual $ctx 'FileTreeColumnVisibility' @($s.FileTreeColumnVisibility) @(1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0)
         Assert-Equal $ctx 'SkipDupeDetectionCloudLinks' $s.SkipDupeDetectionCloudLinks $true
         Assert-Equal $ctx 'ShowDupeDetectionCloudLinksWarning' $s.ShowDupeDetectionCloudLinksWarning $true
         Assert-Equal $ctx 'AutoElevate' $s.AutoElevate $false
+        Assert-Equal $ctx 'UseAbsolutePercentages' $s.UseAbsolutePercentages $true
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $true
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $true
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth $script:SettingsDefaultTreeMapMaxDepth
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 1
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
@@ -8780,6 +8901,7 @@ try {
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
             FileHashAlgorithm = $script:HashAlgorithm.SHA256
+            ProcessPriority = 2
             FilteringMaxAgeDays = 14
             LargeFileCount = 123
             MinimizeViewThreshold = 42
@@ -8798,6 +8920,11 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 1
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' 3
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' 9
+        Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,0,1,1,0,1,0,1,0,0'
+        Set-IniValue $sections 'FileTreeView' 'UseAbsolutePercentages' 0
         Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
         $sections['Cleanups\UserDefinedCleanup00'] = [ordered] @{
             Title = 'Custom cleanup'
@@ -8836,17 +8963,23 @@ try {
         Assert-Equal $ctx 'ShowDeleteWarning' $s.ShowDeleteWarning $false
         Assert-Equal $ctx 'ShowElevationPrompt' $s.ShowElevationPrompt $false
         Assert-Equal $ctx 'ShowMicrosoftProgress' $s.ShowMicrosoftProgress $true
+        Assert-ArrayEqual $ctx 'File-tree column visibility' @($s.FileTreeColumnVisibility) @(1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0)
         Assert-Equal $ctx 'ShowFreeSpace' $s.ShowFreeSpace $true
         Assert-Equal $ctx 'ShowUnknown' $s.ShowUnknown $true
         Assert-Equal $ctx 'SkipDupeDetectionCloudLinks' $s.SkipDupeDetectionCloudLinks $false
         Assert-Equal $ctx 'ShowDupeDetectionCloudLinksWarning' $s.ShowDupeDetectionCloudLinksWarning $false
         Assert-Equal $ctx 'AutoElevate' $s.AutoElevate $true
+        Assert-Equal $ctx 'UseAbsolutePercentages' $s.UseAbsolutePercentages $false
         Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $false
         Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $false
         Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
+        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth 9
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
+        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 2
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
@@ -8883,11 +9016,40 @@ try {
         $dump
     }))
 
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' -Behavior 'Former graph-selection flags and combined treemap values should have no migration behavior.' -Body {
+        param($ctx)
+
+        $flameSections = New-BaseIniSections
+        Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
+        $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
+        Assert-Equal $ctx 'Legacy flame flag ignored' $flame.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Independent treemap style preserved' $flame.Dump.TreeMapStyle 1
+
+        $sunburstSections = New-BaseIniSections
+        Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
+        Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
+        $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
+        Assert-Equal $ctx 'Legacy graph flags ignored' $sunburst.Dump.GraphPaneStyle 0
+
+        $combinedSections = New-BaseIniSections
+        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
+        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
+        Assert-Equal $ctx 'Combined graph value ignored' $combined.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' $combined.Dump.TreeMapStyle 1
+
+        [pscustomobject] @{
+            CommandLine = $combined.CommandLine
+            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds + $combined.ElapsedSeconds, 3)
+        }
+    }))
+
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampLowValues' -Behavior 'Out-of-range low numeric settings should clamp to their declared minimums instead of poisoning runtime state.' -Body {
         param($ctx)
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsLowOutOfRangeValue
@@ -8896,11 +9058,15 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsLowOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsLowOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm $script:SettingsMinHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority minimum' $s.ProcessPriority 0
         Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount $script:SettingsMinLargeFileCount
         Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold $script:SettingsMinMinimizeViewThreshold
         Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads $script:SettingsMinScanningThreads
@@ -8909,6 +9075,9 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle minimum' $s.TreeMapStyle 0
+        Assert-Equal $ctx 'GraphPaneStyle minimum' $s.GraphPaneStyle 0
+        Assert-Equal $ctx 'TreeMapMaxDepth minimum' $s.TreeMapMaxDepth $script:SettingsMinTreeMapMaxDepth
 
         $dump
     }))
@@ -8918,6 +9087,7 @@ try {
 
         $sections = New-BaseIniSections
         Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsHighOutOfRangeValue
@@ -8926,11 +9096,15 @@ try {
         Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
         Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsHighOutOfRangeValue
+        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsHighOutOfRangeValue
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
         $s = $dump.Dump
 
         Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm $script:SettingsMaxHashAlgorithm
+        Assert-Equal $ctx 'ProcessPriority maximum' $s.ProcessPriority 2
         Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold $script:SettingsMaxBoundedCount
         Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads $script:SettingsMaxScanningThreads
@@ -8939,6 +9113,9 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 1
+        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump
     }))
@@ -9081,18 +9258,18 @@ try {
         }
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'Csv_OwnerColumnSetting' -Behavior 'ShowColumnOwner should add the Owner column to the non-interactive CSV export, and disabling it should remove that column.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'Csv_OwnerColumnSetting' -Behavior 'ColumnVisibility should add the Owner column to the non-interactive CSV export when enabled and remove it when disabled.' -Body {
         param($ctx)
 
         $sections = New-BaseIniSections
-        Set-IniValue $sections 'FileTreeView' 'ShowColumnOwner' 0
+        Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,1,1,1,0,1,0,1,0,0'
         $csv = Join-Path $workRoot 'owner-off.csv'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $offRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $scanRoot
         $offHeaders = @((Read-CsvRows -Csv $csv)[0].PSObject.Properties.Name)
         Assert-False $ctx 'Owner header absent when disabled' ('Owner' -in $offHeaders)
 
-        Set-IniValue $sections 'FileTreeView' 'ShowColumnOwner' 1
+        Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,1,1,1,0,1,0,1,0,1'
         $csv = Join-Path $workRoot 'owner-on.csv'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $onRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $scanRoot
@@ -10256,8 +10433,7 @@ function Write-TestIni {
         'UseFastScanEngine=1',
         '',
         '[FileTreeView]',
-        'ShowColumnAttributes=1',
-        'ShowColumnOwner=1'
+        'ColumnVisibility=1,1,1,1,1,0,1,0,1,1,1'
     ) -join "`r`n"
     [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), $ini, [System.Text.Encoding]::Unicode)
 }

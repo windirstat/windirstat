@@ -62,6 +62,13 @@ void CControlView::OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item)
     }
     break;
 
+    case MODEL_CHANGE_SIZE_MODE:
+    {
+        control.SortItems();
+        control.Invalidate();
+    }
+    break;
+
     case MODEL_CHANGE_NONE:
     {
         CWinDirStatPane::OnUpdate(sender, change, item);
