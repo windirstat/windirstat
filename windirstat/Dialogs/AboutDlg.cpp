@@ -187,9 +187,7 @@ CAboutDlg::CAboutDlg()
 
 std::wstring CAboutDlg::GetAppVersion()
 {
-    return std::format(L"{} {}{}.{}.{} ({})\nGit Commit: {}",
-        wds::strWinDirStat, PRODUCTION == 0 ? L"Beta " : L"",
-        PRD_MAJVER, PRD_MINVER, PRD_PATCH,
+    return std::format(L"{} ({})\nGit Commit: {}", GetAppTitle(),
         _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
 }
 
