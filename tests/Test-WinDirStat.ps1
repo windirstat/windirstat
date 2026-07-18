@@ -1118,6 +1118,29 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 public static class Win32Helper {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GUITHREADINFO
+    {
+        public uint Size;
+        public uint Flags;
+        public IntPtr Active;
+        public IntPtr Focus;
+        public IntPtr Capture;
+        public IntPtr MenuOwner;
+        public IntPtr MoveSize;
+        public IntPtr Caret;
+        public RECT CaretRect;
+    }
+
     public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
@@ -1125,7 +1148,22 @@ public static class Win32Helper {
     [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")] private static extern uint GetWindowProcessId(IntPtr hWnd, out uint processId);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetGUIThreadInfo(uint threadId, ref GUITHREADINFO info);
+    [DllImport("user32.dll")] private static extern bool IsChild(IntPtr parent, IntPtr child);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+
+    public static IntPtr GetFocusedWindow(IntPtr root)
+    {
+        uint threadId = GetWindowThreadProcessId(root, IntPtr.Zero);
+        var info = new GUITHREADINFO { Size = (uint)Marshal.SizeOf(typeof(GUITHREADINFO)) };
+        return threadId != 0 && GetGUIThreadInfo(threadId, ref info) ? info.Focus : IntPtr.Zero;
+    }
+
+    public static bool IsDescendant(IntPtr parent, IntPtr child)
+    {
+        return parent == child || IsChild(parent, child);
+    }
 
     public static IntPtr[] GetProcessWindowHandles(uint targetProcessId) {
         var handles = new HashSet<IntPtr>();
@@ -1209,6 +1247,10 @@ public static class NativeListViewHelper
     private const uint LVM_GETSELECTEDCOUNT = LVM_FIRST + 50;
     private const uint LVM_SETITEMSTATE = LVM_FIRST + 43;
     private const uint LVM_ENSUREVISIBLE = LVM_FIRST + 19;
+    private const uint WM_KEYDOWN = 0x0100;
+    private const uint WM_KEYUP = 0x0101;
+    private const uint VK_TAB = 0x09;
+    private const uint VK_ESCAPE = 0x1B;
     private const uint LVIF_TEXT = 0x0001;
     private const uint LVIS_FOCUSED = 0x0001;
     private const uint LVIS_SELECTED = 0x0002;
@@ -1273,6 +1315,9 @@ public static class NativeListViewHelper
     [DllImport("user32.dll")]
     private static extern IntPtr GetFocus();
 
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
     [DllImport("kernel32.dll")]
     private static extern uint GetCurrentThreadId();
 
@@ -1312,6 +1357,13 @@ public static class NativeListViewHelper
         // timeout becomes a normal exception instead of crossing a native frame.
         result.RemoveAll(delegate (IntPtr hwnd) { return GetItemCount(hwnd) <= 0; });
         return result.ToArray();
+    }
+
+    public static string GetWindowClassName(IntPtr window)
+    {
+        var className = new StringBuilder(64);
+        GetClassName(window, className, className.Capacity);
+        return className.ToString();
     }
 
     public static int GetItemCount(IntPtr listView)
@@ -1482,10 +1534,10 @@ public static class NativeListViewHelper
         }
     }
 
-    public static bool FocusListView(IntPtr listView)
+    public static IntPtr FocusWindow(IntPtr window)
     {
         uint processId;
-        uint targetThread = GetWindowThreadProcessId(listView, out processId);
+        uint targetThread = GetWindowThreadProcessId(window, out processId);
         uint currentThread = GetCurrentThreadId();
         bool attached = false;
         try
@@ -1493,16 +1545,30 @@ public static class NativeListViewHelper
             if (targetThread != currentThread)
             {
                 attached = AttachThreadInput(currentThread, targetThread, true);
-                if (!attached) return false;
+                if (!attached) return IntPtr.Zero;
             }
-            SetFocus(listView);
-            return GetFocus() == listView;
+            SetFocus(window);
+            return GetFocus();
         }
         finally
         {
             if (attached) AttachThreadInput(currentThread, targetThread, false);
         }
     }
+
+    public static bool FocusListView(IntPtr listView)
+    {
+        return FocusWindow(listView) == listView;
+    }
+
+    private static bool PostKey(IntPtr window, uint virtualKey)
+    {
+        return PostMessage(window, WM_KEYDOWN, (IntPtr)virtualKey, IntPtr.Zero) &&
+               PostMessage(window, WM_KEYUP, (IntPtr)virtualKey, IntPtr.Zero);
+    }
+
+    public static bool PostTab(IntPtr window) { return PostKey(window, VK_TAB); }
+    public static bool PostEscape(IntPtr window) { return PostKey(window, VK_ESCAPE); }
 
     private static void EnsureSameBitness(IntPtr targetProcess)
     {
@@ -4381,6 +4447,275 @@ public static class RightClickHelper {
     }
 }
 
+function Test-KeyboardFocusCycle {
+    param([string] $Exe, [string] $ScanPath)
+    Write-GroupHeader 'Keyboard Focus Cycle'
+    $g = 'KeyboardFocus'
+
+    try {
+        # A command-line scan avoids the Drive Select dialog so no pane receives
+        # focus through test interaction before the initial Tab assertion.
+        $win = Start-App -Exe $Exe -Arguments ('"{0}"' -f $ScanPath)
+        if (!$win) {
+            Assert-Fail $g 'App launches for untouched focus test' 'Window not found'
+            return
+        }
+        Assert-Pass $g 'App launches for untouched focus test'
+
+        $scanTimeoutMs = [Math]::Max($TimeoutSeconds * 1000, 90000)
+        if (!(Wait-ScanDone -TimeoutMs $scanTimeoutMs)) {
+            Assert-Fail $g 'Command-line scan completes' "Still scanning after ${TimeoutSeconds}s"
+            return
+        }
+        Assert-Pass $g 'Command-line scan completes'
+
+        $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
+        if (!$win) {
+            Assert-Fail $g 'Main window available after command-line scan' 'Lost window reference'
+            return
+        }
+        $script:win = $win
+
+        $mainHwnd = [IntPtr] $win.Current.NativeWindowHandle
+        $tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
+        $tabHwnd = if ($tabCtrl) { [IntPtr] $tabCtrl.Current.NativeWindowHandle } else { [IntPtr]::Zero }
+        if ($mainHwnd -eq [IntPtr]::Zero -or $tabHwnd -eq [IntPtr]::Zero) {
+            Assert-Fail $g 'Main and file-tab native handles available' (
+                "main=0x{0:X}; tab=0x{1:X}" -f $mainHwnd.ToInt64(), $tabHwnd.ToInt64())
+            return
+        }
+        Assert-Pass $g 'Main and file-tab native handles available'
+
+        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem) |
+            Where-Object { !$_.Current.IsOffscreen })
+        $allTab = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
+        $largestTab = $tabItems | Where-Object { $_.Current.Name -like '*Largest Files*' } | Select-Object -First 1
+        if (!$allTab -or !$largestTab) {
+            Assert-Fail $g 'All Files and Largest Files tabs available' (
+                "Found: $(($tabItems | ForEach-Object { $_.Current.Name }) -join ', ')"
+            )
+            return
+        }
+        Assert-Pass $g 'All Files and Largest Files tabs available'
+
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $ScanPath -TargetPath $ScanPath
+        if (!$nativeRoot) {
+            Assert-Fail $g 'Native All Files list available' 'The scan-root row was not found'
+            return
+        }
+        $allFocus = [IntPtr] $nativeRoot.ListView
+        Assert-Pass $g 'Native All Files list available'
+
+        $getSelectedTabName = {
+            foreach ($tab in $tabItems) {
+                try {
+                    $selection = $tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                    if ($selection.Current.IsSelected) { return $tab.Current.Name }
+                }
+                catch {}
+            }
+            return $null
+        }
+        $assertSelectedTab = {
+            param([string] $Expected, [string] $Label)
+            $selectedName = & $getSelectedTabName
+            if ($null -eq $selectedName) {
+                Assert-Skip $g $Label 'The MFC tab provider does not expose SelectionItemPattern state'
+            }
+            elseif ($selectedName -like "*$Expected*") {
+                Assert-Pass $g $Label "Selected: '$selectedName'"
+            }
+            else {
+                Assert-Fail $g $Label "Selected: '$selectedName'"
+            }
+        }
+        $isVisibleList = {
+            param([IntPtr] $Handle)
+            [long[]] $visibleHandles = @([NativeListViewHelper]::GetVisibleListViews($mainHwnd) |
+                ForEach-Object { $_.ToInt64() })
+            return $visibleHandles -contains $Handle.ToInt64()
+        }
+
+        $startupFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $startupFocusReady = $startupFocus -ne [IntPtr]::Zero -and
+            [Win32Helper]::IsDescendant($mainHwnd, $startupFocus) -and
+            ![Win32Helper]::IsDescendant($tabHwnd, $startupFocus)
+        if ($startupFocusReady) {
+            Assert-Pass $g 'Natural launch focus starts outside the data panes'
+        }
+        else {
+            Assert-Fail $g 'Natural launch focus starts outside the data panes' (
+                "Focused HWND: 0x{0:X} ({1})" -f $startupFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($startupFocus))
+        }
+
+        $startupEntryFocus = $startupFocus
+        if ($startupFocus -ne [IntPtr]::Zero) {
+            [NativeListViewHelper]::PostTab($startupFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $startupEntryFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        }
+        if ($startupEntryFocus -eq $allFocus) {
+            Assert-Pass $g 'First Tab after natural launch enters All Files'
+        }
+        else {
+            Assert-Fail $g 'First Tab after natural launch enters All Files' (
+                "initial=0x{0:X}; expected=0x{1:X}; focused=0x{2:X} ({3})" -f $startupFocus.ToInt64(),
+                    $allFocus.ToInt64(), $startupEntryFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($startupEntryFocus))
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after natural startup Tab'
+
+        Focus-Window $win
+        $initialFocus = [NativeListViewHelper]::FocusWindow($mainHwnd)
+        $initialFocusReady = $initialFocus -eq $allFocus -or
+            ($initialFocus -ne [IntPtr]::Zero -and
+                [Win32Helper]::IsDescendant($mainHwnd, $initialFocus) -and
+                ![Win32Helper]::IsDescendant($tabHwnd, $initialFocus))
+        if ($initialFocusReady) {
+            Assert-Pass $g 'Explicit frame focus resolves to a keyboard-entry target'
+        }
+        else {
+            Assert-Fail $g 'Explicit frame focus resolves to a keyboard-entry target' (
+                "Focused HWND: 0x{0:X}" -f $initialFocus.ToInt64())
+        }
+
+        $enteredAllFocus = $initialFocus
+        if ($initialFocus -ne $allFocus) {
+            [NativeListViewHelper]::PostTab($initialFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $enteredAllFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        }
+        $enteredAll = $enteredAllFocus -eq $allFocus
+        if ($enteredAll) {
+            Assert-Pass $g 'Tab from explicit frame focus enters All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab from explicit frame focus enters All Files' (
+                "expected=0x{0:X}; focused=0x{1:X} ({2})" -f $allFocus.ToInt64(),
+                    $enteredAllFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($enteredAllFocus))
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after initial Tab'
+
+        # Establish a known All Files starting point even when the entry assertion
+        # failed, keeping the cycle assertions independently diagnostic.
+        Focus-Window $win
+        if (![NativeListViewHelper]::FocusListView($allFocus)) {
+            Assert-Fail $g 'Reset All Files before cycle' 'Could not focus the visible All Files list'
+            return
+        }
+        Assert-Pass $g 'Reset All Files before cycle'
+
+        $currentFocus = $allFocus
+        $currentTabName = $allTab.Current.Name.Trim()
+        foreach ($nextTab in @($tabItems | Select-Object -Skip 1)) {
+            [NativeListViewHelper]::PostTab($currentFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $nextFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+            $nextTabName = $nextTab.Current.Name.Trim()
+            $nextFocused = $nextFocus -ne $currentFocus -and (& $isVisibleList $nextFocus) -and
+                [Win32Helper]::IsDescendant($tabHwnd, $nextFocus)
+            $label = "Tab moves $currentTabName to $nextTabName"
+            if ($nextFocused) {
+                Assert-Pass $g $label
+            }
+            else {
+                Assert-Fail $g $label (
+                    "previous=0x{0:X}; focused=0x{1:X}" -f $currentFocus.ToInt64(), $nextFocus.ToInt64())
+            }
+            & $assertSelectedTab $nextTabName "$nextTabName tab active after forward Tab"
+            $currentFocus = $nextFocus
+            $currentTabName = $nextTabName
+        }
+
+        [NativeListViewHelper]::PostTab($currentFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $typesFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $typesFocused = (& $isVisibleList $typesFocus) -and
+            [Win32Helper]::IsDescendant($mainHwnd, $typesFocus) -and
+            ![Win32Helper]::IsDescendant($tabHwnd, $typesFocus)
+        if ($typesFocused) {
+            Assert-Pass $g "Tab moves $currentTabName to File Types"
+        }
+        else {
+            Assert-Fail $g "Tab moves $currentTabName to File Types" (
+                "Focused HWND: 0x{0:X}" -f $typesFocus.ToInt64())
+        }
+        & $assertSelectedTab $currentTabName "$currentTabName tab remains active while File Types has focus"
+
+        [NativeListViewHelper]::PostTab($typesFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $wrappedFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $wrappedToAll = $wrappedFocus -eq $allFocus -and (& $isVisibleList $wrappedFocus) -and
+            [Win32Helper]::IsDescendant($tabHwnd, $wrappedFocus)
+        if ($wrappedToAll) {
+            Assert-Pass $g 'Tab wraps File Types to All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab wraps File Types to All Files' (
+                "all=0x{0:X}; focused=0x{1:X}" -f $allFocus.ToInt64(), $wrappedFocus.ToInt64())
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after focus wrap'
+
+        [NativeListViewHelper]::PostEscape($wrappedFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $neutralFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        if ($neutralFocus -eq $mainHwnd) {
+            Assert-Pass $g 'Escape moves focus from All Files to the main frame'
+        }
+        else {
+            Assert-Fail $g 'Escape moves focus from All Files to the main frame' (
+                "main=0x{0:X}; focused=0x{1:X} ({2})" -f $mainHwnd.ToInt64(), $neutralFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($neutralFocus))
+        }
+
+        [NativeListViewHelper]::PostTab($neutralFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $reenteredFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        if ($reenteredFocus -eq $allFocus) {
+            Assert-Pass $g 'Tab after Escape re-enters All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab after Escape re-enters All Files' (
+                "all=0x{0:X}; focused=0x{1:X}" -f $allFocus.ToInt64(), $reenteredFocus.ToInt64())
+        }
+
+        $storageCommandId = Get-ResourceId 'ID_TOOLS_STORAGE_ANALYTICS'
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $storageCommandId)) {
+            Assert-Fail $g 'Storage Analytics opens for focus restoration' 'Could not invoke its command'
+            return
+        }
+        Start-Sleep -Milliseconds 500
+        $storageFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $storageFocused = $storageFocus -ne [IntPtr]::Zero -and $storageFocus -ne $reenteredFocus -and
+            [Win32Helper]::IsDescendant($tabHwnd, $storageFocus) -and !(& $isVisibleList $storageFocus)
+        if ($storageFocused) {
+            Assert-Pass $g 'Storage Analytics opens for focus restoration'
+        }
+        else {
+            Assert-Fail $g 'Storage Analytics opens for focus restoration' (
+                "previous=0x{0:X}; focused=0x{1:X} ({2})" -f $reenteredFocus.ToInt64(),
+                    $storageFocus.ToInt64(), [NativeListViewHelper]::GetWindowClassName($storageFocus))
+            return
+        }
+
+        Focus-Window $win
+        $restoredStorageFocus = [NativeListViewHelper]::FocusWindow($mainHwnd)
+        if ($restoredStorageFocus -eq $storageFocus) {
+            Assert-Pass $g 'Frame focus restores Storage Analytics'
+        }
+        else {
+            Assert-Fail $g 'Frame focus restores Storage Analytics' (
+                "storage=0x{0:X}; focused=0x{1:X}" -f $storageFocus.ToInt64(),
+                    $restoredStorageFocus.ToInt64())
+        }
+    }
+    finally {
+        Stop-App
+    }
+}
+
 function Test-KeyboardNavigation {
     param([System.Windows.Automation.AutomationElement] $Window)
     Write-GroupHeader 'Keyboard Navigation'
@@ -7050,6 +7385,11 @@ function Invoke-UiSuite {
         }
         else {
             Assert-Skip 'UiPhase' 'Pre-scan UI tests' 'Application did not launch'
+        }
+
+        # -- Phase 1.5: untouched keyboard focus --------------------------------
+        & $runPhase 'Keyboard focus cycle' {
+            Test-KeyboardFocusCycle -Exe $ExePath -ScanPath $script:scanRoot
         }
 
         # -- Phase 2: post-scan UI ----------------------------------------------

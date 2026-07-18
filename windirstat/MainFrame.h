@@ -49,6 +49,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_WATCHERLIST,
     LF_PERMSLIST,
     LF_EXTLIST,
+    LF_STORAGEANALYTICS,
 };
 
 //
@@ -132,26 +133,6 @@ protected:
     afx_msg void OnPaint();
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-};
-
-//
-// CDeadFocusWnd. The focus in WinDirStat can be on
-// - the directory list
-// - the extension list,
-// - or none of them. In that case the focus resides on
-//   an invisible (zero-size) child of CMainFrame.
-// Pressing VK_TAB while this window has focus moves focus to the
-// directory list.
-class CDeadFocusWnd final : public CWnd
-{
-public:
-    CDeadFocusWnd() = default;
-    void Create(CWnd* parent);
-    ~CDeadFocusWnd() override;
-
-protected:
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 //
@@ -247,7 +228,6 @@ protected:
     CWdsProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_pacman;      // Static control for Pacman
     LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
-    CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
     CComPtr<ITaskbarList3> m_taskbarList;
     TBPFLAG m_taskbarButtonState = TBPF_INDETERMINATE;
@@ -261,6 +241,8 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
+    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg LRESULT OnEnterSizeMove(WPARAM, LPARAM);
     afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
     afx_msg LRESULT OnCallbackRequest(WPARAM, LPARAM lParam);

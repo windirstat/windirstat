@@ -359,32 +359,6 @@ void CPacmanControl::OnPaint()
         pDC, &CMainFrame::Get()->m_wndStatusBar, rc, 0, CMainFrame::Get()->GetStyle());
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-void CDeadFocusWnd::Create(CWnd* parent)
-{
-    const CRect rc(0, 0, 0, 0);
-    CWnd::Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), L"_deadfocus", WS_CHILD, rc, parent, 0);
-}
-
-CDeadFocusWnd::~CDeadFocusWnd()
-{
-    CWnd::DestroyWindow();
-}
-
-BEGIN_MESSAGE_MAP(CDeadFocusWnd, CWnd)
-    ON_WM_KEYDOWN()
-END_MESSAGE_MAP()
-
-void CDeadFocusWnd::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/ )
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_FILETREE);
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////
 UINT CMainFrame::s_TaskBarMessage = ::RegisterWindowMessage(L"TaskbarButtonCreated");
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
@@ -431,6 +405,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_NCPAINT()
     ON_WM_NCACTIVATE()
     ON_WM_ERASEBKGND()
+    ON_WM_SETFOCUS()
+    ON_WM_KEYDOWN()
     ON_COMMAND(ID_VIEW_ALL_FILES, &CMainFrame::OnViewAllFiles)
     ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
     ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
@@ -473,6 +449,25 @@ CMainFrame::~CMainFrame()
 BOOL CMainFrame::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return TRUE;
+}
+
+void CMainFrame::OnSetFocus(CWnd* pOldWnd)
+{
+    CFrameWndEx::OnSetFocus(pOldWnd);
+    if (::GetFocus() == m_hWnd && GetLogicalFocus() != LF_NONE)
+    {
+        MoveFocus(GetLogicalFocus());
+    }
+}
+
+void CMainFrame::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+{
+    if (nChar == VK_TAB)
+    {
+        MoveFocus(LF_FILETREE);
+        return;
+    }
+    CFrameWndEx::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
@@ -726,7 +721,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Show or hide status bar if requested
     if (!COptions::ShowStatusBar) m_wndStatusBar.ShowWindow(SW_HIDE);
     if (!COptions::ShowToolBar) m_wndToolBar.ShowWindow(SW_HIDE);
-    m_wndDeadFocus.Create(this);
 
     // setup look and feel with dark mode support
     CMFCVisualManager::SetDefaultManager(DarkMode::IsDarkModeActive() ?

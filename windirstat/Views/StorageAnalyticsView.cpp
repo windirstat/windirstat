@@ -86,6 +86,7 @@ IMPLEMENT_DYNCREATE(CStorageAnalyticsView, CWinDirStatPane)
 
 BEGIN_MESSAGE_MAP(CStorageAnalyticsView, CWinDirStatPane)
     ON_WM_CREATE()
+    ON_WM_SETFOCUS()
     ON_WM_SIZE()
     ON_WM_ERASEBKGND()
     ON_WM_CTLCOLOR()
@@ -95,6 +96,12 @@ BEGIN_MESSAGE_MAP(CStorageAnalyticsView, CWinDirStatPane)
 END_MESSAGE_MAP()
 
 CStorageAnalyticsView::CStorageAnalyticsView() = default;
+
+void CStorageAnalyticsView::OnSetFocus(CWnd* pOldWnd)
+{
+    CWinDirStatPane::OnSetFocus(pOldWnd);
+    CMainFrame::Get()->SetLogicalFocus(LF_STORAGEANALYTICS);
+}
 
 int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {

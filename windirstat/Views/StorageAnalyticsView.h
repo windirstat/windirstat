@@ -48,6 +48,7 @@ protected:
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     BOOL PreTranslateMessage(MSG* pMsg) override;
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
