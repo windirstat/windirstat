@@ -1001,7 +1001,12 @@ void CWinDirStatModel::OnContextMenuExplore(UINT nID)
 
     // query current context menu
     if (paths.empty()) return;
-    const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+
+    // Keep OLE alive on this thread so shell clipboard verbs can use delayed rendering.
+    if (thread_local SmartPointer oleInit([](PVOID) noexcept { OleUninitialize(); }, PVOID{});
+        oleInit == nullptr && SUCCEEDED(OleInitialize(nullptr))) oleInit = reinterpret_cast<PVOID>(TRUE);
+
+        const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
     if (contextMenu == nullptr) return;
 
     // create placeholder menu
