@@ -655,11 +655,10 @@ bool CWdsListControl::HasFocus() const
 
 CFont* CWdsListControl::GetFont() const
 {
-    if (!m_isFontCached)
+    if (m_cachedFont == NULL)
     {
         CFont* pFont = CWnd::GetFont();
         m_cachedFont = pFont ? (HFONT)pFont->GetSafeHandle() : NULL;
-        m_isFontCached = true;
     }
     return CFont::FromHandle(m_cachedFont);
 }
@@ -667,8 +666,20 @@ CFont* CWdsListControl::GetFont() const
 LRESULT CWdsListControl::OnSetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
     m_cachedFont = NULL;
-    m_isFontCached = false;
-    return Default();
+    const LRESULT result = Default();
+    m_cachedFont = NULL;
+    DrawTextCache::Get().ClearCache();
+    return result;
+}
+
+void CWdsListControl::OnSettingChange(const UINT uFlags, LPCTSTR lpszSection)
+{
+    m_cachedFont = NULL;
+    CListCtrl::OnSettingChange(uFlags, lpszSection);
+    m_cachedFont = NULL;
+    DrawTextCache::Get().ClearCache();
+    CalculateRowHeight();
+    Invalidate(FALSE);
 }
 
 int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC* pDC)
@@ -974,6 +985,7 @@ BEGIN_MESSAGE_MAP(CWdsListControl, CListCtrl)
     ON_WM_CONTEXTMENU()
     ON_WM_DESTROY()
     ON_WM_ERASEBKGND()
+    ON_WM_SETTINGCHANGE()
     ON_WM_SHOWWINDOW()
     ON_MESSAGE(WM_SETFONT, OnSetFont)
 END_MESSAGE_MAP()

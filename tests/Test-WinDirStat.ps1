@@ -233,6 +233,8 @@ $script:SettingsMaxFolderHistoryCount = 100
 $script:SettingsMinSearchMaxResults = 1
 $script:SettingsMinTreeMapFolderFramesDrawThreshold = 3
 $script:SettingsMaxTreeMapFolderFramesDrawThreshold = 128
+$script:SettingsMaxTreeMapStyle = 3
+$script:SettingsMaxGraphPaneStyle = 5
 $script:SettingsMinTreeMapMaxDepth = 1
 $script:SettingsMaxTreeMapMaxDepth = 64
 
@@ -1116,6 +1118,29 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 public static class Win32Helper {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GUITHREADINFO
+    {
+        public uint Size;
+        public uint Flags;
+        public IntPtr Active;
+        public IntPtr Focus;
+        public IntPtr Capture;
+        public IntPtr MenuOwner;
+        public IntPtr MoveSize;
+        public IntPtr Caret;
+        public RECT CaretRect;
+    }
+
     public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
@@ -1123,7 +1148,22 @@ public static class Win32Helper {
     [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")] private static extern uint GetWindowProcessId(IntPtr hWnd, out uint processId);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetGUIThreadInfo(uint threadId, ref GUITHREADINFO info);
+    [DllImport("user32.dll")] private static extern bool IsChild(IntPtr parent, IntPtr child);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+
+    public static IntPtr GetFocusedWindow(IntPtr root)
+    {
+        uint threadId = GetWindowThreadProcessId(root, IntPtr.Zero);
+        var info = new GUITHREADINFO { Size = (uint)Marshal.SizeOf(typeof(GUITHREADINFO)) };
+        return threadId != 0 && GetGUIThreadInfo(threadId, ref info) ? info.Focus : IntPtr.Zero;
+    }
+
+    public static bool IsDescendant(IntPtr parent, IntPtr child)
+    {
+        return parent == child || IsChild(parent, child);
+    }
 
     public static IntPtr[] GetProcessWindowHandles(uint targetProcessId) {
         var handles = new HashSet<IntPtr>();
@@ -1210,6 +1250,10 @@ public static class NativeListViewHelper
     private const uint LVM_GETSELECTEDCOUNT = LVM_FIRST + 50;
     private const uint LVM_SETITEMSTATE = LVM_FIRST + 43;
     private const uint LVM_ENSUREVISIBLE = LVM_FIRST + 19;
+    private const uint WM_KEYDOWN = 0x0100;
+    private const uint WM_KEYUP = 0x0101;
+    private const uint VK_TAB = 0x09;
+    private const uint VK_ESCAPE = 0x1B;
     private const uint LVIF_TEXT = 0x0001;
     private const uint LVIS_FOCUSED = 0x0001;
     private const uint LVIS_SELECTED = 0x0002;
@@ -1274,6 +1318,9 @@ public static class NativeListViewHelper
     [DllImport("user32.dll")]
     private static extern IntPtr GetFocus();
 
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
     [DllImport("kernel32.dll")]
     private static extern uint GetCurrentThreadId();
 
@@ -1315,9 +1362,21 @@ public static class NativeListViewHelper
         return result.ToArray();
     }
 
+    public static string GetWindowClassName(IntPtr window)
+    {
+        var className = new StringBuilder(64);
+        GetClassName(window, className, className.Capacity);
+        return className.ToString();
+    }
+
     public static int GetItemCount(IntPtr listView)
     {
         return SendBounded(listView, LVM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
+    public static int GetSelectedCount(IntPtr listView)
+    {
+        return SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
     }
 
     public static string[] GetItemTexts(IntPtr listView)
@@ -1399,10 +1458,15 @@ public static class NativeListViewHelper
         return SelectItems(listView, new int[] { index });
     }
 
+    public static bool ClearSelection(IntPtr listView)
+    {
+        return SelectItems(listView, new int[0]);
+    }
+
     public static bool SelectItems(IntPtr listView, int[] indices)
     {
         int count = GetItemCount(listView);
-        if (indices == null || indices.Length == 0) return false;
+        if (indices == null) return false;
         var unique = new HashSet<int>(indices);
         if (unique.Count != indices.Length) return false;
         foreach (int index in indices)
@@ -1446,7 +1510,8 @@ public static class NativeListViewHelper
                 if (SendBounded(listView, LVM_SETITEMSTATE, (IntPtr)index, remoteItem) == IntPtr.Zero)
                     return false;
             }
-            SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
+            if (indices.Length != 0)
+                SendBounded(listView, LVM_ENSUREVISIBLE, (IntPtr)indices[0], IntPtr.Zero);
 
             int selectedCount = SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
             if (selectedCount != indices.Length) return false;
@@ -1472,10 +1537,10 @@ public static class NativeListViewHelper
         }
     }
 
-    public static bool FocusListView(IntPtr listView)
+    public static IntPtr FocusWindow(IntPtr window)
     {
         uint processId;
-        uint targetThread = GetWindowThreadProcessId(listView, out processId);
+        uint targetThread = GetWindowThreadProcessId(window, out processId);
         uint currentThread = GetCurrentThreadId();
         bool attached = false;
         try
@@ -1483,16 +1548,30 @@ public static class NativeListViewHelper
             if (targetThread != currentThread)
             {
                 attached = AttachThreadInput(currentThread, targetThread, true);
-                if (!attached) return false;
+                if (!attached) return IntPtr.Zero;
             }
-            SetFocus(listView);
-            return GetFocus() == listView;
+            SetFocus(window);
+            return GetFocus();
         }
         finally
         {
             if (attached) AttachThreadInput(currentThread, targetThread, false);
         }
     }
+
+    public static bool FocusListView(IntPtr listView)
+    {
+        return FocusWindow(listView) == listView;
+    }
+
+    private static bool PostKey(IntPtr window, uint virtualKey)
+    {
+        return PostMessage(window, WM_KEYDOWN, (IntPtr)virtualKey, IntPtr.Zero) &&
+               PostMessage(window, WM_KEYUP, (IntPtr)virtualKey, IntPtr.Zero);
+    }
+
+    public static bool PostTab(IntPtr window) { return PostKey(window, VK_TAB); }
+    public static bool PostEscape(IntPtr window) { return PostKey(window, VK_ESCAPE); }
 
     private static void EnsureSameBitness(IntPtr targetProcess)
     {
@@ -1603,6 +1682,8 @@ function Get-Win32MenuItems {
 
             $subMenu = [Win32MenuHelper]::GetSubMenu($hMenu, $i)
             if ($subMenu -ne [IntPtr]::Zero) {
+                [Win32MenuHelper]::SendMessage(
+                    $hwnd, $script:WM_INITMENUPOPUP, $subMenu, [IntPtr]$i) | Out-Null
                 [void]$results.Add([PSCustomObject]@{
                     MenuName = $ParentMenuName
                     ItemName = $cleanName
@@ -2891,8 +2972,10 @@ function Test-ApplicationLaunch {
     Assert-Pass $g 'App window appears within timeout'
 
     $title = $win.Current.Name
-    if ($title -like '*WinDirStat*') { Assert-Pass $g 'Window title contains WinDirStat' "Title: '$title'" }
-    else { Assert-Fail $g 'Window title contains WinDirStat' "Got: '$title'" }
+    if ($title -match 'WinDirStat (?:Beta )?\d+\.\d+\.\d+') {
+        Assert-Pass $g 'Window title contains the WinDirStat version' "Title: '$title'"
+    }
+    else { Assert-Fail $g 'Window title contains the WinDirStat version' "Got: '$title'" }
 
     # Menu items are at top-level descendants (UIA exposes them directly)
     $fileItem = Find-MenuItem -Window $win -Name 'File'
@@ -2997,17 +3080,27 @@ function Test-MenuNavigation {
     # -- View menu --------------------------------------------------------------
     Assert-Pass $g 'View menu opens'
     $viewItems = @($allItems | Where-Object { $_.MenuName -eq 'View' })
-    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Treemap', 'Flame Graph') })
-    if ($graphModeItems.Count -eq 2) {
-        Assert-Pass $g 'View menu contains Treemap and Flame Graph modes'
-        $checkedGraphModes = @($graphModeItems | Where-Object { $_.IsChecked })
+    $treeMapSubmenu = @($viewItems | Where-Object { $_.ItemName -eq 'Treemap' -and $_.IsSubmenu })
+    $graphModeItems = @($viewItems | Where-Object { $_.ItemName -in @('Flame Graph', 'Sunburst') })
+    $treeMapStyleItems = @($allItems | Where-Object {
+        $_.MenuName -eq 'View -> Treemap' -and
+        $_.ItemName -in @('Rows', 'Squarified', 'Hilbert', 'Moore')
+    })
+    if ($treeMapSubmenu.Count -eq 1 -and $graphModeItems.Count -eq 2 -and $treeMapStyleItems.Count -eq 4) {
+        Assert-Pass $g 'View menu contains the Treemap submenu, four layouts, Flame Graph, and Sunburst'
+        $checkedGraphModes = @($graphModeItems + $treeMapStyleItems | Where-Object { $_.IsChecked })
         if ($checkedGraphModes.Count -eq 1) {
             Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
         } else {
             Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
         }
     } else {
-        Assert-Fail $g 'View menu contains Treemap and Flame Graph modes' "Found: $($graphModeItems.ItemName -join ', ')"
+        $foundGraphModes = @(
+            "Treemap submenu: $($treeMapSubmenu.Count)"
+            "styles: $($treeMapStyleItems.ItemName -join ', ')"
+            "modes: $($graphModeItems.ItemName -join ', ')"
+        ) -join '; '
+        Assert-Fail $g 'View menu contains all graph modes' $foundGraphModes
     }
     $zoomItems = @($viewItems | Where-Object { $_.ItemName -like 'Zoom*' })
     if ($zoomItems.Count -ge 1) {
@@ -3046,7 +3139,7 @@ function Test-MenuNavigation {
     # -- Options menu -----------------------------------------------------------
     Assert-Pass $g 'Options menu opens'
     $optionsItems = @($allItems | Where-Object { $_.MenuName -eq 'Options' } | ForEach-Object { $_.ItemName })
-    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Show Toolbar', 'Show Statusbar')
+    $expectedOptions = @('Show Free Space', 'Show Unknown', 'Show File Types', 'Treemap', 'Flame Graph', 'Sunburst', 'Show Toolbar', 'Show Statusbar')
     $missingOptions = @($expectedOptions | Where-Object { $_ -notin $optionsItems })
     if ($missingOptions.Count -eq 0) {
         Assert-Pass $g "Options menu contains all $($expectedOptions.Count) expected items"
@@ -3946,6 +4039,103 @@ function Test-ScanAndViews {
         Assert-Skip $g 'File tree items visible' 'No DataItem/ListItem/TreeItem found (custom owner-drawn control)'
     }
 
+    # -- Graph renderers: switch every mode against the populated scan ---------
+    $g = 'Graphs'
+    $graphModes = @(
+        @{ Name = 'Rows';        Command = 'ID_VIEW_TREEMAP_ROWS';       MenuName = 'View -> Treemap' },
+        @{ Name = 'Squarified';  Command = 'ID_VIEW_TREEMAP_SQUARIFIED'; MenuName = 'View -> Treemap' },
+        @{ Name = 'Hilbert';     Command = 'ID_VIEW_TREEMAP_HILBERT';    MenuName = 'View -> Treemap' },
+        @{ Name = 'Moore';       Command = 'ID_VIEW_TREEMAP_MOORE';      MenuName = 'View -> Treemap' },
+        @{ Name = 'Flame Graph'; Command = 'ID_VIEW_FLAMEGRAPH';         MenuName = 'View' },
+        @{ Name = 'Sunburst';    Command = 'ID_VIEW_SUNBURST';           MenuName = 'View' }
+    )
+    foreach ($mode in $graphModes) {
+        $commandId = Get-ResourceId $mode.Command
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $commandId)) {
+            Assert-Fail $g "$($mode.Name) command dispatches" "Command ID $commandId could not be posted"
+            continue
+        }
+        Start-Sleep -Milliseconds 500
+        if ($script:proc -and !$script:proc.HasExited) {
+            $items = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle))
+            $selected = $items | Where-Object {
+                $_.MenuName -eq $mode.MenuName -and $_.ItemName -eq $mode.Name -and $_.IsChecked
+            } | Select-Object -First 1
+            if ($selected) {
+                Assert-Pass $g "$($mode.Name) renders and becomes the selected graph mode"
+            }
+            else {
+                Assert-Fail $g "$($mode.Name) selected state" 'Renderer remained alive but its View menu item was not checked'
+            }
+        }
+        else {
+            Assert-Fail $g "$($mode.Name) renders" 'Application exited while switching graph modes'
+            break
+        }
+    }
+
+    # Exercise direct graph commands at boundaries where normal menu updates disable them.
+    $selectParentId = Get-ResourceId 'ID_TREEMAP_SELECT_PARENT'
+    for ($i = 0; $i -lt 64; $i++) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 20
+    }
+    Start-Sleep -Milliseconds 300
+    if ($script:proc -and !$script:proc.HasExited) {
+        Assert-Pass $g 'Repeated direct select-parent commands are safe at the root boundary'
+    }
+    else {
+        Assert-Fail $g 'Repeated direct select-parent commands are safe at the root boundary' 'Application exited'
+        return
+    }
+
+    $emptySelectionVerified = $false
+    try {
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $ScanPath -TargetPath $ScanPath
+        if ($nativeRoot -and
+            [NativeListViewHelper]::ClearSelection([IntPtr] $nativeRoot.ListView)) {
+            $emptySelectionVerified = [NativeListViewHelper]::GetSelectedCount([IntPtr] $nativeRoot.ListView) -eq 0
+        }
+    }
+    catch {}
+    if ($emptySelectionVerified) {
+        Invoke-Win32CommandId -Window $win -CommandId $selectParentId | Out-Null
+        Start-Sleep -Milliseconds 300
+        if ($script:proc -and !$script:proc.HasExited) {
+            Assert-Pass $g 'Direct select-parent is safe with a verified empty selection'
+        }
+        else {
+            Assert-Fail $g 'Direct select-parent is safe with a verified empty selection' 'Application exited'
+            return
+        }
+    }
+    else {
+        Assert-Skip $g 'Direct select-parent with an empty selection' 'Native file-tree selection could not be cleared and verified'
+    }
+
+    $zoomResetId = Get-ResourceId 'ID_TREEMAP_ZOOMRESET'
+    $zoomOutId = Get-ResourceId 'ID_TREEMAP_ZOOMOUT'
+    Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    Start-Sleep -Milliseconds 100
+    $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+        Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+    if ($zoomOut -and !$zoomOut.IsEnabled) {
+        Invoke-Win32CommandId -Window $win -CommandId $zoomOutId | Out-Null
+        Start-Sleep -Milliseconds 300
+        $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
+            Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+        if ($script:proc -and !$script:proc.HasExited -and $zoomOut -and !$zoomOut.IsEnabled) {
+            Assert-Pass $g 'Direct zoom-out at the global root preserves a valid zoom boundary'
+        }
+        else {
+            Assert-Fail $g 'Direct zoom-out at the global root preserves a valid zoom boundary' 'Command became enabled or application exited'
+        }
+        Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
+    }
+    else {
+        Assert-Fail $g 'Global zoom boundary established' 'Zoom Out remained enabled after Zoom Reset'
+    }
+
     # -- Largest Files tab: verify our large test files appear ------------------
     $g = 'LargestFiles'
 
@@ -4412,6 +4602,275 @@ public static class RightClickHelper {
         # exposing a context menu through any standard mechanism.
         Assert-Skip $g 'Context menu appears' 'No menu via right-click or Shift+F10 (custom owner-drawn control)'
         Send-Keys '{ESC}' 200
+    }
+}
+
+function Test-KeyboardFocusCycle {
+    param([string] $Exe, [string] $ScanPath)
+    Write-GroupHeader 'Keyboard Focus Cycle'
+    $g = 'KeyboardFocus'
+
+    try {
+        # A command-line scan avoids the Drive Select dialog so no pane receives
+        # focus through test interaction before the initial Tab assertion.
+        $win = Start-App -Exe $Exe -Arguments ('"{0}"' -f $ScanPath)
+        if (!$win) {
+            Assert-Fail $g 'App launches for untouched focus test' 'Window not found'
+            return
+        }
+        Assert-Pass $g 'App launches for untouched focus test'
+
+        $scanTimeoutMs = [Math]::Max($TimeoutSeconds * 1000, 90000)
+        if (!(Wait-ScanDone -TimeoutMs $scanTimeoutMs)) {
+            Assert-Fail $g 'Command-line scan completes' "Still scanning after ${TimeoutSeconds}s"
+            return
+        }
+        Assert-Pass $g 'Command-line scan completes'
+
+        $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
+        if (!$win) {
+            Assert-Fail $g 'Main window available after command-line scan' 'Lost window reference'
+            return
+        }
+        $script:win = $win
+
+        $mainHwnd = [IntPtr] $win.Current.NativeWindowHandle
+        $tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
+        $tabHwnd = if ($tabCtrl) { [IntPtr] $tabCtrl.Current.NativeWindowHandle } else { [IntPtr]::Zero }
+        if ($mainHwnd -eq [IntPtr]::Zero -or $tabHwnd -eq [IntPtr]::Zero) {
+            Assert-Fail $g 'Main and file-tab native handles available' (
+                "main=0x{0:X}; tab=0x{1:X}" -f $mainHwnd.ToInt64(), $tabHwnd.ToInt64())
+            return
+        }
+        Assert-Pass $g 'Main and file-tab native handles available'
+
+        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem) |
+            Where-Object { !$_.Current.IsOffscreen })
+        $allTab = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
+        $largestTab = $tabItems | Where-Object { $_.Current.Name -like '*Largest Files*' } | Select-Object -First 1
+        if (!$allTab -or !$largestTab) {
+            Assert-Fail $g 'All Files and Largest Files tabs available' (
+                "Found: $(($tabItems | ForEach-Object { $_.Current.Name }) -join ', ')"
+            )
+            return
+        }
+        Assert-Pass $g 'All Files and Largest Files tabs available'
+
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $ScanPath -TargetPath $ScanPath
+        if (!$nativeRoot) {
+            Assert-Fail $g 'Native All Files list available' 'The scan-root row was not found'
+            return
+        }
+        $allFocus = [IntPtr] $nativeRoot.ListView
+        Assert-Pass $g 'Native All Files list available'
+
+        $getSelectedTabName = {
+            foreach ($tab in $tabItems) {
+                try {
+                    $selection = $tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                    if ($selection.Current.IsSelected) { return $tab.Current.Name }
+                }
+                catch {}
+            }
+            return $null
+        }
+        $assertSelectedTab = {
+            param([string] $Expected, [string] $Label)
+            $selectedName = & $getSelectedTabName
+            if ($null -eq $selectedName) {
+                Assert-Skip $g $Label 'The MFC tab provider does not expose SelectionItemPattern state'
+            }
+            elseif ($selectedName -like "*$Expected*") {
+                Assert-Pass $g $Label "Selected: '$selectedName'"
+            }
+            else {
+                Assert-Fail $g $Label "Selected: '$selectedName'"
+            }
+        }
+        $isVisibleList = {
+            param([IntPtr] $Handle)
+            [long[]] $visibleHandles = @([NativeListViewHelper]::GetVisibleListViews($mainHwnd) |
+                ForEach-Object { $_.ToInt64() })
+            return $visibleHandles -contains $Handle.ToInt64()
+        }
+
+        $startupFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $startupFocusReady = $startupFocus -ne [IntPtr]::Zero -and
+            [Win32Helper]::IsDescendant($mainHwnd, $startupFocus) -and
+            ![Win32Helper]::IsDescendant($tabHwnd, $startupFocus)
+        if ($startupFocusReady) {
+            Assert-Pass $g 'Natural launch focus starts outside the data panes'
+        }
+        else {
+            Assert-Fail $g 'Natural launch focus starts outside the data panes' (
+                "Focused HWND: 0x{0:X} ({1})" -f $startupFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($startupFocus))
+        }
+
+        $startupEntryFocus = $startupFocus
+        if ($startupFocus -ne [IntPtr]::Zero) {
+            [NativeListViewHelper]::PostTab($startupFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $startupEntryFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        }
+        if ($startupEntryFocus -eq $allFocus) {
+            Assert-Pass $g 'First Tab after natural launch enters All Files'
+        }
+        else {
+            Assert-Fail $g 'First Tab after natural launch enters All Files' (
+                "initial=0x{0:X}; expected=0x{1:X}; focused=0x{2:X} ({3})" -f $startupFocus.ToInt64(),
+                    $allFocus.ToInt64(), $startupEntryFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($startupEntryFocus))
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after natural startup Tab'
+
+        Focus-Window $win
+        $initialFocus = [NativeListViewHelper]::FocusWindow($mainHwnd)
+        $initialFocusReady = $initialFocus -eq $allFocus -or
+            ($initialFocus -ne [IntPtr]::Zero -and
+                [Win32Helper]::IsDescendant($mainHwnd, $initialFocus) -and
+                ![Win32Helper]::IsDescendant($tabHwnd, $initialFocus))
+        if ($initialFocusReady) {
+            Assert-Pass $g 'Explicit frame focus resolves to a keyboard-entry target'
+        }
+        else {
+            Assert-Fail $g 'Explicit frame focus resolves to a keyboard-entry target' (
+                "Focused HWND: 0x{0:X}" -f $initialFocus.ToInt64())
+        }
+
+        $enteredAllFocus = $initialFocus
+        if ($initialFocus -ne $allFocus) {
+            [NativeListViewHelper]::PostTab($initialFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $enteredAllFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        }
+        $enteredAll = $enteredAllFocus -eq $allFocus
+        if ($enteredAll) {
+            Assert-Pass $g 'Tab from explicit frame focus enters All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab from explicit frame focus enters All Files' (
+                "expected=0x{0:X}; focused=0x{1:X} ({2})" -f $allFocus.ToInt64(),
+                    $enteredAllFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($enteredAllFocus))
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after initial Tab'
+
+        # Establish a known All Files starting point even when the entry assertion
+        # failed, keeping the cycle assertions independently diagnostic.
+        Focus-Window $win
+        if (![NativeListViewHelper]::FocusListView($allFocus)) {
+            Assert-Fail $g 'Reset All Files before cycle' 'Could not focus the visible All Files list'
+            return
+        }
+        Assert-Pass $g 'Reset All Files before cycle'
+
+        $currentFocus = $allFocus
+        $currentTabName = $allTab.Current.Name.Trim()
+        foreach ($nextTab in @($tabItems | Select-Object -Skip 1)) {
+            [NativeListViewHelper]::PostTab($currentFocus) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $nextFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+            $nextTabName = $nextTab.Current.Name.Trim()
+            $nextFocused = $nextFocus -ne $currentFocus -and (& $isVisibleList $nextFocus) -and
+                [Win32Helper]::IsDescendant($tabHwnd, $nextFocus)
+            $label = "Tab moves $currentTabName to $nextTabName"
+            if ($nextFocused) {
+                Assert-Pass $g $label
+            }
+            else {
+                Assert-Fail $g $label (
+                    "previous=0x{0:X}; focused=0x{1:X}" -f $currentFocus.ToInt64(), $nextFocus.ToInt64())
+            }
+            & $assertSelectedTab $nextTabName "$nextTabName tab active after forward Tab"
+            $currentFocus = $nextFocus
+            $currentTabName = $nextTabName
+        }
+
+        [NativeListViewHelper]::PostTab($currentFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $typesFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $typesFocused = (& $isVisibleList $typesFocus) -and
+            [Win32Helper]::IsDescendant($mainHwnd, $typesFocus) -and
+            ![Win32Helper]::IsDescendant($tabHwnd, $typesFocus)
+        if ($typesFocused) {
+            Assert-Pass $g "Tab moves $currentTabName to File Types"
+        }
+        else {
+            Assert-Fail $g "Tab moves $currentTabName to File Types" (
+                "Focused HWND: 0x{0:X}" -f $typesFocus.ToInt64())
+        }
+        & $assertSelectedTab $currentTabName "$currentTabName tab remains active while File Types has focus"
+
+        [NativeListViewHelper]::PostTab($typesFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $wrappedFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $wrappedToAll = $wrappedFocus -eq $allFocus -and (& $isVisibleList $wrappedFocus) -and
+            [Win32Helper]::IsDescendant($tabHwnd, $wrappedFocus)
+        if ($wrappedToAll) {
+            Assert-Pass $g 'Tab wraps File Types to All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab wraps File Types to All Files' (
+                "all=0x{0:X}; focused=0x{1:X}" -f $allFocus.ToInt64(), $wrappedFocus.ToInt64())
+        }
+        & $assertSelectedTab 'All Files' 'All Files tab active after focus wrap'
+
+        [NativeListViewHelper]::PostEscape($wrappedFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $neutralFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        if ($neutralFocus -eq $mainHwnd) {
+            Assert-Pass $g 'Escape moves focus from All Files to the main frame'
+        }
+        else {
+            Assert-Fail $g 'Escape moves focus from All Files to the main frame' (
+                "main=0x{0:X}; focused=0x{1:X} ({2})" -f $mainHwnd.ToInt64(), $neutralFocus.ToInt64(),
+                    [NativeListViewHelper]::GetWindowClassName($neutralFocus))
+        }
+
+        [NativeListViewHelper]::PostTab($neutralFocus) | Out-Null
+        Start-Sleep -Milliseconds 300
+        $reenteredFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        if ($reenteredFocus -eq $allFocus) {
+            Assert-Pass $g 'Tab after Escape re-enters All Files'
+        }
+        else {
+            Assert-Fail $g 'Tab after Escape re-enters All Files' (
+                "all=0x{0:X}; focused=0x{1:X}" -f $allFocus.ToInt64(), $reenteredFocus.ToInt64())
+        }
+
+        $storageCommandId = Get-ResourceId 'ID_TOOLS_STORAGE_ANALYTICS'
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $storageCommandId)) {
+            Assert-Fail $g 'Storage Analytics opens for focus restoration' 'Could not invoke its command'
+            return
+        }
+        Start-Sleep -Milliseconds 500
+        $storageFocus = [Win32Helper]::GetFocusedWindow($mainHwnd)
+        $storageFocused = $storageFocus -ne [IntPtr]::Zero -and $storageFocus -ne $reenteredFocus -and
+            [Win32Helper]::IsDescendant($tabHwnd, $storageFocus) -and !(& $isVisibleList $storageFocus)
+        if ($storageFocused) {
+            Assert-Pass $g 'Storage Analytics opens for focus restoration'
+        }
+        else {
+            Assert-Fail $g 'Storage Analytics opens for focus restoration' (
+                "previous=0x{0:X}; focused=0x{1:X} ({2})" -f $reenteredFocus.ToInt64(),
+                    $storageFocus.ToInt64(), [NativeListViewHelper]::GetWindowClassName($storageFocus))
+            return
+        }
+
+        Focus-Window $win
+        $restoredStorageFocus = [NativeListViewHelper]::FocusWindow($mainHwnd)
+        if ($restoredStorageFocus -eq $storageFocus) {
+            Assert-Pass $g 'Frame focus restores Storage Analytics'
+        }
+        else {
+            Assert-Fail $g 'Frame focus restores Storage Analytics' (
+                "storage=0x{0:X}; focused=0x{1:X}" -f $storageFocus.ToInt64(),
+                    $restoredStorageFocus.ToInt64())
+        }
+    }
+    finally {
+        Stop-App
     }
 }
 
@@ -7192,6 +7651,11 @@ function Invoke-UiSuite {
             Assert-Skip 'UiPhase' 'Pre-scan UI tests' 'Application did not launch'
         }
 
+        # -- Phase 1.5: untouched keyboard focus --------------------------------
+        & $runPhase 'Keyboard focus cycle' {
+            Test-KeyboardFocusCycle -Exe $ExePath -ScanPath $script:scanRoot
+        }
+
         # -- Phase 2: post-scan UI ----------------------------------------------
         & $runPhase 'Scan and views' { Test-ScanAndViews -Exe $ExePath -ScanPath $script:scanRoot }
         if ($script:win) {
@@ -9175,27 +9639,30 @@ try {
         $dump
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_MigratesLegacySettings' -Behavior 'Former graph-selection flags and combined style values should migrate without overwriting the treemap layout.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' `
+        -Behavior 'Former graph-selection flags and out-of-range treemap values should have no migration behavior.' `
+        -Body {
         param($ctx)
 
         $flameSections = New-BaseIniSections
         Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
         $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
-        Assert-Equal $ctx 'Legacy flame graph pane' $flame.Dump.GraphPaneStyle 2
-        Assert-Equal $ctx 'Legacy flame treemap style preserved' $flame.Dump.TreeMapStyle 1
+        Assert-Equal $ctx 'Legacy flame flag ignored' $flame.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Independent treemap style preserved' $flame.Dump.TreeMapStyle 1
 
         $sunburstSections = New-BaseIniSections
         Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
         Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
         $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
-        Assert-Equal $ctx 'Legacy sunburst pane precedence' $sunburst.Dump.GraphPaneStyle 3
+        Assert-Equal $ctx 'Legacy graph flags ignored' $sunburst.Dump.GraphPaneStyle 0
 
         $combinedSections = New-BaseIniSections
-        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 3
-        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'CombinedSunburst'
-        Assert-Equal $ctx 'Combined sunburst pane migration' $combined.Dump.GraphPaneStyle 3
-        Assert-Equal $ctx 'Combined value restores valid treemap default' $combined.Dump.TreeMapStyle 0
+        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 5
+        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'OutOfRangeTreemapStyle'
+        Assert-Equal $ctx 'Combined graph value ignored' $combined.Dump.GraphPaneStyle 0
+        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' `
+            $combined.Dump.TreeMapStyle $script:SettingsMaxTreeMapStyle
 
         [pscustomobject] @{
             CommandLine = $combined.CommandLine
@@ -9272,8 +9739,8 @@ try {
         Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
         Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
         Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle 1
-        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle 3
+        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle $script:SettingsMaxTreeMapStyle
+        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle $script:SettingsMaxGraphPaneStyle
         Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
 
         $dump

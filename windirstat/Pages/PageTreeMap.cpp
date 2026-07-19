@@ -71,6 +71,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
 
     DDX_Control(pDX, IDC_PREVIEW, m_preview);
+    DDX_Control(pDX, IDC_TREEMAPSTYLE, m_styleCombo);
     DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_highlightColor);
     DDX_Control(pDX, IDC_TREEMAPGRIDCOLOR, m_gridColor);
     DDX_Control(pDX, IDC_BRIGHTNESS, m_brightness);
@@ -87,7 +88,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
         m_preview.SetOptions(&m_options);
     }
 
-    DDX_Radio(pDX, IDC_KDIRSTAT, m_style);
+    DDX_CBIndex(pDX, IDC_TREEMAPSTYLE, m_style);
     DDX_Check(pDX, IDC_TREEMAPGRID, m_grid);
 
     DDX_Text(pDX, IDC_STATICBRIGHTNESS, m_sBrightness);
@@ -114,8 +115,7 @@ BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
     ON_WM_HSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
-    ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
-    ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnSetModified)
+    ON_CBN_SELCHANGE(IDC_TREEMAPSTYLE, OnSetModified)
     ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
@@ -146,6 +146,12 @@ BOOL CPageTreeMap::OnInitDialog()
 
     m_options = COptions::TreeMapOptions;
     m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
+    for (const std::wstring& style : SplitString(
+        Localization::Lookup(IDS_PAGE_TREEMAP_STYLES), L','))
+    {
+        m_styleCombo.AddString(style.c_str());
+    }
+    ASSERT(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
 
     UpdateData(FALSE);
 
@@ -172,7 +178,7 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_options.SetHeightPercent(m_nHeight);
         m_options.SetScaleFactorPercent(m_nScaleFactor);
         m_options.SetLightSourcePoint(m_ptLightSource);
-        m_options.style = m_style == 0 ? CTreeMap::KDirStatStyle : CTreeMap::SequoiaViewStyle;
+        m_options.style = static_cast<TreeMapLayout::Style>(m_style);
         m_options.grid = FALSE != m_grid;
         m_options.gridColor = m_gridColor.GetColor();
     }
@@ -183,7 +189,7 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_nHeight = m_options.GetHeightPercent();
         m_nScaleFactor = m_options.GetScaleFactorPercent();
         m_ptLightSource = m_options.GetLightSourcePoint();
-        m_style = m_options.style == CTreeMap::KDirStatStyle ? 0 : 1;
+        m_style = static_cast<int>(m_options.style);
         m_grid = m_options.grid;
         m_gridColor.SetColor(m_options.gridColor);
     }

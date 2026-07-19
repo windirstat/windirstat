@@ -21,6 +21,7 @@
 #include "Item.h"
 #include "Options.h"
 #include "Localization.h"
+#include "Version.h"
 
 #pragma comment(lib, "cabinet.lib")
 
@@ -567,6 +568,12 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
 }
 
 // Application info
+std::wstring GetAppTitle()
+{
+    return std::format(L"{} {}{}.{}.{}", Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+        PRODUCTION == 0 ? L"Beta " : L"", PRD_MAJVER, PRD_MINVER, PRD_PATCH);
+}
+
 std::wstring GetAppFileName(const std::wstring& ext)
 {
     std::wstring s(MAX_PATH, wds::chrNull);

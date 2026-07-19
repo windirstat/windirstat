@@ -82,7 +82,25 @@ void CGraphView::ShowTreeMap(const bool show)
     ClearHover();
     ResetInputState();
     m_showTreeMap = show;
-    if (GetSafeHwnd()) Invalidate(FALSE);
+    if (!show)
+    {
+        TrimRenderCache();
+    }
+    else if (GetSafeHwnd())
+    {
+        Invalidate(FALSE);
+    }
+}
+
+void CGraphView::TrimRenderCache()
+{
+    ResetInputState();
+    ClearHover();
+    m_bitmap.DeleteObject();
+    m_dimmed.DeleteObject();
+    m_dimmedSize = { 0, 0 };
+    ClearVisualizationLayout();
+    OnRenderCacheTrimmed();
 }
 
 void CGraphView::PaintEmptyView(CDC* pDC)
@@ -108,6 +126,11 @@ bool CGraphView::PrepareDrawing(CDC* /*pDC*/, CRect& rect)
     return !rect.IsRectEmpty();
 }
 
+bool CGraphView::CreateRenderBitmap(CDC* pDC, const CSize size)
+{
+    return m_bitmap.CreateCompatibleBitmap(pDC, size.cx, size.cy) != FALSE;
+}
+
 void CGraphView::OnDraw(CDC* pDC)
 {
     if (!IsReadyToDraw())
@@ -130,11 +153,25 @@ void CGraphView::OnDraw(CDC* pDC)
     if (!IsDrawn())
     {
         CWaitCursor waitCursor;
-        if (!m_bitmap.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height()))
+        if (m_dimmed.m_hObject != nullptr && m_dimmedSize == rect.Size())
         {
-            DiscardRenderCache();
-            pDC->FillSolidRect(rect, BackgroundColor);
-            return;
+            // Rendering is synchronous, so the dimmed bitmap can be recycled
+            // instead of briefly retaining two full-window device bitmaps.
+            m_bitmap.Attach(m_dimmed.Detach());
+            m_dimmedSize = { 0, 0 };
+        }
+        else
+        {
+            // Do not retain a stale full-window bitmap while allocating its
+            // differently sized replacement.
+            m_dimmed.DeleteObject();
+            m_dimmedSize = { 0, 0 };
+            if (!CreateRenderBitmap(pDC, rect.Size()))
+            {
+                DiscardRenderCache();
+                pDC->FillSolidRect(rect, BackgroundColor);
+                return;
+            }
         }
 
         CSelectObject selectBitmap(&memoryDc, &m_bitmap);
@@ -149,7 +186,6 @@ void CGraphView::OnDraw(CDC* pDC)
             &memoryDc, 0, 0, SRCCOPY);
     }
 
-    DrawHoverOverlay(pDC);
     DrawHighlights(pDC);
 }
 
@@ -301,10 +337,10 @@ void CGraphView::ResetZoom(const CPoint point)
         AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMRESET);
 }
 
-void CGraphView::Inactivate()
+void CGraphView::Inactivate(const bool clearLayout)
 {
     ClearHover();
-    ClearVisualizationLayout();
+    if (clearLayout) ClearVisualizationLayout();
     if (m_bitmap.m_hObject == nullptr) return;
 
     m_dimmed.DeleteObject();
@@ -326,11 +362,11 @@ void CGraphView::Inactivate()
         0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunction);
 }
 
-void CGraphView::DiscardRenderCache()
+void CGraphView::DiscardRenderCache(const bool clearLayout)
 {
     ClearHover();
     m_bitmap.DeleteObject();
-    ClearVisualizationLayout();
+    if (clearLayout) ClearVisualizationLayout();
 }
 
 void CGraphView::EmptyView()
@@ -351,7 +387,11 @@ void CGraphView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 void CGraphView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
-    if (!CWinDirStatModel::Get()->IsRootDone()) Inactivate();
+    if (!CWinDirStatModel::Get()->IsRootDone())
+    {
+        if (IsWindowVisible()) Inactivate();
+        else TrimRenderCache();
+    }
 
     switch (change)
     {
@@ -382,15 +422,31 @@ void CGraphView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
     }
 }
 
-void CGraphView::OnVisualizationChanged(MODEL_CHANGE /*change*/)
+void CGraphView::OnVisualizationChanged(const MODEL_CHANGE change)
 {
     ResetInputState();
-    Inactivate();
+    if (!IsWindowVisible())
+    {
+        TrimRenderCache();
+        return;
+    }
+    Inactivate(!CanReuseVisualizationLayout(change));
 }
 
 void CGraphView::ResetInputState()
 {
-    m_wheelDeltaRemainder = 0;
+    if (m_trackingMouse && GetSafeHwnd())
+    {
+        TRACKMOUSEEVENT trackMouseEvent{
+            .cbSize = sizeof(TRACKMOUSEEVENT),
+            .dwFlags = TME_CANCEL | TME_LEAVE,
+            .hwndTrack = m_hWnd,
+        };
+        ::TrackMouseEvent(&trackMouseEvent);
+    }
+    m_trackingMouse = false;
+    m_navigationWheelDeltaRemainder = 0;
+    m_zoomWheelDeltaRemainder = 0;
     OnInputStateReset();
 }
 
@@ -407,20 +463,9 @@ HoverInfo CGraphView::GetHoverInfo() const
 
 void CGraphView::ClearHover()
 {
-    SetHoverItem(nullptr);
-    if (m_paneTextOverride.empty() && m_paneSizeOverride == 0) return;
-
-    m_paneTextOverride.clear();
-    m_paneSizeOverride = 0;
-    if (CMainFrame::Get() != nullptr) CMainFrame::Get()->UpdatePaneText();
-}
-
-void CGraphView::SetHoverItem(const CItem* item)
-{
-    if (item == m_hoverItem) return;
-    const CItem* oldItem = m_hoverItem;
-    m_hoverItem = item;
-    OnHoverItemChanged(oldItem, item);
+    m_hoverItem = nullptr;
+    if (UpdateHoverDetails(nullptr, true) && CMainFrame::Get() != nullptr)
+        CMainFrame::Get()->UpdatePaneText();
 }
 
 std::span<const UINT> CGraphView::GetPersistentContextCommands() const
@@ -457,20 +502,25 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
     }
 
     CItem* item = ResolveItemAtPoint(point);
-    if (item == m_hoverItem) return;
-    SetHoverItem(item);
+    const bool itemChanged = item != m_hoverItem;
+    if (itemChanged) m_hoverItem = item;
+    const bool detailsChanged = UpdateHoverDetails(item, itemChanged);
+    if (detailsChanged)
+    {
+        CMainFrame::Get()->UpdatePaneText();
+    }
+}
 
-    if (item == nullptr)
-    {
-        m_paneTextOverride.clear();
-        m_paneSizeOverride = 0;
-    }
-    else
-    {
-        m_paneTextOverride = item->GetPath();
-        m_paneSizeOverride = item->TmiGetSize();
-    }
-    CMainFrame::Get()->UpdatePaneText();
+bool CGraphView::UpdateHoverDetails(const CItem* item, const bool itemChanged)
+{
+    if (!itemChanged) return false;
+    const std::wstring path = item == nullptr ? std::wstring{} : item->GetPath();
+    const ULONGLONG size = item == nullptr ? 0 : item->TmiGetSize();
+    if (path == m_paneTextOverride && size == m_paneSizeOverride) return false;
+
+    m_paneTextOverride = path;
+    m_paneSizeOverride = size;
+    return true;
 }
 
 void CGraphView::OnMouseLeave()
@@ -484,9 +534,12 @@ BOOL CGraphView::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoin
     CMainFrame* frame = CMainFrame::Get();
     if (frame == nullptr) return CWinDirStatPane::OnMouseWheel(nFlags, zDelta, pt);
 
-    const int totalDelta = m_wheelDeltaRemainder + static_cast<int>(zDelta);
+    const bool zoomCommand = (nFlags & MK_CONTROL) != 0;
+    int& remainder = zoomCommand
+        ? m_zoomWheelDeltaRemainder : m_navigationWheelDeltaRemainder;
+    const int totalDelta = remainder + static_cast<int>(zDelta);
     const int clicks = totalDelta / WHEEL_DELTA;
-    m_wheelDeltaRemainder = totalDelta % WHEEL_DELTA;
+    remainder = totalDelta % WHEEL_DELTA;
     if (clicks == 0) return TRUE;
 
     const UINT commandUp = (nFlags & MK_CONTROL)
@@ -494,6 +547,17 @@ BOOL CGraphView::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoin
     const UINT commandDown = (nFlags & MK_CONTROL)
         ? ID_TREEMAP_ZOOMOUT : ID_TREEMAP_RESELECT_CHILD;
     const UINT command = clicks > 0 ? commandUp : commandDown;
-    for (int i = 0; i < std::abs(clicks); i++) frame->SendMessage(WM_COMMAND, command);
+    const auto currentItem = [zoomCommand]() -> const CItem*
+    {
+        return zoomCommand
+            ? CWinDirStatModel::Get()->GetZoomItem()
+            : CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    };
+    for (int i = 0; i < std::abs(clicks); i++)
+    {
+        const CItem* before = currentItem();
+        frame->SendMessage(WM_COMMAND, command);
+        if (currentItem() == before) break;
+    }
     return TRUE;
 }

@@ -28,8 +28,9 @@ static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, P
 
 bool FinderBasic::FindNext()
 {
+    const bool firstRun = (m_currentInfo == nullptr);
     bool success = false;
-    if (m_firstRun || m_currentInfo->NextEntryOffset == 0)
+    if (firstRun || m_currentInfo->NextEntryOffset == 0)
     {
         UNICODE_STRING uSearch
         {
@@ -66,7 +67,7 @@ bool FinderBasic::FindNext()
         {
             return NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
                 m_directoryInfo.data(), BUFFER_SIZE, infoClass, FALSE,
-                (uSearch.Length > 0) ? &uSearch : nullptr, (m_firstRun) ? TRUE : FALSE);
+                (uSearch.Length > 0) ? &uSearch : nullptr, firstRun ? TRUE : FALSE);
         };
 
         constexpr NTSTATUS STATUS_INVALID_INFO_CLASS = static_cast<NTSTATUS>(0xC0000003L);
@@ -113,7 +114,7 @@ bool FinderBasic::FindNext()
         // special case for reparse points on the initial run since it will
         // return the attributes on the destination folder and not the reparse
         // point attributes itself that we want
-        if (m_firstRun)
+        if (firstRun)
         {
             // Use cached value passed in from previous capture
             if (m_name == L".")
@@ -200,8 +201,6 @@ bool FinderBasic::FindNext()
         }
     }
 
-    m_firstRun = false;
-
     if (success && !m_statMode && (m_name == L"." || m_name == L"..")) return FindNext();
     else return success;
 }
@@ -214,7 +213,6 @@ bool FinderBasic::FindFile(const CItem* item)
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // initialize run
-    m_firstRun = true;
     m_initialAttributes = attr;
     m_currentInfo = nullptr;
     m_reparseTag = 0;

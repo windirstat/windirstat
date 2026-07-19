@@ -48,7 +48,7 @@ public:
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
-    bool WasCancelled() const noexcept { return m_cancelled; }
+    bool WasCancelled() const noexcept { return m_cancelRequested.load(); }
 
     // Methods for task lambda to interact with the dialog
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
@@ -84,9 +84,8 @@ private:
     std::atomic<size_t> m_current = 0;
     const size_t m_total = 0;
     const Flags m_flags = Flags::None;
-    bool m_cancelled = false;
 
-    std::optional<std::jthread> m_workerThread;
+    std::jthread m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
     static constexpr UINT TIMER_INTERVAL = 50; // Update every 50ms
 };

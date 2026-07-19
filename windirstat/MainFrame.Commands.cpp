@@ -327,11 +327,22 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
         case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
         case LF_PERMSLIST: GetFilePermsView()->SetFocus(); break;
-        case LF_FILETREE: GetFileTabbedView()->SetFocus(); break;
+        case LF_STORAGEANALYTICS:
+        {
+            GetFileTabbedView()->SetActiveStorageAnalyticsView();
+            GetFileTabbedView()->SetFocus();
+            break;
+        }
+        case LF_FILETREE:
+        {
+            GetFileTabbedView()->SetActiveFileTreeView();
+            GetFileTreeView()->SetFocus();
+            break;
+        }
         case LF_NONE:
         {
             SetLogicalFocus(LF_NONE);
-            m_wndDeadFocus.SetFocus();
+            SetFocus();
         }
     }
 }
@@ -433,7 +444,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    SetNativeMenuRadio(pCmdUI, IsTreeMapPane(GetGraphPaneType()));
+    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::TreeMap);
 }
 
 void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
@@ -472,7 +483,7 @@ void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
 
 GraphPane CMainFrame::GetGraphPaneType() const
 {
-    return static_cast<GraphPane>(static_cast<int>(COptions::GraphPaneStyle));
+    return DecodeGraphPane(COptions::GraphPaneStyle);
 }
 
 void CMainFrame::SelectGraphPane(const GraphPane pane)
@@ -482,41 +493,62 @@ void CMainFrame::SelectGraphPane(const GraphPane pane)
     if (CWinDirStatModel::Get()->IsScanRunning()) return;
     if (GetGraphPaneType() == pane && IsActiveGraphPaneShown()) return;
 
-    COptions::GraphPaneStyle = static_cast<int>(pane);
-    if (IsTreeMapPane(pane))
-    {
-        COptions::TreeMapStyle = static_cast<int>(pane);
-        COptions::TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(pane));
-    }
+    COptions::GraphPaneStyle = EncodeGraphPane(pane);
     ShowActiveGraphPane(true);
     RebuildLayout();
 }
 
 void CMainFrame::OnViewTreeMap()
 {
-    SelectGraphPane(static_cast<GraphPane>(static_cast<int>(COptions::TreeMapOptions.style)));
+    SelectGraphPane(GraphPane::TreeMap);
+}
+
+static_assert(ID_VIEW_TREEMAP_ROWS + static_cast<int>(TreeMapLayout::Style::Squarified)
+        == ID_VIEW_TREEMAP_SQUARIFIED
+    && ID_VIEW_TREEMAP_ROWS + static_cast<int>(TreeMapLayout::Style::Hilbert) == ID_VIEW_TREEMAP_HILBERT
+    && ID_VIEW_TREEMAP_ROWS + static_cast<int>(TreeMapLayout::Style::Moore) == ID_VIEW_TREEMAP_MOORE);
+
+void CMainFrame::OnViewTreeMapStyle(const UINT commandId)
+{
+    if (CWinDirStatModel::Get()->IsScanRunning()) return;
+
+    const int styleValue = commandId - ID_VIEW_TREEMAP_ROWS;
+    ASSERT(styleValue >= static_cast<int>(TreeMapLayout::Style::Rows)
+        && styleValue <= static_cast<int>(TreeMapLayout::Style::Moore));
+    CTreeMap::Options options = COptions::TreeMapOptions;
+    options.style = static_cast<TreeMapLayout::Style>(styleValue);
+    COptions::SetTreeMapOptions(options);
+    SelectGraphPane(GraphPane::TreeMap);
+}
+
+void CMainFrame::OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    const auto style = static_cast<TreeMapLayout::Style>(pCmdUI->m_nID - ID_VIEW_TREEMAP_ROWS);
+    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::TreeMap
+        && COptions::TreeMapOptions.style == style);
 }
 
 void CMainFrame::OnViewFlameGraph()
 {
-    SelectGraphPane(GraphPane::FLAME_GRAPH);
+    SelectGraphPane(GraphPane::FlameGraph);
 }
 
 void CMainFrame::OnUpdateViewFlameGraph(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::FLAME_GRAPH);
+    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::FlameGraph);
 }
 
 void CMainFrame::OnViewSunburst()
 {
-    SelectGraphPane(GraphPane::SUNBURST);
+    SelectGraphPane(GraphPane::Sunburst);
 }
 
 void CMainFrame::OnUpdateViewSunburst(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::SUNBURST);
+    SetNativeMenuRadio(pCmdUI, GetGraphPaneType() == GraphPane::Sunburst);
 }
 
 static void SortItemRecursive(CItem* item)
@@ -590,7 +622,7 @@ void CMainFrame::OnViewGroupUnregisteredTypes()
 
 void CMainFrame::OnViewShowExtensionsOnTreeMap()
 {
-    if (!IsTreeMapPane(GetGraphPaneType())) return;
+    if (GetGraphPaneType() != GraphPane::TreeMap) return;
 
     COptions::TreeMapShowExtensions = !static_cast<bool>(COptions::TreeMapShowExtensions);
     COptions::TreeMapOptions.showExtensions = COptions::TreeMapShowExtensions;
@@ -599,14 +631,14 @@ void CMainFrame::OnViewShowExtensionsOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(IsTreeMapPane(GetGraphPaneType())
+    pCmdUI->Enable(GetGraphPaneType() == GraphPane::TreeMap
         && !CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
 }
 
 void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 {
-    if (!IsTreeMapPane(GetGraphPaneType())) return;
+    if (GetGraphPaneType() != GraphPane::TreeMap) return;
 
     COptions::TreeMapShowFolderFrames = !static_cast<bool>(COptions::TreeMapShowFolderFrames);
     COptions::TreeMapOptions.showFolderFrames = COptions::TreeMapShowFolderFrames;
@@ -615,7 +647,7 @@ void CMainFrame::OnViewShowFolderFramesOnTreeMap()
 
 void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(IsTreeMapPane(GetGraphPaneType())
+    pCmdUI->Enable(GetGraphPaneType() == GraphPane::TreeMap
         && !CWinDirStatModel::Get()->IsScanRunning());
     pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
 }
@@ -908,7 +940,7 @@ BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, C
 
     Localization::UpdateMenu(*GetMenu());
     Localization::UpdateDialogs(*this);
-    SetTitle(wds::strWinDirStat);
+    SetTitle(GetAppTitle().c_str());
 
     return TRUE;
 }
@@ -1156,10 +1188,9 @@ void CMainFrame::RebuildLayout(bool resetPositions)
     HWND hActiveGraph = hTMV;
     switch (GetGraphPaneType())
     {
-    case GraphPane::FLAME_GRAPH: hActiveGraph = hFGV; break;
-    case GraphPane::SUNBURST: hActiveGraph = hSBV; break;
-    case GraphPane::KDIRSTAT:
-    case GraphPane::QDIRSTAT: break;
+    case GraphPane::TreeMap: break;
+    case GraphPane::FlameGraph: hActiveGraph = hFGV; break;
+    case GraphPane::Sunburst: hActiveGraph = hSBV; break;
     }
     ::SetParent(hFTV,  hFrame);
     ::SetParent(hExtV, hFrame);
@@ -1167,6 +1198,9 @@ void CMainFrame::RebuildLayout(bool resetPositions)
     ::SetParent(hFGV,  hFrame);
     ::SetParent(hSBV,  hFrame);
     const std::array graphWindows{ hTMV, hFGV, hSBV };
+    const std::array<CGraphView*, 3> graphViews{
+        GetTreeMapView(), GetFlameGraphView(), GetSunburstView()
+    };
     for (const HWND graphWindow : graphWindows)
     {
         if (graphWindow != hActiveGraph)
@@ -1184,9 +1218,15 @@ void CMainFrame::RebuildLayout(bool resetPositions)
 
     BuildSplitterLayout(topo, perm, hFTV, hExtV, hActiveGraph);
     ::ShowWindow(hActiveGraph, SW_SHOW);
-    for (const HWND graphWindow : graphWindows)
+    for (std::size_t index = 0; index < graphWindows.size(); ++index)
     {
-        if (graphWindow != hActiveGraph) ::ShowWindow(graphWindow, SW_HIDE);
+        if (graphWindows[index] != hActiveGraph)
+        {
+            ::ShowWindow(graphWindows[index], SW_HIDE);
+            // Hidden panes otherwise retain a full-window bitmap and layout.
+            // Rebuild them on demand instead of keeping three large caches.
+            graphViews[index]->TrimRenderCache();
+        }
     }
     ::ShowWindow(hExtV, SW_SHOW);
 

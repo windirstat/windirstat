@@ -717,7 +717,6 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        bool isXxHash = false;
         SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHash = { FreeXxHashState, nullptr };
         SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
@@ -732,13 +731,10 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         // xxHash is not provided by BCrypt; use the bundled implementation
         if (algorithm == HASH_XXHASH)
         {
-            ctx.name = name;
-            ctx.isXxHash = true;
             ctx.xxHash = XXH3_createState();
-            if (ctx.xxHash.IsValid())
-            {
-                XXH3_64bits_reset(ctx.xxHash);
-            }
+            if (!ctx.xxHash.IsValid()) continue;
+            ctx.name = name;
+            XXH3_64bits_reset(ctx.xxHash);
             contexts.emplace_back(std::move(ctx));
             continue;
         }
@@ -781,7 +777,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
-                if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
+                if (ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
                 else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
         pProgressDlg->Increment();
@@ -791,7 +787,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     std::wstring result = filePath + L"\n\n";
     for (auto& ctx : contexts)
     {
-        if (ctx.isXxHash)
+        if (ctx.xxHash.IsValid())
         {
             XXH64_canonical_t canonical;
             XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(ctx.xxHash));

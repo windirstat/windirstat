@@ -52,6 +52,7 @@ protected:
 
     CTreeMapPreview m_preview;
 
+    CComboBox m_styleCombo;
     int m_style = 0;
     CColorButton m_highlightColor;
     BOOL m_grid = 0;

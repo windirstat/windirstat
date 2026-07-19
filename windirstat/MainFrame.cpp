@@ -359,32 +359,6 @@ void CPacmanControl::OnPaint()
         pDC, &CMainFrame::Get()->m_wndStatusBar, rc, 0, CMainFrame::Get()->GetStyle());
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-void CDeadFocusWnd::Create(CWnd* parent)
-{
-    const CRect rc(0, 0, 0, 0);
-    CWnd::Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), L"_deadfocus", WS_CHILD, rc, parent, 0);
-}
-
-CDeadFocusWnd::~CDeadFocusWnd()
-{
-    CWnd::DestroyWindow();
-}
-
-BEGIN_MESSAGE_MAP(CDeadFocusWnd, CWnd)
-    ON_WM_KEYDOWN()
-END_MESSAGE_MAP()
-
-void CDeadFocusWnd::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/ )
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_FILETREE);
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////
 UINT CMainFrame::s_TaskBarMessage = ::RegisterWindowMessage(L"TaskbarButtonCreated");
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
@@ -394,6 +368,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_GROUP_TYPES, OnViewGroupUnregisteredTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewTreeMap)
+    ON_COMMAND_RANGE(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE, OnViewTreeMapStyle)
     ON_COMMAND(ID_VIEW_FLAMEGRAPH, OnViewFlameGraph)
     ON_COMMAND(ID_VIEW_SUNBURST, OnViewSunburst)
     ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
@@ -406,6 +381,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenu)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE, OnUpdateViewTreeMapStyle)
     ON_UPDATE_COMMAND_UI(ID_VIEW_FLAMEGRAPH, OnUpdateViewFlameGraph)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SUNBURST, OnUpdateViewSunburst)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
@@ -429,6 +405,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_NCPAINT()
     ON_WM_NCACTIVATE()
     ON_WM_ERASEBKGND()
+    ON_WM_SETFOCUS()
+    ON_WM_KEYDOWN()
     ON_COMMAND(ID_VIEW_ALL_FILES, &CMainFrame::OnViewAllFiles)
     ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
     ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
@@ -471,6 +449,25 @@ CMainFrame::~CMainFrame()
 BOOL CMainFrame::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return TRUE;
+}
+
+void CMainFrame::OnSetFocus(CWnd* pOldWnd)
+{
+    CFrameWndEx::OnSetFocus(pOldWnd);
+    if (::GetFocus() == m_hWnd && GetLogicalFocus() != LF_NONE)
+    {
+        MoveFocus(GetLogicalFocus());
+    }
+}
+
+void CMainFrame::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+{
+    if (nChar == VK_TAB)
+    {
+        MoveFocus(LF_FILETREE);
+        return;
+    }
+    CFrameWndEx::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
@@ -724,7 +721,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Show or hide status bar if requested
     if (!COptions::ShowStatusBar) m_wndStatusBar.ShowWindow(SW_HIDE);
     if (!COptions::ShowToolBar) m_wndToolBar.ShowWindow(SW_HIDE);
-    m_wndDeadFocus.Create(this);
 
     // setup look and feel with dark mode support
     CMFCVisualManager::SetDefaultManager(DarkMode::IsDarkModeActive() ?
@@ -901,7 +897,8 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
     // seed initial Title bar text
-    static std::wstring title = Localization::LookupNeutral(AFX_IDS_APP_TITLE) + (IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"");
+    static std::wstring title = std::format(L"{}{}", GetAppTitle(),
+        IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : wds::strEmpty);
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.c_str();
 
@@ -1028,16 +1025,15 @@ void CMainFrame::RestoreGraphPane(bool force)
 
     switch (GetGraphPaneType())
     {
-    case GraphPane::FLAME_GRAPH:
+    case GraphPane::FlameGraph:
         m_flameGraphView->DrawEmptyView();
         m_flameGraphView->RedrawWindow();
         break;
-    case GraphPane::SUNBURST:
+    case GraphPane::Sunburst:
         m_sunburstView->DrawEmptyView();
         m_sunburstView->RedrawWindow();
         break;
-    case GraphPane::KDIRSTAT:
-    case GraphPane::QDIRSTAT:
+    case GraphPane::TreeMap:
         m_treeMapView->DrawEmptyView();
         m_treeMapView->RedrawWindow();
         break;
@@ -1048,14 +1044,13 @@ void CMainFrame::ShowActiveGraphPane(const bool show)
 {
     switch (GetGraphPaneType())
     {
-    case GraphPane::FLAME_GRAPH:
+    case GraphPane::FlameGraph:
         m_flameGraphView->ShowTreeMap(show);
         break;
-    case GraphPane::SUNBURST:
+    case GraphPane::Sunburst:
         m_sunburstView->ShowTreeMap(show);
         break;
-    case GraphPane::KDIRSTAT:
-    case GraphPane::QDIRSTAT:
+    case GraphPane::TreeMap:
         m_treeMapView->ShowTreeMap(show);
         break;
     }
@@ -1065,10 +1060,9 @@ bool CMainFrame::IsActiveGraphPaneShown() const
 {
     switch (GetGraphPaneType())
     {
-    case GraphPane::FLAME_GRAPH: return m_flameGraphView->IsShowTreeMap();
-    case GraphPane::SUNBURST: return m_sunburstView->IsShowTreeMap();
-    case GraphPane::KDIRSTAT:
-    case GraphPane::QDIRSTAT: return m_treeMapView->IsShowTreeMap();
+    case GraphPane::TreeMap: return m_treeMapView->IsShowTreeMap();
+    case GraphPane::FlameGraph: return m_flameGraphView->IsShowTreeMap();
+    case GraphPane::Sunburst: return m_sunburstView->IsShowTreeMap();
     }
     return false;
 }
@@ -1077,10 +1071,9 @@ CWinDirStatPane* CMainFrame::GetActiveGraphPane() const
 {
     switch (GetGraphPaneType())
     {
-    case GraphPane::FLAME_GRAPH: return m_flameGraphView;
-    case GraphPane::SUNBURST: return m_sunburstView;
-    case GraphPane::KDIRSTAT:
-    case GraphPane::QDIRSTAT: return m_treeMapView;
+    case GraphPane::TreeMap: return m_treeMapView;
+    case GraphPane::FlameGraph: return m_flameGraphView;
+    case GraphPane::Sunburst: return m_sunburstView;
     }
     return m_treeMapView;
 }

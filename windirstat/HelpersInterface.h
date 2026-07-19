@@ -90,6 +90,7 @@ constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
 IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
 
 // Application info
+std::wstring GetAppTitle();
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 

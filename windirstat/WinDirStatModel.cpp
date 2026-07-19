@@ -290,10 +290,10 @@ bool CWinDirStatModel::IsRootDone() const
 
 bool CWinDirStatModel::IsScanRunning() const
 {
-    if (!m_thread.has_value()) return false;
+    if (!m_thread.joinable()) return false;
 
     DWORD exitCode;
-    GetExitCodeThread(const_cast<std::jthread&>(*m_thread).native_handle(), &exitCode);
+    GetExitCodeThread(const_cast<std::jthread&>(m_thread).native_handle(), &exitCode);
     return (exitCode == STILL_ACTIVE);
 }
 
@@ -657,6 +657,8 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
 void CWinDirStatModel::SetZoomItem(CItem* item)
 {
+    if (item == nullptr) return;
+
     m_zoomItem = item;
     CTreeListControl* pControl = GetFocusControl();
     pControl->Invalidate();
@@ -833,7 +835,7 @@ std::wstring CWinDirStatModel::BuildUserDefinedCleanupCommandLine(const std::wst
 
 void CWinDirStatModel::PushReselectChild(CItem* item)
 {
-    m_reselectChildStack.push_back(item);
+    if (item != nullptr) m_reselectChildStack.push_back(item);
 }
 
 CItem* CWinDirStatModel::PopReselectChild()

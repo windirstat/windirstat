@@ -141,9 +141,10 @@ Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX
 Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
 Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle",
-    CTreeMap::GetDefaults().style, CTreeMap::KDirStatStyle, CTreeMap::SequoiaViewStyle);
-Setting<int> COptions::GraphPaneStyle(OptionsTreeMap, L"GraphPaneStyle", -1,
-    static_cast<int>(GraphPane::KDIRSTAT), static_cast<int>(GraphPane::SUNBURST));
+    static_cast<int>(CTreeMap::GetDefaults().style),
+    static_cast<int>(TreeMapLayout::Style::Rows), static_cast<int>(TreeMapLayout::Style::Moore));
+Setting<int> COptions::GraphPaneStyle(OptionsTreeMap, L"GraphPaneStyle",
+    EncodeGraphPane(GraphPane::TreeMap), 0, MaxPersistedGraphPane);
 Setting<int> COptions::TreeMapMaxDepth(OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64);
 Setting<int> COptions::FolderHistoryCount(OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100);
 Setting<int> COptions::LayoutTopology(OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL);
@@ -233,8 +234,6 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapOptions = options;
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
-    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(GraphPaneStyle))))
-        GraphPaneStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
     TreeMapShowExtensions = TreeMapOptions.showExtensions;
     TreeMapShowFolderFrames = TreeMapOptions.showFolderFrames;
@@ -262,46 +261,6 @@ void COptions::PreProcessPersistedSettings()
 
 void COptions::PostProcessPersistedSettings()
 {
-    CDirStatApp* app = CDirStatApp::Get();
-    const int persistedTreeMapStyle = app->GetProfileInt(OptionsTreeMap,
-        L"TreeMapStyle", CTreeMap::GetDefaults().style);
-
-    // Builds which temporarily combined graph selection with TreeMapStyle wrote
-    // 2 or 3 here. Preserve that active graph while restoring TreeMapStyle to
-    // its original purpose: remembering the selected treemap layout.
-    if (persistedTreeMapStyle == static_cast<int>(GraphPane::FLAME_GRAPH)
-        || persistedTreeMapStyle == static_cast<int>(GraphPane::SUNBURST))
-    {
-        TreeMapStyle = static_cast<int>(CTreeMap::GetDefaults().style);
-    }
-
-    // Migrate both the former graph-selection flags and the short-lived
-    // combined TreeMapStyle values into the independent graph-pane setting.
-    if (static_cast<int>(GraphPaneStyle) < static_cast<int>(GraphPane::KDIRSTAT))
-    {
-        if (persistedTreeMapStyle == static_cast<int>(GraphPane::FLAME_GRAPH)
-            || persistedTreeMapStyle == static_cast<int>(GraphPane::SUNBURST))
-        {
-            GraphPaneStyle = persistedTreeMapStyle;
-        }
-        else if (app->GetProfileInt(OptionsGeneral, L"UseSunburst", 0) != 0)
-        {
-            GraphPaneStyle = static_cast<int>(GraphPane::SUNBURST);
-        }
-        else if (app->GetProfileInt(OptionsGeneral, L"UseFlameGraph", 0) != 0)
-        {
-            GraphPaneStyle = static_cast<int>(GraphPane::FLAME_GRAPH);
-        }
-        else
-        {
-            GraphPaneStyle = static_cast<int>(TreeMapStyle);
-        }
-    }
-    if (IsTreeMapPane(static_cast<GraphPane>(static_cast<int>(GraphPaneStyle))))
-        GraphPaneStyle = static_cast<int>(TreeMapStyle);
-    (void) app->WriteProfileString(OptionsGeneral, L"UseSunburst", nullptr);
-    (void) app->WriteProfileString(OptionsGeneral, L"UseFlameGraph", nullptr);
-
     // File-tree visibility is also consumed by non-UI exports, so initialize its defaults before any view exists.
     if (auto& visibility = FileTreeColumnVisibility.Obj(); visibility.empty())
     {
@@ -330,7 +289,7 @@ void COptions::PostProcessPersistedSettings()
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
     // Load treemap settings
-    TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
+    TreeMapOptions.style = static_cast<TreeMapLayout::Style>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.showExtensions = TreeMapShowExtensions;
     TreeMapOptions.showFolderFrames = TreeMapShowFolderFrames;
