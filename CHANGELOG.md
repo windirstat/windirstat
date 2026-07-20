@@ -3,6 +3,8 @@
 
 Enhancements
 - Added flame graph as an alternative visualization view (thanks @P403n1x87)
+- Added sunburst graph as an alternative visualization view
+- Added Hilbert and Moore treemap visualization layouts
 - Added additional window layouts
 - Added per-user Explorer context menu registration
 - Added configurable process CPU and I/O priority
@@ -16,12 +18,16 @@ Enhancements
 - Improved percentage progress messages
 - Improved message box dialog performance for massive lists (thanks @harryytm)
 - Improved logical/physical size menu item generalization
+- Improved font refresh behavior after settings changes
 - Modernized locale string retrieval functions (thanks @harryytm)
 
 Bug Fixes
 - Corrected indeterminate progress dialog repainting
 - Corrected layout view type identifiers (thanks @harryytm)
+- Corrected menu mnemonic conflicts across translations
+- Corrected shell context menu clipboard operations
 - Corrected some argument passing issues
+- Corrreted keyboard focus navigation between data panes
 
 <a name="windirstat-2.7.0"></a>
 # WinDirStat 2.7.0
