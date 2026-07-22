@@ -39,19 +39,26 @@ bool FinderBasic::FindNext()
             .Buffer = m_search.data()
         };
 
-        constexpr auto BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
-        thread_local std::vector<LARGE_INTEGER> m_directoryInfo(BUFFER_SIZE / sizeof(LARGE_INTEGER));
+        constexpr auto LOCAL_BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
+        constexpr auto REMOTE_BUFFER_SIZE = static_cast<ULONG>(64 * 1024);
+        thread_local std::vector<LARGE_INTEGER> m_directoryInfo(LOCAL_BUFFER_SIZE / sizeof(LARGE_INTEGER));
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
 
         std::call_once(m_context->InitOnce, [&]
         {
+            // Larger buffers fail on older network redirectors (issue #631).
+            m_context->IsRemoteVolume = m_isUncPath || (m_base.find(L":\\", 1) == 1 &&
+                GetDriveType(m_base.substr(0, 3).c_str()) == DRIVE_REMOTE);
+            const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
+
             if (!m_isUncPath)
             {
                 const NTSTATUS status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                    m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
-                    FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
+                    m_directoryInfo.data(), bufferSize,
+                    static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation), FALSE,
+                    (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
                 m_context->SupportsFileId = (status == 0);
 
                 DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
@@ -63,10 +70,11 @@ bool FinderBasic::FindNext()
             }
         });
 
+        const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
         const auto QueryDirectory = [&](const FILE_INFORMATION_CLASS infoClass)
         {
             return NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                m_directoryInfo.data(), BUFFER_SIZE, infoClass, FALSE,
+                m_directoryInfo.data(), bufferSize, infoClass, FALSE,
                 (uSearch.Length > 0) ? &uSearch : nullptr, firstRun ? TRUE : FALSE);
         };
 
