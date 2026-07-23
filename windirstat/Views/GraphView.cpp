@@ -75,23 +75,6 @@ void CGraphView::DrawEmptyView()
     PaintEmptyView(&dc);
 }
 
-void CGraphView::ShowTreeMap(const bool show)
-{
-    // This method is also called when a previously hidden graph style becomes
-    // active again. Its cached hover may no longer be under the cursor.
-    ClearHover();
-    ResetInputState();
-    m_showTreeMap = show;
-    if (!show)
-    {
-        TrimRenderCache();
-    }
-    else if (GetSafeHwnd())
-    {
-        Invalidate(FALSE);
-    }
-}
-
 void CGraphView::TrimRenderCache()
 {
     ResetInputState();
@@ -116,7 +99,7 @@ void CGraphView::PaintEmptyView(CDC* pDC)
 bool CGraphView::IsReadyToDraw() const
 {
     const CItem* root = CWinDirStatModel::Get()->GetRootItem();
-    return root != nullptr && root->IsDone() && !m_drawingSuspended && m_showTreeMap;
+    return root != nullptr && root->IsDone() && !m_drawingSuspended;
 }
 
 bool CGraphView::PrepareDrawing(CDC* /*pDC*/, CRect& rect)
@@ -452,7 +435,7 @@ void CGraphView::ResetInputState()
 
 HoverInfo CGraphView::GetHoverInfo() const
 {
-    if (!m_showTreeMap || !IsWindowVisible()) return {};
+    if (!IsWindowVisible()) return {};
 
     CPoint point;
     GetCursorPos(&point);

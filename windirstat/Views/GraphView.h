@@ -32,16 +32,14 @@ protected:
     ~CGraphView() override = default;
 
 public:
+    static constexpr COLORREF BackgroundColor = RGB(15, 15, 15);
+
     void SuspendRecalculationDrawing(bool suspend) final;
-    [[nodiscard]] bool IsShowTreeMap() const { return m_showTreeMap; }
-    void ShowTreeMap(bool show);
     void TrimRenderCache();
     void DrawEmptyView();
     HoverInfo GetHoverInfo() const final;
 
 protected:
-    static constexpr COLORREF BackgroundColor = RGB(15, 15, 15);
-
     BOOL PreCreateWindow(CREATESTRUCT& cs) final;
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     void OnDraw(CDC* pDC) final;
@@ -94,7 +92,6 @@ protected:
     std::wstring m_paneTextOverride;
     ULONGLONG m_paneSizeOverride = 0;
     bool m_drawingSuspended = false;
-    bool m_showTreeMap = true;
     bool m_trackingMouse = false;
     int m_navigationWheelDeltaRemainder = 0;
     int m_zoomWheelDeltaRemainder = 0;

@@ -385,7 +385,7 @@ function New-BaselineSettings {
         }
 
         $SectionTreeMap = [ordered]@{
-            ShowTreeMap                = '1'
+            ShowVisualization          = '1'
             TreeMapStyle               = '0'
             TreeMapGrid                = '0'
             TreeMapShowExtensions      = '1'

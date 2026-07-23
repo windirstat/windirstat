@@ -74,10 +74,10 @@ constexpr int MaxPersistedGraphPane = 5;
 // Layout view types
 enum LAYOUT_VIEW_TYPE : int
 {
-    VT_ABSENT    = -1,
-    VT_ALLFILES  = 0,
-    VT_FILETYPES = 1,
-    VT_TREEMAP   = 2
+    VT_ABSENT        = -1,
+    VT_ALLFILES      = 0,
+    VT_FILETYPES     = 1,
+    VT_VISUALIZATION = 2
 };
 
 // Layout topology: the structural arrangement of the two splitters
@@ -86,7 +86,7 @@ enum LAYOUT_TOPOLOGY : int
     LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
     LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)
     LT_COLS_SUB_ROWS = 3, // Main = 2 cols; sub-splitter = 2 rows in col 0
-    LT_COLS_TM_FULL  = 4, // Main = 2 cols; treemap fills one col; sub-splitter = 2 rows in the other
+    LT_COLS_VISUALIZATION_FULL = 4, // Main = 2 cols; visualization fills one col; sub-splitter occupies the other
 };
 
 struct USERDEFINEDCLEANUP
@@ -192,7 +192,7 @@ public:
     inline static Setting<bool> ShowTimeSpent{ OptionsFileTree, L"ShowTimeSpent", true };
     inline static Setting<bool> ShowToolBar{ OptionsGeneral, L"ShowToolBar", true };
     inline static Setting<bool> LargeToolBar{ OptionsGeneral, L"LargeToolBar", false };
-    inline static Setting<bool> ShowTreeMap{ OptionsTreeMap, L"ShowTreeMap", true };
+    inline static Setting<bool> ShowVisualization{ OptionsTreeMap, L"ShowVisualization", true };
     inline static Setting<bool> ShowUnknown{ OptionsGeneral, L"ShowUnknown", false };
     inline static Setting<bool> SkipDupeDetectionCloudLinks{ OptionsGeneral, L"SkipDupeDetectionCloudLinks", true };
     inline static Setting<bool> ShowDupeDetectionCloudLinksWarning{ OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true };
@@ -275,7 +275,8 @@ public:
     inline static Setting<int> GraphPaneStyle{ OptionsTreeMap, L"GraphPaneStyle", EncodeGraphPane(GraphPane::TreeMap), 0, MaxPersistedGraphPane };
     inline static Setting<int> TreeMapMaxDepth{ OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64 };
     inline static Setting<int> FolderHistoryCount{ OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100 };
-    inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_TM_FULL };
+    inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology",
+        LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_VISUALIZATION_FULL };
     inline static Setting<int> LayoutPermutation{ OptionsGeneral, L"LayoutPermutation", 0, 0, 3 };
     inline static Setting<RECT> AboutWindowRect{ OptionsGeneral, L"AboutWindowRect" };
     inline static Setting<RECT> DriveSelectWindowRect{ OptionsDriveSelect, L"WindowRect" };

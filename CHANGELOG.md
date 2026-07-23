@@ -25,9 +25,11 @@ Bug Fixes
 - Corrected indeterminate progress dialog repainting
 - Corrected layout view type identifiers (thanks @harryytm)
 - Corrected menu mnemonic conflicts across translations
+- Corrected optional pane resizing across window layouts
 - Corrected shell context menu clipboard operations
 - Corrected some argument passing issues
 - Corrreted keyboard focus navigation between data panes
+- Restored the option to hide the visualization pane
 
 <a name="windirstat-2.7.0"></a>
 # WinDirStat 2.7.0

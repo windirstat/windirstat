@@ -18,7 +18,6 @@
 #include "pch.h"
 #include "CsvLoader.h"
 #include "FileTreeView.h"
-#include "TreeMapView.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
 #include "FileWatcherControl.h"
@@ -465,8 +464,8 @@ void CWinDirStatModel::OnTreeMapZoomIn()
     {
         SetZoomItem(item->IsRootItem() ? GetRootItem() :
             item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item);
-        if (!CMainFrame::Get()->IsActiveGraphPaneShown())
-            CMainFrame::Get()->RestoreGraphPane(true);
+        if (!CMainFrame::Get()->IsVisualizationShown())
+            CMainFrame::Get()->RestoreVisualizationPane(true);
     }
 }
 
@@ -476,8 +475,8 @@ void CWinDirStatModel::OnTreeMapZoomOut()
     if (zoomItem != nullptr && zoomItem->GetParent() != nullptr)
     {
         SetZoomItem(zoomItem->GetParent());
-        if (!CMainFrame::Get()->IsActiveGraphPaneShown())
-            CMainFrame::Get()->RestoreGraphPane(true);
+        if (!CMainFrame::Get()->IsVisualizationShown())
+            CMainFrame::Get()->RestoreVisualizationPane(true);
     }
 }
 
@@ -1052,8 +1051,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Clear any reselection options since they may be invalidated
     ClearReselectChildStack();
 
-    // Do not attempt to update graph while scanning
-    CMainFrame::Get()->GetActiveGraphPane()->SuspendRecalculationDrawing(true);
+    // Do not attempt to update visualizations while scanning
+    CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(true);
 
     // If scanning drive(s) just rescan the child nodes
     if (items.size() == 1 && items.front()->IsTypeOrFlag(IT_MYCOMPUTER))
@@ -1118,6 +1117,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (item->IsRootItem())
             {
                 Get()->UnlinkRoot();
+                // No worker is launched to release this scan's suspension.
+                CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
                 return;
             }
 
@@ -1195,6 +1196,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             CMainFrame::Get()->InvokeInMessageThread([]
             {
                 CMainFrame::Get()->SetProgressComplete();
+                // Preserve the current layout. A replacement scan expands All Files
+                // before aborting this worker and must remain expanded.
+                CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
             });
             return;
         }
@@ -1289,9 +1293,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             CMainFrame::Get()->LockWindowUpdate();
             Get()->NotifyPanes();
             CMainFrame::Get()->SetProgressComplete();
-            CMainFrame::Get()->RestoreExtensionView();
-            CMainFrame::Get()->RestoreGraphPane();
-            CMainFrame::Get()->GetActiveGraphPane()->SuspendRecalculationDrawing(false);
+            CMainFrame::Get()->ApplyPaneVisibility(true);
+            CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
             CMainFrame::Get()->UnlockWindowUpdate();
 
             // Restore pre-scan visual orientation

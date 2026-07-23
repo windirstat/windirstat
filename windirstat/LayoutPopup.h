@@ -28,7 +28,7 @@ public:
 
     struct Pane
     {
-        int   viewType; // 0=AllFiles, 1=FileTypes, 2=TreeMap; -1=unused
+        int   viewType; // 0=AllFiles, 1=FileTypes, 2=Visualization; -1=unused
         float x, y, w, h;
     };
 
@@ -63,7 +63,7 @@ protected:
     void PaintCard(CDC& dc, int idx) const;
     void DrawAllFilesPane(CDC& dc, CRect r) const;
     void DrawFileTypesPane(CDC& dc, CRect r) const;
-    void DrawTreeMapPane(CDC& dc, CRect r, int cardIdx) const;
+    void DrawVisualizationPane(CDC& dc, CRect r, int cardIdx) const;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();

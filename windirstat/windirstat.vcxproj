@@ -548,6 +548,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Views\ExtensionView.h" />
     <ClInclude Include="Views\WinDirStatPane.h" />
     <ClInclude Include="Views\GraphView.h" />
+    <ClInclude Include="Views\VisualizationPane.h" />
     <ClInclude Include="Views\StorageAnalyticsView.h" />
     <ClInclude Include="Views\FileTabbedView.h" />
     <ClInclude Include="Views\FileTreeView.h" />
@@ -635,6 +636,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\ExtensionView.cpp" />
     <ClCompile Include="Views\WinDirStatPane.cpp" />
     <ClCompile Include="Views\GraphView.cpp" />
+    <ClCompile Include="Views\VisualizationPane.cpp" />
     <ClCompile Include="Views\StorageAnalyticsView.cpp" />
     <ClCompile Include="Views\FileTabbedView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />

@@ -159,7 +159,7 @@
 #define ID_TREEMAP_ZOOMIN               32769
 #define ID_TREEMAP_ZOOMOUT              32770
 #define ID_TREEMAP_SELECT_PARENT        32771
-#define ID_VIEW_SHOWTREEMAP             32772
+#define ID_VIEW_SHOWVISUALIZATION       32772
 #define ID_HELP_REPORTBUG               32773
 #define ID_CLEANUP_OPEN_IN_CONSOLE      32774
 #define ID_CLEANUP_DELETE_BIN           32775
