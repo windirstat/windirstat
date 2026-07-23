@@ -384,6 +384,18 @@ function Assert-False {
     }
 }
 
+function Assert-That {
+    param(
+        [string] $Group,
+        [string] $Name,
+        [bool] $Condition,
+        [string] $FailureDetail = '',
+        [string] $PassDetail = ''
+    )
+    if ($Condition) { Assert-Pass $Group $Name $PassDetail }
+    else { Assert-Fail $Group $Name $FailureDetail }
+}
+
 function Assert-ArrayEqual {
     param([pscustomobject] $Context, [string] $Name, [AllowNull()] [object[]] $Actual, [AllowNull()] [object[]] $Expected)
     $Context.Count++
@@ -423,94 +435,13 @@ function Assert-SetEqual {
     }
 }
 
-# Run and report scenario-style tests consistently. Filtering scenarios carry
-# path-comparison fields, while the settings and reparse suites use check counts.
+# Run and report check-based settings and reparse scenarios consistently.
 function Invoke-Scenario {
-    [CmdletBinding(DefaultParameterSetName = 'Checks')]
     param(
-        [Parameter(Mandatory, ParameterSetName = 'Checks')] [string] $Name,
-        [Parameter(Mandatory, ParameterSetName = 'Checks')] [string] $Behavior,
-        [Parameter(Mandatory, ParameterSetName = 'Checks')] [scriptblock] $Body,
-        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [pscustomobject] $Scenario,
-        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [string] $Exe,
-        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [string] $Root
+        [Parameter(Mandatory)] [string] $Name,
+        [Parameter(Mandatory)] [string] $Behavior,
+        [Parameter(Mandatory)] [scriptblock] $Body
     )
-
-    if ($PSCmdlet.ParameterSetName -eq 'Filtering') {
-        $safeName = $Scenario.Name -replace '[^A-Za-z0-9_.-]', '_'
-        $scenarioRoot = Join-Path $workRoot $safeName
-        $scenarioIni = Join-Path $scenarioRoot 'WinDirStat.ini'
-        $runnerIni = Join-Path $runRoot 'WinDirStat.ini'
-        $scenarioCsv = Join-Path $scenarioRoot 'results.csv'
-        New-Item -ItemType Directory -Force -Path $scenarioRoot | Out-Null
-
-        $actualRows = @()
-        $missingRows = @()
-        $unexpectedRows = @()
-        $duplicateRows = @()
-        $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$Root`""
-        $exitCode = $null
-        $elapsedSeconds = $null
-        $errorText = $null
-
-        try {
-            Write-FilterScenarioIni -Path $scenarioIni -Scenario $Scenario
-            Copy-Item -LiteralPath $scenarioIni -Destination $runnerIni -Force
-            if (Test-Path -LiteralPath $scenarioCsv) {
-                Remove-Item -LiteralPath $scenarioCsv -Force
-            }
-
-            $scan = Invoke-WinDirStatCsv -Exe $Exe -Csv $scenarioCsv -Root $Root
-            $commandLine = $scan.CommandLine
-            $exitCode = $scan.ExitCode
-            $elapsedSeconds = $scan.ElapsedSeconds
-
-            $actualRows = @(Read-CsvPaths $scenarioCsv)
-            $missingRows = Get-SetDifference -Left $Scenario.ExpectedRows -Right $actualRows
-            $unexpectedRows = Get-SetDifference -Left $actualRows -Right $Scenario.ExpectedRows
-            $duplicateRows = @($actualRows |
-                Group-Object |
-                Where-Object Count -gt 1 |
-                ForEach-Object { "$($_.Name) ($($_.Count)x)" })
-        }
-        catch {
-            $errorText = $_.Exception.Message
-            $missingRows = @($Scenario.ExpectedRows)
-        }
-
-        $status = if (!$errorText -and
-                     @($missingRows).Count -eq 0 -and
-                     @($unexpectedRows).Count -eq 0 -and
-                     @($duplicateRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
-
-        return [pscustomobject] @{
-            Name = $Scenario.Name
-            Status = $status
-            CommandLine = $commandLine
-            UseRegex = $Scenario.UseRegex
-            SizeMinimum = $Scenario.SizeMinimum
-            SizeUnits = $Scenario.SizeUnits
-            MaxAgeDays = $Scenario.MaxAgeDays
-            ScanEngine = $Scenario.ScanEngine
-            IncludeDirs = @($Scenario.IncludeDirs)
-            ExcludeDirs = @($Scenario.ExcludeDirs)
-            IncludeFiles = @($Scenario.IncludeFiles)
-            ExcludeFiles = @($Scenario.ExcludeFiles)
-            ExpectedBehavior = $Scenario.ExpectedBehavior
-            ExpectedRows = @($Scenario.ExpectedRows)
-            AllRows = @($Scenario.AllRows)
-            ActualRows = @($actualRows)
-            MissingRows = @($missingRows)
-            UnexpectedRows = @($unexpectedRows)
-            DuplicateRows = @($duplicateRows)
-            ExitCode = $exitCode
-            ElapsedSeconds = $elapsedSeconds
-            Error = $errorText
-            ScanRoot = $Root
-            CsvPath = $scenarioCsv
-            IniPath = $scenarioIni
-        }
-    }
 
     $context = New-CheckContext -Group $Name
     $commandLine = ''
@@ -548,135 +479,75 @@ function Invoke-Scenario {
     }
 }
 
-function Write-SuiteResultsTable {
-    param([Parameter(Mandatory)] [pscustomobject[]] $Results)
-
-    $isFiltering = $Results.Count -gt 0 -and $null -ne $Results[0].PSObject.Properties['ExpectedRows']
-    $scenarioWidth = [Math]::Max(
-        8,
-        @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+function Write-ResultsTable {
+    param(
+        [Parameter(Mandatory)] [pscustomobject[]] $Results,
+        [Parameter(Mandatory)] [pscustomobject[]] $Columns
     )
-    $scenarioWidth = [Math]::Min($scenarioWidth, $(if ($isFiltering) { 62 } else { 66 }))
-    $columns = @(
-        [pscustomobject] @{ Label = 'Status'; Width = 6; Value = { param($result) $result.Status } }
-        [pscustomobject] @{
-            Label = 'Scenario'
-            Width = $scenarioWidth
-            Value = {
-                param($result)
-                if ($result.Name.Length -le $scenarioWidth) { return $result.Name }
-                $result.Name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
-            }
-        }
-    )
-
-    if ($isFiltering) {
-        $columns += [pscustomobject] @{
-            Label = 'Mode'
-            Width = 13
-            Value = {
-                param($result)
-                "$(if ($result.UseRegex) { 'regex' } else { 'glob' })-" +
-                    "$(if ($result.ScanEngine -eq 1) { 'fast' } else { 'basic' })"
-            }
-        }
-        $columns += [pscustomobject] @{
-            Label = 'Rows'
-            Width = 13
-            Value = { param($result) "$(@($result.ActualRows).Count)/$(@($result.ExpectedRows).Count)" }
-        }
-    }
-    else {
-        $columns += [pscustomobject] @{
-            Label = 'Checks'
-            Width = 8
-            Value = { param($result) [string] $result.Checks }
-        }
-    }
-    $columns += [pscustomobject] @{
-        Label = 'Elapsed'
-        Width = 8
-        Value = {
-            param($result)
-            if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
-        }
-    }
 
     Write-ColoredLine 'Scenario results:' DarkCyan
     Write-Host -NoNewline '  '
-    for ($i = 0; $i -lt $columns.Count; $i++) {
+    for ($i = 0; $i -lt $Columns.Count; $i++) {
         if ($i -gt 0) { Write-Host -NoNewline '  ' }
-        Write-SymbolCell $columns[$i].Label $columns[$i].Width DarkCyan
+        Write-SymbolCell $Columns[$i].Label $Columns[$i].Width DarkCyan
     }
     Write-Host ''
 
-    $separatorWidth = ($columns | Measure-Object -Property Width -Sum).Sum + (2 * ($columns.Count - 1))
+    $separatorWidth = ($Columns | Measure-Object -Property Width -Sum).Sum + (2 * ($Columns.Count - 1))
     Write-Host -NoNewline '  '
     Write-ColoredLine (''.PadRight($separatorWidth, '-')) DarkGray
 
     foreach ($result in $Results) {
         Write-Host -NoNewline '  '
-        for ($i = 0; $i -lt $columns.Count; $i++) {
+        for ($i = 0; $i -lt $Columns.Count; $i++) {
             if ($i -gt 0) { Write-Host -NoNewline '  ' }
-            $value = & $columns[$i].Value $result
+            $value = & $Columns[$i].Value $result
             $color = if ($i -eq 0) { Get-StatusColor $result.Status } else { 'Gray' }
-            Write-SymbolCell ([string] $value) $columns[$i].Width $color
+            Write-SymbolCell ([string] $value) $Columns[$i].Width $color
         }
         Write-Host ''
     }
+}
+
+# Check-based settings and reparse scenarios have a distinct result contract.
+function Write-SuiteResultsTable {
+    param([Parameter(Mandatory)] [pscustomobject[]] $Results)
+
+    $scenarioWidth = [Math]::Max(
+        8,
+        @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+    )
+    $scenarioWidth = [Math]::Min($scenarioWidth, 66)
+    $scenarioValue = ({
+        param($result)
+        if ($result.Name.Length -le $scenarioWidth) { return $result.Name }
+        $result.Name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
+    }).GetNewClosure()
+    $columns = @(
+        [pscustomobject] @{ Label = 'Status'; Width = 6; Value = { param($result) $result.Status } }
+        [pscustomobject] @{ Label = 'Scenario'; Width = $scenarioWidth; Value = $scenarioValue }
+        [pscustomobject] @{
+            Label = 'Checks'
+            Width = 8
+            Value = { param($result) [string] $result.Checks }
+        }
+        [pscustomobject] @{
+            Label = 'Elapsed'
+            Width = 8
+            Value = {
+                param($result)
+                if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
+            }
+        }
+    )
+
+    Write-ResultsTable -Results $Results -Columns $columns
 }
 
 function Write-ScenarioSummary {
     param([Parameter(Mandatory)] [pscustomobject] $Result)
 
     $statusColor = Get-StatusColor $Result.Status
-    $isFiltering = $null -ne $Result.PSObject.Properties['ExpectedRows']
-    if ($isFiltering) {
-        $actualBehavior = if ($Result.Error) {
-            "Scan failed before validation completed: $($Result.Error)"
-        }
-        elseif (@($Result.MissingRows).Count -eq 0 -and
-                @($Result.UnexpectedRows).Count -eq 0 -and
-                @($Result.DuplicateRows).Count -eq 0) {
-            'CSV output matched the expected paths exactly.'
-        }
-        else {
-            'CSV output differed from expectation: {0} missing path(s), {1} unexpected path(s), ' +
-                '{2} duplicated path(s).' -f @($Result.MissingRows).Count,
-                @($Result.UnexpectedRows).Count,
-                @($Result.DuplicateRows).Count
-        }
-
-        $filterMode = if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' }
-        $scanMode = if ($Result.ScanEngine -eq 1) { 'fast engine' } else { 'basic engine' }
-        Write-Host ''
-        Write-ColoredLine "=== $($Result.Name) ===" Cyan
-        Write-LabelValue 'Result' $Result.Status $statusColor
-        Write-LabelValue 'Command' $Result.CommandLine
-        Write-LabelValue 'Test base' $Result.ScanRoot
-        Write-LabelValue 'Mode' "$filterMode, $scanMode"
-        Write-LabelValue 'Size minimum' "$($Result.SizeMinimum) unit index $($Result.SizeUnits)"
-        Write-LabelValue 'Maximum age' "$($Result.MaxAgeDays) day(s)"
-        Format-ListBlock 'Input include directories' $Result.IncludeDirs
-        Format-ListBlock 'Input exclude directories' $Result.ExcludeDirs
-        Format-ListBlock 'Input include files' $Result.IncludeFiles
-        Format-ListBlock 'Input exclude files' $Result.ExcludeFiles
-        Write-LabelValue 'Expected behavior' $Result.ExpectedBehavior
-        Write-LabelValue 'Actual behavior' $actualBehavior $statusColor
-        Write-PathVerificationTable $Result
-        if (@($Result.MissingRows).Count -gt 0) { Format-ListBlock 'Missing expected paths' $Result.MissingRows }
-        if (@($Result.UnexpectedRows).Count -gt 0) { Format-ListBlock 'Unexpected actual paths' $Result.UnexpectedRows }
-        if (@($Result.DuplicateRows).Count -gt 0) { Format-ListBlock 'Duplicated actual paths' $Result.DuplicateRows }
-        if ($Result.Error) {
-            Write-LabelValue 'Error' $Result.Error Red
-        }
-        else {
-            Write-LabelValue 'Exit code' $Result.ExitCode
-            Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds
-        }
-        return
-    }
-
     $symbol = switch ($Result.Status) {
         'PASS' { $symbolPass }
         'WARN' { $symbolWarn }
@@ -1158,12 +1029,6 @@ function Get-VolumeCompressionSupport {
     }
     catch {}
     [pscustomobject]@{ FileSystem = $fs; Standard = [bool]$standard; Modern = [bool]$modern }
-}
-
-function Test-VolumeSupportsCompression {
-    param([string] $Path)
-    $c = Get-VolumeCompressionSupport -Path $Path
-    return ($c.Standard -or $c.Modern)
 }
 
 function Test-IsElevated {
@@ -2105,9 +1970,26 @@ function Find-UiaAll {
     @(Invoke-UiaQueryWithRetry -Operation 'FindAll' -Action { $Root.FindAll($Scope, $cond) })
 }
 
-function Get-AllDescendantsByType {
-    param([System.Windows.Automation.AutomationElement] $Root, [System.Windows.Automation.ControlType] $Type)
-    Find-UiaAll -Root $Root -Type $Type
+function Find-UiaRows {
+    param(
+        [System.Windows.Automation.AutomationElement] $Root,
+        [switch] $AllTypes,
+        [switch] $ListFirst,
+        [switch] $NoTree
+    )
+
+    $dataType = [System.Windows.Automation.ControlType]::DataItem
+    $listType = [System.Windows.Automation.ControlType]::ListItem
+    $types = if ($ListFirst) { @($listType, $dataType) } else { @($dataType, $listType) }
+    if (!$NoTree) { $types += [System.Windows.Automation.ControlType]::TreeItem }
+
+    $items = foreach ($type in $types) {
+        $found = @(Find-UiaAll -Root $Root -Type $type)
+        if ($found.Count -eq 0) { continue }
+        $found
+        if (!$AllTypes) { break }
+    }
+    @($items)
 }
 
 function Invoke-Button {
@@ -2210,52 +2092,6 @@ function Get-ChildWindows {
     })
 }
 
-# Wait for a new window to appear by snapshotting existing HWNDs first
-function Wait-NewWindow {
-    param(
-        [int] $ProcessId,
-        [IntPtr[]] $ExcludeHwnds = @(),
-        [string] $TitleContains = $null,
-        [int] $TimeoutMs = 8000
-    )
-    $excludeSet = [System.Collections.Generic.HashSet[long]]::new()
-    foreach ($h in $ExcludeHwnds) { [void]$excludeSet.Add($h.ToInt64()) }
-
-    $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
-    while ([System.DateTime]::UtcNow -lt $deadline) {
-        $wins = Get-ChildWindows -ProcessId $ProcessId
-        foreach ($w in $wins) {
-            if ($excludeSet.Contains([long]$w.Current.NativeWindowHandle)) { continue }
-            if (!$TitleContains -or $w.Current.Name -like "*$TitleContains*") { return $w }
-        }
-        # Also look inside main window descendants
-        foreach ($excl in $ExcludeHwnds) {
-            if ($excl -eq [IntPtr]::Zero) { continue }
-            try {
-                $pidC = [System.Windows.Automation.PropertyCondition]::new(
-                    [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
-                $handleCondition = [System.Windows.Automation.PropertyCondition]::new(
-                    [System.Windows.Automation.AutomationElement]::NativeWindowHandleProperty,
-                    [int]$excl)
-                $win = Invoke-UiaQueryWithRetry -Operation 'Find window by handle' -Action {
-                    [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
-                        [System.Windows.Automation.TreeScope]::Children, $handleCondition)
-                }
-                if ($win) {
-                    $dlg = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
-                        -Scope ([System.Windows.Automation.TreeScope]::Descendants)
-                    if ($dlg -and !$excludeSet.Contains([long]$dlg.Current.NativeWindowHandle)) {
-                        if (!$TitleContains -or $dlg.Current.Name -like "*$TitleContains*") { return $dlg }
-                    }
-                }
-            }
-            catch {}
-        }
-        Start-Sleep -Milliseconds 200
-    }
-    return $null
-}
-
 # Snapshot the current set of window HWNDs for a process
 function Get-CurrentWindowHwnds {
     param([int] $ProcessId)
@@ -2337,14 +2173,30 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class MouseHelper {
+    [DllImport("user32.dll")] static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr info);
     [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr info);
+    const byte VK_CONTROL = 0x11;
+    const uint KEYEVENTF_KEYUP = 0x02;
     const uint MOUSEEVENTF_LEFTDOWN = 0x02;
     const uint MOUSEEVENTF_LEFTUP   = 0x04;
+    const uint MOUSEEVENTF_RIGHTDOWN = 0x08;
+    const uint MOUSEEVENTF_RIGHTUP   = 0x10;
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     public static void LeftClick(int x, int y) {
         SetCursorPos(x, y);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
         mouse_event(MOUSEEVENTF_LEFTUP,   0, 0, 0, UIntPtr.Zero);
+    }
+    public static void RightClick() {
+        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_RIGHTUP,   0, 0, 0, UIntPtr.Zero);
+    }
+    public static void CtrlLeftClick(int x, int y) {
+        SetCursorPos(x, y);
+        keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
 }
 '@
@@ -2458,14 +2310,6 @@ function Select-TabItem {
     return $false
 }
 
-# Find the toolbar pane (class contains 'ToolBar') and return its buttons
-function Get-ToolbarPane {
-    param([System.Windows.Automation.AutomationElement] $Window)
-    Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Pane) `
-        -ClassName 'Afx:ToolBar:5f580000:8:10003:10' `
-        -Scope ([System.Windows.Automation.TreeScope]::Children)
-}
-
 # Toolbar class name varies by ASLR address - use a partial class name match via a loop
 function Find-ToolbarPane {
     param([System.Windows.Automation.AutomationElement] $Window)
@@ -2484,32 +2328,6 @@ function Find-StatusBarPane {
 function Find-MenuItem {
     param([System.Windows.Automation.AutomationElement] $Window, [string] $Name)
     Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem) -Name $Name
-}
-
-# Collect all currently-visible menu items (fast single pass) from window + popup windows
-function Get-AllMenuItems {
-    param([System.Windows.Automation.AutomationElement] $Window)
-    $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::MenuItem))
-    # Also check any popup menus at desktop level belonging to our process
-    $procId = $Window.Current.ProcessId
-    $root = [System.Windows.Automation.AutomationElement]::RootElement
-    $pidC = [System.Windows.Automation.PropertyCondition]::new(
-        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $procId)
-    $menuTypeC = [System.Windows.Automation.PropertyCondition]::new(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-        [System.Windows.Automation.ControlType]::Menu)
-    $menuClassC = [System.Windows.Automation.PropertyCondition]::new(
-        [System.Windows.Automation.AutomationElement]::ClassNameProperty,
-        '#32768')
-    $menuC = [System.Windows.Automation.OrCondition]::new($menuTypeC, $menuClassC)
-    $popupCondition = [System.Windows.Automation.AndCondition]::new($pidC, $menuC)
-    $popups = @(Invoke-UiaQueryWithRetry -Operation 'Find popup menus' -Action {
-        $root.FindAll([System.Windows.Automation.TreeScope]::Children, $popupCondition)
-    })
-    foreach ($popup in $popups) {
-        $items += @(Find-UiaAll -Root $popup -Type ([System.Windows.Automation.ControlType]::MenuItem))
-    }
-    $items
 }
 
 function Find-ProcessPopupMenu {
@@ -3156,29 +2974,23 @@ function Test-ApplicationLaunch {
     Assert-Pass $g 'App window appears within timeout'
 
     $title = $win.Current.Name
-    if ($title -match 'WinDirStat (?:Beta )?\d+\.\d+\.\d+') {
-        Assert-Pass $g 'Window title contains the WinDirStat version' "Title: '$title'"
-    }
-    else { Assert-Fail $g 'Window title contains the WinDirStat version' "Got: '$title'" }
+    Assert-That $g 'Window title contains the WinDirStat version' `
+        ($title -match 'WinDirStat (?:Beta )?\d+\.\d+\.\d+') "Got: '$title'" "Title: '$title'"
 
     # Menu items are at top-level descendants (UIA exposes them directly)
     $fileItem = Find-MenuItem -Window $win -Name 'File'
-    if ($fileItem) { Assert-Pass $g 'File menu item accessible' }
-    else { Assert-Fail $g 'File menu item accessible' 'File menu item not found in UIA tree' }
+    Assert-That $g 'File menu item accessible' $fileItem 'File menu item not found in UIA tree'
 
     $helpItem = Find-MenuItem -Window $win -Name 'Help'
-    if ($helpItem) { Assert-Pass $g 'Help menu item accessible' }
-    else { Assert-Fail $g 'Help menu item accessible' 'Help menu item not found' }
+    Assert-That $g 'Help menu item accessible' $helpItem 'Help menu item not found'
 
     # Status bar is a Pane child with class *StatusBar*
     $sb = Find-StatusBarPane -Window $win
-    if ($sb) { Assert-Pass $g 'Status bar pane present' }
-    else { Assert-Fail $g 'Status bar pane present' 'No Pane with StatusBar in class name' }
+    Assert-That $g 'Status bar pane present' $sb 'No Pane with StatusBar in class name'
 
     # Toolbar is a Pane child with class *ToolBar*
     $tb = Find-ToolbarPane -Window $win
-    if ($tb) { Assert-Pass $g 'Toolbar pane present' }
-    else { Assert-Fail $g 'Toolbar pane present' 'No Pane with ToolBar in class name' }
+    Assert-That $g 'Toolbar pane present' $tb 'No Pane with ToolBar in class name'
 
     # Drive selection dialog auto-opens at launch - close it for subsequent tests
     $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
@@ -3293,11 +3105,8 @@ function Test-MenuNavigation {
         Assert-Skip $g 'View Zoom items' 'No Zoom items found'
     }
     $folderFramesItem = $viewItems | Where-Object { $_.ItemName -like '*Folder*Frames*' } | Select-Object -First 1
-    if ($folderFramesItem) {
-        Assert-Pass $g 'View Show Folder Frames item present'
-    } else {
-        Assert-Fail $g 'View Show Folder Frames item present' 'Could not find "Show Folder Frames" menu item'
-    }
+    Assert-That $g 'View Show Folder Frames item present' $folderFramesItem `
+        'Could not find "Show Folder Frames" menu item'
 
     # -- Clean Up menu ----------------------------------------------------------
     Assert-Pass $g 'Clean Up menu opens'
@@ -3335,8 +3144,7 @@ function Test-MenuNavigation {
     Assert-Pass $g 'Help menu opens'
     $helpItems = @($allItems | Where-Object { $_.MenuName -eq 'Help' })
     $about = $helpItems | Where-Object { $_.ItemName -eq 'About' } | Select-Object -First 1
-    if ($about) { Assert-Pass $g 'About item in Help menu' }
-    else { Assert-Fail $g 'About item in Help menu' 'About not found' }
+    Assert-That $g 'About item in Help menu' $about 'About not found'
 
     Focus-Window $Window
 }
@@ -3453,8 +3261,8 @@ function Test-DriveSelectionDialog {
     # OK and Cancel buttons
     $okBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
     $cancelBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
-    if ($okBtn) { Assert-Pass $g 'OK button present' } else { Assert-Fail $g 'OK button present' 'Not found' }
-    if ($cancelBtn) { Assert-Pass $g 'Cancel button present' } else { Assert-Fail $g 'Cancel button present' 'Not found' }
+    Assert-That $g 'OK button present' $okBtn 'Not found'
+    Assert-That $g 'Cancel button present' $cancelBtn 'Not found'
 
     # Test radio button selection - click "Individual Folder"
     $folderRadio = $radios | Where-Object { $_.Current.Name -like '*Folder*' } | Select-Object -First 1
@@ -4079,9 +3887,7 @@ function Test-ScanAndViews {
     # -- File list/tree: verify populated with expected content -----------------
     $g = 'FileTree'
 
-    $anyItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($anyItems.Count -eq 0) { $anyItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($anyItems.Count -eq 0) { $anyItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $anyItems = @(Find-UiaRows -Root $win)
 
     if ($anyItems.Count -gt 0) {
         Assert-Pass $g "$($anyItems.Count) item(s) visible in file tree"
@@ -4190,12 +3996,9 @@ function Test-ScanAndViews {
         Start-Sleep -Milliseconds 300
         $zoomOut = @(Get-Win32MenuItems -hwnd ([IntPtr]$win.Current.NativeWindowHandle)) |
             Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
-        if ($script:proc -and !$script:proc.HasExited -and $zoomOut -and !$zoomOut.IsEnabled) {
-            Assert-Pass $g 'Direct zoom-out at the global root preserves a valid zoom boundary'
-        }
-        else {
-            Assert-Fail $g 'Direct zoom-out at the global root preserves a valid zoom boundary' 'Command became enabled or application exited'
-        }
+    Assert-That $g 'Direct zoom-out at the global root preserves a valid zoom boundary' `
+        ($script:proc -and !$script:proc.HasExited -and $zoomOut -and !$zoomOut.IsEnabled) `
+        'Command became enabled or application exited'
         Invoke-Win32CommandId -Window $win -CommandId $zoomResetId | Out-Null
     }
     else {
@@ -4214,8 +4017,7 @@ function Test-ScanAndViews {
 
             # CFileTopView (Largest Files) is CListView/SysListView32 → rows exposed as ListItem.
             # Searching DataItem first would capture the always-visible extension-list pane instead.
-            $listItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::ListItem))
-            if ($listItems.Count -eq 0) { $listItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::DataItem)) }
+            $listItems = @(Find-UiaRows -Root $win -ListFirst -NoTree)
 
             if ($listItems.Count -gt 0) {
                 Assert-Pass $g "$($listItems.Count) item(s) accessible in Largest Files area"
@@ -4285,9 +4087,7 @@ function Test-TreeNavigation {
     }
 
     # Get initial visible items
-    $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $items = @(Find-UiaRows -Root $Window)
 
     if ($items.Count -eq 0) {
         # [UIA-OwnerDraw] Tree rows not exposed via any standard UIA item type.
@@ -4320,17 +4120,13 @@ function Test-TreeNavigation {
     # Left arrow: collapse the root — the root should be expanded (showing children),
     # so LEFT reduces the visible count from ~$countBefore down toward 1.
     Send-Keys '{LEFT}' 500
-    $itemsAfterLeft = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($itemsAfterLeft.Count -eq 0) { $itemsAfterLeft = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($itemsAfterLeft.Count -eq 0) { $itemsAfterLeft = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $itemsAfterLeft = @(Find-UiaRows -Root $Window)
     $countAfterLeft = $itemsAfterLeft.Count
     Assert-Pass $g "Left arrow key accepted by tree (count: $countBefore → $countAfterLeft)"
 
     # Right arrow: expand the now-collapsed root node
     Send-Keys '{RIGHT}' 500
-    $itemsAfterRight = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($itemsAfterRight.Count -eq 0) { $itemsAfterRight = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($itemsAfterRight.Count -eq 0) { $itemsAfterRight = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $itemsAfterRight = @(Find-UiaRows -Root $Window)
     $countAfterRight = $itemsAfterRight.Count
 
     if ($countAfterRight -gt $countAfterLeft) {
@@ -4397,9 +4193,7 @@ function Test-DuplicateDetection {
     Assert-Pass $g 'Duplicate Files tab selected'
 
     # Count items in the duplicate list
-    $listItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($listItems.Count -eq 0) { $listItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($listItems.Count -eq 0) { $listItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $listItems = @(Find-UiaRows -Root $Window)
 
     if ($listItems.Count -gt 0) {
         Assert-Pass $g "$($listItems.Count) item(s) in Duplicate Files list"
@@ -4522,8 +4316,7 @@ function Test-SearchAfterScan {
             Assert-Pass $g 'Search Results tab appeared'
 
             # Verify results: we have .log files in our corpus (app.log, error.log, debug.log, beta.log + archives)
-            $resultItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-            if ($resultItems.Count -eq 0) { $resultItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
+            $resultItems = @(Find-UiaRows -Root $Window -NoTree)
             if ($resultItems.Count -gt 0) {
                 Assert-Pass $g "$($resultItems.Count) search result(s) returned for *.log"
                 $logFiles = @('app.log', 'error.log', 'debug.log', 'beta.log', '2023-01.log')
@@ -4581,21 +4374,6 @@ function Test-ContextMenu {
         return
     }
 
-    # Declare RightClickHelper once (idempotent)
-    Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class RightClickHelper {
-    [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr info);
-    const uint MOUSEEVENTF_RIGHTDOWN = 0x08;
-    const uint MOUSEEVENTF_RIGHTUP   = 0x10;
-    public static void RightClick() {
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_RIGHTUP,   0, 0, 0, UIntPtr.Zero);
-    }
-}
-'@ -ErrorAction SilentlyContinue
-
     $ctxMenu = $null
 
     # --- Attempt 1: mouse right-click (GetClickablePoint with BoundingRect fallback) ---
@@ -4604,7 +4382,7 @@ public static class RightClickHelper {
         try {
             [void][MouseHelper]::SetCursorPos($cp.X, $cp.Y)
             Start-Sleep -Milliseconds 200
-            [RightClickHelper]::RightClick()
+            [MouseHelper]::RightClick()
             Start-Sleep -Milliseconds 700
 
             $deadline = [System.DateTime]::UtcNow.AddSeconds(3)
@@ -5108,8 +4886,7 @@ function Test-LargeCorpusCount {
         # captures the always-visible extension-list pane; ListItem captures tab
         # headers and Duplicate Files group rows. Try both and apply a 3-tier
         # fallback so the assertion always resolves to Pass rather than Skip.
-        $listItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::ListItem))
-        if ($listItems.Count -eq 0) { $listItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::DataItem)) }
+        $listItems = @(Find-UiaRows -Root $win -ListFirst -NoTree)
 
         if ($listItems.Count -gt 0) {
             Assert-Pass $g "$($listItems.Count) item(s) accessible in Largest Files area (large corpus)"
@@ -5167,9 +4944,7 @@ function Test-LargeCorpusCount {
         Select-TabItem $dupeTab | Out-Null
         Start-Sleep -Milliseconds 1000   # Dupe view sorts+populates asynchronously
 
-        $dupeItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::DataItem))
-        if ($dupeItems.Count -eq 0) { $dupeItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-        if ($dupeItems.Count -eq 0) { $dupeItems = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+        $dupeItems = @(Find-UiaRows -Root $win)
 
         if ($dupeItems.Count -gt 0) {
             Assert-Pass $g "$($dupeItems.Count) duplicate item(s) found in large corpus"
@@ -5208,8 +4983,7 @@ function Test-LargeCorpusCount {
     )) {
         $containers = @(Find-UiaAll -Root $win -Type $ctType)
         foreach ($c in $containers) {
-            $items = @(Find-UiaAll -Root $c -Type ([System.Windows.Automation.ControlType]::ListItem))
-            if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $c -Type ([System.Windows.Automation.ControlType]::DataItem)) }
+            $items = @(Find-UiaRows -Root $c -ListFirst -NoTree)
             $extItems += $items
         }
     }
@@ -5301,9 +5075,7 @@ function Test-InitialTreePopulation {
     Assert-WindowReady $Window
 
     # -- All Files tab: verify tree is non-empty ------------------------------
-    $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($items.Count -eq 0) { $items = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $items = @(Find-UiaRows -Root $Window)
 
     if ($items.Count -gt 0) {
         Assert-Pass $g "$($items.Count) item(s) visible in All Files tree after ops scan"
@@ -5395,8 +5167,7 @@ function Test-InitialTreePopulation {
             Select-TabItem $largestTab | Out-Null
             Start-Sleep -Milliseconds 600
 
-            $listItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem))
-            if ($listItems.Count -eq 0) { $listItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem)) }
+            $listItems = @(Find-UiaRows -Root $Window -ListFirst -NoTree)
 
             if ($listItems.Count -gt 0) {
                 Assert-Pass $g "$($listItems.Count) item(s) in Largest Files tab"
@@ -5444,8 +5215,7 @@ function Test-InitialTreePopulation {
                 Start-Sleep -Milliseconds 700
                 Assert-Pass $g 'Duplicate Files tab selectable'
 
-                $dupeItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-                if ($dupeItems.Count -eq 0) { $dupeItems = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
+                $dupeItems = @(Find-UiaRows -Root $Window -NoTree)
 
                 if ($dupeItems.Count -gt 0) {
                     # 2 pairs × 2 files each = 4 expected entries minimum
@@ -5566,7 +5336,7 @@ function Test-CleanUpMenuDelete {
     }
     else {
         $parentNorm = Normalize-ComparePath $targetParent
-        $parentItem = @(Get-UiaRowItems -Root $Window) | Where-Object {
+        $parentItem = @(Find-UiaRows -Root $Window -AllTypes) | Where-Object {
             try { (Normalize-ComparePath $_.Current.Name) -ieq $parentNorm } catch { $false }
         } | Select-Object -First 1
         if ($parentItem) {
@@ -5611,7 +5381,7 @@ function Test-CleanUpMenuDelete {
     }
     else {
         $targetNorm = Normalize-ComparePath $targetPath
-        $matches = @(Get-UiaRowItems -Root $Window | Where-Object {
+        $matches = @(Find-UiaRows -Root $Window -AllTypes | Where-Object {
             try { (Normalize-ComparePath $_.Current.Name) -ieq $targetNorm } catch { $false }
         })
         if ($matches.Count -ne 1) {
@@ -5724,12 +5494,8 @@ function Test-CleanUpMenuDelete {
             "$path content changed"
         }
     })
-    if ($collateralErrors.Count -eq 0) {
-        Assert-Pass $g 'CleanUp preserves both unselected sibling files and their contents'
-    }
-    else {
-        Assert-Fail $g 'CleanUp preserves both unselected sibling files and their contents' ($collateralErrors -join '; ')
-    }
+    Assert-That $g 'CleanUp preserves both unselected sibling files and their contents' `
+        ($collateralErrors.Count -eq 0) ($collateralErrors -join '; ')
     $script:deletedFilePath = $targetPath
 
     Assert-WindowReady $Window
@@ -5817,9 +5583,7 @@ function Test-RefreshAll {
     }
 
     # Capture item count before refresh for before/after comparison
-    $itemsBefore = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($itemsBefore.Count -eq 0) { $itemsBefore = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($itemsBefore.Count -eq 0) { $itemsBefore = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $itemsBefore = @(Find-UiaRows -Root $Window)
     $countBefore = $itemsBefore.Count
 
     $titleBefore = $Window.Current.Name
@@ -5858,9 +5622,7 @@ function Test-RefreshAll {
     Start-Sleep -Milliseconds 600
 
     # Verify the tree is still populated after refresh
-    $itemsAfter = @(Find-UiaAll -Root $script:win -Type ([System.Windows.Automation.ControlType]::DataItem))
-    if ($itemsAfter.Count -eq 0) { $itemsAfter = @(Find-UiaAll -Root $script:win -Type ([System.Windows.Automation.ControlType]::ListItem)) }
-    if ($itemsAfter.Count -eq 0) { $itemsAfter = @(Find-UiaAll -Root $script:win -Type ([System.Windows.Automation.ControlType]::TreeItem)) }
+    $itemsAfter = @(Find-UiaRows -Root $script:win)
     $countAfter = $itemsAfter.Count
 
     if ($countAfter -gt 0) {
@@ -6090,7 +5852,7 @@ function Test-RefreshSelected {
     # Refreshing a file cannot discover a new sibling, while selecting the scan
     # root redirects to Refresh All inside the product.  Neither is a valid
     # substitute for selecting refresh_subdir itself.
-    $allItems = @(Get-UiaRowItems -Root $Window)
+    $allItems = @(Find-UiaRows -Root $Window -AllTypes)
     $targetNorm = Normalize-ComparePath $RefreshTargetDir
     $targetLeaf = Split-Path -Leaf $RefreshTargetDir
 
@@ -6212,20 +5974,6 @@ function Test-RefreshSelected {
 
     # Strategy 2: context menu right-click (requires a UIA item reference)
     if (!$refreshTriggered -and $targetItem) {
-        Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class RightClickHelper {
-    [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr info);
-    const uint MOUSEEVENTF_RIGHTDOWN = 0x08;
-    const uint MOUSEEVENTF_RIGHTUP   = 0x10;
-    public static void RightClick() {
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_RIGHTUP,   0, 0, 0, UIntPtr.Zero);
-    }
-}
-'@ -ErrorAction SilentlyContinue
-
         $ctxMenu  = $null
 
         $cp = Get-ElementClickPoint $targetItem
@@ -6233,7 +5981,7 @@ public static class RightClickHelper {
             try {
                 [void][MouseHelper]::SetCursorPos($cp.X, $cp.Y)
                 Start-Sleep -Milliseconds 200
-                [RightClickHelper]::RightClick()
+                [MouseHelper]::RightClick()
                 Start-Sleep -Milliseconds 700
                 $ctxDeadline = [System.DateTime]::UtcNow.AddSeconds(3)
                 while ([System.DateTime]::UtcNow -lt $ctxDeadline -and !$ctxMenu) {
@@ -6442,32 +6190,10 @@ function Test-FileOperations {
 #   Deduplicate         -> the two files become one hardlink (shared NTFS file id, links >= 2)
 # -----------------------------------------------------------------------------
 
-# Mouse helper for Ctrl+click (multi-select).  Distinct class name so it
-# coexists with MouseHelper / RightClickHelper declared elsewhere.
-Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class WdsInput {
-    [DllImport("user32.dll")] static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-    [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr info);
-    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
-    const byte VK_CONTROL = 0x11;
-    const uint KEYEVENTF_KEYUP = 0x2;
-    const uint MOUSEEVENTF_LEFTDOWN = 0x02, MOUSEEVENTF_LEFTUP = 0x04;
-    public static void CtrlLeftClick(int x, int y) {
-        SetCursorPos(x, y);
-        keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
-        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-    }
-}
-'@ -ErrorAction SilentlyContinue
-
 function Invoke-CtrlClickElement {
     param([System.Windows.Automation.AutomationElement] $El)
     $cp = Get-ElementClickPoint $El
-    if ($cp) { [WdsInput]::CtrlLeftClick($cp.X, $cp.Y); Start-Sleep -Milliseconds 250; return $true }
+    if ($cp) { [MouseHelper]::CtrlLeftClick($cp.X, $cp.Y); Start-Sleep -Milliseconds 250; return $true }
     return $false
 }
 
@@ -6544,31 +6270,6 @@ function Show-AllFilesExpanded {
     Start-Sleep -Milliseconds 300
 }
 
-function Get-UiaRowItems {
-    param([System.Windows.Automation.AutomationElement] $Root)
-
-    $items = [System.Collections.Generic.List[System.Windows.Automation.AutomationElement]]::new()
-    foreach ($type in @(
-        [System.Windows.Automation.ControlType]::DataItem,
-        [System.Windows.Automation.ControlType]::ListItem,
-        [System.Windows.Automation.ControlType]::TreeItem
-    )) {
-        foreach ($item in @(Find-UiaAll -Root $Root -Type $type)) {
-            [void] $items.Add($item)
-        }
-    }
-    return @($items)
-}
-
-function Get-UiaRowsAllTypes {
-    param([System.Windows.Automation.AutomationElement] $Root)
-    @(
-        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::DataItem))
-        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::ListItem))
-        @(Find-UiaAll -Root $Root -Type ([System.Windows.Automation.ControlType]::TreeItem))
-    )
-}
-
 function Expand-DupeRowsByKeyboard {
     param([System.Windows.Automation.AutomationElement[]] $Rows)
 
@@ -6592,7 +6293,7 @@ function Expand-DupeRowsByKeyboard {
 # (i.e. real file-system rows, not tab headers or extension-pane categories).
 function Get-TreePathItems {
     param([System.Windows.Automation.AutomationElement] $Window)
-    $items = Get-UiaRowItems -Root $Window
+    $items = Find-UiaRows -Root $Window -AllTypes
     @($items | Where-Object { $_.Current.Name -match '\\' })
 }
 
@@ -6925,8 +6626,8 @@ function Test-CompressionOps {
                         Assert-Fail $g 'None clears compression' "After None: COMPRESSED=$stillAttr, WOF=$stillWof"
                     }
                     $decHashAfter = (Get-FileHash -LiteralPath $dec -Algorithm SHA256).Hash
-                    if ($decHashAfter -ceq $decHashBefore) { Assert-Pass $g 'Compress->None preserves file contents' }
-                    else { Assert-Fail $g 'Compress->None preserves file contents' 'SHA-256 changed across the round trip' }
+                    Assert-That $g 'Compress->None preserves file contents' ($decHashAfter -ceq $decHashBefore) `
+                        'SHA-256 changed across the round trip'
                 }
                 else { Assert-Fail $g 'No-compression menu item' 'Not found/disabled for a compressed file' }
             }
@@ -7095,14 +6796,14 @@ function Test-DedupOps {
     $rows = @()
     $deadline = [System.DateTime]::UtcNow.AddSeconds(8)
     while ([System.DateTime]::UtcNow -lt $deadline) {
-        $rows = Get-UiaRowsAllTypes -Root $Window
+        $rows = Find-UiaRows -Root $Window -AllTypes
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
 
         Expand-DupeRowsByKeyboard -Rows $rows
 
-        $rows = Get-UiaRowsAllTypes -Root $Window
+        $rows = Find-UiaRows -Root $Window -AllTypes
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
@@ -7181,10 +6882,9 @@ function Test-DedupOps {
     }
     $hashAfter1 = (Get-FileHash -LiteralPath $f1 -Algorithm SHA256).Hash
     $hashAfter2 = (Get-FileHash -LiteralPath $f2 -Algorithm SHA256).Hash
-    if ($hashAfter1 -ceq $hashBefore1 -and $hashAfter2 -ceq $hashBefore2) {
-        Assert-Pass $g 'Dedup preserves both file contents'
-    }
-    else { Assert-Fail $g 'Dedup preserves both file contents' 'SHA-256 changed after hardlink creation' }
+    Assert-That $g 'Dedup preserves both file contents' `
+        ($hashAfter1 -ceq $hashBefore1 -and $hashAfter2 -ceq $hashBefore2) `
+        'SHA-256 changed after hardlink creation'
 }
 
 # Orchestrates file-operation verification in two scans:
@@ -7327,12 +7027,7 @@ function Test-StorageAnalytics {
     }
 
     $unitCombo = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::ComboBox)
-    if ($unitCombo) {
-        Assert-Pass $g 'Unit combo box present'
-    }
-    else {
-        Assert-Fail $g 'Unit combo box present' 'ComboBox not found'
-    }
+    Assert-That $g 'Unit combo box present' $unitCombo 'ComboBox not found'
 
     # Clean up: return to All Files tab
     $allFilesTab = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
@@ -7485,8 +7180,8 @@ function Test-LoadResults {
         if ($expectedByPath.ContainsKey($path)) { [void] $sourceDuplicatePaths.Add($path) }
         else { $expectedByPath[$path] = $row }
     }
-    if ($sourceDuplicatePaths.Count -eq 0) { Assert-Pass $g 'Source export contains every path exactly once' }
-    else { Assert-Fail $g 'Source export contains every path exactly once' ($sourceDuplicatePaths -join ', ') }
+    Assert-That $g 'Source export contains every path exactly once' `
+        ($sourceDuplicatePaths.Count -eq 0) ($sourceDuplicatePaths -join ', ')
 
     # 3. Test loading each of the 4 files
     foreach ($testFile in @($jsonPath, $jsonBomPath, $csvPath, $csvBomPath)) {
@@ -7706,9 +7401,9 @@ function Invoke-UiSuite {
 # FILTERING SUITE  (CSV / regex / glob / size filtering, headless CLI scans)
 # #############################################################################
 function Invoke-FilteringSuite {
-    $script:workRoot = Join-Path $BuildRoot 'filter-regex-csv-test'
-    $script:runRoot  = Join-Path $script:workRoot 'runner'
-    $script:scanRoot = Join-Path $script:workRoot 'scan-root'
+    $workRoot = Join-Path $BuildRoot 'filter-regex-csv-test'
+    $runRoot  = Join-Path $workRoot 'runner'
+    $scanRoot = Join-Path $workRoot 'scan-root'
 
     function ConvertTo-CxxRegexLiteralPath {
         param(
@@ -7958,6 +7653,181 @@ function Invoke-FilteringSuite {
 
         if ($rows.Count -gt $Limit) {
             Write-ColoredLine "  ... $($rows.Count - $Limit) more path(s)" DarkGray
+        }
+    }
+
+    function Invoke-FilteringScenario {
+        param(
+            [Parameter(Mandatory)] [pscustomobject] $Scenario,
+            [Parameter(Mandatory)] [string] $Exe,
+            [Parameter(Mandatory)] [string] $ScanRoot,
+            [Parameter(Mandatory)] [string] $WorkRoot,
+            [Parameter(Mandatory)] [string] $RunRoot
+        )
+
+        $safeName = $Scenario.Name -replace '[^A-Za-z0-9_.-]', '_'
+        $scenarioRoot = Join-Path $WorkRoot $safeName
+        $scenarioIni = Join-Path $scenarioRoot 'WinDirStat.ini'
+        $runnerIni = Join-Path $RunRoot 'WinDirStat.ini'
+        $scenarioCsv = Join-Path $scenarioRoot 'results.csv'
+        New-Item -ItemType Directory -Force -Path $scenarioRoot | Out-Null
+
+        $actualRows = @()
+        $missingRows = @()
+        $unexpectedRows = @()
+        $duplicateRows = @()
+        $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$ScanRoot`""
+        $exitCode = $null
+        $elapsedSeconds = $null
+        $errorText = $null
+
+        try {
+            Write-FilterScenarioIni -Path $scenarioIni -Scenario $Scenario
+            Copy-Item -LiteralPath $scenarioIni -Destination $runnerIni -Force
+            if (Test-Path -LiteralPath $scenarioCsv) {
+                Remove-Item -LiteralPath $scenarioCsv -Force
+            }
+
+            $scan = Invoke-WinDirStatCsv -Exe $Exe -Csv $scenarioCsv -Root $ScanRoot
+            $commandLine = $scan.CommandLine
+            $exitCode = $scan.ExitCode
+            $elapsedSeconds = $scan.ElapsedSeconds
+
+            $actualRows = @(Read-CsvPaths $scenarioCsv)
+            $missingRows = Get-SetDifference -Left $Scenario.ExpectedRows -Right $actualRows
+            $unexpectedRows = Get-SetDifference -Left $actualRows -Right $Scenario.ExpectedRows
+            $duplicateRows = @($actualRows |
+                Group-Object |
+                Where-Object Count -gt 1 |
+                ForEach-Object { "$($_.Name) ($($_.Count)x)" })
+        }
+        catch {
+            $errorText = $_.Exception.Message
+            $missingRows = @($Scenario.ExpectedRows)
+        }
+
+        $status = if (!$errorText -and
+                     @($missingRows).Count -eq 0 -and
+                     @($unexpectedRows).Count -eq 0 -and
+                     @($duplicateRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
+
+        [pscustomobject] @{
+            Name = $Scenario.Name
+            Status = $status
+            CommandLine = $commandLine
+            UseRegex = $Scenario.UseRegex
+            SizeMinimum = $Scenario.SizeMinimum
+            SizeUnits = $Scenario.SizeUnits
+            MaxAgeDays = $Scenario.MaxAgeDays
+            ScanEngine = $Scenario.ScanEngine
+            IncludeDirs = @($Scenario.IncludeDirs)
+            ExcludeDirs = @($Scenario.ExcludeDirs)
+            IncludeFiles = @($Scenario.IncludeFiles)
+            ExcludeFiles = @($Scenario.ExcludeFiles)
+            ExpectedBehavior = $Scenario.ExpectedBehavior
+            ExpectedRows = @($Scenario.ExpectedRows)
+            AllRows = @($Scenario.AllRows)
+            ActualRows = @($actualRows)
+            MissingRows = @($missingRows)
+            UnexpectedRows = @($unexpectedRows)
+            DuplicateRows = @($duplicateRows)
+            ExitCode = $exitCode
+            ElapsedSeconds = $elapsedSeconds
+            Error = $errorText
+            ScanRoot = $ScanRoot
+            CsvPath = $scenarioCsv
+            IniPath = $scenarioIni
+        }
+    }
+
+    function Write-FilteringResultsTable {
+        param([Parameter(Mandatory)] [pscustomobject[]] $Results)
+
+        $scenarioWidth = [Math]::Max(
+            8,
+            @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+        )
+        $scenarioWidth = [Math]::Min($scenarioWidth, 62)
+        $scenarioValue = ({
+            param($result)
+            if ($result.Name.Length -le $scenarioWidth) { return $result.Name }
+            $result.Name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
+        }).GetNewClosure()
+        $columns = @(
+            [pscustomobject] @{ Label = 'Status'; Width = 6; Value = { param($result) $result.Status } }
+            [pscustomobject] @{ Label = 'Scenario'; Width = $scenarioWidth; Value = $scenarioValue }
+            [pscustomobject] @{
+                Label = 'Mode'
+                Width = 13
+                Value = {
+                    param($result)
+                    "$(if ($result.UseRegex) { 'regex' } else { 'glob' })-" +
+                        "$(if ($result.ScanEngine -eq 1) { 'fast' } else { 'basic' })"
+                }
+            }
+            [pscustomobject] @{
+                Label = 'Rows'
+                Width = 13
+                Value = { param($result) "$(@($result.ActualRows).Count)/$(@($result.ExpectedRows).Count)" }
+            }
+            [pscustomobject] @{
+                Label = 'Elapsed'
+                Width = 8
+                Value = {
+                    param($result)
+                    if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
+                }
+            }
+        )
+
+        Write-ResultsTable -Results $Results -Columns $columns
+    }
+
+    function Write-FilteringScenarioSummary {
+        param([Parameter(Mandatory)] [pscustomobject] $Result)
+
+        $statusColor = Get-StatusColor $Result.Status
+        $actualBehavior = if ($Result.Error) {
+            "Scan failed before validation completed: $($Result.Error)"
+        }
+        elseif (@($Result.MissingRows).Count -eq 0 -and
+                @($Result.UnexpectedRows).Count -eq 0 -and
+                @($Result.DuplicateRows).Count -eq 0) {
+            'CSV output matched the expected paths exactly.'
+        }
+        else {
+            'CSV output differed from expectation: {0} missing path(s), {1} unexpected path(s), ' +
+                '{2} duplicated path(s).' -f @($Result.MissingRows).Count,
+                @($Result.UnexpectedRows).Count,
+                @($Result.DuplicateRows).Count
+        }
+
+        $filterMode = if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' }
+        $scanMode = if ($Result.ScanEngine -eq 1) { 'fast engine' } else { 'basic engine' }
+        Write-Host ''
+        Write-ColoredLine "=== $($Result.Name) ===" Cyan
+        Write-LabelValue 'Result' $Result.Status $statusColor
+        Write-LabelValue 'Command' $Result.CommandLine
+        Write-LabelValue 'Test base' $Result.ScanRoot
+        Write-LabelValue 'Mode' "$filterMode, $scanMode"
+        Write-LabelValue 'Size minimum' "$($Result.SizeMinimum) unit index $($Result.SizeUnits)"
+        Write-LabelValue 'Maximum age' "$($Result.MaxAgeDays) day(s)"
+        Format-ListBlock 'Input include directories' $Result.IncludeDirs
+        Format-ListBlock 'Input exclude directories' $Result.ExcludeDirs
+        Format-ListBlock 'Input include files' $Result.IncludeFiles
+        Format-ListBlock 'Input exclude files' $Result.ExcludeFiles
+        Write-LabelValue 'Expected behavior' $Result.ExpectedBehavior
+        Write-LabelValue 'Actual behavior' $actualBehavior $statusColor
+        Write-PathVerificationTable $Result
+        if (@($Result.MissingRows).Count -gt 0) { Format-ListBlock 'Missing expected paths' $Result.MissingRows }
+        if (@($Result.UnexpectedRows).Count -gt 0) { Format-ListBlock 'Unexpected actual paths' $Result.UnexpectedRows }
+        if (@($Result.DuplicateRows).Count -gt 0) { Format-ListBlock 'Duplicated actual paths' $Result.DuplicateRows }
+        if ($Result.Error) {
+            Write-LabelValue 'Error' $Result.Error Red
+        }
+        else {
+            Write-LabelValue 'Exit code' $Result.ExitCode
+            Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds
         }
     }
 
@@ -8246,7 +8116,8 @@ function Invoke-FilteringSuite {
         Write-ColoredLine "Prepared $($scenarios.Count) filtering scenarios against: $scanRoot" Cyan
         $results = @()
         foreach ($scenario in $scenarios) {
-            $result = Invoke-Scenario -Scenario $scenario -Exe $testExe -Root $scanRoot
+            $result = Invoke-FilteringScenario -Scenario $scenario -Exe $testExe -ScanRoot $scanRoot `
+                -WorkRoot $workRoot -RunRoot $runRoot
             $results += $result
             if ($result.Status -eq 'PASS') {
                 Assert-Pass $result.Name 'CSV output matches expected paths'
@@ -8264,17 +8135,17 @@ function Invoke-FilteringSuite {
         Write-LabelValue 'Scenarios run' $results.Count
         Write-LabelValue 'Passed' ($results.Count - $failed.Count) Green
         Write-LabelValue 'Failed' $failed.Count $(if ($failed.Count -eq 0) { 'Green' } else { 'Red' })
-        Write-SuiteResultsTable $results
+        Write-FilteringResultsTable $results
         if ($Details) {
             Write-ColoredLine 'Scenario details:' Cyan
             foreach ($result in $results) {
-                Write-ScenarioSummary $result
+                Write-FilteringScenarioSummary $result
             }
         }
         elseif ($failed.Count -gt 0) {
             Write-ColoredLine 'Failed scenario details:' Red
             foreach ($result in $failed) {
-                Write-ScenarioSummary $result
+                Write-FilteringScenarioSummary $result
             }
         }
 
@@ -8315,10 +8186,7 @@ function Find-MSBuild {
     $cmd = Get-Command msbuild.exe -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
 
-    $candidates = @(
-        'C:\Program Files\Microsoft Visual Studio',
-        'C:\Program Files (x86)\Microsoft Visual Studio'
-    )
+    $candidates = @('C:\Program Files\Microsoft Visual Studio', 'C:\Program Files (x86)\Microsoft Visual Studio')
 
     foreach ($root in $candidates) {
         if (!(Test-Path -LiteralPath $root)) { continue }
@@ -8340,8 +8208,7 @@ function Remove-TestBuildArtifacts {
 
 function Copy-SourceTreeForBuild {
     param(
-        [Parameter(Mandatory)] [string] $Source,
-        [Parameter(Mandatory)] [string] $Destination
+        [Parameter(Mandatory)] [string] $Source, [Parameter(Mandatory)] [string] $Destination
     )
 
     if (Test-Path -LiteralPath $Destination) {
@@ -8349,13 +8216,9 @@ function Copy-SourceTreeForBuild {
     }
     New-Item -ItemType Directory -Force -Path $Destination | Out-Null
 
-    $excludedRoots = @(
-        (Join-Path $Source '.git'),
-        (Join-Path $Source '.vs'),
-        (Join-Path $Source 'publish'),
-        (Join-Path $Source 'build'),
-        (Join-Path $Source 'intermediate')
-    ) | ForEach-Object { [System.IO.Path]::GetFullPath($_).TrimEnd('\') }
+    $excludedRoots = @('.git', '.vs', 'publish', 'build', 'intermediate') | ForEach-Object {
+        [System.IO.Path]::GetFullPath((Join-Path $Source $_)).TrimEnd('\')
+    }
 
     Get-ChildItem -LiteralPath $Source -Force -Recurse -File |
         Where-Object {
@@ -8381,6 +8244,29 @@ function Add-SettingsTestHarness {
 
     $appPath = Join-Path $Source 'windirstat\WinDirStat.cpp'
     $text = [System.IO.File]::ReadAllText($appPath)
+    $dumpFields = @(
+        'AutomaticallyResizeColumns', 'AutoMapDrivesWhenElevated', 'ExcludeJunctions', 'ExcludeSymbolicLinksDirectory', 'ExcludeVolumeMountPoints', 'ExcludeHiddenDirectory', 'ExcludeProtectedDirectory', 'ExcludeSymbolicLinksFile'
+        'ExcludeHiddenFile', 'ExcludeProtectedFile', 'FilteringUseRegex', 'FollowVolumeMountPoints', 'UseSizeSuffixes', 'ListFullRowSelection', 'ListGrid', 'ListStripes', 'PacmanAnimation', 'ScanForDuplicates'
+        'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults', 'ShowDeleteWarning', 'ShowElevationPrompt', 'ShowMicrosoftProgress', 'ShowFileTypes', 'ShowFreeSpace', 'ShowStatusBar'
+        'ShowTimeSpent', 'ShowToolBar', 'LargeToolBar', 'ShowTreeMap', 'ShowUnknown', 'SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning', 'AutoElevate', 'TreeMapGrid'
+        'TreeMapShowExtensions', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine', 'UseWindowsLocaleSetting', 'ProcessHardlinks', 'ConfigPage'
+        'LanguageId', 'FileHashAlgorithm', 'ProcessPriority', 'LargeFileCount', 'MinimizeViewThreshold', 'ScanningThreads', 'SelectDrivesRadio', 'SizeProportionIndent', 'FileTreeColorCount'
+        'FilteringSizeMinimum', 'FilteringSizeUnits', 'FilteringMaxAgeDays', 'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapHeightFactor', 'TreeMapLightSourceX'
+        'TreeMapLightSourceY', 'TreeMapScaleFactor', 'TreeMapStyle', 'GraphPaneStyle', 'TreeMapMaxDepth', 'DarkMode', 'FolderHistoryCount', 'DriveListColumnOrder', 'DriveListColumnWidths'
+        'DriveListColumnVisibility', 'DupeViewColumnOrder', 'DupeViewColumnWidths', 'DupeViewColumnVisibility', 'FileTreeColumnOrder', 'FileTreeColumnWidths', 'FileTreeColumnVisibility', 'ExtViewColumnOrder'
+        'ExtViewColumnWidths', 'ExtViewColumnVisibility', 'SearchViewColumnOrder', 'SearchViewColumnWidths', 'SearchViewColumnVisibility', 'TopViewColumnOrder', 'TopViewColumnWidths', 'TopViewColumnVisibility'
+        'WatcherColumnOrder', 'WatcherColumnWidths', 'WatcherColumnVisibility', 'PermsViewColumnVisibility', 'SelectDrivesDrives', 'SelectDrivesFolder', 'FilteringExcludeDirs', 'FilteringExcludeFiles'
+        'FilteringIncludeDirs', 'FilteringIncludeFiles', 'PermsExcludeRegex', 'SearchTerm'
+    )
+    $cleanupFields = @('Title', 'CommandLine', 'Enabled', 'VirginTitle', 'WorksForDrives', 'WorksForDirectories',
+        'WorksForFiles', 'WorksForUncPaths', 'RecurseIntoSubdirectories', 'AskForConfirmation', 'ShowConsoleWindow',
+        'WaitForCompletion', 'RefreshPolicy')
+    $dumpCode = ($dumpFields | ForEach-Object {
+        '        Field(out, first, "{0}", COptions::{0}.Obj());' -f $_
+    }) -join [Environment]::NewLine
+    $cleanupCode = ($cleanupFields | ForEach-Object {
+        '            Field(out, first, "{0}", udc.{0}.Obj());' -f $_
+    }) -join [Environment]::NewLine
 
     $includeMarker = '#include "CsvLoader.h"'
     $includeReplacement = @'
@@ -8389,11 +8275,10 @@ function Add-SettingsTestHarness {
 #include "FileSearchControl.h"
 #include <iomanip>
 #include <sstream>
+#include <type_traits>
 #endif
 '@
-    if (!$text.Contains($includeMarker)) {
-        throw "Could not locate include marker in $appPath"
-    }
+    if (!$text.Contains($includeMarker)) { throw "Could not locate include marker in $appPath" }
     $text = $text.Replace($includeMarker, $includeReplacement)
 
     $helper = @'
@@ -8406,7 +8291,6 @@ namespace WdsSettingsTest
         const int size = WideCharToMultiByte(CP_UTF8, 0, value.data(), static_cast<int>(value.size()),
             nullptr, 0, nullptr, nullptr);
         if (size <= 0) return {};
-
         std::string result(static_cast<size_t>(size), '\0');
         WideCharToMultiByte(CP_UTF8, 0, value.data(), static_cast<int>(value.size()),
             result.data(), size, nullptr, nullptr);
@@ -8435,10 +8319,7 @@ namespace WdsSettingsTest
                     out << "\\u" << std::hex << std::setw(4) << std::setfill('0')
                         << static_cast<int>(ch) << std::dec << std::setfill(' ');
                 }
-                else
-                {
-                    out << static_cast<char>(ch);
-                }
+                else out << static_cast<char>(ch);
                 break;
             }
         }
@@ -8451,11 +8332,6 @@ namespace WdsSettingsTest
         return JsonString(std::wstring(value.GetString()));
     }
 
-    std::string JsonBool(const bool value)
-    {
-        return value ? "true" : "false";
-    }
-
     void RawField(std::ostringstream& out, bool& first, const char* name, const std::string& raw)
     {
         if (!first) out << ',';
@@ -8463,55 +8339,36 @@ namespace WdsSettingsTest
         first = false;
     }
 
-    void BoolField(std::ostringstream& out, bool& first, const char* name, const bool value)
+    template <typename T>
+    std::string JsonValue(const T& value)
     {
-        RawField(out, first, name, JsonBool(value));
-    }
-
-    void IntField(std::ostringstream& out, bool& first, const char* name, const long long value)
-    {
-        RawField(out, first, name, std::to_string(value));
-    }
-
-    void StringField(std::ostringstream& out, bool& first, const char* name, const std::wstring& value)
-    {
-        RawField(out, first, name, JsonString(value));
-    }
-
-    std::string IntArray(const std::vector<int>& values)
-    {
-        std::ostringstream out;
-        out << '[';
-        for (size_t i = 0; i < values.size(); ++i)
+        using Value = std::decay_t<T>;
+        if constexpr (std::is_same_v<Value, bool>) return value ? "true" : "false";
+        else if constexpr (std::is_enum_v<Value>)
+            return std::to_string(static_cast<std::underlying_type_t<Value>>(value));
+        else if constexpr (std::is_integral_v<Value>) return std::to_string(value);
+        else if constexpr (std::is_same_v<Value, CString> || std::is_same_v<Value, std::wstring>)
+            return JsonString(value);
+        else
         {
-            if (i > 0) out << ',';
-            out << values[i];
+            std::ostringstream out;
+            out << '[';
+            bool first = true;
+            for (const auto& item : value)
+            {
+                if (!first) out << ',';
+                out << JsonValue(item);
+                first = false;
+            }
+            out << ']';
+            return out.str();
         }
-        out << ']';
-        return out.str();
     }
 
-    std::string StringArray(const std::vector<std::wstring>& values)
+    template <typename T>
+    void Field(std::ostringstream& out, bool& first, const char* name, const T& value)
     {
-        std::ostringstream out;
-        out << '[';
-        for (size_t i = 0; i < values.size(); ++i)
-        {
-            if (i > 0) out << ',';
-            out << JsonString(values[i]);
-        }
-        out << ']';
-        return out.str();
-    }
-
-    std::string LanguageArray()
-    {
-        std::vector<int> values;
-        for (const auto language : Localization::GetLanguageList())
-        {
-            values.push_back(static_cast<int>(language));
-        }
-        return IntArray(values);
+        RawField(out, first, name, JsonValue(value));
     }
 
     std::string ReparseFollowingJson()
@@ -8519,11 +8376,11 @@ namespace WdsSettingsTest
         std::ostringstream out;
         out << '{';
         bool first = true;
-        BoolField(out, first, "None", CDirStatApp::Get()->IsFollowingAllowed(0));
-        BoolField(out, first, "MountPoint", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_MOUNT_POINT));
-        BoolField(out, first, "SymbolicLink", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_SYMLINK));
-        BoolField(out, first, "Junction", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_JUNCTION_POINT));
-        BoolField(out, first, "OtherReparsePoint", CDirStatApp::Get()->IsFollowingAllowed(0xA0001234));
+        Field(out, first, "None", CDirStatApp::Get()->IsFollowingAllowed(0));
+        Field(out, first, "MountPoint", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_MOUNT_POINT));
+        Field(out, first, "SymbolicLink", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_SYMLINK));
+        Field(out, first, "Junction", CDirStatApp::Get()->IsFollowingAllowed(IO_REPARSE_TAG_JUNCTION_POINT));
+        Field(out, first, "OtherReparsePoint", CDirStatApp::Get()->IsFollowingAllowed(0xA0001234));
         out << "\n  }";
         return out.str();
     }
@@ -8550,11 +8407,11 @@ namespace WdsSettingsTest
             }
         };
 
-        BoolField(out, first, "LowerLog", matches(L"alpha.log"));
-        BoolField(out, first, "UpperLog", matches(L"Alpha.LOG"));
-        BoolField(out, first, "NotesTxt", matches(L"notes.txt"));
-        BoolField(out, first, "LiteralPattern", matches(L"literal.*"));
-        BoolField(out, first, "TargetSubstring", matches(L"prefix-target-suffix"));
+        Field(out, first, "LowerLog", matches(L"alpha.log"));
+        Field(out, first, "UpperLog", matches(L"Alpha.LOG"));
+        Field(out, first, "NotesTxt", matches(L"notes.txt"));
+        Field(out, first, "LiteralPattern", matches(L"literal.*"));
+        Field(out, first, "TargetSubstring", matches(L"prefix-target-suffix"));
         out << "\n  }";
         return out.str();
     }
@@ -8569,19 +8426,7 @@ namespace WdsSettingsTest
             const auto& udc = COptions::UserDefinedCleanups[i];
             out << "\n    {";
             bool first = true;
-            StringField(out, first, "Title", udc.Title.Obj());
-            StringField(out, first, "CommandLine", udc.CommandLine.Obj());
-            BoolField(out, first, "Enabled", udc.Enabled.Obj());
-            BoolField(out, first, "VirginTitle", udc.VirginTitle.Obj());
-            BoolField(out, first, "WorksForDrives", udc.WorksForDrives.Obj());
-            BoolField(out, first, "WorksForDirectories", udc.WorksForDirectories.Obj());
-            BoolField(out, first, "WorksForFiles", udc.WorksForFiles.Obj());
-            BoolField(out, first, "WorksForUncPaths", udc.WorksForUncPaths.Obj());
-            BoolField(out, first, "RecurseIntoSubdirectories", udc.RecurseIntoSubdirectories.Obj());
-            BoolField(out, first, "AskForConfirmation", udc.AskForConfirmation.Obj());
-            BoolField(out, first, "ShowConsoleWindow", udc.ShowConsoleWindow.Obj());
-            BoolField(out, first, "WaitForCompletion", udc.WaitForCompletion.Obj());
-            IntField(out, first, "RefreshPolicy", udc.RefreshPolicy.Obj());
+{{CLEANUP_FIELDS}}
             out << "\n    }";
         }
         out << "\n  ]";
@@ -8594,109 +8439,10 @@ namespace WdsSettingsTest
         out << '{';
         bool first = true;
 
-        BoolField(out, first, "AutomaticallyResizeColumns", COptions::AutomaticallyResizeColumns.Obj());
-        BoolField(out, first, "AutoMapDrivesWhenElevated", COptions::AutoMapDrivesWhenElevated.Obj());
-        BoolField(out, first, "ExcludeJunctions", COptions::ExcludeJunctions.Obj());
-        BoolField(out, first, "ExcludeSymbolicLinksDirectory", COptions::ExcludeSymbolicLinksDirectory.Obj());
-        BoolField(out, first, "ExcludeVolumeMountPoints", COptions::ExcludeVolumeMountPoints.Obj());
-        BoolField(out, first, "ExcludeHiddenDirectory", COptions::ExcludeHiddenDirectory.Obj());
-        BoolField(out, first, "ExcludeProtectedDirectory", COptions::ExcludeProtectedDirectory.Obj());
-        BoolField(out, first, "ExcludeSymbolicLinksFile", COptions::ExcludeSymbolicLinksFile.Obj());
-        BoolField(out, first, "ExcludeHiddenFile", COptions::ExcludeHiddenFile.Obj());
-        BoolField(out, first, "ExcludeProtectedFile", COptions::ExcludeProtectedFile.Obj());
-        BoolField(out, first, "FilteringUseRegex", COptions::FilteringUseRegex.Obj());
-        BoolField(out, first, "FollowVolumeMountPoints", COptions::FollowVolumeMountPoints.Obj());
-        BoolField(out, first, "UseSizeSuffixes", COptions::UseSizeSuffixes.Obj());
-        BoolField(out, first, "ListFullRowSelection", COptions::ListFullRowSelection.Obj());
-        BoolField(out, first, "ListGrid", COptions::ListGrid.Obj());
-        BoolField(out, first, "ListStripes", COptions::ListStripes.Obj());
-        BoolField(out, first, "PacmanAnimation", COptions::PacmanAnimation.Obj());
-        BoolField(out, first, "ScanForDuplicates", COptions::ScanForDuplicates.Obj());
-        BoolField(out, first, "SearchWholePhrase", COptions::SearchWholePhrase.Obj());
-        BoolField(out, first, "SearchCase", COptions::SearchCase.Obj());
-        BoolField(out, first, "SearchRegex", COptions::SearchRegex.Obj());
-        IntField(out, first, "SearchMaxResults", COptions::SearchMaxResults.Obj());
-        BoolField(out, first, "ShowDeleteWarning", COptions::ShowDeleteWarning.Obj());
-        BoolField(out, first, "ShowElevationPrompt", COptions::ShowElevationPrompt.Obj());
-        BoolField(out, first, "ShowMicrosoftProgress", COptions::ShowMicrosoftProgress.Obj());
-        BoolField(out, first, "ShowFileTypes", COptions::ShowFileTypes.Obj());
-        BoolField(out, first, "ShowFreeSpace", COptions::ShowFreeSpace.Obj());
-        BoolField(out, first, "ShowStatusBar", COptions::ShowStatusBar.Obj());
-        BoolField(out, first, "ShowTimeSpent", COptions::ShowTimeSpent.Obj());
-        BoolField(out, first, "ShowToolBar", COptions::ShowToolBar.Obj());
-        BoolField(out, first, "LargeToolBar", COptions::LargeToolBar.Obj());
-        BoolField(out, first, "ShowTreeMap", COptions::ShowTreeMap.Obj());
-        BoolField(out, first, "ShowUnknown", COptions::ShowUnknown.Obj());
-        BoolField(out, first, "SkipDupeDetectionCloudLinks", COptions::SkipDupeDetectionCloudLinks.Obj());
-        BoolField(out, first, "ShowDupeDetectionCloudLinksWarning", COptions::ShowDupeDetectionCloudLinksWarning.Obj());
-        BoolField(out, first, "AutoElevate", COptions::AutoElevate.Obj());
-        BoolField(out, first, "TreeMapGrid", COptions::TreeMapGrid.Obj());
-        BoolField(out, first, "TreeMapShowExtensions", COptions::TreeMapShowExtensions.Obj());
-        BoolField(out, first, "TreeMapUseLogical", COptions::TreeMapUseLogical.Obj());
-        BoolField(out, first, "UseAbsolutePercentages", COptions::UseAbsolutePercentages.Obj());
-        BoolField(out, first, "UseBackupRestore", COptions::UseBackupRestore.Obj());
-        BoolField(out, first, "UseDrawTextCache", COptions::UseDrawTextCache.Obj());
-        BoolField(out, first, "UseFastScanEngine", COptions::UseFastScanEngine.Obj());
-        BoolField(out, first, "UseWindowsLocaleSetting", COptions::UseWindowsLocaleSetting.Obj());
-        BoolField(out, first, "ProcessHardlinks", COptions::ProcessHardlinks.Obj());
-        IntField(out, first, "ConfigPage", COptions::ConfigPage.Obj());
-        IntField(out, first, "LanguageId", COptions::LanguageId.Obj());
-        IntField(out, first, "FileHashAlgorithm", COptions::FileHashAlgorithm.Obj());
-        IntField(out, first, "ProcessPriority", COptions::ProcessPriority.Obj());
-        IntField(out, first, "LargeFileCount", COptions::LargeFileCount.Obj());
-        IntField(out, first, "MinimizeViewThreshold", COptions::MinimizeViewThreshold.Obj());
-        IntField(out, first, "ScanningThreads", COptions::ScanningThreads.Obj());
-        IntField(out, first, "SelectDrivesRadio", COptions::SelectDrivesRadio.Obj());
-        IntField(out, first, "SizeProportionIndent", COptions::SizeProportionIndent.Obj());
-        IntField(out, first, "FileTreeColorCount", COptions::FileTreeColorCount.Obj());
-        IntField(out, first, "FilteringSizeMinimum", COptions::FilteringSizeMinimum.Obj());
-        IntField(out, first, "FilteringSizeUnits", COptions::FilteringSizeUnits.Obj());
-        IntField(out, first, "FilteringMaxAgeDays", COptions::FilteringMaxAgeDays.Obj());
-        IntField(out, first, "TreeMapAmbientLightPercent", COptions::TreeMapAmbientLightPercent.Obj());
-        IntField(out, first, "TreeMapBrightness", COptions::TreeMapBrightness.Obj());
-        IntField(out, first, "TreeMapFolderFramesDrawThreshold", COptions::TreeMapFolderFramesDrawThreshold.Obj());
-        IntField(out, first, "TreeMapHeightFactor", COptions::TreeMapHeightFactor.Obj());
-        IntField(out, first, "TreeMapLightSourceX", COptions::TreeMapLightSourceX.Obj());
-        IntField(out, first, "TreeMapLightSourceY", COptions::TreeMapLightSourceY.Obj());
-        IntField(out, first, "TreeMapScaleFactor", COptions::TreeMapScaleFactor.Obj());
-        IntField(out, first, "TreeMapStyle", COptions::TreeMapStyle.Obj());
-        IntField(out, first, "GraphPaneStyle", COptions::GraphPaneStyle.Obj());
-        IntField(out, first, "TreeMapMaxDepth", COptions::TreeMapMaxDepth.Obj());
-        IntField(out, first, "DarkMode", COptions::DarkMode.Obj());
-        IntField(out, first, "FolderHistoryCount", COptions::FolderHistoryCount.Obj());
-        RawField(out, first, "DriveListColumnOrder", IntArray(COptions::DriveListColumnOrder.Obj()));
-        RawField(out, first, "DriveListColumnWidths", IntArray(COptions::DriveListColumnWidths.Obj()));
-        RawField(out, first, "DriveListColumnVisibility", IntArray(COptions::DriveListColumnVisibility.Obj()));
-        RawField(out, first, "DupeViewColumnOrder", IntArray(COptions::DupeViewColumnOrder.Obj()));
-        RawField(out, first, "DupeViewColumnWidths", IntArray(COptions::DupeViewColumnWidths.Obj()));
-        RawField(out, first, "DupeViewColumnVisibility", IntArray(COptions::DupeViewColumnVisibility.Obj()));
-        RawField(out, first, "FileTreeColumnOrder", IntArray(COptions::FileTreeColumnOrder.Obj()));
-        RawField(out, first, "FileTreeColumnWidths", IntArray(COptions::FileTreeColumnWidths.Obj()));
-        RawField(out, first, "FileTreeColumnVisibility", IntArray(COptions::FileTreeColumnVisibility.Obj()));
-        RawField(out, first, "ExtViewColumnOrder", IntArray(COptions::ExtViewColumnOrder.Obj()));
-        RawField(out, first, "ExtViewColumnWidths", IntArray(COptions::ExtViewColumnWidths.Obj()));
-        RawField(out, first, "ExtViewColumnVisibility", IntArray(COptions::ExtViewColumnVisibility.Obj()));
-        RawField(out, first, "SearchViewColumnOrder", IntArray(COptions::SearchViewColumnOrder.Obj()));
-        RawField(out, first, "SearchViewColumnWidths", IntArray(COptions::SearchViewColumnWidths.Obj()));
-        RawField(out, first, "SearchViewColumnVisibility", IntArray(COptions::SearchViewColumnVisibility.Obj()));
-        RawField(out, first, "TopViewColumnOrder", IntArray(COptions::TopViewColumnOrder.Obj()));
-        RawField(out, first, "TopViewColumnWidths", IntArray(COptions::TopViewColumnWidths.Obj()));
-        RawField(out, first, "TopViewColumnVisibility", IntArray(COptions::TopViewColumnVisibility.Obj()));
-        RawField(out, first, "WatcherColumnOrder", IntArray(COptions::WatcherColumnOrder.Obj()));
-        RawField(out, first, "WatcherColumnWidths", IntArray(COptions::WatcherColumnWidths.Obj()));
-        RawField(out, first, "WatcherColumnVisibility", IntArray(COptions::WatcherColumnVisibility.Obj()));
-        RawField(out, first, "PermsViewColumnVisibility", IntArray(COptions::PermsViewColumnVisibility.Obj()));
-        RawField(out, first, "SelectDrivesDrives", StringArray(COptions::SelectDrivesDrives.Obj()));
-        RawField(out, first, "SelectDrivesFolder", StringArray(COptions::SelectDrivesFolder.Obj()));
-        StringField(out, first, "FilteringExcludeDirs", COptions::FilteringExcludeDirs.Obj());
-        StringField(out, first, "FilteringExcludeFiles", COptions::FilteringExcludeFiles.Obj());
-        StringField(out, first, "FilteringIncludeDirs", COptions::FilteringIncludeDirs.Obj());
-        StringField(out, first, "FilteringIncludeFiles", COptions::FilteringIncludeFiles.Obj());
-        StringField(out, first, "PermsExcludeRegex", COptions::PermsExcludeRegex.Obj());
-        StringField(out, first, "SearchTerm", COptions::SearchTerm.Obj());
-        RawField(out, first, "LanguageList", LanguageArray());
-        IntField(out, first, "LocaleForFormatting", COptions::GetLocaleForFormatting());
-        IntField(out, first, "UserDefaultLCID", GetUserDefaultLCID());
+{{DUMP_FIELDS}}
+        Field(out, first, "LanguageList", Localization::GetLanguageList());
+        Field(out, first, "LocaleForFormatting", COptions::GetLocaleForFormatting());
+        Field(out, first, "UserDefaultLCID", GetUserDefaultLCID());
         RawField(out, first, "ReparseFollowing", ReparseFollowingJson());
         RawField(out, first, "SearchProbeMatches", SearchProbeJson());
         RawField(out, first, "UserDefinedCleanups", UserDefinedCleanupsJson());
@@ -8733,11 +8479,10 @@ namespace WdsSettingsTest
 #endif
 
 '@
+    $helper = $helper.Replace('{{DUMP_FIELDS}}', $dumpCode).Replace('{{CLEANUP_FIELDS}}', $cleanupCode)
 
     $initMarker = 'BOOL CDirStatApp::InitInstance()'
-    if (!$text.Contains($initMarker)) {
-        throw "Could not locate InitInstance marker in $appPath"
-    }
+    if (!$text.Contains($initMarker)) { throw "Could not locate InitInstance marker in $appPath" }
     $text = $text.Replace($initMarker, "$helper$initMarker")
 
     $loadMarker = '    COptions::LoadAppSettings();'
@@ -8747,9 +8492,7 @@ namespace WdsSettingsTest
     WdsSettingsTest::TryRun();
 #endif
 '@
-    if (!$text.Contains($loadMarker)) {
-        throw "Could not locate LoadAppSettings marker in $appPath"
-    }
+    if (!$text.Contains($loadMarker)) { throw "Could not locate LoadAppSettings marker in $appPath" }
     $text = $text.Replace($loadMarker, $loadReplacement)
 
     [System.IO.File]::WriteAllText($appPath, $text, [System.Text.UTF8Encoding]::new($false))
@@ -8759,12 +8502,7 @@ function Build-SettingsTestExecutable {
     $msbuild = Find-MSBuild
     $solution = Join-Path $sourceRoot 'windirstat.sln'
     $buildArgs = @(
-        $solution,
-        '/m:1',
-        '/v:minimal',
-        '/p:Configuration=Release',
-        "/p:Platform=$Platform",
-        "/p:TargetName=$targetName",
+        $solution, '/m:1', '/v:minimal', '/p:Configuration=Release', "/p:Platform=$Platform", "/p:TargetName=$targetName",
         '/p:ExternalCompilerOptions=/DWDS_SETTINGS_TEST'
     )
 
@@ -8801,33 +8539,31 @@ function Invoke-SettingsDump {
 
     Write-PortableIni -Path $scenarioIni -Sections $Sections
     Copy-Item -LiteralPath $scenarioIni -Destination $runnerIni -Force
-    if (Test-Path -LiteralPath $jsonPath) {
-        Remove-Item -LiteralPath $jsonPath -Force
-    }
+    if (Test-Path -LiteralPath $jsonPath) { Remove-Item -LiteralPath $jsonPath -Force }
 
     $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @('/wds-settings-dump', $jsonPath) -WorkingDirectory $runRoot
-    if ($run.ExitCode -ne 0) {
-        throw "Settings dump exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
-    }
-    if (!(Test-Path -LiteralPath $jsonPath)) {
-        throw "Settings dump did not create JSON output: $jsonPath"
-    }
+    if ($run.ExitCode -ne 0) { throw "Settings dump exited with code $($run.ExitCode). StdErr: $($run.StdErr)" }
+    if (!(Test-Path -LiteralPath $jsonPath)) { throw "Settings dump did not create JSON output: $jsonPath" }
 
     [pscustomobject] @{
         Dump = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
-        CommandLine = $run.CommandLine
-        ExitCode = $run.ExitCode
-        ElapsedSeconds = $run.ElapsedSeconds
-        IniPath = $scenarioIni
-        JsonPath = $jsonPath
+        CommandLine = $run.CommandLine; ExitCode = $run.ExitCode; ElapsedSeconds = $run.ElapsedSeconds
+        IniPath = $scenarioIni; JsonPath = $jsonPath
     }
 }
 
 function Get-DefinedSettingNames {
-    $optionsCpp = Join-Path $repoRoot 'windirstat\Options.cpp'
-    $text = Get-Content -LiteralPath $optionsCpp -Raw
-    $matches = [regex]::Matches($text, 'Setting<.+>\s+COptions::(?<name>[A-Za-z0-9_]+)\s*[\(\[]')
-    @($matches | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
+    $text = @('Options.h', 'Options.cpp' | ForEach-Object {
+        $path = Join-Path $repoRoot "windirstat\$_"
+        if (Test-Path -LiteralPath $path) { Get-Content -LiteralPath $path -Raw }
+    }) -join [Environment]::NewLine
+    $patterns = @(
+        'Setting<[^;\r\n]+>\s+COptions::(?<name>[A-Za-z0-9_]+)\s*[\(\[\{]',
+        '(?:inline\s+)?static(?:\s+inline)?\s+Setting<[^;\r\n]+>\s+(?<name>[A-Za-z0-9_]+)\s*[;=\{\[]'
+    )
+    @($patterns | ForEach-Object {
+        [regex]::Matches($text, $_) | ForEach-Object { $_.Groups['name'].Value }
+    } | Sort-Object -Unique)
 }
 
 $filteringSettings = @(
@@ -8841,154 +8577,41 @@ $filteringSettings = @(
 )
 
 $visualSettings = @(
-    'AboutWindowRect',
-    'ConfigPage',
-    'DarkMode',
-    'DriveListColumnOrder',
-    'DriveListColumnWidths',
-    'DriveListColumnVisibility',
-    'DriveSelectWindowRect',
-    'DupeViewColumnOrder',
-    'DupeViewColumnWidths',
-    'DupeViewColumnVisibility',
-    'ExtViewColumnOrder',
-    'ExtViewColumnWidths',
-    'ExtViewColumnVisibility',
-    'FileTreeColors',
-    'FileTreeColorCount',
-    'FileTreeColumnOrder',
-    'FileTreeColumnWidths',
-    'GroupUnregisteredTypes',
-    'LargeToolBar',
-    'LayoutPermutation',
-    'LayoutTopology',
-    'ListFullRowSelection',
-    'ListGrid',
-    'ListStripes',
-    'MainSplitterPos',
-    'MainWindowPlacement',
-    'MinimizeViewThreshold',
-    'PacmanAnimation',
-    'PermsColor',
-    'PermsColorAccount',
-    'PermsColorLevel',
-    'PermsViewColumnOrder',
-    'PermsViewColumnWidths',
-    'PermsViewColumnVisibility',
-    'SearchViewColumnOrder',
-    'SearchViewColumnWidths',
-    'SearchViewColumnVisibility',
-    'SearchWindowRect',
-    'ShowFileTypes',
-    'ShowStatusBar',
-    'ShowTimeSpent',
-    'ShowToolBar',
-    'ShowTreeMap',
-    'SizeProportionIndent',
-    'SubSplitterPos',
-    'TopViewColumnOrder',
-    'TopViewColumnWidths',
-    'TopViewColumnVisibility',
-    'TreeMapAmbientLightPercent',
-    'TreeMapBrightness',
-    'TreeMapFolderFramesDrawThreshold',
-    'TreeMapGrid',
-    'TreeMapGridColor',
-    'TreeMapHeightFactor',
-    'TreeMapHighlightColor',
-    'GraphPaneStyle',
-    'TreeMapLightSourceX',
-    'TreeMapLightSourceY',
-    'TreeMapMaxDepth',
-    'TreeMapScaleFactor',
-    'TreeMapShowExtensions',
-    'TreeMapShowFolderFrames',
-    'TreeMapStyle',
-    'TreeMapUseLogical',
-    'UseAbsolutePercentages',
-    'WatcherAutoScroll',
-    'WatcherColumnOrder',
-    'WatcherColumnWidths',
-    'WatcherColumnVisibility'
-)
-
-$coveredNonVisualSettings = @(
-    'AutomaticallyResizeColumns',
-    'AutoElevate',
-    'AutoMapDrivesWhenElevated',
-    'ExcludeHiddenDirectory',
-    'ExcludeHiddenFile',
-    'ExcludeJunctions',
-    'ExcludeProtectedDirectory',
-    'ExcludeProtectedFile',
-    'ExcludeSymbolicLinksDirectory',
-    'ExcludeSymbolicLinksFile',
-    'ExcludeVolumeMountPoints',
-    'FileHashAlgorithm',
-    'FilteringMaxAgeDays',
-    'FolderHistoryCount',
-    'FollowVolumeMountPoints',
-    'LanguageId',
-    'LargeFileCount',
-    'PermsExcludeRegex',
-    'ProcessHardlinks',
-    'ProcessPriority',
-    'ScanForDuplicates',
-    'ScanningThreads',
-    'SearchCase',
-    'SearchMaxResults',
-    'SearchRegex',
-    'SearchTerm',
-    'SearchWholePhrase',
-    'SelectDrivesDrives',
-    'SelectDrivesFolder',
-    'SelectDrivesRadio',
-    'FileTreeColumnVisibility',
-    'ShowDeleteWarning',
-    'ShowDupeDetectionCloudLinksWarning',
-    'ShowElevationPrompt',
-    'ShowFreeSpace',
-    'ShowMicrosoftProgress',
-    'ShowUnknown',
-    'SkipDupeDetectionCloudLinks',
-    'UseBackupRestore',
-    'UseDrawTextCache',
-    'UseFastScanEngine',
-    'UseSizeSuffixes',
-    'UseWindowsLocaleSetting'
+    'AboutWindowRect', 'ConfigPage', 'DarkMode', 'DriveSelectWindowRect', 'FileTreeColors', 'FileTreeColorCount',
+    'GroupUnregisteredTypes', 'LargeToolBar', 'LayoutPermutation', 'LayoutTopology', 'ListFullRowSelection',
+    'ListGrid', 'ListStripes', 'MainSplitterPos', 'MainWindowPlacement', 'MinimizeViewThreshold', 'PacmanAnimation',
+    'PermsColor', 'PermsColorAccount', 'PermsColorLevel', 'SearchWindowRect', 'ShowFileTypes', 'ShowStatusBar',
+    'ShowTimeSpent', 'ShowToolBar', 'ShowTreeMap', 'SizeProportionIndent', 'SubSplitterPos',
+    'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapGrid',
+    'TreeMapGridColor', 'TreeMapHeightFactor', 'TreeMapHighlightColor', 'GraphPaneStyle', 'TreeMapLightSourceX',
+    'TreeMapLightSourceY', 'TreeMapMaxDepth', 'TreeMapScaleFactor', 'TreeMapShowExtensions',
+    'TreeMapShowFolderFrames', 'TreeMapStyle', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'WatcherAutoScroll'
+    foreach ($view in @('DriveList', 'DupeView', 'ExtView', 'PermsView', 'SearchView', 'TopView', 'Watcher')) {
+        foreach ($property in @('Order', 'Widths', 'Visibility')) { "${view}Column$property" }
+    }
+    'FileTreeColumnOrder'
+    'FileTreeColumnWidths'
 )
 
 $noSettingValue = [object]::new()
 
 function New-SettingCase {
     param(
-        [Parameter(Mandatory, Position = 0)] [string] $Name,
-        [string] $Section = 'Options',
-        [string] $Entry,
-        [AllowNull()] [object] $Default = $noSettingValue,
-        [AllowNull()] [object] $ExplicitInput = $noSettingValue,
-        [AllowNull()] [object] $ExplicitExpected = $noSettingValue,
-        [string] $ExplicitName,
-        [AllowNull()] [object] $Minimum = $noSettingValue,
-        [AllowNull()] [object] $Maximum = $noSettingValue,
-        [AllowNull()] [object] $HighInput = $noSettingValue,
-        [int] $BoundsOrder,
-        [switch] $Array
+        [Parameter(Mandatory, Position = 0)] [string[]] $Name, [string] $Section = 'Options', [string] $Entry,
+        [AllowNull()] [object] $Default = $noSettingValue, [AllowNull()] [object] $ExplicitInput = $noSettingValue,
+        [AllowNull()] [object] $ExplicitExpected = $noSettingValue, [string] $ExplicitName,
+        [AllowNull()] [object] $Minimum = $noSettingValue, [AllowNull()] [object] $Maximum = $noSettingValue,
+        [AllowNull()] [object] $HighInput = $noSettingValue, [int] $BoundsOrder, [switch] $Array
     )
 
-    [pscustomobject] @{
-        Name = $Name
-        Section = $Section
-        Entry = $Entry ? $Entry : $Name
-        Default = $Default
-        ExplicitInput = $ExplicitInput
-        ExplicitExpected = $ExplicitExpected
-        ExplicitName = $ExplicitName ? $ExplicitName : $Name
-        Minimum = $Minimum
-        Maximum = $Maximum
-        HighInput = $HighInput
-        BoundsOrder = $BoundsOrder
-        Array = $Array.IsPresent
+    foreach ($settingName in $Name) {
+        [pscustomobject] @{
+            Name = $settingName; Section = $Section; Entry = $Entry ? $Entry : $settingName
+            Default = $Default; ExplicitInput = $ExplicitInput; ExplicitExpected = $ExplicitExpected
+            ExplicitName = $ExplicitName ? $ExplicitName : $settingName
+            Minimum = $Minimum; Maximum = $Maximum; HighInput = $HighInput
+            BoundsOrder = $BoundsOrder; Array = $Array.IsPresent
+        }
     }
 }
 
@@ -8997,11 +8620,30 @@ function Test-SettingCaseHasValue {
     -not [object]::ReferenceEquals($Value, $noSettingValue)
 }
 
+function Set-IniValues {
+    param([System.Collections.Specialized.OrderedDictionary] $Sections, [object[]] $Values)
+    for ($i = 0; $i -lt $Values.Count; $i += 3) {
+        Set-IniValue $Sections $Values[$i] $Values[$i + 1] $Values[$i + 2]
+    }
+}
+
+function Assert-EqualCases {
+    param([pscustomobject] $Context, [object[]] $Cases)
+    for ($i = 0; $i -lt $Cases.Count; $i += 3) {
+        Assert-Equal $Context $Cases[$i] $Cases[$i + 1] $Cases[$i + 2]
+    }
+}
+
+function Assert-BooleanCases {
+    param([pscustomobject] $Context, [object[]] $Cases)
+    for ($i = 0; $i -lt $Cases.Count; $i += 3) {
+        if ($Cases[$i + 2]) { Assert-True $Context $Cases[$i] $Cases[$i + 1] }
+        else { Assert-False $Context $Cases[$i] $Cases[$i + 1] }
+    }
+}
+
 function Set-SettingCaseInputs {
-    param(
-        [System.Collections.Specialized.OrderedDictionary] $Sections,
-        [object[]] $Cases
-    )
+    param([System.Collections.Specialized.OrderedDictionary] $Sections, [object[]] $Cases)
     foreach ($case in $Cases) {
         if (Test-SettingCaseHasValue $case.ExplicitInput) {
             Set-IniValue $Sections $case.Section $case.Entry $case.ExplicitInput
@@ -9011,9 +8653,7 @@ function Set-SettingCaseInputs {
 
 function Assert-SettingCases {
     param(
-        [pscustomobject] $Context,
-        [pscustomobject] $Settings,
-        [object[]] $Cases,
+        [pscustomobject] $Context, [pscustomobject] $Settings, [object[]] $Cases,
         [ValidateSet('Default', 'ExplicitExpected', 'Minimum', 'Maximum')] [string] $ExpectedProperty
     )
 
@@ -9021,7 +8661,6 @@ function Assert-SettingCases {
     foreach ($case in $Cases) {
         $expected = $case.$ExpectedProperty
         if (!(Test-SettingCaseHasValue $expected)) { continue }
-
         $name = if ($ExpectedProperty -eq 'ExplicitExpected') { $case.ExplicitName } else { "$($case.Name)$suffix" }
         $actual = $Settings.($case.Name)
         if ($case.Array) {
@@ -9057,39 +8696,84 @@ function Invoke-SettingsBounds {
     $dump
 }
 
+function Invoke-SettingsProbeCases {
+    param([pscustomobject] $Context, [object[]] $Cases)
+    $elapsed = 0.0
+    $lastDump = $null
+    foreach ($case in $Cases) {
+        $sections = New-BaseIniSections
+        Set-IniValues $sections $case.Values
+        $lastDump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name $case.Name
+        $elapsed += $lastDump.ElapsedSeconds
+        for ($i = 0; $i -lt $case.Expected.Count; $i += 3) {
+            $actual = $lastDump.Dump
+            foreach ($property in $case.Expected[$i + 1] -split '\.') { $actual = $actual.$property }
+            Assert-Equal $Context $case.Expected[$i] $actual $case.Expected[$i + 2]
+        }
+    }
+
+    [pscustomobject] @{ CommandLine = $lastDump.CommandLine; ElapsedSeconds = [math]::Round($elapsed, 3) }
+}
+
+function Assert-SettingsJsonShape {
+    param(
+        [pscustomobject] $Context, [object[]] $Items, [string[]] $RequiredProperties,
+        [string] $PropertiesName, [string] $TimestampName, [string[]] $IntegralFields, [string] $IntegralNameFormat
+    )
+
+    if ($RequiredProperties.Count) {
+        $missingProperties = @(foreach ($item in $Items) {
+            foreach ($property in $RequiredProperties) {
+                if ($null -eq $item.PSObject.Properties[$property]) { "$($item.Name): $property" }
+            }
+        })
+        Assert-True $Context $PropertiesName ($missingProperties.Count -eq 0)
+    }
+    if (!$TimestampName) { return }
+
+    $badTimestamps = @($Items | Where-Object {
+        $value = $_.'Last Change'
+        if ($null -eq $value) { return $true }
+        if ($value -is [datetime]) { return $value.Kind -ne [DateTimeKind]::Utc }
+        if ($value -isnot [string]) { return $true }
+        $value -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
+    })
+    Assert-True $Context $TimestampName ($badTimestamps.Count -eq 0)
+
+    $integralTypes = @([System.TypeCode]::Byte, [System.TypeCode]::SByte, [System.TypeCode]::Int16,
+        [System.TypeCode]::UInt16,
+        [System.TypeCode]::Int32, [System.TypeCode]::UInt32, [System.TypeCode]::Int64, [System.TypeCode]::UInt64
+    )
+    foreach ($field in $IntegralFields) {
+        $invalid = @($Items | Where-Object {
+            $value = $_.$field
+            $null -eq $value -or [System.Type]::GetTypeCode($value.GetType()) -notin $integralTypes
+        })
+        Assert-True $Context ($IntegralNameFormat -f $field) ($invalid.Count -eq 0)
+    }
+}
+
 $settingCases = @(
     New-SettingCase AutomaticallyResizeColumns -ExplicitInput 0
-    New-SettingCase AutoMapDrivesWhenElevated -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ExcludeJunctions -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ExcludeSymbolicLinksDirectory -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ExcludeVolumeMountPoints -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ExcludeHiddenDirectory -Default $false -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase ExcludeProtectedDirectory -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase @('AutoMapDrivesWhenElevated', 'ExcludeJunctions', 'ExcludeSymbolicLinksDirectory', 'ExcludeVolumeMountPoints') -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('ExcludeHiddenDirectory', 'ExcludeProtectedDirectory') -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase ExcludeSymbolicLinksFile -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ExcludeHiddenFile -Default $false -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase ExcludeProtectedFile -Default $false -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase FollowVolumeMountPoints -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase @('ExcludeHiddenFile', 'ExcludeProtectedFile', 'FollowVolumeMountPoints') -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase UseSizeSuffixes -ExplicitInput 0
     New-SettingCase ScanForDuplicates -Section DupeView -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase SearchMaxResults -Section SearchView -Default $script:SettingsDefaultSearchMaxResults -ExplicitInput 321 -ExplicitExpected 321 -Minimum $script:SettingsMinSearchMaxResults -Maximum $script:SettingsMaxSearchResults -HighInput $script:SettingsSearchHighOutOfRangeValue -BoundsOrder 9
-    New-SettingCase ShowDeleteWarning -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ShowElevationPrompt -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('ShowDeleteWarning', 'ShowElevationPrompt') -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase ShowMicrosoftProgress -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase FileTreeColumnVisibility -Section FileTreeView -Entry ColumnVisibility -Default @(1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0) -ExplicitInput '1,1,0,1,1,0,1,0,1,0,0' -ExplicitExpected @(1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0) -ExplicitName 'File-tree column visibility' -Array
-    New-SettingCase ShowFreeSpace -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase ShowUnknown -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase SkipDupeDetectionCloudLinks -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ShowDupeDetectionCloudLinksWarning -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('ShowFreeSpace', 'ShowUnknown') -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase @('SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning') -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase AutoElevate -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase UseAbsolutePercentages -Section FileTreeView -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase UseBackupRestore -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase UseDrawTextCache -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase UseFastScanEngine -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine') -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase TreeMapStyle -Section TreeMapView -Default 0 -ExplicitInput 1 -ExplicitExpected 1 -Minimum 0 -Maximum $script:SettingsMaxTreeMapStyle -BoundsOrder 11
     New-SettingCase GraphPaneStyle -Section TreeMapView -Default 0 -ExplicitInput 3 -ExplicitExpected 3 -Minimum 0 -Maximum $script:SettingsMaxGraphPaneStyle -BoundsOrder 12
     New-SettingCase TreeMapMaxDepth -Section TreeMapView -Default $script:SettingsDefaultTreeMapMaxDepth -ExplicitInput 9 -ExplicitExpected 9 -Minimum $script:SettingsMinTreeMapMaxDepth -Maximum $script:SettingsMaxTreeMapMaxDepth -BoundsOrder 13
-    New-SettingCase UseWindowsLocaleSetting -Default $true -ExplicitInput 0 -ExplicitExpected $false
-    New-SettingCase ProcessHardlinks -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('UseWindowsLocaleSetting', 'ProcessHardlinks') -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase FileHashAlgorithm -Default $script:HashAlgorithm.XXHASH -ExplicitInput $script:HashAlgorithm.SHA256 -ExplicitExpected $script:HashAlgorithm.SHA256 -Minimum $script:SettingsMinHashAlgorithm -Maximum $script:SettingsMaxHashAlgorithm -BoundsOrder 1
     New-SettingCase ProcessPriority -Default 1 -ExplicitInput 2 -ExplicitExpected 2 -Minimum 0 -Maximum 2 -BoundsOrder 2
     New-SettingCase FilteringMaxAgeDays -Default 0 -ExplicitInput 14 -ExplicitExpected 14
@@ -9103,9 +8787,7 @@ $settingCases = @(
     New-SettingCase FolderHistoryCount -Section DriveSelect -Default 10 -ExplicitInput 3 -ExplicitExpected 3 -Minimum $script:SettingsMinFolderHistoryCount -Maximum $script:SettingsMaxFolderHistoryCount -BoundsOrder 8
     New-SettingCase SelectDrivesDrives -Section DriveSelect -ExplicitInput 'C:\|D:\' -ExplicitExpected @('C:\', 'D:\') -Array
     New-SettingCase SelectDrivesFolder -Section DriveSelect -ExplicitInput 'C:\Alpha|\\server\share\Beta' -ExplicitExpected @('C:\Alpha', '\\server\share\Beta') -Array
-    New-SettingCase SearchWholePhrase -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase SearchRegex -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
-    New-SettingCase SearchCase -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase @('SearchWholePhrase', 'SearchRegex', 'SearchCase') -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase SearchTerm -Section SearchView -ExplicitInput "alpha${recordSeparator}beta" -ExplicitExpected "alpha`r`nbeta" -ExplicitName 'SearchTerm record separator decoding'
 )
 
@@ -9216,17 +8898,18 @@ try {
 
     $results = [System.Collections.Generic.List[pscustomobject]]::new()
 
-    [void] $results.Add((Invoke-Scenario -Name 'Inventory_NonVisualSettingsClassified' -Behavior 'Every persisted setting in Options.cpp should either be covered here, covered by the filtering suite, or deliberately classified as visual/UI state.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'Inventory_NonVisualSettingsClassified' -Behavior 'Every persisted setting in the Options files should either be covered here, covered by the filtering suite, or deliberately classified as visual/UI state.' -Body {
         param($ctx)
 
         $defined = @(Get-DefinedSettingNames)
-        $classified = @($filteringSettings + $visualSettings + $coveredNonVisualSettings | Sort-Object -Unique)
+        $classified = @($filteringSettings + $visualSettings + $settingCases.Name + 'LanguageId' |
+            Sort-Object -Unique)
         $unclassified = @($defined | Where-Object { $_ -notin $classified })
         $staleClassifications = @($classified | Where-Object { $_ -notin $defined })
 
-        Assert-SetEqual -Context $ctx -Name 'Options.cpp unclassified settings' -Actual $unclassified -Expected @()
+        Assert-SetEqual -Context $ctx -Name 'Options files unclassified settings' -Actual $unclassified -Expected @()
         foreach ($stale in $staleClassifications) {
-            Add-Warning -Context $ctx -Message "Classification '$stale' no longer appears in Options.cpp."
+            Add-Warning -Context $ctx -Message "Classification '$stale' no longer appears in the Options files."
         }
     }))
 
@@ -9239,15 +8922,13 @@ try {
 
         Assert-SettingCases $ctx $s $settingCases Default
         Assert-True $ctx 'LanguageId is available' ([int] $s.LanguageId -in @($s.LanguageList))
-        Assert-Equal $ctx 'Reparse none follows' $s.ReparseFollowing.None $true
-        Assert-Equal $ctx 'Reparse mount default blocked' $s.ReparseFollowing.MountPoint $false
-        Assert-Equal $ctx 'Reparse symlink default blocked' $s.ReparseFollowing.SymbolicLink $false
-        Assert-Equal $ctx 'Reparse junction default blocked' $s.ReparseFollowing.Junction $false
-        Assert-Equal $ctx 'Reparse other default follows' $s.ReparseFollowing.OtherReparsePoint $true
-        Assert-Equal $ctx 'UserDefinedCleanups count' @($s.UserDefinedCleanups).Count 10
+        Assert-EqualCases $ctx @(
+            'Reparse none follows', $s.ReparseFollowing.None, $true; 'Reparse mount default blocked', $s.ReparseFollowing.MountPoint, $false; 'Reparse symlink default blocked', $s.ReparseFollowing.SymbolicLink, $false; 'Reparse junction default blocked', $s.ReparseFollowing.Junction, $false; 'Reparse other default follows', $s.ReparseFollowing.OtherReparsePoint, $true; 'UserDefinedCleanups count', @($s.UserDefinedCleanups).Count, 10
+        )
         Assert-True $ctx 'Default cleanup 0 title populated' (![string]::IsNullOrWhiteSpace($s.UserDefinedCleanups[0].Title))
-        Assert-Equal $ctx 'Default cleanup 0 enabled' $s.UserDefinedCleanups[0].Enabled $false
-        Assert-Equal $ctx 'Default cleanup 0 refresh policy' $s.UserDefinedCleanups[0].RefreshPolicy 0
+        Assert-EqualCases $ctx @(
+            'Default cleanup 0 enabled', $s.UserDefinedCleanups[0].Enabled, $false; 'Default cleanup 0 refresh policy', $s.UserDefinedCleanups[0].RefreshPolicy, 0
+        )
 
         $dump
     }))
@@ -9281,23 +8962,16 @@ try {
         $s = $dump.Dump
 
         Assert-SettingCases $ctx $s $settingCases ExplicitExpected
-        Assert-Equal $ctx 'Cleanup 00 title' $s.UserDefinedCleanups[0].Title 'Custom cleanup'
-        Assert-Equal $ctx 'Cleanup 00 command line' $s.UserDefinedCleanups[0].CommandLine "echo %p`r`necho %sn"
-        Assert-Equal $ctx 'Cleanup 00 enabled' $s.UserDefinedCleanups[0].Enabled $true
-        Assert-Equal $ctx 'Cleanup 00 works for drives' $s.UserDefinedCleanups[0].WorksForDrives $true
-        Assert-Equal $ctx 'Cleanup 00 works for directories' $s.UserDefinedCleanups[0].WorksForDirectories $true
-        Assert-Equal $ctx 'Cleanup 00 works for files' $s.UserDefinedCleanups[0].WorksForFiles $true
-        Assert-Equal $ctx 'Cleanup 00 works for UNC paths' $s.UserDefinedCleanups[0].WorksForUncPaths $true
-        Assert-Equal $ctx 'Cleanup 00 recurse' $s.UserDefinedCleanups[0].RecurseIntoSubdirectories $true
-        Assert-Equal $ctx 'Cleanup 00 ask' $s.UserDefinedCleanups[0].AskForConfirmation $true
-        Assert-Equal $ctx 'Cleanup 00 console' $s.UserDefinedCleanups[0].ShowConsoleWindow $true
-        Assert-Equal $ctx 'Cleanup 00 wait' $s.UserDefinedCleanups[0].WaitForCompletion $true
-        Assert-Equal $ctx 'Cleanup 00 refresh policy' $s.UserDefinedCleanups[0].RefreshPolicy 2
+        Assert-EqualCases $ctx @(
+            'Cleanup 00 title', $s.UserDefinedCleanups[0].Title, 'Custom cleanup'; 'Cleanup 00 command line', $s.UserDefinedCleanups[0].CommandLine, "echo %p`r`necho %sn"; 'Cleanup 00 enabled', $s.UserDefinedCleanups[0].Enabled, $true; 'Cleanup 00 works for drives', $s.UserDefinedCleanups[0].WorksForDrives, $true
+            'Cleanup 00 works for directories', $s.UserDefinedCleanups[0].WorksForDirectories, $true; 'Cleanup 00 works for files', $s.UserDefinedCleanups[0].WorksForFiles, $true; 'Cleanup 00 works for UNC paths', $s.UserDefinedCleanups[0].WorksForUncPaths, $true; 'Cleanup 00 recurse', $s.UserDefinedCleanups[0].RecurseIntoSubdirectories, $true
+            'Cleanup 00 ask', $s.UserDefinedCleanups[0].AskForConfirmation, $true; 'Cleanup 00 console', $s.UserDefinedCleanups[0].ShowConsoleWindow, $true; 'Cleanup 00 wait', $s.UserDefinedCleanups[0].WaitForCompletion, $true; 'Cleanup 00 refresh policy', $s.UserDefinedCleanups[0].RefreshPolicy, 2
+        )
         Assert-True $ctx 'Cleanup 01 virgin title localized' (![string]::IsNullOrWhiteSpace($s.UserDefinedCleanups[1].Title))
         Assert-True $ctx 'Cleanup 01 title replaced' ($s.UserDefinedCleanups[1].Title -ne '')
-        Assert-Equal $ctx 'Reparse mount allowed' $s.ReparseFollowing.MountPoint $true
-        Assert-Equal $ctx 'Reparse symlink allowed' $s.ReparseFollowing.SymbolicLink $true
-        Assert-Equal $ctx 'Reparse junction allowed' $s.ReparseFollowing.Junction $true
+        Assert-EqualCases $ctx @(
+            'Reparse mount allowed', $s.ReparseFollowing.MountPoint, $true; 'Reparse symlink allowed', $s.ReparseFollowing.SymbolicLink, $true; 'Reparse junction allowed', $s.ReparseFollowing.Junction, $true
+        )
 
         $dump
     }))
@@ -9307,30 +8981,11 @@ try {
         -Body {
         param($ctx)
 
-        $flameSections = New-BaseIniSections
-        Set-IniValue $flameSections 'Options' 'UseFlameGraph' 1
-        Set-IniValue $flameSections 'TreeMapView' 'TreeMapStyle' 1
-        $flame = Invoke-SettingsDump -Exe $testExe -Sections $flameSections -Name 'LegacyFlameGraph'
-        Assert-Equal $ctx 'Legacy flame flag ignored' $flame.Dump.GraphPaneStyle 0
-        Assert-Equal $ctx 'Independent treemap style preserved' $flame.Dump.TreeMapStyle 1
-
-        $sunburstSections = New-BaseIniSections
-        Set-IniValue $sunburstSections 'Options' 'UseFlameGraph' 1
-        Set-IniValue $sunburstSections 'Options' 'UseSunburst' 1
-        $sunburst = Invoke-SettingsDump -Exe $testExe -Sections $sunburstSections -Name 'LegacySunburst'
-        Assert-Equal $ctx 'Legacy graph flags ignored' $sunburst.Dump.GraphPaneStyle 0
-
-        $combinedSections = New-BaseIniSections
-        Set-IniValue $combinedSections 'TreeMapView' 'TreeMapStyle' 5
-        $combined = Invoke-SettingsDump -Exe $testExe -Sections $combinedSections -Name 'OutOfRangeTreemapStyle'
-        Assert-Equal $ctx 'Combined graph value ignored' $combined.Dump.GraphPaneStyle 0
-        Assert-Equal $ctx 'Out-of-range treemap style clamps normally' `
-            $combined.Dump.TreeMapStyle $script:SettingsMaxTreeMapStyle
-
-        [pscustomobject] @{
-            CommandLine = $combined.CommandLine
-            ElapsedSeconds = [math]::Round($flame.ElapsedSeconds + $sunburst.ElapsedSeconds + $combined.ElapsedSeconds, 3)
-        }
+        Invoke-SettingsProbeCases $ctx @(
+            @{ Name = 'LegacyFlameGraph'; Values = @('Options', 'UseFlameGraph', 1, 'TreeMapView', 'TreeMapStyle', 1); Expected = @('Legacy flame flag ignored', 'GraphPaneStyle', 0, 'Independent treemap style preserved', 'TreeMapStyle', 1) }
+            @{ Name = 'LegacySunburst'; Values = @('Options', 'UseFlameGraph', 1, 'Options', 'UseSunburst', 1); Expected = @('Legacy graph flags ignored', 'GraphPaneStyle', 0) }
+            @{ Name = 'OutOfRangeTreemapStyle'; Values = @('TreeMapView', 'TreeMapStyle', 5); Expected = @('Combined graph value ignored', 'GraphPaneStyle', 0, 'Out-of-range treemap style clamps normally', 'TreeMapStyle', $script:SettingsMaxTreeMapStyle) }
+        )
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampLowValues' -Behavior 'Out-of-range low numeric settings should clamp to their declared minimums instead of poisoning runtime state.' -Body {
@@ -9348,73 +9003,30 @@ try {
     [void] $results.Add((Invoke-Scenario -Name 'Locale_UsesConfiguredLanguageWhenRequested' -Behavior 'Formatting locale should use the configured language when UseWindowsLocaleSetting is disabled, and the user default LCID when enabled.' -Body {
         param($ctx)
 
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'LanguageId' 7
-        Set-IniValue $sections 'Options' 'UseWindowsLocaleSetting' 0
-        $configured = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Locale_ConfiguredLanguage'
-        Assert-Equal $ctx 'Configured locale LCID' $configured.Dump.LocaleForFormatting 7
-        Assert-Equal $ctx 'Configured language id' $configured.Dump.LanguageId 7
-
-        Set-IniValue $sections 'Options' 'UseWindowsLocaleSetting' 1
-        $windows = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Locale_WindowsDefault'
-        Assert-Equal $ctx 'Windows locale sentinel' $windows.Dump.LocaleForFormatting $script:WindowsLocaleUserDefaultLcid
-
-        [pscustomobject] @{
-            CommandLine = $windows.CommandLine
-            ElapsedSeconds = [math]::Round($configured.ElapsedSeconds + $windows.ElapsedSeconds, 3)
-        }
+        Invoke-SettingsProbeCases $ctx @(
+            @{ Name = 'Locale_ConfiguredLanguage'; Values = @('Options', 'LanguageId', 7, 'Options', 'UseWindowsLocaleSetting', 0); Expected = @('Configured locale LCID', 'LocaleForFormatting', 7, 'Configured language id', 'LanguageId', 7) }
+            @{ Name = 'Locale_WindowsDefault'; Values = @('Options', 'LanguageId', 7, 'Options', 'UseWindowsLocaleSetting', 1); Expected = @('Windows locale sentinel', 'LocaleForFormatting', $script:WindowsLocaleUserDefaultLcid) }
+        )
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'SearchSettings_DriveProbeMatching' -Behavior 'Search term, regex mode, case sensitivity, and whole-phrase settings should combine into the same probe matching behavior the app uses for searches.' -Body {
         param($ctx)
 
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'SearchView' 'SearchTerm' '*.LOG'
-        Set-IniValue $sections 'SearchView' 'SearchRegex' 0
-        Set-IniValue $sections 'SearchView' 'SearchCase' 0
-        Set-IniValue $sections 'SearchView' 'SearchWholePhrase' 1
-        $glob = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SearchSettings_GlobWholeCaseInsensitive'
-        Assert-Equal $ctx 'Glob lower match' $glob.Dump.SearchProbeMatches.LowerLog $true
-        Assert-Equal $ctx 'Glob upper match' $glob.Dump.SearchProbeMatches.UpperLog $true
-        Assert-Equal $ctx 'Glob notes no match' $glob.Dump.SearchProbeMatches.NotesTxt $false
-
-        Set-IniValue $sections 'SearchView' 'SearchTerm' '^Alpha\.LOG$'
-        Set-IniValue $sections 'SearchView' 'SearchRegex' 1
-        Set-IniValue $sections 'SearchView' 'SearchCase' 1
-        Set-IniValue $sections 'SearchView' 'SearchWholePhrase' 1
-        $regex = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SearchSettings_RegexWholeCaseSensitive'
-        Assert-Equal $ctx 'Regex lower no match' $regex.Dump.SearchProbeMatches.LowerLog $false
-        Assert-Equal $ctx 'Regex upper match' $regex.Dump.SearchProbeMatches.UpperLog $true
-
-        Set-IniValue $sections 'SearchView' 'SearchTerm' 'target'
-        Set-IniValue $sections 'SearchView' 'SearchRegex' 0
-        Set-IniValue $sections 'SearchView' 'SearchCase' 0
-        Set-IniValue $sections 'SearchView' 'SearchWholePhrase' 0
-        $partial = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SearchSettings_Partial'
-        Assert-Equal $ctx 'Partial search match' $partial.Dump.SearchProbeMatches.TargetSubstring $true
-
-        [pscustomobject] @{
-            CommandLine = $partial.CommandLine
-            ElapsedSeconds = [math]::Round($glob.ElapsedSeconds + $regex.ElapsedSeconds + $partial.ElapsedSeconds, 3)
-        }
+        Invoke-SettingsProbeCases $ctx @(
+            @{ Name = 'SearchSettings_GlobWholeCaseInsensitive'; Values = @('SearchView', 'SearchTerm', '*.LOG', 'SearchView', 'SearchRegex', 0, 'SearchView', 'SearchCase', 0, 'SearchView', 'SearchWholePhrase', 1); Expected = @('Glob lower match', 'SearchProbeMatches.LowerLog', $true, 'Glob upper match', 'SearchProbeMatches.UpperLog', $true, 'Glob notes no match', 'SearchProbeMatches.NotesTxt', $false) }
+            @{ Name = 'SearchSettings_RegexWholeCaseSensitive'; Values = @('SearchView', 'SearchTerm', '^Alpha\.LOG$', 'SearchView', 'SearchRegex', 1, 'SearchView', 'SearchCase', 1, 'SearchView', 'SearchWholePhrase', 1); Expected = @('Regex lower no match', 'SearchProbeMatches.LowerLog', $false, 'Regex upper match', 'SearchProbeMatches.UpperLog', $true) }
+            @{ Name = 'SearchSettings_Partial'; Values = @('SearchView', 'SearchTerm', 'target', 'SearchView', 'SearchRegex', 0, 'SearchView', 'SearchCase', 0, 'SearchView', 'SearchWholePhrase', 0); Expected = @('Partial search match', 'SearchProbeMatches.TargetSubstring', $true) }
+        )
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Csv_AttributeExclusionSettings' -Behavior 'Hidden and protected file/directory exclusion settings should remove the correct paths from a real non-interactive scan.' -Body {
         param($ctx)
 
         $allExpected = @(
-            $scanRoot,
-            (Join-Path $scanRoot 'visible.txt'),
-            (Join-Path $scanRoot 'hidden-file.txt'),
-            (Join-Path $scanRoot 'protected-file.txt'),
-            (Join-Path $scanRoot 'hidden-dir'),
-            (Join-Path $scanRoot 'hidden-dir\inside-hidden.txt'),
-            (Join-Path $scanRoot 'protected-dir'),
-            (Join-Path $scanRoot 'protected-dir\inside-protected.txt'),
-            (Join-Path $scanRoot 'link-target'),
-            (Join-Path $scanRoot 'link-target\target-child.txt'),
-            (Join-Path $scanRoot 'file-link-target.bin')
-        ) | ForEach-Object { Normalize-ComparePath $_ }
+            '', 'visible.txt', 'hidden-file.txt', 'protected-file.txt', 'hidden-dir', 'hidden-dir\inside-hidden.txt',
+            'protected-dir', 'protected-dir\inside-protected.txt', 'link-target', 'link-target\target-child.txt',
+            'file-link-target.bin'
+        ) | ForEach-Object { Normalize-ComparePath (Join-Path $scanRoot $_) }
 
         $sections = New-BaseIniSections
         $csv = Join-Path $workRoot 'attributes-all.csv'
@@ -9427,19 +9039,18 @@ try {
             Assert-True $ctx "All attributes present: $path" ($path -in $allPaths)
         }
 
-        Set-IniValue $sections 'Options' 'ExcludeHiddenFile' 1
-        Set-IniValue $sections 'Options' 'ExcludeProtectedFile' 1
-        Set-IniValue $sections 'Options' 'ExcludeHiddenDirectory' 1
-        Set-IniValue $sections 'Options' 'ExcludeProtectedDirectory' 1
+        Set-IniValues $sections @(
+            'Options', 'ExcludeHiddenFile', 1; 'Options', 'ExcludeProtectedFile', 1
+            'Options', 'ExcludeHiddenDirectory', 1; 'Options', 'ExcludeProtectedDirectory', 1
+        )
         $csv = Join-Path $workRoot 'attributes-excluded.csv'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $excludedRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $scanRoot
         $excludedPaths = @(Read-CsvPaths -Csv $csv)
-        Assert-True $ctx 'Visible file remains' ((Normalize-ComparePath (Join-Path $scanRoot 'visible.txt')) -in $excludedPaths)
-        Assert-False $ctx 'Hidden file omitted' ((Normalize-ComparePath (Join-Path $scanRoot 'hidden-file.txt')) -in $excludedPaths)
-        Assert-False $ctx 'Protected file omitted' ((Normalize-ComparePath (Join-Path $scanRoot 'protected-file.txt')) -in $excludedPaths)
-        Assert-False $ctx 'Hidden dir omitted' ((Normalize-ComparePath (Join-Path $scanRoot 'hidden-dir')) -in $excludedPaths)
-        Assert-False $ctx 'Protected dir omitted' ((Normalize-ComparePath (Join-Path $scanRoot 'protected-dir')) -in $excludedPaths)
+        Assert-BooleanCases $ctx @(
+            'Visible file remains', ((Normalize-ComparePath (Join-Path $scanRoot 'visible.txt')) -in $excludedPaths), $true; 'Hidden file omitted', ((Normalize-ComparePath (Join-Path $scanRoot 'hidden-file.txt')) -in $excludedPaths), $false; 'Protected file omitted', ((Normalize-ComparePath (Join-Path $scanRoot 'protected-file.txt')) -in $excludedPaths), $false
+            'Hidden dir omitted', ((Normalize-ComparePath (Join-Path $scanRoot 'hidden-dir')) -in $excludedPaths), $false; 'Protected dir omitted', ((Normalize-ComparePath (Join-Path $scanRoot 'protected-dir')) -in $excludedPaths), $false
+        )
 
         [pscustomobject] @{
             CommandLine = $excludedRun.CommandLine
@@ -9456,26 +9067,22 @@ try {
         }
 
         $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile' 0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions' 1
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints' 1
+        Set-IniValues $sections @(
+            'Options', 'ExcludeSymbolicLinksDirectory', 0; 'Options', 'ExcludeSymbolicLinksFile', 0
+            'Options', 'ExcludeJunctions', 1; 'Options', 'ExcludeVolumeMountPoints', 1
+        )
         $csv = Join-Path $workRoot 'symlinks-follow.csv'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $followRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $scanRoot
         $followPaths = @(Read-CsvPaths -Csv $csv)
-        Assert-True $ctx 'File symlink included when allowed' ((Normalize-ComparePath $linkInfo.FileLink) -in $followPaths)
-        Assert-True $ctx 'Directory symlink child included when following allowed' ((Normalize-ComparePath $linkInfo.LinkedChild) -in $followPaths)
+        Assert-BooleanCases $ctx @('File symlink included when allowed', ((Normalize-ComparePath $linkInfo.FileLink) -in $followPaths), $true; 'Directory symlink child included when following allowed', ((Normalize-ComparePath $linkInfo.LinkedChild) -in $followPaths), $true)
 
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 1
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile' 1
+        Set-IniValues $sections @('Options', 'ExcludeSymbolicLinksDirectory', 1; 'Options', 'ExcludeSymbolicLinksFile', 1)
         $csv = Join-Path $workRoot 'symlinks-excluded.csv'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $excludeRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $scanRoot
         $excludePaths = @(Read-CsvPaths -Csv $csv)
-        Assert-False $ctx 'File symlink omitted when excluded' ((Normalize-ComparePath $linkInfo.FileLink) -in $excludePaths)
-        Assert-True $ctx 'Directory symlink node still visible' ((Normalize-ComparePath $linkInfo.DirectoryLink) -in $excludePaths)
-        Assert-False $ctx 'Directory symlink child omitted when not following' ((Normalize-ComparePath $linkInfo.LinkedChild) -in $excludePaths)
+        Assert-BooleanCases $ctx @('File symlink omitted when excluded', ((Normalize-ComparePath $linkInfo.FileLink) -in $excludePaths), $false; 'Directory symlink node still visible', ((Normalize-ComparePath $linkInfo.DirectoryLink) -in $excludePaths), $true; 'Directory symlink child omitted when not following', ((Normalize-ComparePath $linkInfo.LinkedChild) -in $excludePaths), $false)
 
         [pscustomobject] @{
             CommandLine = $excludeRun.CommandLine
@@ -9524,9 +9131,7 @@ try {
 
         foreach ($expectation in $expectations) {
             $sections = New-BaseIniSections
-            Set-IniValue $sections 'Options' 'FileHashAlgorithm' $expectation.Algorithm
-            Set-IniValue $sections 'Options' 'UseFastScanEngine' 0
-            Set-IniValue $sections 'DupeView' 'ScanForDuplicates' 1
+            Set-IniValues $sections @('Options', 'FileHashAlgorithm', $expectation.Algorithm; 'Options', 'UseFastScanEngine', 0; 'DupeView', 'ScanForDuplicates', 1)
             $csv = Join-Path $workRoot "dupes-$($expectation.Name).csv"
             Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
             $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $csv -Root $dupeRoot -Duplicates
@@ -9563,13 +9168,9 @@ try {
 
         Assert-True $ctx 'JSON array is non-empty' ($items.Count -gt 0)
 
-        $requiredProps = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change', 'WinDirStat Attributes', 'Index')
-        $missingProperties = @(foreach ($item in $items) {
-            foreach ($prop in $requiredProps) {
-                if ($null -eq $item.PSObject.Properties[$prop]) { "$($item.Name): $prop" }
-            }
-        })
-        Assert-True $ctx 'Every JSON item has every required property' ($missingProperties.Count -eq 0)
+        Assert-SettingsJsonShape $ctx $items `
+            @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change', 'WinDirStat Attributes', 'Index') `
+            'Every JSON item has every required property'
 
         $scanRootNorm = Normalize-ComparePath $scanRoot
         $jsonNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
@@ -9583,28 +9184,9 @@ try {
         $badIndex = @($items | Where-Object { $_.Index -notmatch '^0x[0-9A-Fa-f]{16}$' })
         Assert-True $ctx 'All Index values are 0x-prefixed hex' ($badIndex.Count -eq 0)
 
-        $badTimestamp = @($items | Where-Object {
-            $v = $_.'Last Change'
-            if ($null -eq $v) { return $true }
-            if ($v -is [datetime]) { return $v.Kind -ne [DateTimeKind]::Utc }
-            if ($v -isnot [string]) { return $true }
-            $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
-        })
-        Assert-True $ctx 'All Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
-
-        $integralTypeCodes = @(
-            [System.TypeCode]::Byte, [System.TypeCode]::SByte,
-            [System.TypeCode]::Int16, [System.TypeCode]::UInt16,
-            [System.TypeCode]::Int32, [System.TypeCode]::UInt32,
-            [System.TypeCode]::Int64, [System.TypeCode]::UInt64
-        )
-        foreach ($field in @('Files', 'Folders', 'Logical Size', 'Physical Size')) {
-            $badNumbers = @($items | Where-Object {
-                $value = $_.$field
-                $null -eq $value -or [System.Type]::GetTypeCode($value.GetType()) -notin $integralTypeCodes
-            })
-            Assert-True $ctx "All '$field' values are integral JSON numbers" ($badNumbers.Count -eq 0)
-        }
+        Assert-SettingsJsonShape $ctx $items @() '' `
+            'All Last Change values are ISO-8601 UTC timestamps or empty' `
+            @('Files', 'Folders', 'Logical Size', 'Physical Size') "All '{0}' values are integral JSON numbers"
 
         [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
     }))
@@ -9645,8 +9227,7 @@ try {
         param($ctx)
 
         $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'UseFastScanEngine' 0
-        Set-IniValue $sections 'DupeView' 'ScanForDuplicates' 1
+        Set-IniValues $sections @('Options', 'UseFastScanEngine', 0; 'DupeView', 'ScanForDuplicates', 1)
         $jsonPath = Join-Path $workRoot 'json-dupes-structure.json'
         Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
         $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $dupeRoot -Duplicates
@@ -9656,13 +9237,9 @@ try {
 
         Assert-Equal $ctx 'Duplicate JSON entry count' $items.Count 2
 
-        $requiredDupeProps = @('Hash Prefix', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes')
-        $missingDupeProperties = @(foreach ($item in $items) {
-            foreach ($prop in $requiredDupeProps) {
-                if ($null -eq $item.PSObject.Properties[$prop]) { "$($item.Name): $prop" }
-            }
-        })
-        Assert-True $ctx 'Every dupe entry has every required property' ($missingDupeProperties.Count -eq 0)
+        Assert-SettingsJsonShape $ctx $items `
+            @('Hash Prefix', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes') `
+            'Every dupe entry has every required property'
 
         $dupeNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
         Assert-SetEqual $ctx 'Duplicate JSON contains the exact fixture pair' -Actual $dupeNames -Expected @(
@@ -9675,28 +9252,9 @@ try {
             Assert-True $ctx 'Hash Prefix is non-empty' (![string]::IsNullOrEmpty($items[0].'Hash Prefix'))
         }
 
-        $badTimestamp = @($items | Where-Object {
-            $v = $_.'Last Change'
-            if ($null -eq $v) { return $true }
-            if ($v -is [datetime]) { return $v.Kind -ne [DateTimeKind]::Utc }
-            if ($v -isnot [string]) { return $true }
-            $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
-        })
-        Assert-True $ctx 'All dupe Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
-
-        $dupeIntegralTypes = @(
-            [System.TypeCode]::Byte, [System.TypeCode]::SByte,
-            [System.TypeCode]::Int16, [System.TypeCode]::UInt16,
-            [System.TypeCode]::Int32, [System.TypeCode]::UInt32,
-            [System.TypeCode]::Int64, [System.TypeCode]::UInt64
-        )
-        foreach ($field in @('Logical Size', 'Physical Size')) {
-            $badSizes = @($items | Where-Object {
-                $value = $_.$field
-                $null -eq $value -or [System.Type]::GetTypeCode($value.GetType()) -notin $dupeIntegralTypes
-            })
-            Assert-True $ctx "All dupe '$field' values are integral JSON numbers" ($badSizes.Count -eq 0)
-        }
+        Assert-SettingsJsonShape $ctx $items @() '' `
+            'All dupe Last Change values are ISO-8601 UTC timestamps or empty' `
+            @('Logical Size', 'Physical Size') "All dupe '{0}' values are integral JSON numbers"
 
         [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
     }))
@@ -9711,25 +9269,17 @@ try {
     Write-LabelValue 'Failed' $failed.Count $(if ($failed.Count -eq 0) { 'Green' } else { 'Red' })
     Write-SuiteResultsTable -Results @($results)
 
-    if ($Details) {
-        Write-ColoredLine 'Scenario details:' Cyan
-        foreach ($result in $results) {
-            Write-ScenarioSummary -Result $result
-        }
+    $detailGroups = if ($Details) {
+        [pscustomobject] @{ Title = 'Scenario details:'; Color = 'Cyan'; Results = @($results); Always = $true }
     }
-    elseif ($failed.Count -gt 0 -or $warned.Count -gt 0) {
-        if ($failed.Count -gt 0) {
-            Write-ColoredLine 'Failed scenario details:' Red
-            foreach ($result in $failed) {
-                Write-ScenarioSummary -Result $result
-            }
-        }
-        if ($warned.Count -gt 0) {
-            Write-ColoredLine 'Warning scenario details:' Yellow
-            foreach ($result in $warned) {
-                Write-ScenarioSummary -Result $result
-            }
-        }
+    else {
+        [pscustomobject] @{ Title = 'Failed scenario details:'; Color = 'Red'; Results = $failed; Always = $false }
+        [pscustomobject] @{ Title = 'Warning scenario details:'; Color = 'Yellow'; Results = $warned; Always = $false }
+    }
+    foreach ($group in $detailGroups) {
+        if (!$group.Always -and $group.Results.Count -eq 0) { continue }
+        Write-ColoredLine $group.Title $group.Color
+        foreach ($result in $group.Results) { Write-ScenarioSummary -Result $result }
     }
 
     # Outcome is owned by the unified summary; do not throw here.
@@ -10447,8 +9997,8 @@ $scan = Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csvOut -Root $scanRoot -Worki
 Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $scan.ElapsedSeconds) DarkGray
         $csvRows = @(Read-CsvRows -Csv $csvOut)
 
-        if ($deepPath.Length -gt 260) { Assert-Pass 'EdgeCases' 'Deep fixture exceeds MAX_PATH' "$($deepPath.Length) characters" }
-        else { Assert-Fail 'EdgeCases' 'Deep fixture exceeds MAX_PATH' "Only $($deepPath.Length) characters" }
+        Assert-That 'EdgeCases' 'Deep fixture exceeds MAX_PATH' ($deepPath.Length -gt 260) `
+            "Only $($deepPath.Length) characters" "$($deepPath.Length) characters"
 
         Assert-CsvHasRow -ExpectedPath (Join-Path $deepPath 'deep_file.txt') -ExpectedLogicalSize 1024
         Assert-CsvHasRow -ExpectedPath $unicodePathResult
@@ -10510,251 +10060,137 @@ Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $scan.ElapsedSeconds) 
 #                 gracefully otherwise and restores both drives to NTFS.
 #
 function Invoke-EnumerationSuite {
-    $workRoot  = Join-Path $BuildRoot 'enumeration-test'
-    $runRoot   = Join-Path $workRoot 'runner'
-    $scanRoot  = Join-Path $workRoot 'scan-root'
-    $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
-
+    $workRoot = Join-Path $BuildRoot 'enumeration-test'; $runRoot = Join-Path $workRoot 'runner'
+    $scanRoot = Join-Path $workRoot 'scan-root'; $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
     # -- local helpers --------------------------------------------------------
-
-    function Write-EnumIni {
-        param([int] $FastEngine, [hashtable] $Extra)
-        $opts = [ordered] @{
-            LanguageId          = 9          # English: Read-Csv* needs the 'Name' column
-            UseFastScanEngine   = $FastEngine
-            UseBackupRestore    = 0
-            ShowElevationPrompt = 0
-            AutoElevate         = 0
-            ShowFreeSpace       = 0
-            ShowUnknown         = 0
-            ProcessHardlinks    = 0
-        }
+    function Write-EnumIni { param([int] $FastEngine, [hashtable] $Extra)
+        $opts = [ordered] @{ LanguageId          = 9          # English: Read-Csv* needs the 'Name' column
+            UseFastScanEngine = $FastEngine; UseBackupRestore = 0; ShowElevationPrompt = 0; AutoElevate = 0
+            ShowFreeSpace = 0; ShowUnknown = 0; ProcessHardlinks = 0 }
         if ($Extra) { foreach ($k in $Extra.Keys) { $opts[$k] = $Extra[$k] } }
         $lines = @('[Options]') + @($opts.Keys | ForEach-Object { "$_=$($opts[$_])" })
-        [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), ($lines -join "`r`n"), [System.Text.Encoding]::Unicode)
-    }
-
+        [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), ($lines -join "`r`n"),
+            [System.Text.Encoding]::Unicode) }
     # Run a scan and return the CSV path (throws on a non-zero exit / missing CSV).
-    function Invoke-EnumScanCsv {
-        param([string] $Root, [int] $FastEngine, [hashtable] $Extra)
+    function Invoke-EnumScanCsv { param([string] $Root, [int] $FastEngine, [hashtable] $Extra)
         Write-EnumIni -FastEngine $FastEngine -Extra $Extra
         $csv = Join-Path $workRoot ('enum-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.csv')
-        [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root)
-        $csv
-    }
-
+        [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root); $csv }
     # CSV -> ordered map of (relative path -> full CSV row), relative to the
     # detected root row (the shortest Name; every other row is prefixed by it).
-    function Get-EnumRowMap {
-        param([string] $Csv)
+    function Get-EnumRowMap { param([string] $Csv)
         $rows = @(Read-CsvRows -Csv $Csv)
-        $rootName = ($rows | Sort-Object { $_.Name.Length } | Select-Object -First 1).Name
-        $map = [ordered] @{}
-        foreach ($r in $rows) {
-            if ($r.Name -eq $rootName) { continue }
-            $map[$r.Name.Substring($rootName.Length).TrimStart('\')] = $r
-        }
-        $map
-    }
-
+        $rootName = ($rows | Sort-Object { $_.Name.Length } | Select-Object -First 1).Name; $map = [ordered] @{}
+        foreach ($r in $rows) { if ($r.Name -eq $rootName) { continue }
+            $map[$r.Name.Substring($rootName.Length).TrimStart('\')] = $r }
+        $map }
     # Stage a "rich" set of files exercising every size-correction path plus a
     # subdir / unicode entry.  Returns which optional kinds were actually created
     # (sparse / compression need a capable volume).
-    function Add-SpecialFiles {
-        param([string] $Root)
+    function Add-SpecialFiles { param([string] $Root)
         New-Item -ItemType Directory -Force -Path (Join-Path $Root 'subdir') | Out-Null
-        [System.IO.File]::WriteAllBytes((Join-Path $Root 'normal.bin'),       [byte[]]::new(5000))
-        [System.IO.File]::WriteAllBytes((Join-Path $Root 'zero.bin'),         @())
-        [System.IO.File]::WriteAllBytes((Join-Path $Root 'slack.bin'),        [byte[]]::new(100))
-        [System.IO.File]::WriteAllBytes((Join-Path $Root 'onecluster.bin'),   [byte[]]::new(4096))
-        [System.IO.File]::WriteAllBytes((Join-Path $Root 'subdir\nested.bin'),[byte[]]::new(777))
-        [System.IO.File]::WriteAllBytes((Join-Path $Root ('uni_' + [char]0x00E9 + '.bin')), [byte[]]::new(321))
-
+        $files = [ordered]@{ 'normal.bin' = 5000; 'zero.bin' = 0; 'slack.bin' = 100; 'onecluster.bin' = 4096
+            'subdir\nested.bin' = 777; ('uni_' + [char]0x00E9 + '.bin') = 321 }
+        foreach ($name in $files.Keys) {
+            [System.IO.File]::WriteAllBytes((Join-Path $Root $name), [byte[]]::new($files[$name])) }
         # Highly compressible, non-zero payload: a 64-byte low-entropy pattern
         # tiled to 256 KiB.  It compresses *within* each LZNT1 chunk (so the file
         # actually shrinks on disk) yet allocates > 0, unlike all-zero content.
         $unit = [byte[]]::new(64); for ($i = 0; $i -lt $unit.Length; $i++) { $unit[$i] = [byte] ($i % 16) }
         $payload = [byte[]]::new(262144)
         for ($o = 0; $o -lt $payload.Length; $o += $unit.Length) { [Array]::Copy($unit, 0, $payload, $o, $unit.Length) }
-
-        $info = [ordered] @{ Sparse = $false; NtfsComp = $false; Wof = $false; Hardlink = $false }
-
-        try {
-            $sp = Join-Path $Root 'sparse.bin'
-            [System.IO.File]::WriteAllBytes($sp, @())
-            & fsutil sparse setflag "$sp" *> $null
-            $fs = [System.IO.File]::Open($sp, 'Open', 'ReadWrite'); $fs.SetLength(1MB); $fs.Close()
-            & fsutil sparse setrange "$sp" 0 $script:SparseRangeBytes *> $null
-            $info.Sparse = Get-FileSparseAttr $sp
-        } catch {}
-
-        try {
-            $nc = Join-Path $Root 'ntfscomp.bin'
-            [System.IO.File]::WriteAllBytes($nc, $payload)
-            & compact /c "$nc" *> $null
-            $info.NtfsComp = Get-FileCompressedAttr $nc
-        } catch {}
-
-        try {
-            $wf = Join-Path $Root 'wof.bin'
-            [System.IO.File]::WriteAllBytes($wf, $payload)
-            & compact /c /exe:LZX "$wf" *> $null
-            $info.Wof = (Get-FileWofAlgorithm $wf) -ge 0
-        } catch {}
-
-        try {
-            $ha = Join-Path $Root 'hl_a.bin'
-            [System.IO.File]::WriteAllBytes($ha, [byte[]]::new(8192))
-            New-Item -ItemType HardLink -Path (Join-Path $Root 'hl_b.bin') -Target $ha -ErrorAction Stop | Out-Null
-            $info.Hardlink = $true
-        } catch {}
-
-        [pscustomobject] $info
-    }
-
+        $creators = [ordered]@{ Sparse = {
+                $path = Join-Path $Root 'sparse.bin'; [System.IO.File]::WriteAllBytes($path, @())
+                & fsutil sparse setflag "$path" *> $null
+                $stream = [System.IO.File]::Open($path, 'Open', 'ReadWrite'); $stream.SetLength(1MB); $stream.Close()
+                & fsutil sparse setrange "$path" 0 $script:SparseRangeBytes *> $null; Get-FileSparseAttr $path }
+            NtfsComp = { $path = Join-Path $Root 'ntfscomp.bin'; [System.IO.File]::WriteAllBytes($path, $payload)
+                & compact /c "$path" *> $null; Get-FileCompressedAttr $path }
+            Wof = { $path = Join-Path $Root 'wof.bin'; [System.IO.File]::WriteAllBytes($path, $payload)
+                & compact /c /exe:LZX "$path" *> $null; (Get-FileWofAlgorithm $path) -ge 0 }
+            Hardlink = { $path = Join-Path $Root 'hl_a.bin'; [System.IO.File]::WriteAllBytes($path, [byte[]]::new(8192))
+                New-Item -ItemType HardLink -Path (Join-Path $Root 'hl_b.bin') -Target $path -ErrorAction Stop | Out-Null
+                $true } }
+        $info = [ordered]@{}
+        foreach ($kind in $creators.Keys) { try { $info[$kind] = & $creators[$kind] } catch { $info[$kind] = $false } }
+        [pscustomobject] $info }
     # Ground truth: every descendant (dirs + files) relative to $Root, sorted.
-    function Get-EnumRelative {
-        param([Parameter(Mandatory)][string] $Root)
+    function Get-EnumRelative { param([Parameter(Mandatory)][string] $Root)
         $rootNorm = [System.IO.Path]::GetFullPath($Root).TrimEnd('\')
         @(Get-ChildItem -LiteralPath $Root -Recurse -Force | ForEach-Object {
             $_.FullName.TrimEnd('\').Substring($rootNorm.Length).TrimStart('\')
-        } | Sort-Object)
-    }
-
+        } | Sort-Object) }
     # Build the fixture tree under $Root; return its ground-truth relative set.
     # Names exercise spaces, unicode, shell-special characters, an empty
     # directory and a long (~120 char) component.  Everything stays well within
     # MAX_PATH so the PowerShell ground-truth pass is reliable, while the \\?\
     # spellings still drive the long-path prefix handling on the finder side.
-    function New-EnumFixture {
-        param([Parameter(Mandatory)][string] $Root)
-
+    function New-EnumFixture { param([Parameter(Mandatory)][string] $Root)
         if (Test-Path -LiteralPath $Root) { Remove-Item -LiteralPath $Root -Recurse -Force }
         New-Item -ItemType Directory -Force -Path $Root | Out-Null
-
         $uniDir   = 'uni_' + [char]0x3053 + [char]0x3093 + '_dir'   # こん
         $uniFile  = 'uni_' + [char]0x00E9 + [char]0x0444 + '.txt'   # é ф
         $longName = 'Long' + ('o' * 120) + 'Name.txt'
-
-        $files = @(
-            'root file.txt',
-            'Sub Dir With Spaces\inside.dat',
-            'Sub Dir With Spaces\Nested\leaf.bin',
-            "$uniDir\$uniFile",
-            'Special #1 [a+b] & (c)\weird %name% +1.log',
-            $longName
-        )
+        $files = @('root file.txt', 'Sub Dir With Spaces\inside.dat', 'Sub Dir With Spaces\Nested\leaf.bin',
+            "$uniDir\$uniFile", 'Special #1 [a+b] & (c)\weird %name% +1.log', $longName)
         $seed = 1
-        foreach ($f in $files) {
-            New-TestFile -Path (Join-Path $Root $f) -Size (16 * $seed) -Seed $seed
-            $seed++
-        }
+        foreach ($f in $files) { New-TestFile -Path (Join-Path $Root $f) -Size (16 * $seed) -Seed $seed; $seed++ }
         # an explicitly empty directory to confirm directories enumerate too
         New-Item -ItemType Directory -Force -Path (Join-Path $Root 'Empty Dir') | Out-Null
-
-        Get-EnumRelative -Root $Root
-    }
-
+        Get-EnumRelative -Root $Root }
     # CSV -> relative set, made relative to the detected root row (the shortest
     # Name; every other row is prefixed by it).  Spelling agnostic.
-    function Get-EnumCsvRelative {
-        param([Parameter(Mandatory)][string] $Csv)
+    function Get-EnumCsvRelative { param([Parameter(Mandatory)][string] $Csv)
         $names = @(Read-CsvRows -Csv $Csv | ForEach-Object { $_.Name } | Where-Object { $_ })
-        if ($names.Count -eq 0) { return @() }
-        $root = ($names | Sort-Object { $_.Length })[0]
-        @($names | Where-Object { $_ -ne $root } | ForEach-Object {
-            $_.Substring($root.Length).TrimStart('\')
-        } | Sort-Object)
-    }
-
+        if ($names.Count -eq 0) { return @() }; $root = ($names | Sort-Object { $_.Length })[0]
+        @($names | Where-Object { $_ -ne $root } | ForEach-Object { $_.Substring($root.Length).TrimStart('\')
+        } | Sort-Object) }
     # Scan $Root with the given engine; assert the relative set equals $Expected.
     function Assert-EnumMatches {
-        param(
-            [string] $Group, [string] $Label, [string] $Root,
-            [string[]] $Expected, [int] $FastEngine
-        )
+        param([string] $Group, [string] $Label, [string] $Root, [string[]] $Expected, [int] $FastEngine)
         Write-EnumIni -FastEngine $FastEngine
         $csv = Join-Path $workRoot ('enum-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.csv')
-        try {
-            [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root)
-        }
-        catch {
-            $detail = $_.Exception.Message
+        try { [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csv -Root $Root) }
+        catch { $detail = $_.Exception.Message
             if ($detail -match [regex]::Escape([string] $script:FailFastExitCode)) { $detail += "  ($script:FailFastExitHex fail-fast crash)" }
-            Assert-Fail $Group $Label $detail
-            return
-        }
-        $actual  = Get-EnumCsvRelative -Csv $csv
-        Remove-Item -LiteralPath $csv -Force -ErrorAction SilentlyContinue
+            Assert-Fail $Group $Label $detail; return }
+        $actual = Get-EnumCsvRelative -Csv $csv; Remove-Item -LiteralPath $csv -Force -ErrorAction SilentlyContinue
         $missing = @($Expected | Where-Object { $actual -notcontains $_ })
-        $extra   = @($actual   | Where-Object { $Expected -notcontains $_ })
-        $duplicates = @($actual |
-            Group-Object |
-            Where-Object Count -gt 1 |
+        $extra = @($actual | Where-Object { $Expected -notcontains $_ })
+        $duplicates = @($actual | Group-Object | Where-Object Count -gt 1 |
             ForEach-Object { "$($_.Name) ($($_.Count)x)" })
-        if ($missing.Count -eq 0 -and $extra.Count -eq 0 -and $duplicates.Count -eq 0) {
-            Assert-Pass $Group $Label "$($actual.Count) entries"
-        }
-        else {
-            $m = ($missing | Select-Object -First 4) -join ', '
-            $x = ($extra   | Select-Object -First 4) -join ', '
-            $d = ($duplicates | Select-Object -First 4) -join ', '
-            Assert-Fail $Group $Label "missing $($missing.Count) [$m]; extra $($extra.Count) [$x]; duplicated $($duplicates.Count) [$d]"
-        }
-    }
-
-    function Test-PathForms {
-        param([string] $Canon, [string[]] $Expected)
-        $drive = $Canon.Substring(0, 1)
-        $spellings = [ordered]@{
-            'plain'           = $Canon
-            'trailing slash'  = "$Canon\"
-            'lowercase drive' = ($drive.ToLowerInvariant() + $Canon.Substring(1))
-            '\\?\ long path'  = "\\?\$Canon"
-            '\\?\ + trailing' = "\\?\$Canon\"
-        }
-        foreach ($engine in @(0, 1)) {
-            $eng = if ($engine -eq 1) { 'fast' } else { 'basic' }
+        $m = ($missing | Select-Object -First 4) -join ', '; $x = ($extra | Select-Object -First 4) -join ', '
+        $d = ($duplicates | Select-Object -First 4) -join ', '
+        $failure = "missing $($missing.Count) [$m]; extra $($extra.Count) [$x]; duplicated $($duplicates.Count) [$d]"
+        Assert-That $Group $Label ($missing.Count -eq 0 -and $extra.Count -eq 0 -and $duplicates.Count -eq 0) `
+            $failure "$($actual.Count) entries" }
+    function Test-PathForms { param([string] $Canon, [string[]] $Expected)
+        $drive = $Canon.Substring(0, 1); $spellings = [ordered]@{ 'plain' = $Canon; 'trailing slash' = "$Canon\"
+            'lowercase drive' = ($drive.ToLowerInvariant() + $Canon.Substring(1)); '\\?\ long path' = "\\?\$Canon"
+            '\\?\ + trailing' = "\\?\$Canon\" }
+        foreach ($engine in @(0, 1)) { $eng = if ($engine -eq 1) { 'fast' } else { 'basic' }
             foreach ($name in $spellings.Keys) {
                 Assert-EnumMatches -Group 'PathForms' -Label "$name [$eng]" -Root $spellings[$name] -Expected $Expected -FastEngine $engine
-            }
-        }
-    }
-
+            } } }
     # Test-Path throws (not $false) on access-denied UNC roots under the
     # script's ErrorActionPreference='Stop'; treat any failure as "absent".
-    function Test-PathQuiet {
-        param([string] $Path)
-        try { return [bool] (Test-Path -LiteralPath $Path) } catch { return $false }
-    }
-
-    function Test-UncForms {
-        param([string] $Canon, [string[]] $Expected)
-        $g          = 'Unc'
-        $drive      = $Canon.Substring(0, 1)
+    function Test-PathQuiet { param([string] $Path)
+        try { return [bool] (Test-Path -LiteralPath $Path) } catch { return $false } }
+    function Test-UncForms { param([string] $Canon, [string[]] $Expected)
+        $g = 'Unc'; $drive = $Canon.Substring(0, 1)
         $afterColon = $Canon.Substring(2)                 # e.g. \Users\...\scan-root
-        $hostName   = $env:COMPUTERNAME
-        $adminRoot  = '\\' + $hostName + '\' + $drive + '$' + $afterColon
-
+        $hostName = $env:COMPUTERNAME; $adminRoot = '\\' + $hostName + '\' + $drive + '$' + $afterColon
         if (-not (Test-PathQuiet $adminRoot)) {
             Assert-Skip $g 'Admin share reachable' "\\$hostName\$drive`$ not reachable (admin share disabled or UAC remote-token filtering)"
-        }
-        else {
-            $uncSpellings = [ordered]@{
-                'admin share \\host\X$'  = $adminRoot
-                'admin share + trailing' = "$adminRoot\"
-                '\\?\UNC\ long unc'      = '\\?\UNC\' + $hostName + '\' + $drive + '$' + $afterColon
-            }
+        } else { $uncSpellings = [ordered]@{
+                'admin share \\host\X$' = $adminRoot; 'admin share + trailing' = "$adminRoot\"
+                '\\?\UNC\ long unc' = '\\?\UNC\' + $hostName + '\' + $drive + '$' + $afterColon }
             foreach ($name in $uncSpellings.Keys) {
-                Assert-EnumMatches -Group $g -Label $name -Root $uncSpellings[$name] -Expected $Expected -FastEngine 0
-            }
+                Assert-EnumMatches -Group $g -Label $name -Root $uncSpellings[$name] -Expected $Expected -FastEngine 0 }
         }
-
         # \\tsclient\<drive> exists only inside an RDP session with drive
         # redirection; skip cleanly when absent.
-        $tsShare = '\\tsclient\' + $drive
-        $tsRoot  = $tsShare + $afterColon
-        if (Test-PathQuiet '\\tsclient\c\windows\system32') {
+        $tsRoot = '\\tsclient\' + $drive + $afterColon; if (Test-PathQuiet '\\tsclient\c\windows\system32') {
             # \\tsclient\<X> maps to the RDP CLIENT's <X>: drive.  Usually that is
             # a different physical device than the server's, so the fixture must
             # be replicated on the tsclient path before WinDirStat can scan it.
@@ -10766,250 +10202,145 @@ function Invoke-EnumerationSuite {
             # that scan the same $canon tree afterwards.
             $probeName = '.tsclient-probe-' + $PID + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
             $aliasesLocal = $false
-            try {
-                Set-Content -LiteralPath (Join-Path $canon $probeName) -Value 'x' -ErrorAction Stop
+            try { Set-Content -LiteralPath (Join-Path $canon $probeName) -Value 'x' -ErrorAction Stop
                 $aliasesLocal = Test-PathQuiet (Join-Path $tsRoot $probeName)
-            }
-            catch {}
-            finally {
-                Remove-Item -LiteralPath (Join-Path $canon $probeName) -Force -ErrorAction SilentlyContinue
-            }
-
-            try {
-                if ($aliasesLocal) {
+            } catch {} finally {
+                Remove-Item -LiteralPath (Join-Path $canon $probeName) -Force -ErrorAction SilentlyContinue }
+            try { if ($aliasesLocal) {
                     # Same-machine RDP: scan the already-present fixture in place.
                     # Do NOT stage or delete — the suite-level cleanup owns $canon.
                     Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $Expected -FastEngine 0
-                }
-                else {
-                    try {
-                        $tsExpected = New-EnumFixture -Root $tsRoot
+                } else { try { $tsExpected = New-EnumFixture -Root $tsRoot
                         Assert-EnumMatches -Group $g -Label '\\tsclient\<drive>' -Root $tsRoot -Expected $tsExpected -FastEngine 0
-                    }
-                    finally {
-                        Remove-Item -LiteralPath $tsRoot -Recurse -Force -ErrorAction SilentlyContinue
-                    }
-                }
-            }
-            catch {
-                Assert-Fail $g '\\tsclient\<drive>' "tsclient enumeration failed: $($_.Exception.Message)"
-            }
-        }
-        else {
+                    } finally { Remove-Item -LiteralPath $tsRoot -Recurse -Force -ErrorAction SilentlyContinue } }
+            } catch { Assert-Fail $g '\\tsclient\<drive>' "tsclient enumeration failed: $($_.Exception.Message)" }
+        } else {
             Assert-Skip $g '\\tsclient redirected drive' 'No RDP drive redirection (\\tsclient\<drive> not present)'
-        }
-    }
-
+        } }
     # Scan the fixture through a redirected root — a subst'd drive, a directory
     # junction and a directory symbolic link all pointing at the same tree.
     # Each must enumerate the target identically.  subst and junctions need no
     # elevation; symlinks need admin or Developer Mode (skipped otherwise).
-    function Test-RootRedirects {
-        param([string] $Canon, [string[]] $Expected)
-        $g         = 'RootRedirects'
-        $redirRoot = Join-Path $workRoot 'redirects'
-        $junction  = Join-Path $redirRoot 'junction-root'
-        $symlink   = Join-Path $redirRoot 'symlink-root'
+    function Test-RootRedirects { param([string] $Canon, [string[]] $Expected)
+        $g = 'RootRedirects'; $redirRoot = Join-Path $workRoot 'redirects'
+        $junction = Join-Path $redirRoot 'junction-root'; $symlink = Join-Path $redirRoot 'symlink-root'
         New-Item -ItemType Directory -Force -Path $redirRoot | Out-Null
-
-        $substDrive  = $null
-        $createdLinks = [System.Collections.Generic.List[string]]::new()
-        try {
+        $substDrive = $null; $createdLinks = [System.Collections.Generic.List[string]]::new(); try {
             # -- subst'd drive root (X:\ -> fixture) --------------------------
             $free = $null
             foreach ($code in 90..68) {           # Z .. D
-                $candidate = [char] $code
-                if (-not (Test-PathQuiet "${candidate}:\")) { $free = $candidate; break }
-            }
-            if (-not $free) {
-                Assert-Skip $g 'subst drive root' 'No free drive letter available'
-            }
-            else {
-                $out = & subst "${free}:" $Canon 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    $substDrive = "${free}:"
+                $candidate = [char] $code; if (-not (Test-PathQuiet "${candidate}:\")) { $free = $candidate; break } }
+            if (-not $free) { Assert-Skip $g 'subst drive root' 'No free drive letter available' } else {
+                $out = & subst "${free}:" $Canon 2>&1; if ($LASTEXITCODE -eq 0) { $substDrive = "${free}:"
                     Assert-EnumMatches -Group $g -Label "subst drive ${free}:\" -Root "${free}:\" -Expected $Expected -FastEngine 0
-                }
-                else {
-                    Assert-Skip $g 'subst drive root' "subst failed: $out"
-                }
-            }
-
+                } else { Assert-Skip $g 'subst drive root' "subst failed: $out" } }
             # -- directory junction root -------------------------------------
-            try {
-                New-Item -ItemType Junction -Path $junction -Target $Canon -ErrorAction Stop | Out-Null
-                $createdLinks.Add($junction)
-                Assert-EnumMatches -Group $g -Label 'junction root'            -Root $junction    -Expected $Expected -FastEngine 0
-                Assert-EnumMatches -Group $g -Label 'junction root + trailing' -Root "$junction\" -Expected $Expected -FastEngine 0
-            }
-            catch {
-                Assert-Skip $g 'junction root' "Could not create junction: $($_.Exception.Message)"
-            }
-
             # -- directory symbolic-link root --------------------------------
-            try {
-                New-Item -ItemType SymbolicLink -Path $symlink -Target $Canon -ErrorAction Stop | Out-Null
-                $createdLinks.Add($symlink)
-                Assert-EnumMatches -Group $g -Label 'directory symlink root' -Root $symlink -Expected $Expected -FastEngine 0
-            }
-            catch {
-                Assert-Skip $g 'directory symlink root' "Could not create symlink (needs admin or Developer Mode): $($_.Exception.Message)"
-            }
-        }
-        finally {
+            $links = @(
+                @{ Type = 'Junction'; Path = $junction; Skip = 'junction root'; Error = 'Could not create junction: '
+                    Forms = [ordered]@{ 'junction root' = $junction; 'junction root + trailing' = "$junction\" } }
+                @{ Type = 'SymbolicLink'; Path = $symlink; Skip = 'directory symlink root';
+                    Error = 'Could not create symlink (needs admin or Developer Mode): ';
+                    Forms = [ordered]@{ 'directory symlink root' = $symlink } }
+            ); foreach ($link in $links) { try {
+                    New-Item -ItemType $link.Type -Path $link.Path -Target $Canon -ErrorAction Stop | Out-Null
+                    $createdLinks.Add($link.Path); foreach ($label in $link.Forms.Keys) {
+                        Assert-EnumMatches -Group $g -Label $label -Root $link.Forms[$label] -Expected $Expected -FastEngine 0 }
+                } catch { Assert-Skip $g $link.Skip "$($link.Error)$($_.Exception.Message)" } }
+        } finally {
             # Tear down redirects before the suite's recursive cleanup so it
             # never recurses through a link into the target.
             if ($substDrive) { & subst $substDrive /D 2>&1 | Out-Null }
-            foreach ($lnk in $createdLinks) {
-                try { [System.IO.Directory]::Delete($lnk, $false) } catch {}
-            }
-        }
-    }
-
+            foreach ($lnk in $createdLinks) { try { [System.IO.Directory]::Delete($lnk, $false) } catch {} }
+        } }
     # #1 — the two scan engines must agree on every column for a rich tree.
-    function Test-CrossEngine {
-        param([string] $Root)
+    function Test-CrossEngine { param([string] $Root)
         $g = 'CrossEngine'
-        try {
-            $csv0 = Invoke-EnumScanCsv -Root $Root -FastEngine 0
-            $csv1 = Invoke-EnumScanCsv -Root $Root -FastEngine 1
-        }
-        catch { Assert-Fail $g 'scan under both engines' $_.Exception.Message; return }
-        $relative0 = @(Get-EnumCsvRelative -Csv $csv0)
-        $relative1 = @(Get-EnumCsvRelative -Csv $csv1)
+        try { $csv0 = Invoke-EnumScanCsv -Root $Root -FastEngine 0; $csv1 = Invoke-EnumScanCsv -Root $Root -FastEngine 1
+        } catch { Assert-Fail $g 'scan under both engines' $_.Exception.Message; return }
+        $relative0 = @(Get-EnumCsvRelative -Csv $csv0); $relative1 = @(Get-EnumCsvRelative -Csv $csv1)
         $duplicates0 = @($relative0 | Group-Object | Where-Object Count -gt 1)
         $duplicates1 = @($relative1 | Group-Object | Where-Object Count -gt 1)
-        if ($duplicates0.Count -eq 0 -and $duplicates1.Count -eq 0) {
-            Assert-Pass $g 'neither engine emits duplicate entries'
-        }
-        else {
-            $basicDetail = @($duplicates0 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
-            $fastDetail = @($duplicates1 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
-            Assert-Fail $g 'neither engine emits duplicate entries' "basic=[$basicDetail]; fast=[$fastDetail]"
-        }
-
+        $basicDetail = @($duplicates0 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
+        $fastDetail = @($duplicates1 | ForEach-Object { "$($_.Name) ($($_.Count)x)" }) -join ', '
+        Assert-That $g 'neither engine emits duplicate entries' `
+            ($duplicates0.Count -eq 0 -and $duplicates1.Count -eq 0) "basic=[$basicDetail]; fast=[$fastDetail]"
         $m0 = Get-EnumRowMap $csv0; $m1 = Get-EnumRowMap $csv1
         Remove-Item $csv0, $csv1 -Force -ErrorAction SilentlyContinue
-
-        $onlyBasic = @($m0.Keys | Where-Object { -not $m1.Contains($_) })
-        $onlyFast  = @($m1.Keys | Where-Object { -not $m0.Contains($_) })
-        if ($onlyBasic.Count -eq 0 -and $onlyFast.Count -eq 0) {
-            Assert-Pass $g 'both engines enumerate the same entries' "$($m0.Count) entries"
-        }
-        else {
-            Assert-Fail $g 'both engines enumerate the same entries' "basic-only=$($onlyBasic.Count) [$(($onlyBasic | Select-Object -First 3) -join ', ')]; fast-only=$($onlyFast.Count) [$(($onlyFast | Select-Object -First 3) -join ', ')]"
-        }
+        $onlyBasic = @($m0.Keys | Where-Object { -not $m1.Contains($_) }); $onlyFast = @($m1.Keys |
+            Where-Object { -not $m0.Contains($_) })
+        $engineDifference = "basic-only=$($onlyBasic.Count) [$(($onlyBasic | Select-Object -First 3) -join ', ')]; " +
+            "fast-only=$($onlyFast.Count) [$(($onlyFast | Select-Object -First 3) -join ', ')]"
+        Assert-That $g 'both engines enumerate the same entries' `
+            ($onlyBasic.Count -eq 0 -and $onlyFast.Count -eq 0) $engineDifference "$($m0.Count) entries"
         foreach ($col in @('Logical Size', 'Physical Size', 'Attributes', 'Index')) {
             $diffs = @(foreach ($k in $m0.Keys) {
                 if ($m1.Contains($k) -and $m0[$k].$col -ne $m1[$k].$col) { "$k ($($m0[$k].$col)|$($m1[$k].$col))" }
             })
-            if ($diffs.Count -eq 0) { Assert-Pass $g "engines agree on '$col'" }
-            else { Assert-Fail $g "engines agree on '$col'" "$($diffs.Count) diff(s): $(($diffs | Select-Object -First 4) -join '; ')" }
-        }
-    }
-
+            Assert-That $g "engines agree on '$col'" ($diffs.Count -eq 0) `
+                "$($diffs.Count) diff(s): $(($diffs | Select-Object -First 4) -join '; ')"
+        } }
     # #3 — reported logical / physical sizes match native ground truth across the
     # zero / slack / cluster / sparse / NTFS-compressed / WOF size-correction paths.
-    function Test-Sizes {
-        param([string] $Root, [pscustomobject] $Info)
-        $g = 'Sizes'
-        try { $csv = Invoke-EnumScanCsv -Root $Root -FastEngine 0 }
+    function Test-Sizes { param([string] $Root, [pscustomobject] $Info)
+        $g = 'Sizes'; try { $csv = Invoke-EnumScanCsv -Root $Root -FastEngine 0 }
         catch { Assert-Fail $g 'scan rich fixture' $_.Exception.Message; return }
         $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
-
         foreach ($leaf in @('zero.bin', 'slack.bin', 'onecluster.bin', 'normal.bin', 'hl_a.bin')) {
             if (-not $map.Contains($leaf)) { Assert-Fail $g "$leaf present" 'missing from scan'; continue }
-            $full  = Join-Path $Root $leaf
-            $gtLog = (Get-Item -LiteralPath $full).Length
-            $gtPhy = Get-FileAllocationSize $full
-            $r = $map[$leaf]
+            $full = Join-Path $Root $leaf; $gtLog = (Get-Item -LiteralPath $full).Length
+            $gtPhy = Get-FileAllocationSize $full; $r = $map[$leaf]
             if ([long] $r.'Logical Size'  -eq [long] $gtLog) { Assert-Pass $g "$leaf logical size = $gtLog" }  else { Assert-Fail $g "$leaf logical size"  "got $($r.'Logical Size'), expected $gtLog" }
             if ([long] $r.'Physical Size' -eq [long] $gtPhy) { Assert-Pass $g "$leaf physical size = $gtPhy" } else { Assert-Fail $g "$leaf physical size" "got $($r.'Physical Size'), expected $gtPhy (AllocationSize)" }
-        }
-
-        if ($Info.Sparse -and $map.Contains('sparse.bin')) {
-            $r = $map['sparse.bin']
-            if ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'sparse: physical < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
-            else { Assert-Fail $g 'sparse: physical < logical' "physical $($r.'Physical Size'), logical $($r.'Logical Size')" }
-        }
-        else { Assert-Skip $g 'sparse file' 'sparse not created on this volume' }
-
+        }; if ($Info.Sparse -and $map.Contains('sparse.bin')) { $r = $map['sparse.bin']
+            Assert-That $g 'sparse: physical < logical' ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') `
+                "physical $($r.'Physical Size'), logical $($r.'Logical Size')" "$($r.'Physical Size') < $($r.'Logical Size')"
+        } else { Assert-Skip $g 'sparse file' 'sparse not created on this volume' }
         if ($Info.NtfsComp -and $map.Contains('ntfscomp.bin')) {
             $r = $map['ntfscomp.bin']; $gtPhy = Get-FileAllocationSize (Join-Path $Root 'ntfscomp.bin')
             if ([long] $r.'Physical Size' -eq [long] $gtPhy -and [long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'NTFS-compressed: physical = allocated < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
             else { Assert-Fail $g 'NTFS-compressed physical' "physical $($r.'Physical Size'), allocated $gtPhy, logical $($r.'Logical Size')" }
-        }
-        else { Assert-Skip $g 'NTFS-compressed file' 'LZNT1 not available/applied on this volume' }
-
-        if ($Info.Wof -and $map.Contains('wof.bin')) {
-            $r = $map['wof.bin']
-            if ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') { Assert-Pass $g 'WOF: physical < logical' "$($r.'Physical Size') < $($r.'Logical Size')" }
-            else { Assert-Fail $g 'WOF: physical < logical' "physical $($r.'Physical Size'), logical $($r.'Logical Size')" }
+        } else { Assert-Skip $g 'NTFS-compressed file' 'LZNT1 not available/applied on this volume' }
+        if ($Info.Wof -and $map.Contains('wof.bin')) { $r = $map['wof.bin']
+            Assert-That $g 'WOF: physical < logical' ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') `
+                "physical $($r.'Physical Size'), logical $($r.'Logical Size')" "$($r.'Physical Size') < $($r.'Logical Size')"
             # FinderBasic best-effort flags WOF files Compressed, but the WOF filter
             # usually masks IO_REPARSE_TAG_WOF from enumeration (the code even notes
             # this), so a missing 'C' is expected rather than a failure.
             if ($r.Attributes -match 'C') { Assert-Pass $g 'WOF file flagged Compressed (reparse tag surfaced)' }
             else { Assert-Pass $g 'WOF file flagged Compressed' 'WOF reparse tag masked by WOF filter driver (expected behavior; physical size still reflects compression)' }
-        }
-        else { Assert-Skip $g 'WOF-compressed file' 'WOF not available/applied on this volume' }
-    }
-
+        } else { Assert-Skip $g 'WOF-compressed file' 'WOF not available/applied on this volume' } }
     # #2 — a single directory large enough to exceed the 4 MB read buffer, forcing
     # the NextEntryOffset==0 refill path; the exact entry count must round-trip.
-    function Test-LargeDir {
-        $g     = 'LargeDir'
-        $count = 15000
-        $big   = Join-Path $workRoot 'big-dir'
+    function Test-LargeDir { $g = 'LargeDir'; $count = 15000; $big = Join-Path $workRoot 'big-dir'
         New-Item -ItemType Directory -Force -Path $big | Out-Null
         # ~200-char names: 15000 entries ≈ 7 MB of directory information (> 4 MB),
         # so at least one buffer refill happens.  Created via \\?\ for the length.
-        $pad   = 'p' * 190
-        $empty = [byte[]]::new(1)
+        $pad = 'p' * 190; $empty = [byte[]]::new(1)
         $expectedNames = [System.Collections.Generic.List[string]]::new($count)
-        for ($i = 0; $i -lt $count; $i++) {
-            $leaf = 'f' + ('{0:D6}' -f $i) + "_$pad.bin"
-            [void] $expectedNames.Add($leaf)
-            [System.IO.File]::WriteAllBytes(('\\?\' + $big + '\' + $leaf), $empty)
-        }
+        for ($i = 0; $i -lt $count; $i++) { $leaf = 'f' + ('{0:D6}' -f $i) + "_$pad.bin"
+            [void] $expectedNames.Add($leaf); [System.IO.File]::WriteAllBytes(('\\?\' + $big + '\' + $leaf), $empty) }
         $gt = @([System.IO.Directory]::EnumerateFiles('\\?\' + $big)).Count
-        try {
-            $csv = Invoke-EnumScanCsv -Root ('\\?\' + $big) -FastEngine 0
-            $actualNames = @(Get-EnumCsvRelative -Csv $csv)
-            Remove-Item $csv -Force -ErrorAction SilentlyContinue
-
-            $expectedSet = [System.Collections.Generic.HashSet[string]]::new(
-                $expectedNames, [System.StringComparer]::Ordinal
-            )
+        try { $csv = Invoke-EnumScanCsv -Root ('\\?\' + $big) -FastEngine 0
+            $actualNames = @(Get-EnumCsvRelative -Csv $csv); Remove-Item $csv -Force -ErrorAction SilentlyContinue
+            $expectedSet = [System.Collections.Generic.HashSet[string]]::new($expectedNames, [System.StringComparer]::Ordinal)
             $actualSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
             $duplicates = [System.Collections.Generic.List[string]]::new()
-            foreach ($name in $actualNames) {
-                if (-not $actualSet.Add($name)) { [void] $duplicates.Add($name) }
-            }
+            foreach ($name in $actualNames) { if (-not $actualSet.Add($name)) { [void] $duplicates.Add($name) } }
             $missing = @($expectedNames | Where-Object { -not $actualSet.Contains($_) })
             $unexpected = @($actualSet | Where-Object { -not $expectedSet.Contains($_) })
-
+            $failure = "created=$count; ground truth=$gt; scan=$($actualNames.Count); missing=$($missing.Count); " +
+                "unexpected=$($unexpected.Count); duplicated=$($duplicates.Count)"
             if ($gt -eq $count -and $missing.Count -eq 0 -and
                 $unexpected.Count -eq 0 -and $duplicates.Count -eq 0) {
                 Assert-Pass $g "single directory of $count exact names enumerated once (buffer-refill path)"
-            }
-            else {
-                Assert-Fail $g "single directory of $count exact names" (
-                    "created=$count; ground truth=$gt; scan=$($actualNames.Count); " +
-                    "missing=$($missing.Count); unexpected=$($unexpected.Count); duplicated=$($duplicates.Count)"
-                )
-            }
-        }
-        catch { Assert-Fail $g "single directory of $count entries" $_.Exception.Message }
-        finally { try { [System.IO.Directory]::Delete('\\?\' + $big, $true) } catch {} }
-    }
-
+            } else { Assert-Fail $g "single directory of $count exact names" $failure }
+        } catch { Assert-Fail $g "single directory of $count entries" $_.Exception.Message }
+        finally { try { [System.IO.Directory]::Delete('\\?\' + $big, $true) } catch {} } }
     # #4 — results must be identical regardless of the scanning-thread count
     # (stresses the shared FinderBasicContext: atomic SupportsFileId + call_once).
-    function Test-Threads {
-        param([string] $Root)
-        $g = 'Threads'
-        $ref = $null; $refThreads = $null
-        foreach ($t in @(1, 2, 8, 16)) {
+    function Test-Threads { param([string] $Root)
+        $g = 'Threads'; $ref = $null; $refThreads = $null; foreach ($t in @(1, 2, 8, 16)) {
             try { $csv = Invoke-EnumScanCsv -Root $Root -FastEngine 0 -Extra @{ ScanningThreads = $t } }
             catch { Assert-Fail $g "$t-thread scan" $_.Exception.Message; continue }
             $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
@@ -11019,60 +10350,40 @@ function Invoke-EnumerationSuite {
             if ($null -eq $ref) { $ref = $sig; $refThreads = $t; Assert-Pass $g "$t-thread scan (baseline)" "$($map.Count) entries" }
             elseif ($sig -eq $ref) { Assert-Pass $g "$t threads identical to $refThreads-thread result" }
             else { Assert-Fail $g "$t threads identical to baseline" 'result differs across thread counts' }
-        }
-    }
-
+        } }
     # #5 — hard links share one non-zero FileId (GetIndex / SupportsFileId decode).
-    function Test-Hardlinks {
-        $g    = 'Hardlinks'
-        $root = Join-Path $workRoot 'hardlinks'
-        New-Item -ItemType Directory -Force -Path $root | Out-Null
-        $a = Join-Path $root 'link_a.bin'
-        [System.IO.File]::WriteAllBytes($a, [byte[]]::new(12288))
-        $extra = @('link_b.bin', 'link_c.bin')
+    function Test-Hardlinks { $g = 'Hardlinks'; $root = Join-Path $workRoot 'hardlinks'
+        New-Item -ItemType Directory -Force -Path $root | Out-Null; $a = Join-Path $root 'link_a.bin'
+        [System.IO.File]::WriteAllBytes($a, [byte[]]::new(12288)); $extra = @('link_b.bin', 'link_c.bin')
         foreach ($l in $extra) {
             try { New-Item -ItemType HardLink -Path (Join-Path $root $l) -Target $a -ErrorAction Stop | Out-Null }
-            catch { Assert-Skip $g 'create hard links' "$($_.Exception.Message) (volume may not support hard links)"; return }
-        }
+            catch { Assert-Skip $g 'create hard links' "$($_.Exception.Message) (volume may not support hard links)"; return } }
         try { $csv = Invoke-EnumScanCsv -Root $root -FastEngine 0 }
         catch { Assert-Fail $g 'scan hard-link set' $_.Exception.Message; return }
         $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
-
-        $names   = @('link_a.bin') + $extra
-        $indices = @($names | ForEach-Object { $map[$_].Index })
-        $idxA    = $map['link_a.bin'].Index
-        $allEqual = (@($indices | Select-Object -Unique).Count -eq 1)
-        $nonZero  = $idxA -and ($idxA -notmatch '^0x0+$')
+        $names = @('link_a.bin') + $extra
+        $indices = @($names | ForEach-Object { $map[$_].Index }); $idxA = $map['link_a.bin'].Index
+        $allEqual = (@($indices | Select-Object -Unique).Count -eq 1); $nonZero = $idxA -and ($idxA -notmatch '^0x0+$')
         if ($allEqual -and $nonZero) { Assert-Pass $g 'all hard links share one non-zero Index' $idxA }
         else { Assert-Fail $g 'all hard links share one non-zero Index' "indices: $($indices -join ', ')" }
-
         $identity = Get-FileIdentity $a                      # "volSerial:fileIndex16"
-        if ($identity.Id) {
-            $gtIndex = '0x' + ($identity.Id -split ':')[1]
+        if ($identity.Id) { $gtIndex = '0x' + ($identity.Id -split ':')[1]
             if ($idxA -ieq $gtIndex) { Assert-Pass $g 'Index matches the NTFS file id' $idxA }
             else { Assert-Fail $g 'Index matches the NTFS file id' "scan=$idxA native=$gtIndex" }
-        }
-        else { Assert-Fail $g 'Read native NTFS file id' 'GetFileInformationByHandle returned no identity' }
+        } else { Assert-Fail $g 'Read native NTFS file id' 'GetFileInformationByHandle returned no identity' }
         if ($identity.Links -ge ($names.Count)) { Assert-Pass $g "NTFS link count = $($identity.Links) (>= $($names.Count))" }
-        else { Assert-Fail $g 'NTFS link count' "$($identity.Links) (expected >= $($names.Count))" }
-    }
-
+        else { Assert-Fail $g 'NTFS link count' "$($identity.Links) (expected >= $($names.Count))" } }
     # #6 — an unreadable subdirectory must be skipped gracefully mid-scan.
-    function Test-AccessDenied {
-        $g      = 'AccessDenied'
-        $root   = Join-Path $workRoot 'access-denied'
-        $denied = Join-Path $root 'denied-subdir'
-        $okDir  = Join-Path $root 'readable'
+    function Test-AccessDenied { $g = 'AccessDenied'; $root = Join-Path $workRoot 'access-denied'
+        $denied = Join-Path $root 'denied-subdir'; $okDir = Join-Path $root 'readable'
         New-Item -ItemType Directory -Force -Path (Join-Path $denied 'inner'), $okDir | Out-Null
         [System.IO.File]::WriteAllBytes((Join-Path $denied 'secret.bin'), [byte[]]::new(64))
         [System.IO.File]::WriteAllBytes((Join-Path $okDir 'visible.bin'), [byte[]]::new(64))
         $me = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-        try {
-            & icacls $denied /inheritance:r /deny "${me}:(OI)(CI)(RX)" *> $null
+        try { & icacls $denied /inheritance:r /deny "${me}:(OI)(CI)(RX)" *> $null
             $blocked = $false
             try { [void] (Get-ChildItem -LiteralPath $denied -Force -ErrorAction Stop) } catch { $blocked = $true }
             if (-not $blocked) { Assert-Skip $g 'deny ACE blocks listing' 'Could not block our own access (owner/SYSTEM override)'; return }
-
             try { $csv = Invoke-EnumScanCsv -Root $root -FastEngine 0 }
             catch { Assert-Fail $g 'scan past unreadable subdir' $_.Exception.Message; return }
             $leaves = @(Read-CsvRows -Csv $csv | ForEach-Object { Split-Path $_.Name -Leaf })
@@ -11080,276 +10391,141 @@ function Invoke-EnumerationSuite {
             if ('visible.bin'   -in $leaves) { Assert-Pass $g 'readable sibling still enumerated' }              else { Assert-Fail $g 'readable sibling still enumerated' 'visible.bin missing' }
             if ('denied-subdir' -in $leaves) { Assert-Pass $g 'unreadable directory still listed as a folder' } else { Assert-Fail $g 'unreadable directory still listed' 'denied-subdir missing' }
             if ('secret.bin' -notin $leaves) { Assert-Pass $g 'unreadable contents skipped without crashing' }  else { Assert-Fail $g 'unreadable contents skipped' 'secret.bin leaked past the deny ACE' }
-        }
-        finally { & icacls $denied /reset *> $null }
-    }
-
+        } finally { & icacls $denied /reset *> $null } }
     # #7 — NT-only names (trailing dot/space), case-only-differing siblings, and a
     # dangling junction must all enumerate cleanly.
-    function Test-TrickyNames {
-        $g    = 'TrickyNames'
-        $root = Join-Path $workRoot 'tricky'
+    function Test-TrickyNames { $g = 'TrickyNames'; $root = Join-Path $workRoot 'tricky'
         New-Item -ItemType Directory -Force -Path $root | Out-Null
-
-        $ntNames = @('trailingdot.', 'trailingspace ', 'plain.txt')
-        $made    = @()
+        $ntNames = @('trailingdot.', 'trailingspace ', 'plain.txt'); $made = @()
         foreach ($n in $ntNames) { try { [System.IO.File]::WriteAllBytes("\\?\$root\$n", [byte[]]::new(8)); $made += $n } catch {} }
-        if ($made.Count -eq $ntNames.Count) {
-            try {
-                $csv = Invoke-EnumScanCsv -Root "\\?\$root" -FastEngine 0
-                $actualNames = @(Get-EnumCsvRelative -Csv $csv)
-                Remove-Item $csv -Force -ErrorAction SilentlyContinue
+        if ($made.Count -eq $ntNames.Count) { try { $csv = Invoke-EnumScanCsv -Root "\\?\$root" -FastEngine 0
+                $actualNames = @(Get-EnumCsvRelative -Csv $csv); Remove-Item $csv -Force -ErrorAction SilentlyContinue
                 $diff = @(Compare-Object -ReferenceObject $ntNames -DifferenceObject $actualNames -CaseSensitive)
                 $duplicates = @($actualNames | Group-Object -CaseSensitive | Where-Object Count -gt 1)
-                if ($diff.Count -eq 0 -and $duplicates.Count -eq 0) {
-                    Assert-Pass $g 'trailing dot/space names preserved exactly and enumerated once'
-                }
-                else {
-                    Assert-Fail $g 'trailing dot/space names preserved exactly and enumerated once' (
-                        "expected=[$($ntNames -join ', ')]; actual=[$($actualNames -join ', ')]; " +
-                        "duplicates=$($duplicates.Count)"
-                    )
-                }
-            }
-            catch { Assert-Fail $g 'trailing dot/space names enumerated' $_.Exception.Message }
-        }
-        else { Assert-Skip $g 'trailing dot/space names' "could not create NT-only names ($($made.Count)/$($ntNames.Count))" }
-
-        $cs = Join-Path $root 'case-sensitive'
-        New-Item -ItemType Directory -Force -Path $cs | Out-Null
-        $csOut = & fsutil file setCaseSensitiveInfo "$cs" enable 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            $ok = $true
+                $failure = "expected=[$($ntNames -join ', ')]; actual=[$($actualNames -join ', ')]; " +
+                    "duplicates=$($duplicates.Count)"
+                Assert-That $g 'trailing dot/space names preserved exactly and enumerated once' `
+                    ($diff.Count -eq 0 -and $duplicates.Count -eq 0) $failure
+            } catch { Assert-Fail $g 'trailing dot/space names enumerated' $_.Exception.Message }
+        } else { Assert-Skip $g 'trailing dot/space names' "could not create NT-only names ($($made.Count)/$($ntNames.Count))" }
+        $cs = Join-Path $root 'case-sensitive'; New-Item -ItemType Directory -Force -Path $cs | Out-Null
+        $csOut = & fsutil file setCaseSensitiveInfo "$cs" enable 2>&1; if ($LASTEXITCODE -eq 0) { $ok = $true
             try { [System.IO.File]::WriteAllBytes("\\?\$cs\Data.bin", [byte[]]::new(8)); [System.IO.File]::WriteAllBytes("\\?\$cs\data.bin", [byte[]]::new(16)) } catch { $ok = $false }
-            if ($ok) {
-                try {
-                    $csv = Invoke-EnumScanCsv -Root $cs -FastEngine 0
+            if ($ok) { try { $csv = Invoke-EnumScanCsv -Root $cs -FastEngine 0
                     $leaves = @(Read-CsvRows -Csv $csv | ForEach-Object { Split-Path $_.Name -Leaf })
                     Remove-Item $csv -Force -ErrorAction SilentlyContinue
                     if (($leaves -ccontains 'Data.bin') -and ($leaves -ccontains 'data.bin')) { Assert-Pass $g 'case-only-differing siblings both enumerated' }
                     else { Assert-Fail $g 'case-only-differing siblings both enumerated' "leaves: $($leaves -join ', ')" }
-                }
-                catch { Assert-Fail $g 'case-sensitive siblings scan' $_.Exception.Message }
-            }
-            else { Assert-Skip $g 'case-only-differing siblings' 'could not create case-differing files' }
-        }
-        else { Assert-Skip $g 'case-sensitive directory' "fsutil setCaseSensitiveInfo failed: $csOut" }
-
+                } catch { Assert-Fail $g 'case-sensitive siblings scan' $_.Exception.Message }
+            } else { Assert-Skip $g 'case-only-differing siblings' 'could not create case-differing files' }
+        } else { Assert-Skip $g 'case-sensitive directory' "fsutil setCaseSensitiveInfo failed: $csOut" }
         # dangling junction (target deleted) — the parent must still scan cleanly.
-        $target = Join-Path $workRoot 'broken-target'
-        New-Item -ItemType Directory -Force -Path $target | Out-Null
-        $linkParent = Join-Path $root 'broken-links'
-        New-Item -ItemType Directory -Force -Path $linkParent | Out-Null
+        $target = Join-Path $workRoot 'broken-target'; New-Item -ItemType Directory -Force -Path $target | Out-Null
+        $linkParent = Join-Path $root 'broken-links'; New-Item -ItemType Directory -Force -Path $linkParent | Out-Null
         $dangling = Join-Path $linkParent 'dangling-junction'
-        try {
-            New-Item -ItemType Junction -Path $dangling -Target $target -ErrorAction Stop | Out-Null
+        try { New-Item -ItemType Junction -Path $dangling -Target $target -ErrorAction Stop | Out-Null
             [System.IO.Directory]::Delete($target, $true)
-            try {
-                $csv = Invoke-EnumScanCsv -Root $linkParent -FastEngine 0
+            try { $csv = Invoke-EnumScanCsv -Root $linkParent -FastEngine 0
                 Remove-Item $csv -Force -ErrorAction SilentlyContinue
                 Assert-Pass $g 'parent of a dangling junction scans without crashing'
-            }
-            catch { Assert-Fail $g 'parent of a dangling junction scans without crashing' $_.Exception.Message }
-        }
-        catch { Assert-Skip $g 'dangling junction' "could not create junction: $($_.Exception.Message)" }
-        finally { try { [System.IO.Directory]::Delete($dangling, $false) } catch {} }
-    }
-
+            } catch { Assert-Fail $g 'parent of a dangling junction scans without crashing' $_.Exception.Message }
+        } catch { Assert-Skip $g 'dangling junction' "could not create junction: $($_.Exception.Message)" }
+        finally { try { [System.IO.Directory]::Delete($dangling, $false) } catch {} } }
     function Test-FileSystems {
-        $g         = 'FileSystems'
-        $oneLetter = ($LinkTestDriveOne -replace ':.*', '').ToUpperInvariant()
+        $g = 'FileSystems'; $oneLetter = ($LinkTestDriveOne -replace ':.*', '').ToUpperInvariant()
         $twoLetter = ($LinkTestDriveTwo -replace ':.*', '').ToUpperInvariant()
-
-        if (-not (Test-IsElevated)) {
-            Assert-Skip $g 'Administrator privileges' 'Not elevated; formatting scratch drives requires admin'
-            return
-        }
-        if ($oneLetter -eq 'C' -or $twoLetter -eq 'C') {
-            Assert-Skip $g 'Scratch drive selection' "Refusing C: as a scratch drive (configured: ${oneLetter}: / ${twoLetter}:)"
-            return
-        }
-        if ($oneLetter -eq $twoLetter) {
-            Assert-Fail $g 'Scratch drives are distinct' "Both scratch-drive parameters resolve to ${oneLetter}:"
-            return
-        }
+        if (-not (Test-IsElevated)) { Assert-Skip $g 'Administrator privileges' 'Not elevated; formatting scratch drives requires admin'; return }
+        if ($oneLetter -eq 'C' -or $twoLetter -eq 'C') { Assert-Skip $g 'Scratch drive selection' "Refusing C: as a scratch drive (configured: ${oneLetter}: / ${twoLetter}:)"; return }
+        if ($oneLetter -eq $twoLetter) { Assert-Fail $g 'Scratch drives are distinct' "Both scratch-drive parameters resolve to ${oneLetter}:"; return }
         $protected = @(foreach ($letter in @($oneLetter, $twoLetter)) {
-            foreach ($reason in @(Get-ScratchDriveProtectionReasons -Letter $letter)) {
-                "${letter}: $reason"
-            }
+            foreach ($reason in @(Get-ScratchDriveProtectionReasons -Letter $letter)) { "${letter}: $reason" }
         })
-        if ($protected.Count -gt 0) {
-            Assert-Skip $g 'Scratch drives are disposable' ($protected -join '; ')
-            return
-        }
+        if ($protected.Count -gt 0) { Assert-Skip $g 'Scratch drives are disposable' ($protected -join '; '); return }
         if (-not (Test-Path "${oneLetter}:\") -or -not (Test-Path "${twoLetter}:\")) {
-            Assert-Skip $g 'Scratch drives present' "Drives ${oneLetter}: and ${twoLetter}: must both exist; set LINK_TEST_DRIVE_ONE/TWO"
-            return
-        }
-        if (-not (Get-Command Format-Volume -ErrorAction SilentlyContinue)) {
-            Assert-Skip $g 'Format-Volume available' 'Storage cmdlets not available on this system'
-            return
-        }
-
+            Assert-Skip $g 'Scratch drives present' `
+                "Drives ${oneLetter}: and ${twoLetter}: must both exist; set LINK_TEST_DRIVE_ONE/TWO"; return }
+        if (-not (Get-Command Format-Volume -ErrorAction SilentlyContinue)) { Assert-Skip $g 'Format-Volume available' 'Storage cmdlets not available on this system'; return }
         $sizeGate = Test-ScratchDrivesUnderSizeLimit -Letters @($oneLetter, $twoLetter) -MaxBytes 4GB
-        if (-not $sizeGate.Allowed) {
-            if ($sizeGate.Unknown.Count -gt 0) {
+        if (-not $sizeGate.Allowed) { if ($sizeGate.Unknown.Count -gt 0) {
                 Assert-Skip $g 'Scratch drive size check' "Could not read total size for: $($sizeGate.Unknown -join ', '). Refusing to format without confirming each drive is < 4GB."
-            }
-            else {
+            } else {
                 Assert-Skip $g 'Scratch drive size check' "Refusing to format scratch drives unless each is < 4GB. Too large: $($sizeGate.TooLarge -join ', ')."
-            }
-            return
-        }
-
+            }; return }
         $scratchLock = Enter-ScratchDriveLock -Letters @($oneLetter, $twoLetter)
-        if (!$scratchLock) {
-            Assert-Skip $g 'Scratch-drive lock' 'Another WinDirStat E2E process is formatting these drives'
-            return
-        }
-
+        if (!$scratchLock) { Assert-Skip $g 'Scratch-drive lock' 'Another WinDirStat E2E process is formatting these drives'; return }
         # (drive, file system) plan covering all three systems across the two
         # scratch drives, finishing with NTFS so both are left clean.
         $plan = @(
-            [pscustomobject]@{ Letter = $oneLetter; Fs = 'FAT32' },
-            [pscustomobject]@{ Letter = $twoLetter; Fs = 'ReFS'  },
-            [pscustomobject]@{ Letter = $oneLetter; Fs = 'NTFS'  },
-            [pscustomobject]@{ Letter = $twoLetter; Fs = 'NTFS'  }
+            [pscustomobject]@{ Letter = $oneLetter; Fs = 'FAT32' }, [pscustomobject]@{ Letter = $twoLetter; Fs = 'ReFS' },
+            [pscustomobject]@{ Letter = $oneLetter; Fs = 'NTFS' }, [pscustomobject]@{ Letter = $twoLetter; Fs = 'NTFS' }
         )
-        $formattedLetters = [System.Collections.Generic.HashSet[string]]::new(
-            [System.StringComparer]::OrdinalIgnoreCase
-        )
-        try {
-        foreach ($step in $plan) {
-            $label = "$($step.Fs) on $($step.Letter):"
-            try {
-                Write-ColoredLine "  Formatting $($step.Letter): as $($step.Fs) ..." DarkGray
-                Format-Volume -DriveLetter $step.Letter -FileSystem $step.Fs -NewFileSystemLabel "WdsEnum$($step.Fs)" -Force -Confirm:$false -ErrorAction Stop | Out-Null
-                [void] $formattedLetters.Add($step.Letter)
-            }
-            catch {
-                if ($step.Fs -eq 'ReFS') {
-                    Assert-Skip $g $label "ReFS format is not supported on this drive: $($_.Exception.Message)"
-                }
-                else {
-                    Assert-Fail $g $label "Required $($step.Fs) format failed: $($_.Exception.Message)"
-                }
-                continue
-            }
-
-            $fsRoot = "$($step.Letter):\wds-enum-fs\scan-root"
-            try {
-                $exp = New-EnumFixture -Root $fsRoot
-            }
-            catch {
-                Assert-Fail $g $label "Could not stage fixture on $($step.Fs): $($_.Exception.Message)"
-                continue
-            }
-
-            Assert-EnumMatches -Group $g -Label "$label (plain)" -Root $fsRoot      -Expected $exp -FastEngine 0
-            Assert-EnumMatches -Group $g -Label "$label (\\?\)"  -Root "\\?\$fsRoot" -Expected $exp -FastEngine 0
-
-            # #5 — WinDirStat's Index is the OS-provided 64-bit file id from
-            # directory enumeration.  Every local file system here hands one back
-            # (FAT32 included — FASTFAT synthesizes an id from the directory-entry
-            # location), so a non-zero Index that agrees with the OS is expected; a
-            # zero Index is only acceptable when the OS itself exposes none.
-            try {
-                $csv = Invoke-EnumScanCsv -Root $fsRoot -FastEngine 0
-                $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
-                if ($map.Contains('root file.txt')) {
-                    $idx     = $map['root file.txt'].Index
-                    $native  = Get-FileIdentity (Join-Path $fsRoot 'root file.txt')
-                    $gtIndex = if ($native.Id) { '0x' + ($native.Id -split ':')[1] } else { $null }
-                    if ($idx -notmatch '^0x0+$') {
-                        if ($gtIndex -and ($idx -ieq $gtIndex)) { Assert-Pass $g "$label Index is a non-zero file id matching the OS ($idx)" }
-                        elseif ($gtIndex) { Assert-Fail $g "$label Index matches the OS" "scan reported $idx but the OS file id is $gtIndex" }
-                        else { Assert-Pass $g "$label Index is a non-zero file id ($idx)" }
-                    }
-                    elseif (-not $gtIndex) { Assert-Pass $g "$label Index = 0 (OS exposes no file id)" }
-                    else { Assert-Fail $g "$label Index" "scan reported 0 but the OS file id is $gtIndex" }
-                }
-                else {
-                    Assert-Fail $g "$label Index check" 'root file.txt was missing from the scan output'
-                }
-            }
-            catch { Assert-Fail $g "$label Index check" $_.Exception.Message }
-
-            # #8 — scan the volume ROOT (system/reserved entries like System Volume
-            # Information / $RECYCLE.BIN) and confirm it enumerates cleanly.
-            try {
-                $csvR = Invoke-EnumScanCsv -Root "$($step.Letter):\" -FastEngine 0
-                $rootLeaves = @(Read-CsvRows -Csv $csvR | ForEach-Object { Split-Path $_.Name -Leaf })
-                Remove-Item $csvR -Force -ErrorAction SilentlyContinue
-                if ('wds-enum-fs' -in $rootLeaves) { Assert-Pass $g "$label volume-root scan enumerates top-level entries" }
-                else { Assert-Fail $g "$label volume-root scan" 'wds-enum-fs not found at volume root' }
-            }
-            catch { Assert-Fail $g "$label volume-root scan" $_.Exception.Message }
-
-            Remove-Item -LiteralPath "$($step.Letter):\wds-enum-fs" -Recurse -Force -ErrorAction SilentlyContinue
-        }
-        }
-        finally {
+        $formattedLetters = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        try { foreach ($step in $plan) { $label = "$($step.Fs) on $($step.Letter):"
+                try { Write-ColoredLine "  Formatting $($step.Letter): as $($step.Fs) ..." DarkGray
+                    Format-Volume -DriveLetter $step.Letter -FileSystem $step.Fs -NewFileSystemLabel "WdsEnum$($step.Fs)" -Force -Confirm:$false -ErrorAction Stop | Out-Null
+                    [void] $formattedLetters.Add($step.Letter)
+                } catch {
+                    if ($step.Fs -eq 'ReFS') { Assert-Skip $g $label "ReFS format is not supported on this drive: $($_.Exception.Message)" }
+                    else { Assert-Fail $g $label "Required $($step.Fs) format failed: $($_.Exception.Message)" }
+                    continue }
+                $fsRoot = "$($step.Letter):\wds-enum-fs\scan-root"; try { $exp = New-EnumFixture -Root $fsRoot } catch {
+                    Assert-Fail $g $label "Could not stage fixture on $($step.Fs): $($_.Exception.Message)"; continue }
+                Assert-EnumMatches -Group $g -Label "$label (plain)" -Root $fsRoot -Expected $exp -FastEngine 0
+                Assert-EnumMatches -Group $g -Label "$label (\\?\)" -Root "\\?\$fsRoot" -Expected $exp -FastEngine 0
+                # #5 — WinDirStat's Index is the OS-provided 64-bit file id from
+                # directory enumeration.  Every local file system here hands one back
+                # (FAT32 included — FASTFAT synthesizes an id from the directory-entry
+                # location), so a non-zero Index that agrees with the OS is expected; a
+                # zero Index is only acceptable when the OS itself exposes none.
+                try { $csv = Invoke-EnumScanCsv -Root $fsRoot -FastEngine 0
+                    $map = Get-EnumRowMap $csv; Remove-Item $csv -Force -ErrorAction SilentlyContinue
+                    if ($map.Contains('root file.txt')) { $idx = $map['root file.txt'].Index
+                        $native = Get-FileIdentity (Join-Path $fsRoot 'root file.txt')
+                        $gtIndex = if ($native.Id) { '0x' + ($native.Id -split ':')[1] } else { $null }
+                        if ($idx -notmatch '^0x0+$') {
+                            if ($gtIndex -and ($idx -ieq $gtIndex)) { Assert-Pass $g "$label Index is a non-zero file id matching the OS ($idx)" }
+                            elseif ($gtIndex) { Assert-Fail $g "$label Index matches the OS" "scan reported $idx but the OS file id is $gtIndex" }
+                            else { Assert-Pass $g "$label Index is a non-zero file id ($idx)" }
+                        } elseif (-not $gtIndex) { Assert-Pass $g "$label Index = 0 (OS exposes no file id)" }
+                        else { Assert-Fail $g "$label Index" "scan reported 0 but the OS file id is $gtIndex" }
+                    } else { Assert-Fail $g "$label Index check" 'root file.txt was missing from the scan output' }
+                } catch { Assert-Fail $g "$label Index check" $_.Exception.Message }
+                # #8 — scan the volume ROOT (system/reserved entries like System Volume
+                # Information / $RECYCLE.BIN) and confirm it enumerates cleanly.
+                try { $csvR = Invoke-EnumScanCsv -Root "$($step.Letter):\" -FastEngine 0
+                    $rootLeaves = @(Read-CsvRows -Csv $csvR | ForEach-Object { Split-Path $_.Name -Leaf })
+                    Remove-Item $csvR -Force -ErrorAction SilentlyContinue
+                    if ('wds-enum-fs' -in $rootLeaves) { Assert-Pass $g "$label volume-root scan enumerates top-level entries" }
+                    else { Assert-Fail $g "$label volume-root scan" 'wds-enum-fs not found at volume root' }
+                } catch { Assert-Fail $g "$label volume-root scan" $_.Exception.Message }
+                Remove-Item -LiteralPath "$($step.Letter):\wds-enum-fs" -Recurse -Force -ErrorAction SilentlyContinue }
+        } finally {
             # A test failure or Ctrl+C must not strand a scratch volume as FAT32
             # or ReFS.  Query first to avoid an unnecessary second NTFS format
             # after the normal final steps completed successfully.
-            foreach ($letter in $formattedLetters) {
-                $currentFs = $null
+            foreach ($letter in $formattedLetters) { $currentFs = $null
                 try { $currentFs = (Get-Volume -DriveLetter $letter -ErrorAction Stop).FileSystem } catch {}
                 if ($currentFs -eq 'NTFS') { continue }
-
-                try {
-                    Write-ColoredLine "  Restoring ${letter}: to NTFS ..." DarkGray
+                try { Write-ColoredLine "  Restoring ${letter}: to NTFS ..." DarkGray
                     Format-Volume -DriveLetter $letter -FileSystem NTFS -NewFileSystemLabel 'WdsEnumNTFS' -Force -Confirm:$false -ErrorAction Stop | Out-Null
                     Assert-Pass $g "Restore ${letter}: to NTFS"
-                }
-                catch {
-                    Assert-Fail $g "Restore ${letter}: to NTFS" $_.Exception.Message
-                }
-            }
-            Exit-ScratchDriveLock -Mutex $scratchLock
-        }
-    }
-
-    try {
-        if (-not (Test-Path -LiteralPath $ExePath)) {
-            Assert-Skip 'PathForms' 'Executable present' "WinDirStat executable not found: $ExePath"
-            return
-        }
-
+                } catch { Assert-Fail $g "Restore ${letter}: to NTFS" $_.Exception.Message } }
+            Exit-ScratchDriveLock -Mutex $scratchLock } }
+    try { if (-not (Test-Path -LiteralPath $ExePath)) {
+            Assert-Skip 'PathForms' 'Executable present' "WinDirStat executable not found: $ExePath"; return }
         if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
         New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
         Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
-
-        $canon    = [System.IO.Path]::GetFullPath($scanRoot).TrimEnd('\')
-        $expected = New-EnumFixture -Root $canon
-
+        $canon    = [System.IO.Path]::GetFullPath($scanRoot).TrimEnd('\'); $expected = New-EnumFixture -Root $canon
         Write-ColoredLine 'Enumeration suite — path-form, UNC and file-system coverage' Cyan
-        Write-LabelValue 'Fixture' $canon
-        Write-LabelValue 'Entries' "$($expected.Count) (dirs + files)"
-        Write-LabelValue 'Exe'     $runnerExe
-        Write-Host ''
-
-        Test-PathForms     -Canon $canon -Expected $expected
-        Test-UncForms      -Canon $canon -Expected $expected
-        Test-RootRedirects -Canon $canon -Expected $expected
-
+        Write-LabelValue 'Fixture' $canon; Write-LabelValue 'Entries' "$($expected.Count) (dirs + files)"
+        Write-LabelValue 'Exe'     $runnerExe; Write-Host ''; Test-PathForms     -Canon $canon -Expected $expected
+        Test-UncForms      -Canon $canon -Expected $expected; Test-RootRedirects -Canon $canon -Expected $expected
         # Rich fixture shared by the cross-engine and size-accuracy groups.
-        $crossRoot = Join-Path $workRoot 'cross-root'
-        $special   = Add-SpecialFiles -Root $crossRoot
-
-        Test-CrossEngine   -Root $crossRoot
-        Test-Sizes         -Root $crossRoot -Info $special
-        Test-LargeDir
-        Test-Threads       -Root $canon
-        Test-Hardlinks
-        Test-AccessDenied
-        Test-TrickyNames
-        Test-FileSystems
-    }
-    finally {
-        Remove-TestArtifacts -Path $workRoot
-    }
-}
+        $crossRoot = Join-Path $workRoot 'cross-root'; $special   = Add-SpecialFiles -Root $crossRoot
+        Test-CrossEngine   -Root $crossRoot; Test-Sizes         -Root $crossRoot -Info $special; Test-LargeDir
+        Test-Threads       -Root $canon; Test-Hardlinks; Test-AccessDenied; Test-TrickyNames; Test-FileSystems }
+    finally { Remove-TestArtifacts -Path $workRoot } }
 
 # #############################################################################
 # UNC SHARE-ROOT SUITE  (regression: issue #538)
@@ -11564,11 +10740,6 @@ function Invoke-PermissionsSuite {
         param($Rows, [string] $Path)
         $norm = Normalize-ComparePath $Path
         ,@($Rows | Where-Object { (Normalize-ComparePath $_.Name) -ieq $norm })
-    }
-
-    function Assert-That {
-        param([string] $G, [string] $Name, [bool] $Cond, [string] $Detail = '')
-        if ($Cond) { Assert-Pass $G $Name } else { Assert-Fail $G $Name $Detail }
     }
 
     try {

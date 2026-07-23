@@ -311,11 +311,6 @@ $SectionSearch      = 'SearchView'
 $SectionWatcher     = 'Watcher'
 $SectionDriveSelect = 'DriveSelect'
 
-function Convert-BoolToIni {
-    param([Parameter(Mandatory)] [bool] $Value)
-    if ($Value) { '1' } else { '0' }
-}
-
 function Format-MultiPattern {
     # Joins multiple regex / glob patterns with the record separator MFC uses.
     param([Parameter(Mandatory)] [AllowEmptyCollection()] [string[]] $Patterns)
@@ -577,6 +572,33 @@ function New-ScenarioList {
     $scanRootArg = $ScanRoot.TrimEnd('\') + '\'
     $dupeRootArg = $DupeRoot.TrimEnd('\') + '\'
 
+    function New-ScanScenario(
+        [string] $Name, [string] $Description, [string] $Artifact,
+        [hashtable] $General, [hashtable] $DriveSelect
+    ) {
+        $settings = @{ $SectionGeneral = $General }
+        if ($DriveSelect) { $settings[$SectionDriveSelect] = $DriveSelect }
+        @{ Name = $Name; Description = $Description; Settings = $settings
+           Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir $Artifact)) }
+    }
+
+    function New-DupeScenario(
+        [string] $Name, [string] $Description, [string] $Artifact, [string] $Algorithm
+    ) {
+        $settings = @{
+            $SectionGeneral = @{ FileHashAlgorithm = $Algorithm }
+            $SectionDupeTree = @{ ScanForDuplicates = '1' }
+        }
+        @{ Name = $Name; Description = $Description; Settings = $settings
+           Arguments = @($dupeRootArg, '/savedupesto', (Join-Path $script:ArtifactDir $Artifact)) }
+    }
+
+    function New-LoadScenario([string] $Name, [string] $Description, [string] $Artifact) {
+        $path = Join-Path $script:ArtifactDir $Artifact
+        @{ Name = $Name; Description = $Description; Settings = @{}; Arguments = @('/loadfrom', $path)
+           KillAfterSettle = $true; RequiresArtifact = $path }
+    }
+
     # Restrictive include/exclude scenario:
     #   * Anchor scan inside System32 (deeply nested, file-rich).
     #   * Include all *.dll and *.exe under that anchor.
@@ -592,248 +614,118 @@ function New-ScenarioList {
     )
     $excludeFiles = Format-MultiPattern @('.*\.tmp$', '.*\.log$')
 
-    $artifactCsv  = Join-Path $script:ArtifactDir 'scan-fast.csv'
-    $artifactCsv2 = Join-Path $script:ArtifactDir 'scan-legacy.csv'
-    $artifactJson = Join-Path $script:ArtifactDir 'scan-fast.json'
-    $dupeJson     = Join-Path $script:ArtifactDir 'dupes-windows.json'
-    $dupeSha512Csv = Join-Path $script:ArtifactDir 'dupes-windows-sha512.csv'
-    $dupeCsv      = Join-Path $script:ArtifactDir 'dupes-windows.csv'
-
     @(
         # 1. Headline scan: accelerated NTFS engine, save to CSV.
-        @{
-            Name = 'ScanFastEngine'
-            Description = "Accelerated scan of $ScanRoot (UseFastScanEngine=1) → CSV"
-            Settings = @{
-                $SectionGeneral = @{ UseFastScanEngine = '1'; ScanningThreads = '4' }
-            }
-            Arguments = @($scanRootArg, '/saveto', $artifactCsv)
-        }
+        New-ScanScenario 'ScanFastEngine' `
+            "Accelerated scan of $ScanRoot (UseFastScanEngine=1) → CSV" 'scan-fast.csv' `
+            @{ UseFastScanEngine = '1'; ScanningThreads = '4' }
 
         # 2. Same scan with the legacy per-file walker (covers the alternate
         # FinderBasic code path).
-        @{
-            Name = 'ScanLegacyEngine'
-            Description = "Legacy walker scan of $ScanRoot (UseFastScanEngine=0) → CSV"
-            Settings = @{
-                $SectionGeneral = @{ UseFastScanEngine = '0'; ScanningThreads = '4' }
-            }
-            Arguments = @($scanRootArg, '/saveto', $artifactCsv2)
-        }
+        New-ScanScenario 'ScanLegacyEngine' `
+            "Legacy walker scan of $ScanRoot (UseFastScanEngine=0) → CSV" 'scan-legacy.csv' `
+            @{ UseFastScanEngine = '0'; ScanningThreads = '4' }
 
         # 3. Save to JSON to exercise SaveResultsJson and the wide-string
         # encoder.
-        @{
-            Name = 'ScanFastEngineJson'
-            Description = "Accelerated scan of $ScanRoot → JSON (covers JSON writer)"
-            Settings = @{
-                $SectionGeneral = @{ UseFastScanEngine = '1' }
-            }
-            Arguments = @($scanRootArg, '/saveto', $artifactJson)
-        }
+        New-ScanScenario 'ScanFastEngineJson' `
+            "Accelerated scan of $ScanRoot → JSON (covers JSON writer)" 'scan-fast.json' `
+            @{ UseFastScanEngine = '1' }
 
         # 4. Restrictive includes + minor excludes (regex). Exercises the
         # filter compile, anchor extraction, and the include-fast-path.
-        @{
-            Name = 'ScanRestrictiveIncludes'
-            Description = "Restrictive include/exclude scan rooted at $RestrictiveIncludeRoot"
-            Settings = @{
-                $SectionGeneral = @{
-                    UseFastScanEngine = '1'
-                    FilteringUseRegex = '1'
-                }
-                $SectionDriveSelect = @{
-                    FilteringIncludeDirs  = $includeDirs
-                    FilteringIncludeFiles = $includeFiles
-                    FilteringExcludeDirs  = $excludeDirs
-                    FilteringExcludeFiles = $excludeFiles
-                }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-restrictive.csv'))
+        New-ScanScenario 'ScanRestrictiveIncludes' `
+            "Restrictive include/exclude scan rooted at $RestrictiveIncludeRoot" 'scan-restrictive.csv' `
+            @{ UseFastScanEngine = '1'; FilteringUseRegex = '1' } @{
+            FilteringIncludeDirs  = $includeDirs
+            FilteringIncludeFiles = $includeFiles
+            FilteringExcludeDirs  = $excludeDirs
+            FilteringExcludeFiles = $excludeFiles
         }
 
         # 5. Glob filtering (FilteringUseRegex=0). Covers the second compile path.
-        @{
-            Name = 'ScanGlobFilters'
-            Description = "Glob (non-regex) filtering, *.dll/*.exe under $RestrictiveIncludeRoot"
-            Settings = @{
-                $SectionGeneral = @{
-                    UseFastScanEngine = '1'
-                    FilteringUseRegex = '0'
-                }
-                $SectionDriveSelect = @{
-                    FilteringIncludeDirs  = Format-MultiPattern @($restrictiveAnchor + '\*')
-                    FilteringIncludeFiles = Format-MultiPattern @('*.dll', '*.exe')
-                    FilteringExcludeFiles = Format-MultiPattern @('*.tmp', '*.log')
-                }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-glob.csv'))
+        New-ScanScenario 'ScanGlobFilters' `
+            "Glob (non-regex) filtering, *.dll/*.exe under $RestrictiveIncludeRoot" 'scan-glob.csv' `
+            @{ UseFastScanEngine = '1'; FilteringUseRegex = '0' } @{
+            FilteringIncludeDirs  = Format-MultiPattern @($restrictiveAnchor + '\*')
+            FilteringIncludeFiles = Format-MultiPattern @('*.dll', '*.exe')
+            FilteringExcludeFiles = Format-MultiPattern @('*.tmp', '*.log')
         }
 
         # 6. Size filter (only files ≥ 1 MB). Touches the size-pruning branch.
-        @{
-            Name = 'ScanSizeFiltered'
-            Description = "Scan $ScanRoot with size filter ≥ 1 MiB"
-            Settings = @{
-                $SectionGeneral = @{
-                    FilteringSizeMinimum = '1'
-                    FilteringSizeUnits   = '2'   # MiB (0=B, 1=KiB, 2=MiB, 3=GiB)
-                }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-size.csv'))
-        }
+        New-ScanScenario 'ScanSizeFiltered' "Scan $ScanRoot with size filter ≥ 1 MiB" 'scan-size.csv' `
+            @{ FilteringSizeMinimum = '1'; FilteringSizeUnits = '2' } # MiB (0=B, 1=KiB, 2=MiB, 3=GiB)
 
         # 7. Age filter (recent files only). Touches the FILETIME cutoff branch.
-        @{
-            Name = 'ScanAgeFiltered'
-            Description = "Scan $ScanRoot with max-age 365 days"
-            Settings = @{
-                $SectionGeneral = @{ FilteringMaxAgeDays = '365' }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-age.csv'))
-        }
+        New-ScanScenario 'ScanAgeFiltered' "Scan $ScanRoot with max-age 365 days" 'scan-age.csv' `
+            @{ FilteringMaxAgeDays = '365' }
 
         # 8. Hidden / protected / unknown inclusion. Maximises file count.
-        @{
-            Name = 'ScanIncludeHiddenAndUnknown'
-            Description = "Scan including hidden/protected/unknown items"
-            Settings = @{
-                $SectionGeneral = @{
-                    ExcludeHiddenDirectory    = '0'
-                    ExcludeHiddenFile         = '0'
-                    ExcludeProtectedDirectory = '0'
-                    ExcludeProtectedFile      = '0'
-                    ShowUnknown               = '1'
-                    ShowFreeSpace             = '1'
-                }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-hidden.csv'))
+        New-ScanScenario 'ScanIncludeHiddenAndUnknown' `
+            "Scan including hidden/protected/unknown items" 'scan-hidden.csv' @{
+            ExcludeHiddenDirectory    = '0'
+            ExcludeHiddenFile         = '0'
+            ExcludeProtectedDirectory = '0'
+            ExcludeProtectedFile      = '0'
+            ShowUnknown               = '1'
+            ShowFreeSpace             = '1'
         }
 
         # 9. Single-threaded scan (covers the serial path / contention-free
         # branches).
-        @{
-            Name = 'ScanSingleThreaded'
-            Description = "Accelerated scan with ScanningThreads=1"
-            Settings = @{
-                $SectionGeneral = @{ ScanningThreads = '1' }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-1t.csv'))
-        }
+        New-ScanScenario 'ScanSingleThreaded' "Accelerated scan with ScanningThreads=1" 'scan-1t.csv' `
+            @{ ScanningThreads = '1' }
 
         # 10. Maxed-out worker pool (exercises the BlockingQueue contention
         # paths).
-        @{
-            Name = 'ScanManyThreaded'
-            Description = "Accelerated scan with ScanningThreads=8"
-            Settings = @{
-                $SectionGeneral = @{ ScanningThreads = '8' }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-8t.csv'))
-        }
+        New-ScanScenario 'ScanManyThreaded' "Accelerated scan with ScanningThreads=8" 'scan-8t.csv' `
+            @{ ScanningThreads = '8' }
 
         # 11. Hardlink processing disabled (alternate dedupe path during scan).
-        @{
-            Name = 'ScanNoHardlinks'
-            Description = "Scan with ProcessHardlinks=0 (skip hardlink dedupe)"
-            Settings = @{
-                $SectionGeneral = @{ ProcessHardlinks = '0' }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-nohl.csv'))
-        }
+        New-ScanScenario 'ScanNoHardlinks' `
+            "Scan with ProcessHardlinks=0 (skip hardlink dedupe)" 'scan-nohl.csv' @{ ProcessHardlinks = '0' }
 
         # 12. Backup/restore privileges off (slower file open path).
-        @{
-            Name = 'ScanNoBackupRestore'
-            Description = "Scan without UseBackupRestore privilege"
-            Settings = @{
-                $SectionGeneral = @{ UseBackupRestore = '0' }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-nobr.csv'))
-        }
+        New-ScanScenario 'ScanNoBackupRestore' `
+            "Scan without UseBackupRestore privilege" 'scan-nobr.csv' @{ UseBackupRestore = '0' }
 
         # 13. Reparse-following enabled (mount points / junctions). May add
         # extra subtrees on systems with mounted volumes.
-        @{
-            Name = 'ScanFollowReparse'
-            Description = "Scan with mount-point/junction following enabled"
-            Settings = @{
-                $SectionGeneral = @{
-                    ExcludeJunctions              = '0'
-                    ExcludeSymbolicLinksDirectory = '0'
-                    ExcludeVolumeMountPoints      = '0'
-                    FollowVolumeMountPoints       = '1'
-                }
-            }
-            Arguments = @($scanRootArg, '/saveto', (Join-Path $script:ArtifactDir 'scan-reparse.csv'))
+        New-ScanScenario 'ScanFollowReparse' `
+            "Scan with mount-point/junction following enabled" 'scan-reparse.csv' @{
+            ExcludeJunctions              = '0'
+            ExcludeSymbolicLinksDirectory = '0'
+            ExcludeVolumeMountPoints      = '0'
+            FollowVolumeMountPoints       = '1'
         }
 
         # 14. Duplicate scan of C:\Windows → JSON. Covers the current default
         # xxHash path plus dupe-tree construction.
-        @{
-            Name = 'DupeScanWindowsJson'
-            Description = "Duplicate scan of $DupeRoot (xxHash/default) → JSON"
-            Settings = @{
-                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.XXHASH }
-                $SectionDupeTree = @{ ScanForDuplicates = '1' }
-            }
-            Arguments = @($dupeRootArg, '/savedupesto', $dupeJson)
-        }
+        New-DupeScenario 'DupeScanWindowsJson' `
+            "Duplicate scan of $DupeRoot (xxHash/default) → JSON" 'dupes-windows.json' $script:HashAlgorithm.XXHASH
 
         # 15. SHA-512 goes through the BCrypt hashing pipeline and stores the
         # reduced 16-byte duplicate fingerprint.
-        @{
-            Name = 'DupeScanWindowsSha512Csv'
-            Description = "Duplicate scan of $DupeRoot (SHA-512) → CSV"
-            Settings = @{
-                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.SHA512 }
-                $SectionDupeTree = @{ ScanForDuplicates = '1' }
-            }
-            Arguments = @($dupeRootArg, '/savedupesto', $dupeSha512Csv)
-        }
+        New-DupeScenario 'DupeScanWindowsSha512Csv' `
+            "Duplicate scan of $DupeRoot (SHA-512) → CSV" 'dupes-windows-sha512.csv' $script:HashAlgorithm.SHA512
 
         # 16. Same dupe scan with the cheaper MD5 hash (different BCrypt
         # algorithm path in the hashing pipeline).
-        @{
-            Name = 'DupeScanWindowsMd5Csv'
-            Description = "Duplicate scan of $DupeRoot (MD5) → CSV"
-            Settings = @{
-                $SectionGeneral = @{ FileHashAlgorithm = [string] $script:HashAlgorithm.MD5 }
-                $SectionDupeTree = @{ ScanForDuplicates = '1' }
-            }
-            Arguments = @($dupeRootArg, '/savedupesto', $dupeCsv)
-        }
+        New-DupeScenario 'DupeScanWindowsMd5Csv' `
+            "Duplicate scan of $DupeRoot (MD5) → CSV" 'dupes-windows.csv' $script:HashAlgorithm.MD5
 
         # 17. Reload the CSV produced earlier. /loadfrom does not auto-exit,
         # so the launcher kills the process after a short settle.
-        @{
-            Name = 'LoadFromCsv'
-            Description = "Load CSV produced by ScanFastEngine (UI load path, killed after $LoadSettleSeconds s)"
-            Settings = @{}
-            Arguments = @('/loadfrom', $artifactCsv)
-            KillAfterSettle = $true
-            RequiresArtifact = $artifactCsv
-        }
+        New-LoadScenario 'LoadFromCsv' `
+            "Load CSV produced by ScanFastEngine (UI load path, killed after $LoadSettleSeconds s)" 'scan-fast.csv'
 
         # 18. Reload the JSON produced earlier (different parser path).
-        @{
-            Name = 'LoadFromJson'
-            Description = "Load JSON produced by ScanFastEngineJson (UI load path, killed after $LoadSettleSeconds s)"
-            Settings = @{}
-            Arguments = @('/loadfrom', $artifactJson)
-            KillAfterSettle = $true
-            RequiresArtifact = $artifactJson
-        }
+        New-LoadScenario 'LoadFromJson' `
+            "Load JSON produced by ScanFastEngineJson (UI load path, killed after $LoadSettleSeconds s)" 'scan-fast.json'
 
         # 19. Reload the dupe JSON. Touches the dupe-tree deserializer.
-        @{
-            Name = 'LoadDupeJson'
-            Description = "Load dupe JSON produced by DupeScanWindowsJson (killed after $LoadSettleSeconds s)"
-            Settings = @{}
-            Arguments = @('/loadfrom', $dupeJson)
-            KillAfterSettle = $true
-            RequiresArtifact = $dupeJson
-        }
+        New-LoadScenario 'LoadDupeJson' `
+            "Load dupe JSON produced by DupeScanWindowsJson (killed after $LoadSettleSeconds s)" 'dupes-windows.json'
     )
 }
 
