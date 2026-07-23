@@ -21,21 +21,10 @@
 
 static constexpr int MIN_LABEL_WIDTH = 40;
 static constexpr int MIN_LABEL_HEIGHT = 14;
-static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 static int ScaleMetric(const int value, const int rowHeight) noexcept
 {
     return std::max(1, ::MulDiv(value, rowHeight, CFlameGraph::ROW_HEIGHT));
-}
-
-static constexpr COLORREF DimColor(COLORREF rgb, float factor) noexcept
-{
-    factor = std::clamp(factor, 0.0f, 1.0f);
-    return RGB(
-        static_cast<BYTE>(GetRValue(rgb) * factor),
-        static_cast<BYTE>(GetGValue(rgb) * factor),
-        static_cast<BYTE>(GetBValue(rgb) * factor)
-    );
 }
 
 static COLORREF GetFlameDepthColor(int depth) noexcept
@@ -381,7 +370,6 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
 
     const DWORD rawColor = item->TmiGetGraphColor();
-    const DWORD colorFlags = rawColor & CTreeMap::COLORFLAG_MASK;
     COLORREF drawColor = rawColor & 0x00FFFFFF;
 
     if (drawColor == RGB(0, 0, 0) && item->IsTypeOrFlag(IT_DIRECTORY)
@@ -389,19 +377,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     {
         drawColor = GetFlameDepthColor(depth);
     }
-    else if (colorFlags == CTreeMap::COLORFLAG_DARKER)
-    {
-        drawColor = CColorSpace::MakeBrightColor(drawColor, PALETTE_BRIGHTNESS);
-        drawColor = DimColor(drawColor, 0.66f);
-    }
-    else if (colorFlags == CTreeMap::COLORFLAG_LIGHTER)
-    {
-        drawColor = CColorSpace::MakeBrightColor(drawColor, PALETTE_BRIGHTNESS);
-        drawColor = RGB(
-            std::min(255, GetRValue(drawColor) + 60),
-            std::min(255, GetGValue(drawColor) + 60),
-            std::min(255, GetBValue(drawColor) + 60));
-    }
+    else drawColor = CColorSpace::ApplyGraphColorFlags(rawColor);
 
     pdc->FillSolidRect(rc, drawColor);
 
@@ -410,7 +386,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     {
         // Reuse the process-wide DC brush instead of constructing a GDI brush
         // for every directory tile.
-        ::SetDCBrushColor(pdc->GetSafeHdc(), DimColor(drawColor, 0.6f));
+        ::SetDCBrushColor(pdc->GetSafeHdc(), CColorSpace::DimColor(drawColor, 0.6f));
         ::FrameRect(pdc->GetSafeHdc(), &rc,
             static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
     }
@@ -442,7 +418,7 @@ void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rec
     CRect fillRc = rc;
     fillRc.right -= separator;
     fillRc.bottom -= separator;
-    COLORREF color = DimColor(GetFlameDepthColor(depth), 0.35f);
+    COLORREF color = CColorSpace::DimColor(GetFlameDepthColor(depth), 0.35f);
     if (!fillRc.IsRectEmpty())
     {
         pdc->FillSolidRect(fillRc, color);

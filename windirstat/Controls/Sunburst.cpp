@@ -34,17 +34,6 @@ namespace
     constexpr double MIN_HIT_ARC = 2.0;
     constexpr double MAX_LABEL_SEAM_OVERFLOW = 12.0;
     constexpr int MAX_DEPTH = 64;
-    constexpr double PALETTE_BRIGHTNESS = 0.6;
-
-    constexpr COLORREF DimColor(const COLORREF rgb, float factor) noexcept
-    {
-        factor = std::clamp(factor, 0.0f, 1.0f);
-        return RGB(
-            static_cast<BYTE>(GetRValue(rgb) * factor),
-            static_cast<BYTE>(GetGValue(rgb) * factor),
-            static_cast<BYTE>(GetBValue(rgb) * factor));
-    }
-
     COLORREF ScaleColor(const COLORREF rgb, const double factor) noexcept
     {
         return RGB(
@@ -444,7 +433,6 @@ COLORREF CSunburst::GetItemColor(const LayoutEntry& entry) const
     if (entry.remainderSize != 0) return RGB(92, 96, 104);
 
     const DWORD rawColor = entry.item->TmiGetGraphColor();
-    const DWORD colorFlags = rawColor & CTreeMap::COLORFLAG_MASK;
     COLORREF color = rawColor & 0x00FFFFFF;
 
     if (color == RGB(0, 0, 0) && entry.item->IsTypeOrFlag(IT_DIRECTORY)
@@ -452,19 +440,7 @@ COLORREF CSunburst::GetItemColor(const LayoutEntry& entry) const
     {
         color = GetBranchColor(entry.branchColor, entry.depth);
     }
-    else if (colorFlags == CTreeMap::COLORFLAG_DARKER)
-    {
-        color = CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS);
-        color = DimColor(color, 0.66f);
-    }
-    else if (colorFlags == CTreeMap::COLORFLAG_LIGHTER)
-    {
-        color = CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS);
-        color = RGB(
-            std::min(255, GetRValue(color) + 60),
-            std::min(255, GetGValue(color) + 60),
-            std::min(255, GetBValue(color) + 60));
-    }
+    else color = CColorSpace::ApplyGraphColorFlags(rawColor);
 
     return color;
 }
@@ -478,7 +454,7 @@ void CSunburst::RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entr
     brush.SetColor(ToGdiColor(color));
     graphics.FillPath(&brush, &path);
 
-    separator.SetColor(ToGdiColor(DimColor(color, 0.42f)));
+    separator.SetColor(ToGdiColor(CColorSpace::DimColor(color, 0.42f)));
     graphics.DrawPath(&separator, &path);
 }
 

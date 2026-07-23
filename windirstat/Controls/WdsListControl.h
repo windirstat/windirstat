@@ -111,11 +111,7 @@ public:
     void ShowFullRowSelection(bool show);
     bool IsFullRowSelection() const;
 
-    COLORREF GetWindowColor() const;
-    COLORREF GetStripeColor() const;
     COLORREF GetHighlightColor() const;
-    COLORREF GetNonFocusHighlightColor() const;
-    COLORREF GetNonFocusHighlightTextColor() const;
     COLORREF GetHighlightTextColor() const;
 
     bool IsItemStripColor(int i) const;
@@ -125,17 +121,13 @@ public:
 
     CWdsListItem* GetItem(int i) const;
     int FindListItem(const CWdsListItem* item) const;
-    int GetTextXMargin() const;
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
     void LoadPersistentAttributes();
     bool HasFocus() const;
-    void AddExtendedStyle(DWORD exStyle);
-    void RemoveExtendedStyle(DWORD exStyle);
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
     void InsertListItem(int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
-    void ClearList();
 
     // Shadow CListCtrl methods for Owner Data management.
     // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
@@ -143,7 +135,6 @@ public:
     BOOL DeleteAllItems();
 
     // Sorting functionality
-    const SSorting& GetSorting() const;
     int ColumnToSubItem(int col) const;
     int SubItemToColumn(int subitem) const;
     bool IsColumnVisible(int subitem) const;

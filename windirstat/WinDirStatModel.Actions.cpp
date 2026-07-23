@@ -1032,9 +1032,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     CWaitCursor wc;
     StopScanningEngine();
 
-    // Stop permissions scanner since the tree is about to be modified
-    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
-
     // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
     for (const auto item : items)

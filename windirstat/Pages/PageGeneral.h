@@ -18,13 +18,12 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPageGeneral. "Settings" property page "General".
 //
-class CPageGeneral final : public CMFCPropertyPage
+class CPageGeneral final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
 
@@ -34,10 +33,8 @@ class CPageGeneral final : public CMFCPropertyPage
     ~CPageGeneral() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     BOOL m_useWindowsLocale = FALSE;
@@ -59,5 +56,4 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

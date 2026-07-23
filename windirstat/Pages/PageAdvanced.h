@@ -18,13 +18,12 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPageAdvanced. "Settings" property page "Advanced".
 //
-class CPageAdvanced final : public CMFCPropertyPage
+class CPageAdvanced final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageAdvanced)
 
@@ -34,10 +33,8 @@ class CPageAdvanced final : public CMFCPropertyPage
     ~CPageAdvanced() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     BOOL m_excludeJunctions = TRUE;
@@ -60,7 +57,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnEnChangeLargestFileCount();
     afx_msg void OnEnChangeFolderHistoryCount();
-    afx_msg void OnSettingChanged();
     afx_msg void OnBnClickedResetPreferences();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

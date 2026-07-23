@@ -18,13 +18,14 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 #include "ColorButton.h"
 #include "XYSlider.h"
 
 //
 // CPageTreeMap. "Settings" property page "TreeMap".
 //
-class CPageTreeMap final : public CMFCPropertyPage
+class CPageTreeMap final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageTreeMap)
 
@@ -42,7 +43,7 @@ protected:
     void ValuesAltered(bool altered = true);
 
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     CTreeMap::Options m_options{}; // Current options
@@ -86,5 +87,4 @@ protected:
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

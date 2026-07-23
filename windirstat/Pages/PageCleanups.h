@@ -18,11 +18,12 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public CMFCPropertyPage
+class CPageCleanups final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
 
@@ -33,7 +34,7 @@ class CPageCleanups final : public CMFCPropertyPage
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     void CurrentUdcToDialog();
@@ -87,5 +88,4 @@ protected:
     afx_msg void OnBnClickedUp();
     afx_msg void OnBnClickedDown();
     afx_msg void OnBnClickedHelpbutton();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

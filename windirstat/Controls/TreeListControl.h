@@ -76,7 +76,6 @@ public:
     bool IsVisible() const { return m_visualInfo.get() != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
-    void SetIndent(unsigned char indent) const;
     CRect GetPlusMinusRect() const;
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
@@ -102,7 +101,6 @@ class CTreeListControl : public CWdsListControl
     CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder);
     ~CTreeListControl() override = default;
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
-    void SysColorChanged() override;
     virtual void SetRootItem(CTreeListItem* root = nullptr);
     virtual void AfterDeleteAllItems() {}
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);

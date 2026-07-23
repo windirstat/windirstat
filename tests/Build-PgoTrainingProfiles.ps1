@@ -120,6 +120,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'ScriptSupport.ps1')
 
 # --- Constants -------------------------------------------------------------
 
@@ -131,63 +132,6 @@ $ScenarioStart = [DateTime]::UtcNow
 $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $HashAlgorithmHeaderPath = Join-Path $RepoRoot 'windirstat\HelpersTasks.h'
 $DefaultSearchMaxResults = 10000
-
-function Convert-CIntegerLiteral {
-    param([Parameter(Mandatory)] [string] $Value)
-
-    $trimmed = $Value.Trim()
-    if ($trimmed -match '^0[xX](?<hex>[0-9A-Fa-f]+)$') {
-        return [Convert]::ToInt32($Matches.hex, 16)
-    }
-    return [int] $trimmed
-}
-
-function Read-CSequentialEnum {
-    param(
-        [Parameter(Mandatory)] [string] $Path,
-        [Parameter(Mandatory)] [string] $EnumName
-    )
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Required header not found: $Path"
-    }
-
-    $text = [System.IO.File]::ReadAllText($Path)
-    $pattern = "enum\s+$([regex]::Escape($EnumName))\s*\{(?<body>.*?)\};"
-    $match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    if (-not $match.Success) {
-        throw "Enum '$EnumName' was not found in $Path"
-    }
-
-    $values = [ordered] @{}
-    $nextValue = 0
-    foreach ($rawLine in ($match.Groups['body'].Value -split '\r?\n')) {
-        $line = ($rawLine -replace '//.*$', '').Trim().TrimEnd(',')
-        if ([string]::IsNullOrWhiteSpace($line)) { continue }
-
-        if ($line -match '^(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+))?$') {
-            if ($Matches.ContainsKey('value') -and $Matches['value']) {
-                $nextValue = Convert-CIntegerLiteral $Matches['value']
-            }
-            $values[$Matches.name] = $nextValue
-            $nextValue++
-        }
-    }
-    return $values
-}
-
-function Get-RequiredMapValue {
-    param(
-        [Parameter(Mandatory)] [System.Collections.IDictionary] $Map,
-        [Parameter(Mandatory)] [string] $Name,
-        [Parameter(Mandatory)] [string] $Source
-    )
-
-    if (-not $Map.Contains($Name)) {
-        throw "Required symbol '$Name' was not found in $Source"
-    }
-    return [int] $Map[$Name]
-}
 
 $script:HashAlgorithmIds = Read-CSequentialEnum -Path $HashAlgorithmHeaderPath -EnumName 'HashAlgorithm'
 function Get-HashAlgorithmId {

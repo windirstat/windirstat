@@ -79,6 +79,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+. (Join-Path $PSScriptRoot 'ScriptSupport.ps1')
 
 # =============================================================================
 # CONSTANTS & GLOBAL STATE
@@ -88,79 +89,6 @@ $RepoRoot                = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoo
 $ResourceHeaderPath      = Join-Path $RepoRoot 'windirstat\resource.h'
 $MainResourceScriptPath  = Join-Path $RepoRoot 'windirstat\windirstat.rc'
 $HashAlgorithmHeaderPath = Join-Path $RepoRoot 'windirstat\HelpersTasks.h'
-
-function Convert-CIntegerLiteral {
-    param([Parameter(Mandatory)] [string] $Value)
-
-    $trimmed = $Value.Trim()
-    if ($trimmed -match '^0[xX](?<hex>[0-9A-Fa-f]+)$') {
-        return [Convert]::ToInt32($Matches.hex, 16)
-    }
-    return [int] $trimmed
-}
-
-function Read-CHeaderNumericDefines {
-    param([Parameter(Mandatory)] [string] $Path)
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Required header not found: $Path"
-    }
-
-    $defines = [ordered] @{}
-    foreach ($line in [System.IO.File]::ReadLines($Path)) {
-        if ($line -match '^\s*#define\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s+(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+)\b') {
-            $defines[$Matches.name] = Convert-CIntegerLiteral $Matches.value
-        }
-    }
-    return $defines
-}
-
-function Read-CSequentialEnum {
-    param(
-        [Parameter(Mandatory)] [string] $Path,
-        [Parameter(Mandatory)] [string] $EnumName
-    )
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Required header not found: $Path"
-    }
-
-    $text = [System.IO.File]::ReadAllText($Path)
-    $pattern = "enum\s+$([regex]::Escape($EnumName))\s*\{(?<body>.*?)\};"
-    $match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    if (-not $match.Success) {
-        throw "Enum '$EnumName' was not found in $Path"
-    }
-
-    $values = [ordered] @{}
-    $nextValue = 0
-    foreach ($rawLine in ($match.Groups['body'].Value -split '\r?\n')) {
-        $line = ($rawLine -replace '//.*$', '').Trim().TrimEnd(',')
-        if ([string]::IsNullOrWhiteSpace($line)) { continue }
-
-        if ($line -match '^(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+))?$') {
-            if ($Matches.ContainsKey('value') -and $Matches['value']) {
-                $nextValue = Convert-CIntegerLiteral $Matches['value']
-            }
-            $values[$Matches.name] = $nextValue
-            $nextValue++
-        }
-    }
-    return $values
-}
-
-function Get-RequiredMapValue {
-    param(
-        [Parameter(Mandatory)] [System.Collections.IDictionary] $Map,
-        [Parameter(Mandatory)] [string] $Name,
-        [Parameter(Mandatory)] [string] $Source
-    )
-
-    if (-not $Map.Contains($Name)) {
-        throw "Required symbol '$Name' was not found in $Source"
-    }
-    return [int] $Map[$Name]
-}
 
 $script:ResourceIds      = Read-CHeaderNumericDefines -Path $ResourceHeaderPath
 $script:HashAlgorithmIds = Read-CSequentialEnum -Path $HashAlgorithmHeaderPath -EnumName 'HashAlgorithm'
@@ -321,17 +249,6 @@ function Get-StatusSymbol {
 # =============================================================================
 # OUTPUT HELPERS
 # =============================================================================
-
-function Write-ColoredLine {
-    param([string] $Message, [ConsoleColor] $Color = [ConsoleColor]::Gray)
-    Write-Host $Message -ForegroundColor $Color
-}
-
-function Write-LabelValue {
-    param([string] $Label, [AllowNull()] $Value, [ConsoleColor] $ValueColor = [ConsoleColor]::Gray)
-    Write-Host -NoNewline "${Label}: " -ForegroundColor DarkCyan
-    Write-Host $Value -ForegroundColor $ValueColor
-}
 
 function Write-SymbolCell {
     param([string] $Text, [int] $Width, [ConsoleColor] $Color = [ConsoleColor]::Gray)
@@ -506,21 +423,279 @@ function Assert-SetEqual {
     }
 }
 
-# Run a scenario body (shared by the settings & reparse suites).  Each check the
-# body performs registers globally; this wrapper prints a header, traps a hard
-# failure, and reports per-scenario failure detail.
-function Invoke-CheckScenario {
-    param([string] $Name, [string] $Behavior, [scriptblock] $Body)
+# Run and report scenario-style tests consistently. Filtering scenarios carry
+# path-comparison fields, while the settings and reparse suites use check counts.
+function Invoke-Scenario {
+    [CmdletBinding(DefaultParameterSetName = 'Checks')]
+    param(
+        [Parameter(Mandatory, ParameterSetName = 'Checks')] [string] $Name,
+        [Parameter(Mandatory, ParameterSetName = 'Checks')] [string] $Behavior,
+        [Parameter(Mandatory, ParameterSetName = 'Checks')] [scriptblock] $Body,
+        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [pscustomobject] $Scenario,
+        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [string] $Exe,
+        [Parameter(Mandatory, ParameterSetName = 'Filtering')] [string] $Root
+    )
 
-    Write-GroupHeader $Name
-    if ($Details -and $Behavior) { Write-ColoredLine "    $Behavior" DarkGray }
+    if ($PSCmdlet.ParameterSetName -eq 'Filtering') {
+        $safeName = $Scenario.Name -replace '[^A-Za-z0-9_.-]', '_'
+        $scenarioRoot = Join-Path $workRoot $safeName
+        $scenarioIni = Join-Path $scenarioRoot 'WinDirStat.ini'
+        $runnerIni = Join-Path $runRoot 'WinDirStat.ini'
+        $scenarioCsv = Join-Path $scenarioRoot 'results.csv'
+        New-Item -ItemType Directory -Force -Path $scenarioRoot | Out-Null
 
-    $ctx = New-CheckContext -Group $Name
+        $actualRows = @()
+        $missingRows = @()
+        $unexpectedRows = @()
+        $duplicateRows = @()
+        $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$Root`""
+        $exitCode = $null
+        $elapsedSeconds = $null
+        $errorText = $null
+
+        try {
+            Write-FilterScenarioIni -Path $scenarioIni -Scenario $Scenario
+            Copy-Item -LiteralPath $scenarioIni -Destination $runnerIni -Force
+            if (Test-Path -LiteralPath $scenarioCsv) {
+                Remove-Item -LiteralPath $scenarioCsv -Force
+            }
+
+            $scan = Invoke-WinDirStatCsv -Exe $Exe -Csv $scenarioCsv -Root $Root
+            $commandLine = $scan.CommandLine
+            $exitCode = $scan.ExitCode
+            $elapsedSeconds = $scan.ElapsedSeconds
+
+            $actualRows = @(Read-CsvPaths $scenarioCsv)
+            $missingRows = Get-SetDifference -Left $Scenario.ExpectedRows -Right $actualRows
+            $unexpectedRows = Get-SetDifference -Left $actualRows -Right $Scenario.ExpectedRows
+            $duplicateRows = @($actualRows |
+                Group-Object |
+                Where-Object Count -gt 1 |
+                ForEach-Object { "$($_.Name) ($($_.Count)x)" })
+        }
+        catch {
+            $errorText = $_.Exception.Message
+            $missingRows = @($Scenario.ExpectedRows)
+        }
+
+        $status = if (!$errorText -and
+                     @($missingRows).Count -eq 0 -and
+                     @($unexpectedRows).Count -eq 0 -and
+                     @($duplicateRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
+
+        return [pscustomobject] @{
+            Name = $Scenario.Name
+            Status = $status
+            CommandLine = $commandLine
+            UseRegex = $Scenario.UseRegex
+            SizeMinimum = $Scenario.SizeMinimum
+            SizeUnits = $Scenario.SizeUnits
+            MaxAgeDays = $Scenario.MaxAgeDays
+            ScanEngine = $Scenario.ScanEngine
+            IncludeDirs = @($Scenario.IncludeDirs)
+            ExcludeDirs = @($Scenario.ExcludeDirs)
+            IncludeFiles = @($Scenario.IncludeFiles)
+            ExcludeFiles = @($Scenario.ExcludeFiles)
+            ExpectedBehavior = $Scenario.ExpectedBehavior
+            ExpectedRows = @($Scenario.ExpectedRows)
+            AllRows = @($Scenario.AllRows)
+            ActualRows = @($actualRows)
+            MissingRows = @($missingRows)
+            UnexpectedRows = @($unexpectedRows)
+            DuplicateRows = @($duplicateRows)
+            ExitCode = $exitCode
+            ElapsedSeconds = $elapsedSeconds
+            Error = $errorText
+            ScanRoot = $Root
+            CsvPath = $scenarioCsv
+            IniPath = $scenarioIni
+        }
+    }
+
+    $context = New-CheckContext -Group $Name
+    $commandLine = ''
+    $elapsed = $null
+    $errorText = $null
+
     try {
-        & $Body $ctx | Out-Null
+        $output = & $Body $context
+        if ($output -and $output.PSObject.Properties.Name -contains 'CommandLine') {
+            $commandLine = $output.CommandLine
+        }
+        if ($output -and $output.PSObject.Properties.Name -contains 'ElapsedSeconds') {
+            $elapsed = $output.ElapsedSeconds
+        }
     }
     catch {
-        Add-Failure -Context $ctx -Message $_.Exception.Message
+        $errorText = $_.Exception.Message
+        Add-Failure -Context $context -Message $errorText
+    }
+
+    $status = if ($context.Failures.Count -gt 0) { 'FAIL' }
+              elseif ($context.Warnings.Count -gt 0) { 'WARN' }
+              else { 'PASS' }
+
+    [pscustomobject] @{
+        Name = $Name
+        Status = $status
+        Behavior = $Behavior
+        Checks = $context.Count
+        Failures = @($context.Failures)
+        Warnings = @($context.Warnings)
+        CommandLine = $commandLine
+        ElapsedSeconds = $elapsed
+        Error = $errorText
+    }
+}
+
+function Write-SuiteResultsTable {
+    param([Parameter(Mandatory)] [pscustomobject[]] $Results)
+
+    $isFiltering = $Results.Count -gt 0 -and $null -ne $Results[0].PSObject.Properties['ExpectedRows']
+    $scenarioWidth = [Math]::Max(
+        8,
+        @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+    )
+    $scenarioWidth = [Math]::Min($scenarioWidth, $(if ($isFiltering) { 62 } else { 66 }))
+    $columns = @(
+        [pscustomobject] @{ Label = 'Status'; Width = 6; Value = { param($result) $result.Status } }
+        [pscustomobject] @{
+            Label = 'Scenario'
+            Width = $scenarioWidth
+            Value = {
+                param($result)
+                if ($result.Name.Length -le $scenarioWidth) { return $result.Name }
+                $result.Name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
+            }
+        }
+    )
+
+    if ($isFiltering) {
+        $columns += [pscustomobject] @{
+            Label = 'Mode'
+            Width = 13
+            Value = {
+                param($result)
+                "$(if ($result.UseRegex) { 'regex' } else { 'glob' })-" +
+                    "$(if ($result.ScanEngine -eq 1) { 'fast' } else { 'basic' })"
+            }
+        }
+        $columns += [pscustomobject] @{
+            Label = 'Rows'
+            Width = 13
+            Value = { param($result) "$(@($result.ActualRows).Count)/$(@($result.ExpectedRows).Count)" }
+        }
+    }
+    else {
+        $columns += [pscustomobject] @{
+            Label = 'Checks'
+            Width = 8
+            Value = { param($result) [string] $result.Checks }
+        }
+    }
+    $columns += [pscustomobject] @{
+        Label = 'Elapsed'
+        Width = 8
+        Value = {
+            param($result)
+            if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
+        }
+    }
+
+    Write-ColoredLine 'Scenario results:' DarkCyan
+    Write-Host -NoNewline '  '
+    for ($i = 0; $i -lt $columns.Count; $i++) {
+        if ($i -gt 0) { Write-Host -NoNewline '  ' }
+        Write-SymbolCell $columns[$i].Label $columns[$i].Width DarkCyan
+    }
+    Write-Host ''
+
+    $separatorWidth = ($columns | Measure-Object -Property Width -Sum).Sum + (2 * ($columns.Count - 1))
+    Write-Host -NoNewline '  '
+    Write-ColoredLine (''.PadRight($separatorWidth, '-')) DarkGray
+
+    foreach ($result in $Results) {
+        Write-Host -NoNewline '  '
+        for ($i = 0; $i -lt $columns.Count; $i++) {
+            if ($i -gt 0) { Write-Host -NoNewline '  ' }
+            $value = & $columns[$i].Value $result
+            $color = if ($i -eq 0) { Get-StatusColor $result.Status } else { 'Gray' }
+            Write-SymbolCell ([string] $value) $columns[$i].Width $color
+        }
+        Write-Host ''
+    }
+}
+
+function Write-ScenarioSummary {
+    param([Parameter(Mandatory)] [pscustomobject] $Result)
+
+    $statusColor = Get-StatusColor $Result.Status
+    $isFiltering = $null -ne $Result.PSObject.Properties['ExpectedRows']
+    if ($isFiltering) {
+        $actualBehavior = if ($Result.Error) {
+            "Scan failed before validation completed: $($Result.Error)"
+        }
+        elseif (@($Result.MissingRows).Count -eq 0 -and
+                @($Result.UnexpectedRows).Count -eq 0 -and
+                @($Result.DuplicateRows).Count -eq 0) {
+            'CSV output matched the expected paths exactly.'
+        }
+        else {
+            'CSV output differed from expectation: {0} missing path(s), {1} unexpected path(s), ' +
+                '{2} duplicated path(s).' -f @($Result.MissingRows).Count,
+                @($Result.UnexpectedRows).Count,
+                @($Result.DuplicateRows).Count
+        }
+
+        $filterMode = if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' }
+        $scanMode = if ($Result.ScanEngine -eq 1) { 'fast engine' } else { 'basic engine' }
+        Write-Host ''
+        Write-ColoredLine "=== $($Result.Name) ===" Cyan
+        Write-LabelValue 'Result' $Result.Status $statusColor
+        Write-LabelValue 'Command' $Result.CommandLine
+        Write-LabelValue 'Test base' $Result.ScanRoot
+        Write-LabelValue 'Mode' "$filterMode, $scanMode"
+        Write-LabelValue 'Size minimum' "$($Result.SizeMinimum) unit index $($Result.SizeUnits)"
+        Write-LabelValue 'Maximum age' "$($Result.MaxAgeDays) day(s)"
+        Format-ListBlock 'Input include directories' $Result.IncludeDirs
+        Format-ListBlock 'Input exclude directories' $Result.ExcludeDirs
+        Format-ListBlock 'Input include files' $Result.IncludeFiles
+        Format-ListBlock 'Input exclude files' $Result.ExcludeFiles
+        Write-LabelValue 'Expected behavior' $Result.ExpectedBehavior
+        Write-LabelValue 'Actual behavior' $actualBehavior $statusColor
+        Write-PathVerificationTable $Result
+        if (@($Result.MissingRows).Count -gt 0) { Format-ListBlock 'Missing expected paths' $Result.MissingRows }
+        if (@($Result.UnexpectedRows).Count -gt 0) { Format-ListBlock 'Unexpected actual paths' $Result.UnexpectedRows }
+        if (@($Result.DuplicateRows).Count -gt 0) { Format-ListBlock 'Duplicated actual paths' $Result.DuplicateRows }
+        if ($Result.Error) {
+            Write-LabelValue 'Error' $Result.Error Red
+        }
+        else {
+            Write-LabelValue 'Exit code' $Result.ExitCode
+            Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds
+        }
+        return
+    }
+
+    $symbol = switch ($Result.Status) {
+        'PASS' { $symbolPass }
+        'WARN' { $symbolWarn }
+        default { $symbolFail }
+    }
+    Write-Host ''
+    Write-ColoredLine "=== $symbol $($Result.Name) ===" Cyan
+    Write-LabelValue 'Result' $Result.Status $statusColor
+    Write-LabelValue 'Expected behavior' $Result.Behavior
+    Write-LabelValue 'Checks' $Result.Checks
+    if ($Result.CommandLine) { Write-LabelValue 'Command' $Result.CommandLine }
+    if ($null -ne $Result.ElapsedSeconds) { Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds }
+    if ($Result.Failures.Count -gt 0) {
+        Write-ColoredLine 'Failures:' Red
+        foreach ($failure in $Result.Failures) { Write-ColoredLine "  - $failure" Red }
+    }
+    if ($Result.Warnings.Count -gt 0) {
+        Write-ColoredLine 'Warnings:' Yellow
+        foreach ($warning in $Result.Warnings) { Write-ColoredLine "  - $warning" Yellow }
     }
 }
 
@@ -745,6 +920,36 @@ function Set-IniValue {
     param([System.Collections.Specialized.OrderedDictionary] $Sections, [string] $Section, [string] $Name, [AllowNull()] $Value)
     if (!$Sections.Contains($Section)) { $Sections[$Section] = [ordered]@{} }
     $Sections[$Section][$Name] = $Value
+}
+
+function New-BaseIniSections {
+    param([switch] $ReparseDefaults, [switch] $BasicScanEngine)
+
+    $options = [ordered] @{
+        LanguageId = 9
+        UseFastScanEngine = if ($ReparseDefaults -and !$BasicScanEngine) { 1 } else { 0 }
+        UseBackupRestore = 0
+        ShowElevationPrompt = 0
+        AutoElevate = 0
+        ShowFreeSpace = 0
+        ShowUnknown = 0
+        ProcessHardlinks = 0
+    }
+    if ($ReparseDefaults) {
+        $options.ExcludeJunctions = 1
+        $options.ExcludeSymbolicLinksDirectory = 1
+        $options.ExcludeSymbolicLinksFile = 1
+        $options.ExcludeVolumeMountPoints = 1
+        $options.FollowVolumeMountPoints = 0
+    }
+
+    $sections = [ordered] @{
+        Options = $options
+        DriveSelect = [ordered] @{}
+        DupeView = [ordered] @{ ScanForDuplicates = 0 }
+    }
+    if (!$ReparseDefaults) { $sections.SearchView = [ordered] @{} }
+    $sections
 }
 
 # =============================================================================
@@ -6553,6 +6758,56 @@ function New-FileOpsVerifyRoot {
 
 }
 
+function Invoke-VerifiedFileOperation {
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [string] $Group,
+        [string[]] $Files,
+        [string] $SelectionPassName,
+        [string] $SelectionSkipName,
+        [string] $SelectionSkipDetail,
+        [string] $Leaf,
+        [string] $MenuFailureName,
+        [string] $DisabledDetail,
+        [string] $MissingDetail,
+        [scriptblock] $Verify,
+        [string] $ContentName,
+        [string] $ContentFailureDetail,
+        [string] $Submenu
+    )
+
+    if (!(Select-TreeFiles -Window $Window -FullPaths $Files)) {
+        Assert-Skip $Group $SelectionSkipName $SelectionSkipDetail
+        return
+    }
+
+    Assert-Pass $Group $SelectionPassName
+    $hashes = @{}
+    foreach ($file in $Files) { $hashes[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }
+
+    $menuArgs = @{ Window = $Window; LeafName = $Leaf }
+    if ($Submenu) { $menuArgs.SubmenuName = $Submenu }
+    $result = Invoke-CleanUpMenuItem @menuArgs
+    if ($result -ne $true) {
+        $detail = if ($result -eq 'disabled') { $DisabledDetail } else { $MissingDetail }
+        Assert-Fail $Group $MenuFailureName $detail
+        return
+    }
+
+    Wait-OpComplete -Window $Window
+    & $Verify $Files
+    $changed = @($Files | Where-Object {
+        (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $hashes[$_]
+    })
+    if ($changed.Count -eq 0) {
+        Assert-Pass $Group $ContentName
+        return
+    }
+
+    $detail = $ContentFailureDetail ? $ContentFailureDetail : ($changed -join ', ')
+    Assert-Fail $Group $ContentName $detail
+}
+
 function Test-CompressionOps {
     param([System.Windows.Automation.AutomationElement] $Window, [string] $ScanRoot)
     Write-GroupHeader 'File Op: Compression (LZNT1 / WOF / None)'
@@ -6563,56 +6818,64 @@ function Test-CompressionOps {
     # volume can actually do, and skips the rest with an accurate reason.
     $cap = Get-VolumeCompressionSupport -Path $dir
     if (-not $cap.Standard -and -not $cap.Modern) {
-        Assert-Skip $g 'Compression operations' "Volume ($($cap.FileSystem)) supports neither standard (LZNT1) nor WOF compression"
+        Assert-Skip $g 'Compression operations' (
+            "Volume ($($cap.FileSystem)) supports neither standard (LZNT1) nor WOF compression"
+        )
         return
     }
-    if ($Details) { Write-ColoredLine "    Volume compression support: standard/LZNT1=$($cap.Standard), modern/WOF=$($cap.Modern), fs=$($cap.FileSystem)" DarkGray }
+    if ($Details) {
+        Write-ColoredLine (
+            "    Volume compression support: standard/LZNT1=$($cap.Standard), " +
+            "modern/WOF=$($cap.Modern), fs=$($cap.FileSystem)"
+        ) DarkGray
+    }
 
     # Apply a compression choice to the selected file(s) via the Clean Up menu and
-    # verify the resulting on-disk state. $Kind = 'lznt1' or a WOF key (XPRESS4K/…).
-    $applyAndVerify = {
-        param([string] $Label, [string[]] $Files, [string] $Leaf, [string] $Kind)
-        if (-not (Select-TreeFiles -Window $Window -FullPaths $Files)) {
-            Assert-Skip $g "$Label selection" "$(@($Files | ForEach-Object { Split-Path -Leaf $_ }) -join ', ') not found as UIA tree row(s)"
-            return
-        }
-        Assert-Pass $g "${Label}: $($Files.Count) file(s) selected"
-        $beforeHashes = @{}
-        foreach ($file in $Files) {
-            $beforeHashes[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
-        }
-        $r = Invoke-CleanUpMenuItem -Window $Window -SubmenuName 'Compress' -LeafName $Leaf
-        if ($r -ne $true) {
-            $why = if ($r -eq 'disabled') { "WinDirStat disabled Compress > $Leaf for this selection/volume" } else { "Compress > $Leaf not found in menu" }
-            Assert-Fail $g "$Label apply" $why
-            return
-        }
-        Wait-OpComplete -Window $Window
+    # verify the resulting on-disk state. Kind is 'lznt1' or a WOF key (XPRESS4K/…).
+    $verifyCompression = {
+        param([string[]] $Files, [string] $Label, [string] $Kind)
+
         if ($Kind -eq 'lznt1') {
             $bad = @($Files | Where-Object { -not (Get-FileCompressedAttr -Path $_) })
-            if ($bad.Count -eq 0) { Assert-Pass $g "${Label}: FILE_ATTRIBUTE_COMPRESSED set on all $($Files.Count) file(s) (verified on disk)" }
-            else { Assert-Fail $g "$Label sets COMPRESSED attribute" "Not compressed: $($bad -join ', ')" }
-        }
-        else {
-            $expAlg = $script:WofAlg[$Kind]
-            $bad = @($Files | Where-Object { (Get-FileWofAlgorithm -Path $_) -ne $expAlg })
             if ($bad.Count -eq 0) {
-                Assert-Pass $g "${Label}: WOF $Kind backing (algorithm $expAlg) on all $($Files.Count) file(s) (verified on disk)"
-                $wofNoAttr = @($Files | Where-Object { Get-FileCompressedAttr -Path $_ })
-                if ($wofNoAttr.Count -eq 0) { Assert-Pass $g "${Label}: WOF does not set the native COMPRESSED attribute (as expected)" }
-                else { Assert-Warn $g "$Label COMPRESSED attribute" 'WOF unexpectedly set FILE_ATTRIBUTE_COMPRESSED' }
+                Assert-Pass $g (
+                    "${Label}: FILE_ATTRIBUTE_COMPRESSED set on all $($Files.Count) file(s) (verified on disk)"
+                )
             }
-            else { Assert-Fail $g "$Label sets WOF backing" "Wrong/absent WOF algorithm on: $($bad -join ', ')" }
+            else { Assert-Fail $g "$Label sets COMPRESSED attribute" "Not compressed: $($bad -join ', ')" }
+            return
         }
-        $contentChanged = @($Files | Where-Object {
-            (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $beforeHashes[$_]
-        })
-        if ($contentChanged.Count -eq 0) {
-            Assert-Pass $g "${Label}: file contents unchanged"
+
+        $expectedAlgorithm = $script:WofAlg[$Kind]
+        $bad = @($Files | Where-Object { (Get-FileWofAlgorithm -Path $_) -ne $expectedAlgorithm })
+        if ($bad.Count -gt 0) {
+            Assert-Fail $g "$Label sets WOF backing" "Wrong/absent WOF algorithm on: $($bad -join ', ')"
+            return
         }
-        else {
-            Assert-Fail $g "${Label}: file contents unchanged" ($contentChanged -join ', ')
+
+        Assert-Pass $g (
+            "${Label}: WOF $Kind backing (algorithm $expectedAlgorithm) on all $($Files.Count) file(s) (verified on disk)"
+        )
+        $wofWithAttribute = @($Files | Where-Object { Get-FileCompressedAttr -Path $_ })
+        if ($wofWithAttribute.Count -eq 0) {
+            Assert-Pass $g "${Label}: WOF does not set the native COMPRESSED attribute (as expected)"
         }
+        else { Assert-Warn $g "$Label COMPRESSED attribute" 'WOF unexpectedly set FILE_ATTRIBUTE_COMPRESSED' }
+    }
+
+    $applyAndVerify = {
+        param([string] $Label, [string[]] $Files, [string] $Leaf, [string] $Kind)
+
+        $selectionDetail = (
+            "$(@($Files | ForEach-Object { Split-Path -Leaf $_ }) -join ', ') not found as UIA tree row(s)"
+        )
+        Invoke-VerifiedFileOperation -Window $Window -Group $g -Files $Files `
+            -SelectionPassName "${Label}: $($Files.Count) file(s) selected" -SelectionSkipName "$Label selection" `
+            -SelectionSkipDetail $selectionDetail -Submenu 'Compress' -Leaf $Leaf -MenuFailureName "$Label apply" `
+            -DisabledDetail "WinDirStat disabled Compress > $Leaf for this selection/volume" `
+            -MissingDetail "Compress > $Leaf not found in menu" `
+            -Verify { param($selected) & $verifyCompression $selected $Label $Kind } `
+            -ContentName "${Label}: file contents unchanged"
     }
 
     # -- LZNT1 (standard NTFS) on single + multiple selections --------------------
@@ -6679,60 +6942,52 @@ function Test-SparsifyOps {
     $g = 'OpSparse'
     $dir = Join-Path $ScanRoot 'sparse'
 
-    # -- Single selection ---------------------------------------------------------
-    $single = Join-Path $dir 's_single.bin'
-    if (Select-TreeFiles -Window $Window -FullPaths @($single)) {
-        Assert-Pass $g 'Single file selected for sparsify'
-        $singleHashBefore = (Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash
-        $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Sparsify'
-        if ($r -eq $true) {
-            Wait-OpComplete -Window $Window
-            $logical = (Get-Item -LiteralPath $single).Length
-            $alloc = Get-FileAllocatedSize -Path $single
-            if ((Get-FileSparseAttr -Path $single) -and $alloc -lt $logical) {
-                Assert-Pass $g "Sparsify single: SPARSE_FILE set, allocated $alloc < logical $logical (verified on disk)"
+    $verify = {
+        param([string[]] $Files)
+
+        if ($Files.Count -eq 1) {
+            $file = $Files[0]
+            $logical = (Get-Item -LiteralPath $file).Length
+            $allocated = Get-FileAllocatedSize -Path $file
+            if ((Get-FileSparseAttr -Path $file) -and $allocated -lt $logical) {
+                Assert-Pass $g (
+                    "Sparsify single: SPARSE_FILE set, allocated $allocated < logical $logical (verified on disk)"
+                )
             }
-            elseif (Get-FileSparseAttr -Path $single) {
-                Assert-Fail $g 'Sparsify single allocated < logical' "SPARSE set but allocated=$alloc logical=$logical"
+            elseif (Get-FileSparseAttr -Path $file) {
+                Assert-Fail $g 'Sparsify single allocated < logical' (
+                    "SPARSE set but allocated=$allocated logical=$logical"
+                )
             }
             else {
-                Assert-Fail $g 'Sparsify single sets SPARSE_FILE attribute' "Attribute not set on $single"
+                Assert-Fail $g 'Sparsify single sets SPARSE_FILE attribute' "Attribute not set on $file"
             }
-            if ((Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash -ceq $singleHashBefore) {
-                Assert-Pass $g 'Sparsify single preserves file contents'
-            }
-            else { Assert-Fail $g 'Sparsify single preserves file contents' 'SHA-256 changed' }
+            return
         }
-        elseif ($r -eq 'disabled') { Assert-Fail $g 'Sparsify menu item' 'Item present but disabled for a valid file selection' }
-        else { Assert-Fail $g 'Sparsify menu item' 'Sparsify File not found in Clean Up menu' }
-    }
-    else { Assert-Skip $g 'Single file selection for sparsify' 's_single.bin not found as a UIA tree row' }
 
-    # -- Multiple selection -------------------------------------------------------
-    $multi = @((Join-Path $dir 's_multi_1.bin'), (Join-Path $dir 's_multi_2.bin'))
-    if (Select-TreeFiles -Window $Window -FullPaths $multi) {
-        Assert-Pass $g 'Two files selected for sparsify (multi-selection)'
-        $multiHashesBefore = @{}
-        foreach ($file in $multi) { $multiHashesBefore[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }
-        $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Sparsify'
-        if ($r -eq $true) {
-            Wait-OpComplete -Window $Window
-            $bad = @($multi | Where-Object { !(Get-FileSparseAttr -Path $_) })
-            if ($bad.Count -eq 0) {
-                Assert-Pass $g 'Sparsify multi: SPARSE_FILE set on both selected files (verified on disk)'
-            } else {
-                Assert-Fail $g 'Sparsify multi sets SPARSE on all selected' "Not sparse: $($bad -join ', ')"
-            }
-            $changed = @($multi | Where-Object {
-                (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $multiHashesBefore[$_]
-            })
-            if ($changed.Count -eq 0) { Assert-Pass $g 'Sparsify multi preserves all file contents' }
-            else { Assert-Fail $g 'Sparsify multi preserves all file contents' ($changed -join ', ') }
+        $bad = @($Files | Where-Object { !(Get-FileSparseAttr -Path $_) })
+        if ($bad.Count -eq 0) {
+            Assert-Pass $g 'Sparsify multi: SPARSE_FILE set on both selected files (verified on disk)'
         }
-        elseif ($r -eq 'disabled') { Assert-Fail $g 'Sparsify multi' 'Menu item disabled for a valid multi-selection' }
-        else { Assert-Fail $g 'Sparsify multi' 'Menu item not found' }
+        else {
+            Assert-Fail $g 'Sparsify multi sets SPARSE on all selected' "Not sparse: $($bad -join ', ')"
+        }
     }
-    else { Assert-Skip $g 'Multi file selection for sparsify' 's_multi_*.bin not found as UIA tree rows' }
+
+    Invoke-VerifiedFileOperation -Window $Window -Group $g -Files @((Join-Path $dir 's_single.bin')) `
+        -SelectionPassName 'Single file selected for sparsify' -SelectionSkipName 'Single file selection for sparsify' `
+        -SelectionSkipDetail 's_single.bin not found as a UIA tree row' -Leaf 'Sparsify' `
+        -MenuFailureName 'Sparsify menu item' -DisabledDetail 'Item present but disabled for a valid file selection' `
+        -MissingDetail 'Sparsify File not found in Clean Up menu' -Verify $verify `
+        -ContentName 'Sparsify single preserves file contents' -ContentFailureDetail 'SHA-256 changed'
+
+    $multi = @((Join-Path $dir 's_multi_1.bin'), (Join-Path $dir 's_multi_2.bin'))
+    Invoke-VerifiedFileOperation -Window $Window -Group $g -Files $multi `
+        -SelectionPassName 'Two files selected for sparsify (multi-selection)' `
+        -SelectionSkipName 'Multi file selection for sparsify' `
+        -SelectionSkipDetail 's_multi_*.bin not found as UIA tree rows' -Leaf 'Sparsify' `
+        -MenuFailureName 'Sparsify multi' -DisabledDetail 'Menu item disabled for a valid multi-selection' `
+        -MissingDetail 'Menu item not found' -Verify $verify -ContentName 'Sparsify multi preserves all file contents'
 }
 
 function Test-MotwOps {
@@ -6741,31 +6996,44 @@ function Test-MotwOps {
     $g = 'OpMotw'
     $dir = Join-Path $ScanRoot 'motw'
 
+    $verify = {
+        param([string[]] $Files)
+
+        if ($Files.Count -eq 1) {
+            $file = $Files[0]
+            if (!(Test-MarkOfWebPresent -Path $file)) {
+                Assert-Pass $g "MOTW single: :Zone.Identifier removed from $(Split-Path -Leaf $file) (verified on disk)"
+            }
+            else { Assert-Fail $g 'MOTW single removes Zone.Identifier' "Stream still present on $file" }
+            return
+        }
+
+        $bad = @($Files | Where-Object { Test-MarkOfWebPresent -Path $_ })
+        if ($bad.Count -eq 0) {
+            Assert-Pass $g 'MOTW multi: :Zone.Identifier removed from both selected files (verified on disk)'
+        }
+        else {
+            Assert-Fail $g 'MOTW multi removes Zone.Identifier from all selected' (
+                "Stream remains on: $($bad -join ', ')"
+            )
+        }
+    }
+
     # -- Single selection ---------------------------------------------------------
     $single = Join-Path $dir 'm_single.txt'
     if (!(Test-MarkOfWebPresent -Path $single)) {
         Assert-Skip $g 'MOTW single precondition' 'Zone.Identifier stream missing before test (ADS unsupported on volume?)'
     }
-    elseif (Select-TreeFiles -Window $Window -FullPaths @($single)) {
-        Assert-Pass $g 'Single file selected for MOTW removal (Zone.Identifier present)'
-        $singleHashBefore = (Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash
-        $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Mark-Of-The-Web'
-        if ($r -eq $true) {
-            Wait-OpComplete -Window $Window
-            if (!(Test-MarkOfWebPresent -Path $single)) {
-                Assert-Pass $g "MOTW single: :Zone.Identifier removed from $(Split-Path -Leaf $single) (verified on disk)"
-            } else {
-                Assert-Fail $g 'MOTW single removes Zone.Identifier' "Stream still present on $single"
-            }
-            if ((Get-FileHash -LiteralPath $single -Algorithm SHA256).Hash -ceq $singleHashBefore) {
-                Assert-Pass $g 'MOTW single preserves primary-stream contents'
-            }
-            else { Assert-Fail $g 'MOTW single preserves primary-stream contents' 'SHA-256 changed' }
-        }
-        elseif ($r -eq 'disabled') { Assert-Fail $g 'MOTW menu item' 'Item present but disabled for a file carrying Zone.Identifier' }
-        else { Assert-Fail $g 'MOTW menu item' 'Remove Mark-Of-The-Web not found in Clean Up menu' }
+    else {
+        Invoke-VerifiedFileOperation -Window $Window -Group $g -Files @($single) `
+            -SelectionPassName 'Single file selected for MOTW removal (Zone.Identifier present)' `
+            -SelectionSkipName 'Single file selection for MOTW' `
+            -SelectionSkipDetail 'm_single.txt not found as a UIA tree row' -Leaf 'Mark-Of-The-Web' `
+            -MenuFailureName 'MOTW menu item' `
+            -DisabledDetail 'Item present but disabled for a file carrying Zone.Identifier' `
+            -MissingDetail 'Remove Mark-Of-The-Web not found in Clean Up menu' -Verify $verify `
+            -ContentName 'MOTW single preserves primary-stream contents' -ContentFailureDetail 'SHA-256 changed'
     }
-    else { Assert-Skip $g 'Single file selection for MOTW' 'm_single.txt not found as a UIA tree row' }
 
     # -- Multiple selection -------------------------------------------------------
     $multi = @((Join-Path $dir 'm_multi_1.txt'), (Join-Path $dir 'm_multi_2.txt'))
@@ -6773,29 +7041,15 @@ function Test-MotwOps {
     if ($present.Count -ne $multi.Count) {
         Assert-Skip $g 'MOTW multi precondition' 'Zone.Identifier missing on one or more files before test'
     }
-    elseif (Select-TreeFiles -Window $Window -FullPaths $multi) {
-        Assert-Pass $g 'Two files selected for MOTW removal (multi-selection)'
-        $multiHashesBefore = @{}
-        foreach ($file in $multi) { $multiHashesBefore[$file] = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }
-        $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Mark-Of-The-Web'
-        if ($r -eq $true) {
-            Wait-OpComplete -Window $Window
-            $bad = @($multi | Where-Object { Test-MarkOfWebPresent -Path $_ })
-            if ($bad.Count -eq 0) {
-                Assert-Pass $g 'MOTW multi: :Zone.Identifier removed from both selected files (verified on disk)'
-            } else {
-                Assert-Fail $g 'MOTW multi removes Zone.Identifier from all selected' "Stream remains on: $($bad -join ', ')"
-            }
-            $changed = @($multi | Where-Object {
-                (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash -cne $multiHashesBefore[$_]
-            })
-            if ($changed.Count -eq 0) { Assert-Pass $g 'MOTW multi preserves all primary-stream contents' }
-            else { Assert-Fail $g 'MOTW multi preserves all primary-stream contents' ($changed -join ', ') }
-        }
-        elseif ($r -eq 'disabled') { Assert-Fail $g 'MOTW multi' 'Menu item disabled for a valid multi-selection' }
-        else { Assert-Fail $g 'MOTW multi' 'Menu item not found' }
+    else {
+        Invoke-VerifiedFileOperation -Window $Window -Group $g -Files $multi `
+            -SelectionPassName 'Two files selected for MOTW removal (multi-selection)' `
+            -SelectionSkipName 'Multi file selection for MOTW' `
+            -SelectionSkipDetail 'm_multi_*.txt not found as UIA tree rows' -Leaf 'Mark-Of-The-Web' `
+            -MenuFailureName 'MOTW multi' -DisabledDetail 'Menu item disabled for a valid multi-selection' `
+            -MissingDetail 'Menu item not found' -Verify $verify `
+            -ContentName 'MOTW multi preserves all primary-stream contents'
     }
-    else { Assert-Skip $g 'Multi file selection for MOTW' 'm_multi_*.txt not found as UIA tree rows' }
 }
 
 # Count how many of the given rows report themselves selected via UIA
@@ -7622,26 +7876,6 @@ function Invoke-FilteringSuite {
         [System.IO.File]::WriteAllText($Path, $ini, [System.Text.Encoding]::Unicode)
     }
 
-    function Invoke-WinDirStatCsvScan {
-        param(
-            [Parameter(Mandatory)] [string] $Exe,
-            [Parameter(Mandatory)] [string] $Csv,
-            [Parameter(Mandatory)] [string] $Root
-        )
-
-        $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @('/saveto', $Csv, $Root) `
-            -WorkingDirectory (Split-Path -Parent $Exe)
-        if ($run.ExitCode -ne 0) {
-            throw "WinDirStat exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
-        }
-
-        if (!(Test-Path -LiteralPath $Csv)) {
-            throw "WinDirStat exited successfully but did not create CSV: $Csv"
-        }
-
-        return $run
-    }
-
     function Write-PathVerificationTable {
         param(
             [Parameter(Mandatory)] [pscustomobject] $Result,
@@ -7724,191 +7958,6 @@ function Invoke-FilteringSuite {
 
         if ($rows.Count -gt $Limit) {
             Write-ColoredLine "  ... $($rows.Count - $Limit) more path(s)" DarkGray
-        }
-    }
-
-    function Write-SuiteResultsTable {
-        param([Parameter(Mandatory)] [pscustomobject[]] $Results)
-
-        $scenarioWidth = [Math]::Max(
-            8,
-            @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
-        )
-        $scenarioWidth = [Math]::Min($scenarioWidth, 62)
-        $statusWidth = 6
-        $modeWidth = 13
-        $rowsWidth = 13
-        $elapsedWidth = 8
-
-        Write-ColoredLine 'Scenario results:' DarkCyan
-        Write-Host -NoNewline '  '
-        Write-SymbolCell 'Status' $statusWidth DarkCyan
-        Write-Host -NoNewline '  '
-        Write-SymbolCell 'Scenario' $scenarioWidth DarkCyan
-        Write-Host -NoNewline '  '
-        Write-SymbolCell 'Mode' $modeWidth DarkCyan
-        Write-Host -NoNewline '  '
-        Write-SymbolCell 'Rows' $rowsWidth DarkCyan
-        Write-Host -NoNewline '  '
-        Write-SymbolCell 'Elapsed' $elapsedWidth DarkCyan
-        Write-Host ''
-
-        Write-Host -NoNewline '  '
-        Write-ColoredLine ("".PadRight($statusWidth + $scenarioWidth + $modeWidth + $rowsWidth + $elapsedWidth + 8, '-')) DarkGray
-
-        foreach ($result in $Results) {
-            $statusColor = Get-StatusColor $result.Status
-            $name = $result.Name
-            if ($name.Length -gt $scenarioWidth) {
-                $name = $name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
-            }
-            $mode = "$(if ($result.UseRegex) { 'regex' } else { 'glob' })-$(if ($result.ScanEngine -eq 1) { 'fast' } else { 'basic' })"
-            $rowsText = "$(@($result.ActualRows).Count)/$(@($result.ExpectedRows).Count)"
-            $elapsedText = if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
-
-            Write-Host -NoNewline '  '
-            Write-SymbolCell $result.Status $statusWidth $statusColor
-            Write-Host -NoNewline '  '
-            Write-SymbolCell $name $scenarioWidth Gray
-            Write-Host -NoNewline '  '
-            Write-SymbolCell $mode $modeWidth Gray
-            Write-Host -NoNewline '  '
-            Write-SymbolCell $rowsText $rowsWidth Gray
-            Write-Host -NoNewline '  '
-            Write-SymbolCell $elapsedText $elapsedWidth Gray
-            Write-Host ''
-        }
-    }
-
-    function Write-ScenarioSummary {
-        param([Parameter(Mandatory)] [pscustomobject] $Result)
-
-        $statusColor = Get-StatusColor $Result.Status
-        $actualBehavior = if ($Result.Error) {
-            "Scan failed before validation completed: $($Result.Error)"
-        }
-        elseif (@($Result.MissingRows).Count -eq 0 -and
-                @($Result.UnexpectedRows).Count -eq 0 -and
-                @($Result.DuplicateRows).Count -eq 0) {
-            'CSV output matched the expected paths exactly.'
-        }
-        else {
-            "CSV output differed from expectation: $(@($Result.MissingRows).Count) missing path(s), $(@($Result.UnexpectedRows).Count) unexpected path(s), $(@($Result.DuplicateRows).Count) duplicated path(s)."
-        }
-
-        Write-Host ''
-        Write-ColoredLine "=== $($Result.Name) ===" Cyan
-        Write-LabelValue 'Result' $Result.Status $statusColor
-        Write-LabelValue 'Command' $Result.CommandLine
-        Write-LabelValue 'Test base' $Result.ScanRoot
-        Write-LabelValue 'Mode' "$(if ($Result.UseRegex) { 'regex' } else { 'glob/non-regex' }), $(if ($Result.ScanEngine -eq 1) { 'fast engine' } else { 'basic engine' })"
-        Write-LabelValue 'Size minimum' "$($Result.SizeMinimum) unit index $($Result.SizeUnits)"
-        Write-LabelValue 'Maximum age' "$($Result.MaxAgeDays) day(s)"
-        Format-ListBlock 'Input include directories' $Result.IncludeDirs
-        Format-ListBlock 'Input exclude directories' $Result.ExcludeDirs
-        Format-ListBlock 'Input include files' $Result.IncludeFiles
-        Format-ListBlock 'Input exclude files' $Result.ExcludeFiles
-        Write-LabelValue 'Expected behavior' $Result.ExpectedBehavior
-        Write-LabelValue 'Actual behavior' $actualBehavior $statusColor
-        Write-PathVerificationTable $Result
-        if (@($Result.MissingRows).Count -gt 0) {
-            Format-ListBlock 'Missing expected paths' $Result.MissingRows
-        }
-        if (@($Result.UnexpectedRows).Count -gt 0) {
-            Format-ListBlock 'Unexpected actual paths' $Result.UnexpectedRows
-        }
-        if (@($Result.DuplicateRows).Count -gt 0) {
-            Format-ListBlock 'Duplicated actual paths' $Result.DuplicateRows
-        }
-        if ($Result.Error) {
-            Write-LabelValue 'Error' $Result.Error Red
-        }
-        else {
-            Write-LabelValue 'Exit code' $Result.ExitCode
-            Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds
-        }
-    }
-
-    function Invoke-Scenario {
-        param(
-            [Parameter(Mandatory)] [pscustomobject] $Scenario,
-            [Parameter(Mandatory)] [string] $Exe,
-            [Parameter(Mandatory)] [string] $Root
-        )
-
-        $safeName = $Scenario.Name -replace '[^A-Za-z0-9_.-]', '_'
-        $scenarioRoot = Join-Path $workRoot $safeName
-        $scenarioIni = Join-Path $scenarioRoot 'WinDirStat.ini'
-        $runnerIni = Join-Path $runRoot 'WinDirStat.ini'
-        $scenarioCsv = Join-Path $scenarioRoot 'results.csv'
-        New-Item -ItemType Directory -Force -Path $scenarioRoot | Out-Null
-
-        $actualRows = @()
-        $missingRows = @()
-        $unexpectedRows = @()
-        $duplicateRows = @()
-        $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$Root`""
-        $exitCode = $null
-        $elapsedSeconds = $null
-        $errorText = $null
-
-        try {
-            Write-FilterScenarioIni -Path $scenarioIni -Scenario $Scenario
-            Copy-Item -LiteralPath $scenarioIni -Destination $runnerIni -Force
-            if (Test-Path -LiteralPath $scenarioCsv) {
-                Remove-Item -LiteralPath $scenarioCsv -Force
-            }
-
-            $scan = Invoke-WinDirStatCsvScan -Exe $Exe -Csv $scenarioCsv -Root $Root
-            $commandLine = $scan.CommandLine
-            $exitCode = $scan.ExitCode
-            $elapsedSeconds = $scan.ElapsedSeconds
-
-            $csv = Read-CsvPaths $scenarioCsv
-            $actualRows = @($csv)
-            $missingRows = Get-SetDifference -Left $Scenario.ExpectedRows -Right $actualRows
-            $unexpectedRows = Get-SetDifference -Left $actualRows -Right $Scenario.ExpectedRows
-            $duplicateRows = @($actualRows |
-                Group-Object |
-                Where-Object Count -gt 1 |
-                ForEach-Object { "$($_.Name) ($($_.Count)x)" })
-        }
-        catch {
-            $errorText = $_.Exception.Message
-            $missingRows = @($Scenario.ExpectedRows)
-        }
-
-        $status = if (!$errorText -and
-                     @($missingRows).Count -eq 0 -and
-                     @($unexpectedRows).Count -eq 0 -and
-                     @($duplicateRows).Count -eq 0) { 'PASS' } else { 'FAIL' }
-
-        [pscustomobject] @{
-            Name = $Scenario.Name
-            Status = $status
-            CommandLine = $commandLine
-            UseRegex = $Scenario.UseRegex
-            SizeMinimum = $Scenario.SizeMinimum
-            SizeUnits = $Scenario.SizeUnits
-            MaxAgeDays = $Scenario.MaxAgeDays
-            ScanEngine = $Scenario.ScanEngine
-            IncludeDirs = @($Scenario.IncludeDirs)
-            ExcludeDirs = @($Scenario.ExcludeDirs)
-            IncludeFiles = @($Scenario.IncludeFiles)
-            ExcludeFiles = @($Scenario.ExcludeFiles)
-            ExpectedBehavior = $Scenario.ExpectedBehavior
-            ExpectedRows = @($Scenario.ExpectedRows)
-            AllRows = @($Scenario.AllRows)
-            ActualRows = @($actualRows)
-            MissingRows = @($missingRows)
-            UnexpectedRows = @($unexpectedRows)
-            DuplicateRows = @($duplicateRows)
-            ExitCode = $exitCode
-            ElapsedSeconds = $elapsedSeconds
-            Error = $errorText
-            ScanRoot = $Root
-            CsvPath = $scenarioCsv
-            IniPath = $scenarioIni
         }
     }
 
@@ -8736,26 +8785,6 @@ function Build-SettingsTestExecutable {
     return $builtExe
 }
 
-function New-BaseIniSections {
-    [ordered] @{
-        Options = [ordered] @{
-            LanguageId = 9
-            UseFastScanEngine = 0
-            UseBackupRestore = 0
-            ShowElevationPrompt = 0
-            AutoElevate = 0
-            ShowFreeSpace = 0
-            ShowUnknown = 0
-            ProcessHardlinks = 0
-        }
-        DriveSelect = [ordered] @{}
-        DupeView = [ordered] @{
-            ScanForDuplicates = 0
-        }
-        SearchView = [ordered] @{}
-    }
-}
-
 function Invoke-SettingsDump {
     param(
         [Parameter(Mandatory)] [string] $Exe,
@@ -8929,126 +8958,156 @@ $coveredNonVisualSettings = @(
     'UseWindowsLocaleSetting'
 )
 
-function Invoke-Scenario {
+$noSettingValue = [object]::new()
+
+function New-SettingCase {
     param(
-        [Parameter(Mandatory)] [string] $Name,
-        [Parameter(Mandatory)] [string] $Behavior,
-        [Parameter(Mandatory)] [scriptblock] $Body
+        [Parameter(Mandatory, Position = 0)] [string] $Name,
+        [string] $Section = 'Options',
+        [string] $Entry,
+        [AllowNull()] [object] $Default = $noSettingValue,
+        [AllowNull()] [object] $ExplicitInput = $noSettingValue,
+        [AllowNull()] [object] $ExplicitExpected = $noSettingValue,
+        [string] $ExplicitName,
+        [AllowNull()] [object] $Minimum = $noSettingValue,
+        [AllowNull()] [object] $Maximum = $noSettingValue,
+        [AllowNull()] [object] $HighInput = $noSettingValue,
+        [int] $BoundsOrder,
+        [switch] $Array
     )
 
-    $context = New-CheckContext -Group $Name
-    $commandLine = ''
-    $elapsed = $null
-    $errorText = $null
-
-    try {
-        $output = & $Body $context
-        if ($output -and $output.PSObject.Properties.Name -contains 'CommandLine') {
-            $commandLine = $output.CommandLine
-        }
-        if ($output -and $output.PSObject.Properties.Name -contains 'ElapsedSeconds') {
-            $elapsed = $output.ElapsedSeconds
-        }
-    }
-    catch {
-        $errorText = $_.Exception.Message
-        Add-Failure -Context $context -Message $errorText
-    }
-
-    $status = if ($context.Failures.Count -gt 0) { 'FAIL' } elseif ($context.Warnings.Count -gt 0) { 'WARN' } else { 'PASS' }
     [pscustomobject] @{
         Name = $Name
-        Status = $status
-        Behavior = $Behavior
-        Checks = $context.Count
-        Failures = @($context.Failures)
-        Warnings = @($context.Warnings)
-        CommandLine = $commandLine
-        ElapsedSeconds = $elapsed
-        Error = $errorText
+        Section = $Section
+        Entry = $Entry ? $Entry : $Name
+        Default = $Default
+        ExplicitInput = $ExplicitInput
+        ExplicitExpected = $ExplicitExpected
+        ExplicitName = $ExplicitName ? $ExplicitName : $Name
+        Minimum = $Minimum
+        Maximum = $Maximum
+        HighInput = $HighInput
+        BoundsOrder = $BoundsOrder
+        Array = $Array.IsPresent
     }
 }
 
-function Write-SuiteResultsTable {
-    param([Parameter(Mandatory)] [pscustomobject[]] $Results)
+function Test-SettingCaseHasValue {
+    param([AllowNull()] [object] $Value)
+    -not [object]::ReferenceEquals($Value, $noSettingValue)
+}
 
-    $scenarioWidth = [Math]::Max(
-        8,
-        @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+function Set-SettingCaseInputs {
+    param(
+        [System.Collections.Specialized.OrderedDictionary] $Sections,
+        [object[]] $Cases
     )
-    $scenarioWidth = [Math]::Min($scenarioWidth, 66)
-    $statusWidth = 6
-    $checksWidth = 8
-    $elapsedWidth = 8
-
-    Write-ColoredLine 'Scenario results:' DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Status' $statusWidth DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Scenario' $scenarioWidth DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Checks' $checksWidth DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Elapsed' $elapsedWidth DarkCyan
-    Write-Host ''
-
-    Write-Host -NoNewline '  '
-    Write-ColoredLine ("".PadRight($statusWidth + $scenarioWidth + $checksWidth + $elapsedWidth + 6, '-')) DarkGray
-
-    foreach ($result in $Results) {
-        $statusColor = Get-StatusColor $result.Status
-        $name = $result.Name
-        if ($name.Length -gt $scenarioWidth) {
-            $name = $name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...'
-        }
-        $elapsedText = if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
-
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $result.Status $statusWidth $statusColor
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $name $scenarioWidth Gray
-        Write-Host -NoNewline '  '
-        Write-SymbolCell ([string] $result.Checks) $checksWidth Gray
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $elapsedText $elapsedWidth Gray
-        Write-Host ''
-    }
-}
-
-function Write-ScenarioSummary {
-    param([Parameter(Mandatory)] [pscustomobject] $Result)
-
-    $statusColor = Get-StatusColor $Result.Status
-    $symbol = switch ($Result.Status) {
-        'PASS' { $symbolPass }
-        'WARN' { $symbolWarn }
-        default { $symbolFail }
-    }
-
-    Write-Host ''
-    Write-ColoredLine "=== $symbol $($Result.Name) ===" Cyan
-    Write-LabelValue 'Result' $Result.Status $statusColor
-    Write-LabelValue 'Expected behavior' $Result.Behavior
-    Write-LabelValue 'Checks' $Result.Checks
-    if ($Result.CommandLine) {
-        Write-LabelValue 'Command' $Result.CommandLine
-    }
-    if ($null -ne $Result.ElapsedSeconds) {
-        Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds
-    }
-    if ($Result.Failures.Count -gt 0) {
-        Write-ColoredLine 'Failures:' Red
-        foreach ($failure in $Result.Failures) {
-            Write-ColoredLine "  - $failure" Red
-        }
-    }
-    if ($Result.Warnings.Count -gt 0) {
-        Write-ColoredLine 'Warnings:' Yellow
-        foreach ($warning in $Result.Warnings) {
-            Write-ColoredLine "  - $warning" Yellow
+    foreach ($case in $Cases) {
+        if (Test-SettingCaseHasValue $case.ExplicitInput) {
+            Set-IniValue $Sections $case.Section $case.Entry $case.ExplicitInput
         }
     }
 }
+
+function Assert-SettingCases {
+    param(
+        [pscustomobject] $Context,
+        [pscustomobject] $Settings,
+        [object[]] $Cases,
+        [ValidateSet('Default', 'ExplicitExpected', 'Minimum', 'Maximum')] [string] $ExpectedProperty
+    )
+
+    $suffix = @{ Default = ''; ExplicitExpected = ''; Minimum = ' minimum'; Maximum = ' maximum' }[$ExpectedProperty]
+    foreach ($case in $Cases) {
+        $expected = $case.$ExpectedProperty
+        if (!(Test-SettingCaseHasValue $expected)) { continue }
+
+        $name = if ($ExpectedProperty -eq 'ExplicitExpected') { $case.ExplicitName } else { "$($case.Name)$suffix" }
+        $actual = $Settings.($case.Name)
+        if ($case.Array) {
+            Assert-ArrayEqual $Context $name @($actual) @($expected)
+        }
+        else {
+            Assert-Equal $Context $name $actual $expected
+        }
+    }
+}
+
+function Invoke-SettingsBounds {
+    param([pscustomobject] $Context, [ValidateSet('Low', 'High')] [string] $Mode)
+
+    $expectedProperty = if ($Mode -eq 'Low') { 'Minimum' } else { 'Maximum' }
+    $cases = @($settingCases | Where-Object { Test-SettingCaseHasValue $_.$expectedProperty } | Sort-Object BoundsOrder)
+    $sections = New-BaseIniSections
+    foreach ($case in $cases) {
+        $input = if ($Mode -eq 'Low') {
+            $script:SettingsLowOutOfRangeValue
+        }
+        elseif (Test-SettingCaseHasValue $case.HighInput) {
+            $case.HighInput
+        }
+        else {
+            $script:SettingsHighOutOfRangeValue
+        }
+        Set-IniValue $sections $case.Section $case.Entry $input
+    }
+
+    $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name "Bounds_Clamp${Mode}Values"
+    Assert-SettingCases $Context $dump.Dump $cases $expectedProperty
+    $dump
+}
+
+$settingCases = @(
+    New-SettingCase AutomaticallyResizeColumns -ExplicitInput 0
+    New-SettingCase AutoMapDrivesWhenElevated -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ExcludeJunctions -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ExcludeSymbolicLinksDirectory -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ExcludeVolumeMountPoints -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ExcludeHiddenDirectory -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase ExcludeProtectedDirectory -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase ExcludeSymbolicLinksFile -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ExcludeHiddenFile -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase ExcludeProtectedFile -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase FollowVolumeMountPoints -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase UseSizeSuffixes -ExplicitInput 0
+    New-SettingCase ScanForDuplicates -Section DupeView -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SearchMaxResults -Section SearchView -Default $script:SettingsDefaultSearchMaxResults -ExplicitInput 321 -ExplicitExpected 321 -Minimum $script:SettingsMinSearchMaxResults -Maximum $script:SettingsMaxSearchResults -HighInput $script:SettingsSearchHighOutOfRangeValue -BoundsOrder 9
+    New-SettingCase ShowDeleteWarning -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ShowElevationPrompt -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ShowMicrosoftProgress -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase FileTreeColumnVisibility -Section FileTreeView -Entry ColumnVisibility -Default @(1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0) -ExplicitInput '1,1,0,1,1,0,1,0,1,0,0' -ExplicitExpected @(1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0) -ExplicitName 'File-tree column visibility' -Array
+    New-SettingCase ShowFreeSpace -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase ShowUnknown -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SkipDupeDetectionCloudLinks -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ShowDupeDetectionCloudLinksWarning -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase AutoElevate -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase UseAbsolutePercentages -Section FileTreeView -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase UseBackupRestore -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase UseDrawTextCache -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase UseFastScanEngine -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase TreeMapStyle -Section TreeMapView -Default 0 -ExplicitInput 1 -ExplicitExpected 1 -Minimum 0 -Maximum $script:SettingsMaxTreeMapStyle -BoundsOrder 11
+    New-SettingCase GraphPaneStyle -Section TreeMapView -Default 0 -ExplicitInput 3 -ExplicitExpected 3 -Minimum 0 -Maximum $script:SettingsMaxGraphPaneStyle -BoundsOrder 12
+    New-SettingCase TreeMapMaxDepth -Section TreeMapView -Default $script:SettingsDefaultTreeMapMaxDepth -ExplicitInput 9 -ExplicitExpected 9 -Minimum $script:SettingsMinTreeMapMaxDepth -Maximum $script:SettingsMaxTreeMapMaxDepth -BoundsOrder 13
+    New-SettingCase UseWindowsLocaleSetting -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase ProcessHardlinks -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase FileHashAlgorithm -Default $script:HashAlgorithm.XXHASH -ExplicitInput $script:HashAlgorithm.SHA256 -ExplicitExpected $script:HashAlgorithm.SHA256 -Minimum $script:SettingsMinHashAlgorithm -Maximum $script:SettingsMaxHashAlgorithm -BoundsOrder 1
+    New-SettingCase ProcessPriority -Default 1 -ExplicitInput 2 -ExplicitExpected 2 -Minimum 0 -Maximum 2 -BoundsOrder 2
+    New-SettingCase FilteringMaxAgeDays -Default 0 -ExplicitInput 14 -ExplicitExpected 14
+    New-SettingCase LargeFileCount -Default 50 -ExplicitInput 123 -ExplicitExpected 123 -Minimum $script:SettingsMinLargeFileCount -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 3
+    New-SettingCase MinimizeViewThreshold -ExplicitInput 42 -ExplicitExpected 42 -Minimum $script:SettingsMinMinimizeViewThreshold -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 4
+    New-SettingCase PermsExcludeRegex -Section PermissionsView -Entry ExcludeRegex -Default '' -ExplicitInput '^BUILTIN\\Users$' -ExplicitExpected '^BUILTIN\\Users$'
+    New-SettingCase ScanningThreads -Default 4 -ExplicitInput 7 -ExplicitExpected 7 -Minimum $script:SettingsMinScanningThreads -Maximum $script:SettingsMaxScanningThreads -BoundsOrder 5
+    New-SettingCase DarkMode -Minimum $script:SettingsMinDarkMode -Maximum $script:SettingsMaxDarkMode -BoundsOrder 6
+    New-SettingCase TreeMapFolderFramesDrawThreshold -Section TreeMapView -Default $script:SettingsDefaultTreeMapFolderFramesDrawThreshold -ExplicitInput 17 -ExplicitExpected 17 -Minimum $script:SettingsMinTreeMapFolderFramesDrawThreshold -Maximum $script:SettingsMaxTreeMapFolderFramesDrawThreshold -BoundsOrder 10
+    New-SettingCase SelectDrivesRadio -Section DriveSelect -Default 0 -ExplicitInput 2 -ExplicitExpected 2 -Minimum $script:SettingsMinSelectDrivesRadio -Maximum $script:SettingsMaxSelectDrivesRadio -BoundsOrder 7
+    New-SettingCase FolderHistoryCount -Section DriveSelect -Default 10 -ExplicitInput 3 -ExplicitExpected 3 -Minimum $script:SettingsMinFolderHistoryCount -Maximum $script:SettingsMaxFolderHistoryCount -BoundsOrder 8
+    New-SettingCase SelectDrivesDrives -Section DriveSelect -ExplicitInput 'C:\|D:\' -ExplicitExpected @('C:\', 'D:\') -Array
+    New-SettingCase SelectDrivesFolder -Section DriveSelect -ExplicitInput 'C:\Alpha|\\server\share\Beta' -ExplicitExpected @('C:\Alpha', '\\server\share\Beta') -Array
+    New-SettingCase SearchWholePhrase -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SearchRegex -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SearchCase -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SearchTerm -Section SearchView -ExplicitInput "alpha${recordSeparator}beta" -ExplicitExpected "alpha`r`nbeta" -ExplicitName 'SearchTerm record separator decoding'
+)
 
 function Prepare-ScanTrees {
     if (Test-Path -LiteralPath $scanRoot) {
@@ -9178,43 +9237,7 @@ try {
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Defaults_LoadAndDerivedBehavior'
         $s = $dump.Dump
 
-        Assert-Equal $ctx 'AutoMapDrivesWhenElevated' $s.AutoMapDrivesWhenElevated $true
-        Assert-Equal $ctx 'ExcludeJunctions' $s.ExcludeJunctions $true
-        Assert-Equal $ctx 'ExcludeSymbolicLinksDirectory' $s.ExcludeSymbolicLinksDirectory $true
-        Assert-Equal $ctx 'ExcludeVolumeMountPoints' $s.ExcludeVolumeMountPoints $true
-        Assert-Equal $ctx 'ExcludeHiddenDirectory' $s.ExcludeHiddenDirectory $false
-        Assert-Equal $ctx 'ExcludeProtectedDirectory' $s.ExcludeProtectedDirectory $false
-        Assert-Equal $ctx 'ExcludeSymbolicLinksFile' $s.ExcludeSymbolicLinksFile $true
-        Assert-Equal $ctx 'ExcludeHiddenFile' $s.ExcludeHiddenFile $false
-        Assert-Equal $ctx 'ExcludeProtectedFile' $s.ExcludeProtectedFile $false
-        Assert-Equal $ctx 'FollowVolumeMountPoints' $s.FollowVolumeMountPoints $false
-        Assert-Equal $ctx 'ScanForDuplicates' $s.ScanForDuplicates $false
-        Assert-Equal $ctx 'SearchMaxResults' $s.SearchMaxResults $script:SettingsDefaultSearchMaxResults
-        Assert-Equal $ctx 'ShowDeleteWarning' $s.ShowDeleteWarning $true
-        Assert-Equal $ctx 'ShowElevationPrompt' $s.ShowElevationPrompt $true
-        Assert-Equal $ctx 'ShowMicrosoftProgress' $s.ShowMicrosoftProgress $false
-        Assert-ArrayEqual $ctx 'FileTreeColumnVisibility' @($s.FileTreeColumnVisibility) @(1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0)
-        Assert-Equal $ctx 'SkipDupeDetectionCloudLinks' $s.SkipDupeDetectionCloudLinks $true
-        Assert-Equal $ctx 'ShowDupeDetectionCloudLinksWarning' $s.ShowDupeDetectionCloudLinksWarning $true
-        Assert-Equal $ctx 'AutoElevate' $s.AutoElevate $false
-        Assert-Equal $ctx 'UseAbsolutePercentages' $s.UseAbsolutePercentages $true
-        Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $true
-        Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $true
-        Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $true
-        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 0
-        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 0
-        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth $script:SettingsDefaultTreeMapMaxDepth
-        Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
-        Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
-        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.XXHASH
-        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 1
-        Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
-        Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
-        Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
-        Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 4
-        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold' $s.TreeMapFolderFramesDrawThreshold $script:SettingsDefaultTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 0
-        Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 10
+        Assert-SettingCases $ctx $s $settingCases Default
         Assert-True $ctx 'LanguageId is available' ([int] $s.LanguageId -in @($s.LanguageList))
         Assert-Equal $ctx 'Reparse none follows' $s.ReparseFollowing.None $true
         Assert-Equal $ctx 'Reparse mount default blocked' $s.ReparseFollowing.MountPoint $false
@@ -9233,58 +9256,7 @@ try {
         param($ctx)
 
         $sections = New-BaseIniSections
-        foreach ($entry in ([ordered] @{
-            AutomaticallyResizeColumns = 0
-            AutoMapDrivesWhenElevated = 0
-            ExcludeJunctions = 0
-            ExcludeSymbolicLinksDirectory = 0
-            ExcludeVolumeMountPoints = 0
-            ExcludeHiddenDirectory = 1
-            ExcludeProtectedDirectory = 1
-            ExcludeSymbolicLinksFile = 0
-            ExcludeHiddenFile = 1
-            ExcludeProtectedFile = 1
-            FollowVolumeMountPoints = 1
-            UseSizeSuffixes = 0
-            ShowDeleteWarning = 0
-            ShowElevationPrompt = 0
-            ShowMicrosoftProgress = 1
-            ShowFreeSpace = 1
-            ShowUnknown = 1
-            SkipDupeDetectionCloudLinks = 0
-            ShowDupeDetectionCloudLinksWarning = 0
-            AutoElevate = 1
-            UseBackupRestore = 0
-            UseDrawTextCache = 0
-            UseFastScanEngine = 0
-            UseWindowsLocaleSetting = 0
-            ProcessHardlinks = 0
-            FileHashAlgorithm = $script:HashAlgorithm.SHA256
-            ProcessPriority = 2
-            FilteringMaxAgeDays = 14
-            LargeFileCount = 123
-            MinimizeViewThreshold = 42
-            ScanningThreads = 7
-        }).GetEnumerator()) {
-            Set-IniValue $sections 'Options' $entry.Key $entry.Value
-        }
-        Set-IniValue $sections 'DupeView' 'ScanForDuplicates' 1
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' 2
-        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' 3
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesDrives' 'C:\|D:\'
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesFolder' 'C:\Alpha|\\server\share\Beta'
-        Set-IniValue $sections 'SearchView' 'SearchWholePhrase' 1
-        Set-IniValue $sections 'SearchView' 'SearchRegex' 1
-        Set-IniValue $sections 'SearchView' 'SearchCase' 1
-        Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
-        Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
-        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' 17
-        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' 1
-        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' 3
-        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' 9
-        Set-IniValue $sections 'FileTreeView' 'ColumnVisibility' '1,1,0,1,1,0,1,0,1,0,0'
-        Set-IniValue $sections 'FileTreeView' 'UseAbsolutePercentages' 0
-        Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
+        Set-SettingCaseInputs $sections $settingCases
         $sections['Cleanups\UserDefinedCleanup00'] = [ordered] @{
             Title = 'Custom cleanup'
             CommandLine = "echo %p${recordSeparator}echo %sn"
@@ -9308,52 +9280,7 @@ try {
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'ExplicitValues_LoadExactly'
         $s = $dump.Dump
 
-        Assert-Equal $ctx 'AutoMapDrivesWhenElevated' $s.AutoMapDrivesWhenElevated $false
-        Assert-Equal $ctx 'ExcludeJunctions' $s.ExcludeJunctions $false
-        Assert-Equal $ctx 'ExcludeSymbolicLinksDirectory' $s.ExcludeSymbolicLinksDirectory $false
-        Assert-Equal $ctx 'ExcludeVolumeMountPoints' $s.ExcludeVolumeMountPoints $false
-        Assert-Equal $ctx 'ExcludeHiddenDirectory' $s.ExcludeHiddenDirectory $true
-        Assert-Equal $ctx 'ExcludeProtectedDirectory' $s.ExcludeProtectedDirectory $true
-        Assert-Equal $ctx 'ExcludeSymbolicLinksFile' $s.ExcludeSymbolicLinksFile $false
-        Assert-Equal $ctx 'ExcludeHiddenFile' $s.ExcludeHiddenFile $true
-        Assert-Equal $ctx 'ExcludeProtectedFile' $s.ExcludeProtectedFile $true
-        Assert-Equal $ctx 'FollowVolumeMountPoints' $s.FollowVolumeMountPoints $true
-        Assert-Equal $ctx 'ScanForDuplicates' $s.ScanForDuplicates $true
-        Assert-Equal $ctx 'ShowDeleteWarning' $s.ShowDeleteWarning $false
-        Assert-Equal $ctx 'ShowElevationPrompt' $s.ShowElevationPrompt $false
-        Assert-Equal $ctx 'ShowMicrosoftProgress' $s.ShowMicrosoftProgress $true
-        Assert-ArrayEqual $ctx 'File-tree column visibility' @($s.FileTreeColumnVisibility) @(1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0)
-        Assert-Equal $ctx 'ShowFreeSpace' $s.ShowFreeSpace $true
-        Assert-Equal $ctx 'ShowUnknown' $s.ShowUnknown $true
-        Assert-Equal $ctx 'SkipDupeDetectionCloudLinks' $s.SkipDupeDetectionCloudLinks $false
-        Assert-Equal $ctx 'ShowDupeDetectionCloudLinksWarning' $s.ShowDupeDetectionCloudLinksWarning $false
-        Assert-Equal $ctx 'AutoElevate' $s.AutoElevate $true
-        Assert-Equal $ctx 'UseAbsolutePercentages' $s.UseAbsolutePercentages $false
-        Assert-Equal $ctx 'UseBackupRestore' $s.UseBackupRestore $false
-        Assert-Equal $ctx 'UseDrawTextCache' $s.UseDrawTextCache $false
-        Assert-Equal $ctx 'UseFastScanEngine' $s.UseFastScanEngine $false
-        Assert-Equal $ctx 'TreeMapStyle' $s.TreeMapStyle 1
-        Assert-Equal $ctx 'GraphPaneStyle' $s.GraphPaneStyle 3
-        Assert-Equal $ctx 'TreeMapMaxDepth' $s.TreeMapMaxDepth 9
-        Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
-        Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
-        Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm $script:HashAlgorithm.SHA256
-        Assert-Equal $ctx 'ProcessPriority' $s.ProcessPriority 2
-        Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
-        Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
-        Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
-        Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex '^BUILTIN\\Users$'
-        Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 7
-        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold' $s.TreeMapFolderFramesDrawThreshold 17
-        Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 2
-        Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 3
-        Assert-ArrayEqual $ctx 'SelectDrivesDrives' @($s.SelectDrivesDrives) @('C:\', 'D:\')
-        Assert-ArrayEqual $ctx 'SelectDrivesFolder' @($s.SelectDrivesFolder) @('C:\Alpha', '\\server\share\Beta')
-        Assert-Equal $ctx 'SearchWholePhrase' $s.SearchWholePhrase $true
-        Assert-Equal $ctx 'SearchRegex' $s.SearchRegex $true
-        Assert-Equal $ctx 'SearchCase' $s.SearchCase $true
-        Assert-Equal $ctx 'SearchMaxResults' $s.SearchMaxResults 321
-        Assert-Equal $ctx 'SearchTerm record separator decoding' $s.SearchTerm "alpha`r`nbeta"
+        Assert-SettingCases $ctx $s $settingCases ExplicitExpected
         Assert-Equal $ctx 'Cleanup 00 title' $s.UserDefinedCleanups[0].Title 'Custom cleanup'
         Assert-Equal $ctx 'Cleanup 00 command line' $s.UserDefinedCleanups[0].CommandLine "echo %p`r`necho %sn"
         Assert-Equal $ctx 'Cleanup 00 enabled' $s.UserDefinedCleanups[0].Enabled $true
@@ -9409,77 +9336,13 @@ try {
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampLowValues' -Behavior 'Out-of-range low numeric settings should clamp to their declared minimums instead of poisoning runtime state.' -Body {
         param($ctx)
 
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'Options' 'DarkMode' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsLowOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsLowOutOfRangeValue
-
-        $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampLowValues'
-        $s = $dump.Dump
-
-        Assert-Equal $ctx 'FileHashAlgorithm minimum' $s.FileHashAlgorithm $script:SettingsMinHashAlgorithm
-        Assert-Equal $ctx 'ProcessPriority minimum' $s.ProcessPriority 0
-        Assert-Equal $ctx 'LargeFileCount minimum' $s.LargeFileCount $script:SettingsMinLargeFileCount
-        Assert-Equal $ctx 'MinimizeViewThreshold minimum' $s.MinimizeViewThreshold $script:SettingsMinMinimizeViewThreshold
-        Assert-Equal $ctx 'ScanningThreads minimum' $s.ScanningThreads $script:SettingsMinScanningThreads
-        Assert-Equal $ctx 'DarkMode minimum' $s.DarkMode $script:SettingsMinDarkMode
-        Assert-Equal $ctx 'SelectDrivesRadio minimum' $s.SelectDrivesRadio $script:SettingsMinSelectDrivesRadio
-        Assert-Equal $ctx 'FolderHistoryCount minimum' $s.FolderHistoryCount $script:SettingsMinFolderHistoryCount
-        Assert-Equal $ctx 'SearchMaxResults minimum' $s.SearchMaxResults $script:SettingsMinSearchMaxResults
-        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold minimum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMinTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'TreeMapStyle minimum' $s.TreeMapStyle 0
-        Assert-Equal $ctx 'GraphPaneStyle minimum' $s.GraphPaneStyle 0
-        Assert-Equal $ctx 'TreeMapMaxDepth minimum' $s.TreeMapMaxDepth $script:SettingsMinTreeMapMaxDepth
-
-        $dump
+        Invoke-SettingsBounds $ctx Low
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Bounds_ClampHighValues' -Behavior 'Out-of-range high numeric settings should clamp to their declared maximums.' -Body {
         param($ctx)
 
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'FileHashAlgorithm' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'Options' 'ProcessPriority' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'Options' 'LargeFileCount' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'Options' 'MinimizeViewThreshold' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'Options' 'ScanningThreads' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'Options' 'DarkMode' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'DriveSelect' 'SelectDrivesRadio' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'DriveSelect' 'FolderHistoryCount' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'SearchView' 'SearchMaxResults' $script:SettingsSearchHighOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapFolderFramesDrawThreshold' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapStyle' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'GraphPaneStyle' $script:SettingsHighOutOfRangeValue
-        Set-IniValue $sections 'TreeMapView' 'TreeMapMaxDepth' $script:SettingsHighOutOfRangeValue
-
-        $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'Bounds_ClampHighValues'
-        $s = $dump.Dump
-
-        Assert-Equal $ctx 'FileHashAlgorithm maximum' $s.FileHashAlgorithm $script:SettingsMaxHashAlgorithm
-        Assert-Equal $ctx 'ProcessPriority maximum' $s.ProcessPriority 2
-        Assert-Equal $ctx 'LargeFileCount maximum' $s.LargeFileCount $script:SettingsMaxBoundedCount
-        Assert-Equal $ctx 'MinimizeViewThreshold maximum' $s.MinimizeViewThreshold $script:SettingsMaxBoundedCount
-        Assert-Equal $ctx 'ScanningThreads maximum' $s.ScanningThreads $script:SettingsMaxScanningThreads
-        Assert-Equal $ctx 'DarkMode maximum' $s.DarkMode $script:SettingsMaxDarkMode
-        Assert-Equal $ctx 'SelectDrivesRadio maximum' $s.SelectDrivesRadio $script:SettingsMaxSelectDrivesRadio
-        Assert-Equal $ctx 'FolderHistoryCount maximum' $s.FolderHistoryCount $script:SettingsMaxFolderHistoryCount
-        Assert-Equal $ctx 'SearchMaxResults maximum' $s.SearchMaxResults $script:SettingsMaxSearchResults
-        Assert-Equal $ctx 'TreeMapFolderFramesDrawThreshold maximum' $s.TreeMapFolderFramesDrawThreshold $script:SettingsMaxTreeMapFolderFramesDrawThreshold
-        Assert-Equal $ctx 'TreeMapStyle maximum' $s.TreeMapStyle $script:SettingsMaxTreeMapStyle
-        Assert-Equal $ctx 'GraphPaneStyle maximum' $s.GraphPaneStyle $script:SettingsMaxGraphPaneStyle
-        Assert-Equal $ctx 'TreeMapMaxDepth maximum' $s.TreeMapMaxDepth $script:SettingsMaxTreeMapMaxDepth
-
-        $dump
+        Invoke-SettingsBounds $ctx High
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Locale_UsesConfiguredLanguageWhenRequested' -Behavior 'Formatting locale should use the configured language when UseWindowsLocaleSetting is disabled, and the user default LCID when enabled.' -Body {
@@ -9899,30 +9762,6 @@ function Invoke-ReparseSuite {
     $driveTwoLetter = ($DriveTwo -replace ':.*', '').ToUpperInvariant()
     $scanRoot       = "${driveOneLetter}:\wds-reparse-test"
 
-function New-BaseIniSections {
-    param([switch] $BasicScanEngine)
-
-    [ordered] @{
-        Options     = [ordered] @{
-            LanguageId                    = 9
-            UseFastScanEngine             = if ($BasicScanEngine) { 0 } else { 1 }
-            UseBackupRestore              = 0
-            ShowElevationPrompt           = 0
-            AutoElevate                   = 0
-            ShowFreeSpace                 = 0
-            ShowUnknown                   = 0
-            ProcessHardlinks              = 0
-            ExcludeJunctions              = 1
-            ExcludeSymbolicLinksDirectory = 1
-            ExcludeSymbolicLinksFile      = 1
-            ExcludeVolumeMountPoints      = 1
-            FollowVolumeMountPoints       = 0
-        }
-        DriveSelect = [ordered] @{}
-        DupeView    = [ordered] @{ ScanForDuplicates = 0 }
-    }
-}
-
 function Assert-ValidTestDrive {
     param([Parameter(Mandatory)] [string] $Letter)
 
@@ -9978,118 +9817,6 @@ function Dismount-VolumeAtPath {
     $result = @(& mountvol $Directory /D 2>&1)
     if ($LASTEXITCODE -ne 0) {
         Write-ColoredLine "Warning: mountvol /D failed for $Directory : $($result -join ' ')" Yellow
-    }
-}
-
-function Invoke-Scenario {
-    param(
-        [Parameter(Mandatory)] [string] $Name,
-        [Parameter(Mandatory)] [string] $Behavior,
-        [Parameter(Mandatory)] [scriptblock] $Body
-    )
-
-    $context     = New-CheckContext -Group $Name
-    $commandLine = ''
-    $elapsed     = $null
-    $errorText   = $null
-
-    try {
-        $output = & $Body $context
-        if ($output -and $output.PSObject.Properties.Name -contains 'CommandLine') {
-            $commandLine = $output.CommandLine
-        }
-        if ($output -and $output.PSObject.Properties.Name -contains 'ElapsedSeconds') {
-            $elapsed = $output.ElapsedSeconds
-        }
-    }
-    catch {
-        $errorText = $_.Exception.Message
-        Add-Failure -Context $context -Message $errorText
-    }
-
-    $status = if ($context.Failures.Count -gt 0) { 'FAIL' }
-              elseif ($context.Warnings.Count -gt 0) { 'WARN' }
-              else { 'PASS' }
-
-    [pscustomobject] @{
-        Name           = $Name
-        Status         = $status
-        Behavior       = $Behavior
-        Checks         = $context.Count
-        Failures       = @($context.Failures)
-        Warnings       = @($context.Warnings)
-        CommandLine    = $commandLine
-        ElapsedSeconds = $elapsed
-        Error          = $errorText
-    }
-}
-
-# --- Results display ---
-
-function Write-SuiteResultsTable {
-    param([Parameter(Mandatory)] [pscustomobject[]] $Results)
-
-    $scenarioWidth = [Math]::Max(8, @($Results | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum)
-    $scenarioWidth = [Math]::Min($scenarioWidth, 66)
-    $statusWidth   = 6
-    $checksWidth   = 8
-    $elapsedWidth  = 8
-
-    Write-ColoredLine 'Scenario results:' DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Status'   $statusWidth   DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Scenario' $scenarioWidth DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Checks'   $checksWidth   DarkCyan
-    Write-Host -NoNewline '  '
-    Write-SymbolCell 'Elapsed'  $elapsedWidth  DarkCyan
-    Write-Host ''
-    Write-Host -NoNewline '  '
-    Write-ColoredLine ("".PadRight($statusWidth + $scenarioWidth + $checksWidth + $elapsedWidth + 6, '-')) DarkGray
-
-    foreach ($result in $Results) {
-        $statusColor = Get-StatusColor $result.Status
-        $name        = $result.Name
-        if ($name.Length -gt $scenarioWidth) { $name = $name.Substring(0, [Math]::Max(0, $scenarioWidth - 3)) + '...' }
-        $elapsedText = if ($null -eq $result.ElapsedSeconds) { '-' } else { "$($result.ElapsedSeconds)s" }
-
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $result.Status                  $statusWidth   $statusColor
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $name                           $scenarioWidth Gray
-        Write-Host -NoNewline '  '
-        Write-SymbolCell ([string] $result.Checks)       $checksWidth   Gray
-        Write-Host -NoNewline '  '
-        Write-SymbolCell $elapsedText                    $elapsedWidth  Gray
-        Write-Host ''
-    }
-}
-
-function Write-ScenarioSummary {
-    param([Parameter(Mandatory)] [pscustomobject] $Result)
-
-    $statusColor = Get-StatusColor $Result.Status
-    $symbol      = switch ($Result.Status) {
-        'PASS'  { $symbolPass }
-        'WARN'  { $symbolWarn }
-        default { $symbolFail }
-    }
-
-    Write-Host ''
-    Write-ColoredLine "=== $symbol $($Result.Name) ===" Cyan
-    Write-LabelValue 'Result'            $Result.Status $statusColor
-    Write-LabelValue 'Expected behavior' $Result.Behavior
-    Write-LabelValue 'Checks'            $Result.Checks
-    if ($Result.CommandLine)              { Write-LabelValue 'Command'         $Result.CommandLine }
-    if ($null -ne $Result.ElapsedSeconds) { Write-LabelValue 'Elapsed seconds' $Result.ElapsedSeconds }
-    if ($Result.Failures.Count -gt 0) {
-        Write-ColoredLine 'Failures:' Red
-        foreach ($failure in $Result.Failures) { Write-ColoredLine "  - $failure" Red }
-    }
-    if ($Result.Warnings.Count -gt 0) {
-        Write-ColoredLine 'Warnings:' Yellow
-        foreach ($warning in $Result.Warnings) { Write-ColoredLine "  - $warning" Yellow }
     }
 }
 
@@ -10196,6 +9923,69 @@ function Invoke-ScanWithIni {
     [pscustomobject] @{ Run = $run; Paths = $paths }
 }
 
+function New-ReparsePathCheck {
+    param([string] $Fixture, [string] $Name, [string] $Path, [bool] $Expected)
+    [pscustomobject] @{ Fixture = $Fixture; Name = $Name; Path = $Path; Expected = $Expected }
+}
+
+function New-ReparseOptions {
+    param(
+        [int] $ExcludeDirectorySymlinks,
+        [int] $ExcludeFileSymlinks,
+        [int] $ExcludeJunctions,
+        [int] $ExcludeMountPoints,
+        [int] $FollowMountPoints
+    )
+    [ordered] @{
+        ExcludeSymbolicLinksDirectory = $ExcludeDirectorySymlinks
+        ExcludeSymbolicLinksFile = $ExcludeFileSymlinks
+        ExcludeJunctions = $ExcludeJunctions
+        ExcludeVolumeMountPoints = $ExcludeMountPoints
+        FollowVolumeMountPoints = $FollowMountPoints
+    }
+}
+
+function Invoke-ReparseScenario {
+    param(
+        [Parameter(Mandatory)] [System.Collections.IDictionary] $Scenario,
+        [Parameter(Mandatory)] [string] $Exe,
+        [Parameter(Mandatory)] [pscustomobject] $FixtureInfo
+    )
+
+    Invoke-Scenario -Name $Scenario.Name -Behavior $Scenario.Behavior -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections -ReparseDefaults -BasicScanEngine:$Scenario.BasicScanEngine
+        foreach ($option in $Scenario.Options.GetEnumerator()) {
+            Set-IniValue $sections 'Options' $option.Key $option.Value
+        }
+
+        $scan = Invoke-ScanWithIni -Exe $Exe -CsvName $Scenario.CsvName -Sections $sections
+        foreach ($fixtureName in @('Always', 'Symlinks', 'Junction', 'MountPoint')) {
+            $checks = @($Scenario.Checks | Where-Object Fixture -eq $fixtureName)
+            if ($checks.Count -eq 0) { continue }
+
+            if ($fixtureName -ne 'Always' -and !$FixtureInfo.$fixtureName.Created) {
+                $label = @{ Symlinks = 'Symlink'; Junction = 'Junction'; MountPoint = 'Mount point' }[$fixtureName]
+                Add-Warning -Context $ctx -Message "$label fixtures unavailable: $($FixtureInfo.$fixtureName.Error)"
+                continue
+            }
+
+            foreach ($check in $checks) {
+                $present = (Normalize-ComparePath $check.Path) -in $scan.Paths
+                if ($check.Expected) {
+                    Assert-True $ctx $check.Name $present
+                }
+                else {
+                    Assert-False $ctx $check.Name $present
+                }
+            }
+        }
+
+        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
+    }
+}
+
 # ============================================================
 # Main
 # ============================================================
@@ -10298,425 +10088,173 @@ try {
     Write-Host ''
 
     $results = [System.Collections.Generic.List[pscustomobject]]::new()
+    $followAll = New-ReparseOptions 0 0 0 0 1
+    $excludeJunction = New-ReparseOptions 0 0 1 0 1
+    $excludeDirectorySymlink = New-ReparseOptions 1 0 0 0 1
+    $excludeFileSymlink = New-ReparseOptions 0 1 0 0 1
+    $excludeMountPoint = New-ReparseOptions 0 0 0 1 0
 
-    # ----------------------------------------------------------
-    # Scenario 1: All excluded — default WinDirStat behavior.
-    # Directory link nodes and junction/mount nodes appear in
-    # the CSV, but none of their children are enumerated.
-    # File symlinks are invisible entirely.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'AllExcluded_Defaults' -Behavior 'With all reparse-point exclusions enabled (defaults), directory link nodes appear in the CSV but their children are not enumerated, and file symlinks are invisible.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        $scan = Invoke-ScanWithIni -Exe $testExe -CsvName 'all-excluded' -Sections $sections
-        $paths = $scan.Paths
-
-        # Real dir/file should always be present.
-        Assert-True  $ctx 'Real dir in CSV'        ((Normalize-ComparePath $fixtureInfo.RealDir)   -in $paths)
-        Assert-True  $ctx 'Real child in CSV'      ((Normalize-ComparePath $fixtureInfo.RealChild) -in $paths)
-        Assert-True  $ctx 'Real file in CSV'       ((Normalize-ComparePath $fixtureInfo.RealFile)  -in $paths)
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-False $ctx 'File symlink absent (excluded)'      ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True  $ctx 'Dir symlink node visible'            ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLink)      -in $paths)
-            Assert-False $ctx 'Dir symlink child absent (excluded)' ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
+    $scenarios = @(
+        [ordered] @{
+            Name = 'AllExcluded_Defaults'
+            CsvName = 'all-excluded'
+            Behavior = 'With all reparse-point exclusions enabled (defaults), directory link nodes appear in the CSV but their children are not enumerated, and file symlinks are invisible.'
+            BasicScanEngine = $false
+            Options = [ordered] @{}
+            Checks = @(
+                New-ReparsePathCheck 'Always' 'Real dir in CSV' $fixtureInfo.RealDir $true
+                New-ReparsePathCheck 'Always' 'Real child in CSV' $fixtureInfo.RealChild $true
+                New-ReparsePathCheck 'Always' 'Real file in CSV' $fixtureInfo.RealFile $true
+                New-ReparsePathCheck 'Symlinks' 'File symlink absent (excluded)' $fixtureInfo.Symlinks.FileLink $false
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink node visible' $fixtureInfo.Symlinks.DirLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child absent (excluded)' $fixtureInfo.Symlinks.DirLinkChild $false
+                New-ReparsePathCheck 'Junction' 'Junction node visible' $fixtureInfo.Junction.JunctionDir $true
+                New-ReparsePathCheck 'Junction' 'Junction child absent (excluded)' $fixtureInfo.Junction.JunctionChild $false
+                New-ReparsePathCheck 'MountPoint' 'Mount point node visible' $fixtureInfo.MountPoint.MountDir $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content absent (excluded)' $fixtureInfo.MountPoint.MountedFile $false
+            )
         }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
+        [ordered] @{
+            Name = 'AllFollowed_AllEnabled'
+            CsvName = 'all-followed'
+            Behavior = 'With all reparse-point exclusions disabled, every link type is traversed: file symlinks appear, directory symlink children are enumerated, junction children are enumerated, and mount point contents appear.'
+            BasicScanEngine = $false
+            Options = $followAll
+            Checks = @(
+                New-ReparsePathCheck 'Always' 'Real dir in CSV' $fixtureInfo.RealDir $true
+                New-ReparsePathCheck 'Always' 'Real child in CSV' $fixtureInfo.RealChild $true
+                New-ReparsePathCheck 'Always' 'Real file in CSV' $fixtureInfo.RealFile $true
+                New-ReparsePathCheck 'Symlinks' 'File symlink visible (allowed)' $fixtureInfo.Symlinks.FileLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink node visible' $fixtureInfo.Symlinks.DirLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child visible (followed)' $fixtureInfo.Symlinks.DirLinkChild $true
+                New-ReparsePathCheck 'Junction' 'Junction node visible' $fixtureInfo.Junction.JunctionDir $true
+                New-ReparsePathCheck 'Junction' 'Junction child visible (followed)' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point node visible' $fixtureInfo.MountPoint.MountDir $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible (followed)' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True  $ctx 'Junction node visible'             ((Normalize-ComparePath $fixtureInfo.Junction.JunctionDir)   -in $paths)
-            Assert-False $ctx 'Junction child absent (excluded)'  ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
+        [ordered] @{
+            Name = 'JunctionsExcluded_OthersFollowed'
+            CsvName = 'junctions-excluded'
+            Behavior = 'With only ExcludeJunctions enabled, junction children are not enumerated while directory symlinks and mount point contents are traversed normally.'
+            BasicScanEngine = $false
+            Options = $excludeJunction
+            Checks = @(
+                New-ReparsePathCheck 'Always' 'Real dir in CSV' $fixtureInfo.RealDir $true
+                New-ReparsePathCheck 'Always' 'Real child in CSV' $fixtureInfo.RealChild $true
+                New-ReparsePathCheck 'Symlinks' 'File symlink visible' $fixtureInfo.Symlinks.FileLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child visible' $fixtureInfo.Symlinks.DirLinkChild $true
+                New-ReparsePathCheck 'Junction' 'Junction node visible' $fixtureInfo.Junction.JunctionDir $true
+                New-ReparsePathCheck 'Junction' 'Junction child absent (excluded)' $fixtureInfo.Junction.JunctionChild $false
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
+        [ordered] @{
+            Name = 'DirSymlinksExcluded_FileSymlinksVisible'
+            CsvName = 'dirsymlink-excluded-filesymlink-visible'
+            Behavior = 'With ExcludeSymbolicLinksDirectory enabled and ExcludeSymbolicLinksFile disabled, directory symlink children are blocked but file symlinks appear in the CSV.'
+            BasicScanEngine = $false
+            Options = $excludeDirectorySymlink
+            Checks = @(
+                New-ReparsePathCheck 'Symlinks' 'File symlink visible (allowed)' $fixtureInfo.Symlinks.FileLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink node visible' $fixtureInfo.Symlinks.DirLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child absent (dir excluded)' $fixtureInfo.Symlinks.DirLinkChild $false
+                New-ReparsePathCheck 'Junction' 'Junction child visible (followed)' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True  $ctx 'Mount point node visible'             ((Normalize-ComparePath $fixtureInfo.MountPoint.MountDir)    -in $paths)
-            Assert-False $ctx 'Mount point content absent (excluded)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
+        [ordered] @{
+            Name = 'FileSymlinksExcluded_DirSymlinksFollowed'
+            CsvName = 'filesymlink-excluded-dirsymlink-followed'
+            Behavior = 'With ExcludeSymbolicLinksFile enabled and ExcludeSymbolicLinksDirectory disabled, file symlinks are invisible but directory symlink children are enumerated.'
+            BasicScanEngine = $false
+            Options = $excludeFileSymlink
+            Checks = @(
+                New-ReparsePathCheck 'Symlinks' 'File symlink absent (excluded)' $fixtureInfo.Symlinks.FileLink $false
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink node visible' $fixtureInfo.Symlinks.DirLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child visible (followed)' $fixtureInfo.Symlinks.DirLinkChild $true
+                New-ReparsePathCheck 'Junction' 'Junction child visible (followed)' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
+        [ordered] @{
+            Name = 'MountPointsExcluded_OthersFollowed'
+            CsvName = 'mountpoints-excluded'
+            Behavior = 'With only ExcludeVolumeMountPoints enabled, the off-volume mount point directory is visible but its contents are not enumerated, while symlinks and junctions are traversed normally.'
+            BasicScanEngine = $false
+            Options = $excludeMountPoint
+            Checks = @(
+                New-ReparsePathCheck 'Symlinks' 'File symlink visible' $fixtureInfo.Symlinks.FileLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child visible' $fixtureInfo.Symlinks.DirLinkChild $true
+                New-ReparsePathCheck 'Junction' 'Junction child visible (followed)' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point node visible' $fixtureInfo.MountPoint.MountDir $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content absent (excluded)' $fixtureInfo.MountPoint.MountedFile $false
+            )
         }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 2: All following enabled — all link types are
-    # traversed and their contents appear in the CSV.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'AllFollowed_AllEnabled' -Behavior 'With all reparse-point exclusions disabled, every link type is traversed: file symlinks appear, directory symlink children are enumerated, junction children are enumerated, and mount point contents appear.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'all-followed' -Sections $sections
-        $paths = $scan.Paths
-
-        Assert-True $ctx 'Real dir in CSV'   ((Normalize-ComparePath $fixtureInfo.RealDir)   -in $paths)
-        Assert-True $ctx 'Real child in CSV' ((Normalize-ComparePath $fixtureInfo.RealChild) -in $paths)
-        Assert-True $ctx 'Real file in CSV'  ((Normalize-ComparePath $fixtureInfo.RealFile)  -in $paths)
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-True $ctx 'File symlink visible (allowed)'       ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True $ctx 'Dir symlink node visible'             ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLink)      -in $paths)
-            Assert-True $ctx 'Dir symlink child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
+        [ordered] @{
+            Name = 'AllExcluded_BasicScanEngine'
+            CsvName = 'all-excluded-basic'
+            Behavior = 'With all exclusions enabled and UseFastScanEngine disabled, the basic NtQueryDirectoryFile code path should enforce the same reparse-point exclusions as the NTFS MFT path.'
+            BasicScanEngine = $true
+            Options = [ordered] @{}
+            Checks = @(
+                New-ReparsePathCheck 'Always' 'Real dir in CSV' $fixtureInfo.RealDir $true
+                New-ReparsePathCheck 'Always' 'Real child in CSV' $fixtureInfo.RealChild $true
+                New-ReparsePathCheck 'Always' 'Real file in CSV' $fixtureInfo.RealFile $true
+                New-ReparsePathCheck 'Symlinks' 'File symlink absent (excluded)' $fixtureInfo.Symlinks.FileLink $false
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink node visible' $fixtureInfo.Symlinks.DirLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child absent (excluded)' $fixtureInfo.Symlinks.DirLinkChild $false
+                New-ReparsePathCheck 'Junction' 'Junction node visible' $fixtureInfo.Junction.JunctionDir $true
+                New-ReparsePathCheck 'Junction' 'Junction child absent (excluded)' $fixtureInfo.Junction.JunctionChild $false
+                New-ReparsePathCheck 'MountPoint' 'Mount point node visible' $fixtureInfo.MountPoint.MountDir $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content absent (excluded)' $fixtureInfo.MountPoint.MountedFile $false
+            )
         }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
+        [ordered] @{
+            Name = 'AllFollowed_BasicScanEngine'
+            CsvName = 'all-followed-basic'
+            Behavior = 'With all exclusions disabled and UseFastScanEngine disabled, the basic scan engine should enumerate all link types including file symlinks, directory symlink children, junction children, and mount point contents.'
+            BasicScanEngine = $true
+            Options = $followAll
+            Checks = @(
+                New-ReparsePathCheck 'Always' 'Real dir in CSV' $fixtureInfo.RealDir $true
+                New-ReparsePathCheck 'Always' 'Real child in CSV' $fixtureInfo.RealChild $true
+                New-ReparsePathCheck 'Always' 'Real file in CSV' $fixtureInfo.RealFile $true
+                New-ReparsePathCheck 'Symlinks' 'File symlink visible' $fixtureInfo.Symlinks.FileLink $true
+                New-ReparsePathCheck 'Symlinks' 'Dir symlink child visible' $fixtureInfo.Symlinks.DirLinkChild $true
+                New-ReparsePathCheck 'Junction' 'Junction child visible' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction node visible'              ((Normalize-ComparePath $fixtureInfo.Junction.JunctionDir)   -in $paths)
-            Assert-True $ctx 'Junction child visible (followed)'  ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
+        [ordered] @{
+            Name = 'JunctionExcluded_MountPointFollowed'
+            CsvName = 'junction-excl-mount-followed'
+            Behavior = 'With ExcludeJunctions enabled and ExcludeVolumeMountPoints disabled, on-volume junction children must be absent while off-volume mount point contents are enumerated, demonstrating that the two reparse-point subtypes are correctly distinguished.'
+            BasicScanEngine = $false
+            Options = $excludeJunction
+            Checks = @(
+                New-ReparsePathCheck 'Junction' 'Junction node visible' $fixtureInfo.Junction.JunctionDir $true
+                New-ReparsePathCheck 'Junction' 'Junction child absent (excluded)' $fixtureInfo.Junction.JunctionChild $false
+                New-ReparsePathCheck 'MountPoint' 'Mount point content visible (followed)' $fixtureInfo.MountPoint.MountedFile $true
+            )
         }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
+        [ordered] @{
+            Name = 'MountPointExcluded_JunctionFollowed'
+            CsvName = 'mount-excl-junction-followed'
+            Behavior = 'With ExcludeVolumeMountPoints enabled and ExcludeJunctions disabled, off-volume mount point contents must be absent while on-volume junction children are enumerated.'
+            BasicScanEngine = $false
+            Options = $excludeMountPoint
+            Checks = @(
+                New-ReparsePathCheck 'Junction' 'Junction child visible (followed)' $fixtureInfo.Junction.JunctionChild $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point node visible' $fixtureInfo.MountPoint.MountDir $true
+                New-ReparsePathCheck 'MountPoint' 'Mount point content absent (excluded)' $fixtureInfo.MountPoint.MountedFile $false
+            )
         }
+    )
 
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point node visible'              ((Normalize-ComparePath $fixtureInfo.MountPoint.MountDir)    -in $paths)
-            Assert-True $ctx 'Mount point content visible (followed)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 3: Only junctions excluded. Symlinks and mount
-    # points are followed; junctions are not.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'JunctionsExcluded_OthersFollowed' -Behavior 'With only ExcludeJunctions enabled, junction children are not enumerated while directory symlinks and mount point contents are traversed normally.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              1
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'junctions-excluded' -Sections $sections
-        $paths = $scan.Paths
-
-        Assert-True $ctx 'Real dir in CSV'   ((Normalize-ComparePath $fixtureInfo.RealDir)   -in $paths)
-        Assert-True $ctx 'Real child in CSV' ((Normalize-ComparePath $fixtureInfo.RealChild) -in $paths)
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-True $ctx 'File symlink visible'              ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True $ctx 'Dir symlink child visible'         ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True  $ctx 'Junction node visible'             ((Normalize-ComparePath $fixtureInfo.Junction.JunctionDir)   -in $paths)
-            Assert-False $ctx 'Junction child absent (excluded)'  ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point content visible' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 4: Directory symlinks excluded, file symlinks
-    # visible. Junctions and mount points followed.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'DirSymlinksExcluded_FileSymlinksVisible' -Behavior 'With ExcludeSymbolicLinksDirectory enabled and ExcludeSymbolicLinksFile disabled, directory symlink children are blocked but file symlinks appear in the CSV.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 1
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'dirsymlink-excluded-filesymlink-visible' -Sections $sections
-        $paths = $scan.Paths
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-True  $ctx 'File symlink visible (allowed)'         ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True  $ctx 'Dir symlink node visible'               ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLink)      -in $paths)
-            Assert-False $ctx 'Dir symlink child absent (dir excluded)' ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point content visible' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 5: File symlinks excluded, directory symlinks
-    # followed. Junctions and mount points followed.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'FileSymlinksExcluded_DirSymlinksFollowed' -Behavior 'With ExcludeSymbolicLinksFile enabled and ExcludeSymbolicLinksDirectory disabled, file symlinks are invisible but directory symlink children are enumerated.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      1
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'filesymlink-excluded-dirsymlink-followed' -Sections $sections
-        $paths = $scan.Paths
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-False $ctx 'File symlink absent (excluded)'      ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True  $ctx 'Dir symlink node visible'            ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLink)      -in $paths)
-            Assert-True  $ctx 'Dir symlink child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point content visible' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 6: Only mount points excluded. Symlinks and
-    # junctions are fully followed.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'MountPointsExcluded_OthersFollowed' -Behavior 'With only ExcludeVolumeMountPoints enabled, the off-volume mount point directory is visible but its contents are not enumerated, while symlinks and junctions are traversed normally.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      1
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       0
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'mountpoints-excluded' -Sections $sections
-        $paths = $scan.Paths
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-True $ctx 'File symlink visible'        ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True $ctx 'Dir symlink child visible'   ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True  $ctx 'Mount point node visible'              ((Normalize-ComparePath $fixtureInfo.MountPoint.MountDir)    -in $paths)
-            Assert-False $ctx 'Mount point content absent (excluded)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 7: All excluded — repeat with the basic (non-NTFS)
-    # scan engine to verify the alternative code path also
-    # enforces reparse-point exclusions correctly.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'AllExcluded_BasicScanEngine' -Behavior 'With all exclusions enabled and UseFastScanEngine disabled, the basic NtQueryDirectoryFile code path should enforce the same reparse-point exclusions as the NTFS MFT path.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections -BasicScanEngine
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'all-excluded-basic' -Sections $sections
-        $paths = $scan.Paths
-
-        Assert-True $ctx 'Real dir in CSV'   ((Normalize-ComparePath $fixtureInfo.RealDir)   -in $paths)
-        Assert-True $ctx 'Real child in CSV' ((Normalize-ComparePath $fixtureInfo.RealChild) -in $paths)
-        Assert-True $ctx 'Real file in CSV'  ((Normalize-ComparePath $fixtureInfo.RealFile)  -in $paths)
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-False $ctx 'File symlink absent (excluded)'      ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True  $ctx 'Dir symlink node visible'            ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLink)      -in $paths)
-            Assert-False $ctx 'Dir symlink child absent (excluded)' ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True  $ctx 'Junction node visible'            ((Normalize-ComparePath $fixtureInfo.Junction.JunctionDir)   -in $paths)
-            Assert-False $ctx 'Junction child absent (excluded)' ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True  $ctx 'Mount point node visible'              ((Normalize-ComparePath $fixtureInfo.MountPoint.MountDir)    -in $paths)
-            Assert-False $ctx 'Mount point content absent (excluded)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 8: All followed — basic scan engine.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'AllFollowed_BasicScanEngine' -Behavior 'With all exclusions disabled and UseFastScanEngine disabled, the basic scan engine should enumerate all link types including file symlinks, directory symlink children, junction children, and mount point contents.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections -BasicScanEngine
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'all-followed-basic' -Sections $sections
-        $paths = $scan.Paths
-
-        Assert-True $ctx 'Real dir in CSV'   ((Normalize-ComparePath $fixtureInfo.RealDir)   -in $paths)
-        Assert-True $ctx 'Real child in CSV' ((Normalize-ComparePath $fixtureInfo.RealChild) -in $paths)
-        Assert-True $ctx 'Real file in CSV'  ((Normalize-ComparePath $fixtureInfo.RealFile)  -in $paths)
-
-        if ($fixtureInfo.Symlinks.Created) {
-            Assert-True $ctx 'File symlink visible'              ((Normalize-ComparePath $fixtureInfo.Symlinks.FileLink)     -in $paths)
-            Assert-True $ctx 'Dir symlink child visible'         ((Normalize-ComparePath $fixtureInfo.Symlinks.DirLinkChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Symlink fixtures unavailable: $($fixtureInfo.Symlinks.Error)"
-        }
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction child visible'  ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point content visible' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    # ----------------------------------------------------------
-    # Scenario 9: Junction and mount point distinguished.
-    # Junctions excluded, mount points followed (and vice versa),
-    # confirming WinDirStat separates them even though both use
-    # IO_REPARSE_TAG_MOUNT_POINT at the filesystem level.
-    # ----------------------------------------------------------
-    [void] $results.Add((Invoke-Scenario -Name 'JunctionExcluded_MountPointFollowed' -Behavior 'With ExcludeJunctions enabled and ExcludeVolumeMountPoints disabled, on-volume junction children must be absent while off-volume mount point contents are enumerated, demonstrating that the two reparse-point subtypes are correctly distinguished.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              1
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      0
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       1
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'junction-excl-mount-followed' -Sections $sections
-        $paths = $scan.Paths
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True  $ctx 'Junction node visible'             ((Normalize-ComparePath $fixtureInfo.Junction.JunctionDir)   -in $paths)
-            Assert-False $ctx 'Junction child absent (excluded)'  ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True $ctx 'Mount point content visible (followed)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
-
-    [void] $results.Add((Invoke-Scenario -Name 'MountPointExcluded_JunctionFollowed' -Behavior 'With ExcludeVolumeMountPoints enabled and ExcludeJunctions disabled, off-volume mount point contents must be absent while on-volume junction children are enumerated.' -Body {
-        param($ctx)
-
-        $sections = New-BaseIniSections
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksDirectory' 0
-        Set-IniValue $sections 'Options' 'ExcludeSymbolicLinksFile'      0
-        Set-IniValue $sections 'Options' 'ExcludeJunctions'              0
-        Set-IniValue $sections 'Options' 'ExcludeVolumeMountPoints'      1
-        Set-IniValue $sections 'Options' 'FollowVolumeMountPoints'       0
-        $scan  = Invoke-ScanWithIni -Exe $testExe -CsvName 'mount-excl-junction-followed' -Sections $sections
-        $paths = $scan.Paths
-
-        if ($fixtureInfo.Junction.Created) {
-            Assert-True $ctx 'Junction child visible (followed)' ((Normalize-ComparePath $fixtureInfo.Junction.JunctionChild) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Junction fixture unavailable: $($fixtureInfo.Junction.Error)"
-        }
-
-        if ($fixtureInfo.MountPoint.Created) {
-            Assert-True  $ctx 'Mount point node visible'              ((Normalize-ComparePath $fixtureInfo.MountPoint.MountDir)    -in $paths)
-            Assert-False $ctx 'Mount point content absent (excluded)' ((Normalize-ComparePath $fixtureInfo.MountPoint.MountedFile) -in $paths)
-        }
-        else {
-            Add-Warning -Context $ctx -Message "Mount point fixture unavailable: $($fixtureInfo.MountPoint.Error)"
-        }
-
-        [pscustomobject] @{ CommandLine = $scan.Run.CommandLine; ElapsedSeconds = $scan.Run.ElapsedSeconds }
-    }))
+    foreach ($scenario in $scenarios) {
+        [void] $results.Add((Invoke-ReparseScenario -Scenario $scenario -Exe $testExe -FixtureInfo $fixtureInfo))
+    }
 
     # ----------------------------------------------------------
     # Summary
@@ -10798,21 +10336,6 @@ function Write-TestIni {
         'ColumnVisibility=1,1,1,1,1,0,1,0,1,1,1'
     ) -join "`r`n"
     [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), $ini, [System.Text.Encoding]::Unicode)
-}
-
-function Invoke-WinDirStatCsvScan {
-    Write-ColoredLine "Running WinDirStat..." Cyan
-    $run = Invoke-ProcessWithTimeout -FileName $runnerExe -Arguments @('/saveto', $csvOut, $scanRoot) `
-        -WorkingDirectory $runRoot
-    if ($run.ExitCode -ne 0) {
-        throw "WinDirStat exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
-    }
-
-    if (!(Test-Path -LiteralPath $csvOut)) {
-        throw "WinDirStat exited successfully but did not create CSV: $csvOut"
-    }
-
-    Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $run.ElapsedSeconds) DarkGray
 }
 
     function Assert-CsvHasRow {
@@ -10919,7 +10442,9 @@ $longFileName = "L" + ("o" * 200) + "ngFileName.txt"
 New-TestFile (Join-Path $scanRoot $longFileName) 1024
 
 Write-TestIni
-Invoke-WinDirStatCsvScan
+Write-ColoredLine "Running WinDirStat..." Cyan
+$scan = Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csvOut -Root $scanRoot -WorkingDirectory $runRoot
+Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $scan.ElapsedSeconds) DarkGray
         $csvRows = @(Read-CsvRows -Csv $csvOut)
 
         if ($deepPath.Length -gt 260) { Assert-Pass 'EdgeCases' 'Deep fixture exceeds MAX_PATH' "$($deepPath.Length) characters" }

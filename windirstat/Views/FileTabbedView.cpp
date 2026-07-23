@@ -148,7 +148,6 @@ void CFileTabbedView::SetPermsTabVisibility(const bool show)
     if (!show)
     {
         GetTabControl().ShowTab(m_filePermsViewIndex, false);
-        CFilePermsControl::Get()->StopScan();
         return;
     }
 

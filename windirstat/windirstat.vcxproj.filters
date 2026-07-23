@@ -128,6 +128,9 @@
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageShared.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
@@ -344,6 +347,9 @@
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageGeneral.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageShared.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageTreeMap.cpp">

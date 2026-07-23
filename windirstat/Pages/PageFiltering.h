@@ -18,13 +18,12 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPageFiltering. "Settings" property page "Filtering".
 //
-class CPageFiltering final : public CMFCPropertyPage
+class CPageFiltering final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageFiltering)
 
@@ -34,10 +33,9 @@ class CPageFiltering final : public CMFCPropertyPage
     ~CPageFiltering() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
+    void AdjustControls() override;
     void OnOK() override;
     void SetToolTips();
 
@@ -60,5 +58,4 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();
     BOOL PreTranslateMessage(MSG* pMsg) override;
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

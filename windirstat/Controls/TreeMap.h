@@ -27,6 +27,19 @@
 class CColorSpace final
 {
 public:
+    static constexpr double GraphPaletteBrightness = 0.6;
+    static constexpr DWORD GraphColorDarker = 0x01000000;
+    static constexpr DWORD GraphColorLighter = 0x02000000;
+    static constexpr DWORD GraphColorMask = GraphColorDarker | GraphColorLighter;
+
+    static constexpr COLORREF DimColor(const COLORREF color, float factor = 0.9f) noexcept
+    {
+        factor = std::clamp(factor, 0.0f, 1.0f);
+        return RGB(static_cast<BYTE>(GetRValue(color) * factor),
+            static_cast<BYTE>(GetGValue(color) * factor),
+            static_cast<BYTE>(GetBValue(color) * factor));
+    }
+
     // Returns the arithmetic brightness used by MakeBrightColor.
     static constexpr double GetColorBrightness(const COLORREF color)
     {
@@ -73,6 +86,19 @@ public:
         NormalizeColor(red, green, blue);
 
         return RGB(red, green, blue);
+    }
+
+    static constexpr COLORREF ApplyGraphColorFlags(const DWORD rawColor)
+    {
+        const DWORD flags = rawColor & GraphColorMask;
+        COLORREF color = rawColor & 0x00FFFFFF;
+        if (flags != GraphColorDarker && flags != GraphColorLighter) return color;
+
+        color = MakeBrightColor(color, GraphPaletteBrightness);
+        if (flags == GraphColorDarker) return DimColor(color, 0.66f);
+        return RGB(std::min(255, GetRValue(color) + 60),
+            std::min(255, GetGValue(color) + 60),
+            std::min(255, GetBValue(color) + 60));
     }
 
     // Swaps values above 255 to the other two values
@@ -142,9 +168,9 @@ public:
     // by TmiGetGraphColor(). Used for <Free space> (darker)
     // and <Unknown> (brighter).
     //
-    static constexpr DWORD COLORFLAG_DARKER  = 0x01000000;
-    static constexpr DWORD COLORFLAG_LIGHTER = 0x02000000;
-    static constexpr DWORD COLORFLAG_MASK    = 0x03000000;
+    static constexpr DWORD COLORFLAG_DARKER  = CColorSpace::GraphColorDarker;
+    static constexpr DWORD COLORFLAG_LIGHTER = CColorSpace::GraphColorLighter;
+    static constexpr DWORD COLORFLAG_MASK    = CColorSpace::GraphColorMask;
 
     //
     // Collection of all treemap options.

@@ -340,58 +340,70 @@ BOOL CStorageAnalyticsView::PreTranslateMessage(MSG* pMsg)
     return CWinDirStatPane::PreTranslateMessage(pMsg);
 }
 
-bool CStorageAnalyticsView::AreParametersValid()
+bool CStorageAnalyticsView::ReadParameters(const bool apply)
 {
-    CString text;
-    double lastVal = 0.0;
-    bool hasLastActive = false;
-
-    auto ReadText = [&](CCenteredEdit& edit) {
-        edit.GetWindowTextW(text);
-        text.Trim();
-        return !text.IsEmpty();
+    struct Parameters
+    {
+        bool active;
+        double thresholdDays;
+        double costGiB;
     };
 
-    auto ParseText = [&](double& val, const bool allowZero) {
+    CString text;
+    std::vector<Parameters> parameters;
+    parameters.reserve(m_tiers.size());
+    double lastThreshold = 0.0;
+    bool hasLastActive = false;
+
+    const auto ParseText = [&](double& value, const bool allowZero) {
         wchar_t* end = nullptr;
-        val = std::wcstod(text.GetString(), &end);
-        return end != text.GetString() && *end == L'\0' && std::isfinite(val) &&
-            (allowZero ? val >= 0.0 : val > 0.0);
+        value = std::wcstod(text.GetString(), &end);
+        return end != text.GetString() && *end == L'\0' && std::isfinite(value) &&
+            (allowZero ? value >= 0.0 : value > 0.0);
     };
 
     for (size_t i = 0; i < m_tiers.size(); ++i)
     {
         auto& tier = m_tiers[i];
         bool active = (i == 0);
+        double thresholdDays = 0.0;
         if (tier.editThreshold)
         {
-            double val = 0.0;
-            active = ReadText(*tier.editThreshold);
-            if (active && !ParseText(val, false)) return false;
-            if (active)
-            {
-                if (hasLastActive && lastVal >= val)
-                {
-                    return false;
-                }
-                lastVal = val;
-                hasLastActive = true;
-            }
+            tier.editThreshold->GetWindowTextW(text);
+            text.Trim();
+            active = !text.IsEmpty();
+            if (active && (!ParseText(thresholdDays, false)
+                || hasLastActive && lastThreshold >= thresholdDays)) return false;
+            if (active) lastThreshold = thresholdDays;
+            hasLastActive |= active;
         }
 
+        double costGiB = 0.0;
         if (active)
         {
-            double cost = 0.0;
-            if (!ReadText(*tier.editCost) || !ParseText(cost, true)) return false;
+            tier.editCost->GetWindowTextW(text);
+            text.Trim();
+            if (!ParseText(costGiB, true)) return false;
         }
+        parameters.push_back({ active, thresholdDays, costGiB });
     }
 
+    if (!apply) return true;
+    for (size_t i = 0; i < m_tiers.size(); ++i)
+    {
+        auto& tier = m_tiers[i];
+        tier.active = parameters[i].active;
+        tier.thresholdDays = parameters[i].thresholdDays;
+        tier.costGiB = parameters[i].costGiB;
+        tier.filesCount = 0;
+        tier.totalSize = 0;
+    }
     return true;
 }
 
 void CStorageAnalyticsView::OnEditChange()
 {
-    m_btnRecalculate.EnableWindow(AreParametersValid());
+    m_btnRecalculate.EnableWindow(ReadParameters(false));
 }
 
 void CStorageAnalyticsView::OnEditChangeRange(UINT)
@@ -419,48 +431,11 @@ void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change
 void CStorageAnalyticsView::Recalculate()
 {
     const auto* model = CWinDirStatModel::Get();
-    if (!model->IsScanSettled())
+    if (!model->IsScanSettled() || !ReadParameters(true))
     {
         m_hasData = false;
         InvalidateRect(nullptr);
         return;
-    }
-    if (!AreParametersValid())
-    {
-        m_hasData = false;
-        InvalidateRect(nullptr);
-        return;
-    }
-
-    CString text;
-    for (size_t i = 0; i < m_tiers.size(); ++i)
-    {
-        auto& tier = m_tiers[i];
-        if (tier.editThreshold)
-        {
-            tier.editThreshold->GetWindowTextW(text);
-            text.Trim();
-            tier.active = !text.IsEmpty();
-            tier.thresholdDays = tier.active ? std::wcstod(text.GetString(), nullptr) : 0.0;
-        }
-        else
-        {
-            tier.active = true;
-            tier.thresholdDays = 0.0;
-        }
-
-        if (tier.active)
-        {
-            tier.editCost->GetWindowTextW(text);
-            tier.costGiB = std::wcstod(text.GetString(), nullptr);
-        }
-        else
-        {
-            tier.costGiB = 0.0;
-        }
-
-        tier.filesCount = 0;
-        tier.totalSize = 0;
     }
 
     FILETIME now;
@@ -622,26 +597,26 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
     CFont fontCardVal;
     CFont fontCardLbl;
     CFont fontBody;
-    CFont fontSavingsVal;
-
-    fontTitle.CreateFont(-DpiRest(20, this), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
-    fontCardVal.CreateFont(-DpiRest(18, this), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
-    fontCardLbl.CreateFont(-DpiRest(11, this), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
-    fontBody.CreateFont(-DpiRest(12, this), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
-    fontSavingsVal.CreateFont(-DpiRest(20, this), 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
+    const auto CreateFont = [&](CFont& font, const int size, const int weight) {
+        font.CreateFont(-DpiRest(size, this), 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
+            DEFAULT_PITCH | FF_DONTCARE, wds::strFontSegoeUI);
+    };
+    CreateFont(fontTitle, 20, FW_BOLD);
+    CreateFont(fontCardVal, 18, FW_BOLD);
+    CreateFont(fontCardLbl, 11, FW_NORMAL);
+    CreateFont(fontBody, 12, FW_NORMAL);
 
     CSetBkMode setBkMode(&memDC, TRANSPARENT);
     CSetTextColor setTextColor(&memDC, fgText);
-
-    {
-        CSelectObject selectFont(&memDC, &fontTitle);
-        memDC.TextOutW(leftWidth + DpiRest(20, this), DpiRest(20, this), Localization::Lookup(IDS_ANALYTICS_TITLE).c_str());
-    }
+    const auto DrawText = [&](CFont& font, const COLORREF color, const int x, const int y,
+        const std::wstring& text) {
+        CSelectObject selectFont(&memDC, &font);
+        CSetTextColor selectColor(&memDC, color);
+        memDC.TextOutW(x, y, text.c_str());
+    };
+    DrawText(fontTitle, fgText, leftWidth + DpiRest(20, this), DpiRest(20, this),
+        Localization::Lookup(IDS_ANALYTICS_TITLE));
 
     if (!m_hasData || m_tiers.empty())
     {
@@ -673,13 +648,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         const int cardY = DpiRest(70, this);
 
         struct CardDrawData {
-            std::wstring title;
-            ULONGLONG files;
-            ULONGLONG size;
-            double cost;
-            COLORREF bgLight, bgDark;
-            COLORREF borderLight, borderDark;
-            COLORREF accent;
+            const TierInfo* tier;
             std::wstring legendDesc;
         };
         std::vector<CardDrawData> activeCards;
@@ -695,18 +664,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
             const auto& tier = m_tiers[i];
             if (tier.active)
             {
-                CardDrawData card;
-                card.title = tier.name;
-                card.files = tier.filesCount;
-                card.size = tier.totalSize;
-                card.cost = static_cast<double>(tier.totalSize) / scale * tier.costGiB;
-                card.bgLight = tier.bgLight;
-                card.bgDark = tier.bgDark;
-                card.borderLight = tier.borderLight;
-                card.borderDark = tier.borderDark;
-                card.accent = tier.accent;
-
-                card.legendDesc = tier.name;
+                CardDrawData card{ &tier, tier.name };
                 if (i == 0)
                 {
                     const auto firstActiveTier = findActiveTierFrom(1);
@@ -727,7 +685,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                     else card.legendDesc += std::format(L" (>{:.0f} {})", tier.thresholdDays, daysStr);
                 }
 
-                activeCards.push_back(card);
+                activeCards.push_back(std::move(card));
             }
         }
 
@@ -736,44 +694,27 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
 
         for (int i = 0; i < activeCount; ++i)
         {
+            const auto& card = activeCards[i];
+            const auto& tier = *card.tier;
             const int cardX = leftWidth + DpiRest(20, this) + i * (cardW + cardGap);
             CRect rcCard(cardX, cardY, cardX + cardW, cardY + cardH);
 
-            memDC.FillSolidRect(&rcCard, isDark ? activeCards[i].bgDark : activeCards[i].bgLight);
-            CBrush brBorder(isDark ? activeCards[i].borderDark : activeCards[i].borderLight);
+            memDC.FillSolidRect(&rcCard, isDark ? tier.bgDark : tier.bgLight);
+            CBrush brBorder(isDark ? tier.borderDark : tier.borderLight);
             memDC.FrameRect(&rcCard, &brBorder);
 
             const int accentBarW = 4;
             CRect rcAccent = rcCard;
             rcAccent.right = rcAccent.left + DpiRest(accentBarW, this);
-            memDC.FillSolidRect(&rcAccent, activeCards[i].accent);
+            memDC.FillSolidRect(&rcAccent, tier.accent);
 
-            {
-                CSelectObject selectFont(&memDC, &fontCardLbl);
-                CSetTextColor setMutedColor(&memDC, fgMuted);
-                memDC.TextOutW(rcCard.left + DpiRest(12, this), rcCard.top + DpiRest(10, this), activeCards[i].title.c_str());
-            }
-
-            {
-                CSelectObject selectFont(&memDC, &fontCardVal);
-                CSetTextColor setTextColorCard(&memDC, fgText);
-                std::wstring sizeText = FormatSizeSuffixes(activeCards[i].size);
-                memDC.TextOutW(rcCard.left + DpiRest(12, this), rcCard.top + DpiRest(30, this), sizeText.c_str());
-            }
-
-            {
-                CSelectObject selectFont(&memDC, &fontBody);
-                CSetTextColor setMutedColor(&memDC, fgMuted);
-                std::wstring filesText = FormatCount(activeCards[i].files) + L" files";
-                memDC.TextOutW(rcCard.left + DpiRest(12, this), rcCard.top + DpiRest(53, this), filesText.c_str());
-            }
-
-            {
-                CSelectObject selectFont(&memDC, &fontCardVal);
-                CSetTextColor setAccentColor(&memDC, activeCards[i].accent);
-                std::wstring costText = std::format(L"${:.2f}/mo", activeCards[i].cost);
-                memDC.TextOutW(rcCard.left + DpiRest(12, this), rcCard.top + DpiRest(70, this), costText.c_str());
-            }
+            const int textX = rcCard.left + DpiRest(12, this);
+            DrawText(fontCardLbl, fgMuted, textX, rcCard.top + DpiRest(10, this), tier.name);
+            DrawText(fontCardVal, fgText, textX, rcCard.top + DpiRest(30, this), FormatSizeSuffixes(tier.totalSize));
+            DrawText(fontBody, fgMuted, textX, rcCard.top + DpiRest(53, this),
+                FormatCount(tier.filesCount) + L" files");
+            DrawText(fontCardVal, tier.accent, textX, rcCard.top + DpiRest(70, this),
+                std::format(L"${:.2f}/mo", static_cast<double>(tier.totalSize) / scale * tier.costGiB));
         }
 
         // Draw Distribution Bars
@@ -844,7 +785,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         {
             const int legendX = barX + i * legendColW;
             CRect rcColor(legendX, legendY + DpiRest(2, this), legendX + DpiRest(10, this), legendY + DpiRest(12, this));
-            memDC.FillSolidRect(&rcColor, activeCards[i].accent);
+            memDC.FillSolidRect(&rcColor, activeCards[i].tier->accent);
             CBrush brLegend(clrBorder);
             memDC.FrameRect(&rcColor, &brLegend);
 
@@ -868,41 +809,19 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         const int numSavingsColumns = 3;
         const int colW = barW / numSavingsColumns;
 
-        {
-            CSelectObject selectFont(&memDC, &fontCardLbl);
-            CSetTextColor setSavingsLabelColor(&memDC, fgMuted);
-            memDC.TextOutW(rcSavings.left + DpiRest(15, this), rcSavings.top + DpiRest(15, this), Localization::Lookup(IDS_CURRENT_COST_LABEL).c_str());
-        }
-        {
-            CSelectObject selectFont(&memDC, &fontCardVal);
-            CSetTextColor setSavingsValColor(&memDC, fgText);
-            std::wstring currentCostMsg = std::format(L"${:.2f}/mo", currentCost);
-            memDC.TextOutW(rcSavings.left + DpiRest(15, this), rcSavings.top + DpiRest(38, this), currentCostMsg.c_str());
-        }
-
-        {
-            CSelectObject selectFont(&memDC, &fontCardLbl);
-            CSetTextColor setSavingsLabelColor(&memDC, fgMuted);
-            memDC.TextOutW(rcSavings.left + colW + DpiRest(10, this), rcSavings.top + DpiRest(15, this), Localization::Lookup(IDS_OPTIMIZED_COST_LABEL).c_str());
-        }
-        {
-            CSelectObject selectFont(&memDC, &fontCardVal);
-            CSetTextColor setSavingsValColor(&memDC, fgText);
-            std::wstring optimizedCostMsg = std::format(L"${:.2f}/mo", optimizedCost);
-            memDC.TextOutW(rcSavings.left + colW + DpiRest(10, this), rcSavings.top + DpiRest(38, this), optimizedCostMsg.c_str());
-        }
-
-        {
-            CSelectObject selectFont(&memDC, &fontCardLbl);
-            CSetTextColor setSavingsLabelColor(&memDC, textSavings);
-            memDC.TextOutW(rcSavings.left + colW * 2 + DpiRest(10, this), rcSavings.top + DpiRest(15, this), Localization::Lookup(IDS_STORAGE_SAVINGS).c_str());
-        }
-        {
-            CSelectObject selectFont(&memDC, &fontSavingsVal);
-            CSetTextColor setSavingsValColor(&memDC, textSavings);
-            std::wstring savingsMsg = std::format(L"${:.2f}/mo ({:.1f}%)", savings, savingsPct);
-            memDC.TextOutW(rcSavings.left + colW * 2 + DpiRest(10, this), rcSavings.top + DpiRest(36, this), savingsMsg.c_str());
-        }
+        const int labelY = rcSavings.top + DpiRest(15, this);
+        DrawText(fontCardLbl, fgMuted, rcSavings.left + DpiRest(15, this), labelY,
+            Localization::Lookup(IDS_CURRENT_COST_LABEL));
+        DrawText(fontCardVal, fgText, rcSavings.left + DpiRest(15, this),
+            rcSavings.top + DpiRest(38, this), std::format(L"${:.2f}/mo", currentCost));
+        DrawText(fontCardLbl, fgMuted, rcSavings.left + colW + DpiRest(10, this), labelY,
+            Localization::Lookup(IDS_OPTIMIZED_COST_LABEL));
+        DrawText(fontCardVal, fgText, rcSavings.left + colW + DpiRest(10, this),
+            rcSavings.top + DpiRest(38, this), std::format(L"${:.2f}/mo", optimizedCost));
+        DrawText(fontCardLbl, textSavings, rcSavings.left + colW * 2 + DpiRest(10, this), labelY,
+            Localization::Lookup(IDS_STORAGE_SAVINGS));
+        DrawText(fontTitle, textSavings, rcSavings.left + colW * 2 + DpiRest(10, this),
+            rcSavings.top + DpiRest(36, this), std::format(L"${:.2f}/mo ({:.1f}%)", savings, savingsPct));
     }
 
     pDC->BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &memDC, 0, 0, SRCCOPY);

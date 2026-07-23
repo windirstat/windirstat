@@ -57,9 +57,6 @@ void CWinDirStatModel::ClearScanState()
     // Stop watchers
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->StopMonitoring();
 
-    // Stop permissions scanner before the tree is torn down
-    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
-
     // Discard pending top-list entries that still point into the old tree.
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->ClearPendingItems();
 

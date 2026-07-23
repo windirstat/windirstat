@@ -153,7 +153,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
 
     CSelectObject sofont(pdc, list->GetFont());
 
-    rcRest.DeflateRect(list->GetTextXMargin(), 0);
+    rcRest.DeflateRect(TEXT_X_MARGIN, 0);
 
     CRect rcLabel = rcRest;
     DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcLabel, true, true);
@@ -399,30 +399,6 @@ bool CWdsListControl::IsFullRowSelection() const
     return m_showFullRowSelect;
 }
 
-// Normal window background color
-COLORREF CWdsListControl::GetWindowColor() const
-{
-    return m_windowColor;
-}
-
-// Shaded window background color (for stripes)
-COLORREF CWdsListControl::GetStripeColor() const
-{
-    return m_stripeColor;
-}
-
-// Highlight color if we have no focus
-COLORREF CWdsListControl::GetNonFocusHighlightColor() const
-{
-    return DarkMode::IsDarkModeActive() ? RGB(90, 90, 90) : RGB(190, 190, 190);
-}
-
-// Highlight text color if we have no focus
-COLORREF CWdsListControl::GetNonFocusHighlightTextColor() const
-{
-    return DarkMode::IsDarkModeActive() ? RGB(255, 255, 255) : RGB(0, 0, 0);
-}
-
 COLORREF CWdsListControl::GetHighlightColor() const
 {
     if (HasFocus())
@@ -430,7 +406,7 @@ COLORREF CWdsListControl::GetHighlightColor() const
         return DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
     }
 
-    return GetNonFocusHighlightColor();
+    return DarkMode::IsDarkModeActive() ? RGB(90, 90, 90) : RGB(190, 190, 190);
 }
 
 COLORREF CWdsListControl::GetHighlightTextColor() const
@@ -440,7 +416,7 @@ COLORREF CWdsListControl::GetHighlightTextColor() const
         return DarkMode::WdsSysColor(COLOR_HIGHLIGHTTEXT);
     }
 
-    return GetNonFocusHighlightTextColor();
+    return DarkMode::IsDarkModeActive() ? RGB(255, 255, 255) : RGB(0, 0, 0);
 }
 
 bool CWdsListControl::IsItemStripColor(const int i) const
@@ -450,7 +426,7 @@ bool CWdsListControl::IsItemStripColor(const int i) const
 
 COLORREF CWdsListControl::GetItemBackgroundColor(const int i) const
 {
-    return IsItemStripColor(i) ? GetStripeColor() : GetWindowColor();
+    return IsItemStripColor(i) ? m_stripeColor : m_windowColor;
 }
 
 COLORREF CWdsListControl::GetItemSelectionBackgroundColor(const int i) const
@@ -473,11 +449,6 @@ COLORREF CWdsListControl::GetItemSelectionTextColor(const int i) const
     }
 
     return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
-}
-
-int CWdsListControl::GetTextXMargin() const
-{
-    return TEXT_X_MARGIN;
 }
 
 int CWdsListControl::GetGeneralLeftIndent() const
@@ -754,21 +725,6 @@ void CWdsListControl::SavePersistentAttributes() const
             (*m_columnWidths)[i] = GetColumnWidth(i);
         }
     }
-}
-
-void CWdsListControl::AddExtendedStyle(const DWORD exStyle)
-{
-    SetExtendedStyle(GetExtendedStyle() | exStyle);
-}
-
-void CWdsListControl::RemoveExtendedStyle(const DWORD exStyle)
-{
-    SetExtendedStyle(GetExtendedStyle() & ~exStyle);
-}
-
-const SSorting& CWdsListControl::GetSorting() const
-{
-    return m_sorting;
 }
 
 int CWdsListControl::ColumnToSubItem(const int col) const
@@ -1233,20 +1189,6 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     }
 }
 
-void CWdsListControl::ClearList()
-{
-    if (m_ownsItems)
-    {
-        for (const auto* item : m_items)
-        {
-            delete item;
-        }
-    }
-    m_items.clear();
-    m_itemMap.clear();
-    SetItemCountEx(0, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
-}
-
 BOOL CWdsListControl::DeleteItem(const int i)
 {
     RemoveListItem(i);
@@ -1255,6 +1197,9 @@ BOOL CWdsListControl::DeleteItem(const int i)
 
 BOOL CWdsListControl::DeleteAllItems()
 {
-    ClearList();
+    if (m_ownsItems) for (const auto* item : m_items) delete item;
+    m_items.clear();
+    m_itemMap.clear();
+    SetItemCountEx(0, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
     return TRUE;
 }

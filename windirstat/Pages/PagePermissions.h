@@ -18,12 +18,13 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 #include "ColorButton.h"
 
 //
 // CPagePermissions. "Settings" property page "Permissions".
 //
-class CPagePermissions final : public CMFCPropertyPage
+class CPagePermissions final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPagePermissions)
 
@@ -34,7 +35,7 @@ class CPagePermissions final : public CMFCPropertyPage
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     CString m_account[PERMSRULECOUNT];
@@ -45,8 +46,4 @@ protected:
     CString m_excludeRegex;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
-    afx_msg void OnSettingChanged(UINT id);
-    afx_msg void OnExcludeChanged();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

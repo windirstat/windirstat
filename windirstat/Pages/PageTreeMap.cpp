@@ -23,10 +23,10 @@ namespace
     constexpr UINT c_MaxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreeMap, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageTreeMap, COptionsPage)
 
 CPageTreeMap::CPageTreeMap()
-    : CMFCPropertyPage(IDD)
+    : COptionsPage(IDD)
 {
 }
 
@@ -63,12 +63,12 @@ BOOL CPageTreeMap::PreTranslateMessage(MSG* pMsg)
             }
         }
     }
-    return CMFCPropertyPage::PreTranslateMessage(pMsg);
+    return COptionsPage::PreTranslateMessage(pMsg);
 }
 
 void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    COptionsPage::DoDataExchange(pDX);
 
     DDX_Control(pDX, IDC_PREVIEW, m_preview);
     DDX_Control(pDX, IDC_TREEMAPSTYLE, m_styleCombo);
@@ -111,7 +111,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageTreeMap, COptionsPage)
     ON_WM_HSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
@@ -119,22 +119,10 @@ BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
-    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
-HBRUSH CPageTreeMap::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+void CPageTreeMap::InitializePage()
 {
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageTreeMap::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
     ValuesAltered(); // m_undo is invalid
 
     m_brightness.SetPageSize(10);
@@ -154,8 +142,6 @@ BOOL CPageTreeMap::OnInitDialog()
     ASSERT(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
 
     UpdateData(FALSE);
-
-    return TRUE;
 }
 
 void CPageTreeMap::OnOK()
@@ -205,6 +191,9 @@ void CPageTreeMap::UpdateStatics()
 
 void CPageTreeMap::OnSomethingChanged()
 {
+    if (!IsInitialized())
+        return;
+
     UpdateData();
     UpdateData(FALSE);
     SetModified();

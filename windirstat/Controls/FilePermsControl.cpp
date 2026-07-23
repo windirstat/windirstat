@@ -28,7 +28,6 @@ CFilePermsControl::CFilePermsControl()
 
 CFilePermsControl::~CFilePermsControl()
 {
-    StopScan();
     m_singleton = nullptr;
 }
 
@@ -176,11 +175,6 @@ bool CFilePermsControl::StartScan()
         SortItems();
     }
     return true;
-}
-
-void CFilePermsControl::StopScan()
-{
-    // Scanning is modal/synchronous so nothing runs in the background to stop
 }
 
 std::vector<const CItemPerm*> CFilePermsControl::GetPermItems() const

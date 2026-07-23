@@ -18,37 +18,34 @@
 #include "pch.h"
 #include "PageAdvanced.h"
 
-IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageAdvanced, COptionsPage)
 
-CPageAdvanced::CPageAdvanced() : CMFCPropertyPage(IDD) {}
-
-COptionsPropertySheet* CPageAdvanced::GetSheet() const
+CPageAdvanced::CPageAdvanced() : COptionsPage(IDD)
 {
-    return DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+    BindCheck(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, COptions::ExcludeVolumeMountPoints, m_excludeVolumeMountPoints);
+    BindCheck(IDC_EXCLUDE_JUNCTIONS, COptions::ExcludeJunctions, m_excludeJunctions);
+    BindCheck(IDC_EXCLUDE_SYMLINKS_DIRECTORY, COptions::ExcludeSymbolicLinksDirectory, m_excludeSymbolicLinksDirectory);
+    BindCheck(IDC_SKIP_CLOUD_LINKS, COptions::SkipDupeDetectionCloudLinks, m_skipDupeDetectionCloudLinks);
+    BindCheck(IDC_EXCLUDE_HIDDEN_DIRECTORY, COptions::ExcludeHiddenDirectory, m_skipHiddenDirectory);
+    BindCheck(IDC_EXCLUDE_PROTECTED_DIRECTORY, COptions::ExcludeProtectedDirectory, m_skipProtectedDirectory);
+    BindCheck(IDC_BACKUP_RESTORE, COptions::UseBackupRestore, m_useBackupRestore);
+    BindCheck(IDC_EXCLUDE_SYMLINKS_FILE, COptions::ExcludeSymbolicLinksFile, m_excludeSymbolicLinksFile);
+    BindCheck(IDC_EXCLUDE_HIDDEN_FILE, COptions::ExcludeHiddenFile, m_skipHiddenFile);
+    BindCheck(IDC_EXCLUDE_PROTECTED_FILE, COptions::ExcludeProtectedFile, m_skipProtectedFile);
+    BindCheck(IDC_PROCESS_HARDLINKS, COptions::ProcessHardlinks, m_processHardlinks);
+    BindCombo(IDC_HASH_ALGORITHM, COptions::FileHashAlgorithm, m_fileHashAlgorithm);
+    BindCombo(IDC_PROCESS_PRIORITY, COptions::ProcessPriority, m_processPriority);
 }
 
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_excludeVolumeMountPoints);
-    DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_excludeJunctions);
-    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_excludeSymbolicLinksDirectory);
-    DDX_Check(pDX, IDC_SKIP_CLOUD_LINKS, m_skipDupeDetectionCloudLinks);
-    DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_DIRECTORY, m_skipHiddenDirectory);
-    DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_DIRECTORY, m_skipProtectedDirectory);
-    DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
-    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_FILE, m_excludeSymbolicLinksFile);
-    DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_skipHiddenFile);
-    DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_skipProtectedFile);
-    DDX_Check(pDX, IDC_PROCESS_HARDLINKS, m_processHardlinks);
+    COptionsPage::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_largestFileCount);
     DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_folderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
-    DDX_CBIndex(pDX, IDC_HASH_ALGORITHM, m_fileHashAlgorithm);
-    DDX_CBIndex(pDX, IDC_PROCESS_PRIORITY, m_processPriority);
 }
 
-BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageAdvanced, COptionsPage)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
@@ -66,38 +63,11 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
     ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
     ON_EN_CHANGE(IDC_FOLDER_HISTORY_COUNT, &CPageAdvanced::OnEnChangeFolderHistoryCount)
-    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
-HBRUSH CPageAdvanced::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+void CPageAdvanced::InitializePage()
 {
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageAdvanced::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-
-    // Apply dark mode to this property page
-    DarkMode::AdjustControls(GetSafeHwnd());
-
-    m_excludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
-    m_excludeJunctions = COptions::ExcludeJunctions;
-    m_excludeSymbolicLinksDirectory = COptions::ExcludeSymbolicLinksDirectory;
-    m_skipDupeDetectionCloudLinks = COptions::SkipDupeDetectionCloudLinks;
-    m_skipHiddenDirectory = COptions::ExcludeHiddenDirectory;
-    m_skipProtectedDirectory = COptions::ExcludeProtectedDirectory;
-    m_excludeSymbolicLinksFile = COptions::ExcludeSymbolicLinksFile;
-    m_skipHiddenFile = COptions::ExcludeHiddenFile;
-    m_skipProtectedFile = COptions::ExcludeProtectedFile;
-    m_useBackupRestore = COptions::UseBackupRestore;
-    m_processHardlinks = COptions::ProcessHardlinks;
     m_scanningThreads = COptions::ScanningThreads - 1;
-    m_fileHashAlgorithm = COptions::FileHashAlgorithm;
-    m_processPriority = COptions::ProcessPriority;
     m_largestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_folderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
 
@@ -108,7 +78,6 @@ BOOL CPageAdvanced::OnInitDialog()
     }
 
     UpdateData(FALSE);
-    return TRUE;
 }
 
 void CPageAdvanced::OnOK()
@@ -127,20 +96,8 @@ void CPageAdvanced::OnOK()
         COptions::ProcessHardlinks != static_cast<bool>(m_processHardlinks) ||
         (COptions::ScanForDuplicates && COptions::FileHashAlgorithm != m_fileHashAlgorithm);
 
-    COptions::ExcludeJunctions = (FALSE != m_excludeJunctions);
-    COptions::ExcludeSymbolicLinksDirectory = (FALSE != m_excludeSymbolicLinksDirectory);
-    COptions::ExcludeVolumeMountPoints = (FALSE != m_excludeVolumeMountPoints);
-    COptions::SkipDupeDetectionCloudLinks = (FALSE != m_skipDupeDetectionCloudLinks);
-    COptions::ExcludeHiddenDirectory = (FALSE != m_skipHiddenDirectory);
-    COptions::ExcludeProtectedDirectory = (FALSE != m_skipProtectedDirectory);
-    COptions::ExcludeSymbolicLinksFile = (FALSE != m_excludeSymbolicLinksFile);
-    COptions::ExcludeHiddenFile = (FALSE != m_skipHiddenFile);
-    COptions::ExcludeProtectedFile = (FALSE != m_skipProtectedFile);
-    COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
-    COptions::ProcessHardlinks = (FALSE != m_processHardlinks);
+    ApplyOptionBindings();
     COptions::ScanningThreads = m_scanningThreads + 1;
-    COptions::FileHashAlgorithm = m_fileHashAlgorithm;
-    COptions::ProcessPriority = m_processPriority;
     SetProcessPriority(COptions::ProcessPriority);
     COptions::LargeFileCount = std::stoi(m_largestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_folderHistoryCount.GetString());
@@ -163,11 +120,6 @@ void CPageAdvanced::OnOK()
     CMFCPropertyPage::OnOK();
 }
 
-void CPageAdvanced::OnSettingChanged()
-{
-    SetModified();
-}
-
 void CPageAdvanced::OnBnClickedResetPreferences()
 {
     CDirStatApp::Get()->RestartApplication(true);
@@ -175,6 +127,9 @@ void CPageAdvanced::OnBnClickedResetPreferences()
 
 void CPageAdvanced::OnEnChangeLargestFileCount()
 {
+    if (!IsInitialized())
+        return;
+
     // This function limits the number of files in the largest files list
     UpdateData(TRUE);
 
@@ -187,6 +142,9 @@ void CPageAdvanced::OnEnChangeLargestFileCount()
 
 void CPageAdvanced::OnEnChangeFolderHistoryCount()
 {
+    if (!IsInitialized())
+        return;
+
     // This function limits the value in the folder history count
     UpdateData(TRUE);
 

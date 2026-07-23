@@ -179,12 +179,6 @@ unsigned char CTreeListItem::GetIndent() const
     return m_visualInfo->indent;
 }
 
-void CTreeListItem::SetIndent(const unsigned char indent) const
-{
-    ASSERT(IsVisible());
-    m_visualInfo->indent = indent;
-}
-
 CRect CTreeListItem::GetPlusMinusRect() const
 {
     ASSERT(IsVisible());
@@ -228,14 +222,9 @@ BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, cons
     const BOOL bRet = Create(dwStyle, rect, pParentWnd, nID);
     if (bRet && dwExStyle)
     {
-        AddExtendedStyle(dwExStyle);
+        SetExtendedStyle(GetExtendedStyle() | dwExStyle);
     }
     return bRet;
-}
-
-void CTreeListControl::SysColorChanged()
-{
-    CWdsListControl::SysColorChanged();
 }
 
 CTreeListItem* CTreeListControl::GetItem(const int i) const
@@ -428,7 +417,7 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, con
 
     // Determine connector symbols
     const int rowIndex = FindTreeItem(item);
-    const COLORREF bgColor = IsItemStripColor(rowIndex) ? GetStripeColor() : GetWindowColor();
+    const COLORREF bgColor = IsItemStripColor(rowIndex) ? m_stripeColor : m_windowColor;
 
     // Cache ancestors to draw connecting lines
     // Use static vector to avoid repeated allocations in the draw loop
@@ -459,7 +448,7 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, con
         const int count = parent ? parent->GetTreeListChildCount() : 0;
         if (count <= 1) return true;
 
-        const auto& sorting = GetSorting();
+        const auto& sorting = m_sorting;
         const int sub1 = ColumnToSubItem(sorting.column1);
         const int sub2 = ColumnToSubItem(sorting.column2);
 

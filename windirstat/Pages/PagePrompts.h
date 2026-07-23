@@ -18,13 +18,12 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPagePrompts. "Settings" property page "Prompts".
 //
-class CPagePrompts final : public CMFCPropertyPage
+class CPagePrompts final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPagePrompts)
 
@@ -34,10 +33,7 @@ class CPagePrompts final : public CMFCPropertyPage
     ~CPagePrompts() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     BOOL m_showDeleteWarning = FALSE;
@@ -46,6 +42,4 @@ protected:
     BOOL m_showMicrosoftProgress = FALSE;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedSetModified();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -19,36 +19,33 @@
 #include "Filtering.h"
 #include "PageFiltering.h"
 
-IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageFiltering, COptionsPage)
 
 CPageFiltering::CPageFiltering(const bool refreshOnFilteringChange) :
-    CMFCPropertyPage(IDD),
-    m_refreshOnFilteringChange(refreshOnFilteringChange) {}
-
-COptionsPropertySheet* CPageFiltering::GetSheet() const
+    COptionsPage(IDD),
+    m_refreshOnFilteringChange(refreshOnFilteringChange)
 {
-    return DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+    BindText(IDC_FILTERING_SIZE_MIN, COptions::FilteringSizeMinimum, m_filteringSizeMinimum);
+    BindCombo(IDC_FILTERING_MIN_UNITS, COptions::FilteringSizeUnits, m_filteringSizeUnits);
+    BindCheck(IDC_FILTERING_USE_REGEX, COptions::FilteringUseRegex, m_filteringUseRegex);
+    BindText(IDC_FILTERING_MAX_AGE_DAYS, COptions::FilteringMaxAgeDays, m_filteringMaxAgeDays);
+    BindText(IDC_FILTERING_EXCLUDE_DIRS, COptions::FilteringExcludeDirs, m_filteringExcludeDirs);
+    BindText(IDC_FILTERING_EXCLUDE_FILES, COptions::FilteringExcludeFiles, m_filteringExcludeFiles);
+    BindText(IDC_FILTERING_INCLUDE_DIRS, COptions::FilteringIncludeDirs, m_filteringIncludeDirs);
+    BindText(IDC_FILTERING_INCLUDE_FILES, COptions::FilteringIncludeFiles, m_filteringIncludeFiles);
 }
 
 void CPageFiltering::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Text(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_filteringExcludeDirs);
-    DDX_Text(pDX, IDC_FILTERING_EXCLUDE_FILES, m_filteringExcludeFiles);
-    DDX_Text(pDX, IDC_FILTERING_INCLUDE_DIRS, m_filteringIncludeDirs);
-    DDX_Text(pDX, IDC_FILTERING_INCLUDE_FILES, m_filteringIncludeFiles);
-    DDX_Text(pDX, IDC_FILTERING_SIZE_MIN, m_filteringSizeMinimum);
-    DDX_Check(pDX, IDC_FILTERING_USE_REGEX, m_filteringUseRegex);
-    DDX_Text(pDX, IDC_FILTERING_MAX_AGE_DAYS, m_filteringMaxAgeDays);
+    COptionsPage::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_FILTERING_MIN_UNITS, m_ctlFilteringSizeUnits);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_FILES, m_ctrlFilteringExcludeFiles);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_ctrlFilteringExcludeDirs);
     DDX_Control(pDX, IDC_FILTERING_INCLUDE_FILES, m_ctrlFilteringIncludeFiles);
     DDX_Control(pDX, IDC_FILTERING_INCLUDE_DIRS, m_ctrlFilteringIncludeDirs);
-    DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_filteringSizeUnits);
 }
 
-BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageFiltering, COptionsPage)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_INCLUDE_DIRS, OnSettingChanged)
@@ -58,30 +55,10 @@ BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_MAX_AGE_DAYS, OnSettingChanged)
-    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
-HBRUSH CPageFiltering::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+void CPageFiltering::InitializePage()
 {
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageFiltering::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-
-    m_filteringSizeMinimum = COptions::FilteringSizeMinimum;
-    m_filteringSizeUnits = COptions::FilteringSizeUnits;
-    m_filteringUseRegex = COptions::FilteringUseRegex;
-    m_filteringMaxAgeDays = COptions::FilteringMaxAgeDays;
-    m_filteringExcludeDirs = COptions::FilteringExcludeDirs.Obj().c_str();
-    m_filteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
-    m_filteringIncludeDirs = COptions::FilteringIncludeDirs.Obj().c_str();
-    m_filteringIncludeFiles = COptions::FilteringIncludeFiles.Obj().c_str();
-
     m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_MiB().c_str());
@@ -95,11 +72,14 @@ BOOL CPageFiltering::OnInitDialog()
     m_toolTip.Activate(TRUE);
 
     UpdateData(FALSE);
+}
 
+void CPageFiltering::AdjustControls()
+{
     // Apply dark mode to this property page AFTER controls are initialized
     if (DarkMode::IsDarkModeActive())
     {
-        DarkMode::AdjustControls(GetSafeHwnd());
+        COptionsPage::AdjustControls();
         DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
         DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
         DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.GetSafeHwnd());
@@ -109,8 +89,6 @@ BOOL CPageFiltering::OnInitDialog()
         m_ctrlFilteringIncludeDirs.Invalidate();
         m_ctrlFilteringIncludeFiles.Invalidate();
     }
-
-    return TRUE;
 }
 
 void CPageFiltering::SetToolTips()
@@ -145,14 +123,7 @@ void CPageFiltering::OnOK()
         COptions::FilteringIncludeFiles.Obj() != m_filteringIncludeFiles.GetString() ||
         COptions::FilteringIncludeDirs.Obj() != m_filteringIncludeDirs.GetString();
 
-    COptions::FilteringSizeMinimum = m_filteringSizeMinimum;
-    COptions::FilteringSizeUnits = m_filteringSizeUnits;
-    COptions::FilteringUseRegex = (FALSE != m_filteringUseRegex);
-    COptions::FilteringMaxAgeDays = m_filteringMaxAgeDays;
-    COptions::FilteringExcludeFiles.Obj() = m_filteringExcludeFiles;
-    COptions::FilteringExcludeDirs.Obj() = m_filteringExcludeDirs;
-    COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
-    COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
+    ApplyOptionBindings();
     CFiltering::CompileFilters();
 
     if (m_refreshOnFilteringChange && refreshAll)
@@ -166,6 +137,9 @@ void CPageFiltering::OnOK()
 
 void CPageFiltering::OnSettingChanged()
 {
+    if (!IsInitialized())
+        return;
+
     UpdateData();
     SetModified();
     SetToolTips();
@@ -175,5 +149,5 @@ BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)
 {
     m_toolTip.RelayEvent(pMsg);
 
-    return CMFCPropertyPage::PreTranslateMessage(pMsg);
+    return COptionsPage::PreTranslateMessage(pMsg);
 }
