@@ -153,6 +153,16 @@
 #define IDC_PERMS_EXCLUDE               1135
 #define IDC_PROCESS_PRIORITY            1136
 #define IDC_TREEMAPSTYLE                1137
+#define IDC_PROMPT_EMPTY_BIN            1138
+#define IDC_PROMPT_CREATE_HARDLINK      1139
+#define IDC_PROMPT_REMOVE_MOTW          1140
+#define IDC_PROMPT_DISABLE_HIBERNATE    1141
+#define IDC_PROMPT_REMOVE_SHADOW        1142
+#define IDC_PROMPT_DISM_NORMAL          1143
+#define IDC_PROMPT_DISM_RESET           1144
+#define IDC_PROMPT_SET_DATES            1145
+#define IDC_PROMPT_REMOVE_EMPTY         1146
+#define IDC_DELETION_BIN_WARNING        1147
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -233,7 +243,7 @@
 #define ID_CLEANUP_CREATE_HARDLINK      32843
 #define ID_CLEANUP_SPARSIFY_FILE        32844
 #define ID_TOOLS_SET_DATES              32845
-#define ID_TOOLS_REMOVE_EMPTY           32846
+#define ID_CLEANUP_REMOVE_EMPTY         32846
 #define ID_TOOLS_SHADOW_COPY_BASE       32850
 #define ID_TOOLS_DEFRAG_BASE            32880
 #define ID_TOOLS_CHKDSK_BASE            32910
@@ -275,7 +285,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32964
-#define _APS_NEXT_CONTROL_VALUE         1138
+#define _APS_NEXT_CONTROL_VALUE         1148
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

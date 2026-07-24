@@ -801,6 +801,17 @@ function New-BaseIniSections {
         UseFastScanEngine = if ($ReparseDefaults -and !$BasicScanEngine) { 1 } else { 0 }
         UseBackupRestore = 0
         ShowElevationPrompt = 0
+        ShowDeletePermanentlyWarning = 0
+        ShowDeleteToRecycleBinWarning = 0
+        ShowEmptyRecycleBinPrompt = 0
+        ShowCreateHardlinkPrompt = 0
+        ShowRemoveMotwPrompt = 0
+        ShowDisableHibernatePrompt = 0
+        ShowRemoveShadowCopiesPrompt = 0
+        ShowDismCleanupPrompt = 0
+        ShowDismResetPrompt = 0
+        ShowSetDatesPrompt = 0
+        ShowRemoveEmptyFoldersPrompt = 0
         AutoElevate = 0
         ShowFreeSpace = 0
         ShowUnknown = 0
@@ -2929,6 +2940,10 @@ function New-PortableIni {
         '[Options]',
         'LanguageId=9', 'UseFastScanEngine=1', 'UseBackupRestore=0',
         'ShowElevationPrompt=0', 'AutoElevate=0', 'ShowFreeSpace=0', 'ShowUnknown=0',
+        'ShowDeletePermanentlyWarning=0', 'ShowDeleteToRecycleBinWarning=0',
+        'ShowEmptyRecycleBinPrompt=0', 'ShowCreateHardlinkPrompt=0', 'ShowRemoveMotwPrompt=0',
+        'ShowDisableHibernatePrompt=0', 'ShowRemoveShadowCopiesPrompt=0', 'ShowDismCleanupPrompt=0',
+        'ShowDismResetPrompt=0', 'ShowSetDatesPrompt=0', 'ShowRemoveEmptyFoldersPrompt=0',
         'ScanForDuplicates=1', 'ProcessHardlinks=0',
         'MainWindowPlacement=2C0000000200000003000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF32000000320000003204000032030000'
     )
@@ -8971,7 +8986,12 @@ function Add-SettingsTestHarness {
     $dumpFields = @(
         'AutomaticallyResizeColumns', 'AutoMapDrivesWhenElevated', 'ExcludeJunctions', 'ExcludeSymbolicLinksDirectory', 'ExcludeVolumeMountPoints', 'ExcludeHiddenDirectory', 'ExcludeProtectedDirectory', 'ExcludeSymbolicLinksFile'
         'ExcludeHiddenFile', 'ExcludeProtectedFile', 'FilteringUseRegex', 'FollowVolumeMountPoints', 'UseSizeSuffixes', 'ListFullRowSelection', 'ListGrid', 'ListStripes', 'PacmanAnimation', 'ScanForDuplicates'
-        'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults', 'ShowDeleteWarning', 'ShowElevationPrompt', 'ShowMicrosoftProgress', 'ShowFileTypes', 'ShowFreeSpace', 'ShowStatusBar'
+        'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults',
+        'ShowDeletePermanentlyWarning', 'ShowDeleteToRecycleBinWarning', 'ShowElevationPrompt',
+        'ShowEmptyRecycleBinPrompt', 'ShowCreateHardlinkPrompt', 'ShowRemoveMotwPrompt',
+        'ShowDisableHibernatePrompt', 'ShowRemoveShadowCopiesPrompt', 'ShowDismCleanupPrompt',
+        'ShowDismResetPrompt', 'ShowSetDatesPrompt', 'ShowRemoveEmptyFoldersPrompt',
+        'ShowMicrosoftProgress', 'ShowFileTypes', 'ShowFreeSpace', 'ShowStatusBar'
         'ShowTimeSpent', 'ShowToolBar', 'LargeToolBar', 'ShowVisualization', 'ShowUnknown'
         'SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning', 'AutoElevate', 'TreeMapGrid'
         'TreeMapShowExtensions', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine', 'UseWindowsLocaleSetting', 'ProcessHardlinks', 'ConfigPage'
@@ -9598,7 +9618,14 @@ $settingCases = @(
     New-SettingCase UseSizeSuffixes -ExplicitInput 0
     New-SettingCase ScanForDuplicates -Section DupeView -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase SearchMaxResults -Section SearchView -Default $script:SettingsDefaultSearchMaxResults -ExplicitInput 321 -ExplicitExpected 321 -Minimum $script:SettingsMinSearchMaxResults -Maximum $script:SettingsMaxSearchResults -HighInput $script:SettingsSearchHighOutOfRangeValue -BoundsOrder 9
-    New-SettingCase @('ShowDeleteWarning', 'ShowElevationPrompt') -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @(
+        'ShowDeletePermanentlyWarning', 'ShowDeleteToRecycleBinWarning', 'ShowElevationPrompt'
+    ) -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @(
+        'ShowEmptyRecycleBinPrompt', 'ShowCreateHardlinkPrompt', 'ShowRemoveMotwPrompt',
+        'ShowDisableHibernatePrompt', 'ShowRemoveShadowCopiesPrompt', 'ShowDismCleanupPrompt',
+        'ShowDismResetPrompt', 'ShowSetDatesPrompt', 'ShowRemoveEmptyFoldersPrompt'
+    ) -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase ShowMicrosoftProgress -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase ShowVisualization -Section TreeMapView -Default $true `
         -ExplicitInput 0 -ExplicitExpected $false
@@ -10048,8 +10075,9 @@ try {
 
         $finderPath = Join-Path $repoRoot 'windirstat\FinderBasic.cpp'
         $finderSource = [System.IO.File]::ReadAllText($finderPath)
+        $remoteBufferPattern = 'REMOTE_BUFFER_SIZE\s*=\s*static_cast<ULONG>\(64\s*\*\s*(?:1024|wds::Ki)\)'
         Assert-True $ctx 'Remote directory buffer remains 64 KiB' `
-            ($finderSource -match 'REMOTE_BUFFER_SIZE\s*=\s*static_cast<ULONG>\(64\s*\*\s*1024\)')
+            ($finderSource -match $remoteBufferPattern)
         Assert-True $ctx 'UNC paths classify as remote volumes' `
             ($finderSource.Contains('m_context->IsRemoteVolume = m_isUncPath ||'))
         Assert-True $ctx 'Mapped DRIVE_REMOTE paths classify as remote volumes' `

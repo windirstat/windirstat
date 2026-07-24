@@ -36,10 +36,20 @@ protected:
     void InitializePage() override;
     void OnOK() override;
 
-    BOOL m_showDeleteWarning = FALSE;
+    BOOL m_showDeletePermanentlyWarning = FALSE;
+    BOOL m_showDeleteToRecycleBinWarning = FALSE;
     BOOL m_showElevationPrompt = FALSE;
     BOOL m_showDupeDetectionCloudLinksWarning = FALSE;
     BOOL m_showMicrosoftProgress = FALSE;
+    BOOL m_showEmptyRecycleBinPrompt = FALSE;
+    BOOL m_showCreateHardlinkPrompt = FALSE;
+    BOOL m_showRemoveMotwPrompt = FALSE;
+    BOOL m_showDisableHibernatePrompt = FALSE;
+    BOOL m_showRemoveShadowCopiesPrompt = FALSE;
+    BOOL m_showDismCleanupPrompt = FALSE;
+    BOOL m_showDismResetPrompt = FALSE;
+    BOOL m_showSetDatesPrompt = FALSE;
+    BOOL m_showRemoveEmptyFoldersPrompt = FALSE;
 
     DECLARE_MESSAGE_MAP()
 };

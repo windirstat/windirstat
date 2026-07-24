@@ -326,7 +326,17 @@ function New-BaselineSettings {
             # No prompts, no elevation pop-ups
             ShowElevationPrompt        = '0'
             AutoElevate                = '0'
-            ShowDeleteWarning          = '0'
+            ShowDeletePermanentlyWarning = '0'
+            ShowDeleteToRecycleBinWarning = '0'
+            ShowEmptyRecycleBinPrompt  = '0'
+            ShowCreateHardlinkPrompt   = '0'
+            ShowRemoveMotwPrompt       = '0'
+            ShowDisableHibernatePrompt = '0'
+            ShowRemoveShadowCopiesPrompt = '0'
+            ShowDismCleanupPrompt      = '0'
+            ShowDismResetPrompt        = '0'
+            ShowSetDatesPrompt         = '0'
+            ShowRemoveEmptyFoldersPrompt = '0'
             ShowDupeDetectionCloudLinksWarning = '0'
 
             # Predictable scanning behavior

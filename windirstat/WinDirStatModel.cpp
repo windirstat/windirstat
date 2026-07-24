@@ -509,7 +509,9 @@ void CWinDirStatModel::RebuildExtensionData()
 
 void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
-    if (COptions::ShowDeleteWarning)
+    auto& showDeleteWarning = toTrashBin ?
+        COptions::ShowDeleteToRecycleBinWarning : COptions::ShowDeletePermanentlyWarning;
+    if (showDeleteWarning)
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;
@@ -524,7 +526,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             if (result.nID != IDYES) return false;
 
             // Save off the deletion warning preference
-            COptions::ShowDeleteWarning = !result.isChecked;
+            showDeleteWarning = !result.isChecked;
             return true;
         }()) return;
     }
@@ -670,6 +672,35 @@ void CWinDirStatModel::SetZoomItem(CItem* item)
 void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item) const
 {
     Get()->StartScanningEngine(item);
+}
+
+bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,
+    const std::wstring_view detail)
+{
+    return ConfirmOperation(operationId, prompt, std::span<CItem* const>{}, detail);
+}
+
+bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,
+    const std::span<CItem* const> affectedItems, const std::wstring_view detail)
+{
+    if (!prompt) return true;
+
+    const std::wstring operation = GetLocalizedMenuText(operationId, detail);
+    ASSERT(!operation.empty());
+    if (operation.empty()) return false;
+
+    std::vector<std::wstring> affectedPaths;
+    affectedPaths.reserve(affectedItems.size());
+    for (const CItem* item : affectedItems) affectedPaths.emplace_back(item->GetPath());
+
+    const auto [nID, isChecked] = CMessageBoxDlg::Show(
+        Localization::Format(IDS_OPERATION_CONFIRMATIONs, operation), affectedPaths,
+        Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(),
+        affectedPaths.empty() ? CSize{} : CSize{ 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+    if (nID != IDYES) return false;
+
+    prompt = !isChecked;
+    return true;
 }
 
 // UDC confirmation dialog.
