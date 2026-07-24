@@ -978,7 +978,7 @@ void CItem::UpdateStatsFromDisk()
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
         FinderBasic finder(true);
-        if (finder.FindFile(GetFolderPath(), IsTypeOrFlag(ITF_ROOTITEM) ? std::wstring() : GetName(), GetAttributes()))
+        if (finder.FindFile(GetFolderPath(), IsTypeOrFlag(ITF_ROOTITEM, ITF_MULTIROOT) ? std::wstring() : GetName(), GetAttributes()))
         {
             SetLastChange(finder.GetLastWriteTime());
             SetAttributes(finder.GetAttributes());
@@ -994,7 +994,7 @@ void CItem::UpdateStatsFromDisk()
                 ExtensionDataAdd();
             }
         }
-        else if (IsTypeOrFlag(ITF_ROOTITEM) && GetAttributes() == INVALID_FILE_ATTRIBUTES)
+        else if (IsTypeOrFlag(ITF_ROOTITEM, ITF_MULTIROOT) && GetAttributes() == INVALID_FILE_ATTRIBUTES)
         {
             // Correct potential invalid attributes on root items
             if (const DWORD attr = GetFileAttributes(GetPathLong().c_str()); attr != INVALID_FILE_ATTRIBUTES)
