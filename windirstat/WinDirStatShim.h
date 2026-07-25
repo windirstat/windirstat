@@ -3785,6 +3785,7 @@ private:
 
 class CWinApp : public CWinThread
 {
+    DECLARE_MESSAGE_MAP()
 public:
     HINSTANCE m_hInstance = nullptr;
     LPWSTR    m_lpCmdLine = nullptr;
@@ -3821,6 +3822,11 @@ public:
     void SetRegistryKey(UINT nIDRegistryKey) { CString s; s.LoadString(nIDRegistryKey); SetRegistryKey(s.GetString()); }
     void LoadStdProfileSettings(UINT = 0) {}
     void EnableShellOpen() {}
+
+    afx_msg void OnAppExit()
+    {
+        if (m_pMainWnd != nullptr) m_pMainWnd->SendMessage(WM_CLOSE);
+    }
 
     HICON   LoadIcon(LPCWSTR lpszResourceName) const { return ::LoadIconW(AfxGetResourceHandle(), lpszResourceName); }
     HICON   LoadIcon(UINT nIDResource) const { return LoadIcon(MAKEINTRESOURCEW(nIDResource)); }
@@ -6590,6 +6596,24 @@ inline constexpr UINT ID_WIZBACK   = 0x3023;
 inline constexpr UINT ID_WIZNEXT   = 0x3024;
 inline constexpr UINT ID_WIZFINISH = 0x3025;
 #endif
+
+// CWinApp's default message map (mirrors MFC's built-in ID_APP_EXIT handling),
+// defined here since ID_APP_EXIT must be visible first. Written by hand (rather
+// than via BEGIN_MESSAGE_MAP) so that these are proper inline definitions,
+// since this header (unlike most message-map hosts) has no matching .cpp file
+// and gets included into multiple translation units.
+inline const AFX_MSGMAP* CWinApp::GetMessageMap() const { return GetThisMessageMap(); }
+inline const AFX_MSGMAP* __stdcall CWinApp::_GetBaseMessageMap() { return CCmdTarget::GetThisMessageMap(); }
+inline const AFX_MSGMAP* CWinApp::GetThisMessageMap()
+{
+    using ThisClass = CWinApp;
+    static const AFX_MSGMAP_ENTRY _messageEntries[] = {
+        ON_COMMAND(ID_APP_EXIT, OnAppExit)
+        { 0, 0, 0, 0, nullptr, nullptr, nullptr }
+    };
+    static const AFX_MSGMAP messageMap = { &_GetBaseMessageMap, &_messageEntries[0] };
+    return &messageMap;
+}
 #ifndef AFX_IDP_NO_ERROR_AVAILABLE
 inline constexpr UINT AFX_IDP_NO_ERROR_AVAILABLE = 0xF001;
 #endif
