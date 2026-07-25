@@ -4257,16 +4257,14 @@ public:
     CWnd* GetClientFrameWnd() const { return CWnd::FromHandle(::GetDlgItem(m_hWnd, AFX_IDW_PANE_FIRST)); }
     void UpdateMenuCmdUI(CMenu* pMenu, BOOL bSysMenu);
 
+    // Default handling for the standard ID_VIEW_TOOLBAR / ID_VIEW_STATUS_BAR menu
+    // commands (mirrors MFC's CFrameWnd::OnBarCheck / OnUpdateControlBarMenu).
+    afx_msg void OnBarCheck(UINT nID);
+    afx_msg void OnUpdateControlBarMenu(CCmdUI* pCmdUI);
+
     BOOL PreTranslateMessage(MSG* pMsg) override;
 
-    static const AFX_MSGMAP* __stdcall _GetBaseMessageMap() { return CWnd::GetThisMessageMap(); }
-    static const AFX_MSGMAP* GetThisMessageMap()
-    {
-        static const AFX_MSGMAP_ENTRY entries[] = { { 0, 0, 0, 0, nullptr, nullptr, nullptr } };
-        static const AFX_MSGMAP map = { &CFrameWnd::_GetBaseMessageMap, entries };
-        return &map;
-    }
-    const AFX_MSGMAP* GetMessageMap() const override { return GetThisMessageMap(); }
+    DECLARE_MESSAGE_MAP()
 };
 SHIM_IMPLEMENT_DYNAMIC_INLINE(CFrameWnd, RUNTIME_CLASS(CWnd))
 
@@ -6614,6 +6612,53 @@ inline const AFX_MSGMAP* CWinApp::GetThisMessageMap()
     static const AFX_MSGMAP messageMap = { &_GetBaseMessageMap, &_messageEntries[0] };
     return &messageMap;
 }
+
+// CFrameWnd's default message map (mirrors MFC's built-in ID_VIEW_TOOLBAR /
+// ID_VIEW_STATUS_BAR handling via OnBarCheck / OnUpdateControlBarMenu). Written
+// by hand for the same reason as CWinApp's map above (multi-TU header).
+inline const AFX_MSGMAP* CFrameWnd::GetMessageMap() const { return GetThisMessageMap(); }
+inline const AFX_MSGMAP* __stdcall CFrameWnd::_GetBaseMessageMap() { return CWnd::GetThisMessageMap(); }
+inline const AFX_MSGMAP* CFrameWnd::GetThisMessageMap()
+{
+    using ThisClass = CFrameWnd;
+    static const AFX_MSGMAP_ENTRY _messageEntries[] = {
+        ON_COMMAND_RANGE(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR, OnBarCheck)
+        ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR, OnUpdateControlBarMenu)
+        { 0, 0, 0, 0, nullptr, nullptr, nullptr }
+    };
+    static const AFX_MSGMAP messageMap = { &_GetBaseMessageMap, &_messageEntries[0] };
+    return &messageMap;
+}
+
+inline void CFrameWnd::OnBarCheck(UINT nID)
+{
+    for (auto& [bar, align] : m_bars)
+    {
+        if (bar == nullptr) continue;
+        const bool isMatch = (nID == ID_VIEW_TOOLBAR && DYNAMIC_DOWNCAST(CMFCToolBar, bar) != nullptr) ||
+                             (nID == ID_VIEW_STATUS_BAR && DYNAMIC_DOWNCAST(CMFCStatusBar, bar) != nullptr);
+        if (!isMatch) continue;
+        bar->ShowWindow(bar->IsWindowVisible() ? SW_HIDE : SW_SHOW);
+        RecalcLayout();
+        return;
+    }
+}
+
+inline void CFrameWnd::OnUpdateControlBarMenu(CCmdUI* pCmdUI)
+{
+    for (auto& [bar, align] : m_bars)
+    {
+        if (bar == nullptr) continue;
+        const bool isMatch = (pCmdUI->m_nID == ID_VIEW_TOOLBAR && DYNAMIC_DOWNCAST(CMFCToolBar, bar) != nullptr) ||
+                             (pCmdUI->m_nID == ID_VIEW_STATUS_BAR && DYNAMIC_DOWNCAST(CMFCStatusBar, bar) != nullptr);
+        if (!isMatch) continue;
+        pCmdUI->Enable(TRUE);
+        pCmdUI->SetCheck(bar->IsWindowVisible() ? 1 : 0);
+        return;
+    }
+    pCmdUI->Enable(FALSE);
+}
+
 #ifndef AFX_IDP_NO_ERROR_AVAILABLE
 inline constexpr UINT AFX_IDP_NO_ERROR_AVAILABLE = 0xF001;
 #endif
