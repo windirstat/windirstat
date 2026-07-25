@@ -84,8 +84,8 @@ private:
     // Recalculates metrics by traversing the loaded directory tree
     void Recalculate();
 
-    // Validates inputs and enables/disables the recalculate button
-    bool AreParametersValid();
+    // Validates inputs and optionally applies them to the tiers
+    bool ReadParameters(bool apply);
 
     // Performs a performant single-pass DFS traversal over CItem hierarchy
     void Traverse(CItem* item, FILETIME now);

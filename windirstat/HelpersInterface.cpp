@@ -505,6 +505,14 @@ bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noex
     return (menu->GetMenuState(pos, lookup) & (MF_DISABLED | MF_GRAYED)) == 0;
 }
 
+std::wstring GetLocalizedMenuText(const std::wstring_view textId, const std::wstring_view detail)
+{
+    static const std::wregex decorations(LR"(\s*\(&.\)(?:\t.*)?$|\t.*$|&(&?))",
+        std::regex_constants::optimize);
+    std::wstring text = std::regex_replace(Localization::Lookup(textId), decorations, L"$1");
+    return detail.empty() ? text : std::format(L"{} ({})", text, detail);
+}
+
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, GetWindowDpi(wnd));

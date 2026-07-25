@@ -17,9 +17,7 @@
 
 #include "pch.h"
 #include "Filtering.h"
-#include "TreeMapView.h"
-#include "FlameGraphView.h"
-#include "SunburstView.h"
+#include "VisualizationPane.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
 #include "DrawTextCache.h"
@@ -367,7 +365,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_GROUP_TYPES, OnViewGroupUnregisteredTypes)
-    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewTreeMap)
+    ON_COMMAND(ID_VIEW_SHOWVISUALIZATION, OnViewShowVisualization)
     ON_COMMAND_RANGE(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE, OnViewTreeMapStyle)
     ON_COMMAND(ID_VIEW_FLAMEGRAPH, OnViewFlameGraph)
     ON_COMMAND(ID_VIEW_SUNBURST, OnViewSunburst)
@@ -380,7 +378,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENU, OnUahDrawMenu)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenu)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWVISUALIZATION, OnUpdateViewShowVisualization)
     ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE, OnUpdateViewTreeMapStyle)
     ON_UPDATE_COMMAND_UI(ID_VIEW_FLAMEGRAPH, OnUpdateViewFlameGraph)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SUNBURST, OnUpdateViewSunburst)
@@ -795,7 +793,7 @@ void CMainFrame::OnDestroy()
     COptions::MainWindowPlacement = wp;
 
     COptions::ShowFileTypes = GetExtensionView()->IsShowTypes();
-    COptions::ShowTreeMap = IsActiveGraphPaneShown();
+    COptions::ShowVisualization = IsVisualizationShown();
 
     // Close all artifacts and our child windows
     CFrameWndEx::OnDestroy();
@@ -806,36 +804,23 @@ void CMainFrame::OnDestroy()
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
-    m_splitter.CreateStatic(this, 2, 1);
-    m_splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
-    m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
-    m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
-    m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
+    if (!m_splitter.CreateStatic(this, 2, 1)
+        || !m_splitter.CreateView(1, 0, RUNTIME_CLASS(CVisualizationPane), CSize(100, 100), pContext)
+        || !m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
+            m_splitter.IdFromRowCol(0, 0))
+        || !m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext)
+        || !m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext))
+    {
+        return FALSE;
+    }
 
-    m_treeMapView    = DYNAMIC_DOWNCAST(CTreeMapView,    m_splitter.GetPane(1, 0));
+    m_visualizationPane = DYNAMIC_DOWNCAST(CVisualizationPane, m_splitter.GetPane(1, 0));
     m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
-    m_extensionView  = DYNAMIC_DOWNCAST(CExtensionView,  m_subSplitter.GetPane(0, 1));
-
-    m_flameGraphView = new CFlameGraphView();
-    if (!m_flameGraphView->Create(nullptr, nullptr, WS_CHILD | WS_VSCROLL, CRect{}, this, 0))
-    {
-        // Create invokes PostNcDestroy on failure, which deletes the view.
-        m_flameGraphView = nullptr;
+    m_extensionView = DYNAMIC_DOWNCAST(CExtensionView, m_subSplitter.GetPane(0, 1));
+    if (m_visualizationPane == nullptr || m_fileTabbedView == nullptr || m_extensionView == nullptr)
         return FALSE;
-    }
-
-    m_sunburstView = new CSunburstView();
-    if (!m_sunburstView->Create(nullptr, nullptr, WS_CHILD, CRect{}, this, 0))
-    {
-        // Create invokes PostNcDestroy on failure, which deletes the view.
-        m_sunburstView = nullptr;
-        return FALSE;
-    }
 
     GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
-    GetTreeMapView()->ShowTreeMap(COptions::ShowTreeMap);
-    m_flameGraphView->ShowTreeMap(COptions::ShowTreeMap);
-    m_sunburstView->ShowTreeMap(COptions::ShowTreeMap);
 
     m_layoutPopup.Create(this);
     RebuildLayout();
@@ -844,9 +829,8 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 void CMainFrame::UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item)
 {
-    const std::array<CWinDirStatPane*, 5> panes{
-        m_fileTabbedView, m_extensionView, m_treeMapView, m_flameGraphView,
-        m_sunburstView
+    const std::array<CWinDirStatPane*, 3> panes{
+        m_fileTabbedView, m_extensionView, m_visualizationPane
     };
     for (CWinDirStatPane* pane : panes)
     {
@@ -931,33 +915,12 @@ void CMainFrame::MinimizeExtensionView()
     // LT_COLS_THREE perm 0/1 and LT_COLS_SUB_ROWS: ExtV is in m_splitter col 1
     else if (topo == LT_COLS_THREE || topo == LT_COLS_SUB_ROWS)
         m_splitter.SetSplitterPos(1.0);
-    // LT_COLS_TM_FULL: ExtV is in m_subSplitter row 0 (perm 0/2) or row 1 (perm 1/3)
-    else if (topo == LT_COLS_TM_FULL)
+    // LT_COLS_VISUALIZATION_FULL: ExtV is in sub-splitter row 0 (perm 0/2) or row 1 (perm 1/3)
+    else if (topo == LT_COLS_VISUALIZATION_FULL)
         m_subSplitter.SetSplitterPos(perm == 0 || perm == 2 ? 0.0 : 1.0);
     // LT_ROWS_SUB_COLS: ExtV is in m_subSplitter col 1
     else
         m_subSplitter.SetSplitterPos(1.0);
-}
-
-void CMainFrame::RestoreExtensionView()
-{
-    if (!GetExtensionView()->IsShowTypes()) return;
-
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
-
-    if (topo == LT_COLS_THREE && (perm == 2 || perm == 3))
-        m_subSplitter.RestoreSplitterPos(1.0 / 3.0);
-    else if (topo == LT_COLS_SUB_ROWS)
-        m_splitter.RestoreSplitterPos(0.75);
-    else if (topo == LT_COLS_THREE)
-        m_splitter.RestoreSplitterPos(0.80);
-    else if (topo == LT_COLS_TM_FULL)
-        m_subSplitter.RestoreSplitterPos(0.50);
-    else
-        m_subSplitter.RestoreSplitterPos(0.75);  // LT_ROWS_SUB_COLS
-
-    GetExtensionView()->RedrawWindow();
 }
 
 void CMainFrame::ExpandFileTabbedView()
@@ -968,7 +931,7 @@ void CMainFrame::ExpandFileTabbedView()
     // Collapse whichever main-splitter pane doesn't contain FTV.
     const bool ftvInPane1 = (topo == LT_ROWS_SUB_COLS && perm == 1) ||
                              (topo == LT_COLS_THREE   && perm == 3) ||
-                             (topo == LT_COLS_TM_FULL && (perm == 0 || perm == 1));
+                             (topo == LT_COLS_VISUALIZATION_FULL && (perm == 0 || perm == 1));
     m_splitter.SetSplitterPos(ftvInPane1 ? 0.0 : 1.0);
 
     // LT_COLS_THREE perm 2: FTV is directly in main splitter, no sub-splitter needed.
@@ -978,11 +941,11 @@ void CMainFrame::ExpandFileTabbedView()
     // Collapse whichever sub-splitter pane doesn't contain FTV.
     const bool ftvInSubPane1 = (topo == LT_COLS_THREE    && (perm == 1 || perm == 3)) ||
                                 (topo == LT_COLS_SUB_ROWS && perm == 0) ||
-                                (topo == LT_COLS_TM_FULL  && (perm == 0 || perm == 2));
+                                (topo == LT_COLS_VISUALIZATION_FULL && (perm == 0 || perm == 2));
     m_subSplitter.SetSplitterPos(ftvInSubPane1 ? 0.0 : 1.0);
 }
 
-void CMainFrame::MinimizeGraphPane()
+void CMainFrame::MinimizeVisualizationPane()
 {
     const int topo = COptions::LayoutTopology;
     const int perm = COptions::LayoutPermutation;
@@ -991,102 +954,113 @@ void CMainFrame::MinimizeGraphPane()
         m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0);
     else if (topo == LT_COLS_THREE && perm == 3)
         m_splitter.SetSplitterPos(0.0);
-    else if (topo == LT_COLS_TM_FULL)
+    else if (topo == LT_COLS_VISUALIZATION_FULL)
         m_splitter.SetSplitterPos(perm == 0 || perm == 1 ? 0.0 : 1.0);
     else
     {
-        // Graph in m_subSplitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
-        const bool graphInPane0 = (topo == LT_COLS_THREE && perm == 1) ||
-                                  (topo == LT_COLS_SUB_ROWS && perm == 0);
-        m_subSplitter.SetSplitterPos(graphInPane0 ? 0.0 : 1.0);
+        // Visualization in sub-splitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
+        const bool visualizationInPane0 = (topo == LT_COLS_THREE && perm == 1)
+            || (topo == LT_COLS_SUB_ROWS && perm == 0);
+        m_subSplitter.SetSplitterPos(visualizationInPane0 ? 0.0 : 1.0);
     }
 }
 
-void CMainFrame::RestoreGraphPane(bool force)
+void CMainFrame::RestoreSplitterPositions()
 {
-    if (force) ShowActiveGraphPane(true);
-    if (!IsActiveGraphPaneShown()) return;
-
     const int topo = COptions::LayoutTopology;
     const int perm = COptions::LayoutPermutation;
 
-    if (topo == LT_ROWS_SUB_COLS)
+    switch (topo)
+    {
+    case LT_ROWS_SUB_COLS:
         m_splitter.RestoreSplitterPos(0.5);
-    else if (topo == LT_COLS_TM_FULL)
-        m_splitter.RestoreSplitterPos(0.50);
-    else if (topo == LT_COLS_THREE && perm == 3)
-        m_splitter.RestoreSplitterPos(0.40);
-    else if (topo == LT_COLS_THREE && perm == 2)
-        m_subSplitter.RestoreSplitterPos(1.0 / 3.0);
-    else if (topo == LT_COLS_THREE)  // perm 0 or 1
+        m_subSplitter.RestoreSplitterPos(0.75);
+        break;
+
+    case LT_COLS_THREE:
+        if (perm == 0 || perm == 1)
+        {
+            m_splitter.RestoreSplitterPos(0.80);
+            m_subSplitter.RestoreSplitterPos(0.50);
+        }
+        else
+        {
+            m_splitter.RestoreSplitterPos(0.40);
+            m_subSplitter.RestoreSplitterPos(1.0 / 3.0);
+        }
+        break;
+
+    case LT_COLS_SUB_ROWS:
+        m_splitter.RestoreSplitterPos(0.75);
         m_subSplitter.RestoreSplitterPos(0.50);
-    else  // LT_COLS_SUB_ROWS
+        break;
+
+    case LT_COLS_VISUALIZATION_FULL:
+        m_splitter.RestoreSplitterPos(0.5);
         m_subSplitter.RestoreSplitterPos(0.50);
-
-    switch (GetGraphPaneType())
-    {
-    case GraphPane::FlameGraph:
-        m_flameGraphView->DrawEmptyView();
-        m_flameGraphView->RedrawWindow();
-        break;
-    case GraphPane::Sunburst:
-        m_sunburstView->DrawEmptyView();
-        m_sunburstView->RedrawWindow();
-        break;
-    case GraphPane::TreeMap:
-        m_treeMapView->DrawEmptyView();
-        m_treeMapView->RedrawWindow();
         break;
     }
 }
 
-void CMainFrame::ShowActiveGraphPane(const bool show)
+void CMainFrame::ApplyPaneVisibility(const bool restoreDuringScan)
 {
-    switch (GetGraphPaneType())
+    if (!restoreDuringScan && CWinDirStatModel::Get()->IsScanRunning())
     {
-    case GraphPane::FlameGraph:
-        m_flameGraphView->ShowTreeMap(show);
-        break;
-    case GraphPane::Sunburst:
-        m_sunburstView->ShowTreeMap(show);
-        break;
-    case GraphPane::TreeMap:
-        m_treeMapView->ShowTreeMap(show);
-        break;
+        ExpandFileTabbedView();
+        return;
     }
+
+    RestoreSplitterPositions();
+    const bool showFileTypes = GetExtensionView()->IsShowTypes();
+    const bool showVisualization = IsVisualizationShown();
+    if (!showFileTypes && !showVisualization)
+    {
+        ExpandFileTabbedView();
+        return;
+    }
+    if (!showFileTypes) MinimizeExtensionView();
+    if (!showVisualization) MinimizeVisualizationPane();
 }
 
-bool CMainFrame::IsActiveGraphPaneShown() const
+void CMainFrame::RestoreVisualizationPane(const bool force)
 {
-    switch (GetGraphPaneType())
-    {
-    case GraphPane::TreeMap: return m_treeMapView->IsShowTreeMap();
-    case GraphPane::FlameGraph: return m_flameGraphView->IsShowTreeMap();
-    case GraphPane::Sunburst: return m_sunburstView->IsShowTreeMap();
-    }
-    return false;
+    if (force) ShowVisualization(true);
+    if (!IsVisualizationShown()) return;
+
+    ApplyPaneVisibility();
+    GetActiveVisualization()->RedrawWindow();
 }
 
-CWinDirStatPane* CMainFrame::GetActiveGraphPane() const
+void CMainFrame::ShowVisualization(const bool show)
 {
-    switch (GetGraphPaneType())
-    {
-    case GraphPane::TreeMap: return m_treeMapView;
-    case GraphPane::FlameGraph: return m_flameGraphView;
-    case GraphPane::Sunburst: return m_sunburstView;
-    }
-    return m_treeMapView;
+    m_visualizationPane->ShowVisualization(show);
+    COptions::ShowVisualization = show;
+}
+
+bool CMainFrame::IsVisualizationShown() const
+{
+    return m_visualizationPane->IsVisualizationShown();
+}
+
+CWinDirStatPane* CMainFrame::GetVisualizationPane() const
+{
+    return m_visualizationPane;
+}
+
+CWinDirStatPane* CMainFrame::GetActiveVisualization() const
+{
+    return m_visualizationPane->GetActiveView();
 }
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
 {
-    GetActiveGraphPane()->SuspendRecalculationDrawing(true);
+    GetVisualizationPane()->SuspendRecalculationDrawing(true);
     return 0;
 }
 
 LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 {
-    GetActiveGraphPane()->SuspendRecalculationDrawing(false);
+    GetVisualizationPane()->SuspendRecalculationDrawing(false);
     return 0;
 }
 

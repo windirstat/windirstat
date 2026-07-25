@@ -18,13 +18,13 @@
 #include "pch.h"
 #include "PageCleanups.h"
 
-IMPLEMENT_DYNAMIC(CPageCleanups, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageCleanups, COptionsPage)
 
-CPageCleanups::CPageCleanups() : CMFCPropertyPage(IDD) {}
+CPageCleanups::CPageCleanups() : COptionsPage(IDD) {}
 
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    COptionsPage::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_LIST, m_customCleanupList);
     DDX_Check(pDX, IDC_ENABLED, m_enabled);
     DDX_Text(pDX, IDC_TITLE, m_title);
@@ -56,7 +56,7 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DOWN, m_ctlDown);
 }
 
-BEGIN_MESSAGE_MAP(CPageCleanups, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageCleanups, COptionsPage)
     ON_LBN_SELCHANGE(IDC_LIST, OnLbnSelchangeList)
     ON_BN_CLICKED(IDC_ENABLED, OnBnClickedEnabled)
     ON_EN_CHANGE(IDC_TITLE, OnEnChangeTitle)
@@ -73,24 +73,10 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_UP, OnBnClickedUp)
     ON_BN_CLICKED(IDC_DOWN, OnBnClickedDown)
     ON_BN_CLICKED(IDC_HELPBUTTON, OnBnClickedHelpbutton)
-    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
-HBRUSH CPageCleanups::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+void CPageCleanups::InitializePage()
 {
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageCleanups::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-
-    // Apply dark mode to this property page
-    DarkMode::AdjustControls(GetSafeHwnd());
-
     // Combobox data correspond to enum REFRESHPOLICY:
     m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH).c_str());
     m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_ENTRY).c_str());
@@ -104,8 +90,6 @@ BOOL CPageCleanups::OnInitDialog()
 
     m_customCleanupList.SetCurSel(0);
     OnLbnSelchangeList();
-
-    return TRUE; // return TRUE unless you set the focus to a control
 }
 
 void CPageCleanups::OnOK()

@@ -30,7 +30,6 @@ public:
     static CFilePermsControl* Get() { return m_singleton; }
 
     bool StartScan();
-    void StopScan();
     std::vector<const CItemPerm*> GetPermItems() const;
 
     // Headless parallel scan of the whole tree; used by the silent command-line export

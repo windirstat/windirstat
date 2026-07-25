@@ -128,6 +128,9 @@
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageShared.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
@@ -135,6 +138,9 @@
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\GraphView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\VisualizationPane.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\StorageAnalyticsView.h">
@@ -352,6 +358,9 @@
     <ClCompile Include="Pages\PageGeneral.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Pages\PageShared.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Pages\PageTreeMap.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
@@ -365,6 +374,9 @@
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\GraphView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\VisualizationPane.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\StorageAnalyticsView.cpp">

@@ -18,12 +18,13 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 #include "ColorButton.h"
 
 //
 // CPageFileTree. "Settings" property page "Folder List".
 //
-class CPageFileTree final : public CMFCPropertyPage
+class CPageFileTree final : public COptionsPage
 {
     DECLARE_DYNAMIC(CPageFileTree)
 
@@ -34,21 +35,24 @@ class CPageFileTree final : public CMFCPropertyPage
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
     void EnableButtons();
 
     BOOL m_pacmanAnimation = FALSE;
     BOOL m_showTimeSpent = FALSE;
-    BOOL m_showColumnFolders = FALSE;
-    BOOL m_showColumnItems = FALSE;
-    BOOL m_showColumnFiles = FALSE;
-    BOOL m_showColumnAttributes = FALSE;
-    BOOL m_showColumnLastChange = FALSE;
-    BOOL m_showColumnOwner = FALSE;
-    BOOL m_showColumnPercentage = FALSE;
-    BOOL m_showColumnSizePhysical = FALSE;
-    BOOL m_showColumnSizeLogical = FALSE;
+    inline static constexpr std::array<std::pair<UINT, int>, 9> c_columns = {{
+        { IDC_TREECOL_FOLDERS, COL_FOLDERS },
+        { IDC_TREECOL_ITEMS, COL_ITEMS },
+        { IDC_TREECOL_FILES, COL_FILES },
+        { IDC_TREECOL_ATTRIBUTES, COL_ATTRIBUTES },
+        { IDC_TREECOL_LAST_CHANGE, COL_LAST_CHANGE },
+        { IDC_TREECOL_OWNER, COL_OWNER },
+        { IDC_TREECOL_PERCENTAGE, COL_PERCENTAGE },
+        { IDC_TREECOL_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
+        { IDC_TREECOL_SIZE_LOGICAL, COL_SIZE_LOGICAL },
+    }};
+    std::array<BOOL, c_columns.size()> m_showColumns{};
 
     int m_fileTreeColorCount = TREELISTCOLORCOUNT;
     COLORREF m_fileTreeColor[TREELISTCOLORCOUNT] = {};
@@ -57,8 +61,5 @@ protected:
     CSliderCtrl m_slider;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnBnClickedSetModified();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -25,23 +25,11 @@ static constexpr COLORREF BGR(auto b, auto g, auto r)
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
 
-static constexpr COLORREF DimColor(COLORREF rgb, float factor = 0.9f) noexcept
-{
-    factor = std::clamp(factor, 0.0f, 1.0f);
-    return RGB(
-        static_cast<BYTE>(GetRValue(rgb) * factor),
-        static_cast<BYTE>(GetGValue(rgb) * factor),
-        static_cast<BYTE>(GetBValue(rgb) * factor)
-    );
-}
-
 // Define the "brightness" of an RBG value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
 // all having the same brightness of 0.6
 // Later in RenderCushion() this number is used again to
 // scale the colors.
-
-static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 using Surface = std::array<double, 4>;
 
@@ -88,7 +76,7 @@ const std::array<CPoint, 4> EXTENSION_SHADOW_OFFSETS = {
     }
 
     const DWORD flags = color & CTreeMap::COLORFLAG_MASK;
-    prepared.color = CColorSpace::MakeBrightColor(baseColor, PALETTE_BRIGHTNESS);
+    prepared.color = CColorSpace::MakeBrightColor(baseColor, CColorSpace::GraphPaletteBrightness);
 
     if ((flags & CTreeMap::COLORFLAG_DARKER) != 0)
     {
@@ -104,7 +92,7 @@ const std::array<CPoint, 4> EXTENSION_SHADOW_OFFSETS = {
 
 [[nodiscard]] COLORREF MakeBitmapColor(const COLORREF color, const double brightness)
 {
-    const double factor = brightness / PALETTE_BRIGHTNESS;
+    const double factor = brightness / CColorSpace::GraphPaletteBrightness;
 
     int red = static_cast<int>(GetRValue(color) * factor);
     int green = static_cast<int>(GetGValue(color) * factor);
@@ -198,7 +186,7 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
     palette.resize(std::size(DefaultCushionColors));
     std::ranges::transform(DefaultCushionColors, palette.begin(),
-        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
+        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, CColorSpace::GraphPaletteBrightness); });
 }
 
 std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
@@ -595,7 +583,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         bitmap = { m_bitmapBits.data(), static_cast<size_t>(renderWidth) };
     }
     DrawSolidRect(bitmap, CRect(0, 0, renderWidth, renderHeight),
-        m_options.gridColor, PALETTE_BRIGHTNESS);
+        m_options.gridColor, CColorSpace::GraphPaletteBrightness);
 
     const int gridWidth = m_options.grid ? 1 : 0;
     const bool cushionShading = IsCushionShading();
@@ -714,7 +702,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
-                CBrush borderBrush(DimColor(GetDepthColor(folder.depth)));
+                CBrush borderBrush(CColorSpace::DimColor(GetDepthColor(folder.depth)));
                 pdc->FrameRect(&rcFolder, &borderBrush);
 
                 if (folder.showHeader)
@@ -877,7 +865,7 @@ void CTreeMap::DrawCushion(const BitmapView bitmap, const CRect& rc, const std::
 {
     const double Ia = m_options.ambientLight;
     const double Is = 1 - Ia;
-    const double brightnessFactor = brightness / PALETTE_BRIGHTNESS;
+    const double brightnessFactor = brightness / CColorSpace::GraphPaletteBrightness;
 
     const double colR = GetRValue(col);
     const double colG = GetGValue(col);

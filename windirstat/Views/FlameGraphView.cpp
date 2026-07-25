@@ -377,7 +377,7 @@ void CFlameGraphView::UpdateScrollBar(const int fullHeight, const int pageHeight
 bool CFlameGraphView::EnsureFullHeightForInput()
 {
     const auto* model = CWinDirStatModel::Get();
-    if (m_drawingSuspended || !m_showTreeMap || model == nullptr || !model->IsRootDone())
+    if (m_drawingSuspended || !IsWindowVisible() || model == nullptr || !model->IsRootDone())
     {
         return false;
     }

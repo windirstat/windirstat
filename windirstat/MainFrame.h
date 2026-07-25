@@ -27,10 +27,8 @@ class CWdsSplitterWnd;
 class CMainFrame;
 
 class CFileTreeView;
-class CTreeMapView;
 class CExtensionView;
-class CFlameGraphView;
-class CSunburstView;
+class CVisualizationPane;
 
 //
 // The "logical focus" can be
@@ -152,19 +150,18 @@ protected:
     void InitialShowWindow();
     void InvokeInMessageThread(std::function<void()> callback) const;
 
-    void RestoreGraphPane(bool forced = false);
-    void RestoreExtensionView();
-    void MinimizeGraphPane();
+    void RestoreVisualizationPane(bool forced = false);
+    void MinimizeVisualizationPane();
     void MinimizeExtensionView();
     void ExpandFileTabbedView();
+    void RestoreSplitterPositions();
+    void ApplyPaneVisibility(bool restoreDuringScan = false);
     void CopyToClipboard(const std::wstring& psz);
 
-    // Used for storing and retrieving the various views
+    // Used for storing and retrieving the main panes
     CFileTabbedView* m_fileTabbedView = nullptr;
     CExtensionView* m_extensionView = nullptr;
-    CTreeMapView* m_treeMapView = nullptr;
-    CFlameGraphView* m_flameGraphView = nullptr;
-    CSunburstView* m_sunburstView = nullptr;
+    CVisualizationPane* m_visualizationPane = nullptr;
     CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
@@ -172,15 +169,13 @@ protected:
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
-    CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
-    CFlameGraphView* GetFlameGraphView() const { return m_flameGraphView; }
-    CSunburstView* GetSunburstView() const { return m_sunburstView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
     [[nodiscard]] GraphPane GetGraphPaneType() const;
     void SelectGraphPane(GraphPane pane);
-    void ShowActiveGraphPane(bool show);
-    bool IsActiveGraphPaneShown() const;
-    CWinDirStatPane* GetActiveGraphPane() const;
+    void ShowVisualization(bool show);
+    [[nodiscard]] bool IsVisualizationShown() const;
+    [[nodiscard]] CWinDirStatPane* GetVisualizationPane() const;
+    [[nodiscard]] CWinDirStatPane* GetActiveVisualization() const;
 
     void CreateProgress(ULONGLONG range);
     void UpdateProgressRange(ULONGLONG range);
@@ -251,14 +246,14 @@ protected:
     afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
     afx_msg void OnUpdateEnableControl(CCmdUI* pCmdUI);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateViewShowVisualization(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewAbsolutePercentages(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowWatcher(CCmdUI* pCmdUI);
-    afx_msg void OnViewTreeMap();
+    afx_msg void OnViewShowVisualization();
     afx_msg void OnViewTreeMapStyle(UINT commandId);
     afx_msg void OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI);
     afx_msg void OnViewFlameGraph();
@@ -317,6 +312,6 @@ public:
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
 
 private:
-    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hGraph);
+    void BuildSplitterLayout(int topology, int permutation, HWND hFTV, HWND hExtV, HWND hVisualization);
     void ConfigureSplitterCallbacks(int topology, int permutation);
 };

@@ -18,34 +18,29 @@
 #include "pch.h"
 #include "PageGeneral.h"
 
-IMPLEMENT_DYNAMIC(CPageGeneral, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageGeneral, COptionsPage)
 
-CPageGeneral::CPageGeneral() : CMFCPropertyPage(IDD) {}
-
-COptionsPropertySheet* CPageGeneral::GetSheet() const
+CPageGeneral::CPageGeneral() : COptionsPage(IDD)
 {
-    const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
-    ASSERT(sheet != nullptr);
-    return sheet;
+    BindCheck(IDC_AUTO_ELEVATE, COptions::AutoElevate, m_automaticallyElevateOnStartup);
+    BindCheck(IDC_COLUMN_AUTOSIZE, COptions::AutomaticallyResizeColumns, m_automaticallyResizeColumns);
+    BindCheck(IDC_FULL_ROW_SELECTION, COptions::ListFullRowSelection, m_listFullRowSelection);
+    BindCheck(IDC_SHOW_GRID, COptions::ListGrid, m_listGrid);
+    BindCheck(IDC_SHOW_STRIPES, COptions::ListStripes, m_listStripes);
+    BindCheck(IDC_SIZE_SUFFIXES, COptions::UseSizeSuffixes, m_sizeSuffixesFormat);
+    BindCheck(IDC_USE_WINDOWS_LOCALE, COptions::UseWindowsLocaleSetting, m_useWindowsLocale);
+    BindRadio(IDC_DARK_MODE_DISABLED, COptions::DarkMode, m_darkModeRadio);
 }
 
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_AUTO_ELEVATE, m_automaticallyElevateOnStartup);
-    DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_automaticallyResizeColumns);
+    COptionsPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_CONTEXT_MENU, m_contextMenuIntegration);
-    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_listFullRowSelection);
     DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
-    DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
-    DDX_Check(pDX, IDC_SHOW_STRIPES, m_listStripes);
-    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_sizeSuffixesFormat);
-    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_useWindowsLocale);
     DDX_Control(pDX, IDC_COMBO, m_combo);
-    DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_darkModeRadio);
 }
 
-BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageGeneral, COptionsPage)
     ON_BN_CLICKED(IDC_AUTO_ELEVATE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_CONTEXT_MENU, OnBnClickedSetModified)
@@ -59,14 +54,8 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_DARK_MODE_ENABLED, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_DARK_MODE_USE_WINDOWS, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnBnClickedSetModified)
-    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
-HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
 bool CPageGeneral::IsContextMenuRegistered(HKEY root)
 {
     return CRegKey().Open(root, std::format(LR"(Software\Classes\Drive\shell\{})",
@@ -117,22 +106,9 @@ bool CPageGeneral::SetContextMenuRegistration(bool enable)
     return true;
 }
 
-BOOL CPageGeneral::OnInitDialog()
+void CPageGeneral::InitializePage()
 {
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
-    m_automaticallyElevateOnStartup = COptions::AutoElevate;
-    m_automaticallyResizeColumns = COptions::AutomaticallyResizeColumns;
-    m_sizeSuffixesFormat = COptions::UseSizeSuffixes;
-    m_listGrid = COptions::ListGrid;
-    m_listStripes = COptions::ListStripes;
-    m_listFullRowSelection = COptions::ListFullRowSelection;
-    m_useWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_portableMode = CDirStatApp::InPortableMode();
-    m_darkModeRadio = COptions::DarkMode;
 
     // Query checkbox status and then gray out if a system-level entry
     // exists that cannot be changed without elevation
@@ -155,7 +131,6 @@ BOOL CPageGeneral::OnInitDialog()
     }
 
     UpdateData(FALSE);
-    return TRUE;
 }
 
 void CPageGeneral::OnOK()
@@ -168,14 +143,7 @@ void CPageGeneral::OnOK()
         static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection ||
         static_cast<bool>(m_sizeSuffixesFormat) != COptions::UseSizeSuffixes;
 
-    COptions::AutoElevate = (FALSE != m_automaticallyElevateOnStartup);
-    COptions::AutomaticallyResizeColumns = (FALSE != m_automaticallyResizeColumns);
-    COptions::UseSizeSuffixes = (FALSE != m_sizeSuffixesFormat);
-    COptions::UseWindowsLocaleSetting = (FALSE != m_useWindowsLocale);
-    COptions::ListGrid = (FALSE != m_listGrid);
-    COptions::ListStripes = (FALSE != m_listStripes);
-    COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
-    COptions::DarkMode = m_darkModeRadio;
+    ApplyOptionBindings();
 
     if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
     {
@@ -219,6 +187,9 @@ void CPageGeneral::OnOK()
 
 void CPageGeneral::OnBnClickedSetModified()
 {
+    if (!IsInitialized())
+        return;
+
     UpdateData(TRUE);
 
     // Assess for restart required

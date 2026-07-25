@@ -159,6 +159,10 @@ public:
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
 private:
+    static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,
+        std::wstring_view detail = {});
+    static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,
+        std::span<CItem* const> affectedItems, std::wstring_view detail = {});
     void RemoveLocalProfiles(std::wstring_view whereClause);
     void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
@@ -231,8 +235,8 @@ private:
     afx_msg void OnCleanupCompress(UINT id);
     afx_msg void OnCleanupOptimizeVhd();
     afx_msg void OnCleanupSparsifyFile();
+    afx_msg void OnCleanupRemoveEmpty();
     afx_msg void OnToolsSetDates();
-    afx_msg void OnToolsRemoveEmpty();
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();

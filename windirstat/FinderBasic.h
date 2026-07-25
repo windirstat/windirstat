@@ -26,6 +26,7 @@ class FinderBasicContext final
 public:
     std::atomic<bool> SupportsFileId = false;
     ULONG ClusterSize = 0;
+    bool IsRemoteVolume = false;
     std::once_flag InitOnce;
 };
 
