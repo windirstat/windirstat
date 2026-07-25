@@ -5619,6 +5619,15 @@ public:
         Invalidate(FALSE);
     }
 
+    LRESULT OnNcHitTest(CPoint point)
+    {
+        CPoint clientPt = point;
+        ScreenToClient(&clientPt);
+        if (TabStripRect().PtInRect(clientPt))
+            return HTCLIENT;
+        return Default();
+    }
+
     void OnSize(UINT, int, int) { Default(); LayoutPanes(); Invalidate(FALSE); }
     BOOL OnEraseBkgnd(CDC*) { return TRUE; }
 
@@ -5785,6 +5794,7 @@ public:
     static const AFX_MSGMAP* GetThisMessageMap()
     {
         static const AFX_MSGMAP_ENTRY entries[] = {
+            { WM_NCHITTEST, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<LRESULT (CMFCTabCtrl::*)(CPoint)>(&CMFCTabCtrl::OnNcHitTest)), &WdsThunk_NcHitTest, nullptr },
             { WM_SIZE, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<void (CMFCTabCtrl::*)(UINT,int,int)>(&CMFCTabCtrl::OnSize)), &WdsThunk_Size, nullptr },
             { WM_ERASEBKGND, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<BOOL (CMFCTabCtrl::*)(CDC*)>(&CMFCTabCtrl::OnEraseBkgnd)), &WdsThunk_EraseBkgnd, nullptr },
             { WM_LBUTTONDOWN, 0, 0, 0, reinterpret_cast<AFX_PMSG>(static_cast<void (CMFCTabCtrl::*)(UINT,CPoint)>(&CMFCTabCtrl::OnLButtonDown)), &WdsThunk_MouseBtn, nullptr },
