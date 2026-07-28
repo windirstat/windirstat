@@ -1277,7 +1277,10 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         if (const auto dupeSavePath = CDirStatApp::Get()->GetSaveDupesToPath(); !dupeSavePath.empty())
         {
             // Get the duplicate root item
-            CFileDupeControl::Get()->SortItems();
+            CMainFrame::Get()->InvokeInMessageThread([]
+            {
+                CFileDupeControl::Get()->SortItems();
+            });
             const auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
             if (dupeRoot == nullptr) ExitProcess(1);
 

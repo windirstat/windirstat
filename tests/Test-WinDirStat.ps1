@@ -2049,6 +2049,20 @@ function Find-UiaRows {
 
 function Invoke-Button {
     param([System.Windows.Automation.AutomationElement] $Btn)
+
+    # A synchronous UIA Invoke can end an MFC modal loop while it is in the idle
+    # phase, tripping CWnd::RunModalLoop's ContinueModal assertion in Debug builds.
+    $hwnd = [IntPtr]$Btn.Current.NativeWindowHandle
+    if ($hwnd -ne [IntPtr]::Zero -and
+        [NativeListViewHelper]::GetWindowClassName($hwnd) -eq 'Button') {
+        if (!$Btn.Current.IsEnabled) { throw 'Cannot invoke a disabled button' }
+        if ([Win32MenuHelper]::PostMessage(
+            $hwnd, $script:BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero)) {
+            return
+        }
+        throw 'Failed to queue the native button click'
+    }
+
     try {
         $p = $Btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
         $p.Invoke()
@@ -2163,26 +2177,53 @@ function Get-CurrentWindowHwnds {
 function Close-OpenDialogs {
     param([System.Windows.Automation.AutomationElement] $Window, [int] $TimeoutMs = 3000)
     $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+    $closedAll = $false
     while ([System.DateTime]::UtcNow -lt $deadline) {
         $childDlgs = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
             -Scope ([System.Windows.Automation.TreeScope]::Descendants))
-        if (!$childDlgs -or $childDlgs.Count -eq 0) { break }
-        foreach ($d in $childDlgs) {
-            $hwnd = [IntPtr]$d.Current.NativeWindowHandle
-            if ($hwnd -ne [IntPtr]::Zero) {
-                [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero) | Out-Null
-                [Win32MenuHelper]::PostMessage($hwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
-            }
+        if (!$childDlgs -or $childDlgs.Count -eq 0) {
+            $closedAll = $true
+            break
         }
-        Start-Sleep -Milliseconds 400
+
+        # Only dismiss the enabled/topmost modal. Closing nested parent and child
+        # dialogs together can unwind their MFC modal loops out of order.
+        $dialog = $null
+        foreach ($candidate in $childDlgs) {
+            try {
+                if ($candidate.Current.IsEnabled) { $dialog = $candidate }
+            }
+            catch {}
+        }
+        if (!$dialog) { $dialog = $childDlgs[-1] }
+
+        $hwnd = [IntPtr]$dialog.Current.NativeWindowHandle
+        if ($hwnd -eq [IntPtr]::Zero -or
+            ![Win32MenuHelper]::PostMessage(
+                $hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero)) {
+            break
+        }
+        $dismissDeadline = [System.DateTime]::UtcNow.AddMilliseconds(500)
+        if ($dismissDeadline -gt $deadline) { $dismissDeadline = $deadline }
+        while ([System.DateTime]::UtcNow -lt $dismissDeadline -and [Win32MenuHelper]::IsWindow($hwnd)) {
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    if (!$closedAll) {
+        $remainingDialogs = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants))
+        $closedAll = $remainingDialogs.Count -eq 0
     }
     Start-Sleep -Milliseconds 300
+    return $closedAll
 }
 
 # Ensure the main window is ready: no child dialogs, has focus
 function Assert-WindowReady {
     param([System.Windows.Automation.AutomationElement] $Window)
-    Close-OpenDialogs -Window $Window
+    if (!(Close-OpenDialogs -Window $Window)) {
+        throw 'Unable to dismiss every modal dialog before continuing'
+    }
     Focus-Window $Window
     Start-Sleep -Milliseconds 400
 }
@@ -2553,13 +2594,22 @@ function Find-ToolbarButton {
 }
 
 function Dismiss-DriveDialog {
-    param([System.Windows.Automation.AutomationElement] $Dialog)
+    param(
+        [System.Windows.Automation.AutomationElement] $Dialog,
+        [int] $TimeoutMs = $script:DefaultDialogTimeoutMs
+    )
     $hwnd = [IntPtr]$Dialog.Current.NativeWindowHandle
-    if ($hwnd -ne [IntPtr]::Zero) {
-        [Win32MenuHelper]::PostMessage($hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero) | Out-Null
-        [Win32MenuHelper]::PostMessage($hwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+    if ($hwnd -eq [IntPtr]::Zero -or
+        ![Win32MenuHelper]::PostMessage(
+            $hwnd, $script:WM_COMMAND, [IntPtr]$script:IDCANCEL, [IntPtr]::Zero)) {
+        return $false
     }
-    Start-Sleep -Milliseconds 400
+
+    $deadline = [System.DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+    while ([System.DateTime]::UtcNow -lt $deadline -and [Win32MenuHelper]::IsWindow($hwnd)) {
+        Start-Sleep -Milliseconds 100
+    }
+    return ![Win32MenuHelper]::IsWindow($hwnd)
 }
 
 # ---------------------------------------------------------------------------
@@ -3077,8 +3127,13 @@ function Test-ApplicationLaunch {
         -Scope ([System.Windows.Automation.TreeScope]::Descendants)
     if ($driveDialog -and $driveDialog.Current.Name -like '*Select*') {
         Assert-Pass $g 'Drive selection dialog auto-opens on fresh launch'
-        Dismiss-DriveDialog -Dialog $driveDialog
-        Assert-Pass $g 'Drive selection dialog dismissed'
+        if (Dismiss-DriveDialog -Dialog $driveDialog) {
+            Assert-Pass $g 'Drive selection dialog dismissed'
+        }
+        else {
+            Assert-Fail $g 'Drive selection dialog dismissed' 'Dialog did not close within the timeout'
+            return $false
+        }
     }
     else {
         # [Pre-Scan / Event-Timing] Dialog may have been suppressed by a non-empty
@@ -4563,10 +4618,32 @@ function Test-VisualizationPaneLayout {
     $runExe = Join-Path $runDirectory (Split-Path -Leaf $Exe)
     $runIni = [System.IO.Path]::ChangeExtension($runExe, 'ini')
     $mainHwnd = [IntPtr] $win.Current.NativeWindowHandle
-    $closed = [Win32MenuHelper]::PostMessage(
-        $mainHwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero) -and $script:proc.WaitForExit(5000)
+    $closePosted = [Win32MenuHelper]::PostMessage(
+        $mainHwnd, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
+    $closeDeadline = [System.DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    while ($closePosted -and
+        [System.DateTime]::UtcNow -lt $closeDeadline -and
+        [Win32MenuHelper]::IsWindow($mainHwnd)) {
+        Start-Sleep -Milliseconds 100
+    }
+    $closed = $closePosted -and ![Win32MenuHelper]::IsWindow($mainHwnd)
     if (!$closed) {
-        Assert-Fail $g 'Close cleanly to persist pane visibility' 'WM_CLOSE did not terminate the application'
+        Assert-Fail $g 'Close cleanly to persist pane visibility' 'WM_CLOSE did not destroy the main window'
+        Stop-App
+        return
+    }
+
+    # Debug builds intentionally wait for input in the trace-console destructor.
+    # The destroyed HWND proves OnDestroy completed and persisted the settings.
+    $isDebugBuild = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($runExe).IsDebug
+    if ($isDebugBuild) {
+        if (!$script:proc.WaitForExit(1000)) {
+            $script:proc.Kill($true)
+            [void] $script:proc.WaitForExit(3000)
+        }
+    }
+    elseif (!$script:proc.WaitForExit($TimeoutSeconds * 1000)) {
+        Assert-Fail $g 'Close cleanly to persist pane visibility' 'Process remained alive after its main window closed'
         Stop-App
         return
     }
@@ -7898,7 +7975,7 @@ function Test-LoadResults {
             -Scope ([System.Windows.Automation.TreeScope]::Descendants)
         if ($driveDialog -and $driveDialog.Current.ClassName -eq '#32770' -and $driveDialog.Current.Name -like '*Select*') {
             Assert-Fail $g "Load $desc suppresses drive dialog" 'Drive dialog auto-opened'
-            Dismiss-DriveDialog -Dialog $driveDialog
+            Dismiss-DriveDialog -Dialog $driveDialog | Out-Null
         }
         else {
             Assert-Pass $g "Load $desc suppresses drive dialog"
