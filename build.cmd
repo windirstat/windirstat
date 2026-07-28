@@ -70,15 +70,13 @@ IF ERRORLEVEL 1 EXIT /B 1
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%PUBDIR%\*.msi*"
 IF ERRORLEVEL 1 ECHO MSI/MSIX signing failed; continuing without a signed MSI.
 
-:: 7-zip executables and debug files
+:: archive executables and debug files
 7z.EXE >NUL 2>&1
-IF %ERRORLEVEL% NEQ 0 ECHO 7-Zip not found; skipping 7-Zip archive
-IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
-IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat-DebugSymbols.7z" "%PUBDIR%\*\*.pdb"
+IF %ERRORLEVEL% NEQ 0 ECHO 7-Zip not found; skipping archives
+IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 -mf=off "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
+IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 -mf=off "%PUBDIR%\WinDirStat-DebugSymbols.7z" "%PUBDIR%\*\*.pdb"
+IF %ERRORLEVEL% EQU 0 7z.EXE a -tzip -mx=9 "%PUBDIR%\WinDirStat.zip" "%PUBDIR%\*\*.exe"
 DEL /F /S /Q "%PUBDIR%\*.pdb" >NUL 2>&1
-
-:: zip up executables
-FOR %%A IN (arm64 x86 x64) DO %POWERSHELL% -Command "Compress-Archive '%PUBDIR%\%%A' -DestinationPath '%PUBDIR%\WinDirStat.zip' -Update"
 
 :: output hash information
 SET HASHFILE=%PUBDIR%\WinDirStat-Hashes.txt
