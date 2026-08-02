@@ -9,6 +9,7 @@ Enhancements
 - Added per-user Explorer context menu registration
 - Added configurable process CPU and I/O priority
 - Added absolute/relative percentage display modes
+- Added confirmation prompt for potentially destructive actions
 - Added list-header column choosers
 - Added File Watcher toolbar controls
 - Added cancellable file hashing progress (thanks @harryytm)
@@ -19,16 +20,20 @@ Enhancements
 - Improved message box dialog performance for massive lists (thanks @harryytm)
 - Improved logical/physical size menu item generalization
 - Improved font refresh behavior after settings changes
+- Improved remote volume scanning performance using smaller buffers
 - Modernized locale string retrieval functions (thanks @harryytm)
 
 Bug Fixes
+- Corrected archive compatibility issues
 - Corrected indeterminate progress dialog repainting
 - Corrected layout view type identifiers (thanks @harryytm)
 - Corrected menu mnemonic conflicts across translations
+- Corrected OLE dependency on context menu
 - Corrected optional pane resizing across window layouts
 - Corrected shell context menu clipboard operations
 - Corrected some argument passing issues
-- Corrreted keyboard focus navigation between data panes
+- Corrected time accounting when scan is paused
+- Corrected keyboard focus navigation between data panes
 - Restored the option to hide the visualization pane
 
 <a name="windirstat-2.7.0"></a>
