@@ -1,5 +1,5 @@
-<a name="windirstat-2.7.x"></a>
-# WinDirStat 2.7.X (Upcoming)
+<a name="windirstat-2.8.0"></a>
+# WinDirStat 2.8.0
 
 Enhancements
 - Added flame graph as an alternative visualization view (thanks @P403n1x87)
