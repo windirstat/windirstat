@@ -397,11 +397,11 @@ void CWinDirStatModel::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 
 void CWinDirStatModel::OnViewShowFreeSpace()
 {
-    for (const auto& drive : GetRootItem()->GetDriveItems())
+    for (CItem* root : GetRootItem()->GetSpaceItems())
     {
         if (COptions::ShowFreeSpace)
         {
-            const CItem* free = drive->FindFreeSpaceItem();
+            const CItem* free = root->FindFreeSpaceItem();
             ASSERT(free != nullptr);
 
             if (GetZoomItem() == free)
@@ -409,11 +409,11 @@ void CWinDirStatModel::OnViewShowFreeSpace()
                 m_zoomItem = free->GetParent();
             }
 
-            drive->RemoveFreeSpaceItem();
+            root->RemoveFreeSpaceItem();
         }
         else
         {
-            drive->CreateFreeSpaceItem();
+            root->CreateFreeSpaceItem();
         }
     }
 
@@ -432,11 +432,11 @@ void CWinDirStatModel::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 
 void CWinDirStatModel::OnViewShowUnknown()
 {
-    for (const auto& drive : GetRootItem()->GetDriveItems())
+    for (CItem* root : GetRootItem()->GetSpaceItems())
     {
         if (COptions::ShowUnknown)
         {
-            const CItem* unknown = drive->FindUnknownItem();
+            const CItem* unknown = root->FindUnknownItem();
             ASSERT(unknown != nullptr);
 
             if (GetZoomItem() == unknown)
@@ -444,11 +444,11 @@ void CWinDirStatModel::OnViewShowUnknown()
                 m_zoomItem = unknown->GetParent();
             }
 
-            drive->RemoveUnknownItem();
+            root->RemoveUnknownItem();
         }
         else
         {
-            drive->CreateUnknownItem();
+            root->CreateUnknownItem();
         }
     }
 
@@ -1214,7 +1214,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Restore unknown and freespace items
         for (const auto& item : items)
         {
-            if (!item->IsTypeOrFlag(IT_DRIVE)) continue;
+            if (!item->SupportsSpaceItems()) continue;
 
             if (COptions::ShowFreeSpace)
             {

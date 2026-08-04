@@ -11711,9 +11711,8 @@ function Invoke-UncSuite {
     $dataRoot = Join-Path $workRoot 'share-data'
     $csvOut   = Join-Path $workRoot 'unc-results.csv'
 
-    # Unique, hidden ($-suffixed) share name so we never collide with a real
-    # share and stay out of the network browse list (just like the c$ admin share).
-    $shareName    = 'WdsUnc' + $PID + '$'
+    # An unused one-letter hidden share exercises the administrative-share root shape.
+    $shareName    = $null
     $shareCreated = $false
 
     try {
@@ -11722,8 +11721,20 @@ function Invoke-UncSuite {
             Assert-Skip $g 'Administrator privileges' 'Not elevated; publishing a temporary SMB share requires admin'
             return
         }
-        if (-not (Get-Command New-SmbShare -ErrorAction SilentlyContinue)) {
-            Assert-Skip $g 'SMB cmdlets available' 'New-SmbShare is not available on this system'
+        if (-not (Get-Command New-SmbShare -ErrorAction SilentlyContinue) -or
+            -not (Get-Command Get-SmbShare -ErrorAction SilentlyContinue)) {
+            Assert-Skip $g 'SMB cmdlets available' 'The required SMB share cmdlets are not available on this system'
+            return
+        }
+        foreach ($code in 90..68) {
+            $candidate = ([char] $code).ToString() + '$'
+            if (-not (Get-SmbShare -Name $candidate -ErrorAction SilentlyContinue)) {
+                $shareName = $candidate
+                break
+            }
+        }
+        if (-not $shareName) {
+            Assert-Skip $g 'Administrative share name available' 'No unused one-letter hidden share name is available'
             return
         }
         if (-not (Test-Path -LiteralPath $ExePath)) {
@@ -11747,8 +11758,8 @@ function Invoke-UncSuite {
             'UseFastScanEngine=1',
             'ShowElevationPrompt=0',
             'AutoElevate=0',
-            'ShowFreeSpace=0',
-            'ShowUnknown=0',
+            'ShowFreeSpace=1',
+            'ShowUnknown=1',
             'ProcessHardlinks=0'
         ) -join "`r`n"
         [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), $ini, [System.Text.Encoding]::Unicode)
@@ -11817,6 +11828,12 @@ function Invoke-UncSuite {
         # --- Content checks (only meaningful once a CSV was produced) -------
         if ($scanOk) {
             $names = @((Import-Csv -LiteralPath $csvOut -Encoding UTF8) | ForEach-Object { $_.Name })
+            $leafNames = @($names | ForEach-Object { [System.IO.Path]::GetFileName($_) })
+            foreach ($pseudoItem in @('<Free Space>', '<Unknown>')) {
+                $pseudoItemCount = @($leafNames | Where-Object { $_ -eq $pseudoItem }).Count
+                Assert-That $g "Administrative-share root shows '$pseudoItem'" `
+                    ($pseudoItemCount -eq 1) "Expected one $pseudoItem row; found $pseudoItemCount"
+            }
             foreach ($leaf in @('unc_root_file.dat', 'nested.dat')) {
                 if ($names | Where-Object { $_ -match [regex]::Escape($leaf) }) {
                     Assert-Pass $g "CSV contains '$leaf'"
