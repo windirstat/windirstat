@@ -1,3 +1,9 @@
+<a name="windirstat-2.8.x"></a>
+# WinDirStat 2.8.x (Upcoming)
+
+Enhancements
+- Added Free Space / Unknown items when scanning administrative share drive paths
+
 <a name="windirstat-2.8.0"></a>
 # WinDirStat 2.8.0
 
