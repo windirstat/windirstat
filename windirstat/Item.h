@@ -79,6 +79,7 @@ enum ITEMTYPE : std::uint32_t
     ITF_ROOTITEM   = 1 << 28, // Indicates root item
     ITF_DONE       = 1 << 29, // Indicates done processing
     ITF_PREVIEW    = 1 << 30, // Indicates preview item (color stored in index)
+    ITF_MULTIROOT  = 1u << 31, // Indicates one of several roots under a multi-folder ("This PC") scan
     ITF_MASK       = 0xFF000000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
