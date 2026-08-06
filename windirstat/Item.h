@@ -232,7 +232,9 @@ public:
 
     // Drive/Volume Specific
     bool IsRootItem() const noexcept;
+    bool SupportsSpaceItems() const noexcept;
     std::vector<CItem*> GetDriveItems() const;
+    std::vector<CItem*> GetSpaceItems() const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     static int GetSizeProportionWidth();

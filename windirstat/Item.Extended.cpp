@@ -18,6 +18,37 @@
 #include "pch.h"
 #include "Item.h"
 
+static constexpr wchar_t AsciiLower(const wchar_t value) noexcept
+{
+    return value >= L'A' && value <= L'Z' ? value + (L'a' - L'A') : value;
+}
+
+static constexpr bool StartsWithNoCase(const std::wstring_view value, const std::wstring_view prefix) noexcept
+{
+    if (value.size() < prefix.size()) return false;
+    for (size_t i = 0; i < prefix.size(); ++i)
+    {
+        if (AsciiLower(value[i]) != AsciiLower(prefix[i])) return false;
+    }
+    return true;
+}
+
+static constexpr bool IsDriveAdministrativeSharePath(std::wstring_view path) noexcept
+{
+    while (path.ends_with(L'\\')) path.remove_suffix(1);
+
+    constexpr std::wstring_view longUncPrefix = LR"(\\?\UNC\)";
+    if (StartsWithNoCase(path, longUncPrefix)) path.remove_prefix(longUncPrefix.size());
+    else if (path.starts_with(L"\\\\")) path.remove_prefix(2);
+    else return false;
+
+    const size_t separator = path.find(L'\\');
+    if (separator == 0 || separator == std::wstring_view::npos || path.size() != separator + 3) return false;
+
+    const wchar_t drive = path[separator + 1];
+    return (drive >= L'A' && drive <= L'Z' || drive >= L'a' && drive <= L'z') && path.back() == L'$';
+}
+
 static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
 static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
@@ -457,6 +488,12 @@ bool CItem::IsRootItem() const noexcept
     return IsTypeOrFlag(ITF_ROOTITEM);
 }
 
+bool CItem::SupportsSpaceItems() const noexcept
+{
+    return IsTypeOrFlag(IT_DRIVE) ||
+        (IsRootItem() && IsTypeOrFlag(IT_DIRECTORY) && IsDriveAdministrativeSharePath(GetNameView()));
+}
+
 std::vector<CItem*> CItem::GetDriveItems() const
 {
     // Gets all items of type IT_DRIVE
@@ -488,6 +525,17 @@ std::vector<CItem*> CItem::GetDriveItems() const
     }
 
     return drives;
+}
+
+std::vector<CItem*> CItem::GetSpaceItems() const
+{
+    std::vector<CItem*> items = GetDriveItems();
+    if (!items.empty()) return items;
+
+    const CItem* root = this;
+    while (root->GetParent() != nullptr) root = root->GetParent();
+    if (root->SupportsSpaceItems()) items.push_back(const_cast<CItem*>(root));
+    return items;
 }
 
 ULONGLONG CItem::GetProgressRange() const
@@ -561,7 +609,7 @@ CItem* CItem::FindRecyclerItem() const
 
 void CItem::CreateFreeSpaceItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    ASSERT(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -593,15 +641,18 @@ void CItem::UpdateFreeSpaceItem()
                 child->UpdateFreeSpaceItem();
         }
     }
-    else if (IsTypeOrFlag(IT_DRIVE))
+    else if (SupportsSpaceItems())
     {
         auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
         // Recreate name based on updated free space and percentage
-        SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
-            FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
-                IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
-            FormatDouble(total == 0 ? 0.0 : 100.0 * free / total)));
+        if (IsTypeOrFlag(IT_DRIVE))
+        {
+            SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
+                FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
+                    IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
+                FormatDouble(total == 0 ? 0.0 : 100.0 * free / total)));
+        }
 
         // Update freespace item if it exists
         if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
@@ -615,7 +666,7 @@ void CItem::UpdateFreeSpaceItem()
 
 void CItem::RemoveFreeSpaceItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    ASSERT(SupportsSpaceItems());
 
     if (const auto freespace = FindFreeSpaceItem(); freespace != nullptr)
     {
@@ -627,7 +678,7 @@ void CItem::RemoveFreeSpaceItem()
 
 void CItem::CreateUnknownItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    ASSERT(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -647,7 +698,7 @@ CItem* CItem::FindUnknownItem() const
 
 void CItem::UpdateUnknownItem() const
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    ASSERT(SupportsSpaceItems());
 
     CItem* unknown = FindUnknownItem();
     if (unknown == nullptr)
@@ -668,7 +719,7 @@ void CItem::UpdateUnknownItem() const
 
 void CItem::RemoveUnknownItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    ASSERT(SupportsSpaceItems());
 
     if (const auto unknown = FindUnknownItem(); unknown != nullptr)
     {

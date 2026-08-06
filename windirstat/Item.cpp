@@ -843,7 +843,7 @@ void CItem::SetDone()
         return;
     }
 
-    if (IsTypeOrFlag(IT_DRIVE))
+    if (SupportsSpaceItems())
     {
         UpdateFreeSpaceItem();
         UpdateUnknownItem();
@@ -872,7 +872,7 @@ void CItem::UpwardSetUndone() noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (p->IsTypeOrFlag(IT_DRIVE) && p->IsDone())
+        if (p->SupportsSpaceItems() && p->IsDone())
         {
             if (CItem* unknown = p->FindUnknownItem(); unknown != nullptr)
             {
