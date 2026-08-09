@@ -81,9 +81,9 @@ class FinderBasic final : public Finder
 public:
 
     FinderBasic() = default;
-    FinderBasic(bool statMode) : m_statMode(statMode) {};
+    FinderBasic(const bool statMode) : m_statMode(statMode) {}
     FinderBasic(FinderBasicContext* context) : m_context(context) {}
-    ~FinderBasic() = default;
+    ~FinderBasic() override = default;
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
@@ -96,7 +96,7 @@ public:
     std::wstring GetFilePath() const override;
     inline ULONGLONG GetIndex() const override;
     inline DWORD GetReparseTag() const override;
-    inline bool IsReserved() const override { return false; };
+    bool IsReserved() const override { return false; }
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

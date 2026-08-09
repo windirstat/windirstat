@@ -18,12 +18,7 @@
 #include "pch.h"
 #include "TreeMapView.h"
 
-IMPLEMENT_DYNCREATE(CTreeMapView, CGraphView)
-
-BEGIN_MESSAGE_MAP(CTreeMapView, CGraphView)
-END_MESSAGE_MAP()
-
-void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rc)
+void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
 {
     CTreeMap::Options options = COptions::TreeMapOptions;
     options.showExtensions = false;
@@ -38,16 +33,16 @@ void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rc)
         { 66, 62, 16, 38, 50 }, { 82, 38, 18, 36, 86 }, { 82, 74, 18, 26, 68 },
     };
 
-    for (const Tile& t : tiles)
+    for (const auto& [x, y, w, h, shade] : tiles)
     {
         CRect tile(
-            rc.left + rc.Width()  * t.x / 100,
-            rc.top  + rc.Height() * t.y / 100,
-            rc.left + rc.Width()  * (t.x + t.w) / 100,
-            rc.top  + rc.Height() * (t.y + t.h) / 100);
+            rect.left + rect.Width()  * x / 100,
+            rect.top  + rect.Height() * y / 100,
+            rect.left + rect.Width()  * (x + w) / 100,
+            rect.top  + rect.Height() * (y + h) / 100);
 
         if (tile.Width() > 0 && tile.Height() > 0)
-            m_treeMap.DrawColorPreview(pDC, tile, RGB(t.shade, t.shade, t.shade), &options);
+            m_treeMap.DrawColorPreview(pDC->Handle(), tile, RGB(shade, shade, shade), &options);
     }
 }
 
@@ -58,12 +53,10 @@ bool CTreeMapView::CreateRenderBitmap(CDC* pDC, const CSize size)
         .biWidth = size.cx, .biHeight = -size.cy, .biPlanes = 1,
         .biBitCount = 32, .biCompression = BI_RGB } };
     void* bits = nullptr;
-    const HBITMAP bitmap = ::CreateDIBSection(pDC->GetSafeHdc(), &bitmapInfo,
-        DIB_RGB_COLORS, &bits, nullptr, 0);
-    if (bitmap != nullptr)
+    if (CBitmap bitmap((CreateDIBSection(pDC->Handle(), &bitmapInfo, DIB_RGB_COLORS, &bits, nullptr, 0))); bitmap)
     {
-        if (m_bitmap.Attach(bitmap)) return true;
-        ::DeleteObject(bitmap);
+        m_bitmap = std::move(bitmap);
+        return true;
     }
     return CGraphView::CreateRenderBitmap(pDC, size);
 }
@@ -71,7 +64,7 @@ bool CTreeMapView::CreateRenderBitmap(CDC* pDC, const CSize size)
 void CTreeMapView::RenderVisualization(CDC* pDC, CRect rect)
 {
     if (CWinDirStatModel::Get()->IsZoomed()) DrawZoomFrame(pDC, rect);
-    m_treeMap.DrawTreeMap(pDC, rect,
+    m_treeMap.DrawTreeMap(pDC->Handle(), rect,
         CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
 }
 
@@ -93,16 +86,16 @@ void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
     r.left = r.right - ZoomFrameWidth;
     pdc->FillSolidRect(r, CWinDirStatModel::Get()->GetZoomColor());
 
-    rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
+    rc.Deflate(ZoomFrameWidth, ZoomFrameWidth);
 }
 
 void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
 
-    CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    CSelectObject sopen(pdc, &pen);
-    CSelectStockObject sobrush(pdc, NULL_BRUSH);
+    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
+    GdiObjectSelection sopen(pdc, &pen);
+    StockObjectSelection sobrush(pdc, NULL_BRUSH);
 
     const CWinDirStatModel* model = CWinDirStatModel::Get();
     const bool isZoomed = model->IsZoomed();
@@ -114,21 +107,19 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
         const CItem* item = visible.item;
         if (!item->TmiIsLeaf() || !IsExtensionHighlighted(item)) continue;
 
-        CRect rc = visible.rectangle;
-        rc.OffsetRect(offset);
+        CRect rc = visible.rectangle + offset;
         RenderHighlightRectangle(pdc, rc);
     }
 }
 
 void CTreeMapView::DrawSelection(CDC* pdc)
 {
-    CSelectStockObject sobrush(pdc, NULL_BRUSH);
+    StockObjectSelection sobrush(pdc, NULL_BRUSH);
 
-    CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    CSelectObject sopen(pdc, &pen);
+    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
+    GdiObjectSelection sopen(pdc, &pen);
 
-    const auto& selectedItems = CWinDirStatModel::Get()->GetAllSelected();
-    for (const CItem* item : selectedItems)
+    for (const auto& selectedItems = CWinDirStatModel::Get()->GetAllSelected(); const CItem* item : selectedItems)
     {
         // Ignore if not a child of the current zoomed item
         if (!CWinDirStatModel::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
@@ -149,12 +140,12 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     // Offset the display rectangle if zoomed
     if (CWinDirStatModel::Get()->IsZoomed())
     {
-        rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
+        rc.Offset(ZoomFrameWidth, ZoomFrameWidth);
     }
 
     if (single)
     {
-        CRect rcClient = ClientRectOf(this);
+        const CRect rcClient = ClientRect();
         if (m_treeMap.GetOptions().grid)
         {
             rc.right++;
@@ -175,7 +166,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     RenderHighlightRectangle(pdc, rc);
 }
 
-CItem* CTreeMapView::FindItemAtPoint(CPoint point)
+CItem* CTreeMapView::FindItemAtPoint(const CPoint point)
 {
     // Offset the click point if zoomed
     CPoint pointClicked = point;
@@ -185,8 +176,8 @@ CItem* CTreeMapView::FindItemAtPoint(CPoint point)
         pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
     }
 
-    return static_cast<CItem*>(m_treeMap.FindItemByPoint(
-        CWinDirStatModel::Get()->GetZoomItem(), pointClicked));
+    return m_treeMap.FindItemByPoint(
+        CWinDirStatModel::Get()->GetZoomItem(), pointClicked);
 }
 
 bool CTreeMapView::HasValidLayout() const
@@ -209,7 +200,7 @@ void CTreeMapView::DrillDown(CItem* item)
     if (item != CWinDirStatModel::Get()->GetZoomItem())
     {
         NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, item);
-        AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
+        GetMainWindow()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
     }
 }
 

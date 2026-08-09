@@ -38,7 +38,7 @@ class FinderNtfsContext final
         std::wstring FileName;
         ULONGLONG BaseRecord;
 
-        FileRecordName(std::wstring fileName, ULONGLONG baseRecord) :
+        FileRecordName(std::wstring fileName, const ULONGLONG baseRecord) :
             FileName(std::move(fileName)), BaseRecord(baseRecord) {}
     };
 

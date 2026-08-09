@@ -22,30 +22,37 @@
 
 // SearchDlg dialog
 
-class SearchDlg final : public CLayoutDialogEx
+class SearchDlg final : public MessageTarget<SearchDlg, CLayoutDialog>
 {
-    DECLARE_DYNAMIC(SearchDlg)
-
+public:
     SearchDlg(CWnd* pParent = nullptr); // standard constructor
     ~SearchDlg() override = default;
 
     // Dialog Data
-#ifdef AFX_DESIGN_TIME
     enum { IDD = IDD_SEARCH };
-#endif
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override; // DDX/DDV support
-    BOOL OnInitDialog() override;
+    bool OnInitDialog() override;
 
-private:
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedOk();
-    afx_msg void OnChangeSearchTerm();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
 
-    CString m_searchTerm{};
-    BOOL m_searchWholePhrase = FALSE;
-    BOOL m_searchCase = FALSE;
-    BOOL m_searchRegex = FALSE;
+protected:
+    void OnBnClickedOk();
+    void OnChangeSearchTerm();
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
 };
+
+inline std::span<const RouteEntry> SearchDlg::Routes()
+{
+    using ThisClass = SearchDlg;
+    static constexpr std::array entries
+    {
+        Route::Control<&SearchDlg::OnBnClickedOk>(BN_CLICKED, IDOK),
+        Route::Control<&SearchDlg::OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
+        Route::Control<&SearchDlg::OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
+        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+    };
+    return entries;
+}

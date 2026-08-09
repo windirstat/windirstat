@@ -23,37 +23,51 @@
 //
 // CPageGeneral. "Settings" property page "General".
 //
-class CPageGeneral final : public COptionsPage
+class CPageGeneral final : public MessageTarget<CPageGeneral, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageGeneral)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_GENERAL };
 
     CPageGeneral();
     ~CPageGeneral() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
     void InitializePage() override;
     void OnOK() override;
 
-    BOOL m_useWindowsLocale = FALSE;
-    BOOL m_automaticallyElevateOnStartup = FALSE;
-    BOOL m_automaticallyResizeColumns = FALSE;
-    BOOL m_contextMenuIntegration = FALSE;
-    BOOL m_sizeSuffixesFormat = FALSE;
-    BOOL m_portableMode = FALSE;
-    BOOL m_listGrid = FALSE;
-    BOOL m_listStripes = FALSE;
-    BOOL m_listFullRowSelection = FALSE;
-
     CComboBox m_combo;
-    int m_darkModeRadio = 0;
 
     // Helper methods for context menu registry operations
     static bool IsContextMenuRegistered(HKEY root);
     static bool SetContextMenuRegistration(bool enable);
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedSetModified();
+    int GetSelectedDarkMode() const;
+
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnBnClickedSetModified();
 };
+
+inline std::span<const RouteEntry> CPageGeneral::Routes()
+{
+    using ThisClass = CPageGeneral;
+    static constexpr std::array entries
+    {
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_AUTO_ELEVATE),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_COLUMN_AUTOSIZE),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_CONTEXT_MENU),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_FULL_ROW_SELECTION),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_PORTABLE_MODE),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_GRID),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_STRIPES),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_SIZE_SUFFIXES),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_USE_WINDOWS_LOCALE),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_DISABLED),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_ENABLED),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_USE_WINDOWS),
+        Route::Control<&ThisClass::OnBnClickedSetModified>(CBN_SELENDOK, IDC_COMBO),
+    };
+    return entries;
+}

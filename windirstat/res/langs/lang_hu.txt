@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Könyvtár statisztika\n\n"Itt megtekintheti az összes lemezterületét\nés segítséget kap a kitakarításhoz."\n\nA Microsoft Windows-hoz újraprogramozta\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\n(https://kdirstat.sourceforge.net/).\n\nA WinDirStat honlapja {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Névjegy
 IDS_ABOUT_LICENSE=Licenc
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer nagyszerű Linuxos eszköze a KDirStat.\nÉn már nagyon sokat használtam a KDirStat (2.3.7) programot.\nhttps://kdirstat.sourceforge.net/\n\nItt a SequoiaView szerzői bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\nakik elkészítették a négyszögletes faszerkezet tapétáját.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman akitől ez a szellemes faszerkezet ötlete származik\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer nagyszerű Linuxos eszköze a KDirStat.\nÉn már nagyon sokat használtam a KDirStat programot.\nhttps://kdirstat.sourceforge.net/\n\nItt a SequoiaView szerzői bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\nakik elkészítették a négyszögletes faszerkezet tapétáját.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman akitől ez a szellemes faszerkezet ötlete származik\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Köszönet
 IDS_ABOUT_TITLE=WinDirStat névjegye
 IDS_ADMIN=Rendszergazda
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Gyorsított vizsgálat használata
 IDS_FILE_FILTER=CSV/JSON fájlok
 IDS_FILE_SELECT=Lemezgyujtemény megnyitása.\nMegnyitás
 IDS_FREESPACE_ITEM=<Szabad terület>
+IDS_GENERIC_APPLY=&Alkalmaz
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Mégse
 IDS_GENERIC_DAYS=nap

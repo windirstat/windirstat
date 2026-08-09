@@ -52,7 +52,7 @@ namespace
         double height = 0.0;
         State orientation;
 
-        [[nodiscard]] double AspectRatio() const
+        double AspectRatio() const
         {
             const double shorter = std::min(width, height);
             return shorter > 0.0 ? std::max(width, height) / shorter
@@ -71,11 +71,11 @@ namespace
                 ? Direction::Counterclockwise : Direction::Clockwise;
         }
 
-        [[nodiscard]] std::pair<Region, Region> SplitHorizontal(double fraction) const;
-        [[nodiscard]] std::pair<Region, Region> SplitVertical(double fraction) const;
+        std::pair<Region, Region> SplitHorizontal(double fraction) const;
+        std::pair<Region, Region> SplitVertical(double fraction) const;
 
     private:
-        [[nodiscard]] std::pair<Region, Region> SplitX(double fraction) const
+        std::pair<Region, Region> SplitX(double fraction) const
         {
             fraction = std::clamp(fraction, 0.0, 1.0);
             const double splitWidth = width * fraction;
@@ -85,7 +85,7 @@ namespace
             };
         }
 
-        [[nodiscard]] std::pair<Region, Region> SplitY(double fraction) const
+        std::pair<Region, Region> SplitY(double fraction) const
         {
             fraction = std::clamp(fraction, 0.0, 1.0);
             const double splitHeight = height * fraction;
@@ -115,7 +115,7 @@ namespace
             return { second, first };
         }
         }
-        ASSERT(false);
+        assert(false);
         return SplitX(fraction);
     }
 
@@ -138,7 +138,7 @@ namespace
         case Rotation::Counterclockwise90:
             return SplitX(fraction);
         }
-        ASSERT(false);
+        assert(false);
         return SplitY(fraction);
     }
 
@@ -166,12 +166,12 @@ namespace
         std::size_t count = 0;
     };
 
-    [[nodiscard]] double Fraction(const double numerator, const double denominator)
+    double Fraction(const double numerator, const double denominator)
     {
         return denominator > 0.0 ? numerator / denominator : 0.0;
     }
 
-    [[nodiscard]] Layout Dissect(const Pattern pattern, const std::span<const double> weights,
+    Layout Dissect(const Pattern pattern, const std::span<const double> weights,
         const Region& rectangle)
     {
         Layout layout{ .count = weights.size() };
@@ -376,7 +376,7 @@ namespace
         return layout;
     }
 
-    [[nodiscard]] double AverageAspectRatio(const Layout& layout)
+    double AverageAspectRatio(const Layout& layout)
     {
         const auto regions = std::span(layout.regions).first(layout.count);
         return std::accumulate(regions.begin(), regions.end(), 0.0,
@@ -384,7 +384,7 @@ namespace
             / layout.count;
     }
 
-    [[nodiscard]] Layout SelectLayout(const std::span<const double> weights,
+    Layout SelectLayout(const std::span<const double> weights,
         const Region& rectangle, const Curve curve)
     {
         static constexpr std::array identity{ Pattern::Identity };
@@ -414,7 +414,7 @@ namespace
                 ? std::span<const Pattern>(hilbert4) : std::span<const Pattern>(moore4);
             break;
         default:
-            ASSERT(false);
+            assert(false);
             patterns = identity;
             break;
         }
@@ -424,10 +424,9 @@ namespace
         for (const Pattern pattern : patterns.subspan(1))
         {
             Layout candidate = Dissect(pattern, weights, rectangle);
-            const double difference = std::abs(AverageAspectRatio(candidate) - 1.0);
-            if (difference < bestDifference)
+            if (const double difference = std::abs(AverageAspectRatio(candidate) - 1.0); difference < bestDifference)
             {
-                best = std::move(candidate);
+                best = candidate;
                 bestDifference = difference;
             }
         }
@@ -440,12 +439,12 @@ namespace
         std::size_t end = 0;
     };
 
-    [[nodiscard]] double RangeWeight(const std::span<const double> prefix, const Range range)
+    double RangeWeight(const std::span<const double> prefix, const Range range)
     {
         return prefix[range.end] - prefix[range.begin];
     }
 
-    [[nodiscard]] std::array<Range, 4> PartitionByVariance(const Range range,
+    std::array<Range, 4> PartitionByVariance(const Range range,
         const std::span<const double> prefix)
     {
         const double mean = RangeWeight(prefix, range) / 4.0;
@@ -533,7 +532,7 @@ namespace
         }
     }
 
-    [[nodiscard]] CRect ToPixelRectangle(const Region& region, const CRect& parent)
+    CRect ToPixelRectangle(const Region& region, const CRect& parent)
     {
         const auto roundCoordinate = [](const double value) { return static_cast<LONG>(std::lround(value)); };
         CRect rectangle(
@@ -550,11 +549,11 @@ namespace
 }
 
 void HilbertMooreTreeMap::ArrangeChildren(const std::span<const ULONGLONG> weights,
-    const CRect& rectangle, const TreeMapLayout::State state, const Curve curve,
+    const CRect& rectangle, const State state, const Curve curve,
     const std::span<TreeMapLayout::ChildRegion> regions)
 {
-    ASSERT(regions.size() == weights.size());
-    if (weights.empty() || rectangle.IsRectEmpty()) return;
+    assert(regions.size() == weights.size());
+    if (weights.empty() || rectangle.IsEmpty()) return;
 
     std::vector<double> positiveWeights;
     std::vector<std::size_t> positiveIndices;
@@ -574,7 +573,7 @@ void HilbertMooreTreeMap::ArrangeChildren(const std::span<const ULONGLONG> weigh
         std::iota(positiveIndices.begin(), positiveIndices.end(), 0u);
     }
 
-    std::vector<double> prefix(positiveWeights.size() + 1, 0.0);
+    std::vector prefix(positiveWeights.size() + 1, 0.0);
     std::partial_sum(positiveWeights.begin(), positiveWeights.end(), prefix.begin() + 1);
 
     std::vector<Region> layout(positiveWeights.size());

@@ -23,7 +23,7 @@
 
 // Locale and formatting
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
-std::wstring GetLocaleString(const LCTYPE lctype, const std::wstring& localeName);
+std::wstring GetLocaleString(LCTYPE lctype, const std::wstring& localeName);
 std::wstring GetLocaleLanguage(LANGID langid);
 wchar_t GetLocaleThousandSeparator() noexcept;
 wchar_t GetLocaleDecimalSeparator() noexcept;
@@ -61,25 +61,19 @@ const std::wstring& GetSpec_GiB() noexcept;
 const std::wstring& GetSpec_TiB() noexcept;
 
 // System information
+FILETIME CurrentSystemFileTime() noexcept;
 std::wstring GetCOMSPEC();
 const std::wstring& GetSysDirectory() noexcept;
 
 // UI helpers
-void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE) noexcept;
-void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 void DisplayError(const std::wstring& error);
 std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"",
-        const std::wstring& lpVerb = L"", HWND hwnd = *AfxGetMainWnd(),
+        const std::wstring& lpVerb = L"", HWND hwnd = *GetMainWindow(),
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
 bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
-void SetMenuItem(CMenu* menu, int pos, bool enable, bool isCommand = false);
-bool IsMenuEnabled(const CMenu* menu, UINT pos, bool isCommand = false) noexcept;
-std::wstring GetLocalizedMenuText(std::wstring_view textId, std::wstring_view detail = {});
 
-// DPI scaling
-int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
-int DpiSave(int value, const CWnd* wnd = nullptr) noexcept;
+std::wstring GetLocalizedMenuText(std::wstring_view textId, std::wstring_view detail = {});
 
 // Shell item array
 class CItem;
@@ -99,14 +93,6 @@ std::wstring GetAppFolder();
 std::vector<BYTE> GetCompressedResource(HRSRC resource) noexcept;
 std::wstring GetTextResource(UINT id);
 std::wstring GetAcceleratorString(UINT commandID);
-
-// Input state
-inline bool IsControlKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0; };
-inline bool IsShiftKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) != 0; };
-
-// Tree node drawing helper
-void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, COLORREF bgColor,
-    bool toTop, bool toBottom, bool toRight, bool showPlus = false, bool showMinus = false);
 
 // Rect struct
 using CSmallRect = struct CSmallRect
@@ -137,10 +123,3 @@ using CSmallRect = struct CSmallRect
         return { left, top, right, bottom };
     }
 };
-
-inline CRect ClientRectOf(const CWnd* hWnd)
-{
-    CRect rc;
-    ::GetClientRect(*hWnd, &rc);
-    return rc;
-}

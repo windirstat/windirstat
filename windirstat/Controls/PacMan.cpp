@@ -86,7 +86,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
     // Calculate rectangle to display graphic
     CRect rc(rect);
-    rc.DeflateRect(5, 1);
+    rc.Deflate(5, 1);
     rc.bottom -= rc.Height() % 2;
     rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / 2.0f));
     rc.right = rc.left + rc.Height();
@@ -110,7 +110,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
     static const Gdiplus::SolidBrush yellowBrush(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Draw filled shape if we started and recently updated
-    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
+    Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.FillPie(&yellowBrush, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
@@ -130,9 +130,9 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)
 {
-    ASSERT(diff >= 0.0f);
-    ASSERT(position >= 0.0f);
-    ASSERT(position <= 1.0f);
+    assert(diff >= 0.0f);
+    assert(position >= 0.0f);
+    assert(position <= 1.0f);
 
     if (!up) position = 2.0f - position;
     position += diff;

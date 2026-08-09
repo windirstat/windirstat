@@ -52,8 +52,7 @@ bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstrin
         if (const auto e = line.find_first_of(wds::chrEqual); e != wds::szNpos)
         {
             // Strip the prefix if any and add to map
-            size_t startPos = 0;
-            if (hasPrefix) startPos = line.find_first_of(wds::chrColon) + 1;
+            const size_t startPos = hasPrefix ? line.find_first_of(wds::chrColon) + 1 : 0;
             m_map[line.substr(startPos, e - startPos)] = line.substr(e + 1);
         }
     }
@@ -81,7 +80,7 @@ std::set<LANGID> Localization::GetLanguageList()
 
     // Also check for external language files
     FinderBasic finder;
-    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_*.txt"); b; b = finder.FindNext())
+    for (bool b = finder.FindFile(GetAppFolder(), L"lang_*.txt"); b; b = finder.FindNext())
     {
         auto langString = finder.GetFileName().substr(5);
         langString = langString.substr(0, langString.find_first_of(L'.'));
@@ -122,19 +121,19 @@ bool Localization::LoadResource(const LANGID language)
 
 void Localization::UpdateMenu(CMenu& menu)
 {
-    for (const int i : std::views::iota(0, menu.GetMenuItemCount()))
+    for (const int i : std::views::iota(0, menu.ItemCount()))
     {
-        CString text;
-        if (menu.GetMenuString(i, text, MF_BYPOSITION) == 0) continue;
+        const std::wstring text = menu.ItemTextAt(i);
+        if (text.empty()) continue;
 
-        if (std::wstring_view(text.GetString()).starts_with(L"ID") && Contains(text.GetString()))
+        if (text.starts_with(L"ID") && Contains(text))
         {
             MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
             mi.fMask = MIIM_ID;
-            menu.GetMenuItemInfo(i, &mi, TRUE);
+            menu.GetItemInfo(i, &mi);
 
             // Build the menu text with localized string and accelerator
-            std::wstring menuText = m_map[text.GetString()];
+            std::wstring menuText = m_map[text];
             if (mi.wID != std::bit_cast<UINT>(-1))
             {
                 const std::wstring accel = GetAcceleratorString(mi.wID);
@@ -144,45 +143,38 @@ void Localization::UpdateMenu(CMenu& menu)
             // Set the item text
             mi.fMask = MIIM_STRING;
             mi.dwTypeData = const_cast<LPWSTR>(menuText.c_str());
-            menu.SetMenuItemInfo(i, &mi, TRUE);
+            menu.SetItemInfo(i, &mi);
         }
 
-        if (CMenu* sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(*sub);
+        if (CMenu* sub = menu.SubmenuAt(i); sub != nullptr) UpdateMenu(*sub);
     }
 }
 
-void Localization::UpdateTabControl(CMFCTabCtrl& tab)
+void Localization::UpdateTabControl(CTabControl& tab)
 {
-    for (const int i : std::views::iota(0, tab.GetTabsNum()))
+    for (const int i : std::views::iota(0, tab.TabCount()))
     {
-        CString tabLabel;
-        tab.GetTabLabel(i, tabLabel);
-        std::wstring tabLabelStr = tabLabel.GetString();
-        if (tabLabelStr.starts_with(L"ID") && Contains(tabLabelStr))
-        {
-            tab.SetTabLabel(i, (L" " + m_map[tabLabelStr] + L" ").c_str());
-        }
+        const std::wstring_view label = tab.TabLabel(i);
+        if (label.starts_with(L"ID") && Contains(label))
+            tab.SetTabLabel(i, L" " + Lookup(label) + L" ");
     }
 }
 
 void Localization::UpdateWindowText(CWnd& wnd)
 {
     // Lookup and cache system font
-    static CFont* systemFont = [] {
+    static CFont systemFont{ [] {
         NONCLIENTMETRICS ncm{ .cbSize = sizeof(NONCLIENTMETRICS) };
         SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-        auto* font = new CFont();
-        font->CreateFontIndirect(&ncm.lfMessageFont);
-        return font;
-        }();
+        return ncm.lfMessageFont;
+        }() };
 
     wnd.SetFont(systemFont);
 
     // Update window text if it's a localizable ID
-    CString text;
-    wnd.GetWindowText(text);
-    if (std::wstring_view(text.GetString()).starts_with(L"ID") && Contains(text.GetString()))
-        wnd.SetWindowText(m_map[text.GetString()].c_str());
+    const std::wstring text = wnd.Text();
+    if (text.starts_with(L"ID") && Contains(text))
+        wnd.SetText(m_map[text].c_str());
 }
 
 void Localization::UpdateDialogs(CWnd& wnd)

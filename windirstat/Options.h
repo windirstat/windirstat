@@ -51,14 +51,14 @@ enum class GraphPane : std::uint8_t
 // GraphPaneStyle historically stored treemap layouts (0, 1, 4, 5) alongside
 // flame graph (2) and sunburst (3). Decode those values while keeping the
 // runtime pane model independent from TreeMapLayout::Style.
-[[nodiscard]] constexpr GraphPane DecodeGraphPane(const int persisted) noexcept
+constexpr GraphPane DecodeGraphPane(const int persisted) noexcept
 {
     if (persisted == 2) return GraphPane::FlameGraph;
     if (persisted == 3) return GraphPane::Sunburst;
     return GraphPane::TreeMap;
 }
 
-[[nodiscard]] constexpr int EncodeGraphPane(const GraphPane pane) noexcept
+constexpr int EncodeGraphPane(const GraphPane pane) noexcept
 {
     switch (pane)
     {
@@ -72,7 +72,7 @@ enum class GraphPane : std::uint8_t
 constexpr int MaxPersistedGraphPane = 5;
 
 // Layout view types
-enum LAYOUT_VIEW_TYPE : int
+enum LAYOUT_VIEW_TYPE : char
 {
     VT_ABSENT        = -1,
     VT_ALLFILES      = 0,
@@ -81,7 +81,7 @@ enum LAYOUT_VIEW_TYPE : int
 };
 
 // Layout topology: the structural arrangement of the two splitters
-enum LAYOUT_TOPOLOGY : int
+enum LAYOUT_TOPOLOGY : char
 {
     LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
     LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)

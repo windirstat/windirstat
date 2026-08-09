@@ -18,31 +18,18 @@
 #include "pch.h"
 #include "XYSlider.h"
 
-IMPLEMENT_DYNAMIC(CXySlider, CStatic)
-
-void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
-{
-    pDX->PrepareCtrl(nIDC);
-    HWND hWndCtrl;
-    pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
-    SendMessage(hWndCtrl, pDX->m_bSaveAndValidate ? CXySlider::XY_GETPOS : CXySlider::XY_SETPOS,
-        0, reinterpret_cast<LPARAM>(&value));
-}
-
 void CXySlider::Initialize()
 {
     if (!m_inited && IsWindow(m_hWnd))
     {
         // Make size odd, so that zero lines are central
-        CRect rc;
-        GetWindowRect(rc);
-        GetParent()->ScreenToClient(rc);
+        CRect rc = GetParent()->WindowRectInClient(Handle());
         if (rc.Width() % 2 == 0) rc.right--;
         if (rc.Height() % 2 == 0) rc.bottom--;
         MoveWindow(rc);
 
         // Initialize sizes
-        m_rcAll = ClientRectOf(this);
+        m_rcAll = ClientRect();
         constexpr int s_gripperRadius = 8;
 
         m_zero.x = m_rcAll.Width() / 2;
@@ -51,7 +38,7 @@ void CXySlider::Initialize()
         m_radius.cy = m_rcAll.Height() / 2 - 1;
 
         m_rcInner = m_rcAll;
-        m_rcInner.DeflateRect(s_gripperRadius - 3, s_gripperRadius - 3);
+        m_rcInner.Deflate(s_gripperRadius - 3, s_gripperRadius - 3);
         m_gripperRadius.cx = s_gripperRadius;
         m_gripperRadius.cy = s_gripperRadius;
         m_range = m_radius - m_gripperRadius;
@@ -82,7 +69,7 @@ LRESULT CXySlider::OnSetPos(WPARAM, const LPARAM lparam)
     return 0;
 }
 
-LRESULT CXySlider::OnGetPos(WPARAM, const LPARAM lparam)
+LRESULT CXySlider::OnGetPos(WPARAM, const LPARAM lparam) const
 {
     const auto point = std::bit_cast<PPOINT>(lparam);
     *point = GetPos();
@@ -106,14 +93,14 @@ CRect CXySlider::GetGripperRect() const
         m_gripperRadius.cx + 1,
         m_gripperRadius.cy + 1
     );
-    rc.OffsetRect(m_zero);
-    rc.OffsetRect(m_pos);
+    rc.Offset(m_zero);
+    rc.Offset(m_pos);
     return rc;
 }
 
 void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 {
-    ASSERT(minVal <= maxVal);
+    assert(minVal <= maxVal);
 
     val = std::clamp(val, static_cast<LONG>(minVal), static_cast<LONG>(maxVal));
 }
@@ -138,20 +125,20 @@ void CXySlider::NotifyParent() const
         .code     = XYSLIDER_CHANGED
     };
 
-    GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&hdr));
+    GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), &hdr);
 }
 
 void CXySlider::PaintBackground(CDC* pdc)
 {
-    pdc->FillSolidRect(m_rcAll, DarkMode::WdsSysColor(COLOR_BTNFACE));
+    pdc->FillSolidRect(m_rcAll, DarkMode::SystemColor(COLOR_BTNFACE));
 
     CRect rc = m_rcInner;
     pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     pdc->FillSolidRect(rc, RGB(255, 255, 255));
 
-    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DLIGHT));
-    CSelectObject sopen(pdc, &pen);
+    const CPen pen(PS_SOLID, 1, DarkMode::SystemColor(COLOR_3DLIGHT));
+    GdiObjectSelection sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, m_zero.y);
     pdc->LineTo(rc.right, m_zero.y);
@@ -159,9 +146,9 @@ void CXySlider::PaintBackground(CDC* pdc)
     pdc->LineTo(m_zero.x, rc.bottom);
 
     CRect circle = m_rcAll;
-    circle.DeflateRect(m_gripperRadius);
+    circle.Deflate(m_gripperRadius);
 
-    CSelectStockObject sobrush(pdc, NULL_BRUSH);
+    StockObjectSelection sobrush(pdc, NULL_BRUSH);
     pdc->Ellipse(circle);
 
     if (GetFocus() == this)
@@ -174,7 +161,7 @@ void CXySlider::PaintGripper(CDC* pdc) const
 {
     CRect rc = GetGripperRect();
 
-    COLORREF color = DarkMode::WdsSysColor(COLOR_BTNFACE);
+    COLORREF color = DarkMode::SystemColor(COLOR_BTNFACE);
     if (m_gripperHighlight)
     {
         auto r = GetRValue(color);
@@ -188,8 +175,8 @@ void CXySlider::PaintGripper(CDC* pdc) const
     pdc->FillSolidRect(rc, color);
     pdc->DrawEdge(rc, EDGE_RAISED, BF_RECT);
 
-    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
-    CSelectObject sopen(pdc, &pen);
+    const CPen pen(PS_SOLID, 1, DarkMode::SystemColor(COLOR_3DSHADOW));
+    GdiObjectSelection sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, rc.top + rc.Height() / 2);
     pdc->LineTo(rc.right, rc.top + rc.Height() / 2);
@@ -221,7 +208,7 @@ void CXySlider::DoDrag(const CPoint & point)
 
     HighlightGripper(true);
 
-    const CSize inGripper = pt0 - GetGripperRect().CenterPoint();
+    const CSize inGripper = pt0 - GetGripperRect().Center();
     const CPoint ptMin(m_zero - m_range + inGripper);
     const CPoint ptMax(m_zero + m_range + inGripper);
 
@@ -246,8 +233,7 @@ void CXySlider::DoDrag(const CPoint & point)
 
         if (msg.message == WM_MOUSEMOVE)
         {
-            CPoint pt = msg.pt;
-            ScreenToClient(&pt);
+            CPoint pt = ToClient(msg.pt);
 
             CheckMinMax(pt.x, ptMin.x, ptMax.x);
             CheckMinMax(pt.y, ptMin.y, ptMax.y);
@@ -273,7 +259,7 @@ void CXySlider::DoPage(const CPoint & point)
 {
     const CSize sz = point - (m_zero + m_pos);
 
-    ASSERT(sz.cx != 0 || sz.cy != 0);
+    assert(sz.cx != 0 || sz.cy != 0);
 
     const double len = std::hypot(sz.cx, sz.cy);
 
@@ -290,19 +276,6 @@ void CXySlider::HighlightGripper(const bool on)
     m_gripperHighlight = on;
     RedrawWindow();
 }
-
-BEGIN_MESSAGE_MAP(CXySlider, CStatic)
-    ON_WM_GETDLGCODE()
-    ON_WM_NCHITTEST()
-    ON_WM_SETFOCUS()
-    ON_WM_KILLFOCUS()
-    ON_WM_PAINT()
-    ON_WM_KEYDOWN()
-    ON_WM_LBUTTONDOWN()
-    ON_WM_LBUTTONDBLCLK()
-    ON_MESSAGE(CXySlider::XY_SETPOS, OnSetPos)
-    ON_MESSAGE(CXySlider::XY_GETPOS, OnGetPos)
-END_MESSAGE_MAP()
 
 UINT CXySlider::OnGetDlgCode()
 {
@@ -330,12 +303,11 @@ void CXySlider::OnPaint()
 {
     Initialize();
 
-    CPaintDC dc(this);
-    CMemDC memDC(dc, this);
-    CDC* pDC = &memDC.GetDC();
+    CPaintDC paintDC(this);
+    CBufferedDC dc(paintDC, this);
 
-    PaintBackground(pDC);
-    PaintGripper(pDC);
+    PaintBackground(&dc);
+    PaintGripper(&dc);
 }
 
 void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
@@ -352,7 +324,7 @@ void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlag
 
 void CXySlider::OnLButtonDown(UINT /*nFlags*/, const CPoint point)
 {
-    if (GetGripperRect().PtInRect(point))
+    if (GetGripperRect().Contains(point))
     {
         SetFocus();
         DoDrag(point);
@@ -363,7 +335,7 @@ void CXySlider::OnLButtonDblClk(UINT /*nFlags*/, const CPoint point)
 {
     SetFocus();
 
-    if (GetGripperRect().PtInRect(point))
+    if (GetGripperRect().Contains(point))
     {
         DoMoveBy(-m_pos.x, -m_pos.y);
     }

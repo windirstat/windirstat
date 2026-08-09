@@ -24,21 +24,20 @@ struct WdsMessageBoxResult { int nID; bool isChecked; };
 
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
-// Emulates the functionality of MessageBox/AfxMessageBox.
+// Provides consistent light and dark message boxes.
 //
-class CMessageBoxDlg final : public CLayoutDialogEx
+class CMessageBoxDlg final : public MessageTarget<CMessageBoxDlg, CLayoutDialog>
 {
-    DECLARE_DYNAMIC(CMessageBoxDlg)
-
+public:
     CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr,
         const std::vector<std::wstring>& listViewItems = {}, const std::wstring& checkBoxText = {}, bool checkBoxValue = false);
     ~CMessageBoxDlg() override = default;
 
-    static int Show(const std::wstring& message, UINT type = MB_OK, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE)) { return Show(message, {}, {}, false, type, pParent, initialSize, title).nID; }
-    static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONQUESTION, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
-    static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE));
+    static int Show(const std::wstring& message, const UINT type = MB_OK, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, {}, false, type, pParent, initialSize, title).nID; }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, const bool checkboxValue = false, const UINT type = MB_YESNO | MB_ICONQUESTION, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE));
 
-    INT_PTR DoModal() override;
+    INT_PTR ShowModal() override;
     void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
     void SetWidthAuto() { m_autoWidth = true; }
 
@@ -48,19 +47,21 @@ class CMessageBoxDlg final : public CLayoutDialogEx
 protected:
     enum : std::uint8_t { IDD = IDD_MESSAGEBOX };
 
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    bool OnInitDialog() override;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnButtonLeft();
-    afx_msg void OnButtonMiddle();
-    afx_msg void OnButtonRight();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnButtonLeft();
+    void OnButtonMiddle();
+    void OnButtonRight();
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    bool OnEraseBkgnd(CDC* pDC) const;
+    void OnSize(UINT nType, int cx, int cy);
+    void OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult);
 
     // Helper methods for control layout
     void ShiftControls(const std::vector<CWnd*>& controls, int shiftAmount);
@@ -96,13 +97,31 @@ private:
 
     // Optional controls
     CButton m_checkbox;
-    CBrush m_checkboxBrush{ DarkMode::WdsSysColor(COLOR_BTNFACE) };
+    CBrush m_checkboxBrush{ DarkMode::SystemColor(COLOR_BTNFACE) };
     CListCtrl m_listView;
     std::wstring m_checkboxText;
     std::vector<std::wstring> m_listViewItems;
-    BOOL m_checkboxChecked = FALSE;
+    bool m_checkboxChecked = false;
 };
 
-// Global wrapper functions that emulate MessageBox/AfxMessageBox
-int WdsMessageBox(const std::wstring& message, UINT type = MB_OK);
-int WdsMessageBox(HWND wnd, const std::wstring& message, const std::wstring& title, UINT type = MB_OK);
+// Global message-box helpers
+int ShowMessageBox(const std::wstring& message, UINT type = MB_OK);
+int ShowMessageBox(HWND wnd, const std::wstring& message, const std::wstring& title, UINT type = MB_OK);
+
+inline std::span<const RouteEntry> CMessageBoxDlg::Routes()
+{
+    using ThisClass = CMessageBoxDlg;
+    static constexpr std::array entries
+    {
+        Route::Control<&ThisClass::OnButtonLeft>(BN_CLICKED, IDC_MESSAGE_BUTTONLEFT),
+        Route::Control<&ThisClass::OnButtonMiddle>(BN_CLICKED, IDC_MESSAGE_BUTTONMIDDLE),
+        Route::Control<&ThisClass::OnButtonRight>(BN_CLICKED, IDC_MESSAGE_BUTTONRIGHT),
+        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Notify<&ThisClass::OnListViewCustomDraw>(NM_CUSTOMDRAW, IDC_MESSAGE_LISTVIEW),
+        Route::Notify<&ThisClass::OnListViewGetDispInfo>(LVN_GETDISPINFO, IDC_MESSAGE_LISTVIEW),
+        Route::Notify<&ThisClass::OnListViewItemChanging>(LVN_ITEMCHANGING, IDC_MESSAGE_LISTVIEW),
+    };
+    return entries;
+}

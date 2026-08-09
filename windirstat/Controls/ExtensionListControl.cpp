@@ -61,7 +61,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
 
     DrawSelection(m_extensionList, pdc, rc, state);
 
-    rc.DeflateRect(2, 3);
+    rc.Deflate(2, 3);
 
     if (rc.right <= rc.left || rc.bottom <= rc.top)
     {
@@ -69,7 +69,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
     }
 
     CTreeMap treemap;
-    treemap.DrawColorPreview(pdc, rc, m_color, &COptions::TreeMapOptions);
+    treemap.DrawColorPreview(pdc->Handle(), rc, m_color, &COptions::TreeMapOptions);
 }
 
 std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
@@ -82,7 +82,7 @@ std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
         case COL_EXT_FILES: return FormatCount(m_files);
         case COL_EXT_DESCRIPTION: return GetDescription();
         case COL_EXT_BYTESPERCENT: return GetBytesPercent();
-        default: ASSERT(FALSE); return {};
+        default: assert(false); return {};
     }
 }
 
@@ -142,24 +142,14 @@ int CExtensionListControl::CListItem::Compare(const CWdsListItem* baseOther, con
         case COL_EXT_FILES: return usignum(m_files, other->m_files);
         case COL_EXT_DESCRIPTION: return signum(_wcsicmp(GetDescription().c_str(), other->GetDescription().c_str()));
         case COL_EXT_BYTESPERCENT: return signum(GetBytesFraction() - other->GetBytesFraction());
-        default: ASSERT(FALSE); return 0;
+        default: assert(false); return 0;
     }
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
-    ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
-    ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
-    ON_WM_SETFOCUS()
-    ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
-    ON_COMMAND(ID_EXTLIST_SEARCH_EXTENSION, &CExtensionListControl::OnSearchExtension)
-    ON_COMMAND(ID_FILTER_EXCLUDE_ITEM, &CExtensionListControl::OnExcludeExtension)
-    ON_WM_KEYDOWN()
-END_MESSAGE_MAP()
-
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
-    : CWdsListControl(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr(), COptions::ExtViewColumnVisibility.Ptr())
+    : MessageTarget(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr(), COptions::ExtViewColumnVisibility.Ptr())
     , m_extensionView(extensionView)
 {
     SetOwnsItems(true);
@@ -175,7 +165,7 @@ bool CExtensionListControl::GetAscendingDefault(const int subitem)
         case COL_EXT_COLOR:
         case COL_EXT_BYTES:
         case COL_EXT_FILES: return false;
-        default: ASSERT(FALSE); return true;
+        default: assert(false); return true;
     }
 }
 
@@ -184,12 +174,12 @@ bool CExtensionListControl::GetAscendingDefault(const int subitem)
 void CExtensionListControl::Initialize()
 {
     // Columns should be in the order of definition in order for sort to work
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, DpiRest(60), COL_EXT_EXTENSION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, DpiRest(40), COL_EXT_COLOR);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, DpiRest(170), COL_EXT_DESCRIPTION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, DpiRest(60), COL_EXT_BYTES);
-    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, DpiRest(50), COL_EXT_BYTESPERCENT);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, DpiRest(50), COL_EXT_FILES);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, ScaleForDpi(60), COL_EXT_EXTENSION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, ScaleForDpi(40), COL_EXT_COLOR);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, ScaleForDpi(170), COL_EXT_DESCRIPTION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, ScaleForDpi(60), COL_EXT_BYTES);
+    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_BYTESPERCENT);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_FILES);
 
     SetSorting(COL_EXT_BYTES, GetAscendingDefault(COL_EXT_BYTES));
 
@@ -199,7 +189,7 @@ void CExtensionListControl::Initialize()
 void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
     // Replace all existing rows
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     DeleteAllItems();
 
     if (ed != nullptr)
@@ -258,7 +248,7 @@ ULONGLONG CExtensionListControl::GetRootSize() const
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
     auto view = std::views::iota(0, GetItemCount());
-    auto it = std::ranges::find_if(view, [&](int i) {
+    const auto it = std::ranges::find_if(view, [&](const int i) {
         const CListItem* item = GetListItem(i);
         if (item->IsAggregate())
         {
@@ -270,20 +260,16 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
     if (it != view.end())
     {
         SetItemState(*it, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-        EnsureVisible(*it, FALSE);
+        EnsureVisible(*it, false);
     }
 }
 
 std::wstring CExtensionListControl::GetSelectedExtension() const
 {
-    POSITION pos = GetFirstSelectedItemPosition();
-    if (pos == nullptr)
-    {
-        return wds::strEmpty;
-    }
+    const int selected = FirstSelectedIndex();
+    if (selected < 0) return wds::strEmpty;
 
-    const int i = GetNextSelectedItem(pos);
-    const CListItem* item = GetListItem(i);
+    const CListItem* item = GetListItem(selected);
     return item->GetExtension();
 }
 
@@ -295,15 +281,15 @@ CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i
 bool CExtensionListControl::IsSelectedAggregate() const
 {
     // The synthetic aggregate row has no concrete extension to act on
-    POSITION pos = GetFirstSelectedItemPosition();
-    return pos != nullptr && GetListItem(GetNextSelectedItem(pos))->IsAggregate();
+    const int selected = FirstSelectedIndex();
+    return selected >= 0 && GetListItem(selected)->IsAggregate();
 }
 
 void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete std::bit_cast<CListItem*>(lv->lParam);
-    *pResult = FALSE;
+    *pResult = false;
 }
 
 void CExtensionListControl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
@@ -319,7 +305,7 @@ void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
     CMainFrame::Get()->SetLogicalFocus(LF_EXTLIST);
 }
 
-void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
+void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult) const
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if ((pNMLV->uNewState & LVIS_SELECTED) != 0)
@@ -327,14 +313,14 @@ void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
         // The aggregate row highlights every unregistered extension at once
         m_extensionView->SetHighlightExtension(GetSelectedExtension(), IsSelectedAggregate());
     }
-    *pResult = FALSE;
+    *pResult = false;
 }
 
 void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
     if (nChar == VK_TAB)
     {
-        if (!IsShiftKeyDown())
+        if (!IsKeyDown(VK_SHIFT))
         {
             CMainFrame::Get()->MoveFocus(LF_FILETREE);
         }
@@ -376,42 +362,40 @@ void CExtensionListControl::OnItemContextMenu(CPoint point)
         CRect rc;
         if (!GetItemRect(i, rc, LVIR_LABEL)) return;
 
-        point = CPoint(rc.left, rc.bottom);
-        ClientToScreen(&point);
+        point = ToScreen(CPoint(rc.left, rc.bottom));
     }
 
     // Searching and excluding need a concrete extension; disable them on the aggregate row
     const UINT aggregateFlags = IsSelectedAggregate() ? MF_GRAYED : 0;
 
-    CMenu menu;
-    menu.CreatePopupMenu();
-    menu.AppendMenu(MF_STRING | aggregateFlags, ID_EXTLIST_SEARCH_EXTENSION, std::format(
+    CMenu menu = CMenu::CreatePopup();
+    menu.Append(MF_STRING | aggregateFlags, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
-    menu.AppendMenu(MF_STRING | MF_ENABLED | (COptions::GroupUnregisteredTypes ? MF_CHECKED : 0),
+    menu.Append(MF_STRING | MF_ENABLED | (COptions::GroupUnregisteredTypes ? MF_CHECKED : 0),
         ID_VIEW_GROUP_TYPES, Localization::Lookup(IDS_MENU_GROUP_TYPES).c_str());
-    menu.AppendMenu(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
-    SetMenuDefaultItem(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE);
+    menu.Append(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
+    menu.SetDefaultItem(ID_EXTLIST_SEARCH_EXTENSION);
 
     // Add search bitmap to menu
-    if (m_searchBitmap.GetSafeHandle() == nullptr)
+    if (m_searchBitmap.Handle() == nullptr)
     {
         m_searchBitmap.Attach(Icons::MakeBitmap(16, Icons::Char(L'⌕', RGB(140, 140, 140))));
     }
 
-    MENUITEMINFO mii{
+    const MENUITEMINFO mii{
         .cbSize = sizeof(MENUITEMINFO),
         .fMask = MIIM_BITMAP,
-        .hbmpItem = static_cast<HBITMAP>(m_searchBitmap.GetSafeHandle())
+        .hbmpItem = static_cast<HBITMAP>(m_searchBitmap.Handle())
     };
-    SetMenuItemInfo(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE, &mii);
-    if (UINT id = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this))
+    menu.SetItemInfo(ID_EXTLIST_SEARCH_EXTENSION, &mii, CMenu::ItemLookup::Command);
+    if (const UINT id = menu.ShowPopup(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this))
     {
-        (id == ID_VIEW_GROUP_TYPES) ? AfxGetMainWnd()->OnCmdMsg(ID_VIEW_GROUP_TYPES, CN_COMMAND, nullptr, nullptr)
-            : OnCmdMsg(id, CN_COMMAND, nullptr, nullptr);
+        (id == ID_VIEW_GROUP_TYPES) ? GetMainWindow()->RouteCommand(ID_VIEW_GROUP_TYPES, CommandCode, nullptr)
+            : RouteCommand(id, CommandCode, nullptr);
     }
 }
 
-void CExtensionListControl::OnSearchExtension()
+void CExtensionListControl::OnSearchExtension() const
 {
     if (IsSelectedAggregate()) return;
 
@@ -423,7 +407,7 @@ void CExtensionListControl::OnSearchExtension()
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }
 
-void CExtensionListControl::OnExcludeExtension()
+void CExtensionListControl::OnExcludeExtension() const
 {
     if (IsSelectedAggregate()) return;
 
@@ -438,5 +422,5 @@ void CExtensionListControl::OnExcludeExtension()
     current += pattern;
 
     CFiltering::CompileFilters();
-    AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_REFRESH_ALL);
+    GetMainWindow()->SendMessage(WM_COMMAND, ID_REFRESH_ALL);
 }

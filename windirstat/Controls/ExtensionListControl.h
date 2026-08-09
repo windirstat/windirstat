@@ -22,7 +22,7 @@ class CExtensionView;
 //
 // CExtensionListControl.
 //
-class CExtensionListControl final : public CWdsListControl
+class CExtensionListControl final : public MessageTarget<CExtensionListControl, CWdsListControl>
 {
 protected:
     // Columns
@@ -90,13 +90,31 @@ protected:
     CExtensionView* m_extensionView;
     ULONGLONG m_rootSize = 0;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnSearchExtension();
-    afx_msg void OnExcludeExtension();
-    afx_msg void OnGroupTypes();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnSearchExtension() const;
+    void OnExcludeExtension() const;
 };
+
+inline std::span<const RouteEntry> CExtensionListControl::Routes()
+{
+    using ThisClass = CExtensionListControl;
+    static constexpr std::array entries
+    {
+        Route::ReflectNotify<&ThisClass::OnLvnDeleteItem>(LVN_DELETEITEM),
+        Route::ReflectNotify<&ThisClass::OnNMDblclk>(NM_DBLCLK),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::ReflectNotify<&ThisClass::OnLvnItemChanged>(LVN_ITEMCHANGED),
+        Route::Command<&CExtensionListControl::OnSearchExtension>(ID_EXTLIST_SEARCH_EXTENSION),
+        Route::Command<&CExtensionListControl::OnExcludeExtension>(ID_FILTER_EXCLUDE_ITEM),
+        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
+    };
+    return entries;
+}

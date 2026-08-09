@@ -19,107 +19,74 @@
 #include "PageShared.h"
 #include "MainFrame.h"
 
-IMPLEMENT_DYNAMIC(COptionsPage, CMFCPropertyPage)
+CSettingsPage::CSettingsPage(const UINT templateId) : MessageTarget(templateId) {}
 
-COptionsPage::COptionsPage(const UINT templateId) : CMFCPropertyPage(templateId) {}
-
-COptionsPropertySheet* COptionsPage::GetSheet() const
+CSettingsSheet* CSettingsPage::GetSheet() const
 {
-    const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
-    ASSERT(sheet != nullptr);
+    const auto sheet = static_cast<CSettingsSheet*>(GetParent());
+    assert(sheet != nullptr);
     return sheet;
 }
 
-void COptionsPage::BindCheck(const int id, Setting<bool>& option, BOOL& value)
+bool CSettingsPage::OnInitDialog()
 {
-    BindOption(option, value, [id, &value](CDataExchange* pDX) { DDX_Check(pDX, id, value); });
-}
-
-void COptionsPage::BindCombo(const int id, Setting<int>& option, int& value)
-{
-    BindOption(option, value, [id, &value](CDataExchange* pDX) { DDX_CBIndex(pDX, id, value); });
-}
-
-void COptionsPage::BindRadio(const int id, Setting<int>& option, int& value)
-{
-    BindOption(option, value, [id, &value](CDataExchange* pDX) { DDX_Radio(pDX, id, value); });
-}
-
-void COptionsPage::BindText(const int id, Setting<int>& option, int& value)
-{
-    BindOption(option, value, [id, &value](CDataExchange* pDX) { DDX_Text(pDX, id, value); });
-}
-
-void COptionsPage::BindText(const int id, Setting<std::wstring>& option, CStringW& value)
-{
-    m_optionBindings.push_back({
-        [&option, &value] { value = option.Obj().c_str(); },
-        [id, &value](CDataExchange* pDX) { DDX_Text(pDX, id, value); },
-        [&option, &value] { option = std::wstring(value.GetString()); },
-    });
-}
-
-void COptionsPage::ApplyOptionBindings() const
-{
-    for (const auto& binding : m_optionBindings)
-        binding.save();
-}
-
-void COptionsPage::DoDataExchange(CDataExchange* pDX)
-{
-    CMFCPropertyPage::DoDataExchange(pDX);
-    for (const auto& binding : m_optionBindings)
-    {
-        if (binding.exchange)
-            binding.exchange(pDX);
-    }
-}
-
-BOOL COptionsPage::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
+    if (!CPropertyPage::OnInitDialog()) return false;
     Localization::UpdateDialogs(*this);
-    for (const auto& binding : m_optionBindings)
-        binding.load();
 
     InitializePage();
     AdjustControls();
     m_initialized = true;
-    return TRUE;
+    return true;
 }
 
-void COptionsPage::AdjustControls()
+void CSettingsPage::LoadCheckboxSettings(const std::span<const CheckboxSettingBinding> bindings)
 {
-    DarkMode::AdjustControls(GetSafeHwnd());
+    for (const auto& [controlId, setting] : bindings)
+        SetChecked(controlId, setting.Obj());
 }
 
-void COptionsPage::SetModified(const BOOL changed)
+void CSettingsPage::SaveCheckboxSettings(const std::span<const CheckboxSettingBinding> bindings)
+{
+    for (const auto& [controlId, setting] : bindings)
+        setting = IsChecked(controlId);
+}
+
+void CSettingsPage::AdjustControls()
+{
+    DarkMode::AdjustControls(Handle());
+}
+
+void CSettingsPage::SetModified(const bool changed)
 {
     if (m_initialized || !changed)
-        CMFCPropertyPage::SetModified(changed);
+        CPropertyPage::SetModified(changed);
 }
 
-void COptionsPage::OnSettingChanged()
+void CSettingsPage::OnSettingChanged()
 {
     SetModified();
 }
 
-void COptionsPage::OnSettingRangeChanged(UINT)
+void CSettingsPage::OnSettingRangeChanged(UINT)
 {
     SetModified();
 }
 
-void COptionsPage::OnSettingNotifyChanged(UINT, NMHDR*, LRESULT*)
+void CSettingsPage::OnSettingNotifyChanged(UINT, NMHDR*, LRESULT*)
 {
     SetModified();
 }
 
-BEGIN_MESSAGE_MAP(COptionsPage, CMFCPropertyPage)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
+bool CSettingsPage::OnEraseBkgnd(CDC* pDC)
+{
+    const CRect rect = ClientRect();
+    pDC->FillSolidRect(&rect, DarkMode::SystemColor(
+        DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
+    return true;
+}
 
-HBRUSH COptionsPage::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+HBRUSH CSettingsPage::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }

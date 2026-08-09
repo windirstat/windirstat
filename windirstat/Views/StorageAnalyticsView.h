@@ -23,44 +23,44 @@
 //
 // CCenteredEdit. Custom edit control that vertically centers its text.
 //
-class CCenteredEdit final : public CEdit
+class CCenteredEdit final : public MessageTarget<CCenteredEdit, CEdit>
 {
 public:
     bool m_isDecimal = false;
 
 protected:
-    afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
-    afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-    DECLARE_MESSAGE_MAP()
+    void OnNcCalcSize(bool bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
+    void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+public:
+    static std::span<const RouteEntry> Routes();
+
 };
 
 //
 // CStorageAnalyticsView. Shows storage tier analytics and cloud cost estimations.
 //
-class CStorageAnalyticsView final : public CWinDirStatPane
+class CStorageAnalyticsView final : public MessageTarget<CStorageAnalyticsView, CWinDirStatPane>
 {
-protected:
+public:
     CStorageAnalyticsView();
     ~CStorageAnalyticsView() override = default;
-    DECLARE_DYNCREATE(CStorageAnalyticsView)
 
     void OnDraw(CDC* pDC) override;
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    afx_msg void OnBtnRecalculate();
-    afx_msg void OnComboUnitSelChange();
-    afx_msg void OnEditChange();
-    afx_msg void OnEditChangeRange(UINT nID);
+    bool PreprocessMessage(MSG* pMsg) override;
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnSize(UINT nType, int cx, int cy);
+    bool OnEraseBkgnd(CDC* pDC);
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    void OnBtnRecalculate();
+    void OnComboUnitSelChange();
+    void OnEditChange();
+    void OnEditChangeRange(UINT nID);
 
-    DECLARE_MESSAGE_MAP()
+static std::span<const RouteEntry> Routes();
 
-public:
-    struct TierInfo {
+struct TierInfo {
         std::wstring name;
 
         std::unique_ptr<CStatic> lblThreshold;
@@ -70,14 +70,15 @@ public:
 
         double thresholdDays = 0.0;
         double costGiB = 0.0;
-        bool active = true;
 
         ULONGLONG filesCount = 0;
         ULONGLONG totalSize = 0;
 
-        COLORREF bgLight, bgDark;
-        COLORREF borderLight, borderDark;
-        COLORREF accent;
+        COLORREF bgLight{}, bgDark{};
+        COLORREF borderLight{}, borderDark{};
+        COLORREF accent{};
+
+        bool active = true;
     };
 
 private:
@@ -93,7 +94,7 @@ private:
     // Helper functions for unit selection and cost label generation
     double GetScaleForSelection(int sel) const;
     double GetActiveUnitScale() const;
-    void UpdateCostLabels();
+    void UpdateCostLabels() const;
 
     std::vector<TierInfo> m_tiers;
 
@@ -110,3 +111,31 @@ private:
     int m_lastUnitSel = 1;
     bool m_hasData = false;
 };
+
+inline std::span<const RouteEntry> CCenteredEdit::Routes()
+{
+    using ThisClass = CCenteredEdit;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnNcCalcSize>(WM_NCCALCSIZE),
+        Route::Window<&ThisClass::OnChar>(WM_CHAR),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CStorageAnalyticsView::Routes()
+{
+    using ThisClass = CStorageAnalyticsView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&CStorageAnalyticsView::OnBtnRecalculate>(BN_CLICKED, 1001),
+        Route::Control<&CStorageAnalyticsView::OnComboUnitSelChange>(CBN_SELCHANGE, 1007),
+        Route::Control<&CStorageAnalyticsView::OnEditChangeRange>(EN_CHANGE, 2000, 2100),
+    };
+    return entries;
+}

@@ -18,51 +18,24 @@
 #include "pch.h"
 #include "PageGeneral.h"
 
-IMPLEMENT_DYNAMIC(CPageGeneral, COptionsPage)
-
-CPageGeneral::CPageGeneral() : COptionsPage(IDD)
+static constexpr std::array DarkModeRadioIds
 {
-    BindCheck(IDC_AUTO_ELEVATE, COptions::AutoElevate, m_automaticallyElevateOnStartup);
-    BindCheck(IDC_COLUMN_AUTOSIZE, COptions::AutomaticallyResizeColumns, m_automaticallyResizeColumns);
-    BindCheck(IDC_FULL_ROW_SELECTION, COptions::ListFullRowSelection, m_listFullRowSelection);
-    BindCheck(IDC_SHOW_GRID, COptions::ListGrid, m_listGrid);
-    BindCheck(IDC_SHOW_STRIPES, COptions::ListStripes, m_listStripes);
-    BindCheck(IDC_SIZE_SUFFIXES, COptions::UseSizeSuffixes, m_sizeSuffixesFormat);
-    BindCheck(IDC_USE_WINDOWS_LOCALE, COptions::UseWindowsLocaleSetting, m_useWindowsLocale);
-    BindRadio(IDC_DARK_MODE_DISABLED, COptions::DarkMode, m_darkModeRadio);
+    IDC_DARK_MODE_DISABLED,
+    IDC_DARK_MODE_ENABLED,
+    IDC_DARK_MODE_USE_WINDOWS,
+};
+
+CPageGeneral::CPageGeneral() : MessageTarget(IDD)
+{
 }
 
-void CPageGeneral::DoDataExchange(CDataExchange* pDX)
-{
-    COptionsPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_CONTEXT_MENU, m_contextMenuIntegration);
-    DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
-    DDX_Control(pDX, IDC_COMBO, m_combo);
-}
-
-BEGIN_MESSAGE_MAP(CPageGeneral, COptionsPage)
-    ON_BN_CLICKED(IDC_AUTO_ELEVATE, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_CONTEXT_MENU, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_FULL_ROW_SELECTION, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_DARK_MODE_DISABLED, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_DARK_MODE_ENABLED, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_DARK_MODE_USE_WINDOWS, OnBnClickedSetModified)
-    ON_CBN_SELENDOK(IDC_COMBO, OnBnClickedSetModified)
-END_MESSAGE_MAP()
-
-bool CPageGeneral::IsContextMenuRegistered(HKEY root)
+bool CPageGeneral::IsContextMenuRegistered(const HKEY root)
 {
     return CRegKey().Open(root, std::format(LR"(Software\Classes\Drive\shell\{})",
         wds::strWinDirStat).c_str(), KEY_READ) == ERROR_SUCCESS;
 }
 
-bool CPageGeneral::SetContextMenuRegistration(bool enable)
+bool CPageGeneral::SetContextMenuRegistration(const bool enable)
 {
     // Elevated instances manage the system-level entry; otherwise use a per-user entry
     const HKEY root = IsElevationActive() ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
@@ -106,18 +79,42 @@ bool CPageGeneral::SetContextMenuRegistration(bool enable)
     return true;
 }
 
+int CPageGeneral::GetSelectedDarkMode() const
+{
+    const int checkedRadio = CheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED);
+    const auto selected = std::ranges::find(DarkModeRadioIds, checkedRadio);
+    assert(selected != DarkModeRadioIds.end());
+    return selected == DarkModeRadioIds.end()
+        ? std::clamp<int>(COptions::DarkMode, DM_DISABLED, DM_USE_WINDOWS)
+        : static_cast<int>(selected - DarkModeRadioIds.begin());
+}
+
 void CPageGeneral::InitializePage()
 {
-    m_portableMode = CDirStatApp::InPortableMode();
+    m_combo.SubclassDlgItem(IDC_COMBO, this);
+
+    SetChecked(IDC_AUTO_ELEVATE, COptions::AutoElevate);
+    SetChecked(IDC_COLUMN_AUTOSIZE, COptions::AutomaticallyResizeColumns);
+    SetChecked(IDC_FULL_ROW_SELECTION, COptions::ListFullRowSelection);
+    SetChecked(IDC_SHOW_GRID, COptions::ListGrid);
+    SetChecked(IDC_SHOW_STRIPES, COptions::ListStripes);
+    SetChecked(IDC_SIZE_SUFFIXES, COptions::UseSizeSuffixes);
+    SetChecked(IDC_USE_WINDOWS_LOCALE, COptions::UseWindowsLocaleSetting);
+    const int darkMode = std::clamp<int>(COptions::DarkMode, DM_DISABLED, DM_USE_WINDOWS);
+    SetCheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED, DarkModeRadioIds[darkMode]);
+
+    SetChecked(IDC_PORTABLE_MODE, CDirStatApp::InPortableMode());
 
     // Query checkbox status and then gray out if a system-level entry
     // exists that cannot be changed without elevation
-    m_contextMenuIntegration = IsContextMenuRegistered(HKEY_LOCAL_MACHINE) ||
-        IsContextMenuRegistered(HKEY_CURRENT_USER) ? TRUE : FALSE;
+    const bool contextMenuIntegration = IsContextMenuRegistered(HKEY_LOCAL_MACHINE) ||
+        IsContextMenuRegistered(HKEY_CURRENT_USER);
+    SetChecked(IDC_CONTEXT_MENU, contextMenuIntegration);
+
     if (CWnd* pWnd = GetDlgItem(IDC_CONTEXT_MENU); pWnd != nullptr &&
         !IsElevationActive() && IsContextMenuRegistered(HKEY_LOCAL_MACHINE))
     {
-        pWnd->EnableWindow(FALSE);
+        pWnd->EnableWindow(false);
     }
 
     for (const auto& language : Localization::GetLanguageList())
@@ -130,29 +127,41 @@ void CPageGeneral::InitializePage()
         }
     }
 
-    UpdateData(FALSE);
 }
 
 void CPageGeneral::OnOK()
 {
-    UpdateData();
+    const bool useWindowsLocale = IsChecked(IDC_USE_WINDOWS_LOCALE);
+    const bool listGrid = IsChecked(IDC_SHOW_GRID);
+    const bool listStripes = IsChecked(IDC_SHOW_STRIPES);
+    const bool listFullRowSelection = IsChecked(IDC_FULL_ROW_SELECTION);
+    const bool sizeSuffixesFormat = IsChecked(IDC_SIZE_SUFFIXES);
+    const bool portableMode = IsChecked(IDC_PORTABLE_MODE);
+    const bool contextMenuIntegration = IsChecked(IDC_CONTEXT_MENU);
 
-    const bool windowsLocaleChanged = static_cast<bool>(m_useWindowsLocale) != COptions::UseWindowsLocaleSetting;
-    const bool listChanged = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
-        static_cast<bool>(m_listStripes) != COptions::ListStripes ||
-        static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection ||
-        static_cast<bool>(m_sizeSuffixesFormat) != COptions::UseSizeSuffixes;
+    const bool windowsLocaleChanged = useWindowsLocale != COptions::UseWindowsLocaleSetting;
+    const bool listChanged = listGrid != COptions::ListGrid ||
+        listStripes != COptions::ListStripes ||
+        listFullRowSelection != COptions::ListFullRowSelection ||
+        sizeSuffixesFormat != COptions::UseSizeSuffixes;
 
-    ApplyOptionBindings();
+    COptions::AutoElevate = IsChecked(IDC_AUTO_ELEVATE);
+    COptions::AutomaticallyResizeColumns = IsChecked(IDC_COLUMN_AUTOSIZE);
+    COptions::ListFullRowSelection = listFullRowSelection;
+    COptions::ListGrid = listGrid;
+    COptions::ListStripes = listStripes;
+    COptions::UseSizeSuffixes = sizeSuffixesFormat;
+    COptions::UseWindowsLocaleSetting = useWindowsLocale;
+    COptions::DarkMode = GetSelectedDarkMode();
 
-    if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
+    if (!CDirStatApp::Get()->SetPortableMode(portableMode))
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
 
     // Update context menu registration; non-elevated instances may only
     // manage the per-user entry when no system-level entry exists
-    const bool shouldBeRegistered = (m_contextMenuIntegration != FALSE);
+    const bool shouldBeRegistered = contextMenuIntegration;
     const bool systemRegistered = IsContextMenuRegistered(HKEY_LOCAL_MACHINE);
     const bool isRegistered = systemRegistered || IsContextMenuRegistered(HKEY_CURRENT_USER);
     if (isRegistered != shouldBeRegistered && (IsElevationActive() || !systemRegistered))
@@ -181,8 +190,6 @@ void CPageGeneral::OnOK()
 
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
-
-    CMFCPropertyPage::OnOK();
 }
 
 void CPageGeneral::OnBnClickedSetModified()
@@ -190,12 +197,10 @@ void CPageGeneral::OnBnClickedSetModified()
     if (!IsInitialized())
         return;
 
-    UpdateData(TRUE);
-
     // Assess for restart required
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     const bool languageChanged = id != static_cast<LANGID>(COptions::LanguageId);
-    const bool darkModeChanged = m_darkModeRadio != COptions::DarkMode;
+    const bool darkModeChanged = GetSelectedDarkMode() != COptions::DarkMode;
     GetSheet()->SetRestartRequired(darkModeChanged || languageChanged);
 
     SetModified();

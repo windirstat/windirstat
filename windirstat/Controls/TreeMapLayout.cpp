@@ -70,7 +70,7 @@ namespace
                 rowFraction = candidateFraction;
             }
 
-            ASSERT(rowEnd > rowBegin);
+            assert(rowEnd > rowBegin);
             if (rowEnd == rowBegin) return;
             while (rowEnd < request.weights.size() && request.weights[rowEnd] == 0) ++rowEnd;
 
@@ -91,7 +91,7 @@ namespace
                 const CRect childBounds = horizontalRows
                     ? CRect(static_cast<int>(left), static_cast<int>(top), right, bottom)
                     : CRect(static_cast<int>(top), static_cast<int>(left), bottom, right);
-                regions[i] = { childBounds, request.state };
+                regions[i] = { .bounds = childBounds, .state = request.state };
                 left = nextLeft;
             }
 
@@ -115,13 +115,13 @@ namespace
         std::size_t head = 0;
         while (head < request.weights.size())
         {
-            ASSERT(remaining.Width() > 0 && remaining.Height() > 0);
+            assert(remaining.Width() > 0 && remaining.Height() > 0);
             if (remaining.Width() <= 0 || remaining.Height() <= 0) break;
 
             const bool horizontal = remaining.Width() >= remaining.Height();
             const int rowThickness = horizontal ? remaining.Height() : remaining.Width();
             const double squaredRowWeight = rowThickness * rowThickness * weightPerPixel;
-            ASSERT(squaredRowWeight > 0);
+            assert(squaredRowWeight > 0);
 
             const std::size_t rowBegin = head;
             std::size_t rowEnd = head;
@@ -184,11 +184,11 @@ namespace
 
 void TreeMapLayout::ArrangeChildren(const Request& request, std::vector<ChildRegion>& regions)
 {
-    ASSERT(std::ranges::is_sorted(request.weights, std::greater<>()));
-    ASSERT(std::accumulate(request.weights.begin(), request.weights.end(), ULONGLONG{ 0 })
+    assert(std::ranges::is_sorted(request.weights, std::greater()));
+    assert(std::accumulate(request.weights.begin(), request.weights.end(), ULONGLONG{ 0 })
         == request.parentWeight);
     regions.assign(request.weights.size(), ChildRegion{ .state = request.state });
-    if (request.weights.empty() || request.bounds.IsRectEmpty()) return;
+    if (request.weights.empty() || request.bounds.IsEmpty()) return;
 
     switch (request.style)
     {

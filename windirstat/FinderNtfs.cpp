@@ -167,7 +167,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     if (!volumePath.empty() && volumePath[0] != L'\\' && volumePath[0] != L'/') volumePath.insert(0, L"\\\\.\\");
 
     // Open volume handle with FILE_FLAG_OVERLAPPED for asynchronous I/O
-    SmartPointer volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+    const SmartPointer volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr));
     if (volumeHandle == INVALID_HANDLE_VALUE) return false;
@@ -179,20 +179,20 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         false;
 
     // Get MFT retrieval pointers
-    SmartPointer fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+    const SmartPointer fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_NO_BUFFERING, nullptr));
     if (fileHandle == INVALID_HANDLE_VALUE) return false;
 
     std::vector<BYTE> dataRunsBuffer(sizeof(RETRIEVAL_POINTERS_BUFFER) + 32 * sizeof(LARGE_INTEGER));
     STARTING_VCN_INPUT_BUFFER input = {};
-    BOOL pointersFetched = FALSE;
+    bool pointersFetched = false;
     while ((pointersFetched = DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
-        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr)) == FALSE && GetLastError() == ERROR_MORE_DATA)
+        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr)) == 0 && GetLastError() == ERROR_MORE_DATA)
     {
         dataRunsBuffer.resize(dataRunsBuffer.size() * 2);
     }
-    if (pointersFetched == FALSE)
+    if (!pointersFetched)
     {
         return false;
     }
@@ -226,7 +226,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
-        thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
+        thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, false, false, nullptr));
         const ULONGLONG mftRunOffset = runVcnStart * volumeInfo.BytesPerCluster;
         ULONG bytesRead = 0;
         for (ULONGLONG bytesReadFromRun = 0; bytesToRead > 0;
@@ -243,7 +243,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             {
                 if (GetLastError() != ERROR_IO_PENDING ||
                     WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
-                    GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, FALSE) == 0)
+                    GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, false) == 0)
                 {
                     VTRACE(L"ERROR: Failed to read MFT data.");
                     break;

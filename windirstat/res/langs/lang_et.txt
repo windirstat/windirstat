@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Directory Statistics\n\n"Shows where all your disk space has gone\nand helps you clean it up."\n\nProgrammed for Microsoft Windows by\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nbased on Stefan Hundhammer's KDE (Linux) program KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's home is {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Teave
 IDS_ABOUT_LICENSE=Litsents
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammerile tema suurepärase Linuxi tööriista KDirStat eest.\nKDirStat (2.3.7) kasutamine spetsifikatsioonina säästis mul palju aega.\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView autoritele, kes näitasid, kui kasulikud puukaardid tegelikult olla võivad.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijkile, Huub van de Weteringile, Mark Brulsile ja Kees Huizingile\nnende artiklite eest polsterdatud puukaartide ja ruudukujuliste puukaartide kohta.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneidermanile tema geniaalse puukaartide idee eest -\ntõeliselt intuitiivse viisi eest puustruktuuri sisu visualiseerimiseks.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammerile tema suurepärase Linuxi tööriista KDirStat eest.\nKDirStat kasutamine spetsifikatsioonina säästis mul palju aega.\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView autoritele, kes näitasid, kui kasulikud puukaardid tegelikult olla võivad.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijkile, Huub van de Weteringile, Mark Brulsile ja Kees Huizingile\nnende artiklite eest polsterdatud puukaartide ja ruudukujuliste puukaartide kohta.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneidermanile tema geniaalse puukaartide idee eest -\ntõeliselt intuitiivse viisi eest puustruktuuri sisu visualiseerimiseks.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Tänud
 IDS_ABOUT_TITLE=WinDirStatist
 IDS_ADMIN=Administraator
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Kasuta kiirendatud skannimist
 IDS_FILE_FILTER=CSV/JSON-failid
 IDS_FILE_SELECT=Ava ajamite kogum.\nAva...
 IDS_FREESPACE_ITEM=<Vaba maht>
+IDS_GENERIC_APPLY=&Rakenda
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Loobu
 IDS_GENERIC_DAYS=päeva

@@ -20,8 +20,8 @@
 #include "pch.h"
 #include "ProgressDlg.h"
 
-constexpr auto signum(auto x) noexcept { return x < 0 ? -1 : x == 0 ? 0 : 1; };
-constexpr auto usignum(auto x, auto y) noexcept { return x < y ? -1 : x == y ? 0 : 1; };
+constexpr auto signum(auto x) noexcept { return x < 0 ? -1 : x == 0 ? 0 : 1; }
+constexpr auto usignum(auto x, auto y) noexcept { return x < y ? -1 : x == y ? 0 : 1; }
 
 constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
 using CompressionAlgorithm = enum CompressionAlgorithm {
@@ -89,9 +89,9 @@ std::wstring GetVolumeName(const std::wstring& rootPath);
 bool DeleteFileForce(const std::wstring& path, DWORD attributes = INVALID_FILE_ATTRIBUTES);
 
 // Path utilities
-std::wstring WdsQueryDosDevice(const std::wstring& drive);
+std::wstring QueryDosDevicePath(const std::wstring& drive);
 bool IsSUBSTedDrive(const std::wstring& drive);
-inline auto GetDrive(const std::wstring_view& sv) { return std::wstring{ sv.substr(0, 2) }; };
+inline auto GetDrive(const std::wstring_view& sv) { return std::wstring{ sv.substr(0, 2) }; }
 
 // Hibernation
 void DisableHibernate() noexcept;
@@ -101,7 +101,7 @@ bool IsStorageSenseAvailable() noexcept;
 // Elevation and privileges
 bool IsElevationActive() noexcept;
 bool IsElevationAvailable() noexcept;
-inline bool IsElevationPossible() noexcept { return IsElevationActive() || IsElevationAvailable(); };
+inline bool IsElevationPossible() noexcept { return IsElevationActive() || IsElevationAvailable(); }
 bool EnableReadPrivileges() noexcept;
 void RunElevated(const std::wstring& cmdLine);
 
@@ -115,7 +115,7 @@ bool SparsifyFile(const std::wstring& path, ULONGLONG minZeroRunSize = 64ull * w
 bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pdlg);
+std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProgressDlg);
 
 // Process priority and VHD optimization
 void SetProcessPriority(int level) noexcept;

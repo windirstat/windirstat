@@ -48,8 +48,8 @@ public:
     // Access the most recently computed flame-graph layout without using the
     // rectangle cache owned by the treemap projection.
     bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
-    [[nodiscard]] bool IsBreadcrumb(const CItem* item) const;
-    [[nodiscard]] int GetBreadcrumbHeight() const;
+    bool IsBreadcrumb(const CItem* item) const;
+    int GetBreadcrumbHeight() const;
     void ClearLayout();
     void TrimMemory();
 
@@ -113,9 +113,9 @@ private:
         requires std::invocable<Visitor&, const RowItem&, const CRect&>
     void VisitRowItems(CRect clip, const CPoint offset, Visitor&& visitor) const
     {
-        clip.OffsetRect(-offset.x, -offset.y);
+        clip.Offset(-offset.x, -offset.y);
         CRect logicalClip;
-        if (!logicalClip.IntersectRect(clip, m_renderArea) || m_rows.empty()) return;
+        if (!logicalClip.Intersect(clip, m_renderArea) || m_rows.empty()) return;
 
         const auto firstRow = static_cast<std::size_t>(
             (logicalClip.top - m_renderArea.top) / m_rowHeight);
@@ -131,8 +131,7 @@ private:
                 });
             for (; entry != row.end() && entry->rectangle.left < logicalClip.right; ++entry)
             {
-                CRect rectangle = entry->rectangle;
-                rectangle.OffsetRect(offset);
+                const CRect rectangle = entry->rectangle + offset;
                 std::invoke(visitor, *entry, rectangle);
             }
         }

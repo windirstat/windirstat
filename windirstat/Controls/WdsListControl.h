@@ -54,7 +54,7 @@ public:
     // This color is used for the current item
     virtual COLORREF GetItemTextColor() const
     {
-        return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+        return DarkMode::SystemColor(COLOR_WINDOWTEXT);
     }
 
     // Comparison methods for sorting
@@ -75,29 +75,12 @@ public:
 };
 
 //
-// CSetRedrawLock. RAII wrapper for SetRedraw(FALSE)/SetRedraw(TRUE).
-//
-class CSetRedrawLock final
-{
-public:
-    explicit CSetRedrawLock(CWnd* wnd) : m_wnd(wnd) { m_wnd->SetRedraw(FALSE); }
-    ~CSetRedrawLock() { m_wnd->SetRedraw(TRUE); m_wnd->Invalidate(); }
-    CSetRedrawLock(const CSetRedrawLock&) = delete;
-    CSetRedrawLock& operator=(const CSetRedrawLock&) = delete;
-
-private:
-    CWnd* m_wnd;
-};
-
-//
 // CWdsListControl. Must be report view. Deals with CWdsListItems.
 // Can have a grid or not (own implementation, don't set LVS_EX_GRIDLINES). Flicker-free.
 // Also handles sorting functionality (merged from CSortingListControl).
 //
-class CWdsListControl : public CListCtrl
+class CWdsListControl : public MessageTarget<CWdsListControl, CListCtrl>
 {
-    DECLARE_DYNAMIC(CWdsListControl)
-
 public:
     CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility);
     ~CWdsListControl() override = default;
@@ -126,13 +109,13 @@ public:
     void LoadPersistentAttributes();
     bool HasFocus() const;
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
-    void InsertListItem(int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
+    void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
 
     // Shadow CListCtrl methods for Owner Data management.
     // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
-    BOOL DeleteItem(int i);
-    BOOL DeleteAllItems();
+    virtual bool DeleteItem(int i);
+    bool DeleteAllItems();
 
     // Sorting functionality
     int ColumnToSubItem(int col) const;
@@ -150,7 +133,7 @@ public:
     // Selection change batching
     void PostSelectionChanged();
     void DeselectAll();
-    CFont* GetFont() const;
+    HFONT GetFont() const;
 
 protected:
     void InitializeColors();
@@ -186,19 +169,44 @@ protected:
     // Selection change batching
     static constexpr DWORD WM_SELECTION_CHANGED = WM_APP + 1;
     bool m_selectionChangePending = false;
-    mutable HFONT m_cachedFont = NULL;
+    mutable HFONT m_cachedFont = nullptr;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnDestroy();
-    afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
-    afx_msg virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnContextMenu(CWnd* pWnd, CPoint point);
+    bool OnEraseBkgnd(CDC* pDC) const;
+    void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnDestroy();
+    void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
+    virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
+    LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 };
+
+inline std::span<const RouteEntry> CWdsListControl::Routes()
+{
+    using ThisClass = CWdsListControl;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnSelectionChanged>(WM_SELECTION_CHANGED),
+        Route::Notify<&ThisClass::OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
+        Route::Notify<&ThisClass::OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
+        Route::Notify<&ThisClass::OnHdnItemClick>(HDN_ITEMCLICK, 0),
+        Route::Notify<&ThisClass::OnHdnItemDblClick>(HDN_ITEMDBLCLICK, 0),
+        Route::Notify<&ThisClass::OnCustomDraw>(NM_CUSTOMDRAW, 0),
+        Route::ReflectNotify<&ThisClass::OnLvnGetDispInfo>(LVN_GETDISPINFO),
+        Route::Window<&ThisClass::OnContextMenu>(WM_CONTEXTMENU),
+        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnSettingChange>(WM_SETTINGCHANGE),
+        Route::Window<&ThisClass::OnShowWindow>(WM_SHOWWINDOW),
+        Route::Window<&ThisClass::OnSetFont>(WM_SETFONT),
+    };
+    return entries;
+}

@@ -20,7 +20,7 @@
 #include "FinderBasic.h"
 
 CFileWatcherControl::CFileWatcherControl()
-    : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), COptions::WatcherColumnVisibility.Ptr(), LF_WATCHERLIST, false)
+    : MessageTarget(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), COptions::WatcherColumnVisibility.Ptr(), LF_WATCHERLIST, false)
 {
     SetOwnsItems(true);
     m_singleton = this;
@@ -32,11 +32,6 @@ CFileWatcherControl::~CFileWatcherControl()
     ClearPendingItems();
     m_singleton = nullptr;
 }
-
-BEGIN_MESSAGE_MAP(CFileWatcherControl, CTreeListControl)
-    ON_WM_DESTROY()
-    ON_MESSAGE(WM_WATCHER_CHANGE, OnWatcherChange)
-END_MESSAGE_MAP()
 
 void CFileWatcherControl::OnDestroy()
 {
@@ -56,8 +51,8 @@ void CFileWatcherControl::StartMonitoring()
 
     if (CItem* root = model->GetRootItem(); root != nullptr)
     {
-        auto children = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
-            std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
+        const auto children = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
+            std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
         for (const auto& child : children)
         {
             m_watchThreads.emplace_back([this, path = child->GetPath()](const std::stop_token& stopToken)
@@ -84,12 +79,12 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
     std::wstring pathWithSlash = path;
     if (pathWithSlash.back() != L'\\') pathWithSlash += L'\\';
 
-    const SmartPointer hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
-    const SmartPointer hStopEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+    const SmartPointer hEvent(CloseHandle, CreateEvent(nullptr, true, false, nullptr));
+    const SmartPointer hStopEvent(CloseHandle, CreateEvent(nullptr, true, false, nullptr));
     OVERLAPPED overlapped{ .hEvent = hEvent };
     std::vector<BYTE> buffer(64ul * 1024ul);
 
-    std::stop_callback stopCallback(stopToken, [handle = hDir.Get(), stop = hStopEvent.Get()]()
+    std::stop_callback stopCallback(stopToken, [handle = hDir.Get(), stop = hStopEvent.Get()]
     {
         SetEvent(stop);
         CancelIoEx(handle, nullptr);
@@ -99,18 +94,18 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
 
     for (; !stopToken.stop_requested(); ResetEvent(overlapped.hEvent))
     {
-        if (!ReadDirectoryChangesW(hDir, buffer.data(), static_cast<DWORD>(buffer.size()), TRUE,
+        if (!ReadDirectoryChangesW(hDir, buffer.data(), static_cast<DWORD>(buffer.size()), true,
             FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE,
             nullptr, &overlapped, nullptr))
         {
             if (GetLastError() != ERROR_IO_PENDING) break;
         }
 
-        if (WaitForMultipleObjects(static_cast<DWORD>(waitHandles.size()), waitHandles.data(), FALSE, INFINITE) != WAIT_OBJECT_0) break;
+        if (WaitForMultipleObjects(static_cast<DWORD>(waitHandles.size()), waitHandles.data(), false, INFINITE) != WAIT_OBJECT_0) break;
         if (stopToken.stop_requested()) break;
 
         DWORD bytesReturned = 0;
-        if (GetOverlappedResult(hDir, &overlapped, &bytesReturned, FALSE) == 0)
+        if (GetOverlappedResult(hDir, &overlapped, &bytesReturned, false) == 0)
         {
             if (GetLastError() == ERROR_OPERATION_ABORTED) break;
             continue;
@@ -129,7 +124,7 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
 
 void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action)
 {
-    if (GetSafeHwnd() == nullptr) return;
+    if (Handle() == nullptr) return;
 
     // Ignore modified events for directories as changes will be captured via their children
     WIN32_FILE_ATTRIBUTE_DATA fileAttr{};
@@ -137,8 +132,7 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     if (action == FILE_ACTION_MODIFIED &&
         (fileAttr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) return;
 
-    FILETIME fileTime{};
-    GetSystemTimeAsFileTime(&fileTime);
+    const FILETIME fileTime = CurrentSystemFileTime();
 
     static auto verbs = SplitString(Localization::Lookup(IDS_WATCHER_VERBS), L',');
     if (action == 0 || action > verbs.size()) return;
@@ -177,7 +171,7 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
 
     if (items.empty()) return 0;
 
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     InsertListItem(GetItemCount(), items);
     SortItems();
 

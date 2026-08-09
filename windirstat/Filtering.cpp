@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "Filtering.h"
-#include "Finder.h"
 #include "HelpersInterface.h"
 #include "Options.h"
 
@@ -34,7 +33,7 @@ bool      CFiltering::FilterActive          = false;
 
 // --- Private helpers ---
 
-static bool HasUnescapedTrailingDollar(std::wstring_view pattern)
+static bool HasUnescapedTrailingDollar(const std::wstring_view pattern)
 {
     if (pattern.empty() || pattern.back() != L'$') return false;
 
@@ -57,7 +56,7 @@ static std::wstring MatchDirectoryAndDescendants(std::wstring pattern)
 // the pattern to ever match). Examples:
 //   "C:\Windows\Sys*" -> "C:\Windows"
 //   "*\foo" -> ""
-std::wstring CFiltering::ExtractIncludeAnchor(std::wstring_view pattern, const bool useRegex)
+std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, const bool useRegex)
 {
     constexpr std::wstring_view literalEscapes = LR"(\.+*?^$|()[]{}/)";
     constexpr std::wstring_view regexSpecials = LR"(.+*?^$|()[]{})";
@@ -105,7 +104,7 @@ std::wstring CFiltering::ExtractIncludeAnchor(std::wstring_view pattern, const b
 
 // In path filters, treat single backslashes as Windows separators even in regex
 // mode. Already escaped separators and escaped regex metacharacters are preserved.
-std::wstring CFiltering::NormalizePathRegex(std::wstring_view pattern)
+std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
 {
     constexpr std::wstring_view preservedEscapes = L"\\.+*?()[]{}^$|";
     std::wstring result;
@@ -191,11 +190,10 @@ void CFiltering::CompileFilters()
     MaxAgeFileTimeCutoff = {};
     if (COptions::FilteringMaxAgeDays > 0)
     {
-        FILETIME ft;
-        GetSystemTimeAsFileTime(&ft); // Windows 7 compatible
-        uint64_t t = (uint64_t(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        const FILETIME ft = CurrentSystemFileTime();
+        uint64_t t = (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
         t -= COptions::FilteringMaxAgeDays.Obj() * 864'000'000'000ULL; // 100ns ticks per day
-        MaxAgeFileTimeCutoff ={ DWORD(t), DWORD(t >> 32) };
+        MaxAgeFileTimeCutoff ={ static_cast<DWORD>(t), static_cast<DWORD>(t >> 32) };
     }
 
     // Cache whether any filter is active so callers can short-circuit cheaply
@@ -251,7 +249,7 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
 }
 
 bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
-    ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
+    const ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
 {
     if (!FilterActive) return false;
 

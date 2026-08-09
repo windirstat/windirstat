@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Statystyki Katalogów\n\n"Pokazuje zajętość Twojej przestrzeni dyskowej\ni pomaga ją porządkować."\n\nProgramowanie dla Microsoft Windows przez\nBernharda Seiferta, Olivera Schneidera, Bryana Bernsa\n(mailto:{}),\n\nna podstawie linuksowego progamu (KDE) KDirStat Stefana Hundhammera\n(https://kdirstat.sourceforge.net/).\n\nStrona domowa WinDirStat {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=O programie
 IDS_ABOUT_LICENSE=Licencja
-IDS_ABOUT_THANKS_TEXT=\nStefana Hundhammera za jego linuksowe super narzędzie KDirStat.\nUżywałem KDirStat (2.3.7) jako specyfikacji, co pozwoliło mi zaoszczędzić mnóstwo czasu.\nhttps://kdirstat.sourceforge.net/\n\nAutorów SequoiaView za pokazanie jak użyteczne mogą być mapy dysków.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls i Kees Huizing\nza ich informacje o cieniowaniu map drzew oraz o ""squarified treemaps"".\nhttps://www.win.tue.nl/~vanwijk/\n\nBena Shneidermana za jego genialną teorię map drzew -\na prawdziwie intuicyjną metodę prezentacji zawartości drzew.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefana Hundhammera za jego linuksowe super narzędzie KDirStat.\nUżywałem KDirStat jako specyfikacji, co pozwoliło mi zaoszczędzić mnóstwo czasu.\nhttps://kdirstat.sourceforge.net/\n\nAutorów SequoiaView za pokazanie jak użyteczne mogą być mapy dysków.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls i Kees Huizing\nza ich informacje o cieniowaniu map drzew oraz o ""squarified treemaps"".\nhttps://www.win.tue.nl/~vanwijk/\n\nBena Shneidermana za jego genialną teorię map drzew -\na prawdziwie intuicyjną metodę prezentacji zawartości drzew.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Podziękowania dla
 IDS_ABOUT_TITLE=O WinDirStat
 IDS_ADMIN=Administrator
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Użyj przyspieszonego skanowania
 IDS_FILE_FILTER=Pliki CSV/JSON
 IDS_FILE_SELECT=Pozwala wybrać dyski.\nOpen
 IDS_FREESPACE_ITEM=<Wolna przestrzeń>
+IDS_GENERIC_APPLY=&Zastosuj
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Anuluj
 IDS_GENERIC_DAYS=dni

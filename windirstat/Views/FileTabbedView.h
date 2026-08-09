@@ -23,16 +23,16 @@
 
 class CStorageAnalyticsView;
 
-class CFileTabbedView final : public CWinDirStatPane
+class CFileTabbedView final : public MessageTarget<CFileTabbedView, CWinDirStatPane>
 {
 public:
-    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTreeViewIndex; }
-    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileDupeViewIndex; }
-    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
-    bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileSearchViewIndex; }
-    bool IsFileWatcherViewTabActive() { return GetTabControl().GetActiveTab() == m_fileWatcherViewIndex; }
-    bool IsFilePermsViewTabActive() { return GetTabControl().GetActiveTab() == m_filePermsViewIndex; }
-    bool IsStorageAnalyticsViewTabActive() { return GetTabControl().GetActiveTab() == m_storageAnalyticsViewIndex; }
+    bool IsFileTreeViewTabActive() { return GetTabControl().ActiveTab() == m_fileTreeViewIndex; }
+    bool IsFileDupeViewTabActive() { return GetTabControl().ActiveTab() == m_fileDupeViewIndex; }
+    bool IsFileTopViewTabActive() { return GetTabControl().ActiveTab() == m_fileTopViewIndex; }
+    bool IsFileSearchViewTabActive() { return GetTabControl().ActiveTab() == m_fileSearchViewIndex; }
+    bool IsFileWatcherViewTabActive() { return GetTabControl().ActiveTab() == m_fileWatcherViewIndex; }
+    bool IsFilePermsViewTabActive() { return GetTabControl().ActiveTab() == m_filePermsViewIndex; }
+    bool IsStorageAnalyticsViewTabActive() { return GetTabControl().ActiveTab() == m_storageAnalyticsViewIndex; }
     CFileTopView* GetFileTopView() const { return m_fileTopView; }
     CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
     CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }
@@ -60,19 +60,18 @@ public:
     bool CycleTab(bool forward);
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
-protected:
-    CFileTabbedView() = default;
+CFileTabbedView() = default;
     ~CFileTabbedView() override = default;
-    DECLARE_DYNCREATE(CFileTabbedView)
     void OnInitialUpdate();
-    CMFCTabCtrl& GetTabControl() { return m_tabControl; }
-    const CMFCTabCtrl& GetTabControl() const { return m_tabControl; }
-    void SetActiveView(int index) { m_tabControl.SetActiveTab(index); }
-    int AddPane(CRuntimeClass* paneClass, const std::wstring_view& tabLabel);
+    CTabControl& GetTabControl() { return m_tabControl; }
+    const CTabControl& GetTabControl() const { return m_tabControl; }
+    void SetActiveView(const int index) { m_tabControl.SelectTab(index); }
+    template<typename Pane>
+    Pane* AddPane(int& index, const std::wstring_view& tabLabel);
     void ResetOptionalTabVisibility();
 
     // Used for storing and retrieving the various tab views
-    CMFCTabCtrl m_tabControl;
+    CTabControl m_tabControl;
     int m_fileTreeViewIndex = -1;
     CFileTreeView* m_fileTreeView = nullptr;
     int m_fileDupeViewIndex = -1;
@@ -90,11 +89,27 @@ protected:
 
     void FocusActiveTabContent();
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
-    afx_msg BOOL PreTranslateMessage(MSG* pMsg) override;
+static std::span<const RouteEntry> Routes();
+
+protected:
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnSize(UINT nType, int cx, int cy);
+    bool OnEraseBkgnd(CDC* pDC);
+    LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
+    bool PreprocessMessage(MSG* pMsg) override;
 };
+
+inline std::span<const RouteEntry> CFileTabbedView::Routes()
+{
+    using ThisClass = CFileTabbedView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnChangeActiveTab>(WM_WDS_TAB_CHANGED),
+    };
+    return entries;
+}

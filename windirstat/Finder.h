@@ -30,6 +30,8 @@ protected:
 
 public:
 
+    virtual ~Finder() = default;
+
     virtual bool FindNext() = 0;
     virtual bool FindFile(const CItem* item) = 0;
     virtual inline DWORD GetAttributes() const = 0;
@@ -92,9 +94,9 @@ public:
     {
         if (reparseBuffer.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
         {
-            const auto volumeIdentifier = LR"(\??\Volume)";
             const auto path = ByteOffset<WCHAR>(reparseBuffer.PathBuffer, reparseBuffer.SubstituteNameOffset);
-            if (reparseBuffer.SubstituteNameLength / sizeof(WCHAR) >= wcslen(volumeIdentifier) &&
+            if (constexpr auto volumeIdentifier = LR"(\??\Volume)";
+                reparseBuffer.SubstituteNameLength / sizeof(WCHAR) >= wcslen(volumeIdentifier) &&
                 _wcsnicmp(path, volumeIdentifier, wcslen(volumeIdentifier)) == 0)
             {
                 return true;

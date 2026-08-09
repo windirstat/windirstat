@@ -23,10 +23,9 @@
 //
 // CPagePrompts. "Settings" property page "Prompts".
 //
-class CPagePrompts final : public COptionsPage
+class CPagePrompts final : public MessageTarget<CPagePrompts, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPagePrompts)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_PROMPTS };
 
     CPagePrompts();
@@ -35,21 +34,24 @@ class CPagePrompts final : public COptionsPage
 protected:
     void InitializePage() override;
     void OnOK() override;
+    static std::span<const CheckboxSettingBinding> CheckboxSettings();
 
-    BOOL m_showDeletePermanentlyWarning = FALSE;
-    BOOL m_showDeleteToRecycleBinWarning = FALSE;
-    BOOL m_showElevationPrompt = FALSE;
-    BOOL m_showDupeDetectionCloudLinksWarning = FALSE;
-    BOOL m_showMicrosoftProgress = FALSE;
-    BOOL m_showEmptyRecycleBinPrompt = FALSE;
-    BOOL m_showCreateHardlinkPrompt = FALSE;
-    BOOL m_showRemoveMotwPrompt = FALSE;
-    BOOL m_showDisableHibernatePrompt = FALSE;
-    BOOL m_showRemoveShadowCopiesPrompt = FALSE;
-    BOOL m_showDismCleanupPrompt = FALSE;
-    BOOL m_showDismResetPrompt = FALSE;
-    BOOL m_showSetDatesPrompt = FALSE;
-    BOOL m_showRemoveEmptyFoldersPrompt = FALSE;
+public:
+    static std::span<const RouteEntry> Routes();
 
-    DECLARE_MESSAGE_MAP()
 };
+
+inline std::span<const RouteEntry> CPagePrompts::Routes()
+{
+    using ThisClass = CPagePrompts;
+    static constexpr std::array entries
+    {
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_DELETION_WARNING),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_ELEVATION_PROMPT),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_CLOUD_LINKS_WARNING),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_SHOW_MICROSOFT_PROGRESS),
+        Route::Control<&ThisClass::OnSettingRangeChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
+    };
+    return entries;
+}

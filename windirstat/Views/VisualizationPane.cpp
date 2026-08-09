@@ -21,19 +21,11 @@
 #include "FlameGraphView.h"
 #include "SunburstView.h"
 
-IMPLEMENT_DYNCREATE(CVisualizationPane, CWinDirStatPane)
-
-BEGIN_MESSAGE_MAP(CVisualizationPane, CWinDirStatPane)
-    ON_WM_CREATE()
-    ON_WM_SETFOCUS()
-    ON_WM_SIZE()
-END_MESSAGE_MAP()
-
 static_assert(static_cast<std::size_t>(GraphPane::TreeMap) == 0
     && static_cast<std::size_t>(GraphPane::FlameGraph) == 1
     && static_cast<std::size_t>(GraphPane::Sunburst) == 2);
 
-BOOL CVisualizationPane::PreCreateWindow(CREATESTRUCT& cs)
+bool CVisualizationPane::PreCreateWindow(CREATESTRUCT& cs)
 {
     cs.style |= WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     return CWinDirStatPane::PreCreateWindow(cs);
@@ -45,23 +37,21 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     struct ViewDefinition
     {
-        CRuntimeClass* runtimeClass;
+        CGraphView* (*create)();
         DWORD style;
     };
     const std::array definitions{
-        ViewDefinition{ RUNTIME_CLASS(CTreeMapView), WS_CHILD },
-        ViewDefinition{ RUNTIME_CLASS(CFlameGraphView), WS_CHILD | WS_VSCROLL },
-        ViewDefinition{ RUNTIME_CLASS(CSunburstView), WS_CHILD },
+        ViewDefinition{ []() -> CGraphView* { return new CTreeMapView; }, WS_CHILD },
+        ViewDefinition{ []() -> CGraphView* { return new CFlameGraphView; }, WS_CHILD | WS_VSCROLL },
+        ViewDefinition{ []() -> CGraphView* { return new CSunburstView; }, WS_CHILD },
     };
 
     for (std::size_t index = 0; index < definitions.size(); ++index)
     {
-        CGraphView* view = DYNAMIC_DOWNCAST(CGraphView, definitions[index].runtimeClass->CreateObject());
-        if (view == nullptr) return -1;
-
+        CGraphView* view = definitions[index].create();
         m_views[index] = view;
         if (!view->Create(nullptr, nullptr, definitions[index].style, CRect{}, this,
-            static_cast<UINT>(AFX_IDW_PANE_FIRST + index)))
+            static_cast<UINT>(WDS_PANE_ID_BASE + index)))
         {
             // Create invokes PostNcDestroy on failure, which deletes the view.
             m_views[index] = nullptr;
@@ -77,7 +67,7 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CVisualizationPane::OnDraw(CDC* pDC)
 {
-    pDC->FillSolidRect(ClientRectOf(this), CGraphView::BackgroundColor);
+    pDC->FillSolidRect(ClientRect(), CGraphView::BackgroundColor);
 }
 
 CGraphView* CVisualizationPane::GetActiveView() const
@@ -108,9 +98,9 @@ void CVisualizationPane::SelectPane(const GraphPane pane)
         return;
     }
 
-    active->MoveWindow(ClientRectOf(this), FALSE);
+    active->MoveWindow(ClientRect(), false);
     active->ShowWindow(SW_SHOW);
-    active->Invalidate(FALSE);
+    active->Invalidate(false);
 }
 
 void CVisualizationPane::ShowVisualization(const bool show)
@@ -126,9 +116,9 @@ void CVisualizationPane::ShowVisualization(const bool show)
         return;
     }
 
-    active->MoveWindow(ClientRectOf(this), FALSE);
+    active->MoveWindow(ClientRect(), false);
     active->ShowWindow(SW_SHOW);
-    active->Invalidate(FALSE);
+    active->Invalidate(false);
 }
 
 void CVisualizationPane::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
@@ -160,7 +150,7 @@ void CVisualizationPane::SuspendRecalculationDrawing(const bool suspend)
     {
         if (m_drawingSuspensionCount == 0)
         {
-            ASSERT(FALSE);
+            assert(false);
             return;
         }
         if (--m_drawingSuspensionCount != 0) return;
@@ -178,9 +168,8 @@ void CVisualizationPane::OnSetFocus(CWnd* /*pOldWnd*/)
         active->SetFocus();
 }
 
-void CVisualizationPane::OnSize(const UINT nType, const int cx, const int cy)
+void CVisualizationPane::OnSize(UINT /*nType*/, const int cx, const int cy)
 {
-    CWinDirStatPane::OnSize(nType, cx, cy);
-    if (CGraphView* active = GetActiveView(); active != nullptr && active->GetSafeHwnd())
+    if (CGraphView* active = GetActiveView(); active != nullptr && active->Handle())
         active->MoveWindow(0, 0, cx, cy);
 }

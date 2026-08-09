@@ -31,7 +31,7 @@ constexpr auto COLBN_CHANGED = 0x87;
 // When the user chose a color, the parent is notified via WM_NOTIFY
 // and the notification code COLBN_CHANGED.
 //
-class CColorButton final : public CButton
+class CColorButton final : public MessageTarget<CColorButton, CButton>
 {
 public:
     COLORREF GetColor() const;
@@ -39,7 +39,7 @@ public:
 
 private:
     // The color preview is an own little child window of the button.
-    class CPreview final : public CWnd
+    class CPreview final : public MessageTarget<CPreview, CWnd>
     {
     public:
         CPreview() = default;
@@ -49,17 +49,46 @@ private:
     private:
         COLORREF m_color = 0;
 
-        DECLARE_MESSAGE_MAP()
-        afx_msg void OnPaint();
-        afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    public:
+        static std::span<const RouteEntry> Routes();
+
+    protected:
+        void OnPaint();
+        void OnLButtonDown(UINT nFlags, CPoint point) const;
     };
 
     CPreview m_preview;
 
+public:
+    static std::span<const RouteEntry> Routes();
+
 protected:
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnPaint();
-    afx_msg void OnDestroy();
-    afx_msg void OnBnClicked();
-    afx_msg void OnEnable(BOOL bEnable);
+    void OnPaint();
+    void OnDestroy();
+    void OnBnClicked();
+    void OnEnable(bool bEnable);
 };
+
+inline std::span<const RouteEntry> CColorButton::CPreview::Routes()
+{
+    using ThisClass = CPreview;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CColorButton::Routes()
+{
+    using ThisClass = CColorButton;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
+        Route::ReflectControl<&ThisClass::OnBnClicked>(BN_CLICKED),
+        Route::Window<&ThisClass::OnEnable>(WM_ENABLE),
+    };
+    return entries;
+}

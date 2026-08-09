@@ -96,30 +96,9 @@ void DarkMode::SetAppDarkMode() noexcept
     DarkModeColors[COLOR_WINDOWFRAME] = RGB(50, 50, 50);
     DarkModeColors[COLOR_WINDOWTEXT] = RGB(220, 220, 220);
 
-    // Update colors
-    SetupGlobalColors();
 }
 
-void DarkMode::SetupGlobalColors() noexcept
-{
-    // No need to continue if dark mode is not enabled
-    if (!s_darkModeEnabled) return;
-
-    // Update global colors
-    auto* const data = GetGlobalData();
-    data->clrBarFace = WdsSysColor(COLOR_MENUBAR);
-    data->clrBarShadow = WdsSysColor(COLOR_MENUBAR);
-    data->clrBtnText = WdsSysColor(COLOR_BTNTEXT);
-    data->clrBtnFace = WdsSysColor(COLOR_BTNFACE);
-    data->clrBtnHilite = WdsSysColor(COLOR_BTNHILIGHT);
-    data->clrBtnShadow = WdsSysColor(COLOR_BTNSHADOW);
-    data->brBarFace.DeleteObject();
-    data->brBarFace.CreateSolidBrush(data->clrBarFace);
-    data->brBtnFace.DeleteObject();
-    data->brBtnFace.CreateSolidBrush(data->clrBtnFace);
-}
-
-COLORREF DarkMode::WdsSysColor(const DWORD index)
+COLORREF DarkMode::SystemColor(const DWORD index)
 {
     return s_darkModeEnabled ? DarkModeColors[index] : OriginalColors[index];
 }
@@ -153,7 +132,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
         const std::wstring_view className(classNameBuffer.data(), length);
 
         // Control whether the window is allowed for dark mode
-        AllowDarkModeForWindow(hWnd, TRUE);
+        AllowDarkModeForWindow(hWnd, true);
 
         // Set toplevel theme
         constexpr BOOL dark = TRUE;
@@ -200,14 +179,14 @@ void DarkMode::AdjustControls(const HWND hWnd)
         SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
 }
 
-HBRUSH DarkMode::OnCtlColor(CDC* pDC, UINT nCtlColor)
+HBRUSH DarkMode::OnCtlColor(CDC* pDC, const UINT nCtlColor)
 {
     if (s_darkModeEnabled &&
         (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC ||
          nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX))
     {
-        pDC->SetTextColor(WdsSysColor(COLOR_WINDOWTEXT));
-        pDC->SetBkColor(WdsSysColor(CTLCOLOR_DLG));
+        pDC->SetTextColor(SystemColor(COLOR_WINDOWTEXT));
+        pDC->SetBkColor(SystemColor(CTLCOLOR_DLG));
         pDC->SetBkMode(nCtlColor == CTLCOLOR_STATIC ? TRANSPARENT : OPAQUE);
         return GetDialogBackgroundBrush();
     }
@@ -217,8 +196,8 @@ HBRUSH DarkMode::OnCtlColor(CDC* pDC, UINT nCtlColor)
 
 HBRUSH DarkMode::GetDialogBackgroundBrush()
 {
-    static HBRUSH darkBrush = CreateSolidBrush(DarkModeColors[COLOR_WINDOW]);
-    return s_darkModeEnabled ? darkBrush : GetSysColorBrush(COLOR_WINDOW);
+    static CBrush darkBrush(DarkModeColors[COLOR_WINDOW]);
+    return s_darkModeEnabled ? static_cast<HBRUSH>(darkBrush) : GetSysColorBrush(COLOR_WINDOW);
 }
 
 void DarkMode::DrawMenuClientArea(CWnd& wnd)
@@ -232,12 +211,10 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
         return;
     }
 
-    CRect rcClient = ClientRectOf(&wnd);
-    wnd.ClientToScreen(&rcClient);
+    CRect rcClient = wnd.ToScreen(wnd.ClientRect());
 
-    CRect rcWindow;
-    wnd.GetWindowRect(&rcWindow);
-    rcClient.OffsetRect(-rcWindow.left, -rcWindow.top);
+    const CRect rcWindow(wnd.Handle());
+    rcClient.Offset(-rcWindow.left, -rcWindow.top);
 
     // the rcBar is offset by the window rect
     CRect lineToPaint = rcClient;
@@ -245,7 +222,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
     lineToPaint.top--;
 
     CWindowDC dc(&wnd);
-    dc.FillSolidRect(&lineToPaint, WdsSysColor(COLOR_MENUBAR));
+    dc.FillSolidRect(&lineToPaint, SystemColor(COLOR_MENUBAR));
 }
 
 LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, const LPARAM lParam, const HWND hWnd)
@@ -273,14 +250,14 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         mbi.cbSize = sizeof(MENUBARINFO);
         GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
 
-        RECT rcWindow{};
-        ::GetWindowRect(hWnd, &rcWindow);
+        const CRect rcWindow(hWnd);
 
         // the rcBar is offset by the window rect
         OffsetRect(&mbi.rcBar, -rcWindow.left, -rcWindow.top);
         mbi.rcBar.top -= 1;
 
-        CDC::FromHandle(pUDM->hdc)->FillSolidRect(&mbi.rcBar, WdsSysColor(COLOR_MENUBAR));
+        auto dc = CDC::Borrow(pUDM->hdc);
+        dc.FillSolidRect(&mbi.rcBar, SystemColor(COLOR_MENUBAR));
     }
     else if (message == WM_UAHDRAWMENUITEM)
     {
@@ -289,18 +266,16 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         std::array<WCHAR, 256> menuString = { L'\0' };
         MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,
             .dwTypeData = menuString.data(), .cch = static_cast<UINT>(menuString.size() - 1) };
-        GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->iPosition, TRUE, &mii);
+        GetMenuItemInfoW(pUDMI->um.hmenu, pUDMI->iPosition, true, &mii);
 
         // Use structured bindings and lambda for state determination
         auto [txtId, bgId] = [&]() -> std::pair<int, int>
         {
-            const auto itemState = pUDMI->dis.itemState;
-
-            if (itemState & ODS_SELECTED)
+            if (const auto itemState = pUDMI->dis.itemState; itemState & ODS_SELECTED)
                 return { MBI_PUSHED, MBI_PUSHED };
-            if (itemState & ODS_HOTLIGHT)
+            else if (itemState & ODS_HOTLIGHT)
                 return { (itemState & ODS_INACTIVE) ? MBI_DISABLEDHOT : MBI_HOT, MBI_HOT };
-            if (itemState & (ODS_GRAYED | ODS_DISABLED | ODS_INACTIVE))
+            else if (itemState & (ODS_GRAYED | ODS_DISABLED | ODS_INACTIVE))
                 return { MBI_DISABLED, MBI_DISABLED };
 
             return { MBI_NORMAL, MBI_NORMAL };
@@ -313,14 +288,15 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         }
 
         const COLORREF bgColor =
-            (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? WdsSysColor(COLOR_MENU) :
-            (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? WdsSysColor(COLOR_MENU) : WdsSysColor(COLOR_MENUBAR);
+            (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? SystemColor(COLOR_MENU) :
+            (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? SystemColor(COLOR_MENU) : SystemColor(COLOR_MENUBAR);
 
-        CDC::FromHandle(pUDMI->um.hdc)->FillSolidRect(&pUDMI->dis.rcItem, bgColor);
+        auto dc = CDC::Borrow(pUDMI->um.hdc);
+        dc.FillSolidRect(&pUDMI->dis.rcItem, bgColor);
 
         const COLORREF textColor =
             (txtId == MBI_DISABLED || txtId == MBI_DISABLEDHOT || txtId == MBI_DISABLEDPUSHED) ?
-            WdsSysColor(COLOR_GRAYTEXT) : WdsSysColor(COLOR_BTNTEXT);
+            SystemColor(COLOR_GRAYTEXT) : SystemColor(COLOR_BTNTEXT);
 
         DTTOPTS dttopts{ .dwSize = sizeof(DTTOPTS) };
         dttopts.dwFlags = DTT_TEXTCOLOR;
@@ -337,19 +313,26 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
 void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
 {
     if (!s_darkModeEnabled) return;
-    BITMAP bm;
-    pBitmap->GetBitmap(&bm);
-    CDC memDC;
-    memDC.CreateCompatibleDC(nullptr);
-    CSelectObject sobmp(&memDC, pBitmap);
+    const auto bitmapInfo = pBitmap->Info();
+    if (!bitmapInfo) return;
+    const BITMAP& bm = *bitmapInfo;
+    if (bm.bmWidth <= 0 || bm.bmHeight <= 0) return;
+
+    const auto width = static_cast<std::size_t>(bm.bmWidth);
+    const auto height = static_cast<std::size_t>(bm.bmHeight);
+    if (width > (std::numeric_limits<std::size_t>::max)() / height / 4) return;
+
+    const std::size_t byteCount = width * height * 4;
+    CDC memDC(nullptr);
+    GdiObjectSelection sobmp(&memDC, pBitmap);
     BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
-    const auto pixels = std::make_unique_for_overwrite<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
+    const auto pixels = std::make_unique_for_overwrite<BYTE[]>(byteCount);
     if (!GetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
 
     if (invert)
     {
         // Invert all color channels (BGR)
-        for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
+        for (std::size_t i = 0; i < byteCount; i += 4)
             std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
                 pixels.get() + i, [](const BYTE b) { return static_cast<BYTE>(255 - b); });
     }
@@ -361,7 +344,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
             [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
 
         // Apply to all color channels (BGR)
-        for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
+        for (std::size_t i = 0; i < byteCount; i += 4)
             std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
                 pixels.get() + i, [&lut](const BYTE b) { return lut[b]; });
     }
@@ -379,77 +362,9 @@ void DarkMode::DrawFocusRect(CDC* pdc, const CRect& rc)
 
     // In dark mode, draw a dotted rectangle with a visible light color
     // Standard DrawFocusRect uses XOR which is nearly invisible on dark backgrounds
-    CPen pen(PS_DOT, 1, RGB(120, 120, 120));
-    CSelectObject sopen(pdc, &pen);
-    CSelectStockObject sobrush(pdc, NULL_BRUSH);
-    CSetBkMode sbm(pdc, TRANSPARENT);
+    const CPen pen(PS_DOT, 1, RGB(120, 120, 120));
+    GdiObjectSelection sopen(pdc, &pen);
+    StockObjectSelection sobrush(pdc, NULL_BRUSH);
+    ScopedBkMode sbm(pdc, TRANSPARENT);
     pdc->Rectangle(rc);
-}
-
-// Implement runtime class information for CDarkModeVisualManager
-IMPLEMENT_DYNCREATE(CDarkModeVisualManager, CMFCVisualManagerWindows)
-
-void CDarkModeVisualManager::GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd,
-    COLORREF& clrDark, COLORREF& clrBlack, COLORREF& clrHighlight, COLORREF& clrFace,
-    COLORREF& clrDarkShadow, COLORREF& clrLight, CBrush*& pbrFace, CBrush*& pbrBlack)
-{
-    CMFCVisualManagerWindows::GetTabFrameColors(pTabWnd, clrDark, clrBlack,
-        clrHighlight, clrFace, clrDarkShadow, clrLight, pbrFace, pbrBlack);
-
-    clrBlack = DarkMode::WdsSysColor(COLOR_BTNHILIGHT); // Flat Style - Tab Border
-    clrFace = DarkMode::WdsSysColor(COLOR_WINDOW); // Flat Style Tab Border Sides
-    clrHighlight = DarkMode::WdsSysColor(COLOR_WINDOW); // Flat Style Tab Border Top
-
-    static CBrush brFaceDark(clrFace); // Flat Style - Tab No Focus Background
-    static CBrush brBlackDark(COLORREF{ 0 }); // Flat Style - Tab Control Border
-
-    pbrFace = &brFaceDark;
-    pbrBlack = &brBlackDark;
-}
-
-void CDarkModeVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rectClient, CRect rectClip, BOOL bNCArea)
-{
-    UNREFERENCED_PARAMETER(pBar);
-    UNREFERENCED_PARAMETER(bNCArea);
-    UNREFERENCED_PARAMETER(rectClip);
-
-    pDC->FillSolidRect(rectClient, DarkMode::WdsSysColor(COLOR_MENUBAR));
-}
-
-void CDarkModeVisualManager::OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz)
-{
-    UNREFERENCED_PARAMETER(pBar);
-
-    const COLORREF clrSeparator = DarkMode::WdsSysColor(COLOR_3DHIGHLIGHT);
-    if (bIsHoriz)
-    {
-        const int x = rect.left + rect.Width() / 2;
-        pDC->FillSolidRect(x, rect.top + 2, 1, rect.Height() - 4, clrSeparator);
-    }
-    else
-    {
-        const int y = rect.top + rect.Height() / 2;
-        pDC->FillSolidRect(rect.left + 2, y, rect.Width() - 4, 1, clrSeparator);
-    }
-}
-
-void CDarkModeVisualManager::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle)
-{
-    UNREFERENCED_PARAMETER(pBar);
-    UNREFERENCED_PARAMETER(uiID);
-    UNREFERENCED_PARAMETER(nStyle);
-
-    pDC->FillSolidRect(rectPane.left, rectPane.top, rectPane.Width(), 1, DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
-    pDC->FillSolidRect(rectPane.right - 1, rectPane.top, 1, rectPane.Height(), DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
-}
-
-void CDarkModeVisualManager::OnFillSplitterBackground(CDC* pDC, CSplitterWndEx* /*pSplitterWnd*/, CRect rect)
-{
-    pDC->FillSolidRect(rect, DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
-}
-
-void CDarkModeVisualManager::OnUpdateSystemColors()
-{
-    CMFCVisualManagerWindows::OnUpdateSystemColors();
-    DarkMode::SetupGlobalColors();
 }

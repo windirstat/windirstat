@@ -49,7 +49,7 @@ static constexpr bool IsDriveAdministrativeSharePath(std::wstring_view path) noe
     return (drive >= L'A' && drive <= L'Z' || drive >= L'a' && drive <= L'z') && path.back() == L'$';
 }
 
-static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void CloseBCryptAlgHandle(const BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
 static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 #pragma comment(lib, "crypt32.lib")
@@ -92,25 +92,25 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     if (showReadJobs)
     {
         constexpr SIZE sizeDeflatePacman = { 1, 2 };
-        rc.DeflateRect(sizeDeflatePacman);
+        rc.Deflate(sizeDeflatePacman);
         DrawPacman(pdc, rc);
     }
     else
     {
-        rc.DeflateRect(2, 4);
-        rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
+        rc.Deflate(2, 4);
+        rc.left += GetIndent() * ScaleForDpi(COptions::SizeProportionIndent);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
-        const auto blendColor = [](COLORREF from, COLORREF to, double amount) {
-            const auto ch = [amount](BYTE a, BYTE b) {
+        const auto blendColor = [](const COLORREF from, const COLORREF to, double amount) {
+            const auto ch = [amount](const BYTE a, const BYTE b) {
                 return static_cast<BYTE>(std::lround(a + (b - a) * std::clamp(amount, 0.0, 1.0)));
             };
             return RGB(ch(GetRValue(from), GetRValue(to)), ch(GetGValue(from), GetGValue(to)), ch(GetBValue(from), GetBValue(to)));
         };
         // Blend toward white in dark mode, toward black in light mode
-        const auto blendDark = [&](COLORREF c, double d, double l) {
+        const auto blendDark = [&](const COLORREF c, const double d, const double l) {
             return dark ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
         };
 
@@ -127,21 +127,21 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
         const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
 
-        const auto drawRoundRect = [&](CRect r, COLORREF fill, COLORREF border) {
+        const auto drawRoundRect = [&](CRect r, const COLORREF fill, const COLORREF border) {
             pdc->SetDCBrushColor(fill);
             pdc->SetDCPenColor(border);
-            CSelectStockObject sb(pdc, DC_BRUSH);
-            CSelectStockObject sp(pdc, DC_PEN);
+            StockObjectSelection sb(pdc, DC_BRUSH);
+            StockObjectSelection sp(pdc, DC_PEN);
             pdc->RoundRect(r, CPoint(3, 3));
         };
 
         // Draw the track background and border
         drawRoundRect(rc, trackFill, trackBorder);
-        rc.DeflateRect(1, 1);
+        rc.Deflate(1, 1);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         // Maps a [0,1] fraction to an x-coordinate within rc
-        const auto fractionX = [&rc](double f) {
+        const auto fractionX = [&rc](const double f) {
             return rc.left + static_cast<int>(std::lround(rc.Width() * std::clamp(f, 0.0, 1.0)));
         };
 
@@ -161,7 +161,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         // Draw the absolute bar inset vertically within the subtree bar
         CRect rcAbsolute = rc;
         rcAbsolute.right = fractionX(std::min(subtreeFraction, absoluteFraction));
-        rcAbsolute.DeflateRect(0, 2);
+        rcAbsolute.Deflate(0, 2);
         if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
         {
             drawRoundRect(rcAbsolute, absoluteFill, absoluteFill);
@@ -259,7 +259,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         break;
 
-    default: ASSERT(FALSE);
+    default: assert(false);
     }
 
     return {};
@@ -309,14 +309,8 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
     case COL_SIZE_PROPORTION:
     {
-        if (MustShowReadJobs())
-        {
-            return usignum(GetReadJobs(), other->GetReadJobs());
-        }
-        else
-        {
-            return signum(GetFraction() - other->GetFraction());
-        }
+        return MustShowReadJobs() ? usignum(GetReadJobs(), other->GetReadJobs()) :
+            signum(GetFraction() - other->GetFraction());
     }
 
     case COL_PERCENTAGE:
@@ -383,7 +377,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
 HICON CItem::GetIcon()
 {
-    ASSERT(IsVisible());
+    assert(IsVisible());
 
     // Return cached icon if available
     if (m_visualInfo->icon != nullptr)
@@ -396,33 +390,27 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetMyComputerImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_FREESPACE))
-    {
+    if (IsTypeOrFlag(IT_FREESPACE))    {
         m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_UNKNOWN))
-    {
+    if (IsTypeOrFlag(IT_UNKNOWN))    {
         m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
-    {
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))    {
         m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_MOUNT))
-    {
+    if (IsTypeOrFlag(ITRP_MOUNT))    {
         m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_SYMLINK))
-    {
+    if (IsTypeOrFlag(ITRP_SYMLINK))    {
         m_visualInfo->icon = GetIconHandler()->GetSymbolicLinkImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_JUNCTION))
-    {
+    if (IsTypeOrFlag(ITRP_JUNCTION))    {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
         m_visualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
@@ -441,12 +429,12 @@ void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
     if (!IsRootItem() && this == CWinDirStatModel::Get()->GetZoomItem())
     {
         CRect rc = rcLabel;
-        rc.InflateRect(1, 0);
+        rc.Inflate(1, 0);
         rc.bottom++;
 
-        CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
-        CSelectObject sopen(pdc, &pen);
+        StockObjectSelection sobrush(pdc, NULL_BRUSH);
+        const CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
+        GdiObjectSelection sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
     }
@@ -515,7 +503,7 @@ std::vector<CItem*> CItem::GetDriveItems() const
     {
         for (const auto& child : root->GetChildren())
         {
-            ASSERT(child->IsTypeOrFlag(IT_DRIVE));
+            assert(child->IsTypeOrFlag(IT_DRIVE));
             drives.push_back(child);
         }
     }
@@ -553,7 +541,7 @@ ULONGLONG CItem::GetProgressRange() const
         return 0;
     }
 
-    ASSERT(FALSE);
+    assert(false);
     return 0;
 }
 
@@ -609,7 +597,7 @@ CItem* CItem::FindRecyclerItem() const
 
 void CItem::CreateFreeSpaceItem()
 {
-    ASSERT(SupportsSpaceItems());
+    assert(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -661,12 +649,12 @@ void CItem::UpdateFreeSpaceItem()
             freeSpaceItem->UpwardAddSizePhysical(free);
         }
     }
-    else ASSERT(FALSE);
+    else assert(false);
 }
 
 void CItem::RemoveFreeSpaceItem()
 {
-    ASSERT(SupportsSpaceItems());
+    assert(SupportsSpaceItems());
 
     if (const auto freespace = FindFreeSpaceItem(); freespace != nullptr)
     {
@@ -678,7 +666,7 @@ void CItem::RemoveFreeSpaceItem()
 
 void CItem::CreateUnknownItem()
 {
-    ASSERT(SupportsSpaceItems());
+    assert(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -698,7 +686,7 @@ CItem* CItem::FindUnknownItem() const
 
 void CItem::UpdateUnknownItem() const
 {
-    ASSERT(SupportsSpaceItems());
+    assert(SupportsSpaceItems());
 
     CItem* unknown = FindUnknownItem();
     if (unknown == nullptr)
@@ -719,7 +707,7 @@ void CItem::UpdateUnknownItem() const
 
 void CItem::RemoveUnknownItem()
 {
-    ASSERT(SupportsSpaceItems());
+    assert(SupportsSpaceItems());
 
     if (const auto unknown = FindUnknownItem(); unknown != nullptr)
     {
@@ -729,7 +717,7 @@ void CItem::RemoveUnknownItem()
     }
 }
 
-void CItem::UpwardDrivePacman()
+void CItem::UpwardDrivePacman() const
 {
     if (!COptions::PacmanAnimation)
     {
@@ -748,7 +736,7 @@ void CItem::UpwardDrivePacman()
 
 void CItem::CreateHardlinksItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(IsTypeOrFlag(IT_DRIVE));
 
     const auto hardlinks = new CItem(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
 
@@ -808,7 +796,7 @@ CItem* CItem::FindHardlinksIndexItem() const
 
 void CItem::RemoveHardlinksItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(IsTypeOrFlag(IT_DRIVE));
 
     if (const auto hardlinks = FindHardlinksItem(); hardlinks != nullptr)
     {
@@ -991,7 +979,7 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
     return results;
 }
 
-std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
+std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
@@ -1002,7 +990,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
     thread_local SmartPointer hashAlgHandle(CloseBCryptAlgHandle, BCRYPT_ALG_HANDLE{});
     thread_local SmartPointer hashHandle(BCryptDestroyHash, BCRYPT_HASH_HANDLE{});
-    thread_local SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHasher(FreeXxHashState, nullptr);
+    thread_local SmartPointer<XXH3_state_t*> xxHasher(FreeXxHashState, nullptr);
 
     if (useXxHash)
     {
@@ -1109,7 +1097,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
-    ASSERT(IsTypeOrFlag(IT_MYCOMPUTER));
+    assert(IsTypeOrFlag(IT_MYCOMPUTER));
 
     ULONGLONG range = 0;
     for (const auto& child : GetChildren())

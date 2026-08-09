@@ -85,13 +85,12 @@ CItem::~CItem()
         std::vector<CItem*> queue = std::move(m_folderInfo->m_children);
         while (!queue.empty())
         {
-            CItem* current = queue.back();
+            const CItem* current = queue.back();
             queue.pop_back();
 
             if (current->m_folderInfo != nullptr)
             {
-                auto& children = current->m_folderInfo->m_children;
-                if (!children.empty())
+                if (auto& children = current->m_folderInfo->m_children; !children.empty())
                 {
                     queue.insert(queue.end(), children.begin(), children.end());
                     children.clear();
@@ -106,7 +105,7 @@ CItem::~CItem()
 
 const std::vector<CItem*>& CItem::GetChildren() const noexcept
 {
-    ASSERT(m_folderInfo != nullptr);
+    assert(m_folderInfo != nullptr);
     return m_folderInfo->m_children;
 }
 
@@ -159,7 +158,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     else m_folderInfo->m_children.push_back(child);
 }
 
-void CItem::RemoveChild(CItem* child)
+void CItem::RemoveChild(CItem* child) const
 {
     if (IsVisible())
     {
@@ -179,9 +178,7 @@ void CItem::RemoveChild(CItem* child)
     if (COptions::ProcessHardlinks && child->IsTypeOrFlag(ITF_HARDLINK) && child->GetIndex() > 0)
     {
         // Find remaining items with the same index
-        const auto sameIndexItems = child->FindItemsBySameIndex();
-
-        if (sameIndexItems.size() == 1)
+        if (const auto sameIndexItems = child->FindItemsBySameIndex(); sameIndexItems.size() == 1)
         {
             // Only one remaining item - it's no longer a hardlink
             CItem* remainingItem = sameIndexItems[0];
@@ -218,7 +215,7 @@ void CItem::RemoveChild(CItem* child)
                 for (const auto* indexSet : hardlinksItem->GetChildren())
                 {
                     if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
-                    for (auto* indexFolder : indexSet->GetChildren())
+                    for (const auto* indexFolder : indexSet->GetChildren())
                     {
                         if (indexFolder->IsTypeOrFlag(IT_HLINKS_IDX) && indexFolder->GetIndex() == child->GetIndex())
                         {
@@ -242,7 +239,7 @@ void CItem::RemoveChild(CItem* child)
     delete child;
 }
 
-void CItem::RemoveAllChildren()
+void CItem::RemoveAllChildren() const
 {
     if (IsRootItem())
     {
@@ -341,7 +338,7 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes) noexcept
 
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(bytes <= p->m_sizePhysical);
+        assert(bytes <= p->m_sizePhysical);
         p->m_sizePhysical -= bytes;
         if (p->IsTypeOrFlag(ITF_HARDLINK)) break;
     }
@@ -361,12 +358,12 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes) noexcept
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(bytes <= p->m_sizeLogical);
+        assert(bytes <= p->m_sizeLogical);
         p->m_sizeLogical -= bytes;
     }
 }
 
-void CItem::UpwardAddFolders(const ULONG dirCount) noexcept
+void CItem::UpwardAddFolders(const ULONG dirCount) const noexcept
 {
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -376,18 +373,18 @@ void CItem::UpwardAddFolders(const ULONG dirCount) noexcept
     }
 }
 
-void CItem::UpwardSubtractFolders(const ULONG dirCount) noexcept
+void CItem::UpwardSubtractFolders(const ULONG dirCount) const noexcept
 {
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_folderInfo->m_subdirs >= dirCount);
+        assert(p->m_folderInfo->m_subdirs >= dirCount);
         if (p->IsTypeOrFlag(IT_FILE)) continue;
         p->m_folderInfo->m_subdirs -= dirCount;
     }
 }
 
-void CItem::UpwardAddFiles(const ULONG fileCount) noexcept
+void CItem::UpwardAddFiles(const ULONG fileCount) const noexcept
 {
     if (fileCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -397,13 +394,13 @@ void CItem::UpwardAddFiles(const ULONG fileCount) noexcept
     }
 }
 
-void CItem::UpwardSubtractFiles(const ULONG fileCount) noexcept
+void CItem::UpwardSubtractFiles(const ULONG fileCount) const noexcept
 {
     if (fileCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        ASSERT(p->m_folderInfo->m_files >= fileCount);
+        assert(p->m_folderInfo->m_files >= fileCount);
         p->m_folderInfo->m_files -= fileCount;
     }
 }
@@ -597,7 +594,7 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (t > p->m_lastChange) p->m_lastChange = t;
+        p->m_lastChange = std::max(p->m_lastChange, t);
     }
 }
 
@@ -725,16 +722,16 @@ int CItem::ComparePath(const CItem* other) const
     const CItem* right = rightPath[rightIdx - 1];
     auto getSlice = [](const CItem* item)
     {
-        auto view = item->GetNameView();
+        const auto view = item->GetNameView();
         if (item->IsTypeOrFlag(IT_DRIVE)) return view.substr(0, 2);
         return view;
     };
 
-    auto leftView = getSlice(left);
-    auto rightView = getSlice(right);
+    const auto leftView = getSlice(left);
+    const auto rightView = getSlice(right);
 
     const size_t minLen = (std::min)(leftView.size(), rightView.size());
-    if (int cmp = _wcsnicmp(leftView.data(), rightView.data(), minLen))
+    if (const int cmp = _wcsnicmp(leftView.data(), rightView.data(), minLen))
     {
         return (cmp > 0) - (cmp < 0);
     }
@@ -753,7 +750,7 @@ std::wstring CItem::GetFolderPath() const
     if (IsTypeOrFlag(IT_FILE))
     {
         const auto i = path.find_last_of(wds::chrBackslash);
-        ASSERT(i != std::wstring::npos);
+        assert(i != std::wstring::npos);
         path = path.substr(0, i + 1);
     }
 
@@ -891,7 +888,7 @@ ULONG CItem::GetReadJobs() const noexcept
     return m_folderInfo->m_jobs;
 }
 
-void CItem::UpwardAddReadJobs(const ULONG count) noexcept
+void CItem::UpwardAddReadJobs(const ULONG count) const noexcept
 {
     if (IsLeaf() || count == 0) return;
     if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = GetScanTickCount();
@@ -942,7 +939,7 @@ void CItem::SuspendScanClock() noexcept
     if ((state & SCAN_CLOCK_SUSPENDED) != 0) return;
 
     const ULONGLONG activeMilliseconds = GetTickCount64() - state;
-    ASSERT((activeMilliseconds & SCAN_CLOCK_SUSPENDED) == 0);
+    assert((activeMilliseconds & SCAN_CLOCK_SUSPENDED) == 0);
     scanClockState.store(SCAN_CLOCK_SUSPENDED | activeMilliseconds, std::memory_order_relaxed);
 }
 
@@ -1045,7 +1042,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             Finder* finder = contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
                 reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
 
-            for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
+            for (bool b = finder->FindFile(item); b; b = finder->FindNext())
             {
                 if (finder->IsDirectory())
                 {
@@ -1108,7 +1105,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 void CItem::ScanItemsFinalize(CItem* item)
 {
     if (item == nullptr) return;
-    std::vector<CItem*> queue({item});
+    std::vector queue({item});
     while (!queue.empty()) [[msvc::forceinline_calls]]
     {
         const auto & qitem = queue.back();

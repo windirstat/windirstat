@@ -26,106 +26,42 @@
 #include "FileTreeControl.h"
 #include "ControlView.h"
 
-class CFileTreeView final : public CControlView
+class CFileTreeView final : public CControlViewT<CFileTreeControl>
 {
 public:
-    void RefreshPercentages() { m_control.Invalidate(); }
-
-protected:
-
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    DECLARE_DYNCREATE(CFileTreeView)
-    CFileTreeView() = default;
-    ~CFileTreeView() override = default;
-
+    void RefreshPercentages() { GetControl().Invalidate(); }
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
-    CFileTreeControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+protected:
+    void InitializeColumns() override;
 };
 
-class CFileWatcherView final : public CControlView
+class CFileWatcherView final : public CControlViewT<CFileWatcherControl, LVS_SINGLESEL>
 {
 protected:
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    DECLARE_DYNCREATE(CFileWatcherView)
-    CFileWatcherView() = default;
-    ~CFileWatcherView() override = default;
-
-    CFileWatcherControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void InitializeColumns() override;
 };
 
-class CFilePermsView final : public CControlView
+class CFilePermsView final : public CControlViewT<CFilePermsControl>
 {
 protected:
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    DECLARE_DYNCREATE(CFilePermsView)
-    CFilePermsView() = default;
-    ~CFilePermsView() override = default;
-
-    CFilePermsControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void InitializeColumns() override;
 };
 
-class CFileTopView final : public CControlView
+class CFileTopView final : public CControlViewT<CFileTopControl>
 {
 protected:
-    DECLARE_DYNCREATE(CFileTopView)
-    CFileTopView() = default;
-    ~CFileTopView() override = default;
-
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    CFileTopControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void InitializeColumns() override;
 };
 
-class CFileDupeView final : public CControlView
+class CFileDupeView final : public CControlViewT<CFileDupeControl>
 {
 protected:
-
-    DECLARE_DYNCREATE(CFileDupeView)
-    CFileDupeView() = default;
-    ~CFileDupeView() override = default;
-
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    CFileDupeControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void InitializeColumns() override;
 };
 
-class CFileSearchView final : public CControlView
+class CFileSearchView final : public CControlViewT<CFileSearchControl>
 {
 protected:
-
-    DECLARE_DYNCREATE(CFileSearchView)
-    CFileSearchView() = default;
-    ~CFileSearchView() override = default;
-
-    CTreeListControl& GetControl() override { return m_control; }
-    const CTreeListControl& GetControl() const override { return m_control; }
-
-    CFileSearchControl m_control;
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void InitializeColumns() override;
 };

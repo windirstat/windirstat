@@ -22,7 +22,6 @@
 class DarkMode final
 {
 public:
-
     // window messages related to menu bar drawing
     static constexpr auto WM_UAHDRAWMENU = 0x0091;
     static constexpr auto WM_UAHDRAWMENUITEM = 0x0092;
@@ -30,7 +29,7 @@ public:
     // Check if dark mode is supported on this system
     static bool IsDarkModeActive() noexcept { return s_darkModeEnabled; }
     static bool EnhancedDarkModeSupport();
-    static COLORREF WdsSysColor(DWORD index);
+    static COLORREF SystemColor(DWORD index);
 
     // Menu rendering functions
     static void DrawMenuClientArea(CWnd& wnd);
@@ -43,7 +42,6 @@ public:
     static void AdjustControls(HWND hWnd);
     static HBRUSH OnCtlColor(CDC* pDC, UINT nCtlColor);
     static void SetAppDarkMode() noexcept;
-    static void SetupGlobalColors() noexcept;
     static void LightenBitmap(CBitmap* pBitmap, bool invert = false);
     static void DrawFocusRect(CDC* pdc, const CRect& rc);
 
@@ -54,50 +52,11 @@ private:
 //
 // CTabCtrlHelper. Used to set up tab control properties.
 //
-class CTabCtrlHelper final : public CMFCTabCtrl
+class CTabCtrlHelper final
 {
 public:
-    static void SetupTabControl(CMFCTabCtrl& tab, Style lightStyle = STYLE_3D_VS2005)
+    static void SetupTabControl(CTabControl& tab)
     {
-        auto& helper = reinterpret_cast<CTabCtrlHelper&>(tab);
-
-        helper.ModifyTabStyle(DarkMode::IsDarkModeActive() ? STYLE_FLAT : lightStyle);
-        helper.EnableTabSwap(FALSE);
-        helper.SetDrawFrame(TRUE);
-        helper.SetScrollButtons();
-        helper.SetActiveTabBoldFont();
-
-        // Forcibly hide scroll controls
-        for (auto* const btn : { &helper.m_btnScrollFirst, &helper.m_btnScrollLast, &helper.m_btnScrollLeft, &helper.m_btnScrollRight })
-        {
-            if (IsWindow(*btn)) btn->ShowWindow(SW_HIDE);
-        }
-        helper.m_bScroll = FALSE;
-
-        // Dark mode tabs have a black background so set text to be white
-        if (DarkMode::IsDarkModeActive())
-        {
-            helper.SetActiveTabColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-            helper.SetTabBorderSize(1);
-        }
+        tab.SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOWTEXT) : CLR_NONE);
     }
-};
-
-//
-// CDarkModeVisualManager. A visual manager tweak for dark mode support
-//
-class CDarkModeVisualManager final : public CMFCVisualManagerWindows
-{
-    DECLARE_DYNCREATE(CDarkModeVisualManager)
-
-protected:
-
-    void GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd,
-        COLORREF& clrDark, COLORREF& clrBlack, COLORREF& clrHighlight, COLORREF& clrFace,
-        COLORREF& clrDarkShadow, COLORREF& clrLight, CBrush*& pbrFace, CBrush*& pbrBlack) override;
-    void OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rectClient, CRect rectClip, BOOL bNCArea) override;
-    void OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz) override;
-    void OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle) override;
-    void OnFillSplitterBackground(CDC* pDC, CSplitterWndEx* pSplitterWnd, CRect rect) override;
-    void OnUpdateSystemColors() override;
 };

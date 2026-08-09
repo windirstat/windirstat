@@ -24,10 +24,9 @@ void COptions::SanitizeRect(RECT& rect)
     CRect rc(rect);
     constexpr int visible = 30;
 
-    rc.NormalizeRect();
+    rc.Normalize();
 
-    CRect rcDesktop;
-    CWnd::GetDesktopWindow()->GetWindowRect(rcDesktop);
+    const CRect rcDesktop(GetDesktopWindow());
 
     if (rc.Width() > rcDesktop.Width())
     {
@@ -40,20 +39,20 @@ void COptions::SanitizeRect(RECT& rect)
 
     if (rc.left < 0)
     {
-        rc.OffsetRect(-rc.left, 0);
+        rc.Offset(-rc.left, 0);
     }
     if (rc.left > rcDesktop.right - visible)
     {
-        rc.OffsetRect(-visible, 0);
+        rc.Offset(-visible, 0);
     }
 
     if (rc.top < 0)
     {
-        rc.OffsetRect(-rc.top, 0);
+        rc.Offset(-rc.top, 0);
     }
     if (rc.top > rcDesktop.bottom - visible)
     {
-        rc.OffsetRect(0, -visible);
+        rc.Offset(0, -visible);
     }
 
     rect = rc;

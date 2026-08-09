@@ -21,17 +21,8 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNCREATE(CExtensionView, CWinDirStatPane)
-
-BEGIN_MESSAGE_MAP(CExtensionView, CWinDirStatPane)
-    ON_WM_CREATE()
-    ON_WM_ERASEBKGND()
-    ON_WM_SIZE()
-    ON_WM_SETFOCUS()
-END_MESSAGE_MAP()
-
 CExtensionView::CExtensionView()
-    : m_extensionListControl(this) {};
+    : m_extensionListControl(this) {}
 
 void CExtensionView::SysColorChanged()
 {
@@ -89,7 +80,7 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
 
             // If there is no vertical scroll bar, the header control doesn't repaint
             // correctly. Don't know why. But this helps:
-            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(nullptr);
+            m_extensionListControl.Header().InvalidateRect(nullptr);
         }
         else
         {
@@ -111,7 +102,7 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
         {
             InvalidateRect(nullptr);
             m_extensionListControl.InvalidateRect(nullptr);
-            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(nullptr);
+            m_extensionListControl.Header().InvalidateRect(nullptr);
         }
         break;
 
@@ -150,14 +141,8 @@ void CExtensionView::SetSelection()
     }
 }
 
-void CExtensionView::OnDraw(CDC* pDC)
+void CExtensionView::OnSize(UINT /*nType*/, const int cx, const int cy)
 {
-    CWinDirStatPane::OnDraw(pDC);
-}
-
-void CExtensionView::OnSize(const UINT nType, const int cx, const int cy)
-{
-    CWinDirStatPane::OnSize(nType, cx, cy);
     if (IsWindow(m_extensionListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
@@ -170,7 +155,7 @@ void CExtensionView::OnSetFocus(CWnd* /*pOldWnd*/)
     m_extensionListControl.SetFocus();
 }
 
-BOOL CExtensionView::OnEraseBkgnd(CDC* /*pDC*/)
+bool CExtensionView::OnEraseBkgnd(CDC* /*pDC*/)
 {
-    return TRUE;
+    return true;
 }

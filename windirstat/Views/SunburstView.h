@@ -24,15 +24,12 @@
 // Drill-down view for the multi-layer Sunburst chart.
 class CSunburstView final : public CGraphView
 {
-protected:
-    DECLARE_DYNCREATE(CSunburstView)
-
 public:
     CSunburstView() = default;
     ~CSunburstView() override = default;
 
 protected:
-    [[nodiscard]] const wchar_t* GetWindowClassName() const override
+    const wchar_t* GetWindowClassName() const override
     {
         return L"WinDirStatSunburstClass";
     }
@@ -40,11 +37,11 @@ protected:
     void RenderVisualization(CDC* pDC, CRect rect) override;
     void DrawHighlightExtension(CDC* pDC) override;
     void DrawSelection(CDC* pDC) override;
-    [[nodiscard]] CItem* FindItemAtPoint(CPoint point) override;
+    CItem* FindItemAtPoint(CPoint point) override;
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;
     bool UpdateHoverDetails(const CItem* item, bool itemChanged) override;
-    [[nodiscard]] bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
+    bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
     CSunburst m_sunburst;
@@ -58,5 +55,4 @@ protected:
 
     void ClearExtensionHighlightCache();
 
-    DECLARE_MESSAGE_MAP()
 };

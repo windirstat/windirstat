@@ -21,23 +21,20 @@
 #include "GraphView.h"
 
 // Stable splitter pane that owns the renderer-specific visualization windows.
-class CVisualizationPane final : public CWinDirStatPane
+class CVisualizationPane final : public MessageTarget<CVisualizationPane, CWinDirStatPane>
 {
-protected:
-    DECLARE_DYNCREATE(CVisualizationPane)
-
+public:
     CVisualizationPane() = default;
     ~CVisualizationPane() override = default;
 
-    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    bool PreCreateWindow(CREATESTRUCT& cs) override;
     void OnDraw(CDC* pDC) override;
 
-public:
-    [[nodiscard]] GraphPane GetActivePaneType() const { return m_activePane; }
+GraphPane GetActivePaneType() const { return m_activePane; }
     void SelectPane(GraphPane pane);
     void ShowVisualization(bool show);
-    [[nodiscard]] bool IsVisualizationShown() const { return m_showVisualization; }
-    [[nodiscard]] CGraphView* GetActiveView() const;
+    bool IsVisualizationShown() const { return m_showVisualization; }
+    CGraphView* GetActiveView() const;
 
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     HoverInfo GetHoverInfo() const override;
@@ -49,8 +46,23 @@ protected:
     bool m_showVisualization = true;
     unsigned int m_drawingSuspensionCount = 0;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnSize(UINT nType, int cx, int cy);
 };
+
+inline std::span<const RouteEntry> CVisualizationPane::Routes()
+{
+    using ThisClass = CVisualizationPane;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+    };
+    return entries;
+}

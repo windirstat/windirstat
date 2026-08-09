@@ -18,30 +18,27 @@
 #include "pch.h"
 #include "ControlView.h"
 
-IMPLEMENT_DYNAMIC(CControlView, CWinDirStatPane)
+int CControlView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
+{
+    if (CWinDirStatPane::OnCreate(lpCreateStruct) == -1) return -1;
 
-BEGIN_MESSAGE_MAP(CControlView, CWinDirStatPane)
-    ON_WM_INITMENUPOPUP()
-    ON_WM_SIZE()
-    ON_WM_ERASEBKGND()
-    ON_WM_SETFOCUS()
-    ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemChanged)
-    ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
-    ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
-END_MESSAGE_MAP()
+    constexpr RECT rect = { 0, 0, 0, 0 };
+    auto& control = GetControl();
+    control.CreateExtended(LVS_EX_HEADERDRAGDROP, GetControlStyle(), rect, this, ID_WDS_CONTROL);
+    control.ShowGrid(COptions::ListGrid);
+    control.ShowStripes(COptions::ListStripes);
+    control.ShowFullRowSelection(COptions::ListFullRowSelection);
+    InitializeColumns();
+    return 0;
+}
 
 int CControlView::InsertCol(const std::wstring_view& colName, const int nFormat, const int nWidth, const int nSubItem)
 {
-    return GetControl().InsertColumn(CHAR_MAX, Localization::Lookup(colName).c_str(), nFormat, DpiRest(nWidth), nSubItem);
+    return GetControl().InsertColumn(CHAR_MAX, Localization::Lookup(colName).c_str(), nFormat, ScaleForDpi(nWidth), nSubItem);
 }
 
-void CControlView::OnDraw(CDC*)
+void CControlView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
-}
-
-void CControlView::OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item)
-{
-    ASSERT(AfxGetThread() != nullptr);
 
     auto& control = GetControl();
 
@@ -85,9 +82,8 @@ void CControlView::SysColorChanged()
     GetControl().SysColorChanged();
 }
 
-void CControlView::OnSize(UINT nType, int cx, int cy)
+void CControlView::OnSize(UINT /*nType*/, const int cx, const int cy)
 {
-    CWinDirStatPane::OnSize(nType, cx, cy);
     if (IsWindow(GetControl().m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
@@ -95,9 +91,9 @@ void CControlView::OnSize(UINT nType, int cx, int cy)
     }
 }
 
-BOOL CControlView::OnEraseBkgnd(CDC* /*pDC*/)
+bool CControlView::OnEraseBkgnd(CDC* /*pDC*/)
 {
-    return TRUE;
+    return true;
 }
 
 void CControlView::OnSetFocus(CWnd* /*pOldWnd*/)
@@ -117,7 +113,7 @@ void CControlView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
     // Defer selection processing for very large selections
     GetControl().PostSelectionChanged();
 
-    *pResult = FALSE;
+    *pResult = false;
 }
 
 void CControlView::OnUpdatePopupToggle(CCmdUI* pCmdUI)

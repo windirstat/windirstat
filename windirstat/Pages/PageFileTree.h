@@ -24,24 +24,20 @@
 //
 // CPageFileTree. "Settings" property page "Folder List".
 //
-class CPageFileTree final : public COptionsPage
+class CPageFileTree final : public MessageTarget<CPageFileTree, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageFileTree)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_TREELIST };
 
     CPageFileTree();
     ~CPageFileTree() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
     void InitializePage() override;
     void OnOK() override;
     void EnableButtons();
 
-    BOOL m_pacmanAnimation = FALSE;
-    BOOL m_showTimeSpent = FALSE;
-    inline static constexpr std::array<std::pair<UINT, int>, 9> c_columns = {{
+    static constexpr std::array<std::pair<UINT, int>, 9> c_columns = {{
         { IDC_TREECOL_FOLDERS, COL_FOLDERS },
         { IDC_TREECOL_ITEMS, COL_ITEMS },
         { IDC_TREECOL_FILES, COL_FILES },
@@ -52,7 +48,6 @@ protected:
         { IDC_TREECOL_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
         { IDC_TREECOL_SIZE_LOGICAL, COL_SIZE_LOGICAL },
     }};
-    std::array<BOOL, c_columns.size()> m_showColumns{};
 
     int m_fileTreeColorCount = TREELISTCOLORCOUNT;
     COLORREF m_fileTreeColor[TREELISTCOLORCOUNT] = {};
@@ -60,6 +55,31 @@ protected:
     CColorButton m_colorButton[TREELISTCOLORCOUNT];
     CSliderCtrl m_slider;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
 };
+
+inline std::span<const RouteEntry> CPageFileTree::Routes()
+{
+    using ThisClass = CPageFileTree;
+    static constexpr std::array entries
+    {
+        Route::Notify<&ThisClass::OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7),
+        Route::Window<&ThisClass::OnVScroll>(WM_VSCROLL),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_PACMANANIMATION),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_SHOWTIMESPENT),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FOLDERS),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ITEMS),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FILES),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ATTRIBUTES),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_LAST_CHANGE),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_OWNER),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_PERCENTAGE),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_LOGICAL),
+        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_PHYSICAL),
+    };
+    return entries;
+}

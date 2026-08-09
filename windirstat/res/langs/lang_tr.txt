@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Dizin İstatistikleri\n\n"Tüm disk alanınızın nereye gittiğini gösterir\nve yer açmanıza yardımcı olur."\n\nMicrosoft Windows için geliştirildi:\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nStefan Hundhammer'ın KDE (Linux) uygulaması KDirStat'ı baz alır\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat ana sayfası {}/\n\nTelif Hakkı © WinDirStat Ekibi
 IDS_ABOUT_ABOUT=Hakkında
 IDS_ABOUT_LICENSE=Lisans
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer'a, mükemmel Linux aracı KDirStat için.\nKDirStat'ın özelliklerini (2.3.7) kullanmak bana çok zaman kazandırdı.\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView yazarlarına, ağaç haritalarının ne kadar yararlı olabileceğini gösterdikleri için.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls ve Kees Huizing\nyastık ağaç haritaları ve kare ağaç haritaları hakkındaki makaleleri için.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman, ağaç haritaları konusundaki yaratıcı fikri için -\nağaç içeriklerini görselleştirmenin gerçekten sezgisel bir yolu.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer'a, mükemmel Linux aracı KDirStat için.\nKDirStat'ın özelliklerini kullanmak bana çok zaman kazandırdı.\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView yazarlarına, ağaç haritalarının ne kadar yararlı olabileceğini gösterdikleri için.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls ve Kees Huizing\nyastık ağaç haritaları ve kare ağaç haritaları hakkındaki makaleleri için.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman, ağaç haritaları konusundaki yaratıcı fikri için -\nağaç içeriklerini görselleştirmenin gerçekten sezgisel bir yolu.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Teşekkürler
 IDS_ABOUT_TITLE=WinDirStat Hakkında
 IDS_ADMIN=Yönetici
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Hızlandırılmış taramayı kullan
 IDS_FILE_FILTER=CSV/JSON Dosyaları
 IDS_FILE_SELECT=Bir Sürücü Koleksiyonunu açın.\nAç...
 IDS_FREESPACE_ITEM=<Boş Alan>
+IDS_GENERIC_APPLY=&Uygula
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&İptal
 IDS_GENERIC_DAYS=gün

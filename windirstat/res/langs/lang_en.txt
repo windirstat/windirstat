@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Directory Statistics\n\n"Shows where all your drive space has gone\nand helps you clean it up."\n\nProgrammed for Microsoft Windows by\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nBased on Stefan Hundhammer's KDE (Linux) application KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's home is {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=About
 IDS_ABOUT_LICENSE=License
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer for his superb Linux tool KDirStat.\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\nhttps://kdirstat.sourceforge.net/\n\nThe authors of SequoiaView for showing just how useful treemaps really can be.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\nfor their papers about cushion treemaps and squarified treemaps.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for his ingenious idea of treemaps -\na truly intuitive way of visualizing tree contents.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer for his superb Linux tool KDirStat.\nUsing KDirStat as a specification saved me a lot of time.\nhttps://kdirstat.sourceforge.net/\n\nThe authors of SequoiaView for showing just how useful treemaps really can be.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\nfor their papers about cushion treemaps and squarified treemaps.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for his ingenious idea of treemaps -\na truly intuitive way of visualizing tree contents.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Thanks To
 IDS_ABOUT_TITLE=About WinDirStat
 IDS_ADMIN=Administrator
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Use accelerated scanning
 IDS_FILE_FILTER=CSV/JSON Files
 IDS_FILE_SELECT=Open a Collection of Drives.\nOpen...
 IDS_FREESPACE_ITEM=<Free Space>
+IDS_GENERIC_APPLY=&Apply
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Cancel
 IDS_GENERIC_DAYS=days

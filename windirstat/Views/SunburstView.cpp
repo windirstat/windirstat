@@ -18,24 +18,17 @@
 #include "pch.h"
 #include "SunburstView.h"
 
-#include <numbers>
-
-IMPLEMENT_DYNCREATE(CSunburstView, CGraphView)
-
-BEGIN_MESSAGE_MAP(CSunburstView, CGraphView)
-END_MESSAGE_MAP()
-
-void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rc)
+void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
 {
-    const int margin = DpiRest(8, this);
+    const int margin = ScaleForDpi(8);
     const int radius = std::max(0,
-        std::min(rc.Width(), rc.Height()) / 2 - margin);
-    if (radius < DpiRest(8, this)) return;
+        std::min(rect.Width(), rect.Height()) / 2 - margin);
+    if (radius < ScaleForDpi(8)) return;
 
-    const CPoint center = rc.CenterPoint();
-    Gdiplus::Graphics graphics(pDC->GetSafeHdc());
+    const CPoint center = rect.Center();
+    Gdiplus::Graphics graphics(pDC->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-    const std::array<Gdiplus::Color, 4> shades{
+    const std::array shades{
         Gdiplus::Color(255, 58, 61, 68),
         Gdiplus::Color(255, 72, 76, 84),
         Gdiplus::Color(255, 50, 53, 59),
@@ -43,7 +36,7 @@ void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rc)
     };
     const int ringWidth = (radius + static_cast<int>(shades.size()) - 1)
         / static_cast<int>(shades.size());
-    const int separatorWidth = std::max(1, DpiRest(1, this));
+    const int separatorWidth = std::max(1, ScaleForDpi(1));
     for (std::size_t ring = 0; ring < shades.size(); ++ring)
     {
         const int outer = radius - static_cast<int>(ring) * ringWidth;
@@ -56,7 +49,7 @@ void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rc)
         Gdiplus::SolidBrush brush(shades[ring]);
         graphics.FillPath(&brush, &path);
     }
-    Gdiplus::Pen separator(Gdiplus::Color(255, 24, 24, 24),
+    const Gdiplus::Pen separator(Gdiplus::Color(255, 24, 24, 24),
         static_cast<Gdiplus::REAL>(separatorWidth));
     for (int i = 0; i < 12; i++)
     {
@@ -81,9 +74,9 @@ void CSunburstView::DrawHighlightExtension(CDC* pDC)
 {
     const CWinDirStatModel* model = CWinDirStatModel::Get();
     const std::wstring extension = model->GetHighlightExtension();
-    const bool unregistered = model->IsHighlightUnregistered();
-    if (!m_extensionOutlineItemsValid || extension != m_cachedHighlightExtension
-        || unregistered != m_cachedHighlightUnregistered)
+    if (const bool unregistered = model->IsHighlightUnregistered();
+        !m_extensionOutlineItemsValid || extension != m_cachedHighlightExtension ||
+        unregistered != m_cachedHighlightUnregistered)
     {
         m_extensionOutlineItems.clear();
         m_sunburst.VisitItems([&](const CItem* item)

@@ -69,8 +69,8 @@ private:
             hash ^= std::hash<UINT>{}(key.format) << 3;
             hash ^= std::hash<USHORT>{}(key.width) << 4;
             hash ^= std::hash<USHORT>{}(key.height) << 5;
-            hash ^= (std::hash<USHORT>{}(key.dpi)) << 6;
-            hash ^= (std::hash<HFONT>{}(key.font)) << 7;
+            hash ^= std::hash<USHORT>{}(key.dpi) << 6;
+            hash ^= std::hash<HFONT>{}(key.font) << 7;
             return hash;
         }
     };
@@ -93,7 +93,7 @@ private:
         CacheKeyHash>;
 
     // Create cache key from current DC state
-    [[nodiscard]] CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
+    CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format) const noexcept;
 
     // Create cached bitmap for the text

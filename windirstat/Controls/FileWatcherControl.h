@@ -49,7 +49,7 @@ public:
     }
 
     // CTreeListItem required overrides
-    int CompareSibling(const CTreeListItem* other, int subitem) const override
+    int CompareSibling(const CTreeListItem* other, const int subitem) const override
     {
         const auto* otherItem = static_cast<const CWatcherItem*>(other);
         if (subitem == COL_ITEMWATCH_ACTION) return signum(_wcsicmp(m_action.c_str(), otherItem->m_action.c_str()));
@@ -75,7 +75,7 @@ private:
     std::wstring m_action;
 };
 
-class CFileWatcherControl final : public CTreeListControl
+class CFileWatcherControl final : public MessageTarget<CFileWatcherControl, CTreeListControl>
 {
 public:
     CFileWatcherControl();
@@ -100,7 +100,21 @@ protected:
     void AddChange(const std::wstring& path, DWORD action);
     void ClearPendingItems();
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnDestroy();
-    afx_msg LRESULT OnWatcherChange(WPARAM wParam, LPARAM lParam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnDestroy();
+    LRESULT OnWatcherChange(WPARAM wParam, LPARAM lParam);
 };
+
+inline std::span<const RouteEntry> CFileWatcherControl::Routes()
+{
+    using ThisClass = CFileWatcherControl;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
+        Route::Window<&ThisClass::OnWatcherChange>(WM_WATCHER_CHANGE),
+    };
+    return entries;
+}

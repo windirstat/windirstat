@@ -20,7 +20,7 @@
 #include "ProgressDlg.h"
 
 CFilePermsControl::CFilePermsControl()
-    : CTreeListControl(COptions::PermsViewColumnOrder.Ptr(), COptions::PermsViewColumnWidths.Ptr(), COptions::PermsViewColumnVisibility.Ptr(), LF_PERMSLIST, false)
+    : MessageTarget(COptions::PermsViewColumnOrder.Ptr(), COptions::PermsViewColumnWidths.Ptr(), COptions::PermsViewColumnVisibility.Ptr(), LF_PERMSLIST, false)
 {
     SetOwnsItems(true);
     m_singleton = this;
@@ -30,10 +30,6 @@ CFilePermsControl::~CFilePermsControl()
 {
     m_singleton = nullptr;
 }
-
-BEGIN_MESSAGE_MAP(CFilePermsControl, CTreeListControl)
-    ON_WM_DESTROY()
-END_MESSAGE_MAP()
 
 void CFilePermsControl::OnDestroy()
 {
@@ -88,7 +84,7 @@ std::vector<const CItem*> CFilePermsControl::BuildScanList(const CItem* docRoot,
 
     // Snapshot every real-path item so worker threads never touch the live tree
     std::vector<const CItem*> items;
-    std::vector<const CItem*> stack{ docRoot };
+    std::vector stack{ docRoot };
     while (!stack.empty())
     {
         const CItem* item = stack.back();
@@ -109,9 +105,9 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItems(const std::vector<const CIt
 
     // Pull items off a shared cursor across worker threads, joined before returning
     std::vector<CItemPerm*> results;
-    std::mutex resultsMutex;
-    std::atomic<size_t> cursor = 0;
     {
+        std::atomic<size_t> cursor = 0;
+        std::mutex resultsMutex;
         std::vector<std::jthread> workers;
         for (int t = 0, n = std::clamp<int>(COptions::ScanningThreads, 1, 16); t < n; t++)
         {
@@ -119,8 +115,7 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItems(const std::vector<const CIt
             {
                 for (size_t i = cursor.fetch_add(1); i < items.size() && !cancelled(); i = cursor.fetch_add(1))
                 {
-                    auto rows = ScanItem(items[i], roots.contains(items[i]), excludeRegex);
-                    if (!rows.empty())
+                    if (auto rows = ScanItem(items[i], roots.contains(items[i]), excludeRegex); !rows.empty())
                     {
                         std::scoped_lock lock(resultsMutex);
                         results.insert(results.end(), rows.begin(), rows.end());
@@ -156,12 +151,12 @@ bool CFilePermsControl::StartScan()
     {
         rows = ScanItems(items, roots, [pdlg] { return pdlg->IsCancelled(); }, [pdlg] { pdlg->Increment(); });
     });
-    progress.DoModal();
+    progress.ShowModal();
 
     // Discard results if the user cancelled; the caller hides the tab in that case
     if (progress.WasCancelled())
     {
-        for (auto* r : rows) delete r;
+        for (const auto* r : rows) delete r;
         return false;
     }
 
@@ -170,7 +165,7 @@ bool CFilePermsControl::StartScan()
     {
         for (auto* r : rows) r->SetVisible(this, true);
         const std::vector<CWdsListItem*> listItems(rows.begin(), rows.end());
-        const CSetRedrawLock lock(this);
+        const ScopedRedrawPause lock(this);
         InsertListItem(GetItemCount(), listItems);
         SortItems();
     }

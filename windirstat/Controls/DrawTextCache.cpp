@@ -55,7 +55,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     // Cache miss - create new cached entry
     if (format & DT_CALCRECT)
     {
-        SIZE size;
+        SIZE size{};
         if (GetTextExtentPoint32W(pDC->m_hDC, text.c_str(), static_cast<int>(text.length()), &size))
         {
             rect.right = rect.left + size.cx;
@@ -102,7 +102,7 @@ DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
     if (pDC->m_hDC != m_lastHDC)
     {
         m_lastHDC = pDC->m_hDC;
-        m_lastDpi = static_cast<USHORT>(::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX));
+        m_lastDpi = static_cast<USHORT>(GetDeviceCaps(pDC->m_hDC, LOGPIXELSX));
     }
 
     return CacheKey{
@@ -110,18 +110,17 @@ DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
         .backgroundColor = pDC->GetBkColor(), .format = format,
         .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
         .dpi = m_lastDpi,
-        .font = static_cast<HFONT>(::GetCurrentObject(pDC->m_hDC, OBJ_FONT))};
+        .font = static_cast<HFONT>(GetCurrentObject(pDC->m_hDC, OBJ_FONT))};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     CDC* pDC, const std::wstring& text, const CRect& rect, const UINT format) noexcept
 {
     // Create temporary DC to calculate text bounds
-    CDC memDC;
-    memDC.CreateCompatibleDC(pDC);
+    CDC memDC(pDC);
 
     // Select the same font to get accurate measurements
-    CSelectObject sofont(&memDC, pDC->GetCurrentFont());
+    GdiObjectSelection sofont(&memDC, pDC->GetCurrentFont());
 
     // Calculate actual text dimensions
     CRect calcRect(0, 0, rect.Width(), rect.Height());
@@ -129,8 +128,8 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
         &calcRect, format | DT_CALCRECT);
 
     // Get font metrics for accurate text height
-    TEXTMETRIC tm;
-    const int textHeight = memDC.GetTextMetrics(&tm) ? tm.tmHeight : calcRect.Height();
+    const auto metrics = memDC.TextMetrics();
+    const int textHeight = metrics ? metrics->tmHeight : calcRect.Height();
 
     auto entry = std::make_unique<CacheEntry>();
     entry->bmpSize = CSize(calcRect.Width(), textHeight);
@@ -142,8 +141,8 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
         rect.left + calcRect.Width(), rect.top + calcRect.Height());
 
     // Create compatible bitmap sized exactly for the text
-    entry->bmp.CreateCompatibleBitmap(pDC, calcRect.Width(), textHeight);
-    CSelectObject sobmp(&memDC, &entry->bmp);
+    entry->bmp.CreateCompatible(pDC, calcRect.Width(), textHeight);
+    GdiObjectSelection sobmp(&memDC, &entry->bmp);
 
     // Fill with background color and draw text with actual text color
     memDC.SetBkColor(pDC->GetBkColor());
@@ -178,16 +177,11 @@ void DrawTextCache::TouchEntry(const CacheMap::iterator& it)
 void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept
 {
     // Create memory DC
-    CDC memDC;
-    memDC.CreateCompatibleDC(pDC);
-    CSelectObject sobmp(&memDC, &entry.bmp);
+    CDC memDC(pDC);
+    GdiObjectSelection sobmp(&memDC, &entry.bmp);
 
     // Calculate horizontal position based on alignment
-    int xPos = rect.left;
-    if (entry.format & DT_RIGHT)
-    {
-        xPos = rect.right - entry.bmpSize.cx;
-    }
+    const int xPos = entry.format & DT_RIGHT ? rect.right - entry.bmpSize.cx : rect.left;
 
     // Calculate vertical position for centering
     const int yPos = rect.top + (rect.Height() - entry.bmpSize.cy) / 2;

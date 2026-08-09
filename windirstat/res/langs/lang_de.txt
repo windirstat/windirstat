@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Verzeichnisstatistik\n\nZeigt an, wo all der Plattenplatz geblieben ist,\nund hilft aufzuräumen.\n\nProgrammiert für Microsoft Windows von\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nauf Grundlage von Stefan Hundhammers KDE (Linux)-Programm KDirStat\n(kdirstat.sourceforge.net/).\n\nWinDirStats Homepage ist {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Über WinDirStat
 IDS_ABOUT_LICENSE=Lizenz
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer für sein vorzügliches Linux-Tool KDirStat.\nKDirStat (2.3.7) als Vorlage zu nehmen hat mir eine Menge Zeit gespart.\nhttps://kdirstat.sourceforge.net/\n\nDen Autoren von SequoiaView, die gezeigt haben, wie nützlich Baumkarten sein können.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls und Kees Huizing\nfür ihre Dokumente über ""Cushion Treemaps"" und ""Squarified Treemaps"".\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman für seine geniale Erfindung von Treemaps -\neiner wirklich intuitiven Art und Weise, Bäume zu visualisieren.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer für sein vorzügliches Linux-Tool KDirStat.\nKDirStat als Vorlage zu nehmen hat mir eine Menge Zeit gespart.\nhttps://kdirstat.sourceforge.net/\n\nDen Autoren von SequoiaView, die gezeigt haben, wie nützlich Baumkarten sein können.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls und Kees Huizing\nfür ihre Dokumente über ""Cushion Treemaps"" und ""Squarified Treemaps"".\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman für seine geniale Erfindung von Treemaps -\neiner wirklich intuitiven Art und Weise, Bäume zu visualisieren.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Dank
 IDS_ABOUT_TITLE=Über WinDirStat
 IDS_ADMIN=Administrator
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Beschleunigtes Scannen verwenden
 IDS_FILE_FILTER=CSV/JSON-Dateien
 IDS_FILE_SELECT=Öffnet eine Menge von Laufwerken.\nÖffnen
 IDS_FREESPACE_ITEM=<Freier Platz>
+IDS_GENERIC_APPLY=&Übernehmen
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Abbruch
 IDS_GENERIC_DAYS=Tage

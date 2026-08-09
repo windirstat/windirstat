@@ -17,16 +17,14 @@
 
 #include "pch.h"
 
-IMPLEMENT_DYNAMIC(CMessageBoxDlg, CLayoutDialogEx)
-
 CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent,
     const std::vector<std::wstring>& listViewItems, const std::wstring& checkBoxText, const bool checkBoxValue)
-    : CLayoutDialogEx(IDD_MESSAGEBOX, &m_windowRect, pParent)
+    : MessageTarget(IDD_MESSAGEBOX, &m_windowRect, pParent)
     , m_message(message)
     , m_title(title)
     , m_checkboxText(checkBoxText)
     , m_listViewItems(listViewItems)
-    , m_checkboxChecked(checkBoxValue ? TRUE : FALSE)
+    , m_checkboxChecked(checkBoxValue)
 {
     const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
     {
@@ -42,7 +40,7 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     };
 
     const auto buttonType = type & MB_TYPEMASK;
-    ASSERT(buttonTypeContexts.contains(buttonType));
+    assert(buttonTypeContexts.contains(buttonType));
     m_buttonContext = buttonTypeContexts.at(buttonType);
 
     // Set icon based on message box type
@@ -60,16 +58,16 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
         iconIter->second : IDI_INFORMATION);
 }
 
-WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue, UINT type, CWnd* pParent, const CSize& initialSize, const std::wstring& title)
+WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, const bool checkboxValue, const UINT type, CWnd* pParent, const CSize& initialSize, const std::wstring& title)
 {
-    CWnd* parent = pParent ? pParent : AfxGetMainWnd();
+    CWnd* parent = pParent ? pParent : GetMainWindow();
 
     CMessageBoxDlg dlg(message, title, type, parent, listViewItems, checkboxText, checkboxValue);
 
     if (initialSize.cx > 0 || initialSize.cy > 0)
         dlg.SetInitialWindowSize(initialSize);
 
-    return { static_cast<int>(dlg.DoModal()), dlg.IsCheckboxChecked() };
+    return { static_cast<int>(dlg.ShowModal()), dlg.IsCheckboxChecked() };
 }
 
 bool CMessageBoxDlg::IsCheckboxChecked() const
@@ -77,63 +75,32 @@ bool CMessageBoxDlg::IsCheckboxChecked() const
     return m_checkboxChecked;
 }
 
-void CMessageBoxDlg::DoDataExchange(CDataExchange* pDX)
-{
-    CLayoutDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_MESSAGE_ICON, m_iconCtrl);
-    DDX_Control(pDX, IDC_MESSAGE_TEXT, m_messageCtrl);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONLEFT, m_buttonLeft);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONMIDDLE, m_buttonMiddle);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONRIGHT, m_buttonRight);
-    DDX_Control(pDX, IDC_MESSAGE_CHECKBOX, m_checkbox);
-    DDX_Control(pDX, IDC_MESSAGE_LISTVIEW, m_listView);
-    DDX_Check(pDX, IDC_MESSAGE_CHECKBOX, m_checkboxChecked);
-}
-
-BEGIN_MESSAGE_MAP(CMessageBoxDlg, CLayoutDialogEx)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTONLEFT, OnButtonLeft)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTONMIDDLE, OnButtonMiddle)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTONRIGHT, OnButtonRight)
-    ON_WM_CTLCOLOR()
-    ON_WM_ERASEBKGND()
-    ON_WM_SIZE()
-    ON_NOTIFY(NM_CUSTOMDRAW, IDC_MESSAGE_LISTVIEW, OnListViewCustomDraw)
-    ON_NOTIFY(LVN_GETDISPINFO, IDC_MESSAGE_LISTVIEW, OnListViewGetDispInfo)
-    ON_NOTIFY(LVN_ITEMCHANGING, IDC_MESSAGE_LISTVIEW, OnListViewItemChanging)
-END_MESSAGE_MAP()
-
 void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int shiftAmount)
 {
     for (auto* pCtrl : controls)
     {
-        CRect rect;
-        pCtrl->GetWindowRect(&rect);
-        ScreenToClient(&rect);
-        rect.OffsetRect(0, shiftAmount);
+        CRect rect = WindowRectInClient(pCtrl->Handle());
+        rect.Offset(0, shiftAmount);
         pCtrl->MoveWindow(&rect);
     }
 
     // Resize dialog
-    CRect dialogRect;
-    GetWindowRect(&dialogRect);
+    CRect dialogRect(Handle());
     dialogRect.bottom += shiftAmount;
     MoveWindow(&dialogRect);
 }
 
-void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding)
+void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, const int padding)
 {
     // Expand checkbox width to the leftmost visible button
     if (pTargetControl == &m_listView && (m_checkbox.GetStyle() & WS_VISIBLE))
     {
-        for (CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
+        for (const CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
         {
-            if (pBtn->GetSafeHwnd() && (pBtn->GetStyle() & WS_VISIBLE))
+            if (pBtn->Handle() && (pBtn->GetStyle() & WS_VISIBLE))
             {
-                CRect cbRect, btnRect;
-                m_checkbox.GetWindowRect(&cbRect);
-                pBtn->GetWindowRect(&btnRect);
-                ScreenToClient(&cbRect);
-                ScreenToClient(&btnRect);
+                CRect cbRect = WindowRectInClient(m_checkbox.Handle());
+                const CRect btnRect = WindowRectInClient(pBtn->Handle());
 
                 cbRect.right = btnRect.left;
                 if (cbRect.right > cbRect.left) m_checkbox.MoveWindow(&cbRect);
@@ -144,17 +111,13 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
 
     if (pTargetControl->GetStyle() & WS_VISIBLE) return;
 
-    CRect targetRect;
-    pTargetControl->GetWindowRect(&targetRect);
-    ScreenToClient(&targetRect);
+    const CRect targetRect = WindowRectInClient(pTargetControl->Handle());
 
     // Find nearest control below target
     int minYBelow = INT_MAX;
     for (const auto* ctrl : controlsToShift)
     {
-        CRect ctrlRect;
-        ctrl->GetWindowRect(&ctrlRect);
-        ScreenToClient(&ctrlRect);
+        const CRect ctrlRect = WindowRectInClient(ctrl->Handle());
 
         if (ctrlRect.top > targetRect.top)
             minYBelow = std::min<int>(minYBelow, ctrlRect.top);
@@ -162,19 +125,27 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
 
     // Calculate shift: control height + spacing to next control, and optional padding
     const int shiftAmount = std::max<int>(0, ((minYBelow != INT_MAX) ?
-        (minYBelow - targetRect.top) : targetRect.Height()) - DpiRest(padding, this));
+        (minYBelow - targetRect.top) : targetRect.Height()) - ScaleForDpi(padding));
 
     // Shift controls below target upward
     ShiftControls(controlsToShift, -shiftAmount);
 }
 
-BOOL CMessageBoxDlg::OnInitDialog()
+bool CMessageBoxDlg::OnInitDialog()
 {
-    CLayoutDialogEx::OnInitDialog();
+    CLayoutDialog::OnInitDialog();
+
+    m_iconCtrl.SubclassDlgItem(IDC_MESSAGE_ICON, this);
+    m_messageCtrl.SubclassDlgItem(IDC_MESSAGE_TEXT, this);
+    m_buttonLeft.SubclassDlgItem(IDC_MESSAGE_BUTTONLEFT, this);
+    m_buttonMiddle.SubclassDlgItem(IDC_MESSAGE_BUTTONMIDDLE, this);
+    m_buttonRight.SubclassDlgItem(IDC_MESSAGE_BUTTONRIGHT, this);
+    m_checkbox.SubclassDlgItem(IDC_MESSAGE_CHECKBOX, this);
+    m_listView.SubclassDlgItem(IDC_MESSAGE_LISTVIEW, this);
 
     // Set window title and message
-    SetWindowText(m_title.c_str());
-    m_messageCtrl.SetWindowText(m_message.c_str());
+    SetText(m_title.c_str());
+    m_messageCtrl.SetText(m_message.c_str());
 
     // Configure buttons
     m_buttonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
@@ -182,9 +153,9 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_buttonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
 
     // Set button texts
-    m_buttonLeft.SetWindowText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
-    m_buttonMiddle.SetWindowText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
-    m_buttonRight.SetWindowText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
+    m_buttonLeft.SetText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
+    m_buttonMiddle.SetText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
+    m_buttonRight.SetText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
 
     // Set display icon
     m_iconCtrl.SetIcon(m_icon);
@@ -200,43 +171,41 @@ BOOL CMessageBoxDlg::OnInitDialog()
     }
 
     // Hide checkbox if no text set
-    m_checkbox.SetWindowText(m_checkboxText.c_str());
+    m_checkbox.SetText(m_checkboxText.c_str());
+    SetChecked(IDC_MESSAGE_CHECKBOX, m_checkboxChecked);
     m_checkbox.ShowWindow(m_checkboxText.empty() ? SW_HIDE : SW_SHOW);
 
     // Apply dark mode
     DarkMode::AdjustControls(*this);
     if (DarkMode::IsDarkModeActive())
     {
-        const COLORREF listBackColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+        const COLORREF listBackColor = DarkMode::SystemColor(COLOR_WINDOW);
         m_listView.SetBkColor(listBackColor);
         m_listView.SetTextBkColor(listBackColor);
-        m_listView.SetTextColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_listView.SetTextColor(DarkMode::SystemColor(COLOR_WINDOWTEXT));
     }
 
     // Collapse hidden controls vertically and add padding to vertically center the message area
     ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, 16);
 
     // Measure message text
-    CRect rectMessage;
-    m_messageCtrl.GetWindowRect(&rectMessage);
-    ScreenToClient(&rectMessage);
+    const CRect rectMessage = WindowRectInClient(m_messageCtrl.Handle());
 
     // Account for control borders/margins
-    CRect rectMessageClient = ClientRectOf(&m_messageCtrl);
+    const CRect rectMessageClient = m_messageCtrl.ClientRect();
     const int messageBorders = rectMessage.Width() - rectMessageClient.Width();
 
     // Calculate scaling for initial size requirements
     const CSize scaledInitialSize(
-        DpiRest(m_initialSize.cx, this),
-        DpiRest(m_initialSize.cy, this)
+        ScaleForDpi(m_initialSize.cx),
+        ScaleForDpi(m_initialSize.cy)
     );
 
-    CRect rectWindow;
-    GetWindowRect(&rectWindow);
+    CRect rectWindow(Handle());
     const int initialWidthExpansion = std::max<int>(0, scaledInitialSize.cx - rectWindow.Width());
 
     CClientDC dc(&m_messageCtrl);
-    CSelectObject selectFont(&dc, m_messageCtrl.GetFont());
+    GdiObjectSelection selectFont(&dc, m_messageCtrl.GetFont());
 
     CRect rectTextCalc = rectMessage;
     constexpr UINT baseFlags = DT_CALCRECT | DT_NOPREFIX | DT_EXPANDTABS;
@@ -245,7 +214,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     {
         // Don't wrap words, calculate full width
         rectTextCalc.right = LONG_MAX;
-        dc.DrawText(m_message.c_str(), &rectTextCalc, baseFlags);
+        dc.DrawText(m_message, &rectTextCalc, baseFlags);
     }
     else
     {
@@ -254,7 +223,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
         // Ensure we respect borders when calculating available text width
         rectTextCalc.right -= messageBorders;
-        dc.DrawText(m_message.c_str(), &rectTextCalc, baseFlags | DT_WORDBREAK);
+        dc.DrawText(m_message, &rectTextCalc, baseFlags | DT_WORDBREAK);
     }
 
     // Restore border width to the calculated rect for layout consistency
@@ -272,7 +241,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Apply Vertical Expansion
     if (const int deltaHeight = std::max<int>(0, rectTextCalc.Height() - rectMessage.Height()); deltaHeight > 0)
     {
-        const int padding = DpiRest(16, this);
+        const int padding = ScaleForDpi(16);
         // Expand message control
         m_messageCtrl.SetWindowPos(nullptr, 0, 0, rectMessage.Width(), rectMessage.Height() + deltaHeight + padding, SWP_NOMOVE | SWP_NOZORDER);
 
@@ -291,12 +260,12 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_layout.OnInitDialog(true);
 
     // Apply width and final height expansion
-    GetWindowRect(&rectWindow);
+    rectWindow = CRect(Handle());
     const int newWidth = rectWindow.Width() + deltaWidth;
     int newHeight = rectWindow.Height();
 
     // Ensure minimum height from initial size
-    newHeight = std::max((int)scaledInitialSize.cy, newHeight);
+    newHeight = std::max(static_cast<int>(scaledInitialSize.cy), newHeight);
     if (newWidth != rectWindow.Width() || newHeight != rectWindow.Height())
     {
         SetWindowPos(nullptr, 0, 0, newWidth, newHeight, SWP_NOMOVE | SWP_NOZORDER);
@@ -314,28 +283,27 @@ BOOL CMessageBoxDlg::OnInitDialog()
     {
         m_buttonContext.btnFocus->ModifyStyle(BS_PUSHBUTTON, BS_DEFPUSHBUTTON);
         m_buttonContext.btnFocus->SetFocus();
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 void CMessageBoxDlg::UpdateListViewColumnWidth()
 {
     LVCOLUMN column{ .mask = LVCF_WIDTH };
-    if (!m_listView.GetSafeHwnd() || !m_listView.GetColumn(0, &column))
+    if (!m_listView.Handle() || !m_listView.GetColumn(0, &column))
     {
         return;
     }
 
-    CRect rect;
-    m_listView.GetClientRect(&rect);
+    const CRect rect = m_listView.ClientRect();
     m_listView.SetColumnWidth(0, rect.Width());
 }
 
 void CMessageBoxDlg::OnSize(const UINT nType, const int cx, const int cy)
 {
-    CLayoutDialogEx::OnSize(nType, cx, cy);
+    CLayoutDialog::OnSize(nType, cx, cy);
     UpdateListViewColumnWidth();
 }
 
@@ -348,24 +316,24 @@ void CMessageBoxDlg::OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
         return;
     }
 
-    auto* customDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
-    if (customDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
+    if (auto* customDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+        customDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
     {
         *pResult = CDRF_NOTIFYITEMDRAW;
     }
     else if (customDraw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
     {
-        customDraw->clrText = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
-        customDraw->clrTextBk = DarkMode::WdsSysColor(COLOR_WINDOW);
+        customDraw->clrText = DarkMode::SystemColor(COLOR_WINDOWTEXT);
+        customDraw->clrTextBk = DarkMode::SystemColor(COLOR_WINDOW);
         *pResult = CDRF_DODEFAULT;
     }
 }
 
-void CMessageBoxDlg::OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CMessageBoxDlg::OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const
 {
-    *pResult = FALSE;
+    *pResult = false;
 
-    auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    const auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     const int item = displayInfo->item.iItem;
     if ((displayInfo->item.mask & LVIF_TEXT) == 0 || displayInfo->item.iSubItem != 0 ||
         item < 0 || item >= static_cast<int>(m_listViewItems.size()) ||
@@ -387,25 +355,25 @@ void CMessageBoxDlg::OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMessageBoxDlg::OnButtonLeft()
 {
-    UpdateData(TRUE);
-    EndDialog(m_buttonContext.btnLeftID);
+    m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
+    CloseModal(m_buttonContext.btnLeftID);
 }
 
 void CMessageBoxDlg::OnButtonMiddle()
 {
-    UpdateData(TRUE);
-    EndDialog(m_buttonContext.btnMidID);
+    m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
+    CloseModal(m_buttonContext.btnMidID);
 }
 
 void CMessageBoxDlg::OnButtonRight()
 {
-    UpdateData(TRUE);
-    EndDialog(m_buttonContext.btnRightID);
+    m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
+    CloseModal(m_buttonContext.btnRightID);
 }
 
-INT_PTR CMessageBoxDlg::DoModal()
+INT_PTR CMessageBoxDlg::ShowModal()
 {
-    return CLayoutDialogEx::DoModal();
+    return CLayoutDialog::ShowModal();
 }
 
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
@@ -414,41 +382,37 @@ HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
 
     // Set checkbox background to match dialog background in dark mode
-    const int nID = pWnd->GetDlgCtrlID();
-    if (nID == IDC_MESSAGE_CHECKBOX)
+    if (const int nID = pWnd->GetDlgCtrlID(); nID == IDC_MESSAGE_CHECKBOX)
     {
-        pDC->SetBkColor(DarkMode::WdsSysColor(COLOR_BTNFACE));
+        pDC->SetBkColor(DarkMode::SystemColor(COLOR_BTNFACE));
         return m_checkboxBrush;
     }
 
     // Set icon and message text backgrounds to white in light mode
-    if (!DarkMode::IsDarkModeActive() && (nID == IDC_MESSAGE_ICON || nID == IDC_MESSAGE_TEXT))
+    else if (!DarkMode::IsDarkModeActive() && (nID == IDC_MESSAGE_ICON || nID == IDC_MESSAGE_TEXT))
     {
         pDC->SetBkColor(GetSysColor(COLOR_WINDOW));
-        return (HBRUSH)GetStockObject(WHITE_BRUSH);
+        return static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
     }
 
-    return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-BOOL CMessageBoxDlg::OnEraseBkgnd(CDC* pDC)
+bool CMessageBoxDlg::OnEraseBkgnd(CDC* pDC) const
 {
-    CRect rect;
-    GetClientRect(&rect);
+    const CRect rect = ClientRect();
     const bool bDark = DarkMode::IsDarkModeActive();
 
-    const COLORREF topColor = DarkMode::WdsSysColor(COLOR_WINDOW);
-    const COLORREF footerColor = DarkMode::WdsSysColor(COLOR_BTNFACE);
-    const COLORREF lineColor = bDark ? DarkMode::WdsSysColor(COLOR_BTNHIGHLIGHT) : GetSysColor(COLOR_3DSHADOW);
+    const COLORREF topColor = DarkMode::SystemColor(COLOR_WINDOW);
+    const COLORREF footerColor = DarkMode::SystemColor(COLOR_BTNFACE);
+    const COLORREF lineColor = bDark ? DarkMode::SystemColor(COLOR_BTNHIGHLIGHT) : GetSysColor(COLOR_3DSHADOW);
 
-    int lineY = rect.bottom - DpiRest(46, this);
+    int lineY = rect.bottom - ScaleForDpi(46);
 
-    if (m_buttonRight.GetSafeHwnd())
+    if (m_buttonRight.Handle())
     {
-        CRect btnRect;
-        m_buttonRight.GetWindowRect(&btnRect);
-        ScreenToClient(&btnRect);
-        lineY = btnRect.top - DpiRest(12, this);
+        const CRect btnRect = WindowRectInClient(m_buttonRight.Handle());
+        lineY = btnRect.top - ScaleForDpi(12);
     }
 
     // Paint the top area
@@ -458,26 +422,26 @@ BOOL CMessageBoxDlg::OnEraseBkgnd(CDC* pDC)
     pDC->FillSolidRect(CRect(rect.left, lineY, rect.right, rect.bottom), footerColor);
 
     // Draw the 1px separator
-    CPen pen(PS_SOLID, 1, lineColor);
-    const CSelectObject soPen(pDC, &pen);
+    const CPen pen(PS_SOLID, 1, lineColor);
+    const GdiObjectSelection soPen(pDC, &pen);
     pDC->MoveTo(0, lineY);
     pDC->LineTo(rect.right, lineY);
 
-    return TRUE;
+    return true;
 }
 
 // Global wrapper functions
-int WdsMessageBox(const std::wstring& message, const UINT type)
+int ShowMessageBox(const std::wstring& message, const UINT type)
 {
     if (!DarkMode::IsDarkModeActive())
     {
-        return AfxMessageBox(message.c_str(), type);
+        return MessageBoxW(GetDialogOwner(), message.c_str(), L"WinDirStat", type);
     }
 
-    return WdsMessageBox(nullptr, message, wds::strWinDirStat, type);
+    return ShowMessageBox(nullptr, message, wds::strWinDirStat, type);
 }
 
-int WdsMessageBox(const HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type)
+int ShowMessageBox(const HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type)
 {
     if (!DarkMode::IsDarkModeActive())
     {
@@ -485,5 +449,5 @@ int WdsMessageBox(const HWND wnd, const std::wstring& message, const std::wstrin
     }
 
     CMessageBoxDlg dlg(message, title, type, CWnd::FromHandle(wnd));
-    return static_cast<int>(dlg.DoModal());
+    return static_cast<int>(dlg.ShowModal());
 }

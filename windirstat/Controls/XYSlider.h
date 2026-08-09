@@ -20,10 +20,9 @@
 //
 // CXySlider. A two-dimensional slider.
 //
-class CXySlider final : public CStatic
+class CXySlider final : public MessageTarget<CXySlider, CStatic>
 {
-    DECLARE_DYNAMIC(CXySlider)
-
+public:
     static constexpr UINT XYSLIDER_CHANGED = 0x88; // Notification code to parent
     static constexpr UINT XY_SETPOS = WM_USER + 100; // lparam = POINT *
     static constexpr UINT XY_GETPOS = WM_USER + 101; // lparam = POINT *
@@ -70,17 +69,37 @@ protected:
 
     bool m_gripperHighlight = false;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg UINT OnGetDlgCode();
-    afx_msg LRESULT OnNcHitTest(CPoint point);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKillFocus(CWnd* pNewWnd);
-    afx_msg void OnPaint();
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg LRESULT OnSetPos(WPARAM, LPARAM lparam);
-    afx_msg LRESULT OnGetPos(WPARAM, LPARAM lparam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    UINT OnGetDlgCode();
+    LRESULT OnNcHitTest(CPoint point);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnKillFocus(CWnd* pNewWnd);
+    void OnPaint();
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    void OnLButtonDblClk(UINT nFlags, CPoint point);
+    LRESULT OnSetPos(WPARAM, LPARAM lparam);
+    LRESULT OnGetPos(WPARAM, LPARAM lparam) const;
 };
 
-void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value);
+inline std::span<const RouteEntry> CXySlider::Routes()
+{
+    using ThisClass = CXySlider;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnGetDlgCode>(WM_GETDLGCODE),
+        Route::Window<&ThisClass::OnNcHitTest>(WM_NCHITTEST),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&ThisClass::OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&ThisClass::OnLButtonDblClk>(WM_LBUTTONDBLCLK),
+        Route::Window<&ThisClass::OnSetPos>(XY_SETPOS),
+        Route::Window<&ThisClass::OnGetPos>(XY_GETPOS),
+    };
+    return entries;
+}

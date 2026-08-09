@@ -50,16 +50,15 @@ public:
 
 protected:
 
-    constexpr static ULONGLONG HashThreshold(ITEMTYPE hashLevel)
+    constexpr static ULONGLONG HashThreshold(const ITEMTYPE hashLevel)
     {
         return
             hashLevel == ITHASH_SMALL ? 4ull * wds::Ki :
-            hashLevel == ITHASH_MEDIUM ? wds::Mi : ULONGLONG_MAX;
+            hashLevel == ITHASH_MEDIUM ? wds::Mi : std::numeric_limits<ULONGLONG>::max();
     }
 
     inline static CFileDupeControl* m_singleton = nullptr;
     CItemDupe* m_rootItem = nullptr;
     bool m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 
-    DECLARE_MESSAGE_MAP()
 };

@@ -19,59 +19,40 @@
 #include "Filtering.h"
 #include "PageFiltering.h"
 
-IMPLEMENT_DYNAMIC(CPageFiltering, COptionsPage)
-
 CPageFiltering::CPageFiltering(const bool refreshOnFilteringChange) :
-    COptionsPage(IDD),
+    MessageTarget(IDD),
     m_refreshOnFilteringChange(refreshOnFilteringChange)
 {
-    BindText(IDC_FILTERING_SIZE_MIN, COptions::FilteringSizeMinimum, m_filteringSizeMinimum);
-    BindCombo(IDC_FILTERING_MIN_UNITS, COptions::FilteringSizeUnits, m_filteringSizeUnits);
-    BindCheck(IDC_FILTERING_USE_REGEX, COptions::FilteringUseRegex, m_filteringUseRegex);
-    BindText(IDC_FILTERING_MAX_AGE_DAYS, COptions::FilteringMaxAgeDays, m_filteringMaxAgeDays);
-    BindText(IDC_FILTERING_EXCLUDE_DIRS, COptions::FilteringExcludeDirs, m_filteringExcludeDirs);
-    BindText(IDC_FILTERING_EXCLUDE_FILES, COptions::FilteringExcludeFiles, m_filteringExcludeFiles);
-    BindText(IDC_FILTERING_INCLUDE_DIRS, COptions::FilteringIncludeDirs, m_filteringIncludeDirs);
-    BindText(IDC_FILTERING_INCLUDE_FILES, COptions::FilteringIncludeFiles, m_filteringIncludeFiles);
 }
-
-void CPageFiltering::DoDataExchange(CDataExchange* pDX)
-{
-    COptionsPage::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_FILTERING_MIN_UNITS, m_ctlFilteringSizeUnits);
-    DDX_Control(pDX, IDC_FILTERING_EXCLUDE_FILES, m_ctrlFilteringExcludeFiles);
-    DDX_Control(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_ctrlFilteringExcludeDirs);
-    DDX_Control(pDX, IDC_FILTERING_INCLUDE_FILES, m_ctrlFilteringIncludeFiles);
-    DDX_Control(pDX, IDC_FILTERING_INCLUDE_DIRS, m_ctrlFilteringIncludeDirs);
-}
-
-BEGIN_MESSAGE_MAP(CPageFiltering, COptionsPage)
-    ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_INCLUDE_DIRS, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_INCLUDE_FILES, OnSettingChanged)
-    ON_BN_CLICKED(IDC_FILTERING_USE_REGEX, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_SIZE_MIN, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
-    ON_CBN_SELENDOK(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
-    ON_EN_CHANGE(IDC_FILTERING_MAX_AGE_DAYS, OnSettingChanged)
-END_MESSAGE_MAP()
 
 void CPageFiltering::InitializePage()
 {
+    m_ctlFilteringSizeUnits.SubclassDlgItem(IDC_FILTERING_MIN_UNITS, this);
+    m_ctrlFilteringExcludeFiles.SubclassDlgItem(IDC_FILTERING_EXCLUDE_FILES, this);
+    m_ctrlFilteringExcludeDirs.SubclassDlgItem(IDC_FILTERING_EXCLUDE_DIRS, this);
+    m_ctrlFilteringIncludeFiles.SubclassDlgItem(IDC_FILTERING_INCLUDE_FILES, this);
+    m_ctrlFilteringIncludeDirs.SubclassDlgItem(IDC_FILTERING_INCLUDE_DIRS, this);
+
     m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_MiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_GiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_TiB().c_str());
 
+    SetText(IDC_FILTERING_SIZE_MIN, std::to_wstring(COptions::FilteringSizeMinimum));
+    SetComboSelection(IDC_FILTERING_MIN_UNITS, COptions::FilteringSizeUnits);
+    SetChecked(IDC_FILTERING_USE_REGEX, COptions::FilteringUseRegex);
+    SetText(IDC_FILTERING_MAX_AGE_DAYS, std::to_wstring(COptions::FilteringMaxAgeDays));
+    SetText(IDC_FILTERING_EXCLUDE_DIRS, COptions::FilteringExcludeDirs.Obj());
+    SetText(IDC_FILTERING_EXCLUDE_FILES, COptions::FilteringExcludeFiles.Obj());
+    SetText(IDC_FILTERING_INCLUDE_DIRS, COptions::FilteringIncludeDirs.Obj());
+    SetText(IDC_FILTERING_INCLUDE_FILES, COptions::FilteringIncludeFiles.Obj());
+
     // Initialize the tooltip control
     m_toolTip.Create(this);
     SetToolTips();
     m_toolTip.SetMaxTipWidth(200);
-    m_toolTip.Activate(TRUE);
-
-    UpdateData(FALSE);
+    m_toolTip.Activate();
 }
 
 void CPageFiltering::AdjustControls()
@@ -79,11 +60,11 @@ void CPageFiltering::AdjustControls()
     // Apply dark mode to this property page AFTER controls are initialized
     if (DarkMode::IsDarkModeActive())
     {
-        COptionsPage::AdjustControls();
-        DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
-        DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
-        DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.GetSafeHwnd());
-        DarkMode::AdjustControls(m_ctrlFilteringIncludeFiles.GetSafeHwnd());
+        CSettingsPage::AdjustControls();
+        DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.Handle());
+        DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.Handle());
+        DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.Handle());
+        DarkMode::AdjustControls(m_ctrlFilteringIncludeFiles.Handle());
         m_ctrlFilteringExcludeDirs.Invalidate();
         m_ctrlFilteringExcludeFiles.Invalidate();
         m_ctrlFilteringIncludeDirs.Invalidate();
@@ -94,7 +75,7 @@ void CPageFiltering::AdjustControls()
 void CPageFiltering::SetToolTips()
 {
     const std::wstring tip = Localization::Lookup(IDS_PAGE_FILTERING_TOOLTIP_PREFIX) + L"\n\n";
-    if (m_filteringUseRegex)
+    if (IsChecked(IDC_FILTERING_USE_REGEX))
     {
         m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX)).c_str());
         m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX)).c_str());
@@ -112,18 +93,32 @@ void CPageFiltering::SetToolTips()
 
 void CPageFiltering::OnOK()
 {
-    UpdateData();
+    const int filteringSizeMinimum = std::stoi(GetText(IDC_FILTERING_SIZE_MIN));
+    const int filteringSizeUnits = ComboSelection(IDC_FILTERING_MIN_UNITS);
+    const bool filteringUseRegex = IsChecked(IDC_FILTERING_USE_REGEX);
+    const int filteringMaxAgeDays = std::stoi(GetText(IDC_FILTERING_MAX_AGE_DAYS));
+    const std::wstring filteringExcludeFiles = GetText(IDC_FILTERING_EXCLUDE_FILES);
+    const std::wstring filteringExcludeDirs = GetText(IDC_FILTERING_EXCLUDE_DIRS);
+    const std::wstring filteringIncludeFiles = GetText(IDC_FILTERING_INCLUDE_FILES);
+    const std::wstring filteringIncludeDirs = GetText(IDC_FILTERING_INCLUDE_DIRS);
 
-    const bool refreshAll = COptions::FilteringSizeMinimum != m_filteringSizeMinimum ||
-        COptions::FilteringSizeUnits != m_filteringSizeUnits ||
-        COptions::FilteringUseRegex != (FALSE != m_filteringUseRegex) ||
-        COptions::FilteringMaxAgeDays != m_filteringMaxAgeDays ||
-        COptions::FilteringExcludeFiles.Obj() != m_filteringExcludeFiles.GetString() ||
-        COptions::FilteringExcludeDirs.Obj() != m_filteringExcludeDirs.GetString() ||
-        COptions::FilteringIncludeFiles.Obj() != m_filteringIncludeFiles.GetString() ||
-        COptions::FilteringIncludeDirs.Obj() != m_filteringIncludeDirs.GetString();
+    const bool refreshAll = COptions::FilteringSizeMinimum != filteringSizeMinimum ||
+        COptions::FilteringSizeUnits != filteringSizeUnits ||
+        COptions::FilteringUseRegex != filteringUseRegex ||
+        COptions::FilteringMaxAgeDays != filteringMaxAgeDays ||
+        COptions::FilteringExcludeFiles.Obj() != filteringExcludeFiles ||
+        COptions::FilteringExcludeDirs.Obj() != filteringExcludeDirs ||
+        COptions::FilteringIncludeFiles.Obj() != filteringIncludeFiles ||
+        COptions::FilteringIncludeDirs.Obj() != filteringIncludeDirs;
 
-    ApplyOptionBindings();
+    COptions::FilteringSizeMinimum = filteringSizeMinimum;
+    COptions::FilteringSizeUnits = filteringSizeUnits;
+    COptions::FilteringUseRegex = filteringUseRegex;
+    COptions::FilteringMaxAgeDays = filteringMaxAgeDays;
+    COptions::FilteringExcludeFiles.Obj() = filteringExcludeFiles;
+    COptions::FilteringExcludeDirs.Obj() = filteringExcludeDirs;
+    COptions::FilteringIncludeFiles.Obj() = filteringIncludeFiles;
+    COptions::FilteringIncludeDirs.Obj() = filteringIncludeDirs;
     CFiltering::CompileFilters();
 
     if (m_refreshOnFilteringChange && refreshAll)
@@ -131,8 +126,6 @@ void CPageFiltering::OnOK()
         CWinDirStatModel::Get()->StartScan(
             CWinDirStatModel::Get()->GetScanPathSpec());
     }
-
-    CMFCPropertyPage::OnOK();
 }
 
 void CPageFiltering::OnSettingChanged()
@@ -140,14 +133,13 @@ void CPageFiltering::OnSettingChanged()
     if (!IsInitialized())
         return;
 
-    UpdateData();
     SetModified();
     SetToolTips();
 }
 
-BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)
+bool CPageFiltering::PreprocessMessage(MSG* pMsg)
 {
     m_toolTip.RelayEvent(pMsg);
 
-    return COptionsPage::PreTranslateMessage(pMsg);
+    return CSettingsPage::PreprocessMessage(pMsg);
 }

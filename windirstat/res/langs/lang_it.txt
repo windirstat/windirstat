@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Statistiche unità/cartelle\n\n"Visualizza come è allocato lo spazio su disco\ned aiuta ad eseguirne la pulzia."\n\nProgrammato per Microsoft Windows da\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nin base al programma KDirStat\n(https://kdirstat.sourceforge.net/ KDE (Linux) di Stefan Hundhammer's).\n\npagina sito web WinDirStat: {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Info programma
 IDS_ABOUT_LICENSE=Licenza
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer per il suo eccellente strumento Linux KDirStat.\nUsando KDirStat (2.3.7) come specificato, ho risparmiato molto tempo.\nhttps://kdirstat.sourceforge.net/\n\nGli autori di SequoiaView per aver fatto vedere\nquanto possano essere davvero utili le mappe struttura.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls e Kees Huizing\nper i loro scritti sui 'cushion treemap' e 'squarified treemap'.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman per la sua idea ingegnosa delle mappe struttura -\nun modo davvero intuitivo di visualizzare i contenuti della struttura.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer per il suo eccellente strumento Linux KDirStat.\nUsando KDirStat come specificato, ho risparmiato molto tempo.\nhttps://kdirstat.sourceforge.net/\n\nGli autori di SequoiaView per aver fatto vedere\nquanto possano essere davvero utili le mappe struttura.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls e Kees Huizing\nper i loro scritti sui 'cushion treemap' e 'squarified treemap'.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman per la sua idea ingegnosa delle mappe struttura -\nun modo davvero intuitivo di visualizzare i contenuti della struttura.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Ringraziamenti
 IDS_ABOUT_TITLE=Info su WinDirStat
 IDS_ADMIN=Amministratore
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Usa scansione accelerata
 IDS_FILE_FILTER=File CSV/JSON
 IDS_FILE_SELECT=Seleziona unità/cartella\nSeleziona
 IDS_FREESPACE_ITEM=<Spazio libero>
+IDS_GENERIC_APPLY=A&pplica
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Annulla
 IDS_GENERIC_DAYS=giorni

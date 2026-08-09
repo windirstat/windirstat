@@ -20,11 +20,10 @@
 
 #pragma comment(lib,"ntdll.lib")
 
-static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
-    PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
-    ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
-    PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
-        static_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile")));
+using NtQueryDirectoryFileFn = NTSTATUS(WINAPI*)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID,
+    ULONG, FILE_INFORMATION_CLASS, BOOLEAN, PUNICODE_STRING, BOOLEAN);
+static const auto NtQueryDirectoryFile = reinterpret_cast<NtQueryDirectoryFileFn>(
+    GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile"));
 
 bool FinderBasic::FindNext()
 {
@@ -57,8 +56,8 @@ bool FinderBasic::FindNext()
             {
                 const NTSTATUS status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
                     m_directoryInfo.data(), bufferSize,
-                    static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation), FALSE,
-                    (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
+                    static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation), false,
+                    (uSearch.Length > 0) ? &uSearch : nullptr, true);
                 m_context->SupportsFileId = (status == 0);
 
                 DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
@@ -74,8 +73,8 @@ bool FinderBasic::FindNext()
         const auto QueryDirectory = [&](const FILE_INFORMATION_CLASS infoClass)
         {
             return NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                m_directoryInfo.data(), bufferSize, infoClass, FALSE,
-                (uSearch.Length > 0) ? &uSearch : nullptr, firstRun ? TRUE : FALSE);
+                m_directoryInfo.data(), bufferSize, infoClass, false,
+                (uSearch.Length > 0) ? &uSearch : nullptr, firstRun);
         };
 
         constexpr NTSTATUS STATUS_INVALID_INFO_CLASS = static_cast<NTSTATUS>(0xC0000003L);
@@ -163,12 +162,11 @@ bool FinderBasic::FindNext()
                 handle != INVALID_HANDLE_VALUE)
             {
                 DWORD returned = 0;
-                if (auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
+                if (const auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
                     DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
                         buf->data(), static_cast<DWORD>(buf->size()), &returned, nullptr))
                 {
-                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf->data());
-                    if (Finder::IsJunction(rp))
+                    if (auto& rp = *reinterpret_cast<REPARSE_DATA_BUFFER*>(buf->data()); IsJunction(rp))
                         m_reparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
                 }
             }
@@ -186,8 +184,8 @@ bool FinderBasic::FindNext()
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
-            const DWORD lowPart = GetCompressedFileSize(GetFilePathLongCached().c_str(), &highPart);
-            if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
+            if (const DWORD lowPart = GetCompressedFileSize(GetFilePathLongCached().c_str(), &highPart);
+                lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
             {
                 m_currentInfo->AllocationSize.LowPart = lowPart;
                 m_currentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
@@ -210,8 +208,7 @@ bool FinderBasic::FindNext()
     }
 
     if (success && !m_statMode && (m_name == L"." || m_name == L"..")) return FindNext();
-    else return success;
-}
+    return success;}
 
 bool FinderBasic::FindFile(const CItem* item)
 {
@@ -271,7 +268,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
         VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_baseNt.data());
-        return FALSE;
+        return false;
     }
 
     // do initial search

@@ -18,10 +18,9 @@
 #pragma once
 
 #include "pch.h"
-#include "Options.h"
 
 // CLayoutPopup - 3x4 grid of layout cards, anchored to a toolbar button.
-class CLayoutPopup final : public CWnd
+class CLayoutPopup final : public MessageTarget<CLayoutPopup, CWnd>
 {
 public:
     static constexpr int LAYOUT_COUNT = 12;
@@ -43,7 +42,7 @@ public:
 
     static int LayoutIndex(int topology, int permutation);
     static int CurrentLayoutIndex();
-    BOOL Create(CWnd* parent);
+    bool Create(CWnd* parent);
     void ShowAtButton(const CRect& buttonScreenRect);
     void DismissPopup(bool cancel = false, bool resetPositions = false);
 
@@ -65,15 +64,37 @@ protected:
     void DrawFileTypesPane(CDC& dc, CRect r) const;
     void DrawVisualizationPane(CDC& dc, CRect r, int cardIdx) const;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnPaint();
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnKillFocus(CWnd* pNewWnd);
-    afx_msg void OnActivateApp(BOOL bActive, DWORD dwThreadID);
-    afx_msg void OnCaptureChanged(CWnd* pWnd);
-    afx_msg LRESULT OnMouseLeave(WPARAM, LPARAM);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnPaint();
+    bool OnEraseBkgnd(CDC* pDC) const;
+    void OnMouseMove(UINT nFlags, CPoint point);
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    void OnLButtonUp(UINT nFlags, CPoint point);
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnKillFocus(CWnd* pNewWnd);
+    void OnActivateApp(bool bActive, DWORD dwThreadID);
+    void OnCaptureChanged(CWnd* pWnd);
+    LRESULT OnMouseLeave(WPARAM, LPARAM);
 };
+
+inline std::span<const RouteEntry> CLayoutPopup::Routes()
+{
+    using ThisClass = CLayoutPopup;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnMouseMove>(WM_MOUSEMOVE),
+        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&ThisClass::OnLButtonUp>(WM_LBUTTONUP),
+        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&ThisClass::OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&ThisClass::OnActivateApp>(WM_ACTIVATEAPP),
+        Route::Window<&ThisClass::OnCaptureChanged>(WM_CAPTURECHANGED),
+        Route::Window<&CLayoutPopup::OnMouseLeave>(WM_MOUSELEAVE),
+    };
+    return entries;
+}

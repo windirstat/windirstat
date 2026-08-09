@@ -19,64 +19,24 @@
 #include "Layout.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CLayoutDialogEx
+// CLayoutDialog
 
-IMPLEMENT_DYNCREATE(CLayoutDialogEx, CDialogEx)
-
-BEGIN_MESSAGE_MAP(CLayoutDialogEx, CDialogEx)
-    ON_WM_SIZE()
-    ON_WM_GETMINMAXINFO()
-    ON_WM_DESTROY()
-END_MESSAGE_MAP()
-
-BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
+void CLayoutDialog::OnSize(const UINT nType, const int cx, const int cy)
 {
-    // Check for Ctrl+C key combination
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && IsControlKeyDown())
-    {
-        // Get the mouse cursor position
-        CPoint pt;
-        GetCursorPos(&pt);
-        ScreenToClient(&pt);
-
-        // Find which child window is at this position
-        if (const CWnd* pWndUnderCursor = ChildWindowFromPoint(pt, CWP_SKIPINVISIBLE);
-            pWndUnderCursor != nullptr && pWndUnderCursor != this)
-        {
-            // Prefer MFC RTTI over raw window class-name checks.
-            if (pWndUnderCursor->IsKindOf(RUNTIME_CLASS(CStatic)))
-            {
-                // Get the text from the static control
-                CString text;
-                pWndUnderCursor->GetWindowText(text);
-                if (!text.IsEmpty())
-                {
-                    CMainFrame::Get()->CopyToClipboard(text.GetString());
-                    return TRUE; // Message handled
-                }
-            }
-        }
-    }
-
-    return CDialogEx::PreTranslateMessage(pMsg);
-}
-
-void CLayoutDialogEx::OnSize(UINT nType, int cx, int cy)
-{
-    CDialogEx::OnSize(nType, cx, cy);
+    CDialog::OnSize(nType, cx, cy);
     m_layout.OnSize();
 }
 
-void CLayoutDialogEx::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+void CLayoutDialog::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
     m_layout.OnGetMinMaxInfo(lpMMI);
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
+    CDialog::OnGetMinMaxInfo(lpMMI);
 }
 
-void CLayoutDialogEx::OnDestroy()
+void CLayoutDialog::OnDestroy()
 {
     m_layout.OnDestroy();
-    CDialogEx::OnDestroy();
+    CDialog::OnDestroy();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -85,38 +45,34 @@ void CLayoutDialogEx::OnDestroy()
 CLayout::CLayout(CWnd* dialog, RECT* placement)
     : m_wp(placement), m_dialog(dialog), m_originalDialogSize(0, 0)
 {
-    ASSERT(dialog != nullptr);
+    assert(dialog != nullptr);
 }
 
 int CLayout::AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy)
 {
-    m_control.emplace_back(control, movex, movey, stretchx, stretchy);
+    m_control.emplace_back(control->Handle(), movex, movey, stretchx, stretchy);
     return static_cast<int>(m_control.size() - 1);
 }
 
 void CLayout::AddControl(const UINT id, const double movex, const double movey, const double stretchx, const double stretchy)
 {
-    AddControl(m_dialog->GetDlgItem(id), movex, movey, stretchx, stretchy);
+    m_control.emplace_back(GetDlgItem(m_dialog->Handle(), id), movex, movey, stretchx, stretchy);
 }
 
 void CLayout::OnInitDialog(const bool centerWindow)
 {
-    m_dialog->SetIcon(CDirStatApp::Get()->LoadIcon(IDR_MAINFRAME), false);
+    m_dialog->SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
 
-    CRect rcDialog;
-    m_dialog->GetWindowRect(rcDialog);
+    const CRect rcDialog(m_dialog->Handle());
     m_originalDialogSize = rcDialog.Size();
 
     for (auto& info : m_control)
     {
-        CRect rc;
-        info.control->GetWindowRect(rc);
-        m_dialog->ScreenToClient(rc);
-        info.originalRectangle = rc;
+        info.originalRectangle = m_dialog->WindowRectInClient(info.control);
     }
 
     // Create size gripper
-    CRect sg = ClientRectOf(m_dialog);
+    CRect sg = m_dialog->ClientRect();
     sg.left = sg.right - m_sizeGripper.m_width;
     sg.top = sg.bottom - m_sizeGripper.m_width;
     m_sizeGripper.Create(m_dialog, sg);
@@ -133,13 +89,12 @@ void CLayout::OnInitDialog(const bool centerWindow)
 
 void CLayout::OnDestroy() const
 {
-    m_dialog->GetWindowRect(m_wp);
+    if (m_wp != nullptr) *m_wp = CRect(m_dialog->Handle());
 }
 
 void CLayout::OnSize()
 {
-    CRect wrc;
-    m_dialog->GetWindowRect(wrc);
+    const CRect wrc(m_dialog->Handle());
     const CSize diff = wrc.Size() - m_originalDialogSize;
 
     CPositioner pos(static_cast<int>(m_control.size()));
@@ -148,17 +103,17 @@ void CLayout::OnSize()
     {
         CRect rc = originalRectangle;
 
-        rc.OffsetRect(static_cast<int>(diff.cx * movex), static_cast<int>(diff.cy * movey));
+        rc.Offset(static_cast<int>(diff.cx * movex), static_cast<int>(diff.cy * movey));
         rc.right += static_cast<int>(diff.cx * stretchx);
         rc.bottom += static_cast<int>(diff.cy * stretchy);
 
-        pos.SetWindowPos(*control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
+        pos.SetWindowPos(control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
 
     m_dialog->Invalidate();
 }
 
-void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
+void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 {
     if (m_originalDialogSize.cx > 0) // Check if initialized
     {
@@ -170,52 +125,40 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 
 void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
 {
-    CWnd::Create(AfxRegisterWndClass(0,
-        CDirStatApp::Get()->LoadStandardCursor(IDC_ARROW), nullptr, nullptr),
+    CWnd::Create(RegisterWindowClass(0, LoadCursorW(nullptr, IDC_ARROW)),
         wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER);
 }
 
-BEGIN_MESSAGE_MAP(CLayout::CSizeGripper, CWnd)
-    ON_WM_PAINT()
-    ON_WM_NCHITTEST()
-    ON_WM_ERASEBKGND()
-END_MESSAGE_MAP()
-
-BOOL CLayout::CSizeGripper::OnEraseBkgnd(CDC* pDC)
+bool CLayout::CSizeGripper::OnEraseBkgnd(CDC* pDC) const
 {
-    CRect rc = ClientRectOf(this);
-    pDC->FillSolidRect(rc, DarkMode::WdsSysColor(CTLCOLOR_DLG));
-    return TRUE;
+    CRect rc = ClientRect();
+    pDC->FillSolidRect(rc, DarkMode::SystemColor(CTLCOLOR_DLG));
+    return true;
 }
 
 void CLayout::CSizeGripper::OnPaint()
 {
-    CPaintDC dc(this);
-
-    const CRect rc = ClientRectOf(this);
-    ASSERT(rc.Width() == m_width);
-    ASSERT(rc.Height() == m_width);
-
     // Draw three diagonal shadow lines
+    CPaintDC dc(this);
     for (int offset : {1, 5, 9})
     {
         DrawShadowLine(&dc, { offset, m_width }, { m_width, offset });
     }
 }
 
-void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
+void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, const CPoint start, const CPoint end)
 {
     // Draw highlight line
     {
-        CPen lightPen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DHIGHLIGHT));
-        const CSelectObject sopen(pdc, &lightPen);
+        const CPen lightPen(PS_SOLID, 1, DarkMode::SystemColor(COLOR_3DHIGHLIGHT));
+        const GdiObjectSelection sopen(pdc, &lightPen);
         pdc->MoveTo(start);
         pdc->LineTo(end);
     }
 
     // Draw shadow lines (2 pixels for depth effect)
-    CPen darkPen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
-    const CSelectObject sopen(pdc, &darkPen);
+    const CPen darkPen(PS_SOLID, 1, DarkMode::SystemColor(COLOR_3DSHADOW));
+    const GdiObjectSelection sopen(pdc, &darkPen);
 
     for (const int i : std::views::iota(1, 3))
     {
@@ -224,9 +167,9 @@ void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
     }
 }
 
-LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
+LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point) const
 {
-    ScreenToClient(&point);
+    point = ToClient(point);
     return (point.x + point.y >= m_width) ? HTBOTTOMRIGHT : 0;
 }
 
@@ -243,7 +186,7 @@ CLayout::CPositioner::~CPositioner()
     }
 }
 
-void CLayout::CPositioner::SetWindowPos(HWND hWnd, const int x, const int y, const int cx, const int cy, const UINT uFlags)
+void CLayout::CPositioner::SetWindowPos(const HWND hWnd, const int x, const int y, const int cx, const int cy, const UINT uFlags)
 {
     m_wdp = DeferWindowPos(m_wdp, hWnd, nullptr, x, y, cx, cy, uFlags | SWP_NOZORDER);
 }

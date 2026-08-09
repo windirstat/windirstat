@@ -112,6 +112,9 @@ $script:WM_INITMENUPOPUP = 0x0117
 $script:BM_GETCHECK      = 0x00F0
 $script:BM_SETCHECK      = 0x00F1
 $script:BM_CLICK         = 0x00F5
+$script:CB_GETCOUNT      = 0x0146
+$script:CB_GETCURSEL     = 0x0147
+$script:CB_SETCURSEL     = 0x014E
 $script:MF_GRAYED        = 0x0001
 $script:MF_DISABLED      = 0x0002
 $script:MF_CHECKED       = 0x0008
@@ -1231,6 +1234,15 @@ public static class Win32Helper {
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetGUIThreadInfo(uint threadId, ref GUITHREADINFO info);
+    [DllImport("user32.dll")] private static extern IntPtr SetFocus(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern bool GetKeyboardState(byte[] keyState);
+    [DllImport("user32.dll")] private static extern bool SetKeyboardState(byte[] keyState);
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam,
+                                                    uint flags, uint timeout, out UIntPtr result);
+    [DllImport("user32.dll")] public static extern int GetDlgCtrlID(IntPtr hWnd);
     [DllImport("user32.dll")] private static extern bool IsChild(IntPtr parent, IntPtr child);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
 
@@ -1244,6 +1256,90 @@ public static class Win32Helper {
     public static bool IsDescendant(IntPtr parent, IntPtr child)
     {
         return parent == child || IsChild(parent, child);
+    }
+
+    public static bool FocusWindow(IntPtr root, IntPtr control)
+    {
+        uint targetThread = GetWindowThreadProcessId(root, IntPtr.Zero);
+        uint currentThread = GetCurrentThreadId();
+        bool attached = false;
+        try
+        {
+            if (targetThread == 0) return false;
+            if (targetThread != currentThread)
+            {
+                attached = AttachThreadInput(currentThread, targetThread, true);
+                if (!attached) return false;
+            }
+            SetFocus(control);
+            return GetFocusedWindow(root) == control;
+        }
+        finally
+        {
+            if (attached) AttachThreadInput(currentThread, targetThread, false);
+        }
+    }
+
+    private static int GetTabSelection(IntPtr tabControl)
+    {
+        const uint TCM_GETCURSEL = 0x130B;
+        const uint SMTO_ABORTIFHUNG = 0x0002;
+        UIntPtr result;
+        return SendMessageTimeout(tabControl, TCM_GETCURSEL, IntPtr.Zero, IntPtr.Zero,
+                                  SMTO_ABORTIFHUNG, 100, out result) != IntPtr.Zero ?
+            unchecked((int)result.ToUInt64()) : -1;
+    }
+
+    public static bool PostKeyWithModifiers(IntPtr root, IntPtr tabControl, int expectedTab, uint virtualKey,
+                                            bool control, bool shift)
+    {
+        const uint WM_KEYDOWN = 0x0100;
+        const uint WM_KEYUP = 0x0101;
+        const byte VK_SHIFT = 0x10;
+        const byte VK_CONTROL = 0x11;
+        uint targetThread = GetWindowThreadProcessId(root, IntPtr.Zero);
+        uint currentThread = GetCurrentThreadId();
+        bool attached = false;
+        byte[] originalState = null;
+        try
+        {
+            if (targetThread == 0 || tabControl == IntPtr.Zero) return false;
+            if (targetThread != currentThread)
+            {
+                attached = AttachThreadInput(currentThread, targetThread, true);
+                if (!attached) return false;
+            }
+
+            var keyState = new byte[256];
+            if (!GetKeyboardState(keyState)) return false;
+            originalState = (byte[])keyState.Clone();
+            keyState[VK_CONTROL] = (byte)((keyState[VK_CONTROL] & 1) | (control ? 0x80 : 0));
+            keyState[VK_SHIFT] = (byte)((keyState[VK_SHIFT] & 1) | (shift ? 0x80 : 0));
+            if (!SetKeyboardState(keyState)) return false;
+
+            IntPtr focus = GetFocusedWindow(root);
+            if (focus == IntPtr.Zero || GetTabSelection(tabControl) == expectedTab ||
+                !PostMessage(focus, WM_KEYDOWN, (IntPtr)virtualKey, IntPtr.Zero))
+                return false;
+
+            bool completed = false;
+            long deadline = Environment.TickCount64 + 3000;
+            while (Environment.TickCount64 < deadline)
+            {
+                if (GetTabSelection(tabControl) == expectedTab)
+                {
+                    completed = true;
+                    break;
+                }
+                System.Threading.Thread.Sleep(10);
+            }
+            return PostMessage(focus, WM_KEYUP, (IntPtr)virtualKey, IntPtr.Zero) && completed;
+        }
+        finally
+        {
+            if (originalState != null) SetKeyboardState(originalState);
+            if (attached) AttachThreadInput(currentThread, targetThread, false);
+        }
     }
 
     public static IntPtr[] GetProcessWindowHandles(uint targetProcessId) {
@@ -1303,6 +1399,9 @@ public static class Win32MenuHelper {
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr GetDlgItem(IntPtr hDlg, int nIDDlgItem);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetNextDlgTabItem(IntPtr hDlg, IntPtr hCtl, bool previous);
 }
 '@
 
@@ -1337,10 +1436,15 @@ public static class NativeListViewHelper
     private const uint LVM_GETSELECTEDCOUNT = LVM_FIRST + 50;
     private const uint LVM_SETITEMSTATE = LVM_FIRST + 43;
     private const uint LVM_ENSUREVISIBLE = LVM_FIRST + 19;
+    private const uint LVM_GETHEADER = LVM_FIRST + 31;
+    private const uint WM_LBUTTONDOWN = 0x0201;
+    private const uint WM_LBUTTONUP = 0x0202;
     private const uint WM_KEYDOWN = 0x0100;
     private const uint WM_KEYUP = 0x0101;
+    private const uint MK_LBUTTON = 0x0001;
     private const uint VK_TAB = 0x09;
     private const uint VK_ESCAPE = 0x1B;
+    private const uint VK_DOWN = 0x28;
     private const uint VK_F9 = 0x78;
     private const uint LVIF_TEXT = 0x0001;
     private const uint LVIS_FOCUSED = 0x0001;
@@ -1394,6 +1498,9 @@ public static class NativeListViewHelper
     private static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
 
     [DllImport("user32.dll")]
+    private static extern bool GetClientRect(IntPtr hwnd, out RECT rect);
+
+    [DllImport("user32.dll")]
     private static extern bool SetWindowPos(IntPtr hwnd, IntPtr insertAfter, int x, int y, int width, int height,
                                             uint flags);
 
@@ -1443,7 +1550,7 @@ public static class NativeListViewHelper
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool IsWow64Process(IntPtr process, out bool wow64);
 
-    public static IntPtr[] GetVisibleListViews(IntPtr root)
+    public static IntPtr[] GetVisibleListViewsIncludingEmpty(IntPtr root)
     {
         var result = new List<IntPtr>();
         EnumChildWindows(root, delegate (IntPtr hwnd, IntPtr unused)
@@ -1454,6 +1561,12 @@ public static class NativeListViewHelper
                 result.Add(hwnd);
             return true;
         }, IntPtr.Zero);
+        return result.ToArray();
+    }
+
+    public static IntPtr[] GetVisibleListViews(IntPtr root)
+    {
+        var result = new List<IntPtr>(GetVisibleListViewsIncludingEmpty(root));
         // Keep bounded message calls on the managed side of the callback so a
         // timeout becomes a normal exception instead of crossing a native frame.
         result.RemoveAll(delegate (IntPtr hwnd) { return GetItemCount(hwnd) <= 0; });
@@ -1498,6 +1611,21 @@ public static class NativeListViewHelper
     public static int GetSelectedCount(IntPtr listView)
     {
         return SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
+    public static bool ClickFirstHeader(IntPtr listView)
+    {
+        IntPtr header = SendBounded(listView, LVM_GETHEADER, IntPtr.Zero, IntPtr.Zero);
+        RECT rect;
+        if (header == IntPtr.Zero || !GetClientRect(header, out rect) ||
+            rect.Right <= rect.Left || rect.Bottom <= rect.Top)
+            return false;
+
+        int x = Math.Min(8, rect.Right - rect.Left - 1);
+        int y = Math.Max(0, (rect.Bottom - rect.Top) / 2);
+        IntPtr point = (IntPtr)((y << 16) | (x & 0xFFFF));
+        return PostMessage(header, WM_LBUTTONDOWN, (IntPtr)MK_LBUTTON, point) &&
+               PostMessage(header, WM_LBUTTONUP, IntPtr.Zero, point);
     }
 
     public static string[] GetItemTexts(IntPtr listView)
@@ -1693,6 +1821,7 @@ public static class NativeListViewHelper
 
     public static bool PostTab(IntPtr window) { return PostKey(window, VK_TAB); }
     public static bool PostEscape(IntPtr window) { return PostKey(window, VK_ESCAPE); }
+    public static bool PostDown(IntPtr window) { return PostKey(window, VK_DOWN); }
     public static bool PostF9(IntPtr window) { return PostKey(window, VK_F9); }
 
     private static void EnsureSameBitness(IntPtr targetProcess)
@@ -2047,6 +2176,25 @@ function Find-UiaRows {
     @($items)
 }
 
+function Find-DuplicateRows {
+    param([System.Windows.Automation.AutomationElement] $TabControl)
+
+    if (!$TabControl) { throw 'Cannot discover duplicate rows without the tab control' }
+
+    $tabHwnd = [IntPtr] $TabControl.Current.NativeWindowHandle
+    if ($tabHwnd -eq [IntPtr]::Zero) { throw 'The duplicate tab control has no native window handle' }
+
+    $listViews = @([NativeListViewHelper]::GetVisibleListViewsIncludingEmpty($tabHwnd))
+    if ($listViews.Count -ne 1) {
+        throw "Expected one visible duplicate list view, but found $($listViews.Count)"
+    }
+
+    $listView = [System.Windows.Automation.AutomationElement]::FromHandle($listViews[0])
+    if (!$listView) { throw 'UI Automation could not open the visible duplicate list view' }
+
+    return @(Find-UiaRows -Root $listView -AllTypes)
+}
+
 function Invoke-Button {
     param([System.Windows.Automation.AutomationElement] $Btn)
 
@@ -2370,48 +2518,48 @@ function Select-TabItem {
     $selectedBefore = & $readSelected
     if ($selectedBefore -eq $true) { return $true }
 
-    $actionSucceeded = $false
     # MFC's tab provider can expose an InvokePattern that returns successfully
     # without changing the active page. Prefer the real tab's clickable point;
     # Click-Element itself falls back to InvokePattern when no point is exposed.
-    try {
-        Click-Element $Tab
-        $actionSucceeded = $true
-    }
-    catch {}
-
-    # Explicit Invoke fallback for providers whose coordinate lookup failed
-    # before Click-Element could reach its own pattern fallback.
-    if (!$actionSucceeded) {
+    foreach ($interactionAttempt in 1..2) {
+        $actionSucceeded = $false
         try {
-            $p = $Tab.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-            $p.Invoke()
+            Click-Element $Tab
             $actionSucceeded = $true
         }
-        catch {
-            return $false
-        }
-    }
+        catch {}
 
-    # Give providers that expose selection state a short window to publish the
-    # change. If state is unavailable, successful invocation remains the only
-    # observable outcome; if it is available and stays false, report failure.
-    $selectedAfter = $null
-    foreach ($attempt in 1..5) {
-        Start-Sleep -Milliseconds 100
-        $selectedAfter = & $readSelected
-        if ($selectedAfter -eq $true) { return $true }
-        if ($null -eq $selectedAfter) { return $actionSucceeded }
+        # Explicit Invoke fallback for providers whose coordinate lookup failed
+        # before Click-Element could reach its own pattern fallback.
+        if (!$actionSucceeded) {
+            try {
+                $p = $Tab.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+                $p.Invoke()
+                $actionSucceeded = $true
+            }
+            catch { continue }
+        }
+
+        # Give providers that expose selection state a short window to publish
+        # the change. A second interaction recovers a click dropped during a
+        # focus transition.
+        foreach ($pollAttempt in 1..5) {
+            Start-Sleep -Milliseconds 100
+            $selectedAfter = & $readSelected
+            if ($selectedAfter -eq $true) { return $true }
+            if ($null -eq $selectedAfter) { return $actionSucceeded }
+        }
     }
     return $false
 }
 
-# Toolbar class name varies by ASLR address - use a partial class name match via a loop
-function Find-ToolbarPane {
+# Native common-control toolbars expose ControlType.ToolBar rather than the
+# ControlType.Pane used by the former MFC toolbar.
+function Find-Toolbar {
     param([System.Windows.Automation.AutomationElement] $Window)
-    $panes = Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::Pane) `
+    $toolbars = Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::ToolBar) `
         -Scope ([System.Windows.Automation.TreeScope]::Children)
-    $panes | Where-Object { $_.Current.ClassName -like '*ToolBar*' } | Select-Object -First 1
+    $toolbars | Where-Object { $_.Current.ClassName -like '*ToolBar*' } | Select-Object -First 1
 }
 
 function Find-StatusBarPane {
@@ -2536,16 +2684,23 @@ function Invoke-CsvExportFromMenu {
     if ($res -ne $true) { return $null }
     Start-Sleep -Milliseconds 1000
 
-    # Wait for the common Save dialog
+    # The first common file dialog can load third-party shell extensions before it creates its window.
     $saveDlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-        -TimeoutMs 8000 -MainWindow $Window
+        -TimeoutMs 20000 -MainWindow $Window
     if (!$saveDlg) { return $null }
 
-    # Locate the filename Edit field (inside the ComboBox in a standard Save dialog)
-    $fnEdit = $null
-    $fnCombo = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::ComboBox)
-    if ($fnCombo) { $fnEdit = Find-UiaFirst -Root $fnCombo -Type ([System.Windows.Automation.ControlType]::Edit) }
-    if (!$fnEdit) { $fnEdit = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Edit) }
+    # Common dialogs expose stable Win32 control IDs even when labels are localized.
+    $fnEdit = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Edit) `
+        -AutomationId '1001'
+    if (!$fnEdit) {
+        $fnCombo = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::ComboBox)
+        if ($fnCombo) {
+            $fnEdit = Find-UiaFirst -Root $fnCombo -Type ([System.Windows.Automation.ControlType]::Edit)
+        }
+    }
+    if (!$fnEdit) {
+        $fnEdit = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Edit)
+    }
 
     if ($fnEdit) {
         try {
@@ -2566,24 +2721,36 @@ function Invoke-CsvExportFromMenu {
         Send-Keys '^v' 300
     }
 
-    # Click Save
-    $saveBtn = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Save'
+    # Exclude the Save dialog itself when looking for a later overwrite prompt.
+    $saveSnapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
+    $saveBtn = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Button) `
+        -AutomationId '1'
+    if (!$saveBtn) {
+        $saveBtn = Find-UiaFirst -Root $saveDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Save'
+    }
     if ($saveBtn) { try { Invoke-Button $saveBtn } catch { Send-Keys '{RETURN}' } }
     else { Send-Keys '{RETURN}' }
-    Start-Sleep -Milliseconds 1500
 
-    # Dismiss overwrite prompt if it appears
-    $overDlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-        -TimeoutMs 3000 -MainWindow $Window
+    $overDlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $saveSnapshot `
+        -TimeoutMs 1500 -MainWindow $Window
     if ($overDlg) {
-        $yesBtn = Find-UiaFirst -Root $overDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Yes'
-        if (!$yesBtn) { $yesBtn = Find-UiaFirst -Root $overDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK' }
+        $yesBtn = Find-UiaFirst -Root $overDlg -Type ([System.Windows.Automation.ControlType]::Button) `
+            -AutomationId '6'
+        if (!$yesBtn) {
+            $yesBtn = Find-UiaFirst -Root $overDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Yes'
+        }
+        if (!$yesBtn) {
+            $yesBtn = Find-UiaFirst -Root $overDlg -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
+        }
         if ($yesBtn) { try { Invoke-Button $yesBtn } catch { Send-Keys 'y' } }
         else { Send-Keys 'y' }
-        Start-Sleep -Milliseconds 800
     }
 
-    if (Test-Path -LiteralPath $OutPath) { return $OutPath }
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(10)
+    while ([System.DateTime]::UtcNow -lt $deadline) {
+        if (Test-Path -LiteralPath $OutPath) { return $OutPath }
+        Start-Sleep -Milliseconds 100
+    }
     return $null
 }
 
@@ -3068,7 +3235,7 @@ function Wait-ScanDone {
     while ([System.DateTime]::UtcNow -lt $deadline) {
         if (!$script:proc -or $script:proc.HasExited -or !$script:win) { return $false }
         try { $title = $script:win.Current.Name } catch { return $false }
-        $isScanning = $title -like '*Scanning*' -or $title -like '* %*'
+        $isScanning = $title -like '*Scanning*' -or $title -match '(?:^| - )\d{1,3}%\s'
         if ($isScanning) {
             $readySince = $null
         }
@@ -3095,7 +3262,8 @@ function Test-ApplicationLaunch {
     $rememberedDrive = [System.IO.Path]::GetPathRoot($env:SystemRoot)
     $win = Start-App -Exe $Exe -DriveSelectLines @(
         'SelectDrivesRadio=0',
-        "SelectDrivesDrives=$rememberedDrive"
+        "SelectDrivesDrives=$rememberedDrive",
+        "SelectDrivesFolder=$script:workRoot|$script:scanRoot"
     )
     if (!$win) {
         Assert-Fail $g 'App window appears within timeout' "Window not found after ${TimeoutSeconds}s"
@@ -3118,9 +3286,9 @@ function Test-ApplicationLaunch {
     $sb = Find-StatusBarPane -Window $win
     Assert-That $g 'Status bar pane present' ([bool] $sb) 'No Pane with StatusBar in class name'
 
-    # Toolbar is a Pane child with class *ToolBar*
-    $tb = Find-ToolbarPane -Window $win
-    Assert-That $g 'Toolbar pane present' ([bool] $tb) 'No Pane with ToolBar in class name'
+    # Toolbar is a native ToolBar child.
+    $tb = Find-Toolbar -Window $win
+    Assert-That $g 'Toolbar present' ([bool] $tb) 'No native ToolBar child found'
 
     # Drive selection dialog auto-opens at launch - close it for subsequent tests
     $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
@@ -3223,13 +3391,17 @@ function Test-MenuNavigation {
         if ($checkedGraphModes.Count -eq 1) {
             Assert-Pass $g "Exactly one graph mode is selected ($($checkedGraphModes[0].ItemName))"
         } else {
-            Assert-Fail $g 'Exactly one graph mode is selected' "Checked graph modes: $($checkedGraphModes.ItemName -join ', ')"
+            $checkedGraphModeNames = @($checkedGraphModes | ForEach-Object { $_.ItemName })
+            Assert-Fail $g 'Exactly one graph mode is selected' `
+                "Checked graph modes: $($checkedGraphModeNames -join ', ')"
         }
     } else {
+        $treeMapStyleNames = @($treeMapStyleItems | ForEach-Object { $_.ItemName })
+        $graphModeNames = @($graphModeItems | ForEach-Object { $_.ItemName })
         $foundGraphModes = @(
             "Treemap submenu: $($treeMapSubmenu.Count)"
-            "styles: $($treeMapStyleItems.ItemName -join ', ')"
-            "modes: $($graphModeItems.ItemName -join ', ')"
+            "styles: $($treeMapStyleNames -join ', ')"
+            "modes: $($graphModeNames -join ', ')"
         ) -join '; '
         Assert-Fail $g 'View menu contains all graph modes' $foundGraphModes
     }
@@ -3308,7 +3480,7 @@ function Test-DriveSelectionDialog {
     Focus-Window $Window; Start-Sleep -Milliseconds 200
 
     # Open via toolbar "Open..." button
-    $tb = Find-ToolbarPane -Window $Window
+    $tb = Find-Toolbar -Window $Window
     $openBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Open' } else { $null }
 
     if ($openBtn) {
@@ -3322,26 +3494,12 @@ function Test-DriveSelectionDialog {
         }
     }
     else {
-        # Fallback: File > Open... via menu
-        $opened = Open-Menu -Window $Window -Name 'File'
-        if ($opened) {
-            $openItem = Find-MenuItem -Window $Window -Name 'Open...'
-            if ($openItem) {
-                try {
-                    $p = $openItem.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-                    $p.Invoke()
-                    Start-Sleep -Milliseconds 800
-                }
-                catch { Close-AllMenus; Assert-Fail $g 'File > Open invoked' "Error: $_"; return }
-            }
-            else {
-                Close-AllMenus; Assert-Fail $g 'Open item in File menu' 'Not found'; return
-            }
-        }
-        else {
-            Assert-Fail $g 'Drive dialog opened' 'Neither toolbar button nor File menu found'
+        # Fallback: invoke File > Select Target through the native menu.
+        if ((Invoke-Win32MenuCommand -Window $Window -MenuPath 'File -> Select Target...') -ne $true) {
+            Assert-Fail $g 'Select Target command invoked' 'Toolbar button and File menu command were unavailable'
             return
         }
+        Start-Sleep -Milliseconds 800
     }
 
     # Locate the dialog as a child window
@@ -3367,6 +3525,55 @@ function Test-DriveSelectionDialog {
     }
     else {
         Assert-Fail $g 'Dialog title correct' "Got: '$dialogTitle'"
+    }
+
+    $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
+    $radioIds = [ordered] @{
+        All = Get-ResourceId 'IDC_RADIO_TARGET_DRIVES_ALL'
+        Subset = Get-ResourceId 'IDC_RADIO_TARGET_DRIVES_SUBSET'
+        Folder = Get-ResourceId 'IDC_RADIO_TARGET_FOLDER'
+    }
+    $radioHandles = [ordered] @{}
+    foreach ($entry in $radioIds.GetEnumerator()) {
+        $radioHandles[$entry.Key] = [Win32MenuHelper]::GetDlgItem($dialogHwnd, [int] $entry.Value)
+    }
+    $driveHwnd = [Win32MenuHelper]::GetDlgItem(
+        $dialogHwnd, (Get-ResourceId 'IDC_TARGET_DRIVES_LIST'))
+    $folderComboHwnd = [Win32MenuHelper]::GetDlgItem(
+        $dialogHwnd, (Get-ResourceId 'IDC_BROWSE_FOLDER'))
+    $nativeRadiosPresent = @($radioHandles.Values | Where-Object { $_ -ne [IntPtr]::Zero }).Count -eq 3
+    Assert-That $g 'All target radio buttons have native handles' $nativeRadiosPresent `
+        "Handles: $(@($radioHandles.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', ')"
+
+    $isRadioChecked = {
+        param([IntPtr] $Radio)
+        [Win32MenuHelper]::SendMessage(
+            $Radio, $script:BM_GETCHECK, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32() -eq $script:ButtonChecked
+    }
+    $clickRadio = {
+        param([IntPtr] $Radio)
+        [Win32MenuHelper]::SendMessage(
+            $Radio, $script:BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+        Start-Sleep -Milliseconds 200
+    }
+
+    # The input controls begin new dialog groups so arrow navigation remains
+    # contained within the three target radio buttons and wraps at each end.
+    if ($nativeRadiosPresent) {
+        & $clickRadio $radioHandles.All
+        $focusedRadio = [NativeListViewHelper]::FocusWindow($radioHandles.All)
+        foreach ($expectedName in @('Subset', 'Folder', 'All')) {
+            $posted = [NativeListViewHelper]::PostDown($focusedRadio)
+            Start-Sleep -Milliseconds 200
+            $focusedRadio = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+            $checkedNames = @($radioHandles.GetEnumerator() |
+                Where-Object { & $isRadioChecked ([IntPtr] ($_.Value)) } |
+                ForEach-Object { $_.Key })
+            Assert-That $g "Down Arrow advances within target radios to $expectedName" `
+                ($posted -and $focusedRadio -eq $radioHandles[$expectedName] -and
+                    $checkedNames.Count -eq 1 -and $checkedNames[0] -eq $expectedName) `
+                "Focus=$focusedRadio; checked=$($checkedNames -join ', ')"
+        }
     }
 
     # Keep All Local Drives stable while asynchronous drive information arrives.
@@ -3435,6 +3642,49 @@ function Test-DriveSelectionDialog {
             Assert-Fail $g 'All Local Drives radio present' 'Radio button not found'
         }
 
+        # Sorting a list with a selected row clears and restores native selection.
+        # Those internal notifications must not change an explicitly selected target.
+        if ($driveHwnd -ne [IntPtr]::Zero -and $nativeRadiosPresent) {
+            try {
+                $nativeDriveCount = [NativeListViewHelper]::GetItemCount($driveHwnd)
+                if ($nativeDriveCount -gt 0) {
+                    [NativeListViewHelper]::SelectSingleItem($driveHwnd, 0) | Out-Null
+                    & $clickRadio $radioHandles.All
+                    Assert-That $g 'All Local Drives is selected before manual drive sorting' `
+                        (& $isRadioChecked $radioHandles.All) 'Could not establish the All Local Drives target'
+
+                    $headerClicked = [NativeListViewHelper]::ClickFirstHeader($driveHwnd)
+                    Start-Sleep -Milliseconds 300
+                    Assert-That $g 'Manual drive header sort preserves All Local Drives' `
+                        ($headerClicked -and (& $isRadioChecked $radioHandles.All)) `
+                        "Header click posted=$headerClicked; selected row count=$(
+                            [NativeListViewHelper]::GetSelectedCount($driveHwnd))"
+
+                    # Native list selection is another implicit SetActiveRadio path.
+                    # It must restore the drive list as the first input in tab order.
+                    & $clickRadio $radioHandles.Folder
+                    $selected = [NativeListViewHelper]::SelectSingleItem($driveHwnd, 0)
+                    Start-Sleep -Milliseconds 200
+                    $nextAfterSubset = [Win32MenuHelper]::GetNextDlgTabItem(
+                        $dialogHwnd, $radioHandles.Subset, $false)
+                    Assert-That $g 'Programmatic drive selection activates Subset with drive-list tab order' `
+                        ($selected -and (& $isRadioChecked $radioHandles.Subset) -and
+                            $nextAfterSubset -eq $driveHwnd) `
+                        ("Selected=$selected; checked=$(& $isRadioChecked $radioHandles.Subset); " +
+                            "next=$nextAfterSubset; expected=$driveHwnd")
+                }
+                else {
+                    Assert-Skip $g 'Manual drive sorting and implicit Subset tab order' 'Native drive list is empty'
+                }
+            }
+            catch {
+                Assert-Fail $g 'Manual drive sorting and implicit Subset tab order' "Native interaction failed: $_"
+            }
+        }
+        else {
+            Assert-Fail $g 'Native drive controls present for radio regression checks' 'Required handles were not found'
+        }
+
         if ($driveItems.Count -gt 0) {
             Assert-Pass $g "$($driveItems.Count) drive(s) listed in drive grid"
             if ($subsetRadio) {
@@ -3479,6 +3729,50 @@ function Test-DriveSelectionDialog {
     $cancelBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
     Assert-That $g 'OK button present' ([bool] $okBtn) 'Not found'
     Assert-That $g 'Cancel button present' ([bool] $cancelBtn) 'Not found'
+
+    # Exercise CBN_SELCHANGE from a collapsed combo.  Directly setting index 0
+    # is deliberately silent; the Down Arrow must deliver the notification that
+    # activates Folder and restores the combo-first tab order.
+    if ($folderComboHwnd -ne [IntPtr]::Zero -and $nativeRadiosPresent) {
+        $historyCount = [Win32MenuHelper]::SendMessage(
+            $folderComboHwnd, $script:CB_GETCOUNT, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32()
+        if ($historyCount -ge 2) {
+            $initialIndex = [Win32MenuHelper]::SendMessage(
+                $folderComboHwnd, $script:CB_SETCURSEL, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32()
+            & $clickRadio $radioHandles.All
+            $comboFocus = [NativeListViewHelper]::FocusWindow($folderComboHwnd)
+            if ($comboFocus -eq [IntPtr]::Zero) { $comboFocus = $folderComboHwnd }
+            $posted = [NativeListViewHelper]::PostDown($comboFocus)
+            Start-Sleep -Milliseconds 300
+            $selectedIndex = [Win32MenuHelper]::SendMessage(
+                $folderComboHwnd, $script:CB_GETCURSEL, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32()
+            $nextAfterFolder = [Win32MenuHelper]::GetNextDlgTabItem(
+                $dialogHwnd, $radioHandles.Folder, $false)
+            Assert-That $g 'Collapsed folder-history Down Arrow activates Folder with combo-first tab order' `
+                ($initialIndex -eq 0 -and $posted -and $selectedIndex -eq 1 -and
+                    (& $isRadioChecked $radioHandles.Folder) -and $nextAfterFolder -eq $folderComboHwnd) `
+                ("Initial=$initialIndex; selected=$selectedIndex; " +
+                    "checked=$(& $isRadioChecked $radioHandles.Folder); next=$nextAfterFolder; " +
+                    "expected=$folderComboHwnd")
+        }
+        else {
+            Assert-Fail $g 'Collapsed folder-history keyboard selection' `
+                "Expected two persisted history entries, found $historyCount"
+        }
+
+        # All is also routed through SetActiveRadio so it must undo the
+        # combo-first order established by selecting a folder.
+        & $clickRadio $radioHandles.Folder
+        & $clickRadio $radioHandles.All
+        $nextAfterAll = [Win32MenuHelper]::GetNextDlgTabItem(
+            $dialogHwnd, $radioHandles.All, $false)
+        Assert-That $g 'All Local Drives restores the default drive-list tab order' `
+            ((& $isRadioChecked $radioHandles.All) -and $nextAfterAll -eq $driveHwnd) `
+            "Next=$nextAfterAll; expected=$driveHwnd"
+    }
+    else {
+        Assert-Fail $g 'Folder history native controls present' 'Combo or radio handles were not found'
+    }
 
     # Test radio button selection - click "Individual Folder"
     $folderRadio = $radios | Where-Object { $_.Current.Name -like '*Folder*' } | Select-Object -First 1
@@ -3539,6 +3833,7 @@ function Test-DriveSelectionDialog {
         $settings = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
             -TimeoutMs 5000 -MainWindow $Window
         if ($settings) {
+            $settingsHwnd = [IntPtr] $settings.Current.NativeWindowHandle
             Assert-Pass $g 'Drive dialog Filtering shortcut opens Settings without crashing'
             $settingsTabs = @(Find-UiaAll -Root $settings -Type (
                 [System.Windows.Automation.ControlType]::TabItem))
@@ -3567,7 +3862,43 @@ function Test-DriveSelectionDialog {
             else {
                 Send-Keys '{ESC}'
             }
-            Start-Sleep -Milliseconds 400
+            for ($attempt = 0; $attempt -lt 20 -and [Win32MenuHelper]::IsWindow($settingsHwnd); $attempt++) {
+                Start-Sleep -Milliseconds 100
+            }
+
+            # Closing nested Settings clears temporary CWnd wrappers. The outer layout must retain
+            # native handles so a later resize still positions its unsubclassed controls.
+            $cancelButtonHwnd = [Win32MenuHelper]::GetDlgItem($dialogHwnd, $script:IDCANCEL)
+            $dialogBefore = [NativeListViewHelper]::GetWindowRectangle($dialogHwnd)
+            $cancelBefore = [NativeListViewHelper]::GetWindowRectangle($cancelButtonHwnd)
+            if (![Win32MenuHelper]::IsWindow($settingsHwnd) -and
+                $dialogBefore.Count -eq 4 -and $cancelBefore.Count -eq 4) {
+                $beforeWidth = $dialogBefore[2] - $dialogBefore[0]
+                $beforeHeight = $dialogBefore[3] - $dialogBefore[1]
+                $requested = [NativeListViewHelper]::ResizeWindow(
+                    $dialogHwnd, $beforeWidth + 80, $beforeHeight + 60)
+                Start-Sleep -Milliseconds 300
+                $dialogAfter = [NativeListViewHelper]::GetWindowRectangle($dialogHwnd)
+                $cancelAfter = [NativeListViewHelper]::GetWindowRectangle($cancelButtonHwnd)
+                $layoutUpdated = $false
+                $layoutDetails = 'Resized window rectangles were unavailable'
+                if ($requested -and $dialogAfter.Count -eq 4 -and $cancelAfter.Count -eq 4) {
+                    $widthDelta = $dialogAfter[2] - $dialogAfter[0] - $beforeWidth
+                    $heightDelta = $dialogAfter[3] - $dialogAfter[1] - $beforeHeight
+                    $cancelXDelta = $cancelAfter[0] - $cancelBefore[0]
+                    $cancelYDelta = $cancelAfter[1] - $cancelBefore[1]
+                    $layoutUpdated = $widthDelta -ne 0 -and $heightDelta -ne 0 -and
+                        $cancelXDelta -eq $widthDelta -and $cancelYDelta -eq $heightDelta
+                    $layoutDetails = "window delta=${widthDelta}x${heightDelta}; " +
+                        "cancel delta=${cancelXDelta}x${cancelYDelta}"
+                }
+                Assert-That $g 'Drive dialog layout survives nested Settings cleanup' `
+                    $layoutUpdated $layoutDetails
+            }
+            else {
+                Assert-Fail $g 'Drive dialog layout survives nested Settings cleanup' `
+                    'Settings did not close or native window rectangles were unavailable'
+            }
         }
         else {
             Assert-Fail $g 'Drive dialog Filtering shortcut opens Settings without crashing' `
@@ -3594,12 +3925,12 @@ function Test-Toolbar {
     Write-GroupHeader 'Toolbar Functionality'
     $g = 'Toolbar'
 
-    $tb = Find-ToolbarPane -Window $Window
-    if (!$tb) { Assert-Fail $g 'Toolbar pane found' 'Not found'; return }
-    Assert-Pass $g 'Toolbar pane found'
+    $tb = Find-Toolbar -Window $Window
+    if (!$tb) { Assert-Fail $g 'Toolbar found' 'Not found'; return }
+    Assert-Pass $g 'Toolbar found'
 
     $btns = @(Find-UiaAll -Root $tb -Type ([System.Windows.Automation.ControlType]::Button))
-    if ($btns.Count -eq 0) { Assert-Fail $g 'Toolbar buttons found' 'No Button children in toolbar pane'; return }
+    if ($btns.Count -eq 0) { Assert-Fail $g 'Toolbar buttons found' 'No Button children in toolbar'; return }
     Assert-Pass $g "$($btns.Count) toolbar button(s) found"
     if ($Details) {
         $names = ($btns | ForEach-Object { ($_.Current.Name -split "`n")[0] }) -join ', '
@@ -3669,7 +4000,7 @@ function Test-Toolbar {
             if ($cancelBtn) { try { Invoke-Button $cancelBtn } catch { Send-Keys '{ESC}' } } else { Send-Keys '{ESC}' }
             Start-Sleep -Milliseconds 400
         } else {
-            Assert-Skip $g 'Settings button opens dialog' 'No new window appeared after click'
+            Assert-Fail $g 'Settings button opens dialog' 'No new window appeared after click'
         }
     } else {
         Assert-Skip $g 'Settings toolbar button' 'Not found in toolbar'
@@ -3711,7 +4042,7 @@ function Test-Toolbar {
             if ($cancelBtn) { try { Invoke-Button $cancelBtn } catch { Send-Keys '{ESC}' } } else { Send-Keys '{ESC}' }
             Start-Sleep -Milliseconds 400
         } else {
-            Assert-Skip $g 'Open button opens Drive Select dialog' 'Expected Select dialog not found'
+            Assert-Fail $g 'Open button opens Drive Select dialog' 'Expected Select dialog not found'
             Send-Keys '{ESC}' 300
         }
     } else {
@@ -3871,47 +4202,194 @@ function Test-SettingsDialog {
     param([System.Windows.Automation.AutomationElement] $Window)
     Write-GroupHeader 'Settings Dialog'
     $g = 'Settings'
+    $darkModeCases = @(
+        [pscustomobject] @{ Name = 'Disabled'; Resource = 'IDC_DARK_MODE_DISABLED'; Value = 0 }
+        [pscustomobject] @{ Name = 'Enabled'; Resource = 'IDC_DARK_MODE_ENABLED'; Value = 1 }
+        [pscustomobject] @{ Name = 'UseWindows'; Resource = 'IDC_DARK_MODE_USE_WINDOWS'; Value = 2 }
+    )
 
     Assert-WindowReady $Window
-    $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
+    $openSettings = {
+        foreach ($attempt in 1..2) {
+            $readyDeadline = [System.DateTime]::UtcNow.AddSeconds(5)
+            $windowEnabled = $false
+            while ([System.DateTime]::UtcNow -lt $readyDeadline) {
+                try {
+                    if ($Window.Current.IsEnabled) { $windowEnabled = $true; break }
+                }
+                catch {}
+                Start-Sleep -Milliseconds 100
+            }
+            if (!$windowEnabled) { continue }
+            Focus-Window $Window
 
-    # Click the Settings toolbar button
-    $tb = Find-ToolbarPane -Window $Window
-    $settingsBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Settings' } else { $null }
+            $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
+            $toolbar = Find-Toolbar -Window $Window
+            $button = if ($toolbar) {
+                Find-ToolbarButton -Toolbar $toolbar -NameContains 'Settings'
+            } else { $null }
+            if (!$button) { continue }
 
-    if ($settingsBtn) {
-        Click-Element $settingsBtn
-        Start-Sleep -Milliseconds 1000
+            try { Click-Element $button } catch { continue }
+            Start-Sleep -Milliseconds 1000
+            $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
+                -TimeoutMs 8000 -MainWindow $Window
+            if ($dialog) { return $dialog }
+        }
+        return $null
     }
-    else {
-        Assert-Fail $g 'Settings toolbar button found' 'Settings button not in toolbar'
-        return
+    $waitForClose = {
+        param([IntPtr] $Hwnd)
+
+        $deadline = [System.DateTime]::UtcNow.AddSeconds(5)
+        while ([Win32MenuHelper]::IsWindow($Hwnd) -and [System.DateTime]::UtcNow -lt $deadline) {
+            Start-Sleep -Milliseconds 100
+        }
+        return ![Win32MenuHelper]::IsWindow($Hwnd)
+    }
+    $findGridCheckbox = {
+        param([System.Windows.Automation.AutomationElement] $Dialog)
+
+        @(Find-UiaAll -Root $Dialog -Type ([System.Windows.Automation.ControlType]::CheckBox)) |
+            Where-Object { !$_.Current.IsOffscreen -and $_.Current.Name -like '*Show Grid*' } |
+            Select-Object -First 1
+    }
+    $getChecked = {
+        param([System.Windows.Automation.AutomationElement] $Button)
+
+        $hwnd = [IntPtr] $Button.Current.NativeWindowHandle
+        if ($hwnd -eq [IntPtr]::Zero) { throw 'The button has no native window handle' }
+        [Win32MenuHelper]::SendMessage(
+            $hwnd, $script:BM_GETCHECK, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32() -eq $script:ButtonChecked
+    }
+    $waitForIniValue = {
+        param([string] $Path, [string] $Name, [int] $Value)
+
+        $deadline = [System.DateTime]::UtcNow.AddSeconds(3)
+        while ([System.DateTime]::UtcNow -lt $deadline) {
+            try {
+                if ([System.IO.File]::ReadAllText($Path) -match "(?m)^$Name=$Value\r?$") { return $true }
+            }
+            catch {}
+            Start-Sleep -Milliseconds 100
+        }
+        return $false
+    }
+    $selectGeneralPage = {
+        param([System.Windows.Automation.AutomationElement] $Dialog)
+
+        $tabs = @(Find-UiaAll -Root $Dialog -Type ([System.Windows.Automation.ControlType]::TabItem))
+        $general = $tabs | Where-Object { $_.Current.Name.Trim() -eq 'General' } | Select-Object -First 1
+        if (!$general -or !(Select-TabItem $general)) { return $false }
+        Start-Sleep -Milliseconds 250
+        return $true
+    }
+    $findDarkModeRadios = {
+        param([System.Windows.Automation.AutomationElement] $Dialog)
+
+        $result = [ordered] @{}
+        foreach ($case in $darkModeCases) {
+            $result[$case.Name] = Find-UiaFirst -Root $Dialog `
+                -Type ([System.Windows.Automation.ControlType]::RadioButton) `
+                -AutomationId ([string] (Get-ResourceId $case.Resource))
+        }
+        return $result
+    }
+    $closeSettingsWithoutRestart = {
+        param([System.Windows.Automation.AutomationElement] $Dialog)
+
+        $settingsHwnd = [IntPtr] $Dialog.Current.NativeWindowHandle
+        $ok = Find-UiaFirst -Root $Dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
+        if (!$ok) { throw 'Settings OK button was not found' }
+
+        $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
+        Invoke-Button $ok
+        $restartPrompt = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
+            -TimeoutMs 5000 -MainWindow $Window
+        if (!$restartPrompt) { throw 'Restart confirmation did not appear' }
+
+        $no = Find-UiaFirst -Root $restartPrompt -Type ([System.Windows.Automation.ControlType]::Button) -Name 'No'
+        if (!$no) { throw 'Restart confirmation No button was not found' }
+        Invoke-Button $no
+        if (!(& $waitForClose $settingsHwnd)) { throw 'Settings did not close after declining restart' }
+        return $true
+    }
+    $restoreGridSetting = {
+        param(
+            [AllowNull()] [System.Windows.Automation.AutomationElement] $CurrentDialog,
+            [IntPtr] $CurrentHwnd,
+            [bool] $Expected,
+            [string] $IniPath
+        )
+
+        try {
+            if (!$CurrentDialog -or $CurrentHwnd -eq [IntPtr]::Zero -or
+                ![Win32MenuHelper]::IsWindow($CurrentHwnd)) {
+                $CurrentDialog = & $openSettings
+                if (!$CurrentDialog) { throw 'Could not reopen Settings' }
+                $CurrentHwnd = [IntPtr] $CurrentDialog.Current.NativeWindowHandle
+            }
+            if (!(& $selectGeneralPage $CurrentDialog)) { throw 'Could not select General' }
+
+            $checkbox = & $findGridCheckbox $CurrentDialog
+            $ok = Find-UiaFirst -Root $CurrentDialog `
+                -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
+            if (!$checkbox -or !$ok) { throw 'Show Grid or OK was not found' }
+
+            if ((& $getChecked $checkbox) -ne $Expected) {
+                Invoke-Button $checkbox
+                Start-Sleep -Milliseconds 250
+            }
+            if ((& $getChecked $checkbox) -ne $Expected) { throw 'Show Grid did not reach the original state' }
+
+            $CurrentHwnd = [IntPtr] $CurrentDialog.Current.NativeWindowHandle
+            Invoke-Button $ok
+            if (!(& $waitForClose $CurrentHwnd)) { throw 'Settings did not close after OK' }
+
+            $expectedValue = if ($Expected) { 1 } else { 0 }
+            return & $waitForIniValue $IniPath 'ListGrid' $expectedValue
+        }
+        catch {
+            if ($CurrentHwnd -ne [IntPtr]::Zero -and [Win32MenuHelper]::IsWindow($CurrentHwnd)) {
+                Send-Keys '{ESC}' 300
+            }
+            return $false
+        }
     }
 
-    $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-        -TimeoutMs 8000 -MainWindow $Window
+    $dialog = & $openSettings
 
     if (!$dialog) {
-        Assert-Fail $g 'Settings dialog appears' 'Window not found after clicking Settings'
+        Assert-Fail $g 'Settings dialog appears' 'Settings toolbar button or dialog not found'
         return
     }
+    Assert-Pass $g 'Settings toolbar button found'
     Assert-Pass $g 'Settings dialog appears'
     Assert-Pass $g "Settings dialog title: '$($dialog.Current.Name)'"
 
     # Property sheet pages via Tab control
     $tabCtrl = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Tab)
+    $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
+    $tabControlHwnd = if ($tabCtrl) {
+        [IntPtr] $tabCtrl.Current.NativeWindowHandle
+    } else { [IntPtr]::Zero }
     if ($tabCtrl) {
-        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
-        if ($tabItems.Count -gt 0) {
-            Assert-Pass $g "$($tabItems.Count) settings page tab(s) found"
-        }
-        else {
-            Assert-Fail $g 'Settings page tabs found' 'Tab control exists but no TabItems'
-        }
+        $initialSettingsFocus = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+        Assert-That $g 'Settings tab strip has initial keyboard focus' `
+            ($dialogHwnd -ne [IntPtr]::Zero -and $tabControlHwnd -ne [IntPtr]::Zero -and
+                $initialSettingsFocus -eq $tabControlHwnd) `
+            "Focused HWND $initialSettingsFocus; expected $tabControlHwnd"
 
-        $expectedPages = @('General', 'Advanced', 'Folder List', 'Treemap', 'Filtering', 'Cleanups', 'Prompts')
+        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
+        Assert-That $g 'Exactly eight English settings pages found' ($tabItems.Count -eq 8) `
+            "Found $($tabItems.Count): $(@($tabItems | ForEach-Object { $_.Current.Name.Trim() }) -join ', ')"
+
+        $expectedPages = @(
+            'General', 'Filtering', 'Folder List', 'Treemap',
+            'Permissions', 'Cleanups', 'Prompts', 'Advanced'
+        )
         foreach ($pageName in $expectedPages) {
-            $pageTab = $tabItems | Where-Object { $_.Current.Name -like "*$pageName*" } | Select-Object -First 1
+            $pageTab = $tabItems | Where-Object { $_.Current.Name.Trim() -eq $pageName } | Select-Object -First 1
             if ($pageTab) {
                 if (Select-TabItem $pageTab) {
                     Start-Sleep -Milliseconds 250
@@ -3922,26 +4400,352 @@ function Test-SettingsDialog {
                 }
             }
             else {
-                # [Control-Not-Found] Page name may differ across localisations or versions.
-                Assert-Skip $g "'$pageName' settings page" 'Tab not found by name'
+                Assert-Fail $g "'$pageName' settings page" 'Required English tab not found'
             }
         }
     }
     else {
-        Assert-Skip $g 'Settings tab control' 'No Tab control found in dialog'
+        Assert-Fail $g 'Settings tab control' 'No Tab control found in dialog'
     }
 
-    # Cancel
-    $cancelBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
-    if ($cancelBtn) {
-        Assert-Pass $g 'Settings Cancel button present'
-        try { Invoke-Button $cancelBtn } catch { Send-Keys '{ESC}' }
+    if (!$tabCtrl -or !(& $selectGeneralPage $dialog)) {
+        Send-Keys '{ESC}' 300
+        Assert-Fail $g 'General settings page selected for persistence checks' 'Could not select General'
+        return
+    }
+
+    $getSelectedSettingsPage = {
+        foreach ($pageTab in $tabItems) {
+            try {
+                $selection = $pageTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                if ($selection.Current.IsSelected) { return $pageTab.Current.Name.Trim() }
+            }
+            catch {}
+        }
+        return ''
+    }
+    $clickFocus = & $findGridCheckbox $dialog
+    $clickFocusHwnd = if ($clickFocus) {
+        [IntPtr] $clickFocus.Current.NativeWindowHandle
+    } else { [IntPtr]::Zero }
+    $filteringTab = $tabItems | Where-Object { $_.Current.Name.Trim() -eq 'Filtering' } | Select-Object -First 1
+    $filteringClickPoint = if ($filteringTab) { Get-ElementClickPoint $filteringTab } else { $null }
+    $focusedAwayFromTab = $clickFocusHwnd -ne [IntPtr]::Zero -and
+        [Win32Helper]::FocusWindow($dialogHwnd, $clickFocusHwnd)
+    $clickedFilteringTab = $focusedAwayFromTab -and $null -ne $filteringClickPoint -and
+        (Select-TabItem $filteringTab)
+    $clickFocusDeadline = [System.DateTime]::UtcNow.AddSeconds(2)
+    while ($clickedFilteringTab -and [System.DateTime]::UtcNow -lt $clickFocusDeadline -and
+        [Win32Helper]::GetFocusedWindow($dialogHwnd) -ne $tabControlHwnd) {
+        Start-Sleep -Milliseconds 25
+    }
+    $focusedAfterTabClick = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+    Assert-That $g 'Clicking a Settings tab focuses its tab strip' `
+        ($clickedFilteringTab -and $tabControlHwnd -ne [IntPtr]::Zero -and
+            $focusedAfterTabClick -eq $tabControlHwnd) `
+        "Clicked=$clickedFilteringTab; focused HWND $focusedAfterTabClick; expected $tabControlHwnd"
+
+    Assert-That $g 'General page is restored after the tab click check' `
+        (& $selectGeneralPage $dialog) "Selected '$(& $getSelectedSettingsPage)'"
+    $keyboardFocus = & $findGridCheckbox $dialog
+    $keyboardFocusHwnd = if ($keyboardFocus) {
+        [IntPtr] $keyboardFocus.Current.NativeWindowHandle
+    } else { [IntPtr]::Zero }
+
+    $previousTabStop = [Win32MenuHelper]::GetNextDlgTabItem($dialogHwnd, $tabControlHwnd, $true)
+    $postedTab = $previousTabStop -ne [IntPtr]::Zero -and
+        [Win32Helper]::FocusWindow($dialogHwnd, $previousTabStop) -and
+        [NativeListViewHelper]::PostTab($previousTabStop)
+    $tabFocusDeadline = [System.DateTime]::UtcNow.AddSeconds(2)
+    while ($postedTab -and [System.DateTime]::UtcNow -lt $tabFocusDeadline -and
+        [Win32Helper]::GetFocusedWindow($dialogHwnd) -ne $tabControlHwnd) {
+        Start-Sleep -Milliseconds 25
+    }
+    $tabFocused = [Win32Helper]::GetFocusedWindow($dialogHwnd) -eq $tabControlHwnd
+    Assert-That $g 'Tab traversal reaches the Settings tab strip' ($postedTab -and $tabFocused) `
+        ("Posted=$postedTab; previous HWND $previousTabStop; " +
+            "focused HWND $([Win32Helper]::GetFocusedWindow($dialogHwnd)); expected $tabControlHwnd")
+
+    if ($tabFocused) {
+        $sent = [Win32Helper]::PostKeyWithModifiers(
+            $dialogHwnd, $tabControlHwnd, 1, [uint32] [System.Windows.Forms.Keys]::Right, $false, $false)
+        $focusedAfterRight = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+        Assert-That $g 'Right Arrow advances the focused Settings tab' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'Filtering' -and
+                $focusedAfterRight -eq $tabControlHwnd) `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'; focused HWND $focusedAfterRight"
+
+        $sent = [Win32Helper]::PostKeyWithModifiers(
+            $dialogHwnd, $tabControlHwnd, 0, [uint32] [System.Windows.Forms.Keys]::Left, $false, $false)
+        $focusedAfterLeft = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+        Assert-That $g 'Left Arrow reverses the focused Settings tab' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'General' -and
+                $focusedAfterLeft -eq $tabControlHwnd) `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'; focused HWND $focusedAfterLeft"
+    }
+
+    if ($keyboardFocusHwnd -ne [IntPtr]::Zero -and
+        [Win32Helper]::FocusWindow($dialogHwnd, $keyboardFocusHwnd)) {
+        $sendSettingsShortcut = {
+            param([uint32] $Key, [int] $ExpectedTab, [bool] $Shift = $false)
+            [Win32Helper]::PostKeyWithModifiers(
+                $dialogHwnd, $tabControlHwnd, $ExpectedTab, $Key, $true, $Shift)
+        }
+
+        $sent = & $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::Tab) 1
+        Assert-That $g 'Ctrl+Tab advances the Settings page' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'Filtering') `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'"
+        $focusedAfterCtrlTab = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+        $focusedControlId = [Win32Helper]::GetDlgCtrlID($focusedAfterCtrlTab)
+        $firstFilteringEditId = Get-ResourceId 'IDC_FILTERING_EXCLUDE_DIRS'
+        $focusMovedToFiltering = $focusedAfterCtrlTab -ne [IntPtr]::Zero -and
+            $focusedControlId -eq $firstFilteringEditId
+        $focusDetails = "Focused control ID $focusedControlId; expected first Filtering edit ID $firstFilteringEditId"
+        Assert-That $g 'Ctrl+Tab moves focus into the active Settings page' $focusMovedToFiltering `
+            $focusDetails
+
+        $sent = & $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::Tab) 0 $true
+        Assert-That $g 'Ctrl+Shift+Tab reverses the Settings page' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'General') `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'"
+
+        $sent = & $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::PageUp) 7
+        Assert-That $g 'Ctrl+PageUp wraps the Settings page backward' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'Advanced') `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'"
+
+        $sent = & $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::PageDown) 0
+        Assert-That $g 'Ctrl+PageDown wraps the Settings page forward' `
+            ($sent -and (& $getSelectedSettingsPage) -eq 'General') `
+            "Posted=$sent; selected '$(& $getSelectedSettingsPage)'"
+
+        $cancelButtonHwnd = [Win32MenuHelper]::GetDlgItem($dialogHwnd, $script:IDCANCEL)
+        $buttonFocused = $cancelButtonHwnd -ne [IntPtr]::Zero -and
+            [Win32Helper]::FocusWindow($dialogHwnd, $cancelButtonHwnd)
+        $sent = $buttonFocused -and
+            (& $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::Tab) 1)
+        $focusedAfterButtonShortcut = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+        $buttonShortcutWorked = $sent -and (& $getSelectedSettingsPage) -eq 'Filtering' -and
+            $focusedAfterButtonShortcut -eq $cancelButtonHwnd
+        Assert-That $g 'Ctrl+Tab changes page without moving focus from a Settings button' `
+            $buttonShortcutWorked "Posted=$sent; selected '$(& $getSelectedSettingsPage)'; " +
+            "focused HWND $focusedAfterButtonShortcut; Cancel HWND $cancelButtonHwnd"
+
+        if ((& $getSelectedSettingsPage) -eq 'Filtering') {
+            $sent = & $sendSettingsShortcut ([uint32] [System.Windows.Forms.Keys]::Tab) 0 $true
+            $focusAfterRestore = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+            Assert-That $g 'Ctrl+Shift+Tab restores the page while a Settings button has focus' `
+                ($sent -and (& $getSelectedSettingsPage) -eq 'General' -and
+                    $focusAfterRestore -eq $cancelButtonHwnd) `
+                "Posted=$sent; selected '$(& $getSelectedSettingsPage)'; focused HWND $focusAfterRestore"
+        }
+
+        Assert-That $g 'General page is restored after keyboard checks' `
+            (& $selectGeneralPage $dialog) "Selected '$(& $getSelectedSettingsPage)'"
     }
     else {
-        Send-Keys '{ESC}'
+        Assert-Fail $g 'Settings keyboard page navigation' 'The General-page control could not receive native focus'
     }
-    Start-Sleep -Milliseconds 500
-    Assert-Pass $g 'Settings dialog closed'
+
+    $runIni = [System.IO.Path]::ChangeExtension($script:proc.StartInfo.FileName, 'ini')
+    $darkModeReady = $true
+    foreach ($darkModeCase in $darkModeCases) {
+        $darkModeRadios = & $findDarkModeRadios $dialog
+        $missingRadios = @($darkModeRadios.GetEnumerator() | Where-Object { !$_.Value } |
+            ForEach-Object { $_.Key })
+        if ($missingRadios.Count -gt 0) {
+            Assert-Fail $g 'Dark mode semantic radio controls present' `
+                "Missing: $($missingRadios -join ', ')"
+            $darkModeReady = $false
+            break
+        }
+
+        try {
+            Invoke-Button $darkModeRadios[$darkModeCase.Name]
+            Start-Sleep -Milliseconds 250
+            $checkedNames = @($darkModeRadios.GetEnumerator() |
+                Where-Object { & $getChecked $_.Value } |
+                ForEach-Object { $_.Key })
+            Assert-That $g "DarkMode=$($darkModeCase.Value) selects $($darkModeCase.Name)" `
+                ($checkedNames.Count -eq 1 -and $checkedNames[0] -eq $darkModeCase.Name) `
+                "Checked: $($checkedNames -join ', ')"
+
+            & $closeSettingsWithoutRestart $dialog | Out-Null
+            $dialog = $null
+            Assert-Pass $g "DarkMode=$($darkModeCase.Value) closes after restart is declined"
+        }
+        catch {
+            Assert-Fail $g "DarkMode=$($darkModeCase.Value) applies without restarting" "Error: $_"
+            $darkModeReady = $false
+            break
+        }
+
+        $persisted = & $waitForIniValue $runIni 'DarkMode' $darkModeCase.Value
+        Assert-That $g "DarkMode=$($darkModeCase.Value) persists by semantic value" $persisted `
+            "DarkMode=$($darkModeCase.Value) was not saved"
+
+        $dialog = & $openSettings
+        if (!$dialog -or !(& $selectGeneralPage $dialog)) {
+            Assert-Fail $g "DarkMode=$($darkModeCase.Value) can be read back" `
+                'Could not reopen Settings on General'
+            $darkModeReady = $false
+            break
+        }
+
+        $reopenedRadios = & $findDarkModeRadios $dialog
+        $reopenedMissing = @($reopenedRadios.GetEnumerator() | Where-Object { !$_.Value })
+        if ($reopenedMissing.Count -gt 0) {
+            Assert-Fail $g "DarkMode=$($darkModeCase.Value) can be read back" `
+                'A semantic dark-mode radio was missing after reopening'
+            $darkModeReady = $false
+            break
+        }
+        $reopenedChecked = @($reopenedRadios.GetEnumerator() |
+            Where-Object { & $getChecked $_.Value } |
+            ForEach-Object { $_.Key })
+        Assert-That $g "DarkMode=$($darkModeCase.Value) restores $($darkModeCase.Name) on reopen" `
+            ($reopenedChecked.Count -eq 1 -and $reopenedChecked[0] -eq $darkModeCase.Name) `
+            "Checked: $($reopenedChecked -join ', ')"
+    }
+
+    if (!$darkModeReady -or !$dialog) {
+        if ($dialog) { Send-Keys '{ESC}' 300 }
+        return
+    }
+
+    $gridCheckbox = & $findGridCheckbox $dialog
+    $applyBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Apply'
+    $cancelBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'Cancel'
+    if (!$gridCheckbox -or !$applyBtn -or !$cancelBtn) {
+        Assert-Fail $g 'Settings persistence controls present' 'Show Grid, Apply, or Cancel was not found'
+        Send-Keys '{ESC}' 300
+        return
+    }
+
+    $initialGrid = & $getChecked $gridCheckbox
+    $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
+    $originalRestored = $false
+    try {
+        $appliedGrid = !$initialGrid
+        Invoke-Button $gridCheckbox
+        Start-Sleep -Milliseconds 250
+        Assert-That $g 'Show Grid can be changed before Apply' `
+            ((& $getChecked $gridCheckbox) -eq $appliedGrid) "Expected checked=$appliedGrid"
+        Assert-That $g 'Apply becomes enabled after a settings change' `
+            $applyBtn.Current.IsEnabled 'Apply remained disabled'
+
+        $cycleTabCtrl = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Tab)
+        $cycleTabHwnd = if ($cycleTabCtrl) {
+            [IntPtr] $cycleTabCtrl.Current.NativeWindowHandle
+        } else { [IntPtr]::Zero }
+        $okButtonHwnd = [Win32MenuHelper]::GetDlgItem($dialogHwnd, $script:IDOK)
+        $cancelButtonHwnd = [Win32MenuHelper]::GetDlgItem($dialogHwnd, $script:IDCANCEL)
+        $applyButtonHwnd = [IntPtr] $applyBtn.Current.NativeWindowHandle
+        $firstGeneralControl = Find-UiaFirst -Root $dialog `
+            -Type ([System.Windows.Automation.ControlType]::CheckBox) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_SIZE_SUFFIXES'))
+        $firstGeneralControlHwnd = if ($firstGeneralControl) {
+            [IntPtr] $firstGeneralControl.Current.NativeWindowHandle
+        } else { [IntPtr]::Zero }
+        $cycleStarted = $cycleTabHwnd -ne [IntPtr]::Zero -and
+            [Win32Helper]::FocusWindow($dialogHwnd, $cycleTabHwnd)
+        $focusCycle = @()
+        $currentFocus = if ($cycleStarted) { $cycleTabHwnd } else { [IntPtr]::Zero }
+        for ($i = 0; $i -lt 32 -and $currentFocus -ne [IntPtr]::Zero; ++$i) {
+            if (![NativeListViewHelper]::PostTab($currentFocus)) { break }
+            $focusDeadline = [System.DateTime]::UtcNow.AddSeconds(2)
+            $nextFocus = $currentFocus
+            while ([System.DateTime]::UtcNow -lt $focusDeadline -and $nextFocus -eq $currentFocus) {
+                Start-Sleep -Milliseconds 25
+                $nextFocus = [Win32Helper]::GetFocusedWindow($dialogHwnd)
+            }
+            if ($nextFocus -eq $currentFocus) { break }
+
+            $focusCycle += $nextFocus
+            if ($nextFocus -eq $cycleTabHwnd) { break }
+            $currentFocus = $nextFocus
+        }
+        $cycleWrapped = $focusCycle.Count -gt 0 -and $focusCycle[-1] -eq $cycleTabHwnd
+        $pageControlsReached = $focusCycle.Count -gt 4 -and $firstGeneralControlHwnd -ne [IntPtr]::Zero -and
+            $focusCycle[0] -eq $firstGeneralControlHwnd
+        $buttonTail = if ($focusCycle.Count -ge 4) { @($focusCycle | Select-Object -Last 4) } else { @() }
+        $buttonOrderMatches = $buttonTail.Count -eq 4 -and
+            $buttonTail[0] -eq $okButtonHwnd -and $buttonTail[1] -eq $cancelButtonHwnd -and
+            $buttonTail[2] -eq $applyButtonHwnd -and $buttonTail[3] -eq $cycleTabHwnd
+        Assert-That $g 'Settings Tab cycle reaches page controls, then OK, Cancel, Apply, and the tab strip' `
+            ($cycleStarted -and $cycleWrapped -and $pageControlsReached -and $buttonOrderMatches) `
+            ("Started=$cycleStarted; wrapped=$cycleWrapped; first=$firstGeneralControlHwnd; " +
+                "handles=$($focusCycle -join ', '); expected tail=$okButtonHwnd, $cancelButtonHwnd, " +
+                "$applyButtonHwnd, $cycleTabHwnd")
+
+        Invoke-Button $applyBtn
+        Start-Sleep -Milliseconds 400
+        Assert-That $g 'Apply commits the pending page and becomes disabled' (!$applyBtn.Current.IsEnabled) `
+            'Apply remained enabled after invocation'
+
+        Invoke-Button $gridCheckbox
+        Start-Sleep -Milliseconds 250
+        Assert-That $g 'A second change can remain unapplied before Cancel' `
+            ((& $getChecked $gridCheckbox) -eq $initialGrid) "Expected checked=$initialGrid"
+
+        Invoke-Button $cancelBtn
+        $closed = & $waitForClose $dialogHwnd
+        Assert-That $g 'Cancel closes the Settings dialog' $closed 'Dialog remained open'
+        if (!$closed) { return }
+        $dialog = $null
+        $dialogHwnd = [IntPtr]::Zero
+
+        $appliedValue = if ($appliedGrid) { 1 } else { 0 }
+        $applyPersisted = & $waitForIniValue $runIni 'ListGrid' $appliedValue
+        Assert-That $g 'Apply persists while a later unapplied change is canceled' $applyPersisted `
+            "ListGrid=$appliedValue was not saved"
+
+        $dialog = & $openSettings
+        if (!$dialog) {
+            Assert-Fail $g 'Settings dialog reopens on General' 'Could not reopen Settings'
+            return
+        }
+        $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
+        if (!(& $selectGeneralPage $dialog)) {
+            Assert-Fail $g 'Settings dialog reopens on General' 'Could not select General'
+            return
+        }
+
+        $gridCheckbox = & $findGridCheckbox $dialog
+        $okBtn = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) -Name 'OK'
+        if (!$gridCheckbox -or !$okBtn) {
+            Assert-Fail $g 'Settings OK controls present' 'Show Grid or OK was not found after reopening'
+            return
+        }
+
+        Assert-That $g 'Reopening reflects Apply rather than the canceled change' `
+            ((& $getChecked $gridCheckbox) -eq $appliedGrid) "Expected checked=$appliedGrid"
+        Invoke-Button $gridCheckbox
+        Start-Sleep -Milliseconds 250
+        Assert-That $g 'Show Grid is restored before the OK check' `
+            ((& $getChecked $gridCheckbox) -eq $initialGrid) "Expected checked=$initialGrid"
+
+        Invoke-Button $okBtn
+        $closed = & $waitForClose $dialogHwnd
+        Assert-That $g 'OK applies changes and closes the Settings dialog' $closed 'Dialog remained open'
+        if (!$closed) { return }
+        $dialog = $null
+        $dialogHwnd = [IntPtr]::Zero
+
+        $restoredValue = if ($initialGrid) { 1 } else { 0 }
+        $okPersisted = & $waitForIniValue $runIni 'ListGrid' $restoredValue
+        Assert-That $g 'OK restores and persists the original Show Grid setting' $okPersisted `
+            "ListGrid=$restoredValue was not saved"
+        $originalRestored = $okPersisted
+    }
+    finally {
+        if (!$originalRestored -and
+            !(& $restoreGridSetting $dialog $dialogHwnd $initialGrid $runIni)) {
+            Assert-Fail $g 'Restore original Show Grid setting after persistence checks' `
+                "Could not restore ListGrid to $initialGrid"
+        }
+    }
 }
 
 function Test-SearchDialog {
@@ -3953,7 +4757,7 @@ function Test-SearchDialog {
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
 
     # Click the Search toolbar button
-    $tb = Find-ToolbarPane -Window $Window
+    $tb = Find-Toolbar -Window $Window
     $searchBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Search' } else { $null }
 
     if ($searchBtn) {
@@ -4043,7 +4847,7 @@ function Test-FilteringDialog {
     $snapshot = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
 
     # Click the Filtering toolbar button
-    $tb = Find-ToolbarPane -Window $Window
+    $tb = Find-Toolbar -Window $Window
     $filterBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Filter' } else { $null }
 
     if ($filterBtn) {
@@ -4150,6 +4954,7 @@ function Test-ScanAndViews {
         }
 
         # Verify and click core tabs
+        Focus-Window $win
         foreach ($tabName in @('All Files', 'Largest Files', 'Duplicate Files')) {
             $tab = $tabItems | Where-Object { $_.Current.Name -like "*$tabName*" } | Select-Object -First 1
             if ($tab) {
@@ -4811,7 +5616,7 @@ function Test-DuplicateDetection {
     Assert-Pass $g 'Duplicate Files tab selected'
 
     # Count items in the duplicate list
-    $listItems = @(Find-UiaRows -Root $Window)
+    $listItems = @(Find-DuplicateRows -TabControl $script:tabCtrl)
 
     if ($listItems.Count -gt 0) {
         Assert-Pass $g "$($listItems.Count) item(s) in Duplicate Files list"
@@ -4821,7 +5626,7 @@ function Test-DuplicateDetection {
             Assert-Pass $g "Duplicate list has >= 4 entries (expected 8+ pairs x 2 files)"
         }
         else {
-            Assert-Skip $g 'Expected duplicate count' "$($listItems.Count) found, expected >= 4"
+            Assert-Fail $g 'Expected duplicate count' "$($listItems.Count) found, expected >= 4"
         }
 
         # Check if any of our known duplicate filenames appear
@@ -4839,7 +5644,7 @@ function Test-DuplicateDetection {
         }
     }
     else {
-        Assert-Skip $g 'Duplicate list populated' 'No list items found (custom owner-drawn or scan still processing)'
+        Assert-Fail $g 'Duplicate list populated' 'No rows found for the eight duplicate fixtures'
     }
 
     # Return to All Files
@@ -4860,7 +5665,7 @@ function Test-SearchAfterScan {
     Assert-WindowReady $Window
 
     # Check that Search toolbar button is now enabled (scan has populated data)
-    $tb = Find-ToolbarPane -Window $Window
+    $tb = Find-Toolbar -Window $Window
     $searchBtn = if ($tb) { Find-ToolbarButton -Toolbar $tb -NameContains 'Search' } else { $null }
 
     if (!$searchBtn) {
@@ -5485,7 +6290,7 @@ function Test-LargeCorpusCount {
             Assert-Pass $g "'$tabName' tab present in large corpus view"
         }
         elseif ($tabName -eq 'Duplicate Files') {
-            Assert-Skip $g "'$tabName' tab" 'Not visible — ScanForDuplicates may not have activated'
+            Assert-Fail $g "'$tabName' tab present" 'Not visible after the controlled duplicate-enabled scan'
         }
         else {
             Assert-Fail $g "'$tabName' tab present" 'Not found'
@@ -5562,23 +6367,30 @@ function Test-LargeCorpusCount {
         Select-TabItem $dupeTab | Out-Null
         Start-Sleep -Milliseconds 1000   # Dupe view sorts+populates asynchronously
 
-        $dupeItems = @(Find-UiaRows -Root $win)
+        # Each dupe spec has SideCount files on 2 sides → 2×SideCount duplicate files total
+        $expectedDupeFiles = ($Meta.DuplicateGroups | ForEach-Object { $_.SideCount * 2 } |
+                              Measure-Object -Sum).Sum
+        $dupeItems = @(Find-DuplicateRows -TabControl $tabCtrl)
 
         if ($dupeItems.Count -gt 0) {
             Assert-Pass $g "$($dupeItems.Count) duplicate item(s) found in large corpus"
 
-            # Each dupe spec has SideCount files on 2 sides → 2×SideCount duplicate files total
-            $expectedDupeFiles = ($Meta.DuplicateGroups | ForEach-Object { $_.SideCount * 2 } |
-                                  Measure-Object -Sum).Sum
-            if ($dupeItems.Count -ge 4) {
-                Assert-Pass $g "Duplicate list >= 4 entries (corpus has $expectedDupeFiles total duplicate files)"
+            # The collapsed tree includes a root row, so its flat UIA row count is not a group count.
+            # All intended fixtures are .dat files; identify their distinct hash-parent rows instead.
+            $dupeGroupNames = @($dupeItems | ForEach-Object { $_.Current.Name } |
+                Where-Object { $_ -match '^[0-9a-f]+ \(\.dat\)$' } | Sort-Object -Unique)
+            $expectedDupeGroups = @($Meta.DuplicateGroups).Count
+            if ($dupeGroupNames.Count -eq $expectedDupeGroups) {
+                Assert-Pass $g "$expectedDupeGroups duplicate groups found ($expectedDupeFiles files)"
             }
             else {
-                Assert-Skip $g 'Expected duplicate count in large corpus' "$($dupeItems.Count) found, expected >= 4"
+                Assert-Fail $g 'Expected duplicate groups in large corpus' `
+                    "$($dupeGroupNames.Count) found, expected $expectedDupeGroups; rows: $($dupeGroupNames -join ', ')"
             }
         }
         else {
-            Assert-Skip $g 'Duplicate list populated (large corpus)' 'No list items visible (custom owner-drawn control)'
+            Assert-Fail $g 'Duplicate list populated (large corpus)' `
+                "No rows found for the $expectedDupeFiles duplicate fixtures"
         }
 
         # Return to All Files
@@ -5586,7 +6398,7 @@ function Test-LargeCorpusCount {
         if ($allFilesTab2) { Select-TabItem $allFilesTab2 | Out-Null; Start-Sleep -Milliseconds 300 }
     }
     else {
-        Assert-Skip $g 'Duplicate Files tab (large corpus)' 'Tab not visible'
+        Assert-Fail $g 'Duplicate Files tab (large corpus)' 'Tab not visible after duplicate-enabled scan'
     }
 
     # -- Extension list (file types bottom pane) ------------------------------
@@ -5833,7 +6645,7 @@ function Test-InitialTreePopulation {
                 Start-Sleep -Milliseconds 700
                 Assert-Pass $g 'Duplicate Files tab selectable'
 
-                $dupeItems = @(Find-UiaRows -Root $Window -NoTree)
+                $dupeItems = @(Find-DuplicateRows -TabControl $script:tabCtrl)
 
                 if ($dupeItems.Count -gt 0) {
                     # 2 pairs × 2 files each = 4 expected entries minimum
@@ -5842,7 +6654,8 @@ function Test-InitialTreePopulation {
                         Assert-Pass $g 'Duplicate list has >= 4 entries (2 pairs × 2 files each)'
                     }
                     else {
-                        Assert-Skip $g 'Expected duplicate count' "$($dupeItems.Count) found, expected >= 4"
+                        Assert-Skip $g 'Expected duplicate count' `
+                            "$($dupeItems.Count) UIA rows found; grouped rows do not map one-to-one to files"
                     }
 
                     # Check for known duplicate file names
@@ -5858,7 +6671,7 @@ function Test-InitialTreePopulation {
                     }
                 }
                 else {
-                    Assert-Skip $g 'Duplicate list populated' 'No items found (custom owner-drawn or scan still processing)'
+                    Assert-Fail $g 'Duplicate list populated' 'No rows found for the two duplicate-pair fixtures'
                 }
 
                 # Return to All Files
@@ -5866,17 +6679,16 @@ function Test-InitialTreePopulation {
                 if ($allTab2) { Select-TabItem $allTab2 | Out-Null; Start-Sleep -Milliseconds 400 }
             }
             else {
-                Assert-Skip $g 'Duplicate Files tab selectable' 'Could not invoke tab'
+                Assert-Fail $g 'Duplicate Files tab selectable' 'Could not invoke tab'
             }
         }
         else {
-            # [Pre-Scan / Control-Not-Found] Duplicate tab only appears when
-            # ScanForDuplicates=1 AND the scan was started via the dialog.
-            Assert-Skip $g 'Duplicate Files tab present' 'Tab not found (ScanForDuplicates may require dialog-based scan)'
+            Assert-Fail $g 'Duplicate Files tab present' `
+                'Tab not found after the controlled duplicate-enabled dialog scan'
         }
     }
     else {
-        Assert-Skip $g 'Duplicate Files tab check' 'Tab control reference not available'
+        Assert-Fail $g 'Duplicate Files tab check' 'Tab control reference not available'
     }
 
     Focus-Window $Window
@@ -6161,7 +6973,7 @@ function Test-RefreshAll {
     }
 
     # Locate the Refresh All toolbar button
-    $tb = Find-ToolbarPane -Window $Window
+    $tb = Find-Toolbar -Window $Window
     $refreshBtn = if ($tb) {
         @(Find-UiaAll -Root $tb -Type ([System.Windows.Automation.ControlType]::Button)) |
             Where-Object {
@@ -6565,7 +7377,7 @@ function Test-RefreshSelected {
     # Acts on the directory item selected above.
     $refreshTriggered = $false
 
-    $tb2 = Find-ToolbarPane -Window $Window
+    $tb2 = Find-Toolbar -Window $Window
     $allTbBtns = if ($tb2) { @(Find-UiaAll -Root $tb2 -Type ([System.Windows.Automation.ControlType]::Button)) } else { @() }
     # Match "Refresh Selected" but not "Refresh All" (both contain "Refresh")
     $refreshSelBtn = $allTbBtns |
@@ -7537,14 +8349,14 @@ function Test-DedupOps {
     $rows = @()
     $deadline = [System.DateTime]::UtcNow.AddSeconds(8)
     while ([System.DateTime]::UtcNow -lt $deadline) {
-        $rows = Find-UiaRows -Root $Window -AllTypes
+        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
 
         Expand-DupeRowsByKeyboard -Rows $rows
 
-        $rows = Find-UiaRows -Root $Window -AllTypes
+        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
@@ -7557,7 +8369,7 @@ function Test-DedupOps {
     if (!$row1 -or !$row2) {
         $sampleNames = @($rows | ForEach-Object { $_.Current.Name } | Select-Object -First 8)
         $detail = if ($sampleNames.Count -gt 0) { "Sample row names: $($sampleNames -join ' | ')" } else { 'No UIA rows found' }
-        Assert-Skip $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows in the duplicate list. $detail"
+        Assert-Fail $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows. $detail"
         return
     }
 
@@ -9149,11 +9961,6 @@ namespace WdsSettingsTest
         return out.str();
     }
 
-    std::string JsonString(const CString& value)
-    {
-        return JsonString(std::wstring(value.GetString()));
-    }
-
     void RawField(std::ostringstream& out, bool& first, const char* name, const std::string& raw)
     {
         if (!first) out << ',';
@@ -9169,7 +9976,7 @@ namespace WdsSettingsTest
         else if constexpr (std::is_enum_v<Value>)
             return std::to_string(static_cast<std::underlying_type_t<Value>>(value));
         else if constexpr (std::is_integral_v<Value>) return std::to_string(value);
-        else if constexpr (std::is_same_v<Value, CString> || std::is_same_v<Value, std::wstring>)
+        else if constexpr (std::is_same_v<Value, std::wstring>)
             return JsonString(value);
         else
         {
@@ -9409,7 +10216,7 @@ namespace WdsSettingsTest
 '@
     $helper = $helper.Replace('{{DUMP_FIELDS}}', $dumpCode).Replace('{{CLEANUP_FIELDS}}', $cleanupCode)
 
-    $initMarker = 'BOOL CDirStatApp::InitInstance()'
+    $initMarker = 'bool CDirStatApp::InitInstance()'
     if (!$text.Contains($initMarker)) { throw "Could not locate InitInstance marker in $appPath" }
     $text = $text.Replace($initMarker, "$helper$initMarker")
 
@@ -9918,34 +10725,39 @@ try {
         $dump
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'Portable_MultilineFilteringRoundTrip' `
-        -Behavior 'Issue #253: saving portable settings must keep every line of a directory exclusion list.' `
+    [void] $results.Add((Invoke-Scenario -Name 'Portable_LongMultilineFilteringRoundTrip' `
+        -Behavior 'Issue #253: portable settings must round-trip a multiline directory exclusion list longer than 8K.' `
         -Body {
         param($ctx)
 
-        $expected = "C:\Windows`r`nC:\Recovery`r`nC:\ProgramData"
-        $persisted = "C:\Windows${recordSeparator}C:\Recovery${recordSeparator}C:\ProgramData"
+        $paths = @(0..511 | ForEach-Object { 'C:\Excluded\Directory-{0:D4}' -f $_ })
+        $expected = $paths -join "`r`n"
+        $persisted = $paths -join $recordSeparator
+        Assert-True $ctx 'Portable exclusion fixture exceeds the former 8K buffer' ($persisted.Length -gt 8192)
+
         $sections = New-BaseIniSections
         Set-IniValue $sections 'DriveSelect' 'FilteringExcludeDirs' $persisted
         $first = Invoke-SettingsDump -Exe $testExe -Sections $sections `
-            -Name 'Portable_MultilineFilteringRoundTrip' -Save
-        Assert-Equal $ctx 'Initial multiline exclusion load' $first.Dump.FilteringExcludeDirs $expected
+            -Name 'Portable_LongMultilineFilteringRoundTrip' -Save
+        Assert-True $ctx 'Initial long multiline exclusion load is exact' `
+            ($first.Dump.FilteringExcludeDirs -ceq $expected)
 
         $savedLines = [System.IO.File]::ReadAllLines($first.RunnerIniPath)
         $savedLine = $savedLines |
             Where-Object { $_.StartsWith('FilteringExcludeDirs=', [StringComparison]::Ordinal) } |
             Select-Object -First 1
-        Assert-Equal $ctx 'Portable INI stores all exclusion lines on one record' `
-            $savedLine "FilteringExcludeDirs=$persisted"
+        Assert-True $ctx 'Portable INI stores all exclusion lines on one record' `
+            ($savedLine -ceq "FilteringExcludeDirs=$persisted")
         Assert-True $ctx 'Portable INI contains no orphaned exclusion lines' (
-            @($savedLines | Where-Object { $_ -cin @('C:\Recovery', 'C:\ProgramData') }).Count -eq 0)
+            @($savedLines | Where-Object { $paths -ccontains $_ }).Count -eq 0)
 
         $roundTripJson = Join-Path (Split-Path -Parent $first.JsonPath) 'settings-roundtrip.json'
         $roundTripRun = Invoke-ProcessWithTimeout -FileName $testExe `
             -Arguments @('/wds-settings-dump', $roundTripJson) -WorkingDirectory $runRoot
         Assert-Equal $ctx 'Reload saved portable settings exits successfully' $roundTripRun.ExitCode 0
         $roundTrip = Get-Content -LiteralPath $roundTripJson -Raw -Encoding UTF8 | ConvertFrom-Json
-        Assert-Equal $ctx 'Reload preserves every exclusion line' $roundTrip.FilteringExcludeDirs $expected
+        Assert-True $ctx 'Reload preserves every long exclusion line exactly' `
+            ($roundTrip.FilteringExcludeDirs -ceq $expected)
 
         [pscustomobject] @{
             CommandLine = $roundTripRun.CommandLine

@@ -148,8 +148,8 @@ public:
     CItem* GetParentDrive() const noexcept;
     CItem* GetVolumeRoot() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
-    void RemoveChild(CItem* child);
-    void RemoveAllChildren();
+    void RemoveChild(CItem* child) const;
+    void RemoveAllChildren() const;
 
     // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
@@ -161,10 +161,10 @@ public:
     void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
     void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
     void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
-    void UpwardAddFolders(ULONG dirCount) noexcept;
-    void UpwardSubtractFolders(ULONG dirCount) noexcept;
-    void UpwardAddFiles(ULONG fileCount) noexcept;
-    void UpwardSubtractFiles(ULONG fileCount) noexcept;
+    void UpwardAddFolders(ULONG dirCount) const noexcept;
+    void UpwardSubtractFolders(ULONG dirCount) const noexcept;
+    void UpwardAddFiles(ULONG fileCount) const noexcept;
+    void UpwardSubtractFiles(ULONG fileCount) const noexcept;
     double GetFraction() const noexcept;
     double GetAbsoluteFraction() const noexcept;
     ULONG GetFilesCount() const noexcept;
@@ -190,8 +190,8 @@ public:
 
     // Paths & Names
     void SetName(std::wstring_view name);
-    std::wstring GetName(const bool stripDrivePrefix = false) const noexcept;
-    std::wstring_view GetNameView(const bool stripDrivePrefix = false) const noexcept;
+    std::wstring GetName(bool stripDrivePrefix = false) const noexcept;
+    std::wstring_view GetNameView(bool stripDrivePrefix = false) const noexcept;
     bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
@@ -207,7 +207,7 @@ public:
     void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
     ULONG GetReadJobs() const noexcept;
-    void UpwardAddReadJobs(ULONG count) noexcept;
+    void UpwardAddReadJobs(ULONG count) const noexcept;
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     ULONGLONG GetTicksWorked() const noexcept;
     void ResetScanStartTime() const noexcept;
@@ -223,7 +223,7 @@ public:
 
     // CTreeMap Interface
     bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const noexcept { return tmiRect; };
+    CRect TmiGetRectangle() const noexcept { return tmiRect; }
     void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
     int TmiGetChildCount() const noexcept;
@@ -247,7 +247,7 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
-    void UpwardDrivePacman();
+    void UpwardDrivePacman() const;
 
     // Hardlinks & Hashing
     void CreateHardlinksItem();

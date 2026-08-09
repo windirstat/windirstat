@@ -79,7 +79,7 @@ enum MODEL_CHANGE : std::uint8_t
 // CWinDirStatModel. The application model.
 // Owner of the root item and various other data (see data members).
 //
-class CWinDirStatModel final : public CCmdTarget
+class CWinDirStatModel final : public MessageTarget<CWinDirStatModel, CCmdTarget>
 {
     friend class CWinDirStatPane;
 
@@ -89,9 +89,9 @@ public:
     ~CWinDirStatModel() override;
 
     void ClearScanState();
-    BOOL ResetScan();
-    BOOL StartScan(const std::wstring& pathSpec);
-    BOOL OpenLoadedScan(CItem* loadedRoot);
+    bool ResetScan();
+    bool StartScan(const std::wstring& pathSpec);
+    bool OpenLoadedScan(CItem* loadedRoot);
     void SetScanPathSpec(const std::wstring& pathSpec);
     const std::wstring& GetScanPathSpec() const { return m_scanPathSpec; }
     const std::wstring& GetScanTitle() const { return m_scanTitle; }
@@ -106,7 +106,7 @@ public:
     bool IsExtensionRegistered(const std::wstring& ext) const;
     ULONGLONG GetRootSize() const;
 
-    void RefreshReparsePointItems();
+    void RefreshReparsePointItems() const;
 
     bool HasRootItem() const;
     bool IsRootDone() const;
@@ -136,7 +136,7 @@ public:
     void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);
-    static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
+    static bool AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const;
     void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath);
@@ -153,6 +153,7 @@ public:
     static bool SearchListHasFocus();
     static bool WatcherListHasFocus();
     static bool PermsListHasFocus();
+    std::span<CItem* const> GetSelectedItemsView();
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
@@ -163,7 +164,7 @@ private:
         std::wstring_view detail = {});
     static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,
         std::span<CItem* const> affectedItems, std::wstring_view detail = {});
-    void RemoveLocalProfiles(std::wstring_view whereClause);
+    void RemoveLocalProfiles(std::wstring_view whereClause) const;
     void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
     static CWinDirStatModel* s_singleton;
@@ -186,66 +187,179 @@ private:
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
     std::jthread m_thread; // Wrapper thread so we do not occupy the UI thread
 
-    // Cache for GetAllSelected to avoid expensive queries
+    // Cache selected items so command-update handlers can use a non-owning view
+    // without repeated queries or copies
     LOGICAL_FOCUS m_cachedFocus{};
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnRefreshSelected();
-    afx_msg void OnRefreshAll();
-    afx_msg void OnSaveResults();
-    afx_msg void OnSaveDuplicates();
-    afx_msg void OnSavePermissions();
-    afx_msg void OnLoadResults();
-    afx_msg void OnEditCopy();
-    afx_msg void OnCleanupEmptyRecycleBin();
-    afx_msg void OnUpdateCentralHandler(CCmdUI* pCmdUI);
-    afx_msg void OnUpdateCompressionHandler(CCmdUI* pCmdUI);
-    afx_msg void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowFreeSpace();
-    afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowUnknown();
-    afx_msg void OnTreeMapZoomIn();
-    afx_msg void OnTreeMapZoomOut();
-    afx_msg void OnTreeMapZoomReset();
-    afx_msg void OnRemoveRoamingProfiles();
-    afx_msg void OnRemoveLocalProfiles();
-    afx_msg void OnDisableHibernateFile();
-    afx_msg void OnExecuteDiskCleanupUtility();
-    afx_msg void OnLaunchStorageSense();
-    afx_msg void OnExecuteProgramsFeatures();
-    afx_msg void OnExecuteDismAnalyze();
-    afx_msg void OnExecuteDismReset();
-    afx_msg void OnExecuteDism();
-    afx_msg void OnExplorerSelect();
-    afx_msg void OnCommandPromptHere();
-    afx_msg void OnPowerShellHere();
-    afx_msg void OnCleanupDeleteToBin();
-    afx_msg void OnCleanupDelete();
-    afx_msg void OnCleanupEmptyFolder();
-    afx_msg void OnSearch();
-    afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
-    afx_msg void OnUserDefinedCleanup(UINT id);
-    afx_msg void OnTreeMapSelectParent();
-    afx_msg void OnTreeMapReselectChild();
-    afx_msg void OnCleanupOpenTarget();
-    afx_msg void OnCleanupProperties();
-    afx_msg void OnComputeHash();
-    afx_msg void OnCleanupCompress(UINT id);
-    afx_msg void OnCleanupOptimizeVhd();
-    afx_msg void OnCleanupSparsifyFile();
-    afx_msg void OnCleanupRemoveEmpty();
-    afx_msg void OnToolsSetDates();
-    afx_msg void OnScanSuspend();
-    afx_msg void OnScanResume();
-    afx_msg void OnScanStop();
-    afx_msg void OnContextMenuExplore(UINT nID);
-    afx_msg void OnRemoveShadowCopies();
-    afx_msg void OnCleanupMoveTo();
-    afx_msg void OnRemoveMarkOfTheWebTags();
-    afx_msg void OnUpdateCreateHardlink(CCmdUI* pCmdUI);
-    afx_msg void OnCreateHardlink();
-    afx_msg void OnFilterExcludeItem();
-    afx_msg void OnPopupCancel() {}
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnRefreshSelected();
+    void OnRefreshAll();
+    void OnSaveResults() const;
+    void OnSaveDuplicates();
+    void OnSavePermissions();
+    void OnLoadResults();
+    void OnEditCopy();
+    void OnCleanupEmptyRecycleBin() const;
+    void OnUpdateCentralHandler(CCmdUI* pCmdUI);
+    void OnUpdateCompressionHandler(CCmdUI* pCmdUI);
+    void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
+    void OnViewShowFreeSpace();
+    void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
+    void OnViewShowUnknown();
+    void OnTreeMapZoomIn();
+    void OnTreeMapZoomOut();
+    void OnTreeMapZoomReset();
+    void OnRemoveRoamingProfiles() const;
+    void OnRemoveLocalProfiles();
+    void OnDisableHibernateFile();
+    void OnExecuteDiskCleanupUtility();
+    void OnLaunchStorageSense();
+    void OnExecuteProgramsFeatures();
+    void OnExecuteDismAnalyze();
+    void OnExecuteDismReset();
+    void OnExecuteDism();
+    void OnExplorerSelect();
+    void OnCommandPromptHere();
+    void OnPowerShellHere();
+    void OnCleanupDeleteToBin();
+    void OnCleanupDelete();
+    void OnCleanupEmptyFolder();
+    void OnSearch();
+    void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
+    void OnUserDefinedCleanup(UINT id);
+    void OnTreeMapSelectParent();
+    void OnTreeMapReselectChild();
+    void OnCleanupOpenTarget();
+    void OnCleanupProperties();
+    void OnComputeHash();
+    void OnCleanupCompress(UINT id);
+    void OnCleanupOptimizeVhd();
+    void OnCleanupSparsifyFile();
+    void OnCleanupRemoveEmpty();
+    void OnToolsSetDates();
+    void OnScanSuspend();
+    void OnScanResume();
+    void OnScanStop();
+    void OnContextMenuExplore(UINT nID);
+    void OnRemoveShadowCopies() const;
+    void OnCleanupMoveTo();
+    void OnRemoveMarkOfTheWebTags();
+    void OnUpdateCreateHardlink(CCmdUI* pCmdUI);
+    void OnCreateHardlink();
+    void OnFilterExcludeItem();
 };
+
+inline std::span<const RouteEntry> CWinDirStatModel::Routes()
+{
+    using ThisClass = CWinDirStatModel;
+    static constexpr std::array entries
+    {
+        Route::Command<&ThisClass::OnRefreshSelected>(ID_REFRESH_SELECTED),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_REFRESH_SELECTED),
+        Route::Command<&ThisClass::OnRefreshAll>(ID_REFRESH_ALL),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_REFRESH_ALL),
+        Route::Command<&ThisClass::OnLoadResults>(ID_LOAD_RESULTS),
+        Route::Command<&ThisClass::OnSaveResults>(ID_SAVE_RESULTS),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SAVE_RESULTS),
+        Route::Command<&ThisClass::OnSaveDuplicates>(ID_SAVE_DUPLICATES),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SAVE_DUPLICATES),
+        Route::Command<&ThisClass::OnSavePermissions>(ID_SAVE_PERMISSIONS),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SAVE_PERMISSIONS),
+        Route::Command<&ThisClass::OnEditCopy>(ID_EDIT_COPY_CLIPBOARD),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_EDIT_COPY_CLIPBOARD),
+        Route::Command<&ThisClass::OnCleanupEmptyRecycleBin>(ID_CLEANUP_EMPTY_BIN),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_EMPTY_BIN),
+        Route::Command<&ThisClass::OnCleanupMoveTo>(ID_CLEANUP_MOVE_TO),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_MOVE_TO),
+        Route::Update<&ThisClass::OnUpdateViewShowFreeSpace>(ID_VIEW_SHOWFREESPACE),
+        Route::Command<&ThisClass::OnViewShowFreeSpace>(ID_VIEW_SHOWFREESPACE),
+        Route::Update<&ThisClass::OnUpdateViewShowUnknown>(ID_VIEW_SHOWUNKNOWN),
+        Route::Command<&ThisClass::OnViewShowUnknown>(ID_VIEW_SHOWUNKNOWN),
+        Route::Command<&ThisClass::OnTreeMapZoomIn>(ID_TREEMAP_ZOOMIN),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TREEMAP_ZOOMIN),
+        Route::Command<&ThisClass::OnTreeMapZoomOut>(ID_TREEMAP_ZOOMOUT),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TREEMAP_ZOOMOUT),
+        Route::Command<&ThisClass::OnTreeMapZoomReset>(ID_TREEMAP_ZOOMRESET),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TREEMAP_ZOOMRESET),
+        Route::Command<&ThisClass::OnExplorerSelect>(ID_CLEANUP_EXPLORER_SELECT),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_EXPLORER_SELECT),
+        Route::Command<&ThisClass::OnCommandPromptHere>(ID_CLEANUP_OPEN_IN_CONSOLE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_OPEN_IN_CONSOLE),
+        Route::Command<&ThisClass::OnPowerShellHere>(ID_CLEANUP_OPEN_IN_PWSH),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_OPEN_IN_PWSH),
+        Route::Command<&ThisClass::OnCleanupDeleteToBin>(ID_CLEANUP_DELETE_BIN),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DELETE_BIN),
+        Route::Command<&ThisClass::OnCleanupDelete>(ID_CLEANUP_DELETE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DELETE),
+        Route::Command<&ThisClass::OnCleanupEmptyFolder>(ID_CLEANUP_EMPTY_FOLDER),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_EMPTY_FOLDER),
+        Route::Command<&ThisClass::OnCleanupRemoveEmpty>(ID_CLEANUP_REMOVE_EMPTY),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_EMPTY),
+        Route::Command<&ThisClass::OnRemoveShadowCopies>(ID_CLEANUP_REMOVE_SHADOW),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_SHADOW),
+        Route::Command<&ThisClass::OnSearch>(ID_SEARCH),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SEARCH),
+        Route::Command<&ThisClass::OnExecuteDismAnalyze>(ID_CLEANUP_DISM_ANALYZE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DISM_ANALYZE),
+        Route::Command<&ThisClass::OnExecuteDism>(ID_CLEANUP_DISM_NORMAL),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DISM_NORMAL),
+        Route::Command<&ThisClass::OnExecuteDismReset>(ID_CLEANUP_DISM_RESET),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DISM_RESET),
+        Route::Command<&ThisClass::OnDisableHibernateFile>(ID_CLEANUP_HIBERNATE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_HIBERNATE),
+        Route::Command<&ThisClass::OnRemoveRoamingProfiles>(ID_CLEANUP_REMOVE_ROAMING),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_ROAMING),
+        Route::Command<&ThisClass::OnRemoveLocalProfiles>(ID_CLEANUP_REMOVE_LOCAL),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_LOCAL),
+        Route::Command<&ThisClass::OnExecuteDiskCleanupUtility>(ID_CLEANUP_DISK_CLEANUP),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_DISK_CLEANUP),
+        Route::Command<&ThisClass::OnLaunchStorageSense>(ID_CLEANUP_STORAGE_SENSE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_STORAGE_SENSE),
+        Route::Command<&ThisClass::OnExecuteProgramsFeatures>(ID_CLEANUP_REMOVE_PROGRAMS),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_PROGRAMS),
+        Route::Command<&ThisClass::OnRemoveMarkOfTheWebTags>(ID_CLEANUP_REMOVE_MOTW),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_MOTW),
+        Route::Update<&ThisClass::OnUpdateCreateHardlink>(ID_CLEANUP_CREATE_HARDLINK),
+        Route::Command<&ThisClass::OnCreateHardlink>(ID_CLEANUP_CREATE_HARDLINK),
+        Route::Update<&ThisClass::OnUpdateUserDefinedCleanup>(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9),
+        Route::Command<&ThisClass::OnUserDefinedCleanup>(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9),
+        Route::Command<&ThisClass::OnTreeMapSelectParent>(ID_TREEMAP_SELECT_PARENT),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TREEMAP_SELECT_PARENT),
+        Route::Command<&ThisClass::OnTreeMapReselectChild>(ID_TREEMAP_RESELECT_CHILD),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TREEMAP_RESELECT_CHILD),
+        Route::Command<&ThisClass::OnCleanupOpenTarget>(ID_CLEANUP_OPEN_SELECTED),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_OPEN_SELECTED),
+        Route::Command<&ThisClass::OnCleanupProperties>(ID_CLEANUP_PROPERTIES),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_PROPERTIES),
+        Route::Command<&ThisClass::OnComputeHash>(ID_COMPUTE_HASH),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_COMPUTE_HASH),
+        Route::Update<&ThisClass::OnUpdateCompressionHandler>(ID_COMPRESS_NONE, ID_COMPRESS_LZX),
+        Route::Command<&ThisClass::OnCleanupCompress>(ID_COMPRESS_NONE, ID_COMPRESS_LZX),
+        Route::Command<&ThisClass::OnCleanupOptimizeVhd>(ID_CLEANUP_OPTIMIZE_VHD),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_OPTIMIZE_VHD),
+        Route::Command<&ThisClass::OnCleanupSparsifyFile>(ID_CLEANUP_SPARSIFY_FILE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_CLEANUP_SPARSIFY_FILE),
+        Route::Command<&ThisClass::OnToolsSetDates>(ID_TOOLS_SET_DATES),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_TOOLS_SET_DATES),
+        Route::Command<&ThisClass::OnScanResume>(ID_SCAN_RESUME),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SCAN_RESUME),
+        Route::Command<&ThisClass::OnScanSuspend>(ID_SCAN_SUSPEND),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SCAN_SUSPEND),
+        Route::Command<&ThisClass::OnScanStop>(ID_SCAN_STOP),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_SCAN_STOP),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_POPUP_CANCEL),
+        Route::Command<&ThisClass::OnFilterExcludeItem>(ID_FILTER_EXCLUDE_ITEM),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_FILTER_EXCLUDE_ITEM),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_INDICATOR_RAM),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_INDICATOR_DISK),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_INDICATOR_IDLE),
+        Route::Update<&ThisClass::OnUpdateCentralHandler>(ID_INDICATOR_SIZE),
+        Route::Command<&ThisClass::OnContextMenuExplore>(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD),
+    };
+    return entries;
+}

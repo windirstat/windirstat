@@ -34,7 +34,7 @@ CItemDupe::~CItemDupe()
     }
 }
 
-static int GetMappedColumn(int subitem)
+static int GetMappedColumn(const int subitem)
 {
     switch (subitem)
     {
@@ -73,7 +73,7 @@ std::wstring CItemDupe::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
 }
 
@@ -96,7 +96,7 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     }
 
     // Individual file names
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
 }
 

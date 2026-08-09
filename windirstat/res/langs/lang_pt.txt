@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Estatísticas sobre diretórios\n\n"Mostra para onde foi todo o espaço dos seus discos\ne te ajuda a limpá-los."\n\nEscrito para Microsoft Windows por\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nbaseado no programa KDE (Linux) KDirStat de Stefan Hundhammer's.\n(https://kdirstat.sourceforge.net/).\n\nO site do WinDirStat é {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Sobre
 IDS_ABOUT_LICENSE=Licença
-IDS_ABOUT_THANKS_TEXT=\nÀ Stefan Hundhammer pelo super KDirStat.\nUsar o KDirStat (2.3.7) como base me economizou muito tempo.\nhttps://kdirstat.sourceforge.net/\n\nAos autores de SequoiaView por mostrarem o quão bom é o uso de Árvores.\nhttps://www.win.tue.nl/sequoiaview/\n\nA Jarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\npelos seus documentos sobre árvores.\nhttps://www.win.tue.nl/~vanwijk/\n\nA Ben Shneiderman por sua ideia de gênio - árvores -\na verdadeiramente intuitiva maneira de visualizar o conteúdo.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nÀ Stefan Hundhammer pelo super KDirStat.\nUsar o KDirStat como base me economizou muito tempo.\nhttps://kdirstat.sourceforge.net/\n\nAos autores de SequoiaView por mostrarem o quão bom é o uso de Árvores.\nhttps://www.win.tue.nl/sequoiaview/\n\nA Jarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\npelos seus documentos sobre árvores.\nhttps://www.win.tue.nl/~vanwijk/\n\nA Ben Shneiderman por sua ideia de gênio - árvores -\na verdadeiramente intuitiva maneira de visualizar o conteúdo.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Agradecimentos
 IDS_ABOUT_TITLE=Sobre o WinDirStat
 IDS_ADMIN=Administrador
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Usar varredura acelerada
 IDS_FILE_FILTER=Arquivos CSV/JSON
 IDS_FILE_SELECT=Abrir uma lista de discos.\nOpen
 IDS_FREESPACE_ITEM=<Espaço Livre>
+IDS_GENERIC_APPLY=&Aplicar
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Cancelar
 IDS_GENERIC_DAYS=dias

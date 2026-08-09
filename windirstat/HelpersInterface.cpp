@@ -144,7 +144,7 @@ std::wstring FormatCount(const ULONGLONG n) noexcept
 
 std::wstring FormatDouble(const double d) noexcept
 {
-    ASSERT(d >= 0);
+    assert(d >= 0);
     const int x = std::lround(d * 100);
     const int i = x / 100;
     const int r = x % 100;
@@ -229,12 +229,12 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 }
 
 // File and path helpers
-std::wstring GetFolderNameFromPath(std::wstring_view path)
+std::wstring GetFolderNameFromPath(const std::wstring_view path)
 {
     return std::filesystem::path(path).parent_path().wstring();
 }
 
-std::wstring GetBaseNameFromPath(std::wstring_view path)
+std::wstring GetBaseNameFromPath(const std::wstring_view path)
 {
     return std::filesystem::path(path).filename().wstring();
 }
@@ -254,7 +254,7 @@ std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
 }
 
 // String helpers
-void ReplaceString(std::wstring& subject, std::wstring_view search, std::wstring_view replace)
+void ReplaceString(std::wstring& subject, const std::wstring_view search, const std::wstring_view replace)
 {
     if (search.empty()) return;
 
@@ -358,6 +358,13 @@ const std::wstring& GetSpec_TiB() noexcept
 }
 
 // System information
+FILETIME CurrentSystemFileTime() noexcept
+{
+    FILETIME result;
+    GetSystemTimeAsFileTime(&result); // Windows 7 compatible
+    return result;
+}
+
 std::wstring GetCOMSPEC()
 {
     std::array<WCHAR, MAX_PATH> cmd;
@@ -380,58 +387,9 @@ const std::wstring& GetSysDirectory() noexcept
 }
 
 // UI helpers
-void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut) noexcept
-{
-    while (true)
-    {
-        MSG msg;
-        while (::PeekMessage(&msg, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
-        {
-            ::DispatchMessage(&msg);
-        }
-
-        const DWORD r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
-
-        if (r == WAIT_OBJECT_0 + 1)
-        {
-            continue;
-        }
-
-        break;
-    }
-}
-
-void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
-{
-    if (CWnd* wnd = AfxGetMainWnd(); wnd != nullptr && GetWindowThreadProcessId(
-        wnd->m_hWnd, nullptr) == GetCurrentThreadId())
-    {
-        static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");
-        std::jthread([wnd, callback]() mutable
-        {
-            callback();
-            wnd->PostMessage(waitMessage, 0, 0);
-        }).detach();
-
-        MSG msg;
-        while (GetMessage(&msg, nullptr, 0, 0)) {
-            if (msg.message == waitMessage) break;
-            if (msg.message >= WM_MOUSEFIRST && msg.message <= WM_MOUSELAST) continue;
-            if (msg.message >= WM_KEYFIRST && msg.message <= WM_KEYLAST) continue;
-            if (msg.message == WM_NCLBUTTONDOWN || msg.message == WM_NCLBUTTONUP) continue;
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-    else
-    {
-        callback();
-    }
-}
-
 void DisplayError(const std::wstring& error)
 {
-    WdsMessageBox(error, MB_OK | MB_ICONERROR);
+    ShowMessageBox(error, MB_OK | MB_ICONERROR);
 }
 
 std::wstring TranslateError(const HRESULT hr)
@@ -440,8 +398,8 @@ std::wstring TranslateError(const HRESULT hr)
     if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr) == 0)
     {
-        const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
-        return std::format(L"{} {:#08x}", s.GetString(), static_cast<DWORD>(hr));
+        return std::format(L"Windows error {:#08x}", static_cast<DWORD>(hr));
+
     }
     return static_cast<LPWSTR>(*lpMsgBuf);
 }
@@ -462,7 +420,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
         .nShow = nShowCmd
     };
 
-    const BOOL bResult = ::ShellExecuteEx(&sei);
+    const bool bResult = ::ShellExecuteEx(&sei);
     if (!bResult && GetLastError() != ERROR_CANCELLED)
     {
         DisplayError(L"ShellExecute failed: " + TranslateError(GetLastError()));
@@ -479,43 +437,12 @@ bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& ti
     return ShellExecuteWrapper(cmd, cmdline, L"runas");
 }
 
-// DPI scaling
-static int GetWindowDpi(const CWnd* wnd) noexcept
-{
-    const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    const SmartPointer dc([h](const HDC hdc) noexcept { ReleaseDC(h, hdc); }, GetDC(h));
-    return dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
-}
-
-int DpiRest(const int value, const CWnd* wnd) noexcept
-{
-    return ::MulDiv(value, GetWindowDpi(wnd), USER_DEFAULT_SCREEN_DPI);
-}
-
-void SetMenuItem(CMenu* menu, const int pos, const bool enable, const bool isCommand)
-{
-    const auto lookup = isCommand ? MF_BYCOMMAND : MF_BYPOSITION;
-    if (pos >= 0) menu->EnableMenuItem(pos, lookup | (enable ? MF_ENABLED
-         : (MF_DISABLED | MF_GRAYED)));
-}
-
-bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noexcept
-{
-    const auto lookup = isCommand ? MF_BYCOMMAND : MF_BYPOSITION;
-    return (menu->GetMenuState(pos, lookup) & (MF_DISABLED | MF_GRAYED)) == 0;
-}
-
 std::wstring GetLocalizedMenuText(const std::wstring_view textId, const std::wstring_view detail)
 {
     static const std::wregex decorations(LR"(\s*\(&.\)(?:\t.*)?$|\t.*$|&(&?))",
         std::regex_constants::optimize);
     std::wstring text = std::regex_replace(Localization::Lookup(textId), decorations, L"$1");
     return detail.empty() ? text : std::format(L"{} ({})", text, detail);
-}
-
-int DpiSave(const int value, const CWnd* wnd) noexcept
-{
-    return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, GetWindowDpi(wnd));
 }
 
 // Shell item array
@@ -578,7 +505,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
 // Application info
 std::wstring GetAppTitle()
 {
-    return std::format(L"{} {}{}.{}.{}", Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+    return std::format(L"{} {}{}.{}.{}", Localization::LookupNeutral(IDS_APP_TITLE),
         PRODUCTION == 0 ? L"Beta " : L"", PRD_MAJVER, PRD_MINVER, PRD_PATCH);
 }
 
@@ -605,7 +532,7 @@ std::wstring GetAppFolder()
 // Resources
 std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 {
-    const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
+    const HGLOBAL resourceData = LoadResource(nullptr, resource);
     if (!resourceData) return {};
 
     const LPVOID binaryData = LockResource(resourceData);
@@ -625,23 +552,23 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     // Use the cabinet function to decompress the resource
     ERF erf{};
     const SmartPointer hfdi(FDIDestroy, FDICreate(
-        +[](ULONG cb) -> void* { return malloc(cb); },
+        +[](const ULONG cb) -> void* { return malloc(cb); },
         +[](void* pv) { free(pv); },
         +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },
-        +[](INT_PTR hf, void* pv, UINT cb) -> UINT {
+        +[](const INT_PTR hf, void* pv, const UINT cb) -> UINT {
             size_t& pos = g_ctx->handles[hf];
-            const size_t toRead = std::min(cb, (UINT)(g_ctx->cabData.size() - pos));
+            const size_t toRead = std::min(cb, static_cast<UINT>(g_ctx->cabData.size() - pos));
             memcpy(pv, g_ctx->cabData.data() + pos, toRead);
             pos += toRead;
             return static_cast<UINT>(toRead);
         },
-        +[](INT_PTR, void* pv, UINT cb) -> UINT {
+        +[](INT_PTR, void* pv, const UINT cb) -> UINT {
             const char* p = static_cast<const char*>(pv);
             g_ctx->output.insert(g_ctx->output.end(), p, p + cb);
             return cb;
         },
-        +[](INT_PTR hf) -> int { g_ctx->handles.erase(hf); return 0; },
-        +[](INT_PTR hf, long dist, int seektype) -> long {
+        +[](const INT_PTR hf) -> int { g_ctx->handles.erase(hf); return 0; },
+        +[](const INT_PTR hf, const long dist, const int seektype) -> long {
             size_t& pos = g_ctx->handles[hf];
             if (seektype == SEEK_SET) pos = dist;
             else if (seektype == SEEK_CUR) pos += dist;
@@ -653,7 +580,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     if (!hfdi) return {};
 
     FDICopy(hfdi, std::string().data(), std::string().data(), 0,
-        +[](FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION) -> INT_PTR {
+        +[](const FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION) -> INT_PTR {
             return (fdint == fdintCOPY_FILE) ? 1 : (fdint == fdintCLOSE_FILE_INFO);
         }, nullptr, &ctx);
 
@@ -699,7 +626,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
         };
 
         // Load all accelerator object and get count
-        const HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+        const HACCEL hAccel = LoadAccelerators(GetAppInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
         const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
         if (count == 0) return wds::strEmpty;
 
@@ -729,10 +656,10 @@ std::wstring GetAcceleratorString(const UINT commandID)
             if (!result.empty()) result.append(L" / ");
 
             // Build modifier string
-            for (const auto& mod : Modifiers)
+            for (const auto& [keyMod, name] : Modifiers)
             {
-                if (virtKey & mod.key) {
-                    result.append(mod.name);
+                if (virtKey & keyMod) {
+                    result.append(name);
                     result.push_back(L'+');
                 }
             }
@@ -763,49 +690,6 @@ std::wstring GetAcceleratorString(const UINT commandID)
     }
 
     // Lookup the requested command ID in the cache
-    auto cacheEntry = std::ranges::lower_bound(cache, commandID, {}, &std::pair<UINT, std::wstring>::first);
+    const auto cacheEntry = std::ranges::lower_bound(cache, commandID, {}, &std::pair<UINT, std::wstring>::first);
     return (cacheEntry != cache.end() && cacheEntry->first == commandID) ? cacheEntry->second : wds::strEmpty;
-}
-
-// Tree node drawing helper
-void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgColor,
-    const bool toTop, const bool toBottom, const bool toRight, const bool showPlus, const bool showMinus)
-{
-    const int nodeWidth = nodeRect.Width();
-    const int nodeHeight = nodeRect.Height();
-    const int centerX = nodeRect.left + nodeWidth / 2;
-    const int centerY = nodeRect.top + nodeHeight / 2;
-
-    // Connectors
-    const COLORREF lineColor = DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96);
-    LOGBRUSH lbConn { BS_SOLID, lineColor, 0 };
-    CPen connPen(PS_GEOMETRIC | PS_DOT, 1, &lbConn);
-    CSelectObject soConn(pdc, &connPen);
-    if (toBottom && toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, nodeRect.bottom);
-    else if (toBottom) pdc->MoveTo(centerX, centerY), pdc->LineTo(centerX, nodeRect.bottom);
-    else if (toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, centerY);
-    if (toRight) pdc->MoveTo(centerX + 1, centerY), pdc->LineTo(nodeRect.right, centerY);
-
-    if (!(showPlus || showMinus)) return;
-
-    // Outside box
-    const int boxSize = nodeHeight / 2 | 1;
-    const int boxHalf = boxSize / 2;
-    const int boxLeft = centerX - boxHalf;
-    const int boxRight = boxLeft + boxSize;
-    const int boxTop = centerY - boxHalf;
-    const int boxBottom = boxTop + boxSize;
-    LOGBRUSH lbBox { BS_SOLID, lineColor, 0 };
-    CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, 1, &lbBox);
-    CBrush bgBox(bgColor);
-    CSelectObject soBox(pdc, &boxPen);
-    CSelectObject a(pdc, &bgBox);
-    pdc->RoundRect(boxLeft, boxTop, boxRight, boxBottom, 2, 2);
-
-    // Minus sign
-    const int margin = nodeHeight / 8;
-    pdc->MoveTo(boxLeft + margin, centerY), pdc->LineTo(boxRight - margin, centerY);
-
-    // Plus sign
-    if (showPlus) pdc->MoveTo(centerX, boxTop + margin), pdc->LineTo(centerX, boxBottom - margin);
 }

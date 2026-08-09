@@ -18,10 +18,8 @@
 #include "pch.h"
 #include "ProgressDlg.h"
 
-IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
-
-CProgressDlg::CProgressDlg(const size_t total, const CProgressDlg::Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task)
-    : CDialogEx(IDD, pParent)
+CProgressDlg::CProgressDlg(const size_t total, const Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task)
+    : MessageTarget(IDD, pParent)
     , m_message(Localization::Lookup(IDS_PROGRESS))
     , m_task(std::move(task))
     , m_total(total)
@@ -29,42 +27,32 @@ CProgressDlg::CProgressDlg(const size_t total, const CProgressDlg::Flags flags, 
 {
 }
 
-BEGIN_MESSAGE_MAP(CProgressDlg, CDialogEx)
-    ON_WM_TIMER()
-    ON_WM_CTLCOLOR()
-    ON_BN_CLICKED(IDCANCEL, OnCancel)
-END_MESSAGE_MAP()
-
-void CProgressDlg::DoDataExchange(CDataExchange* pDX)
+bool CProgressDlg::OnInitDialog()
 {
-    CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_PROGRESS_MESSAGE, m_messageCtrl);
-    DDX_Control(pDX, IDC_PROGRESS_BAR, m_progressCtrl);
-    DDX_Control(pDX, IDCANCEL, m_cancelButton);
-}
-
-BOOL CProgressDlg::OnInitDialog()
-{
-    CDialogEx::OnInitDialog();
+    CDialog::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
+    DarkMode::AdjustControls(Handle());
+
+    m_messageCtrl.SubclassDlgItem(IDC_PROGRESS_MESSAGE, this);
+    m_progressCtrl.SubclassDlgItem(IDC_PROGRESS_BAR, this);
+    m_cancelButton.SubclassDlgItem(IDCANCEL, this);
 
     // Set window title and message
-    SetWindowText(wds::strWinDirStat);
-    m_messageCtrl.SetWindowText(m_message.c_str());
+    SetText(wds::strWinDirStat);
+    m_messageCtrl.SetText(m_message.c_str());
 
     // Configure cancel button
     if (HasFlag(Flags::NoCancel)) m_cancelButton.ShowWindow(SW_HIDE);
 
     // Start timer for progress updates or marquee repaints.
-    SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
+    SetTimer(TIMER_ID, TIMER_INTERVAL);
 
     // Configure progress bar
     if (m_total == 0)
     {
         m_progressCtrl.ModifyStyle(0, PBS_MARQUEE);
-        m_progressCtrl.SetMarquee(TRUE, 30);
+        m_progressCtrl.SetMarquee(true, 30);
     }
 
     // Center dialog
@@ -73,12 +61,12 @@ BOOL CProgressDlg::OnInitDialog()
     // Start worker thread
     StartWorkerThread();
 
-    return TRUE;
+    return true;
 }
 
 void CProgressDlg::StartWorkerThread()
 {
-    m_workerThread = std::jthread([this]()
+    m_workerThread = std::jthread([this]
     {
         // Execute the task, passing the dialog pointer
         m_task(this);
@@ -94,14 +82,14 @@ void CProgressDlg::StartWorkerThread()
     });
 }
 
-void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
+void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_ID)
     {
         if (m_total == 0)
         {
-            m_progressCtrl.Invalidate(FALSE);
-            CDialogEx::OnTimer(nIDEvent);
+            m_progressCtrl.Invalidate(false);
+            CDialog::OnTimer(nIDEvent);
             return;
         }
 
@@ -116,9 +104,9 @@ void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
             std::format(L"{}: {}%", m_message, FormatDouble(percent)) :
             std::format(L"{}: {}% ({} / {})",
                 m_message, FormatDouble(percent), FormatCount(current), FormatCount(m_total));
-        m_messageCtrl.SetWindowText(progressText.c_str());
+        m_messageCtrl.SetText(progressText.c_str());
     }
-    CDialogEx::OnTimer(nIDEvent);
+    CDialog::OnTimer(nIDEvent);
 }
 
 void CProgressDlg::OnCancel()
@@ -128,24 +116,24 @@ void CProgressDlg::OnCancel()
     m_cancelRequested = true;
 
     // Disable cancel button to prevent multiple clicks
-    m_cancelButton.EnableWindow(FALSE);
+    m_cancelButton.EnableWindow(false);
 
     // Wait for worker thread to complete
     if (m_workerThread.joinable())
     {
-        ProcessMessagesUntilSignaled([this]
+        CWinApp::RunTaskWithUiUpdates([this]
         {
             m_workerThread.join();
         });
         m_workerThread = {};
     }
 
-    CDialogEx::OnCancel();
+    CDialog::OnCancel();
 }
 
-INT_PTR CProgressDlg::DoModal()
+INT_PTR CProgressDlg::ShowModal()
 {
-    const INT_PTR result = CDialogEx::DoModal();
+    const INT_PTR result = CDialog::ShowModal();
 
     // Clean up worker thread if still running
     if (m_workerThread.joinable())
@@ -160,45 +148,37 @@ INT_PTR CProgressDlg::DoModal()
 HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-BEGIN_MESSAGE_MAP(CWdsProgressCtrl, CProgressCtrl)
-    ON_WM_PAINT()
-    ON_WM_ERASEBKGND()
-END_MESSAGE_MAP()
-
-BOOL CWdsProgressCtrl::OnEraseBkgnd(CDC* /*pDC*/)
+bool CWdsProgressCtrl::OnEraseBkgnd(CDC* /*pDC*/)
 {
-    return TRUE;
+    return true;
 }
 
 void CWdsProgressCtrl::OnPaint()
 {
     CPaintDC dc(this);
-    CRect rect;
-    GetClientRect(&rect);
-
-    const bool isDark = DarkMode::IsDarkModeActive();
-    const COLORREF trackPenColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
-    const COLORREF trackBrushColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
+    const CRect rect = ClientRect();
 
     // Draw track background and border
     {
-        CPen trackPen(PS_SOLID, 1, trackPenColor);
-        CBrush trackBrush(trackBrushColor);
-        const CSelectObject soPen(&dc, &trackPen);
-        const CSelectObject soBrush(&dc, &trackBrush);
+        const bool isDark = DarkMode::IsDarkModeActive();
+        const COLORREF trackPenColor = isDark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
+        const COLORREF trackBrushColor = isDark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
+        const CPen trackPen(PS_SOLID, 1, trackPenColor);
+        const CBrush trackBrush(trackBrushColor);
+        const GdiObjectSelection soPen(&dc, &trackPen);
+        const GdiObjectSelection soBrush(&dc, &trackBrush);
         dc.RoundRect(&rect, CPoint(4, 4));
     }
 
     // Draw progress fill (square)
-    const COLORREF progColor = DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
+    const COLORREF progColor = DarkMode::SystemColor(COLOR_HIGHLIGHT);
     CRect progRect = rect;
-    progRect.DeflateRect(1, 1);
+    progRect.Deflate(1, 1);
 
-    CRgn clipRgn;
-    clipRgn.CreateRoundRectRgn(rect.left + 2, rect.top + 2, rect.right - 1, rect.bottom - 1, 2, 2);
+    CRgn clipRgn(rect.left + 2, rect.top + 2, rect.right - 1, rect.bottom - 1, 2, 2);
     dc.SelectClipRgn(&clipRgn);
 
     if (GetStyle() & PBS_MARQUEE)
@@ -221,16 +201,16 @@ void CWdsProgressCtrl::OnPaint()
     }
     else
     {
-        int lower = 0, upper = 100;
-        GetRange(lower, upper);
-        const float percent = (upper > lower) ? std::clamp(static_cast<float>(GetPos() - lower) / (upper - lower), 0.0f, 1.0f) : 0.0f;
-
-        if (percent > 0.0f)
+        const auto [lower, upper] = Range();
+        if (const float percent = upper > lower
+                ? std::clamp(static_cast<float>(GetPos() - lower) / (upper - lower), 0.0f, 1.0f)
+                : 0.0f;
+            percent > 0.0f)
         {
             progRect.right = std::max(progRect.left, progRect.left + static_cast<int>(progRect.Width() * percent));
             dc.FillSolidRect(&progRect, progColor);
         }
     }
 
-    dc.SelectClipRgn(NULL);
+    dc.SelectClipRgn(nullptr);
 }

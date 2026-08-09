@@ -19,7 +19,7 @@
 
 #include "TreeListControl.h"
 
-class CFileTreeControl final : public CTreeListControl
+class CFileTreeControl final : public MessageTarget<CFileTreeControl, CTreeListControl>
 {
 public:
     CFileTreeControl();
@@ -32,8 +32,23 @@ protected:
     void SelectFirstItemByType(ITEMTYPE itemType);
     inline static CFileTreeControl* m_singleton = nullptr;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    bool OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 };
+
+inline std::span<const RouteEntry> CFileTreeControl::Routes()
+{
+    using ThisClass = CFileTreeControl;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&ThisClass::OnSetCursor>(WM_SETCURSOR),
+    };
+    return entries;
+}

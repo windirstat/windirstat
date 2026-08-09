@@ -21,28 +21,67 @@
 #include "WinDirStatPane.h"
 #include "TreeListControl.h"
 
-class CControlView : public CWinDirStatPane
+class CControlView : public MessageTarget<CControlView, CWinDirStatPane>
 {
 public:
     void SysColorChanged();
 
-protected:
-    DECLARE_DYNAMIC(CControlView)
     CControlView() = default;
     ~CControlView() override = default;
 
     virtual CTreeListControl& GetControl() = 0;
     virtual const CTreeListControl& GetControl() const = 0;
 
-    int InsertCol(const std::wstring_view& colName, int nFormat, int nWidth, const int nSubItem);
-    void OnDraw(CDC*) override;
+    int InsertCol(const std::wstring_view& colName, int nFormat, int nWidth, int nSubItem);
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnUpdatePopupToggle(CCmdUI* pCmdUI);
-    afx_msg void OnPopupToggle();
+static std::span<const RouteEntry> Routes();
+
+protected:
+    static constexpr DWORD DefaultControlStyle =
+        LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS;
+
+    virtual void InitializeColumns() = 0;
+    virtual DWORD GetControlStyle() const = 0;
+
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSize(UINT nType, int cx, int cy);
+    bool OnEraseBkgnd(CDC* pDC);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnUpdatePopupToggle(CCmdUI* pCmdUI);
+    void OnPopupToggle();
+};
+
+inline std::span<const RouteEntry> CControlView::Routes()
+{
+    using ThisClass = CControlView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
+        Route::Window<&ThisClass::OnInitMenuPopup>(WM_INITMENUPOPUP),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Notify<&ThisClass::OnLvnItemChanged>(LVN_ITEMCHANGED, ID_WDS_CONTROL),
+        Route::Update<&ThisClass::OnUpdatePopupToggle>(ID_POPUP_TOGGLE),
+        Route::Command<&ThisClass::OnPopupToggle>(ID_POPUP_TOGGLE),
+    };
+    return entries;
+}
+
+template<typename Control, DWORD AdditionalStyle = 0>
+class CControlViewT : public CControlView
+{
+    static_assert(std::derived_from<Control, CTreeListControl>);
+
+public:
+    Control& GetControl() final { return m_control; }
+    const Control& GetControl() const final { return m_control; }
+
+protected:
+    DWORD GetControlStyle() const final { return DefaultControlStyle | AdditionalStyle; }
+
+private:
+    Control m_control;
 };

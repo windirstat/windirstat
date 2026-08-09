@@ -29,9 +29,6 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
     return column == COL_ITEMSEARCH_NAME || column == COL_ITEMSEARCH_LAST_CHANGE;
 }
 
-BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
-END_MESSAGE_MAP()
-
 std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTerm, const bool searchCase, const bool useRegex)
 {
     try
@@ -62,7 +59,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
     // Process search request using progress dialog
     std::vector<CItem*> matchedItems;
-    CProgressDlg(static_cast<size_t>(item->GetItemsCount()), CProgressDlg::Flags::None, AfxGetMainWnd(),
+    CProgressDlg(static_cast<size_t>(item->GetItemsCount()), CProgressDlg::Flags::None, GetMainWindow(),
         [&](CProgressDlg* pdlg)
     {
         // Remove previous results
@@ -74,7 +71,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             searchCase, searchRegex);
 
         // Do search
-        std::vector<CItem*> queue{ item };
+        std::vector queue{ item };
         while (!queue.empty() && !pdlg->IsCancelled())
         {
             // Grab item from queue
@@ -116,14 +113,14 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             matchedItems.resize(maxResults);
             m_rootItem->SetLimitExceeded(true);
         }
-    }).DoModal();
+    }).ShowModal();
 
     // Add found items to the interface
     CWaitCursor wait;
     CollapseItem(0);
 
     // Add to found items
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     m_itemTracker.reserve(matchedItems.size());
     for (CItem* matchedItem : matchedItems)
     {
@@ -138,7 +135,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
 void CFileSearchControl::RemoveItem(CItem* item)
 {
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     std::erase_if(m_itemTracker, [&](const auto& pair)
     {
         if (pair.first != item && !item->IsAncestorOf(pair.first)) return false;

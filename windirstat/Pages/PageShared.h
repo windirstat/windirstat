@@ -19,60 +19,55 @@
 
 #include "pch.h"
 
-class COptionsPropertySheet;
+class CSettingsSheet;
 
 //
-// COptionsPage. Shared lifecycle and option bindings for settings pages.
+// CSettingsPage. Shared lifecycle and option bindings for settings pages.
 //
-class COptionsPage : public CMFCPropertyPage
+class CSettingsPage : public MessageTarget<CSettingsPage, CPropertyPage>
 {
-    DECLARE_DYNAMIC(COptionsPage)
-
 protected:
-    explicit COptionsPage(UINT templateId);
-
-    COptionsPropertySheet* GetSheet() const;
-    bool IsInitialized() const { return m_initialized; }
-    void SetModified(BOOL changed = TRUE);
-    void ApplyOptionBindings() const;
-
-    void BindCheck(int id, Setting<bool>& option, BOOL& value);
-    void BindCombo(int id, Setting<int>& option, int& value);
-    void BindRadio(int id, Setting<int>& option, int& value);
-    void BindText(int id, Setting<int>& option, int& value);
-    void BindText(int id, Setting<std::wstring>& option, CStringW& value);
-
-    template <typename T, typename Value>
-    void BindOption(Setting<T>& option, Value& value, std::function<void(CDataExchange*)> exchange = {})
+    struct CheckboxSettingBinding
     {
-        m_optionBindings.push_back({
-            [&option, &value] { value = static_cast<Value>(option.Obj()); },
-            std::move(exchange),
-            [&option, &value] { option = static_cast<T>(value); },
-        });
-    }
+        UINT controlId;
+        Setting<bool>& setting;
+    };
+
+    explicit CSettingsPage(UINT templateId);
+
+    CSettingsSheet* GetSheet() const;
+    bool IsInitialized() const { return m_initialized; }
+    void SetModified(bool changed = true);
+    void LoadCheckboxSettings(std::span<const CheckboxSettingBinding> bindings);
+    void SaveCheckboxSettings(std::span<const CheckboxSettingBinding> bindings);
 
     virtual void InitializePage() = 0;
     virtual void AdjustControls();
 
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() final;
+    bool OnInitDialog() final;
 
-    afx_msg void OnSettingChanged();
-    afx_msg void OnSettingRangeChanged(UINT id);
-    afx_msg void OnSettingNotifyChanged(UINT id, NMHDR*, LRESULT*);
+    void OnSettingChanged();
+    void OnSettingRangeChanged(UINT id);
+    void OnSettingNotifyChanged(UINT id, NMHDR*, LRESULT*);
 
 private:
-    struct OptionBinding
-    {
-        std::function<void()> load;
-        std::function<void(CDataExchange*)> exchange;
-        std::function<void()> save;
-    };
-
-    std::vector<OptionBinding> m_optionBindings;
     bool m_initialized = false;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    bool OnEraseBkgnd(CDC* pDC);
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };
+
+inline std::span<const RouteEntry> CSettingsPage::Routes()
+{
+    using ThisClass = CSettingsPage;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+    };
+    return entries;
+}

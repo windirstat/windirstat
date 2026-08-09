@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Katalogstatistik\n\n"Visar var allt ditt diskutrymme har tagit vägen\noch hjälper dig att rensa upp."\n\nProgrammerad för Microsoft Windows av\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nBaserat på Stefan Hundhammer's KDE (Linux) applikation KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's hem är {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Om
 IDS_ABOUT_LICENSE=Licens
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer för hans fantastiska Linux-verktyg KDirStat.\nAtt använda KDirStat (2.3.7) som en specifikation sparade mig mycket tid.\nhttps://kdirstat.sourceforge.net/\n\nFörfattarna till SequoiaView för att visa hur användbara trädkartor verkligen kan vara.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls och Kees Huizing\nför sina papper om kuddträdskartor och fyrkantiga trädkartor.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman för hans geniala idé om trädkartor -\nett verkligt intuitivt sätt att visualisera trädinnehåll.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer för hans fantastiska Linux-verktyg KDirStat.\nAtt använda KDirStat som en specifikation sparade mig mycket tid.\nhttps://kdirstat.sourceforge.net/\n\nFörfattarna till SequoiaView för att visa hur användbara trädkartor verkligen kan vara.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls och Kees Huizing\nför sina papper om kuddträdskartor och fyrkantiga trädkartor.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman för hans geniala idé om trädkartor -\nett verkligt intuitivt sätt att visualisera trädinnehåll.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Tack till
 IDS_ABOUT_TITLE=Om WinDirStat
 IDS_ADMIN=Administratör
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Använd accelererad skanning
 IDS_FILE_FILTER=CSV/JSON-filer
 IDS_FILE_SELECT=Öppna en samling av enheter.\nÖppna...
 IDS_FREESPACE_ITEM=<Ledigt utrymme>
+IDS_GENERIC_APPLY=&Verkställ
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Avbryt
 IDS_GENERIC_DAYS=dagar

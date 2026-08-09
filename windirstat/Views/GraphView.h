@@ -23,15 +23,12 @@
 // Shared window, interaction, and bitmap-cache lifecycle for the disk-usage
 // visualizations. Derived classes supply only their renderer-specific drawing
 // and geometry operations.
-class CGraphView : public CWinDirStatPane
+class CGraphView : public MessageTarget<CGraphView, CWinDirStatPane>
 {
-protected:
-    DECLARE_DYNAMIC(CGraphView)
-
+public:
     CGraphView() = default;
     ~CGraphView() override = default;
 
-public:
     static constexpr COLORREF BackgroundColor = RGB(15, 15, 15);
 
     void SuspendRecalculationDrawing(bool suspend) final;
@@ -40,19 +37,19 @@ public:
     HoverInfo GetHoverInfo() const final;
 
 protected:
-    BOOL PreCreateWindow(CREATESTRUCT& cs) final;
+    bool PreCreateWindow(CREATESTRUCT& cs) final;
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     void OnDraw(CDC* pDC) final;
 
-    [[nodiscard]] virtual const wchar_t* GetWindowClassName() const = 0;
+    virtual const wchar_t* GetWindowClassName() const = 0;
     virtual void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) = 0;
-    [[nodiscard]] virtual bool CreateRenderBitmap(CDC* pDC, CSize size);
-    [[nodiscard]] virtual bool PrepareDrawing(CDC* pDC, CRect& rect);
+    virtual bool CreateRenderBitmap(CDC* pDC, CSize size);
+    virtual bool PrepareDrawing(CDC* pDC, CRect& rect);
     virtual void RenderVisualization(CDC* pDC, CRect rect) = 0;
     virtual void DrawSelection(CDC* pDC) = 0;
     virtual void DrawHighlightExtension(CDC* pDC) = 0;
-    [[nodiscard]] virtual CItem* FindItemAtPoint(CPoint point) = 0;
-    [[nodiscard]] virtual bool HasValidLayout() const { return IsDrawn(); }
+    virtual CItem* FindItemAtPoint(CPoint point) = 0;
+    virtual bool HasValidLayout() const { return IsDrawn(); }
 
     virtual void ClearVisualizationLayout() {}
     virtual void OnViewEmptied() {}
@@ -61,30 +58,30 @@ protected:
     virtual void OnInputStateReset() {}
     virtual void OnRenderCacheTrimmed() {}
     virtual bool UpdateHoverDetails(const CItem* item, bool itemChanged);
-    [[nodiscard]] virtual bool CanReuseVisualizationLayout(MODEL_CHANGE /*change*/) const
+    virtual bool CanReuseVisualizationLayout(MODEL_CHANGE /*change*/) const
     {
         return false;
     }
     virtual void OnVisualizationChanged(MODEL_CHANGE change);
     virtual void DrillDown(CItem* item);
     void ResetZoom(CPoint point);
-    [[nodiscard]] virtual std::span<const UINT> GetPersistentContextCommands() const;
+    virtual std::span<const UINT> GetPersistentContextCommands() const;
 
-    [[nodiscard]] bool IsReadyToDraw() const;
-    [[nodiscard]] bool IsDrawn() const { return m_bitmap.m_hObject != nullptr; }
+    bool IsReadyToDraw() const;
+    bool IsDrawn() const { return m_bitmap.m_hObject != nullptr; }
     void DrawHighlights(CDC* pDC);
     void Inactivate(bool clearLayout = true);
     void EmptyView();
 
-    [[nodiscard]] CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
+    CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
     void ClearHover();
-    [[nodiscard]] static bool IsExtensionHighlighted(const CItem* item);
-    [[nodiscard]] static const CItem* GetDisplayItem(const CItem* item);
+    static bool IsExtensionHighlighted(const CItem* item);
+    static const CItem* GetDisplayItem(const CItem* item);
     static void RenderHighlightRectangle(CDC* pDC, CRect& rect);
 
 private:
     void PaintEmptyView(CDC* pDC);
-    [[nodiscard]] bool DrawDimmedView(CDC* pDC);
+    bool DrawDimmedView(CDC* pDC);
     void DiscardRenderCache(bool clearLayout = true);
     void ResetInputState();
 
@@ -101,14 +98,35 @@ protected:
     CSize m_dimmedSize{ 0, 0 };
     CBitmap m_dimmed;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-    afx_msg void OnMouseLeave();
-    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnSize(UINT nType, int cx, int cy);
+    void OnLButtonDblClk(UINT nFlags, CPoint point);
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    void OnMButtonDown(UINT nFlags, CPoint point);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnContextMenu(CWnd* pWnd, CPoint point);
+    void OnMouseMove(UINT nFlags, CPoint point);
+    void OnMouseLeave();
+    bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
+
+inline std::span<const RouteEntry> CGraphView::Routes()
+{
+    using ThisClass = CGraphView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&ThisClass::OnLButtonDblClk>(WM_LBUTTONDBLCLK),
+        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&ThisClass::OnMButtonDown>(WM_MBUTTONDOWN),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&ThisClass::OnContextMenu>(WM_CONTEXTMENU),
+        Route::Window<&ThisClass::OnMouseMove>(WM_MOUSEMOVE),
+        Route::Window<&ThisClass::OnMouseLeave>(WM_MOUSELEAVE),
+        Route::Window<&ThisClass::OnMouseWheel>(WM_MOUSEWHEEL),
+    };
+    return entries;
+}

@@ -20,9 +20,9 @@
 #include "pch.h"
 #include "Layout.h"
 
-class CAboutDlg final : public CLayoutDialogEx
+class CAboutDlg final : public MessageTarget<CAboutDlg, CLayoutDialog>
 {
-    class WdsTabControl final : public CMFCTabCtrl
+    class WdsTabControl final : public MessageTarget<WdsTabControl, CTabControl>
     {
     public:
         void Initialize();
@@ -34,13 +34,19 @@ class CAboutDlg final : public CLayoutDialogEx
         CRichEditCtrl m_textAbout;
         CRichEditCtrl m_textThanks;
         CRichEditCtrl m_textLicense;
+        int m_tabAbout = 0;
+        int m_tabThanks = 0;
+        int m_tabLicense = 0;
 
         CRichEditCtrl& GetActiveRichEdit();
 
-        DECLARE_MESSAGE_MAP()
-        afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
-        afx_msg void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
-        afx_msg void OnSetFocus(CWnd* pOldWnd);
+    public:
+        static std::span<const RouteEntry> Routes();
+
+    protected:
+        void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
+        void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
+        void OnSetFocus(CWnd* pOldWnd);
     };
 
 public:
@@ -48,14 +54,39 @@ public:
     static std::wstring GetAppVersion();
 
 protected:
-    BOOL OnInitDialog() override;
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-    void DoDataExchange(CDataExchange* pDX) override;
+    bool OnInitDialog() override;
+    bool PreprocessMessage(MSG* pMsg) override;
 
     CStatic m_caption;
     WdsTabControl m_tab;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    afx_msg LRESULT OnTabChanged(WPARAM wParam, LPARAM lParam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    LRESULT OnTabChanged(WPARAM wParam, LPARAM lParam);
 };
+
+inline std::span<const RouteEntry> CAboutDlg::WdsTabControl::Routes()
+{
+    using ThisClass = WdsTabControl;
+    static constexpr std::array entries
+    {
+        Route::Notify<&ThisClass::OnEnLinkText>(EN_LINK, ID_WDS_CONTROL),
+        Route::Notify<&ThisClass::OnEnMsgFilter>(EN_MSGFILTER, ID_WDS_CONTROL),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CAboutDlg::Routes()
+{
+    using ThisClass = CAboutDlg;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&ThisClass::OnTabChanged>(WM_WDS_TAB_CHANGED),
+    };
+    return entries;
+}

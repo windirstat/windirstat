@@ -52,5 +52,4 @@ protected:
     std::unordered_map<CItem*, CItemTop*> m_itemTracker;
     size_t m_previousTopN = 0;
 
-    DECLARE_MESSAGE_MAP()
 };

@@ -56,6 +56,6 @@ public:
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);
-    void SetLimitExceeded(bool exceeded) { m_limitExceeded = exceeded; }
+    void SetLimitExceeded(const bool exceeded) { m_limitExceeded = exceeded; }
     bool GetLimitExceeded() const { return m_limitExceeded; }
 };

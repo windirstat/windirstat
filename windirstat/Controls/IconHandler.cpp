@@ -40,11 +40,11 @@ void CIconHandler::Initialize()
         m_symlinkImage = Icons::IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
         m_junctionProtected = Icons::IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
         m_freeSpaceImage = Icons::IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
-        m_emptyImage = Icons::IconFromFontChar(L'▢', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_hardlinksImage = Icons::IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_dupesImage = Icons::IconFromFontChar(L'⧈', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_searchImage = Icons::IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_largestImage = Icons::IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_emptyImage = Icons::IconFromFontChar(L'▢', DarkMode::SystemColor(COLOR_WINDOWTEXT));
+        m_hardlinksImage = Icons::IconFromFontChar(L'⧉', DarkMode::SystemColor(COLOR_WINDOWTEXT));
+        m_dupesImage = Icons::IconFromFontChar(L'⧈', DarkMode::SystemColor(COLOR_WINDOWTEXT));
+        m_searchImage = Icons::IconFromFontChar(L'⊙', DarkMode::SystemColor(COLOR_WINDOWTEXT));
+        m_largestImage = Icons::IconFromFontChar(L'⋙', DarkMode::SystemColor(COLOR_WINDOWTEXT));
         m_unknownImage = Icons::IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         m_defaultFileImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_NORMAL);
         m_defaultFolderImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_DIRECTORY);
@@ -114,7 +114,7 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
 
 void CIconHandler::ClearAsyncShellInfoQueue()
 {
-    ProcessMessagesUntilSignaled([this]
+    CWinApp::RunTaskWithUiUpdates([this]
     {
         for (auto* queue : { &m_fastQueue, &m_slowQueue })
         {
@@ -127,7 +127,7 @@ void CIconHandler::ClearAsyncShellInfoQueue()
 
 void CIconHandler::StopAsyncShellInfoQueue()
 {
-    ProcessMessagesUntilSignaled([this]
+    CWinApp::RunTaskWithUiUpdates([this]
     {
         for (auto* queue : { &m_fastQueue, &m_slowQueue })
         {
@@ -138,7 +138,7 @@ void CIconHandler::StopAsyncShellInfoQueue()
     });
 }
 
-void CIconHandler::DrawIcon(const CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
+void CIconHandler::DrawIcon(CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
 {
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);
 }
@@ -200,17 +200,18 @@ namespace Icons
 
     static void PaintDocument(Graphics& g)
     {
-        Pen outlinePen(Neutral(), 4);
+        const Pen outlinePen(Neutral(), 4);
         SolidBrush lineBrush(Neutral());
-        Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
-        g.DrawPolygon(&outlinePen, body, static_cast<INT>(std::size(body)));
-        Point docFoldPts[] = { {44, 6}, {44, 18}, {56, 18} };
-        g.DrawLines(&outlinePen, docFoldPts, static_cast<INT>(std::size(docFoldPts)));
+        const Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
+        g.DrawPolygon(&outlinePen, body, std::size(body));
+        const Point docFoldPts[] = { {44, 6}, {44, 18}, {56, 18} };
+        g.DrawLines(&outlinePen, docFoldPts, std::size(docFoldPts));
     }
 
-    static void PaintBin(Graphics& g, Color body, Color bar, bool recycle = false)
+    static void PaintBin(Graphics& g, const Color body, const Color bar, const bool recycle = false)
     {
-        SolidBrush bodyBrush(body), barBrush(bar);
+        const SolidBrush bodyBrush(body);
+        const SolidBrush barBrush(bar);
         g.FillRectangle(&bodyBrush, 24, 6,  16, 6);
         g.FillRectangle(&bodyBrush,  6, 12, 52, 6);
         g.FillRectangle(&bodyBrush, 12, 18,  4, 40);
@@ -218,7 +219,7 @@ namespace Icons
         g.FillRectangle(&bodyBrush, 12, 54, 40, 4);
         if (recycle)
         {
-            GraphicsState state = g.Save();
+            const GraphicsState state = g.Save();
             g.TranslateTransform(32.0f, 36.0f);
             g.ScaleTransform(0.5f, 0.5f);
             g.TranslateTransform(-32.0f, -32.0f);
@@ -238,8 +239,8 @@ namespace Icons
     void PaintExplorerSelect(Graphics& g)
     {
         PaintDocument(g);
-        SolidBrush cursorBrush(C(0, 102, 204));
-        Point cursor[] = {
+        const SolidBrush cursorBrush(C(0, 102, 204));
+        const Point cursor[] = {
             {21, 14}, {21, 44}, {29, 36},
             {37, 48}, {43, 44}, {35, 32}, {45, 32}
         };
@@ -248,15 +249,15 @@ namespace Icons
 
     void PaintOpenInConsole(Graphics& g)
     {
-        SolidBrush grayBrush(Neutral());
-        Pen framePen(Neutral(), 4);
+        const SolidBrush grayBrush(Neutral());
+        const Pen framePen(Neutral(), 4);
         Pen chevronPen(Neutral(), 4);
         chevronPen.SetStartCap(LineCapRound);
         chevronPen.SetEndCap(LineCapRound);
         chevronPen.SetLineJoin(LineJoinRound);
         g.DrawRectangle(&framePen, 6, 8, 52, 48);
         g.FillRectangle(&grayBrush, 6, 17, 52, 2);
-        Point chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
+        const Point chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
         g.DrawLines(&chevronPen, chevronPts, static_cast<INT>(std::size(chevronPts)));
         g.DrawLine(&chevronPen, 26, 42, 38, 42);
     }
@@ -264,15 +265,15 @@ namespace Icons
     void PaintOpenSelected(Graphics& g)
     {
         PaintDocument(g);
-        SolidBrush greenBrush(C(40, 140, 50));
-        Point triangle[] = { {20, 18}, {44, 32}, {20, 46} };
+        const SolidBrush greenBrush(C(40, 140, 50));
+        const Point triangle[] = { {20, 18}, {44, 32}, {20, 46} };
         g.FillPolygon(&greenBrush, triangle, static_cast<INT>(std::size(triangle)));
     }
 
     void PaintRefreshSelected(Graphics& g)
     {
         PaintDocument(g);
-        GraphicsState state = g.Save();
+        const GraphicsState state = g.Save();
         g.TranslateTransform(29.0f, 35.0f);
         g.ScaleTransform(0.65f, 0.65f);
         g.TranslateTransform(-32.0f, -32.0f);
@@ -283,20 +284,20 @@ namespace Icons
     void PaintProperties(Graphics& g)
     {
         PaintDocument(g);
-        SolidBrush blueBrush(C(0, 102, 204));
+        const SolidBrush blueBrush(C(0, 102, 204));
         g.FillEllipse(&blueBrush, 26, 15, 8, 8);
         g.FillRectangle(&blueBrush, 27, 27, 6, 23);
     }
 
     void PaintEditCopyClipboard(Graphics& g)
     {
-        SolidBrush goldBrush(C(200, 140, 30)), goldLightBrush(C(230, 180, 80)),
+        const SolidBrush goldBrush(C(200, 140, 30)), goldLightBrush(C(230, 180, 80)),
             clipBrush(C(120, 90, 20)), grayBrush(C(180, 180, 180));
-        Pen outlinePen(Neutral(), 3);
+        const Pen outlinePen(Neutral(), 3);
         g.FillRectangle(&goldBrush, 4, 10, 36, 50);
         g.FillRectangle(&clipBrush, 12, 2, 20, 10);
         g.FillRectangle(&goldLightBrush, 16, 5, 12, 4);
-        SolidBrush whiteBrush(C(255, 255, 255));
+        const SolidBrush whiteBrush(C(255, 255, 255));
         g.FillRectangle(&whiteBrush, 28, 24, 32, 36);
         g.DrawRectangle(&outlinePen, 28, 24, 32, 36);
         for (int i = 0; i < 3; ++i)
@@ -305,10 +306,10 @@ namespace Icons
 
     void PaintFileSelect(Graphics& g)
     {
-        Pen outlinePen(C(238, 203, 74), 4);
-        Point folderShapePts[] = { {2, 4}, {28, 4}, {32, 12}, {62, 12}, {62, 58}, {2, 58} };
-        SolidBrush fillBrush(C(255, 231, 146));
-        SolidBrush ringRed(C(200, 30, 30)), ringWhite(C(240, 240, 240)), ringRed2(C(200, 30, 30));
+        const Pen outlinePen(C(238, 203, 74), 4);
+        const Point folderShapePts[] = { {2, 4}, {28, 4}, {32, 12}, {62, 12}, {62, 58}, {2, 58} };
+        const SolidBrush fillBrush(C(255, 231, 146));
+        const SolidBrush ringRed(C(200, 30, 30)), ringWhite(C(240, 240, 240)), ringRed2(C(200, 30, 30));
         g.FillPolygon(&fillBrush, folderShapePts, static_cast<INT>(std::size(folderShapePts)));
         g.DrawPolygon(&outlinePen, folderShapePts, static_cast<INT>(std::size(folderShapePts)));
         g.FillEllipse(&ringRed,   14, 17, 36, 36);
@@ -316,10 +317,10 @@ namespace Icons
         g.FillEllipse(&ringRed2,  27, 30, 10, 10);
     }
 
-    void PaintFilter(Graphics& g, bool active)
+    void PaintFilter(Graphics& g, const bool active)
     {
-        Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };
-        SolidBrush fillBrush(active ? C(255, 140, 0) : Neutral());
+        const Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };
+        const SolidBrush fillBrush(active ? C(255, 140, 0) : Neutral());
         g.FillPolygon(&fillBrush, funnelShape, static_cast<INT>(std::size(funnelShape)));
         Pen outlinePen(Neutral(), 4);
         outlinePen.SetLineJoin(LineJoinMiter);
@@ -328,9 +329,9 @@ namespace Icons
 
     void PaintHelp(Graphics& g)
     {
-        Color blue = C(100, 149, 237);
-        Pen pen(blue, 10);
-        SolidBrush brush(blue);
+        const Color blue = C(100, 149, 237);
+        const Pen pen(blue, 10);
+        const SolidBrush brush(blue);
         GraphicsPath path;
         path.AddBezier(20, 22, 20, 5, 44, 5, 44, 22);
         path.AddBezier(44, 22, 44, 32, 30, 28, 32, 42);
@@ -340,15 +341,15 @@ namespace Icons
 
     void PaintPause(Graphics& g)
     {
-        SolidBrush amberBrush(C(200, 160, 0));
+        const SolidBrush amberBrush(C(200, 160, 0));
         g.FillRectangle(&amberBrush, 5, 5, 19, 54);
         g.FillRectangle(&amberBrush, 39, 5, 19, 54);
     }
 
-    void PaintMagnifier(Graphics& g, bool plus)
+    void PaintMagnifier(Graphics& g, const bool plus)
     {
-        SolidBrush blueBrush(C(0, 102, 204));
-        Pen rimPen(Neutral(), 6);
+        const SolidBrush blueBrush(C(0, 102, 204));
+        const Pen rimPen(Neutral(), 6);
         Pen handlePen(Neutral(), 10);
         handlePen.SetEndCap(LineCapRound);
         g.DrawEllipse(&rimPen, 6, 6, 40, 40);
@@ -359,10 +360,10 @@ namespace Icons
 
     void PaintGear(Graphics& g)
     {
-        SolidBrush gearBrush(Neutral());
+        const SolidBrush gearBrush(Neutral());
         const Point primaryTooth[] = { {-3, -27}, {3, -27}, {6, -17}, {-6, -17} };
 
-        GraphicsState state = g.Save();
+        const GraphicsState state = g.Save();
         g.TranslateTransform(32, 32);
 
         for (int i = 0; i < 8; ++i)
@@ -372,30 +373,30 @@ namespace Icons
         }
         g.Restore(state);
 
-        Pen ringPen(Neutral(), 8);
+        const Pen ringPen(Neutral(), 8);
         g.DrawEllipse(&ringPen, 15, 15, 34, 34);
 
-        Pen bearingPen(Neutral(), 1);
+        const Pen bearingPen(Neutral(), 1);
         g.DrawEllipse(&bearingPen, 23, 23, 18, 18);
     }
 
     void PaintWindowLayout(Graphics& g)
     {
-        Pen framePen(Neutral(), 4);
+        const Pen framePen(Neutral(), 4);
         g.DrawRectangle(&framePen, 4, 4, 56, 56);
         g.DrawLine(&framePen, 4, 34, 60, 34);
         g.DrawLine(&framePen, 36, 4, 36, 34);
 
-        SolidBrush afBrush(C(70, 120, 200)), ftBrush(C(60, 160, 90)), tmBrush(C(200, 140, 40));
+        const SolidBrush afBrush(C(70, 120, 200)), ftBrush(C(60, 160, 90)), tmBrush(C(200, 140, 40));
         g.FillRectangle(&afBrush,  8,  8, 24, 22);
         g.FillRectangle(&ftBrush, 40,  8, 16, 22);
         g.FillRectangle(&tmBrush,  8, 38, 48, 18);
     }
 
-    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold)
+    void PaintCharacter(Graphics& g, const WCHAR ch, const COLORREF clr, const bool bold)
     {
         const WCHAR text[]{ ch, L'\0' };
-        FontFamily fontFamily(wds::strFontSegoeUISymbol);
+        const FontFamily fontFamily(wds::strFontSegoeUISymbol);
         StringFormat format;
         format.SetAlignment(StringAlignmentCenter);
         format.SetLineAlignment(StringAlignmentCenter);
@@ -420,16 +421,16 @@ namespace Icons
                     (64.0f - bounds.Height) / 2.0f - bounds.Y);
         path.Transform(&m);
 
-        SolidBrush brush(Color(255, GetRValue(clr), GetGValue(clr), GetBValue(clr)));
+        const SolidBrush brush(Color(255, GetRValue(clr), GetGValue(clr), GetBValue(clr)));
         g.FillPath(&brush, &path);
     }
 
-    std::function<void(Graphics&)> Char(WCHAR ch, COLORREF clr)
+    std::function<void(Graphics&)> Char(const WCHAR ch, const COLORREF clr)
     {
         return [=](Graphics& g) { PaintCharacter(g, ch, clr); };
     }
 
-    HICON IconFromFontChar(WCHAR ch, COLORREF clr, bool bold, int iconSize)
+    HICON IconFromFontChar(const WCHAR ch, const COLORREF clr, const bool bold, const int iconSize)
     {
         const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
         return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold); });
@@ -458,14 +459,13 @@ HBITMAP Icons::MakeBitmap(const int size, const std::function<void(Graphics&)>& 
 
 HICON Icons::MakeIcon(const int size, const std::function<void(Graphics&)>& painter)
 {
-    SmartPointer color(DeleteObject, MakeBitmap(size, painter));
+    const SmartPointer color(DeleteObject, MakeBitmap(size, painter));
     if (color == nullptr) return nullptr;
 
-    CBitmap mask;
-    mask.CreateBitmap(size, size, 1, 1, nullptr);
+    const CBitmap mask(size, size, 1, 1, nullptr);
 
     ICONINFO ii{
-        .fIcon = TRUE,
+        .fIcon = true,
         .hbmMask = static_cast<HBITMAP>(mask.m_hObject),
         .hbmColor = color
     };

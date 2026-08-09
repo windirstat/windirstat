@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - Katalogstatistik\n\n"Viser, hvor al din diskplads er blevet af\nog hjælper dig med at rydde op."\n\nProgrammeret til Microsoft Windows af\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nBaseret på Stefan Hundhammers KDE (Linux)-applikation KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStats hjemmeside er {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_ABOUT=Om
 IDS_ABOUT_LICENSE=Licens
-IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer for hans fremragende Linux-værktøj KDirStat.\nBrugen af ​​KDirStat (2.3.7) som specifikation sparede mig en masse tid.\nhttps://kdirstat.sourceforge.net/\n\nForfatterne af SequoiaView for at vise, hvor nyttige trækort virkelig kan være.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls og Kees Huizing\nfor deres artikler om pude-trækort og firkantede trækort.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for hans geniale idé om trækort -\nen virkelig intuitiv måde at visualisere træindhold på.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer for hans fremragende Linux-værktøj KDirStat.\nBrugen af ​​KDirStat som specifikation sparede mig en masse tid.\nhttps://kdirstat.sourceforge.net/\n\nForfatterne af SequoiaView for at vise, hvor nyttige trækort virkelig kan være.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls og Kees Huizing\nfor deres artikler om pude-trækort og firkantede trækort.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for hans geniale idé om trækort -\nen virkelig intuitiv måde at visualisere træindhold på.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=Tak til
 IDS_ABOUT_TITLE=Om WinDirStat
 IDS_ADMIN=Administrator
@@ -70,6 +70,7 @@ IDS_FAST_SCAN_CHECKBOX=Brug accelereret scanning
 IDS_FILE_FILTER=CSV/JSON-filer
 IDS_FILE_SELECT=Åbn en samling af drev.\nÅbn...
 IDS_FREESPACE_ITEM=<Ledig plads>
+IDS_GENERIC_APPLY=&Anvend
 IDS_GENERIC_BLANK=#VALUE!
 IDS_GENERIC_CANCEL=&Cancel
 IDS_GENERIC_DAYS=dage

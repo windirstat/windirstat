@@ -16,26 +16,14 @@
 //
 
 #include "pch.h"
-#include "version.h"
 #include "AboutDlg.h"
-
-namespace
-{
-    // Tabs
-    enum : std::uint8_t
-    {
-        TAB_ABOUT,
-        TAB_THANKSTO,
-        TAB_LICENSE
-    };
-}
 
 /////////////////////////////////////////////////////////////////////////////
 
 void CAboutDlg::WdsTabControl::Initialize()
 {
-    SetLocation(LOCATION_TOP);
-    CTabCtrlHelper::SetupTabControl(*this, STYLE_FLAT);
+    SetLocation(Location::Top);
+    CTabCtrlHelper::SetupTabControl(*this);
 
     // Helper to create and configure RichEdit controls
     auto createText = [&](CRichEditCtrl& ctrl, const DWORD align = ES_CENTER)
@@ -44,50 +32,50 @@ void CAboutDlg::WdsTabControl::Initialize()
             CRect(), this, ID_WDS_CONTROL);
         ctrl.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
         ctrl.SetOptions(ECOOP_OR, ECO_READONLY);
-        ctrl.SetOptions(ECOOP_AND, static_cast<DWORD>(~ECO_SELECTIONBAR));
-        ctrl.HideSelection(TRUE, FALSE);
+        ctrl.SetOptions(ECOOP_AND, ~static_cast<DWORD>(ECO_SELECTIONBAR));
+        ctrl.HideSelection();
         return &ctrl;
     };
 
-    // Create all three pages and add them as tabs
-    AddTab(createText(m_textAbout), IDS_ABOUT_ABOUT.data(), TAB_ABOUT);
-    AddTab(createText(m_textThanks), IDS_ABOUT_THANKS.data(), TAB_THANKSTO);
-    AddTab(createText(m_textLicense, ES_LEFT), IDS_ABOUT_LICENSE.data(), TAB_LICENSE);
+    // Create all three pages and add them as tabs, remembering the index each was assigned
+    m_tabAbout = AddTab(createText(m_textAbout), IDS_ABOUT_ABOUT.data());
+    m_tabThanks = AddTab(createText(m_textThanks), IDS_ABOUT_THANKS.data());
+    m_tabLicense = AddTab(createText(m_textLicense, ES_LEFT), IDS_ABOUT_LICENSE.data());
     Localization::UpdateTabControl(*this);
 
     // Use monospace font for license page
-    m_monoFont.CreateFont(DpiRest(12), 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, wds::strFontLucidaConsole);
+    m_monoFont.Create(ScaleForDpi(12), FW_DONTCARE, wds::strFontLucidaConsole, OUT_OUTLINE_PRECIS,
+        CLEARTYPE_NATURAL_QUALITY, FF_MODERN);
 
     // Populate text
-    m_textAbout.SetWindowText(Localization::Format(IDS_ABOUT_ABOUT_TEXTss,
+    m_textAbout.SetText(Localization::Format(IDS_ABOUT_ABOUT_TEXTss,
         Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
         Localization::LookupNeutral(IDS_URL_WEBSITE)).c_str());
 
-    m_textThanks.SetWindowText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT).c_str());
+    m_textThanks.SetText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT).c_str());
 
-    m_textLicense.SetWindowText(GetTextResource(IDR_LICENSE).c_str());
-    m_textLicense.SetFont(&m_monoFont);
+    m_textLicense.SetText(GetTextResource(IDR_LICENSE).c_str());
+    m_textLicense.SetFont(m_monoFont);
 
     // Set default rich edit settings
     CHARFORMAT2 charFormat = {{.cbSize = sizeof(CHARFORMAT2)}};
     charFormat.dwMask = CFM_COLOR;
-    charFormat.crTextColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
-    const auto bgColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+    charFormat.crTextColor = DarkMode::SystemColor(COLOR_WINDOWTEXT);
+    const auto bgColor = DarkMode::SystemColor(COLOR_WINDOW);
 
     for (const auto ctrl : { &m_textAbout, &m_textThanks, &m_textLicense })
     {
         ctrl->SetDefaultCharFormat(charFormat);
-        ctrl->SetAutoURLDetect();
-        ctrl->SetBackgroundColor(FALSE, bgColor);
+        ctrl->EnableAutoUrlDetection();
+        ctrl->SetBackgroundColor(bgColor);
     }
 }
 
 CRichEditCtrl& CAboutDlg::WdsTabControl::GetActiveRichEdit()
 {
-    const auto tabIndex = GetActiveTab();
-    return tabIndex == TAB_ABOUT ? m_textAbout :
-           tabIndex == TAB_THANKSTO ? m_textThanks :
+    const auto tabIndex = ActiveTab();
+    return tabIndex == m_tabAbout ? m_textAbout :
+           tabIndex == m_tabThanks ? m_textThanks :
            m_textLicense;
 }
 
@@ -96,25 +84,25 @@ void CAboutDlg::WdsTabControl::ClearSelectionCursor()
     auto& active = GetActiveRichEdit();
     active.SetSel(0, 0);
     active.HideCaret();
-    active.HideSelection(TRUE, FALSE);
+    active.HideSelection();
 }
 
-bool CAboutDlg::WdsTabControl::HandleTabKey(bool shiftPressed)
+bool CAboutDlg::WdsTabControl::HandleTabKey(const bool shiftPressed)
 {
-    const int activeTab = GetActiveTab();
-    const int tabCount = GetTabsNum();
+    const int activeTab = ActiveTab();
+    const int tabCount = TabCount();
 
     if (shiftPressed)
     {
         if (activeTab > 0)
         {
-            SetActiveTab(activeTab - 1);
+            SelectTab(activeTab - 1);
             return true;
         }
     }
     else if (activeTab < tabCount - 1)
     {
-        SetActiveTab(activeTab + 1);
+        SelectTab(activeTab + 1);
         return true;
     }
 
@@ -123,15 +111,9 @@ bool CAboutDlg::WdsTabControl::HandleTabKey(bool shiftPressed)
     return true;
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg::WdsTabControl, CMFCTabCtrl)
-    ON_NOTIFY(EN_LINK, ID_WDS_CONTROL, OnEnLinkText)
-    ON_NOTIFY(EN_MSGFILTER, ID_WDS_CONTROL, OnEnMsgFilter)
-    ON_WM_SETFOCUS()
-END_MESSAGE_MAP()
-
 void CAboutDlg::WdsTabControl::OnSetFocus(CWnd* pOldWnd)
 {
-    CMFCTabCtrl::OnSetFocus(pOldWnd);
+    CTabControl::OnSetFocus(pOldWnd);
 
     // Hide the caret in the active RichEdit control
     ClearSelectionCursor();
@@ -144,10 +126,9 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
 
     if (el->msg == WM_LBUTTONDOWN)
     {
-        CStringW link;
         const auto& active = GetActiveRichEdit();
-        active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
-        ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
+        const std::wstring link = active.TextRange(el->chrg.cpMin, el->chrg.cpMax);
+        ::ShellExecute(*this, nullptr, link.c_str(), nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
 
@@ -165,7 +146,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
         }
         else if (mf->wParam == VK_TAB)
         {
-            HandleTabKey(IsShiftKeyDown());
+            HandleTabKey(IsKeyDown(VK_SHIFT));
             *pResult = 1;
         }
     }
@@ -181,7 +162,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
 ////////////////////////////////////////////////////////////////////////////
 
 CAboutDlg::CAboutDlg()
-    : CLayoutDialogEx(IDD_ABOUTBOX, COptions::AboutWindowRect.Ptr())
+    : MessageTarget(IDD_ABOUTBOX, COptions::AboutWindowRect.Ptr())
 {
 }
 
@@ -191,29 +172,17 @@ std::wstring CAboutDlg::GetAppVersion()
         _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
 }
 
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+bool CAboutDlg::OnInitDialog()
 {
-    CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_CAPTION, m_caption);
-    DDX_Control(pDX, IDC_TAB, m_tab);
-}
+    CLayoutDialog::OnInitDialog();
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CLayoutDialogEx)
-    ON_WM_CTLCOLOR()
-    ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, OnTabChanged)
-END_MESSAGE_MAP()
-
-BOOL CAboutDlg::OnInitDialog()
-{
-    CLayoutDialogEx::OnInitDialog();
+    m_caption.SubclassDlgItem(IDC_CAPTION, this);
 
     // Re-create the tab control
     CWnd* placeholderTabCtrl = GetDlgItem(IDC_TAB);
-    CRect placeholderRect;
-    placeholderTabCtrl->GetWindowRect(&placeholderRect);
-    ScreenToClient(&placeholderRect);
+    const CRect placeholderRect = WindowRectInClient(placeholderTabCtrl->Handle());
     placeholderTabCtrl->DestroyWindow();
-    m_tab.Create(CMFCTabCtrl::STYLE_FLAT, placeholderRect, this, IDC_TAB);
+    m_tab.Create(placeholderRect, this, IDC_TAB);
     Localization::UpdateDialogs(*this);
 
     m_layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
@@ -223,13 +192,13 @@ BOOL CAboutDlg::OnInitDialog()
 
     m_tab.Initialize();
 
-    m_caption.SetWindowText(GetAppVersion().c_str());
+    m_caption.SetText(GetAppVersion().c_str());
 
-    DarkMode::AdjustControls(GetSafeHwnd());
+    DarkMode::AdjustControls(Handle());
 
     // Set initial focus to tab control
     m_tab.SetFocus();
-    return FALSE;
+    return false;
 }
 
 LRESULT CAboutDlg::OnTabChanged(WPARAM, LPARAM)
@@ -238,27 +207,27 @@ LRESULT CAboutDlg::OnTabChanged(WPARAM, LPARAM)
     return 0;
 }
 
-HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+bool CAboutDlg::PreprocessMessage(MSG* pMsg)
 {
     // Handle tab key when focus is on OK button
     if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB)
     {
         if (GetFocus() == GetDlgItem(IDOK))
         {
-            m_tab.SetActiveTab(IsShiftKeyDown() ? m_tab.GetTabsNum() - 1 : 0);
+            m_tab.SelectTab(IsKeyDown(VK_SHIFT) ? m_tab.TabCount() - 1 : 0);
             m_tab.SetFocus();
-            return TRUE;
+            return true;
         }
 
         // Force showing focus rectangles
         SendMessage(WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS));
     }
 
-    return CLayoutDialogEx::PreTranslateMessage(pMsg);
+    return CLayoutDialog::PreprocessMessage(pMsg);
 }

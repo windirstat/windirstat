@@ -29,7 +29,7 @@ public:
     void DrawOutlineItems(CDC* pdc, std::span<const CItem* const> items,
         COLORREF color, float width = 2.0f) const;
 
-    [[nodiscard]] CItem* FindItemByPoint(CPoint point,
+    CItem* FindItemByPoint(CPoint point,
         ULONGLONG* remainderSize = nullptr) const;
     void ClearLayout();
     void TrimMemory();
@@ -69,14 +69,14 @@ private:
     void RenderLayout(CDC* pdc) const;
     void RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry,
         Gdiplus::SolidBrush& brush, Gdiplus::Pen& separator) const;
-    [[nodiscard]] bool RenderLabel(Gdiplus::Graphics& graphics,
+    bool RenderLabel(Gdiplus::Graphics& graphics,
         const Gdiplus::FontFamily* fontFamily, const LayoutEntry& entry,
         std::vector<Gdiplus::PointF>& points, std::vector<BYTE>& types) const;
     void CreatePath(const LayoutEntry& entry, Gdiplus::GraphicsPath& path) const;
-    [[nodiscard]] COLORREF GetItemColor(const LayoutEntry& entry) const;
-    [[nodiscard]] double GetLabelPriority(const LayoutEntry& entry) const;
+    COLORREF GetItemColor(const LayoutEntry& entry) const;
+    double GetLabelPriority(const LayoutEntry& entry) const;
 
-    [[nodiscard]] const LayoutEntry* FindLayoutEntry(const CItem* item) const;
+    const LayoutEntry* FindLayoutEntry(const CItem* item) const;
 
     CItem* m_layoutRoot = nullptr;
     CRect m_renderArea;

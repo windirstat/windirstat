@@ -18,33 +18,6 @@
 #include "pch.h"
 #include "WinDirStatPane.h"
 
-IMPLEMENT_DYNAMIC(CWinDirStatPane, CWnd)
-
-BEGIN_MESSAGE_MAP(CWinDirStatPane, CWnd)
-    ON_WM_CREATE()
-    ON_WM_MOUSEACTIVATE()
-    ON_WM_PAINT()
-END_MESSAGE_MAP()
-
-BOOL CWinDirStatPane::PreCreateWindow(CREATESTRUCT& cs)
-{
-    if (!CWnd::PreCreateWindow(cs))
-    {
-        return FALSE;
-    }
-
-    if (cs.lpszClass == nullptr)
-    {
-        cs.lpszClass = AfxRegisterWndClass(
-            CS_DBLCLKS,
-            ::LoadCursor(nullptr, IDC_ARROW),
-            nullptr,
-            nullptr);
-    }
-
-    return TRUE;
-}
-
 void CWinDirStatPane::PostNcDestroy()
 {
     delete this;
@@ -70,8 +43,7 @@ int CWinDirStatPane::OnMouseActivate(CWnd* pDesktopWnd, const UINT nHitTest, con
     const int result = CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
     if (result != MA_NOACTIVATE && result != MA_NOACTIVATEANDEAT)
     {
-        const HWND focus = ::GetFocus();
-        if (m_hWnd != focus && !::IsChild(m_hWnd, focus) && IsTopParentActive())
+        if (const HWND focus = ::GetFocus(); m_hWnd != focus && !::IsChild(m_hWnd, focus) && IsTopParentActive())
         {
             SetFocus();
         }
@@ -84,28 +56,12 @@ void CWinDirStatPane::OnUpdate(CWnd* /*sender*/, MODEL_CHANGE /*change*/, CItem*
     InvalidateRect(nullptr);
 }
 
-void CWinDirStatPane::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
-{
-}
-
-void CWinDirStatPane::OnLButtonDblClk(UINT /*nFlags*/, CPoint /*point*/)
-{
-}
-
-void CWinDirStatPane::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
-{
-}
-
-void CWinDirStatPane::OnMButtonDown(UINT /*nFlags*/, CPoint /*point*/)
-{
-}
-
-BOOL CWinDirStatPane::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+bool CWinDirStatPane::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoint pt)
 {
     return CWnd::OnMouseWheel(nFlags, zDelta, pt);
 }
 
-void CWinDirStatPane::NotifyOtherPanes(MODEL_CHANGE change, CItem* item)
+void CWinDirStatPane::NotifyOtherPanes(const MODEL_CHANGE change, CItem* item)
 {
     CWinDirStatModel::Get()->NotifyPanesExcept(this, change, item);
 }
@@ -124,19 +80,19 @@ void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint poin
         NotifyOtherPanes(MODEL_CHANGE_SELECTION_ACTION, clickedItem);
     }
 
-    CMenu menu;
-    if (!menu.LoadMenu(IDR_POPUP_MAP)) return;
+    CMenu menu = CMenu::LoadResource(IDR_POPUP_MAP);
+    if (!menu) return;
     Localization::UpdateMenu(menu);
 
-    CMenu* subMenu = menu.GetSubMenu(0);
+    const CMenu* subMenu = menu.SubmenuAt(0);
     if (subMenu == nullptr) return;
 
     UINT command;
     do
     {
-        command = subMenu->TrackPopupMenu(
+        command = subMenu->ShowPopup(
             TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-            point.x, point.y, AfxGetMainWnd());
-        if (command != 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, command);
+            point.x, point.y, GetMainWindow());
+        if (command != 0) GetMainWindow()->SendMessage(WM_COMMAND, command);
     } while (std::ranges::find(persistentCommands, command) != persistentCommands.end());
 }

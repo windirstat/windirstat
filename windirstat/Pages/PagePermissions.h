@@ -24,26 +24,35 @@
 //
 // CPagePermissions. "Settings" property page "Permissions".
 //
-class CPagePermissions final : public COptionsPage
+class CPagePermissions final : public MessageTarget<CPagePermissions, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPagePermissions)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_PERMISSIONS };
 
     CPagePermissions();
     ~CPagePermissions() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
     void InitializePage() override;
     void OnOK() override;
 
-    CString m_account[PERMSRULECOUNT];
-    int m_level[PERMSRULECOUNT] = {};
-    COLORREF m_color[PERMSRULECOUNT] = {};
     CComboBox m_levelCombo[PERMSRULECOUNT];
     CColorButton m_colorButton[PERMSRULECOUNT];
-    CString m_excludeRegex;
 
-    DECLARE_MESSAGE_MAP()
+public:
+    static std::span<const RouteEntry> Routes();
+
 };
+
+inline std::span<const RouteEntry> CPagePermissions::Routes()
+{
+    using ThisClass = CPagePermissions;
+    static constexpr std::array entries
+    {
+        Route::Notify<&ThisClass::OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON4),
+        Route::Control<&ThisClass::OnSettingRangeChanged>(EN_CHANGE, IDC_PERMS_ACCOUNT0, IDC_PERMS_ACCOUNT4),
+        Route::Control<&ThisClass::OnSettingRangeChanged>(CBN_SELCHANGE, IDC_PERMS_LEVEL0, IDC_PERMS_LEVEL4),
+        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_PERMS_EXCLUDE),
+    };
+    return entries;
+}

@@ -28,7 +28,7 @@ CItemSearch::~CItemSearch()
     }
 }
 
-static int GetMappedColumn(int subitem)
+static int GetMappedColumn(const int subitem)
 {
     switch (subitem)
     {
@@ -65,7 +65,7 @@ std::wstring CItemSearch::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMSEARCH_NAME) return m_item->GetPath();
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
 }
 
@@ -81,7 +81,7 @@ int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) co
     const auto* other = reinterpret_cast<const CItemSearch*>(tlib);
     if (subitem == COL_ITEMSEARCH_NAME) return m_item->ComparePath(other->m_item);
 
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
 }
 

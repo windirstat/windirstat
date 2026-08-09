@@ -25,11 +25,10 @@
 // CExtensionView. The upper right view, which shows the extensions and their
 // cushion colors.
 //
-class CExtensionView final : public CWinDirStatPane
+class CExtensionView final : public MessageTarget<CExtensionView, CWinDirStatPane>
 {
-protected:
+public:
     CExtensionView();
-    DECLARE_DYNCREATE(CExtensionView)
 
     ~CExtensionView() override = default;
 
@@ -40,15 +39,29 @@ protected:
     void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
 
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-    void OnDraw(CDC* pDC) override;
     void SetSelection();
 
     bool m_showTypes = true; // Whether this view shall be shown (F8 option)
     CExtensionListControl m_extensionListControl; // The list control
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+static std::span<const RouteEntry> Routes();
+
+protected:
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSize(UINT nType, int cx, int cy);
+    void OnSetFocus(CWnd* pOldWnd);
+    bool OnEraseBkgnd(CDC* pDC);
 };
+
+inline std::span<const RouteEntry> CExtensionView::Routes()
+{
+    using ThisClass = CExtensionView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
+        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+    };
+    return entries;
+}

@@ -33,7 +33,7 @@ namespace
         explicit SelectionPreserver(CWdsListControl* list)
             : m_list(list)
         {
-            ASSERT(m_list != nullptr);
+            assert(m_list != nullptr);
 
             if (const int i = m_list->GetNextItem(-1, LVNI_FOCUSED); i != -1)
             {
@@ -68,8 +68,7 @@ namespace
 
             RestoreSelectionMark(firstSelected);
 
-            const int focused = m_list->FindListItem(m_focusedItem);
-            if (focused != -1 && IsVisible(focused))
+            if (const int focused = m_list->FindListItem(m_focusedItem); focused != -1 && IsVisible(focused))
             {
                 m_list->SetItemState(focused, LVIS_FOCUSED, LVIS_FOCUSED);
             }
@@ -151,14 +150,14 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     // Decrease size of the remainder rectangle from left
     rcRest.left += sizeImage.cy;
 
-    CSelectObject sofont(pdc, list->GetFont());
+    GdiObjectSelection sofont(pdc, list->GetFont());
 
-    rcRest.DeflateRect(TEXT_X_MARGIN, 0);
+    rcRest.Deflate(TEXT_X_MARGIN, 0);
 
     CRect rcLabel = rcRest;
     DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcLabel, true, true);
 
-    rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
+    rcLabel.Inflate(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
     rcLabel.bottom = rcRest.bottom - LABEL_Y_MARGIN;
 
@@ -178,7 +177,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     }
 
     // Set text color for device context
-    CSetTextColor stc(pdc, textColor);
+    ScopedTextColor stc(pdc, textColor);
 
     if (width == nullptr)
     {
@@ -186,7 +185,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
         DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcRest);
     }
 
-    rcLabel.InflateRect(1, 1);
+    rcLabel.Inflate(1, 1);
 
     *focusLeft = rcLabel.left;
 
@@ -220,7 +219,7 @@ void CWdsListItem::DrawSelection(const CWdsListControl* list, CDC* pdc, CRect rc
         return;
     }
 
-    rc.DeflateRect(0, LABEL_Y_MARGIN);
+    rc.Deflate(0, LABEL_Y_MARGIN);
     pdc->FillSolidRect(rc, list->GetHighlightColor());
 }
 
@@ -246,7 +245,7 @@ void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fractio
     {
         pdc->Draw3dRect(rcLeft, light, dark);
     }
-    rcLeft.DeflateRect(1, 1);
+    rcLeft.Deflate(1, 1);
     if (rcLeft.right > rcLeft.left)
     {
         pdc->FillSolidRect(rcLeft, color);
@@ -256,7 +255,7 @@ void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fractio
     {
         pdc->Draw3dRect(rcRight, light, light);
     }
-    rcRight.DeflateRect(1, 1);
+    rcRight.Deflate(1, 1);
     if (rcRight.right > rcRight.left)
     {
         pdc->FillSolidRect(rcRight, bg);
@@ -266,16 +265,14 @@ void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fractio
 /////////////////////////////////////////////////////////////////////////////
 // CWdsListControl
 
-IMPLEMENT_DYNAMIC(CWdsListControl, CListCtrl)
-
 CWdsListControl::CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility)
     : m_columnOrder(columnOrder)
     , m_columnWidths(columnWidths)
     , m_columnVisibility(columnVisibility)
 {
-    ASSERT(m_columnOrder != nullptr);
-    ASSERT(m_columnWidths != nullptr);
-    ASSERT(m_columnVisibility != nullptr);
+    assert(m_columnOrder != nullptr);
+    assert(m_columnWidths != nullptr);
+    assert(m_columnVisibility != nullptr);
     InitializeColors();
 }
 
@@ -285,7 +282,7 @@ void CWdsListControl::OnColumnsInserted(
     const std::initializer_list<int> defaultHiddenColumns)
 {
     // Cache the column count
-    m_columnCount = GetHeaderCtrl()->GetItemCount();
+    m_columnCount = Header().GetItemCount();
     m_defaultColumnWidths.resize(m_columnCount);
     for (const int column : std::views::iota(0, m_columnCount))
     {
@@ -335,10 +332,7 @@ void CWdsListControl::OnColumnsInserted(
 
     // Force the list control to register a new row height
     // This is necessary for controls embedded in a dialog resource.
-    CImageList imageList;
-    imageList.Create(1, m_rowHeight, ILC_COLOR, 1, 1);
-    SetImageList(&imageList, LVSIL_SMALL);
-    SetImageList(nullptr, LVSIL_SMALL);
+    SetRowHeight(m_rowHeight);
 }
 
 void CWdsListControl::SysColorChanged()
@@ -357,13 +351,13 @@ void CWdsListControl::CalculateRowHeight()
     // Create a device context to get font metrics
     if (!IsWindow(m_hWnd)) return;
     CClientDC dc(this);
-    CSelectObject sofont(&dc, GetFont());
+    GdiObjectSelection sofont(&dc, GetFont());
 
-    if (TEXTMETRIC tm; dc.GetTextMetrics(&tm))
+    if (const auto metrics = dc.TextMetrics())
     {
         // Row height = font height + padding
         // Make sure it's odd number for dotted connector mating
-        m_rowHeight = (tm.tmHeight + (LABEL_Y_MARGIN * 2) + 1) | 1;
+        m_rowHeight = (metrics->tmHeight + (LABEL_Y_MARGIN * 2) + 1) | 1;
     }
 }
 
@@ -403,7 +397,7 @@ COLORREF CWdsListControl::GetHighlightColor() const
 {
     if (HasFocus())
     {
-        return DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
+        return DarkMode::SystemColor(COLOR_HIGHLIGHT);
     }
 
     return DarkMode::IsDarkModeActive() ? RGB(90, 90, 90) : RGB(190, 190, 190);
@@ -413,7 +407,7 @@ COLORREF CWdsListControl::GetHighlightTextColor() const
 {
     if (HasFocus())
     {
-        return DarkMode::WdsSysColor(COLOR_HIGHLIGHTTEXT);
+        return DarkMode::SystemColor(COLOR_HIGHLIGHTTEXT);
     }
 
     return DarkMode::IsDarkModeActive() ? RGB(255, 255, 255) : RGB(0, 0, 0);
@@ -448,7 +442,7 @@ COLORREF CWdsListControl::GetItemSelectionTextColor(const int i) const
         return GetHighlightTextColor();
     }
 
-    return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+    return DarkMode::SystemColor(COLOR_WINDOWTEXT);
 }
 
 int CWdsListControl::GetGeneralLeftIndent() const
@@ -483,7 +477,7 @@ void CWdsListControl::InitializeColors()
     constexpr double diff = 0.07; // Try to alter the brightness by diff.
     constexpr double threshold = 1.04; // If result would be brighter, make color darker.
 
-    m_windowColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+    m_windowColor = DarkMode::SystemColor(COLOR_WINDOW);
 
     double b = CColorSpace::GetColorBrightness(m_windowColor);
 
@@ -497,31 +491,29 @@ void CWdsListControl::InitializeColors()
         b = std::min<double>(b, 1.0);
     }
 
-    m_stripeColor = DarkMode::IsDarkModeActive() ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) :
+    m_stripeColor = DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOWFRAME) :
         CColorSpace::MakeBrightColor(m_windowColor, b);
 }
 
-void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
+void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
 {
     auto* item = GetItem(static_cast<int>(pdis->itemID));
     if (item == nullptr) return;
 
-    auto* pdc = CDC::FromHandle(pdis->hDC);
-    CRect rcItem(pdis->rcItem);
+    auto dc = CDC::Borrow(pdis->hDC);
+    auto* pdc = &dc;
+    const CRect rcItem(pdis->rcItem);
 
-    CDC dcMem;
-    dcMem.CreateCompatibleDC(pdc);
-
-    CBitmap bm;
-    bm.CreateCompatibleBitmap(pdc, rcItem.Width(), rcItem.Height());
-    CSelectObject sobm(&dcMem, &bm);
+    CDC dcMem(pdc);
+    const CBitmap bm(pdc, rcItem.Width(), rcItem.Height());
+    GdiObjectSelection sobm(&dcMem, &bm);
 
     const COLORREF backColor = GetItemBackgroundColor(static_cast<int>(pdis->itemID));
     dcMem.FillSolidRect(rcItem - rcItem.TopLeft(), backColor);
 
     // Set defaults for all text drawing
-    CSetBkColor bkColor(&dcMem, backColor);
-    CSelectObject sofont(&dcMem, GetFont());
+    ScopedBkColor bkColor(&dcMem, backColor);
+    GdiObjectSelection sofont(&dcMem, GetFont());
 
     int focusLeft = 0;
     for (const int i : std::views::iota(0, m_columnCount))
@@ -542,7 +534,7 @@ void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             item->DrawSelection(this, &dcMem, rcDraw, pdis->itemState);
 
             CRect rcText = rcDraw;
-            rcText.DeflateRect(TEXT_X_MARGIN, 0);
+            rcText.Deflate(TEXT_X_MARGIN, 0);
             const std::wstring s = item->GetText(subitem);
 
             // Get the correct color in case of compressed or encrypted items
@@ -557,8 +549,8 @@ void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             }
 
             // Set the text color
-            CSetTextColor tc(&dcMem, textColor);
-            CSetBkColor backColorObj(&dcMem, backColorSub);
+            ScopedTextColor tc(&dcMem, textColor);
+            ScopedBkColor backColorObj(&dcMem, backColorSub);
 
             // Draw the (sub)item text
             DrawTextCache::Get().DrawTextCached(&dcMem, s, rcText, leftAlign);
@@ -569,7 +561,7 @@ void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             constexpr COLORREF gridColor = RGB(212, 208, 200);
             constexpr COLORREF gridColorDark = RGB(99, 99, 99);
             CPen pen(PS_SOLID, 1, DarkMode::IsDarkModeActive() ? gridColorDark : gridColor);
-            CSelectObject sopen(&dcMem, &pen);
+            GdiObjectSelection sopen(&dcMem, &pen);
 
             // Draw top line for first item
             if (pdis->itemID == 0)
@@ -606,14 +598,16 @@ CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) co
         // and we have an icon list, then we would get the rectangle
         // excluding the icon.
         HDITEM hditem = { .mask = HDI_WIDTH };
-        GetHeaderCtrl()->GetItem(0, &hditem);
+        Header().GetItem(0, &hditem);
 
-        VERIFY(GetItemRect(item, rc, LVIR_LABEL));
+        [[maybe_unused]] const bool gotItemRect = GetItemRect(item, rc, LVIR_LABEL);
+        assert(gotItemRect);
         rc.left = rc.right - hditem.cxy;
     }
     else
     {
-        VERIFY(GetSubItemRect(item, subitem, LVIR_LABEL, rc));
+        [[maybe_unused]] const bool gotSubItemRect = GetSubItemRect(item, subitem, LVIR_LABEL, rc);
+        assert(gotSubItemRect);
     }
 
     return rc;
@@ -624,33 +618,29 @@ bool CWdsListControl::HasFocus() const
     return ::GetFocus() == m_hWnd;
 }
 
-CFont* CWdsListControl::GetFont() const
+HFONT CWdsListControl::GetFont() const
 {
-    if (m_cachedFont == NULL)
-    {
-        CFont* pFont = CWnd::GetFont();
-        m_cachedFont = pFont ? (HFONT)pFont->GetSafeHandle() : NULL;
-    }
-    return CFont::FromHandle(m_cachedFont);
+    if (m_cachedFont == nullptr) m_cachedFont = CWnd::GetFont();
+    return m_cachedFont;
 }
 
 LRESULT CWdsListControl::OnSetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
-    m_cachedFont = NULL;
-    const LRESULT result = Default();
-    m_cachedFont = NULL;
+    m_cachedFont = nullptr;
+    const LRESULT result = CallDefaultHandler();
+    m_cachedFont = nullptr;
     DrawTextCache::Get().ClearCache();
     return result;
 }
 
-void CWdsListControl::OnSettingChange(const UINT uFlags, LPCTSTR lpszSection)
+void CWdsListControl::OnSettingChange(const UINT uFlags, const LPCTSTR lpszSection)
 {
-    m_cachedFont = NULL;
+    m_cachedFont = nullptr;
     CListCtrl::OnSettingChange(uFlags, lpszSection);
-    m_cachedFont = NULL;
+    m_cachedFont = nullptr;
     DrawTextCache::Get().ClearCache();
     CalculateRowHeight();
-    Invalidate(FALSE);
+    Invalidate(false);
 }
 
 int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC* pDC)
@@ -658,7 +648,7 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC*
     if (pDC == nullptr)
     {
         CClientDC dc(this);
-        CSelectObject sofont(&dc, GetFont());
+        GdiObjectSelection sofont(&dc, GetFont());
         return GetSubItemWidth(item, subitem, &dc);
     }
 
@@ -677,9 +667,7 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC*
         return 0;
     }
 
-    SIZE size;
-    GetTextExtentPoint32W(pDC->m_hDC, s.c_str(), static_cast<int>(s.size()), &size);
-    return TEXT_X_MARGIN + size.cx;
+    return TEXT_X_MARGIN + pDC->GetTextExtent(s.c_str(), static_cast<int>(s.size())).cx;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -694,7 +682,7 @@ void CWdsListControl::LoadPersistentAttributes()
     if (m_columnOrder->size() != columnCount)
     {
         m_columnOrder->resize(columnCount);
-        GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
+        GetColumnOrder(*m_columnOrder);
     }
 
     // Load default column width values from resource
@@ -708,7 +696,7 @@ void CWdsListControl::LoadPersistentAttributes()
     }
 
     // Set based on persisted values
-    SetColumnOrderArray(static_cast<int>(m_columnOrder->size()), m_columnOrder->data());
+    SetColumnOrder(*m_columnOrder);
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
         SetColumnWidth(i, std::min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
@@ -717,7 +705,7 @@ void CWdsListControl::LoadPersistentAttributes()
 
 void CWdsListControl::SavePersistentAttributes() const
 {
-    GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
+    GetColumnOrder(*m_columnOrder);
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
         if (IsColumnVisible(ColumnToSubItem(i)))
@@ -837,7 +825,7 @@ void CWdsListControl::InsertListItem(const int i, std::span<CWdsListItem* const>
 {
     if (items.empty()) return;
 
-    ASSERT(i >= 0 && i <= GetItemCount());
+    assert(i >= 0 && i <= GetItemCount());
 
     SelectionPreserver preserve(this);
 
@@ -875,33 +863,27 @@ void CWdsListControl::SortItems()
 
     Invalidate();
 
-    // Exit if the header control is unavailable, to prevent a null pointer crash.
-    auto* pHeaderCtrl = GetHeaderCtrl();
-    if (pHeaderCtrl == nullptr)
-    {
-        return;
-    }
-
+    CHeaderCtrl& header = Header();
     HDITEM hditem{ .mask = HDI_FORMAT };
 
     // Remove the sort indicator from the previously sorted column if one exists.
     if (m_indicatedColumn != -1)
     {
-        pHeaderCtrl->GetItem(m_indicatedColumn, &hditem);
+        header.GetItem(m_indicatedColumn, &hditem);
         // Use a bitwise operation to clear both the UP and DOWN sort flags.
         hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
-        pHeaderCtrl->SetItem(m_indicatedColumn, &hditem);
+        header.SetItem(m_indicatedColumn, &hditem);
     }
 
     // Retrieve the newly sorted column's current format flags.
-    pHeaderCtrl->GetItem(m_sorting.column1, &hditem);
+    header.GetItem(m_sorting.column1, &hditem);
     // Clear any existing sort flags to ensure a clean state before applying the new one.
     hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
 
     // Apply the correct native sorting indicator based on the sort direction.
     hditem.fmt |= m_sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN;
 
-    pHeaderCtrl->SetItem(m_sorting.column1, &hditem);
+    header.SetItem(m_sorting.column1, &hditem);
 
     // Store the current sorted column's index to be cleared next time.
     m_indicatedColumn = m_sorting.column1;
@@ -930,30 +912,12 @@ void CWdsListControl::DeselectAll()
 /////////////////////////////////////////////////////////////////////////////
 // Message Map
 
-BEGIN_MESSAGE_MAP(CWdsListControl, CListCtrl)
-    ON_MESSAGE(WM_SELECTION_CHANGED, OnSelectionChanged)
-    ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnHdnDividerdblclick)
-    ON_NOTIFY(HDN_ITEMCHANGING, 0, OnHdnItemchanging)
-    ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemClick)
-    ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
-    ON_NOTIFY(NM_CUSTOMDRAW, 0, OnCustomDraw)
-    ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
-    ON_WM_CONTEXTMENU()
-    ON_WM_DESTROY()
-    ON_WM_ERASEBKGND()
-    ON_WM_SETTINGCHANGE()
-    ON_WM_SHOWWINDOW()
-    ON_MESSAGE(WM_SETFONT, OnSetFont)
-END_MESSAGE_MAP()
-
 void CWdsListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    CRect headerRect;
-    if (const auto* header = GetHeaderCtrl();
-        point != CPoint(-1, -1) && header != nullptr)
+    if (point != CPoint(-1, -1))
     {
-        header->GetWindowRect(headerRect);
-        if (headerRect.PtInRect(point))
+        const CRect headerRect(Header().Handle());
+        if (headerRect.Contains(point))
         {
             ShowColumnContextMenu(point);
             return;
@@ -965,8 +929,8 @@ void CWdsListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 
 void CWdsListControl::ShowColumnContextMenu(const CPoint point)
 {
-    CMenu menu;
-    if (!menu.CreatePopupMenu()) return;
+    CMenu menu = CMenu::CreatePopup();
+    if (!menu) return;
 
     for (const int column : std::views::iota(0, m_columnCount))
     {
@@ -983,10 +947,10 @@ void CWdsListControl::ShowColumnContextMenu(const CPoint point)
         const UINT flags = MF_STRING |
             (required ? MF_GRAYED : MF_ENABLED) |
             (IsColumnVisible(subitem) ? MF_CHECKED : MF_UNCHECKED);
-        menu.AppendMenu(flags, static_cast<UINT>(column + 1), text.data());
+        menu.Append(flags, static_cast<UINT>(column + 1), text.data());
     }
 
-    const UINT command = menu.TrackPopupMenu(
+    const UINT command = menu.ShowPopup(
         TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
         point.x, point.y, this);
     if (command > 0 && command <= static_cast<UINT>(m_columnCount))
@@ -996,7 +960,7 @@ void CWdsListControl::ShowColumnContextMenu(const CPoint point)
     }
 }
 
-void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
 {
     // Check if this is a notification from the header control
     *pResult = CDRF_DODEFAULT;
@@ -1011,13 +975,13 @@ void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
     {
         *pResult = CDRF_NOTIFYITEMDRAW;
     }
-    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT && pNMHDR->hwndFrom == GetHeaderCtrl()->GetSafeHwnd())
+    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT && pNMHDR->hwndFrom == Header().Handle())
     {
-        ::SetTextColor(pCustomDraw->hdc, DarkMode::WdsSysColor(COLOR_BTNTEXT));
+        ::SetTextColor(pCustomDraw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
     }
 }
 
-BOOL CWdsListControl::OnEraseBkgnd(CDC* pDC)
+bool CWdsListControl::OnEraseBkgnd(CDC* pDC) const
 {
     // Fetch coordinate of the last item
     CRect lastRect(0, 0, 0, 0);
@@ -1027,21 +991,21 @@ BOOL CWdsListControl::OnEraseBkgnd(CDC* pDC)
     }
 
     // Erase unused area to the right of all items
-    const CRect rectClient = ClientRectOf(this);
+    const CRect rectClient = ClientRect();
     if (lastRect.right < rectClient.right)
     {
         pDC->FillSolidRect(lastRect.right, 0, rectClient.right - lastRect.right,
-            lastRect.bottom, DarkMode::WdsSysColor(COLOR_WINDOW));
+            lastRect.bottom, DarkMode::SystemColor(COLOR_WINDOW));
     }
 
     // Erase unused area at the bottom of the last item
     if (lastRect.bottom < rectClient.bottom)
     {
         pDC->FillSolidRect(0, lastRect.bottom, rectClient.right,
-            rectClient.bottom - lastRect.bottom, DarkMode::WdsSysColor(COLOR_WINDOW));
+            rectClient.bottom - lastRect.bottom, DarkMode::SystemColor(COLOR_WINDOW));
     }
 
-    return TRUE;
+    return true;
 }
 
 void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
@@ -1052,14 +1016,14 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     // fetch size of rendered column header text
     // temporarily insert a false column to the finalize column does
     // not autosize to fit the whole control width
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     const int falseColumn = InsertColumn(m_columnCount + 1, L"");
     SetColumnWidth(column, LVSCW_AUTOSIZE_USEHEADER);
     int width = GetColumnWidth(column);
     DeleteColumn(falseColumn);
 
     CClientDC dc(this);
-    CSelectObject sofont(&dc, GetFont());
+    GdiObjectSelection sofont(&dc, GetFont());
 
     // fetch size of sub-elements
     for (const int i : std::views::iota(0, GetItemCount()))
@@ -1070,21 +1034,21 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     // update final column width
     constexpr int padding = 3;
     SetColumnWidth(column, width + padding);
-    *pResult = FALSE;
+    *pResult = false;
 }
 
 void CWdsListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    Default();
+    CallDefaultHandler();
     InvalidateRect(nullptr);
 
-    *pResult = FALSE;
+    *pResult = false;
 }
 
-void CWdsListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const
 {
     auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-    *pResult = FALSE;
+    *pResult = false;
 
     auto* item = GetItem(displayInfo->item.iItem);
     if (item == nullptr) return;
@@ -1108,7 +1072,7 @@ void CWdsListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 void CWdsListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto* phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-    *pResult = FALSE;
+    *pResult = false;
 
     if (const int col = phdr->iItem; col == m_sorting.column1)
     {
@@ -1133,7 +1097,7 @@ void CWdsListControl::OnDestroy()
     CListCtrl::OnDestroy();
 }
 
-LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CWdsListControl::OnSelectionChanged(const WPARAM wParam, const LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(wParam);
     UNREFERENCED_PARAMETER(lParam);
@@ -1149,8 +1113,8 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     if (c <= 0) return;
 
     int itemCount = GetItemCount();
-    ASSERT(i >= 0 && i < itemCount);
-    ASSERT(i + c <= itemCount);
+    assert(i >= 0 && i < itemCount);
+    assert(i + c <= itemCount);
 
     std::vector<std::unique_ptr<CWdsListItem>> removedItems;
     if (m_ownsItems)
@@ -1189,17 +1153,17 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     }
 }
 
-BOOL CWdsListControl::DeleteItem(const int i)
+bool CWdsListControl::DeleteItem(const int i)
 {
     RemoveListItem(i);
-    return TRUE;
+    return true;
 }
 
-BOOL CWdsListControl::DeleteAllItems()
+bool CWdsListControl::DeleteAllItems()
 {
     if (m_ownsItems) for (const auto* item : m_items) delete item;
     m_items.clear();
     m_itemMap.clear();
     SetItemCountEx(0, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
-    return TRUE;
+    return true;
 }

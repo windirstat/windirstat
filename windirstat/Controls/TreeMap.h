@@ -65,10 +65,10 @@ public:
     }
 
     // Gives a color a defined brightness.
-    static constexpr COLORREF MakeBrightColor(COLORREF color, double brightness)
+    static constexpr COLORREF MakeBrightColor(const COLORREF color, const double brightness)
     {
-        ASSERT(brightness >= 0.0);
-        ASSERT(brightness <= 1.0);
+        assert(brightness >= 0.0);
+        assert(brightness <= 1.0);
 
         double dred = (GetRValue(color) & 0xFF) / 255.0;
         double dgreen = (GetGValue(color) & 0xFF) / 255.0;
@@ -104,7 +104,7 @@ public:
     // Swaps values above 255 to the other two values
     static constexpr void NormalizeColor(int& red, int& green, int& blue)
     {
-        ASSERT(red + green + blue <= 3 * 255);
+        assert(red + green + blue <= 3 * 255);
 
         if (red > 255)
         {
@@ -134,14 +134,14 @@ protected:
             const int j = second - 255;
             second = 255;
             third += j;
-            ASSERT(third <= 255);
+            assert(third <= 255);
         }
         else if (third > 255)
         {
             const int j = third - 255;
             third = 255;
             second += j;
-            ASSERT(second <= 255);
+            assert(second <= 255);
         }
     }
 };
@@ -198,22 +198,22 @@ public:
         constexpr int GetLightSourceYPercent() const { return RoundDouble(lightSourceY * 100); }
         CPoint GetLightSourcePoint() const { return { GetLightSourceXPercent(), GetLightSourceYPercent() }; }
 
-        constexpr void SetBrightnessPercent(int n) { brightness = n / 100.0; }
-        constexpr void SetHeightPercent(int n) { height = n / 100.0; }
-        constexpr void SetScaleFactorPercent(int n) { scaleFactor = n / 100.0; }
-        constexpr void SetAmbientLightPercent(int n) { ambientLight = n / 100.0; }
-        constexpr void SetLightSourceXPercent(int n) { lightSourceX = n / 100.0; }
-        constexpr void SetLightSourceYPercent(int n) { lightSourceY = n / 100.0; }
-        void SetLightSourcePoint(CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
+        constexpr void SetBrightnessPercent(const int n) { brightness = n / 100.0; }
+        constexpr void SetHeightPercent(const int n) { height = n / 100.0; }
+        constexpr void SetScaleFactorPercent(const int n) { scaleFactor = n / 100.0; }
+        constexpr void SetAmbientLightPercent(const int n) { ambientLight = n / 100.0; }
+        constexpr void SetLightSourceXPercent(const int n) { lightSourceX = n / 100.0; }
+        constexpr void SetLightSourceYPercent(const int n) { lightSourceY = n / 100.0; }
+        void SetLightSourcePoint(const CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
-        static constexpr int RoundDouble(double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
+        static constexpr int RoundDouble(const double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
     };
 
     // Get a good palette of 18 colors
     static void GetDefaultPalette(std::vector<COLORREF>& palette);
 
     // Build the small demo tree used by treemap previews.
-    [[nodiscard]] static std::unique_ptr<CItem> BuildDemoTree();
+    static std::unique_ptr<CItem> BuildDemoTree();
 
     // Good values
     static Options GetDefaults();
@@ -225,27 +225,24 @@ public:
     void SetOptions(const Options* options);
     Options GetOptions() const;
 
-#ifdef _DEBUG
-    // DEBUG function
-    void RecurseCheckTree(const CItem *item);
-#endif // _DEBUG
+    void RecurseCheckTree(const CItem* item);
 
     // Create and draw a treemap
-    void DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options = nullptr);
+    void DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be nullptr, iff point is outside root rect.
     CItem* FindItemByPoint(CItem* item, CPoint point) const;
 
     // Access and clear only geometry from the most recent treemap render.
-    [[nodiscard]] bool HasValidLayout(const CItem* root) const;
-    [[nodiscard]] bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
-    [[nodiscard]] std::span<const VisibleItem> GetVisibleItems() const { return m_visibleItems; }
+    bool HasValidLayout(const CItem* root) const;
+    bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
+    std::span<const VisibleItem> GetVisibleItems() const { return m_visibleItems; }
     void ClearLayout();
     void TrimMemory();
 
     // Draws a sample rectangle in the given style (for color legend)
-    void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
+    void DrawColorPreview(HDC dc, const CRect& rc, COLORREF color, const Options* options = nullptr);
 
 protected:
 
@@ -275,7 +272,7 @@ protected:
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
     // Draws file extension/filename labels on leaf items
-    void DrawTreeMapLabels(CDC* pdc, const CPoint& offset) const;
+    void DrawTreeMapLabels(HDC dc, const CPoint& offset) const;
 
     void AddVisibleItem(CItem* item, const CRect& rectangle, int depth);
     void BuildHitTestIndex();
@@ -343,7 +340,7 @@ protected:
 // CTreeMapPreview. A child window, which demonstrates the options
 // with an own little demo tree.
 //
-class CTreeMapPreview final : public CStatic
+class CTreeMapPreview final : public MessageTarget<CTreeMapPreview, CStatic>
 {
 public:
     CTreeMapPreview();
@@ -356,6 +353,19 @@ protected:
     CItem* m_root;                  // Demo tree
     CTreeMap m_treeMap;             // Our treemap creator
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnPaint();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnPaint();
 };
+
+inline std::span<const RouteEntry> CTreeMapPreview::Routes()
+{
+    using ThisClass = CTreeMapPreview;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+    };
+    return entries;
+}

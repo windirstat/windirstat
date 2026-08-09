@@ -29,18 +29,17 @@ class CItem;
 //
 class CTreeMapView final : public CGraphView
 {
-protected:
+public:
     CTreeMapView() = default;
-    DECLARE_DYNCREATE(CTreeMapView)
 
     ~CTreeMapView() override = default;
 
-    [[nodiscard]] const wchar_t* GetWindowClassName() const override
+    const wchar_t* GetWindowClassName() const override
     {
         return L"WinDirStatTreeMapClass";
     }
     void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
-    [[nodiscard]] bool CreateRenderBitmap(CDC* pDC, CSize size) override;
+    bool CreateRenderBitmap(CDC* pDC, CSize size) override;
     void RenderVisualization(CDC* pDC, CRect rect) override;
 
     void DrawZoomFrame(CDC* pdc, CRect& rc) const;
@@ -48,16 +47,15 @@ protected:
     void DrawSelection(CDC* pdc) override;
 
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
-    [[nodiscard]] CItem* FindItemAtPoint(CPoint point) override;
-    [[nodiscard]] bool HasValidLayout() const override;
+    CItem* FindItemAtPoint(CPoint point) override;
+    bool HasValidLayout() const override;
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;
     void DrillDown(CItem* item) override;
-    [[nodiscard]] std::span<const UINT> GetPersistentContextCommands() const override;
+    std::span<const UINT> GetPersistentContextCommands() const override;
 
     static constexpr int ZoomFrameWidth = 4;
 
     CTreeMap m_treeMap;               // Treemap generator
 
-    DECLARE_MESSAGE_MAP()
 };

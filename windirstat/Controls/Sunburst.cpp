@@ -45,7 +45,7 @@ namespace
     COLORREF GetBranchBaseColor(const std::size_t branch) noexcept
     {
         // A color-vision-safe palette whose hue is inherited by a whole branch.
-        static constexpr std::array<COLORREF, 8> palette{
+        static constexpr std::array palette{
             RGB(79, 157, 232),  // blue
             RGB(71, 173, 128),  // bluish green
             RGB(230, 159, 0),   // orange
@@ -90,9 +90,9 @@ namespace
         static const std::wstring fontFamilyName = []
         {
             LOGFONTW logFont{};
-            const auto stockFont = static_cast<HFONT>(::GetStockObject(DEFAULT_GUI_FONT));
+            const auto stockFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
             if (stockFont != nullptr
-                && ::GetObjectW(stockFont, sizeof(logFont), &logFont) == sizeof(logFont)
+                && GetObjectW(stockFont, sizeof(logFont), &logFont) == sizeof(logFont)
                 && logFont.lfFaceName[0] != L'\0')
             {
                 return std::wstring(logFont.lfFaceName);
@@ -215,7 +215,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
     m_dpiScale = (static_cast<double>(dpiX) + dpiY)
         / (2.0 * USER_DEFAULT_SCREEN_DPI);
     m_separatorWidth = static_cast<float>(std::max(1.0, m_dpiScale));
-    m_center = rc.CenterPoint();
+    m_center = rc.Center();
     m_outerRadius = std::max(0.0,
         static_cast<double>(std::min(rc.Width(), rc.Height())) / 2.0
         - OUTER_MARGIN * m_dpiScale);
@@ -251,29 +251,29 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
 
     while (!pending.empty())
     {
-        const PendingItem current = pending.back();
+        const auto [item, startAngle, sweepAngle, depth, branchColor, remainderSize] = pending.back();
         pending.pop_back();
-        if (current.item == nullptr || current.sweepAngle <= 0.0) continue;
+        if (item == nullptr || sweepAngle <= 0.0) continue;
 
         const std::size_t entryIndex = m_entries.size();
-        m_entries.push_back({ current.item, current.startAngle,
-            current.sweepAngle, 0.0, 0.0, current.remainderSize, current.depth,
-            current.branchColor, true });
-        actualMaxDepth = std::max(actualMaxDepth, current.depth);
+        m_entries.push_back({ item, startAngle,
+            sweepAngle, 0.0, 0.0, remainderSize, depth,
+            branchColor, true });
+        actualMaxDepth = std::max(actualMaxDepth, depth);
 
-        if (current.remainderSize != 0 || current.depth >= depthLimit || current.item->TmiIsLeaf()
-            || current.item->TmiGetSize() == 0)
+        if (remainderSize != 0 || depth >= depthLimit || item->TmiIsLeaf()
+            || item->TmiGetSize() == 0)
         {
             continue;
         }
 
-        const ULONGLONG totalSize = current.item->TmiGetSize();
+        const ULONGLONG totalSize = item->TmiGetSize();
         ULONGLONG placedSize = 0;
         children.clear();
-        const auto& itemChildren = current.item->GetChildren();
+        const auto& itemChildren = item->GetChildren();
         std::size_t branchOrdinal = 0;
-        double nextStart = current.startAngle;
-        const double parentEnd = current.startAngle + current.sweepAngle;
+        double nextStart = startAngle;
+        const double parentEnd = startAngle + sweepAngle;
 
         for (CItem* child : itemChildren)
         {
@@ -282,25 +282,22 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
 
             const ULONGLONG remaining = totalSize - placedSize;
             const ULONGLONG boundedSize = std::min(childSize, remaining);
-            const double childSweep = current.sweepAngle
+            const double childSweep = sweepAngle
                 * static_cast<double>(boundedSize) / static_cast<double>(totalSize);
 
             // Evaluate visibility where this child is actually drawn. Sorted children
             // after the first sector narrower than the stroke/hit target are omitted.
             const double targetRadius = m_centerRadius
-                + (static_cast<double>(current.depth) + 0.5) * provisionalRingWidth;
+                + (static_cast<double>(depth) + 0.5) * provisionalRingWidth;
             const double arcPixels = childSweep * DEGREES_TO_RADIANS * targetRadius;
             if (arcPixels < minArcPixels) break;
 
             placedSize += boundedSize;
-            const COLORREF branchColor = current.depth == 0
-                ? GetBranchBaseColor(branchOrdinal)
-                : current.branchColor;
-            const double childEnd = current.startAngle + current.sweepAngle
+            const double childEnd = startAngle + sweepAngle
                 * static_cast<double>(placedSize) / static_cast<double>(totalSize);
             children.push_back({ child, nextStart,
-                std::max(0.0, childEnd - nextStart), current.depth + 1,
-                branchColor, 0 });
+                std::max(0.0, childEnd - nextStart), depth + 1,
+                depth == 0 ? GetBranchBaseColor(branchOrdinal) : branchColor, 0 });
             nextStart = childEnd;
             ++branchOrdinal;
         }
@@ -309,8 +306,8 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         const double remainderSweep = std::max(0.0, parentEnd - nextStart);
         if (placedSize < totalSize && remainderSweep > 0.0)
         {
-            children.push_back({ current.item, nextStart, remainderSweep, current.depth + 1,
-                current.branchColor, totalSize - placedSize });
+            children.push_back({ item, nextStart, remainderSweep, depth + 1,
+                branchColor, totalSize - placedSize });
         }
 
         for (const PendingItem& child : children | std::views::reverse)
@@ -354,20 +351,21 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         (entry.remainderSize != 0 ? m_remainderEntries : m_itemEntries).emplace(entry.item, index);
     }
 
-#ifdef _DEBUG
-    // Reverse stack insertion preserves increasing angular order within every ring.
-    for (auto& ring : m_rings)
+    if constexpr (IsDebugBuild)
     {
-        ASSERT(std::ranges::is_sorted(ring, {}, &RingEntry::startAngle));
-        ASSERT(std::ranges::is_sorted(ring, {}, &RingEntry::endAngle));
+        // Reverse stack insertion preserves increasing angular order within every ring.
+        for (auto& ring : m_rings)
+        {
+            assert(std::ranges::is_sorted(ring, {}, &RingEntry::startAngle));
+            assert(std::ranges::is_sorted(ring, {}, &RingEntry::endAngle));
+        }
     }
-#endif
 }
 
 void CSunburst::ClearLayout()
 {
     m_layoutRoot = nullptr;
-    m_renderArea.SetRectEmpty();
+    m_renderArea.Clear();
     m_center = {};
     m_outerRadius = 0.0;
     m_centerRadius = 0.0;
@@ -460,7 +458,7 @@ void CSunburst::RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entr
 
 void CSunburst::RenderLayout(CDC* pdc) const
 {
-    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
+    Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
     graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAliasGridFit);
@@ -524,10 +522,10 @@ void CSunburst::RenderLayout(CDC* pdc) const
     // already filled the density budget.
     std::ranges::sort(leafLabels, byPriority);
     std::size_t remainingLeafLabels = labelBudget - drawnLabels;
-    for (const LabelCandidate& candidate : leafLabels)
+    for (const auto& [_, entry] : leafLabels)
     {
         if (remainingLeafLabels == 0) break;
-        if (RenderLabel(graphics, fontFamily, *candidate.entry, points, types))
+        if (RenderLabel(graphics, fontFamily, *entry, points, types))
             --remainingLeafLabels;
     }
 }
@@ -576,12 +574,12 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
     const Gdiplus::REAL dpiScale = static_cast<Gdiplus::REAL>(m_dpiY)
         / USER_DEFAULT_SCREEN_DPI;
     const COLORREF itemColor = GetItemColor(entry);
-    Gdiplus::SolidBrush textBrush(ToGdiColor(GetContrastingMonochrome(itemColor)));
+    const Gdiplus::SolidBrush textBrush(ToGdiColor(GetContrastingMonochrome(itemColor)));
     if (entry.depth == 0)
     {
         const auto half = static_cast<Gdiplus::REAL>(entry.outerRadius * 0.70);
         const Gdiplus::REAL fontSize = std::min(14.0f * dpiScale, half * 0.45f);
-        Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular,
+        const Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular,
             Gdiplus::UnitPixel);
         Gdiplus::StringFormat format;
         format.SetAlignment(Gdiplus::StringAlignmentCenter);
@@ -633,7 +631,7 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
             ? normalizedMiddle - QUARTER_CIRCLE
             : normalizedMiddle - (FULL_CIRCLE - QUARTER_CIRCLE));
 
-        Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular,
+        const Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular,
             Gdiplus::UnitPixel);
         Gdiplus::StringFormat format;
         format.SetAlignment(Gdiplus::StringAlignmentNear);
@@ -714,7 +712,7 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
         point.Y = static_cast<Gdiplus::REAL>(m_center.y + std::sin(screenAngle) * radius);
     }
 
-    Gdiplus::GraphicsPath curvedPath(points.data(), types.data(), pointCount,
+    const Gdiplus::GraphicsPath curvedPath(points.data(), types.data(), pointCount,
         textPath.GetFillMode());
     return graphics.FillPath(&textBrush, &curvedPath) == Gdiplus::Ok;
 }
@@ -740,7 +738,7 @@ void CSunburst::DrawOutlineItems(CDC* pdc, const std::span<const CItem* const> i
 {
     if (pdc == nullptr || items.empty()) return;
 
-    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
+    Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
     const float outlineWidth = std::max(
@@ -769,7 +767,7 @@ void CSunburst::DrawOutlineItems(CDC* pdc, const std::span<const CItem* const> i
 CItem* CSunburst::FindItemByPoint(const CPoint point, ULONGLONG* remainderSize) const
 {
     if (remainderSize != nullptr) *remainderSize = 0;
-    if (m_entries.empty() || !m_renderArea.PtInRect(point)) return nullptr;
+    if (m_entries.empty() || !m_renderArea.Contains(point)) return nullptr;
 
     const double dx = static_cast<double>(point.x - m_center.x);
     const double dy = static_cast<double>(point.y - m_center.y);

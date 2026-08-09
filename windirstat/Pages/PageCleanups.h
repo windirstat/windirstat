@@ -23,17 +23,15 @@
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public COptionsPage
+class CPageCleanups final : public MessageTarget<CPageCleanups, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageCleanups)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_CLEANUPS };
 
     CPageCleanups();
     ~CPageCleanups() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
     void InitializePage() override;
     void OnOK() override;
 
@@ -48,18 +46,6 @@ protected:
 
     // Dialog data
     CListBox m_customCleanupList;
-    BOOL m_enabled = FALSE;
-    CStringW m_title;
-    BOOL m_worksForDrives = FALSE;
-    BOOL m_worksForDirectories = FALSE;
-    BOOL m_worksForFiles = FALSE;
-    BOOL m_worksForUncPaths = FALSE;
-    CStringW m_commandLine;
-    BOOL m_recurseIntoSubdirectories = FALSE;
-    BOOL m_askForConfirmation = FALSE;
-    BOOL m_showConsoleWindow = FALSE;
-    BOOL m_waitForCompletion = FALSE;
-    int m_refreshPolicy = 0;
     CComboBox m_ctlRefreshPolicy;
 
     CEdit m_ctlTitle;
@@ -77,15 +63,43 @@ protected:
     CButton m_ctlUp;
     CButton m_ctlDown;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnLbnSelchangeList();
-    afx_msg void OnBnClickedEnabled();
-    afx_msg void OnEnChangeTitle();
-    afx_msg void OnBnClickedWorksfordrives();
-    afx_msg void OnBnClickedWorksfordirectories();
-    afx_msg void OnBnClickedModified();
-    afx_msg void OnBnClickedRecurseintosubdirectories();
-    afx_msg void OnBnClickedUp();
-    afx_msg void OnBnClickedDown();
-    afx_msg void OnBnClickedHelpbutton();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLbnSelchangeList();
+    void OnBnClickedEnabled();
+    void OnEnChangeTitle();
+    void OnBnClickedWorksfordrives();
+    void OnBnClickedWorksfordirectories();
+    void OnBnClickedModified();
+    void OnBnClickedRecurseintosubdirectories();
+    void OnBnClickedUp();
+    void OnBnClickedDown();
+    void OnBnClickedHelpbutton();
 };
+
+inline std::span<const RouteEntry> CPageCleanups::Routes()
+{
+    using ThisClass = CPageCleanups;
+    static constexpr std::array entries
+    {
+        Route::Control<&ThisClass::OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
+        Route::Control<&ThisClass::OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
+        Route::Control<&ThisClass::OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
+        Route::Control<&ThisClass::OnBnClickedWorksfordrives>(BN_CLICKED, IDC_WORKSFORDRIVES),
+        Route::Control<&ThisClass::OnBnClickedWorksfordirectories>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
+        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WORKSFORFILES),
+        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
+        Route::Control<&ThisClass::OnBnClickedModified>(EN_CHANGE, IDC_COMMANDLINE),
+        Route::Control<&ThisClass::OnBnClickedRecurseintosubdirectories>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
+        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
+        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
+        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WAITFORCOMPLETION),
+        Route::Control<&ThisClass::OnBnClickedModified>(CBN_SELENDOK, IDC_REFRESHPOLICY),
+        Route::Control<&ThisClass::OnBnClickedUp>(BN_CLICKED, IDC_UP),
+        Route::Control<&ThisClass::OnBnClickedDown>(BN_CLICKED, IDC_DOWN),
+        Route::Control<&ThisClass::OnBnClickedHelpbutton>(BN_CLICKED, IDC_HELPBUTTON),
+    };
+    return entries;
+}

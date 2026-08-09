@@ -28,42 +28,39 @@ class CItem;
 // CFlameGraphView. The flame graph (icicle plot) window.
 // A standalone pane that parallels CTreeMapView.
 //
-class CFlameGraphView final : public CGraphView
+class CFlameGraphView final : public MessageTarget<CFlameGraphView, CGraphView>
 {
-protected:
-    DECLARE_DYNCREATE(CFlameGraphView)
-
 public:
     CFlameGraphView() = default;
 
     ~CFlameGraphView() override = default;
 
 protected:
-    [[nodiscard]] const wchar_t* GetWindowClassName() const override
+    const wchar_t* GetWindowClassName() const override
     {
         return L"WinDirStatFlameGraphClass";
     }
     void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
-    [[nodiscard]] bool PrepareDrawing(CDC* pDC, CRect& rect) override;
+    bool PrepareDrawing(CDC* pDC, CRect& rect) override;
     void RenderVisualization(CDC* pDC, CRect rect) override;
 
     void DrawHighlightExtension(CDC* pdc) override;
     void DrawSelection(CDC* pdc) override;
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
 
-    [[nodiscard]] CItem* FindItemAtPoint(CPoint point) override;
-    [[nodiscard]] bool HasValidLayout() const override;
+    CItem* FindItemAtPoint(CPoint point) override;
+    bool HasValidLayout() const override;
     void ClearVisualizationLayout() override;
     void OnViewEmptied() override;
     void OnSuspending() override;
     void OnBeforeSizeChanged() override;
     void OnInputStateReset() override;
     void OnRenderCacheTrimmed() override;
-    [[nodiscard]] bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
+    bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
     void OnVisualizationChanged(MODEL_CHANGE change) override;
 
     void DiscardBase(bool invalidateFullHeight);
-    void RenderViewport(CDC* pDC, CRect clip);
+    void RenderViewport(CDC* pDC, CRect clip) const;
     bool ScrollCachedViewport(int oldPosition);
     void SetScrollPosition(int position);
     void UpdateScrollBar(int fullHeight, int pageHeight);
@@ -79,7 +76,21 @@ protected:
     int m_fullHeight = 0;
     CFlameGraph m_flameGraph;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
 };
+
+inline std::span<const RouteEntry> CFlameGraphView::Routes()
+{
+    using ThisClass = CFlameGraphView;
+    static constexpr std::array entries
+    {
+        Route::Window<&ThisClass::OnMouseWheel>(WM_MOUSEWHEEL),
+        Route::Window<&ThisClass::OnVScroll>(WM_VSCROLL),
+    };
+    return entries;
+}

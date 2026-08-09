@@ -20,7 +20,6 @@
 #include "FileTreeView.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
-#include "FileWatcherControl.h"
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
@@ -28,6 +27,12 @@
 #include "ProgressDlg.h"
 #include "Filtering.h"
 
+static std::optional<std::wstring> ChooseReportPath(const CDialog::FilePickerMode mode)
+{
+    return CDialog::PickFile(mode,
+        std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES)));
+}
 void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct commandFilter
@@ -42,7 +47,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     // special conditions
     static auto model = this;
-    static bool (*isZoomed)(CItem*) = [](CItem*) { return CWinDirStatModel::Get()->IsZoomed(); };
+    static bool (*isZoomed)(CItem*) = [](CItem*) { return Get()->IsZoomed(); };
     static bool (*canZoomIn)(CItem*) = [](CItem* i) { return i != nullptr && (i = i->IsLeaf() ? i->GetParent() : i) != nullptr && i != model->GetZoomItem() && i->TmiGetSize() > 0; };
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return model->GetZoomItem() != model->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* i) { return i != nullptr && i->GetParent() != nullptr; };
@@ -125,24 +130,25 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     const auto it = filters.find(pCmdUI->m_nID);
     if (it == filters.end())
     {
-        ASSERT(FALSE);
+        assert(false);
         return;
     }
 
-    const auto& filter = it->second;
-    bool allow = filter.focus == LF_NONE || (CMainFrame::Get()->GetLogicalFocus() & filter.focus) > 0;
-    allow &= filter.allowEarly || IsScanSettled();
+    const auto& [allowNone, allowMany, allowEarly, focus, typesAllow, extra] = it->second;
+    bool allow = focus == LF_NONE || (CMainFrame::Get()->GetLogicalFocus() & focus) > 0;
+    allow &= allowEarly || IsScanSettled();
     if (!allow) { pCmdUI->Enable(false); return; }
 
-    const auto items = (!filter.allowNone || filter.extra != nullptr) ? GetAllSelected() : std::vector<CItem*>{};
-    allow &= filter.allowNone || !items.empty();
-    allow &= filter.allowMany || items.size() <= 1;
-    if (items.empty() && filter.extra != nullptr) allow &= filter.extra(nullptr);
+    const auto items = (!allowNone || extra != nullptr) ?
+        GetSelectedItemsView() : std::span<CItem* const>{};
+    allow &= allowNone || !items.empty();
+    allow &= allowMany || items.size() <= 1;
+    if (items.empty() && extra != nullptr) allow &= extra(nullptr);
     for (const auto& item : items)
     {
         if (!allow) break;
-        allow &= filter.typesAllow == ITF_ANY || (!item->IsTypeOrFlag(ITF_RESERVED) && item->IsTypeOrFlag(filter.typesAllow));
-        allow &= filter.extra == nullptr || filter.extra(item);
+        allow &= typesAllow == ITF_ANY || (!item->IsTypeOrFlag(ITF_RESERVED) && item->IsTypeOrFlag(typesAllow));
+        allow &= extra == nullptr || extra(item);
     }
     pCmdUI->Enable(allow);
 }
@@ -154,78 +160,14 @@ void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
     if (pCmdUI->m_pMenu == nullptr) return;
 
     // See if each path supports available compression options
-    bool allow = IsMenuEnabled(pCmdUI->m_pMenu, pCmdUI->m_nID, true);
-    for (const auto& item : GetAllSelected())
+    bool allow = pCmdUI->m_pMenu->IsItemEnabled(pCmdUI->m_nID, CMenu::ItemLookup::Command);
+    for (const auto& item : GetSelectedItemsView())
     {
         allow &= CompressFileAllowed(item->GetVolumeRoot()->GetPath(),
             CompressionIdToAlg(pCmdUI->m_nID));
     }
     pCmdUI->Enable(allow);
 }
-
-#define ON_COMMAND_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
-BEGIN_MESSAGE_MAP(CWinDirStatModel, CCmdTarget)
-    ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
-    ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
-    ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_RESULTS, OnSaveResults)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_DUPLICATES, OnSaveDuplicates)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_PERMISSIONS, OnSavePermissions)
-    ON_COMMAND_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_MOVE_TO, OnCleanupMoveTo)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
-    ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
-    ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreeMapZoomIn)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreeMapZoomOut)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMRESET, OnTreeMapZoomReset)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EXPLORER_SELECT, OnExplorerSelect)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_PWSH, OnPowerShellHere)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_FOLDER, OnCleanupEmptyFolder)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_EMPTY, OnCleanupRemoveEmpty)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_SHADOW, OnRemoveShadowCopies)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SEARCH, OnSearch)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_ANALYZE, OnExecuteDismAnalyze)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_HIBERNATE, OnDisableHibernateFile)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_LOCAL, OnRemoveLocalProfiles)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_STORAGE_SENSE, OnLaunchStorageSense)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_PROGRAMS, OnExecuteProgramsFeatures)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_MOTW, OnRemoveMarkOfTheWebTags)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_CREATE_HARDLINK, OnUpdateCreateHardlink)
-    ON_COMMAND(ID_CLEANUP_CREATE_HARDLINK, OnCreateHardlink)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
-    ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreeMapSelectParent)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreeMapReselectChild)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
-    ON_COMMAND_UPDATE_WRAPPER(ID_COMPUTE_HASH, OnComputeHash)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCompressionHandler)
-    ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPTIMIZE_VHD, OnCleanupOptimizeVhd)
-    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_SPARSIFY_FILE, OnCleanupSparsifyFile)
-    ON_COMMAND_UPDATE_WRAPPER(ID_TOOLS_SET_DATES, OnToolsSetDates)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
-    ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
-    ON_COMMAND_UPDATE_WRAPPER(ID_POPUP_CANCEL, OnPopupCancel)
-    ON_COMMAND_UPDATE_WRAPPER(ID_FILTER_EXCLUDE_ITEM, OnFilterExcludeItem)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_RAM, OnUpdateCentralHandler)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_SIZE, OnUpdateCentralHandler)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
-    ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
-END_MESSAGE_MAP()
 
 void CWinDirStatModel::OnFilterExcludeItem()
 {
@@ -248,7 +190,7 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
 {
     // Only sparsify files (no recursion)
     const auto& itemsSelected = GetAllSelected();
-    CProgressDlg(itemsSelected.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(itemsSelected.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         for (const auto* item : itemsSelected)
         {
@@ -261,7 +203,7 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
 
             pdlg->Increment();
         }
-    }).DoModal();
+    }).ShowModal();
 
     RefreshItem(itemsSelected);
 }
@@ -279,61 +221,53 @@ void CWinDirStatModel::OnRefreshAll()
     StartScan(Get()->GetScanPathSpec());
 }
 
-void CWinDirStatModel::OnSaveResults()
+void CWinDirStatModel::OnSaveResults() const
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
-    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
-    if (dlg.DoModal() != IDOK) return;
+    const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
+    if (!path) return;
 
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
     {
-        SaveResults(dlg.GetPathName().GetString(), GetRootItem());
-    }).DoModal();
+        SaveResults(*path, GetRootItem());
+    }).ShowModal();
 }
 
 void CWinDirStatModel::OnSaveDuplicates()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
-    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
-    if (dlg.DoModal() != IDOK) return;
+    const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
+    if (!path) return;
 
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
     {
-        SaveDuplicates(dlg.GetPathName().GetString(), CFileDupeControl::Get()->GetRootItem());
-    }).DoModal();
+        SaveDuplicates(*path, CFileDupeControl::Get()->GetRootItem());
+    }).ShowModal();
 }
 
 void CWinDirStatModel::OnSavePermissions()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
-    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
-    if (dlg.DoModal() != IDOK) return;
+    const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
+    if (!path) return;
 
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
     {
-        SavePermissions(dlg.GetPathName().GetString(), CFilePermsControl::Get()->GetPermItems());
-    }).DoModal();
+        SavePermissions(*path, CFilePermsControl::Get()->GetPermItems());
+    }).ShowModal();
 }
 
 void CWinDirStatModel::OnLoadResults()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
-    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
-    if (dlg.DoModal() != IDOK) return;
+    const auto path = ChooseReportPath(CDialog::FilePickerMode::Open);
+    if (!path) return;
 
     CItem* newroot = nullptr;
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
     {
-        newroot = LoadResults(dlg.GetPathName().GetString());
-    }).DoModal();
+        newroot = LoadResults(*path);
+    }).ShowModal();
 
     if (newroot != nullptr) Get()->OpenLoadedScan(newroot);
 }
@@ -348,18 +282,18 @@ void CWinDirStatModel::OnEditCopy()
         paths += item->GetPath();
     }
 
-    CMainFrame::Get()->CopyToClipboard(paths);
+    if (!CMainFrame::Get()->CopyTextToClipboard(paths)) DisplayError(TranslateError());
 }
 
-void CWinDirStatModel::OnCleanupEmptyRecycleBin()
+void CWinDirStatModel::OnCleanupEmptyRecycleBin() const
 {
     if (!ConfirmOperation(IDS_MENU_EMPTY_BIN, COptions::ShowEmptyRecycleBinPrompt)) return;
 
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [](CProgressDlg*)
+    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [](CProgressDlg*)
     {
-        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr,
+        SHEmptyRecycleBin(*GetMainWindow(), nullptr,
             SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
-    }).DoModal();
+    }).ShowModal();
 
     // locate all drive items in order to refresh recyclers
     std::vector<CItem*> toRefresh;
@@ -375,16 +309,16 @@ void CWinDirStatModel::OnCleanupEmptyRecycleBin()
     if (!toRefresh.empty()) Get()->StartScanningEngine(toRefresh);
 }
 
-void CWinDirStatModel::OnRemoveShadowCopies()
+void CWinDirStatModel::OnRemoveShadowCopies() const
 {
     ULONGLONG count = 0, bytesUsed = 0;
     QueryShadowCopies(count, bytesUsed);
     if (count == 0 || !ConfirmOperation(IDS_MENU_REMOVE_SHADOW, COptions::ShowRemoveShadowCopiesPrompt)) return;
 
-    CProgressDlg(static_cast<size_t>(count), CProgressDlg::Flags::None, AfxGetMainWnd(), [](CProgressDlg* pdlg)
+    CProgressDlg(static_cast<size_t>(count), CProgressDlg::Flags::None, GetMainWindow(), [](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_ShadowCopy", pdlg);
-    }).DoModal();
+    }).ShowModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
 }
@@ -402,7 +336,7 @@ void CWinDirStatModel::OnViewShowFreeSpace()
         if (COptions::ShowFreeSpace)
         {
             const CItem* free = root->FindFreeSpaceItem();
-            ASSERT(free != nullptr);
+            assert(free != nullptr);
 
             if (GetZoomItem() == free)
             {
@@ -437,7 +371,7 @@ void CWinDirStatModel::OnViewShowUnknown()
         if (COptions::ShowUnknown)
         {
             const CItem* unknown = root->FindUnknownItem();
-            ASSERT(unknown != nullptr);
+            assert(unknown != nullptr);
 
             if (GetZoomItem() == unknown)
             {
@@ -473,7 +407,7 @@ void CWinDirStatModel::OnTreeMapZoomIn()
 
 void CWinDirStatModel::OnTreeMapZoomOut()
 {
-    CItem* zoomItem = GetZoomItem();
+    const CItem* zoomItem = GetZoomItem();
     if (zoomItem != nullptr && zoomItem->GetParent() != nullptr)
     {
         SetZoomItem(zoomItem->GetParent());
@@ -511,7 +445,7 @@ void CWinDirStatModel::OnExplorerSelect()
         // ignore unresolvable (e.g., deleted) files
         if (parent == nullptr)
         {
-            ASSERT(FALSE);
+            assert(false);
             return;
         }
 
@@ -556,7 +490,7 @@ void CWinDirStatModel::OnCommandPromptHere()
         std::wstring params = std::format(L"/K TITLE {} - \"{}\" {}", wds::strWinDirStat, path, uncmod);
 
         // Launch command prompt
-        ShellExecuteWrapper(cmd, params, L"open", *AfxGetMainWnd(), path);
+        ShellExecuteWrapper(cmd, params, L"open", *GetMainWindow(), path);
     }
 }
 
@@ -585,7 +519,7 @@ void CWinDirStatModel::OnPowerShellHere()
     // launch a command prompt for each path
     for (const auto& path : paths)
     {
-        ShellExecuteWrapper(pwsh, L"", L"open", *AfxGetMainWnd(), path);
+        ShellExecuteWrapper(pwsh, L"", L"open", *GetMainWindow(), path);
     }
 }
 
@@ -610,17 +544,15 @@ void CWinDirStatModel::OnCleanupMoveTo()
     if (items.empty()) return;
 
     // Show folder browser dialog to get destination directory
-    CFolderPickerDialog dlg(nullptr, OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_DONTADDTORECENT);
-    dlg.m_ofn.lpstrTitle = wds::strWinDirStat;
-
-    if (dlg.DoModal() != IDOK) return;
-    const std::wstring destFolder = dlg.GetPathName().GetString();
+    const auto destination = CDialog::PickFolder();
+    if (!destination) return;
+    const std::wstring& destFolder = *destination;
 
     // Verify destination exists
     if (!FolderExists(destFolder)) return;
 
     // Show progress dialog and move files
-    CProgressDlg(0, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
+    CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
     {
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
@@ -640,7 +572,7 @@ void CWinDirStatModel::OnCleanupMoveTo()
         // Do all moves
         const HRESULT res = fileOperation->PerformOperations();
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
-    }).DoModal();
+    }).ShowModal();
 
     // Refresh the parent items of the moved files
     std::vector<CItem*> refresh;
@@ -668,7 +600,7 @@ void CWinDirStatModel::OnCleanupMoveTo()
 void CWinDirStatModel::OnSearch()
 {
     SearchDlg search;
-    search.DoModal();
+    search.ShowModal();
 }
 
 void CWinDirStatModel::OnDisableHibernateFile()
@@ -690,7 +622,7 @@ void CWinDirStatModel::OnDisableHibernateFile()
     }
 }
 
-void CWinDirStatModel::OnRemoveRoamingProfiles()
+void CWinDirStatModel::OnRemoveRoamingProfiles() const
 {
     RemoveLocalProfiles(L"RoamingConfigured = TRUE");
 }
@@ -700,20 +632,20 @@ void CWinDirStatModel::OnRemoveLocalProfiles()
     RemoveLocalProfiles(L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
 }
 
-void CWinDirStatModel::RemoveLocalProfiles(const std::wstring_view whereClause)
+void CWinDirStatModel::RemoveLocalProfiles(const std::wstring_view whereClause) const
 {
     const auto paths = QueryWmiStringProperty(L"Win32_UserProfile", L"LocalPath", whereClause.data());
     if (paths.empty()) return;
 
     const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_DELETE_WARNING), paths,
-        {}, false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 },
+        {}, false, MB_YESNO | MB_ICONWARNING, GetMainWindow(), { 600, 400 },
         Localization::Lookup(IDS_DELETE_TITLE));
     if (result.nID != IDYES) return;
 
-    CProgressDlg(paths.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(paths.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_UserProfile", pdlg, whereClause.data());
-    }).DoModal();
+    }).ShowModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
     SmartPointer profilePath(CoTaskMemFree, static_cast<PWSTR>(nullptr));
@@ -765,10 +697,10 @@ void CWinDirStatModel::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     if (!IsScanSettled())
     {
-        return pCmdUI->Enable(FALSE);
+        return pCmdUI->Enable(false);
     }
 
-    const auto & items = GetAllSelected();
+    const auto& items = GetSelectedItemsView();
     bool allowControl = (FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus()) &&
         COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
     if (allowControl) for (const auto & item : items)
@@ -791,15 +723,16 @@ void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
     std::vector<CItem*> refreshQueue;
     for (const auto & item : items)
     {
-        ASSERT(UserDefinedCleanupWorksForItem(udc, item));
+        assert(UserDefinedCleanupWorksForItem(udc, item));
         if (!UserDefinedCleanupWorksForItem(udc, item))
         {
             return;
         }
 
+        if (!AskForConfirmation(udc, item)) continue;
+
         try
         {
-            AskForConfirmation(udc, item);
             PerformUserDefinedCleanup(udc, item);
             RefreshAfterUserDefinedCleanup(udc, item, refreshQueue);
         }
@@ -865,17 +798,17 @@ void CWinDirStatModel::OnComputeHash()
     const auto& items = GetAllSelected();
     const ULONGLONG logicalSize = items.front()->GetSizeLogical();
     const size_t totalBlocks = static_cast<size_t>(logicalSize / wds::Mi + (logicalSize % wds::Mi != 0));
-    CProgressDlg(totalBlocks, CProgressDlg::Flags::PercentageOnly, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(totalBlocks, CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         hashResult = ComputeFileHashes(items.front()->GetPath(), pdlg);
-    }).DoModal();
+    }).ShowModal();
 
     if (!hashResult.empty())
     {
         // Display result in message box
         CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
         dlg.SetWidthAuto();
-        dlg.DoModal();
+        dlg.ShowModal();
     }
 }
 
@@ -883,17 +816,17 @@ CompressionAlgorithm CWinDirStatModel::CompressionIdToAlg(const UINT id)
 {
     switch (id)
     {
-        case ID_COMPRESS_NONE: return CompressionAlgorithm::NONE;
-        case ID_COMPRESS_LZNT1: return  CompressionAlgorithm::LZNT1;
-        case ID_COMPRESS_XPRESS4K: return  CompressionAlgorithm::XPRESS4K;
-        case ID_COMPRESS_XPRESS8K: return  CompressionAlgorithm::XPRESS8K;
-        case ID_COMPRESS_XPRESS16K: return  CompressionAlgorithm::XPRESS16K;
-        case ID_COMPRESS_LZX: return  CompressionAlgorithm::LZX;
-        default: return CompressionAlgorithm::NONE;
+        case ID_COMPRESS_NONE: return NONE;
+        case ID_COMPRESS_LZNT1: return LZNT1;
+        case ID_COMPRESS_XPRESS4K: return XPRESS4K;
+        case ID_COMPRESS_XPRESS8K: return XPRESS8K;
+        case ID_COMPRESS_XPRESS16K: return XPRESS16K;
+        case ID_COMPRESS_LZX: return LZX;
+        default: return NONE;
     }
 }
 
-void CWinDirStatModel::OnCleanupCompress(UINT id)
+void CWinDirStatModel::OnCleanupCompress(const UINT id)
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
@@ -901,7 +834,7 @@ void CWinDirStatModel::OnCleanupCompress(UINT id)
 
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         for (const auto & item : items)
         {
@@ -909,7 +842,7 @@ void CWinDirStatModel::OnCleanupCompress(UINT id)
             CompressFile(item->GetPathLong(), alg);
             pdlg->Increment();
         }
-    }).DoModal();
+    }).ShowModal();
 
     // Refresh items after compression
     RefreshItem(itemsSelected);
@@ -923,7 +856,7 @@ void CWinDirStatModel::OnCleanupOptimizeVhd()
         return item->IsTypeOrFlag(IT_FILE) && item->HasExtension(L".vhdx"); });
 
     // Show progress dialog and optimize VHD files
-    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         for (const auto item : items)
         {
@@ -931,7 +864,7 @@ void CWinDirStatModel::OnCleanupOptimizeVhd()
             OptimizeVhd(item->GetPathLong());
             pdlg->Increment();
         }
-    }).DoModal();
+    }).ShowModal();
 
     // Refresh items after optimization
     RefreshItem(itemsSelected);
@@ -941,7 +874,7 @@ void CWinDirStatModel::OnScanSuspend()
 {
     // Wait for system to fully shutdown
     for (auto& queue : m_queues | std::views::values)
-        ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
+        CWinApp::RunTaskWithUiUpdates([&queue] { queue.SuspendExecution(); });
 
     // Freeze the shared item clock only after every scan worker is idle.
     CItem::SuspendScanClock();
@@ -978,17 +911,17 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
 
     // Request for all threads to stop processing
     for (auto& queue : m_queues | std::views::values)
-        ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
+        CWinApp::RunTaskWithUiUpdates([&queue] { queue.SuspendExecution(); });
 
     // Stop m_queues from executing
     for (auto& queue : m_queues | std::views::values)
-        ProcessMessagesUntilSignaled([&queue, &stopReason] { queue.CancelExecution(stopReason); });
+        CWinApp::RunTaskWithUiUpdates([&queue, &stopReason] { queue.CancelExecution(stopReason); });
 
     // Wait for wrapper thread to complete
     if (m_thread.joinable())
     {
         CWaitCursor waitCursor;
-        ProcessMessagesUntilSignaled([this] { m_thread.join(); });
+        CWinApp::RunTaskWithUiUpdates([this] { m_thread.join(); });
         m_thread = {};
         m_queues.clear();
     }
@@ -997,7 +930,7 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
     CItem::ResumeScanClock();
 }
 
-void CWinDirStatModel::OnContextMenuExplore(UINT nID)
+void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
 {
     // get list of paths from items
     const auto selected = GetAllSelected();
@@ -1011,22 +944,22 @@ void CWinDirStatModel::OnContextMenuExplore(UINT nID)
 
     // Keep OLE alive on this thread so shell clipboard verbs can use delayed rendering.
     if (thread_local SmartPointer oleInit([](PVOID) noexcept { OleUninitialize(); }, PVOID{});
-        oleInit == nullptr && SUCCEEDED(OleInitialize(nullptr))) oleInit = reinterpret_cast<PVOID>(TRUE);
+        oleInit == nullptr && SUCCEEDED(OleInitialize(nullptr))) oleInit = reinterpret_cast<PVOID>(1);
 
-        const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+        const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->Handle(), paths);
     if (contextMenu == nullptr) return;
 
     // create placeholder menu
-    CMenu menu;
-    if (menu.CreatePopupMenu() == 0) return;
-    if (FAILED(contextMenu->QueryContextMenu(menu.GetSafeHmenu(), 0,
+    const CMenu menu = CMenu::CreatePopup();
+    if (!menu) return;
+    if (FAILED(contextMenu->QueryContextMenu(menu.Handle(), 0,
         CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
 
     // launch command associated with passed item identifier
     CMINVOKECOMMANDINFOEX info = {};
     info.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
     info.fMask = CMIC_MASK_UNICODE;
-    info.hwnd = CMainFrame::Get()->GetSafeHwnd();
+    info.hwnd = CMainFrame::Get()->Handle();
     info.lpVerb = MAKEINTRESOURCEA(nID - 1);
     info.lpVerbW = MAKEINTRESOURCEW(nID - 1);
     info.nShow = SW_SHOWNORMAL;
@@ -1136,7 +1069,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             item->GetParent()->RemoveChild(item);
         }
     }
-    CWinDirStatModel::InvalidateSelectionCache();
+    InvalidateSelectionCache();
 
     // Refresh filter cutoffs immediately before scanning in case settings
     // were compiled long ago (e.g. dialog left open before clicking scan).
@@ -1179,7 +1112,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];
             auto* basicCtx = &queueContextBasic[queue.first];
-            queue.second.StartThreads(COptions::ScanningThreads, [queuePtr, ntfsCtx, basicCtx]()
+            queue.second.StartThreads(COptions::ScanningThreads, [queuePtr, ntfsCtx, basicCtx]
             {
                 CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx);
             });
@@ -1266,7 +1199,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         if (const auto savePath = CDirStatApp::Get()->GetSaveToPath(); !savePath.empty())
         {
             // Get the model and root item
-            const auto* model = CWinDirStatModel::Get();
+            const auto* model = Get();
             if (!model->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
@@ -1331,7 +1264,7 @@ void CWinDirStatModel::OnRemoveMarkOfTheWebTags()
     const auto& itemsSelected = GetAllSelected();
     const auto& items = CItem::GetItemsRecursive(itemsSelected);
 
-    CProgressDlg(items.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         for (const auto item : items)
         {
@@ -1339,7 +1272,7 @@ void CWinDirStatModel::OnRemoveMarkOfTheWebTags()
             DeleteFile((item->GetPathLong() + L":Zone.Identifier").c_str());
             pdlg->Increment();
         }
-    }).DoModal();
+    }).ShowModal();
 }
 
 void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
@@ -1347,35 +1280,35 @@ void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
     // Only allow when focused on duplicate list after scanning has settled
     if (!IsScanSettled() || !DupeListHasFocus())
     {
-        return pCmdUI->Enable(FALSE);
+        return pCmdUI->Enable(false);
     }
 
     // Get the selected tree list items directly
-    const auto selected = GetAllSelected();
+    const auto selected = GetSelectedItemsView();
     if (selected.size() < 2)
     {
-        return pCmdUI->Enable(FALSE);
+        return pCmdUI->Enable(false);
     }
 
     // Validate all items are on same logical volume
     const auto drive = selected.front()->GetParentDrive();
-    for (auto* item : selected)
+    for (const auto* item : selected)
     {
         if (!item->IsTypeOrFlag(IT_FILE) ||
             item->GetParentDrive() != drive)
         {
-            return pCmdUI->Enable(FALSE);
+            return pCmdUI->Enable(false);
         }
     }
 
-    pCmdUI->Enable(TRUE);
+    pCmdUI->Enable(true);
 }
 
 void CWinDirStatModel::OnCreateHardlink()
 {
     const auto selected = GetAllSelected();
     if (selected.size() < 2 || !ConfirmOperation(IDS_MENU_CREATE_HARDLINK, COptions::ShowCreateHardlinkPrompt,
-        std::span<CItem* const>(selected).subspan(1))) return;
+        std::span(selected).subspan(1))) return;
     for (const auto* item : selected)
     {
         if (item == selected.front()) continue;
@@ -1409,9 +1342,9 @@ void CWinDirStatModel::OnToolsSetDates()
         }
     }
 
-    CProgressDlg(directories.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(directories.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
-        for (CItem* item : directories)
+        for (const CItem* item : directories)
         {
             if (pdlg->IsCancelled()) break;
 
@@ -1427,7 +1360,7 @@ void CWinDirStatModel::OnToolsSetDates()
             }
             pdlg->Increment();
         }
-    }).DoModal();
+    }).ShowModal();
 }
 
 void CWinDirStatModel::OnCleanupRemoveEmpty()
@@ -1441,7 +1374,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
     // yields a bottom-up order suitable for RemoveDirectory, which only removes empty folders and
     // so is guaranteed to find each parent empty once its children have been processed.
     std::vector<CItem*> emptyDirs;
-    std::vector<CItem*> stack(roots.begin(), roots.end());
+    std::vector stack(roots.begin(), roots.end());
     std::unordered_set<CItem*> visited;
     for (CWaitCursor wc; !stack.empty();)
     {
@@ -1464,10 +1397,10 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
     size_t deletedCount = 0;
     std::unordered_set<const CItem*> deletedDirs;
     std::unordered_set<CItem*> parentsToRefresh;
-    std::reverse(emptyDirs.begin(), emptyDirs.end());
-    CProgressDlg(emptyDirs.size(), CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    std::ranges::reverse(emptyDirs);
+    CProgressDlg(emptyDirs.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
-        for (CItem* item : emptyDirs)
+        for (const CItem* item : emptyDirs)
         {
             if (pdlg->IsCancelled()) break;
 
@@ -1482,7 +1415,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
                 pdlg->Increment();
             }
         }
-    }).DoModal();
+    }).ShowModal();
 
     // Refresh parents of deleted items that were not themselves deleted
     std::erase_if(parentsToRefresh, [&](const CItem* parent) {
@@ -1491,7 +1424,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
 
     if (!parentsToRefresh.empty())
     {
-        RefreshItem(std::vector<CItem*>(parentsToRefresh.begin(), parentsToRefresh.end()));
+        RefreshItem(std::vector(parentsToRefresh.begin(), parentsToRefresh.end()));
     }
     else if (deletedCount > 0)
     {

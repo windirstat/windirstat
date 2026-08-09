@@ -29,9 +29,6 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
     return column == COL_ITEMDUP_NAME || column == COL_ITEMDUP_LAST_CHANGE;
 }
 
-BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
-END_MESSAGE_MAP()
-
 void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
@@ -54,12 +51,11 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
 
     // Fetch the configuration information based on file size
     const auto size = item->GetSizeLogical();
-    auto [hashTracker, hashTrackerMutex, maxHashLevel] = [&]()->std::tuple
-        <std::map<std::vector<BYTE>, std::vector<CItem*>>&, std::mutex&, ITEMTYPE>
+    auto [hashTracker, hashTrackerMutex, maxHashLevel] = [&]() -> std::tuple<std::map<std::vector<BYTE>, std::vector<CItem*>>&, std::mutex&, ITEMTYPE>
     {
         if (size <= HashThreshold(ITHASH_SMALL)) return { m_trackerSmall, m_trackerSmallMutex, ITHASH_SMALL };
         if (size > HashThreshold(ITHASH_MEDIUM)) return { m_trackerLarge, m_trackerLargeMutex, ITHASH_LARGE };
-        else return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
+        return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
     }();
 
     // First see if there's more than one size of this file since there is no need to
@@ -158,12 +154,11 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
 
 void CFileDupeControl::SortItems()
 {
-    ASSERT(AfxGetThread() != nullptr);
 
     // Add items to the list
     if (!m_pendingListAdds.empty())
     {
-        const CSetRedrawLock lock(this);
+        const ScopedRedrawPause lock(this);
         std::pair<CItemDupe*, CItemDupe*> pair;
         while (m_pendingListAdds.pop(pair))
         {
@@ -223,7 +218,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
     }
 
     // Cleanup any empty visual nodes in the list
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     for (auto nodeIter = m_nodeTracker.begin(); nodeIter != m_nodeTracker.end(); )
     {
         auto& [dupeParentKey, dupeParent] = *nodeIter;

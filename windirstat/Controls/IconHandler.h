@@ -18,8 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include "SelectObject.h"
-#include "SmartPointer.h"
 
 //
 // CIconHandler. Handles all shell information lookup.
@@ -41,7 +39,7 @@ public:
 
     void Initialize();
     void DoAsyncShellInfoLookup(IconLookup&& lookupInfo);
-    void DrawIcon(const CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
+    void DrawIcon(CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
 
@@ -85,8 +83,8 @@ namespace Icons
     using namespace Gdiplus;
 
     inline COLORREF NeutralRef() { return DarkMode::IsDarkModeActive() ? RGB(210, 210, 210) : RGB(90, 90, 90); }
-    inline Color C(BYTE r, BYTE g, BYTE b, BYTE a = 255) { return Color(a, r, g, b); }
-    inline Color C(COLORREF clr) { return C(GetRValue(clr), GetGValue(clr), GetBValue(clr)); }
+    inline Color C(const BYTE r, const BYTE g, const BYTE b, const BYTE a = 255) { return Color(a, r, g, b); }
+    inline Color C(const COLORREF clr) { return C(GetRValue(clr), GetGValue(clr), GetBValue(clr)); }
     inline Color Neutral() { return C(NeutralRef()); }
 
     void PaintDelete(Graphics& g);
