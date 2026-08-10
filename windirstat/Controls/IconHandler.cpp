@@ -274,7 +274,7 @@ namespace Icons
     {
         PaintDocument(g);
         const GraphicsState state = g.Save();
-        g.TranslateTransform(29.0f, 35.0f);
+        g.TranslateTransform(31.0f, 35.0f);
         g.ScaleTransform(0.65f, 0.65f);
         g.TranslateTransform(-32.0f, -32.0f);
         PaintCharacter(g, L'↻', RGB(0, 156, 221));
