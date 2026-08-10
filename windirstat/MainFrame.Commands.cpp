@@ -841,7 +841,6 @@ void CMainFrame::OnViewFontSize(const UINT commandId)
 
 void CMainFrame::ApplyFontSize(const int percent, const bool rebuildToolBar)
 {
-    m_fontSizeUpdatePending = false;
     const int oldPercent = GetFontSizePercent();
     if (oldPercent == percent) return;
 
@@ -850,7 +849,7 @@ void CMainFrame::ApplyFontSize(const int percent, const bool rebuildToolBar)
     ApplyAppFont(m_hWnd, oldPercent);
     RebuildToolBar(rebuildToolBar);
     UpdatePaneText();
-    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
 void CMainFrame::OnUpdateViewFontSize(CCmdUI* pCmdUI) const
@@ -875,24 +874,25 @@ void CMainFrame::OnConfigure()
     }
 }
 
-void CMainFrame::OnSysColorChange()
+void CMainFrame::ApplyWindowsTextScale()
 {
     const int windowsTextScale = ResolveTextScalePercent(0);
     const bool fontChanged = COptions::FontSizePercent == 0 && windowsTextScale != GetFontSizePercent();
     const bool toolBarChanged = COptions::ToolBarSizePercent == 0 && windowsTextScale != GetToolBarSizePercent();
-    const bool applyFont = fontChanged && IsWindowEnabled();
     if (toolBarChanged) SetToolBarSizePercent(windowsTextScale);
-    if (applyFont) ApplyFontSize(windowsTextScale, toolBarChanged);
+    if (fontChanged) ApplyFontSize(windowsTextScale, toolBarChanged);
     else if (toolBarChanged) RebuildToolBar();
-    if (fontChanged && !applyFont) m_fontSizeUpdatePending = true;
+}
 
+void CMainFrame::OnSysColorChange()
+{
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
     DrawTextCache::Get().ClearCache();
 
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();
-    RedrawWindow();
+    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
 void CMainFrame::OnSettingChange(const UINT flags, const LPCTSTR section)

@@ -863,9 +863,6 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     // Exit early if shutting down
     if (nIDEvent != ID_WDS_CONTROL || m_shuttingDown) return;
 
-    if (m_fontSizeUpdatePending && IsWindowEnabled())
-        ApplyFontSize(ResolveTextScalePercent(COptions::FontSizePercent));
-
     // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
     const bool doInfrequentUpdate = updateCounter++ % 15 == 0;

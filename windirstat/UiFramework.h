@@ -3023,6 +3023,7 @@ public:
 
             };
         OnUpdateCmdUI(frame);
+        RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
     int ButtonIndexForCommand(const UINT id) const { return static_cast<int>(SendNativeMessage(TB_COMMANDTOINDEX, id)); }
     bool GetButtonRect(const int index, LPRECT rect) const

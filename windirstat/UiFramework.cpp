@@ -17,20 +17,25 @@
 
 #include "pch.h"
 
-int ResolveTextScalePercent(const int configuredPercent) noexcept
+static int ReadWindowsTextScalePercent() noexcept
 {
-    if (configuredPercent != 0) return std::clamp(configuredPercent, 100, 200);
-
     DWORD percent = 100;
     if (CRegKey key; key.Open(HKEY_CURRENT_USER, wds::strAccessibilityKey, KEY_READ) == ERROR_SUCCESS)
         key.QueryDWORDValue(L"TextScaleFactor", percent);
-    return static_cast<int>(std::clamp<DWORD>(percent, 100, 200));
+    return static_cast<int>(std::clamp<DWORD>(percent, 100, 225));
+}
+
+int ResolveTextScalePercent(const int configuredPercent) noexcept
+{
+    return configuredPercent != 0 ? std::clamp(configuredPercent, 100, 200) :
+        std::min(ReadWindowsTextScalePercent(), 200);
 }
 
 HFONT GetAppFont(const HWND window)
 {
     const int dpi = GetWindowDpi(window);
-    const std::pair key(dpi, GetFontSizePercent());
+    const int percent = GetFontSizePercent();
+    const std::pair key(dpi, percent);
     static std::map<std::pair<int, int>, CFont> fonts;
     if (const auto found = fonts.find(key); found != fonts.end()) return found->second;
 
@@ -38,9 +43,11 @@ HFONT GetAppFont(const HWND window)
     using SystemParametersInfoForDpiFn = BOOL(WINAPI*)(UINT, UINT, PVOID, UINT, UINT);
     static const auto systemParametersInfoForDpi = reinterpret_cast<SystemParametersInfoForDpiFn>(
         GetProcAddress(GetModuleHandleW(L"user32.dll"), "SystemParametersInfoForDpi"));
-    bool dpiAdjusted = systemParametersInfoForDpi != nullptr &&
+    const bool dpiAdjusted = systemParametersInfoForDpi != nullptr &&
         systemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0, dpi);
-    if (!dpiAdjusted && !SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
+    const bool systemMetrics = dpiAdjusted ||
+        SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+    if (!systemMetrics)
     {
         LOGFONTW fallback{};
         GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(fallback), &fallback);
@@ -53,8 +60,9 @@ HFONT GetAppFont(const HWND window)
         metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, dpi, systemDpi);
     }
 
-    metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, GetFontSizePercent(), 100);
-    metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, GetFontSizePercent(), 100);
+    const int sourcePercent = systemMetrics ? ReadWindowsTextScalePercent() : 100;
+    metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, percent, sourcePercent);
+    metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, percent, sourcePercent);
     return fonts.try_emplace(key, metrics.lfMessageFont).first->second;
 }
 
@@ -1162,13 +1170,7 @@ bool CTabControl::UsesLabelOnlyTabs() const
 
 int CTabControl::TabStripHeight() const
 {
-    int height = 0;
-    for (int native = 0; std::cmp_less(native, m_visibleToLogical.size()); ++native)
-    {
-        CRect rcTab;
-        if (GetNativeItemRect(native, rcTab)) height = std::max(height, static_cast<int>(rcTab.Height()));
-    }
-    return std::max(::ScaleForDpi(22, m_hWnd), height + ::ScaleForDpi(4, m_hWnd));
+    return ::ScaleForDpi(22, m_hWnd);
 }
 
 void CTabControl::LayoutPanes()

@@ -214,7 +214,6 @@ public:
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
     bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
-    bool m_fontSizeUpdatePending = false;
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
@@ -327,6 +326,7 @@ public:
 
 private:
     void ApplyFontSize(int percent, bool rebuildToolBar = false);
+    void ApplyWindowsTextScale();
     void BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hVisualization);
     void ConfigureSplitterCallbacks(int topo, int perm);
 };
