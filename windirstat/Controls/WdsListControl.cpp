@@ -335,6 +335,20 @@ void CWdsListControl::OnColumnsInserted(
     SetRowHeight(m_rowHeight);
 }
 
+void CWdsListControl::OnFontSizeChanged(const int oldPercent, const int newPercent)
+{
+    for (int& width : m_defaultColumnWidths) width = MulDiv(width, newPercent, oldPercent);
+    for (const int column : std::views::iota(0, m_columnCount))
+    {
+        const int width = GetColumnWidth(column);
+        if (width <= 0) continue;
+
+        const int scaledWidth = MulDiv(width, newPercent, oldPercent);
+        SetColumnWidth(column, scaledWidth);
+        if (std::cmp_less(column, m_columnWidths->size())) (*m_columnWidths)[column] = scaledWidth;
+    }
+}
+
 void CWdsListControl::SysColorChanged()
 {
     InitializeColors();
@@ -630,6 +644,9 @@ LRESULT CWdsListControl::OnSetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
     const LRESULT result = CallDefaultHandler();
     m_cachedFont = nullptr;
     DrawTextCache::Get().ClearCache();
+    CalculateRowHeight();
+    SetRowHeight(m_rowHeight);
+    Invalidate(false);
     return result;
 }
 

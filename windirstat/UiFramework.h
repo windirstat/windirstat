@@ -43,15 +43,59 @@ inline int GetWindowDpi(const HWND window) noexcept
     return dpi > 0 ? dpi : USER_DEFAULT_SCREEN_DPI;
 }
 
-inline int ScaleForDpi(const int value, const HWND window = nullptr) noexcept
+inline int g_fontSizePercent = 100;
+inline int g_toolBarSizePercent = 100;
+
+inline int GetFontSizePercent() noexcept
+{
+    return g_fontSizePercent;
+}
+
+inline void SetFontSizePercent(const int percent) noexcept
+{
+    g_fontSizePercent = std::clamp(percent, 100, 200);
+}
+
+inline int GetToolBarSizePercent() noexcept
+{
+    return g_toolBarSizePercent;
+}
+
+inline void SetToolBarSizePercent(const int percent) noexcept
+{
+    g_toolBarSizePercent = std::clamp(percent, 100, 200);
+}
+
+int ResolveTextScalePercent(int configuredPercent) noexcept;
+
+inline int ScaleForScreenDpi(const int value, const HWND window = nullptr) noexcept
 {
     return MulDiv(value, GetWindowDpi(window), USER_DEFAULT_SCREEN_DPI);
 }
 
-inline int UnscaleForDpi(const int value, const HWND window = nullptr) noexcept
+inline int UnscaleForScreenDpi(const int value, const HWND window = nullptr) noexcept
 {
     return MulDiv(value, USER_DEFAULT_SCREEN_DPI, GetWindowDpi(window));
 }
+
+inline int ScaleForToolBarDpi(const int value, const HWND window = nullptr) noexcept
+{
+    return MulDiv(value, GetWindowDpi(window) * GetToolBarSizePercent(), USER_DEFAULT_SCREEN_DPI * 100);
+}
+
+inline int ScaleForDpi(const int value, const HWND window = nullptr) noexcept
+{
+    return MulDiv(value, GetWindowDpi(window) * GetFontSizePercent(), USER_DEFAULT_SCREEN_DPI * 100);
+}
+
+inline int UnscaleForDpi(const int value, const HWND window = nullptr) noexcept
+{
+    return MulDiv(value, USER_DEFAULT_SCREEN_DPI * 100, GetWindowDpi(window) * GetFontSizePercent());
+}
+
+HFONT GetAppFont(HWND window = nullptr);
+void ApplyAppFont(HWND window, int oldPercent = 0);
+void InitializeDialogFontAndSize(HWND dialog);
 
 inline bool IsKeyDown(const int virtualKey) noexcept
 {
@@ -760,6 +804,7 @@ public:
     virtual bool PreCreateWindow(CREATESTRUCT& cs);
     virtual void PostNcDestroy();
     virtual bool PreprocessMessage(MSG*) { return false; }
+    virtual void OnFontSizeChanged(int, int) {}
     bool InitializeDialogControls(UINT resourceId);
 
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
@@ -800,7 +845,11 @@ public:
         {
             try
             {
-                if (SubclassNativeWindow(h)) return true;
+                if (SubclassNativeWindow(h))
+                {
+                    SetFont(GetAppFont(m_hWnd));
+                    return true;
+                }
             }
             catch (...)
             {
@@ -813,6 +862,7 @@ public:
             PostNcDestroy();
             return false;
         }
+        SetFont(GetAppFont(m_hWnd));
         return true;
     }
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
@@ -2238,7 +2288,11 @@ inline INT_PTR CALLBACK FrameworkDialogProc(HWND hWnd, const UINT msg, const WPA
             return false;
         }
 
-        try { return pDlg->OnInitDialog(); }
+        try
+        {
+            InitializeDialogFontAndSize(hWnd);
+            return pDlg->OnInitDialog();
+        }
         catch (...)
         {
             abortDialog();
@@ -2885,7 +2939,7 @@ public:
 
     void SetMetrics(const SIZE buttonSize, const int imageSize)
     {
-        m_buttonSize = buttonSize;
+        SetButtonSize(buttonSize);
         if (m_imageList != nullptr && !::ImageList_RemoveAll(m_imageList))
         {
             ImageList_Destroy(m_imageList);
@@ -2897,10 +2951,9 @@ public:
             m_disabledImageList = nullptr;
         }
 
-        const int scaledImageSize = ScaleForDpi(imageSize);
-        if (scaledImageSize != m_imageSize)
+        if (imageSize != m_imageSize)
         {
-            m_imageSize = scaledImageSize;
+            m_imageSize = imageSize;
             RecreateImageLists();
         }
     }
@@ -2930,7 +2983,7 @@ public:
     {
         TBBUTTON b{};
         b.fsStyle = BTNS_SEP;
-        b.iBitmap = ::ScaleForDpi(8, m_hWnd);
+        b.iBitmap = MulDiv(m_imageSize, 8, 20);
         SendNativeMessage(TB_INSERTBUTTONW, ButtonCount(), &b);
     }
     void AddButton(const CToolBarButton& btn)
@@ -2951,6 +3004,7 @@ public:
         }
         SendNativeMessage(TB_INSERTBUTTONW, ButtonCount(), &b);
     }
+    void SetButtonSize(const SIZE buttonSize) noexcept { m_buttonSize = buttonSize; }
     void UpdateLayout()
     {
         SendNativeMessage(TB_SETIMAGELIST, 0, m_imageList);
@@ -2998,7 +3052,7 @@ public:
     CSize PreferredSize() override
     {
         const CRect rcParent = GetParent()->ClientRect();
-        return CSize(rcParent.Width(), ButtonSize().cy + ::ScaleForDpi(2, m_hWnd));
+        return CSize(rcParent.Width(), ButtonSize().cy + ::ScaleForScreenDpi(2, m_hWnd));
     }
 
     void OnUpdateCmdUI(CFrameWnd* pTarget)
@@ -3177,6 +3231,7 @@ public:
 
 protected:
     LRESULT OnNcHitTest(CPoint point);
+    void OnFontSizeChanged(int oldPercent, int newPercent) override;
     void OnSize(UINT, int, int);
     bool OnEraseBkgnd(CDC*);
     void OnLButtonDown(UINT, CPoint point);

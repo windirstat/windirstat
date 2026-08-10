@@ -90,10 +90,6 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     m_lblTitle.Create(L"Configuration", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
 
-    // Create left panel fonts
-    m_fontLeftPanelTitle.Create(-ScaleForDpi(14), FW_BOLD, wds::strFontSegoeUI);
-    m_fontLeftPanel.Create(-ScaleForDpi(11), FW_NORMAL, wds::strFontSegoeUI);
-
     // Dynamic Tier Parsing from comma-separated list
     const std::vector<std::wstring> tierNames = SplitString(Localization::Lookup(IDS_TIERS), L',');
 
@@ -127,21 +123,17 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
             tier.lblThreshold = std::make_unique<CStatic>();
             std::wstring lblText = tier.name + L" Threshold (Days):";
             tier.lblThreshold->Create(lblText.c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
-            tier.lblThreshold->SetFont(m_fontLeftPanel);
 
             tier.editThreshold = std::make_unique<CCenteredEdit>();
             tier.editThreshold->Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, rect, this, 2000 + static_cast<int>(i) * 2);
-            tier.editThreshold->SetFont(m_fontLeftPanel);
         }
 
         tier.lblCost = std::make_unique<CStatic>();
         tier.lblCost->Create(L"Cost:", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
-        tier.lblCost->SetFont(m_fontLeftPanel);
 
         tier.editCost = std::make_unique<CCenteredEdit>();
         tier.editCost->m_isDecimal = true;
         tier.editCost->Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, rect, this, 2000 + static_cast<int>(i) * 2 + 1);
-        tier.editCost->SetFont(m_fontLeftPanel);
 
         m_tiers.push_back(std::move(tier));
     }
@@ -163,14 +155,11 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     UpdateCostLabels();
     m_btnRecalculate.SetText(Localization::Lookup(IDS_RECALCULATE).c_str());
 
-    m_lblTitle.SetFont(m_fontLeftPanelTitle);
-    m_lblUnit.SetFont(m_fontLeftPanel);
-    m_comboUnit.SetFont(m_fontLeftPanel);
-    m_btnRecalculate.SetFont(m_fontLeftPanel);
+    OnFontSizeChanged(0, 0);
 
     // Initialize edit fields with default values
-    const std::vector defaultThresholds = { 0.0, 30.0, 180.0, 365.0 };
-    const std::vector defaultCosts = { 0.03, 0.02, 0.1, 0.005 };
+    static constexpr std::array defaultThresholds = { 0.0, 30.0, 180.0, 365.0 };
+    static constexpr std::array defaultCosts = { 0.03, 0.02, 0.1, 0.005 };
     const size_t numDefaults = defaultThresholds.size();
 
     for (size_t i = 0; i < m_tiers.size(); ++i)
@@ -189,6 +178,25 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     OnEditChange();
 
     return 0;
+}
+
+void CStorageAnalyticsView::OnFontSizeChanged(int, int)
+{
+    m_fontLeftPanelTitle.Create(-ScaleForDpi(14), FW_BOLD, wds::strFontSegoeUI);
+    m_fontLeftPanel.Create(-ScaleForDpi(11), FW_NORMAL, wds::strFontSegoeUI);
+    m_lblTitle.SetFont(m_fontLeftPanelTitle);
+    m_lblUnit.SetFont(m_fontLeftPanel);
+    m_comboUnit.SetFont(m_fontLeftPanel);
+    m_btnRecalculate.SetFont(m_fontLeftPanel);
+    for (auto& tier : m_tiers)
+    {
+        if (tier.lblThreshold) tier.lblThreshold->SetFont(m_fontLeftPanel);
+        if (tier.editThreshold) tier.editThreshold->SetFont(m_fontLeftPanel);
+        tier.lblCost->SetFont(m_fontLeftPanel);
+        tier.editCost->SetFont(m_fontLeftPanel);
+    }
+    const CRect rc = ClientRect();
+    OnSize(SIZE_RESTORED, rc.Width(), rc.Height());
 }
 
 void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)

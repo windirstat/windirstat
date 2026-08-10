@@ -85,6 +85,7 @@ public:
     CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility);
     ~CWdsListControl() override = default;
     void OnColumnsInserted(std::initializer_list<int> requiredColumns = {}, std::initializer_list<int> defaultHiddenColumns = {});
+    void OnFontSizeChanged(int oldPercent, int newPercent) override;
     virtual void SysColorChanged();
 
     int GetRowHeight() const;

@@ -162,14 +162,7 @@ void Localization::UpdateTabControl(CTabControl& tab)
 
 void Localization::UpdateWindowText(CWnd& wnd)
 {
-    // Lookup and cache system font
-    static CFont systemFont{ [] {
-        NONCLIENTMETRICS ncm{ .cbSize = sizeof(NONCLIENTMETRICS) };
-        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-        return ncm.lfMessageFont;
-        }() };
-
-    wnd.SetFont(systemFont);
+    wnd.SetFont(GetAppFont(wnd.Handle()));
 
     // Update window text if it's a localizable ID
     const std::wstring text = wnd.Text();

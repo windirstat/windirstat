@@ -372,7 +372,8 @@ void CMainFrame::UpdatePaneText()
     }
 
     // Update select physical size
-    const CClientDC dc(this);
+    CClientDC dc(this);
+    const GdiObjectSelection selectFont(&dc, GetAppFont(m_hWnd));
     SetStatusPaneText(dc, CStatusBar::PaneId::Idle, fileSelectionText);
     SetStatusPaneText(dc, CStatusBar::PaneId::Size, (size == MAXULONGLONG) ? wds::strEmpty :
         std::format(L"{}: \u2211 {}", Localization::Lookup(COptions::TreeMapUseLogical ? IDS_COL_SIZE_LOGICAL : IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
@@ -630,24 +631,28 @@ static void PaintWatcherAutoScroll(Gdiplus::Graphics& g, const bool enabled)
     }
 }
 
-void CMainFrame::RebuildToolBar()
+void CMainFrame::RebuildToolBar(const bool rebuildButtons)
 {
-    const auto imageSize = COptions::LargeToolBar ? 32 : 20;
-    const auto scale = COptions::LargeToolBar ? (32.0f / 20.0f) : 1.0f;
+    constexpr int baseImageSize = 20;
+    const int imageSize = ScaleForToolBarDpi(baseImageSize, m_wndToolBar);
+    const SIZE buttonSize
+    {
+        ScaleForToolBarDpi(m_defaultButtonSize.cx, m_wndToolBar),
+        std::max(ScaleForToolBarDpi(m_defaultButtonSize.cy, m_wndToolBar),
+            ::ScaleForDpi(m_defaultButtonSize.cy, m_wndToolBar))
+    };
+
+    if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
+    if (!rebuildButtons) { m_wndToolBar.SetButtonSize(buttonSize); m_wndToolBar.UpdateLayout(); return; }
 
     // Remove all existing buttons
-    if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
     m_wndToolBar.ClearButtons();
 
     // Resize buttons and images to match the selected toolbar size
-    m_wndToolBar.SetMetrics(
-        { static_cast<LONG>(m_defaultButtonSize.cx * scale),
-          static_cast<LONG>(m_defaultButtonSize.cy * scale)},
-        imageSize);
+    m_wndToolBar.SetMetrics(buttonSize, imageSize);
 
     using Painter = std::function<void(Gdiplus::Graphics&)>;
-    static const std::vector<std::tuple<UINT, std::wstring_view, Painter>> toolbarButtons =
-    {
+    static const auto toolbarButtons = std::to_array<std::tuple<UINT, std::wstring_view, Painter>>({
         { ID_FILE_SELECT,             IDS_FILE_SELECT,             Icons::PaintFileSelect},
         { ID_SEPARATOR,               {},{}},
         { ID_SCAN_RESUME,             IDS_RESUME,                  Icons::Char(L'▶', RGB( 50, 205,  50))},
@@ -682,7 +687,7 @@ void CMainFrame::RebuildToolBar()
         { ID_WATCHER_PAUSE,           {},                          Icons::PaintPause},
         { ID_WATCHER_AUTOSCROLL,      {},                          {}},
         { ID_WATCHER_CLEAR,           {},                          Icons::PaintDelete},
-    };
+    });
 
     for (const auto& [id, text, painter] : toolbarButtons)
     {
@@ -721,12 +726,12 @@ void CMainFrame::RebuildToolBar()
 
     // The watcher buttons are contextual and only shown while its tab is active
     SetWatcherToolBarButtons(m_fileTabbedView != nullptr &&
-        m_fileTabbedView->IsFileWatcherViewTabActive());
+        m_fileTabbedView->IsFileWatcherViewTabActive(), false);
 
     m_wndToolBar.UpdateLayout();
 }
 
-void CMainFrame::SetWatcherToolBarButtons(const bool visible)
+void CMainFrame::SetWatcherToolBarButtons(const bool visible, const bool updateLayout)
 {
     if (m_wndToolBar.Handle() == nullptr) return;
 
@@ -740,7 +745,7 @@ void CMainFrame::SetWatcherToolBarButtons(const bool visible)
 
     // Recompute button locations and repaint; a size-only adjustment does
     // not refresh the layout when the docked toolbar extents are unchanged
-    if (changed) m_wndToolBar.UpdateLayout();
+    if (changed && updateLayout) m_wndToolBar.UpdateLayout();
 }
 
 void CMainFrame::OnWatcherStart()
@@ -795,16 +800,63 @@ void CMainFrame::OnUpdateWatcherClear(CCmdUI* pCmdUI)
     pCmdUI->Enable(watcher != nullptr && watcher->GetItemCount() > 0);
 }
 
-void CMainFrame::OnViewLargeToolBar()
+static constexpr auto sizePercents = std::to_array<int>({ 100, 125, 150, 175, 200, 0 });
+static_assert(ID_VIEW_FONT_SIZE_200 - ID_VIEW_FONT_SIZE_100 == 4 &&
+    ID_VIEW_FONT_SIZE_USE_WINDOWS - ID_VIEW_FONT_SIZE_100 == 5 &&
+    ID_VIEW_TOOLBAR_SIZE_200 - ID_VIEW_TOOLBAR_SIZE_100 == 4 &&
+    ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS - ID_VIEW_TOOLBAR_SIZE_100 == 5);
+
+static constexpr int SizePercentFromCommand(const UINT commandId, const UINT firstCommand) noexcept
 {
-    COptions::LargeToolBar = !COptions::LargeToolBar;
+    const UINT index = commandId - firstCommand;
+    assert(commandId >= firstCommand && std::cmp_less(index, sizePercents.size()));
+    return sizePercents[index];
+}
+
+void CMainFrame::OnViewToolBarSize(const UINT commandId)
+{
+    const int percent = SizePercentFromCommand(commandId, ID_VIEW_TOOLBAR_SIZE_100);
+    if (COptions::ToolBarSizePercent == percent) return;
+
+    COptions::ToolBarSizePercent = percent;
+    SetToolBarSizePercent(ResolveTextScalePercent(percent));
     RebuildToolBar();
 }
 
-void CMainFrame::OnUpdateViewLargeToolBar(CCmdUI* pCmdUI) const
+void CMainFrame::OnUpdateViewToolBarSize(CCmdUI* pCmdUI) const
 {
-    pCmdUI->SetCheck(COptions::LargeToolBar);
+    const int percent = SizePercentFromCommand(pCmdUI->m_nID, ID_VIEW_TOOLBAR_SIZE_100);
+    pCmdUI->SetRadio(COptions::ToolBarSizePercent == percent);
     pCmdUI->Enable((m_wndToolBar.GetStyle() & WS_VISIBLE) != 0);
+}
+
+void CMainFrame::OnViewFontSize(const UINT commandId)
+{
+    const int percent = SizePercentFromCommand(commandId, ID_VIEW_FONT_SIZE_100);
+    if (COptions::FontSizePercent == percent) return;
+
+    COptions::FontSizePercent = percent;
+    ApplyFontSize(ResolveTextScalePercent(percent));
+}
+
+void CMainFrame::ApplyFontSize(const int percent, const bool rebuildToolBar)
+{
+    m_fontSizeUpdatePending = false;
+    const int oldPercent = GetFontSizePercent();
+    if (oldPercent == percent) return;
+
+    COptions::RescaleFontDependentState(oldPercent, percent);
+    SetFontSizePercent(percent);
+    ApplyAppFont(m_hWnd, oldPercent);
+    RebuildToolBar(rebuildToolBar);
+    UpdatePaneText();
+    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+}
+
+void CMainFrame::OnUpdateViewFontSize(CCmdUI* pCmdUI) const
+{
+    const int percent = SizePercentFromCommand(pCmdUI->m_nID, ID_VIEW_FONT_SIZE_100);
+    pCmdUI->SetRadio(COptions::FontSizePercent == percent);
 }
 
 void CMainFrame::OnConfigure()
@@ -825,6 +877,15 @@ void CMainFrame::OnConfigure()
 
 void CMainFrame::OnSysColorChange()
 {
+    const int windowsTextScale = ResolveTextScalePercent(0);
+    const bool fontChanged = COptions::FontSizePercent == 0 && windowsTextScale != GetFontSizePercent();
+    const bool toolBarChanged = COptions::ToolBarSizePercent == 0 && windowsTextScale != GetToolBarSizePercent();
+    const bool applyFont = fontChanged && IsWindowEnabled();
+    if (toolBarChanged) SetToolBarSizePercent(windowsTextScale);
+    if (applyFont) ApplyFontSize(windowsTextScale, toolBarChanged);
+    else if (toolBarChanged) RebuildToolBar();
+    if (fontChanged && !applyFont) m_fontSizeUpdatePending = true;
+
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
     DrawTextCache::Get().ClearCache();
@@ -832,6 +893,12 @@ void CMainFrame::OnSysColorChange()
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();
     RedrawWindow();
+}
+
+void CMainFrame::OnSettingChange(const UINT flags, const LPCTSTR section)
+{
+    CFrameWnd::OnSettingChange(flags, section);
+    OnSysColorChange();
 }
 
 UINT CMainFrame::OnPowerBroadcast(UINT, LPARAM)

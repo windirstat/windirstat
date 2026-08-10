@@ -541,7 +541,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         return;
     }
 
-    StockObjectSelection selectFont(dc, DEFAULT_GUI_FONT);
+    GdiObjectSelection selectFont(dc, GetAppFont());
 
     TEXTMETRIC tm{};
     GetTextMetricsW(dc, &tm);
@@ -948,7 +948,7 @@ void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset) const
     assert(dc != nullptr);
     if (dc == nullptr) return;
 
-    StockObjectSelection selectFont(dc, DEFAULT_GUI_FONT);
+    GdiObjectSelection selectFont(dc, GetAppFont());
     ScopedBkMode backgroundMode(dc, TRANSPARENT);
 
     std::unordered_map<std::wstring, CSize> textExtentCache;

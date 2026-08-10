@@ -17,6 +17,119 @@
 
 #include "pch.h"
 
+int ResolveTextScalePercent(const int configuredPercent) noexcept
+{
+    if (configuredPercent != 0) return std::clamp(configuredPercent, 100, 200);
+
+    DWORD percent = 100;
+    if (CRegKey key; key.Open(HKEY_CURRENT_USER, wds::strAccessibilityKey, KEY_READ) == ERROR_SUCCESS)
+        key.QueryDWORDValue(L"TextScaleFactor", percent);
+    return static_cast<int>(std::clamp<DWORD>(percent, 100, 200));
+}
+
+HFONT GetAppFont(const HWND window)
+{
+    const int dpi = GetWindowDpi(window);
+    const std::pair key(dpi, GetFontSizePercent());
+    static std::map<std::pair<int, int>, CFont> fonts;
+    if (const auto found = fonts.find(key); found != fonts.end()) return found->second;
+
+    NONCLIENTMETRICSW metrics{ .cbSize = sizeof(metrics) };
+    using SystemParametersInfoForDpiFn = BOOL(WINAPI*)(UINT, UINT, PVOID, UINT, UINT);
+    static const auto systemParametersInfoForDpi = reinterpret_cast<SystemParametersInfoForDpiFn>(
+        GetProcAddress(GetModuleHandleW(L"user32.dll"), "SystemParametersInfoForDpi"));
+    bool dpiAdjusted = systemParametersInfoForDpi != nullptr &&
+        systemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0, dpi);
+    if (!dpiAdjusted && !SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
+    {
+        LOGFONTW fallback{};
+        GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(fallback), &fallback);
+        metrics.lfMessageFont = fallback;
+    }
+    else if (!dpiAdjusted)
+    {
+        const int systemDpi = GetWindowDpi(nullptr);
+        metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, dpi, systemDpi);
+        metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, dpi, systemDpi);
+    }
+
+    metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, GetFontSizePercent(), 100);
+    metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, GetFontSizePercent(), 100);
+    return fonts.try_emplace(key, metrics.lfMessageFont).first->second;
+}
+
+static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
+{
+    try
+    {
+        SendMessageW(window, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(window)), false);
+    }
+    catch (...) {}
+    return true;
+}
+
+static BOOL CALLBACK NotifyFontSizeChangedCallback(const HWND window, const LPARAM oldPercent) noexcept
+{
+    try
+    {
+        if (CWnd* attached = CWnd::FindAttached(window))
+            attached->OnFontSizeChanged(static_cast<int>(oldPercent), GetFontSizePercent());
+    }
+    catch (...) {}
+    return true;
+}
+
+void ApplyAppFont(const HWND window, const int oldPercent)
+{
+    if (!IsWindow(window)) return;
+    SetAppFontCallback(window, 0);
+    EnumChildWindows(window, SetAppFontCallback, 0);
+    if (oldPercent == 0) return;
+    NotifyFontSizeChangedCallback(window, oldPercent);
+    EnumChildWindows(window, NotifyFontSizeChangedCallback, oldPercent);
+}
+
+void InitializeDialogFontAndSize(const HWND dialog)
+{
+    if (!IsWindow(dialog)) return;
+
+    const int percent = GetFontSizePercent();
+    if (percent != 100)
+    {
+        std::vector<std::pair<HWND, CRect>> controls;
+        for (HWND control = GetWindow(dialog, GW_CHILD); control != nullptr;
+            control = GetWindow(control, GW_HWNDNEXT))
+        {
+            CRect rect(control);
+            MapWindowPoints(nullptr, dialog, reinterpret_cast<LPPOINT>(&rect), 2);
+            controls.emplace_back(control, rect);
+        }
+
+        const CRect windowRect(dialog);
+        CRect clientRect;
+        GetClientRect(dialog, &clientRect);
+        const bool childDialog = (GetWindowLongPtrW(dialog, GWL_STYLE) & WS_CHILD) != 0;
+        const int width = childDialog ? MulDiv(windowRect.Width(), percent, 100) :
+            windowRect.Width() + MulDiv(clientRect.Width(), percent, 100) - clientRect.Width();
+        const int height = childDialog ? MulDiv(windowRect.Height(), percent, 100) :
+            windowRect.Height() + MulDiv(clientRect.Height(), percent, 100) - clientRect.Height();
+        SetWindowPos(dialog, nullptr, 0, 0, width, height,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+        HDWP positions = BeginDeferWindowPos(static_cast<int>(controls.size()));
+        for (const auto& [control, rect] : controls)
+        {
+            positions = DeferWindowPos(positions, control, nullptr,
+                MulDiv(rect.left, percent, 100), MulDiv(rect.top, percent, 100),
+                MulDiv(rect.Width(), percent, 100), MulDiv(rect.Height(), percent, 100),
+                SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        if (positions != nullptr) EndDeferWindowPos(positions);
+    }
+
+    ApplyAppFont(dialog);
+}
+
 void CDC::DrawTreeConnector(const CRect& nodeRect, const COLORREF background, const bool toTop,
     const bool toBottom, const bool toRight, const bool showPlus, const bool showMinus)
 {
@@ -331,7 +444,7 @@ void CFrameWnd::UpdateMenuCommands(CMenu* pMenu, const bool bSysMenu)
     for (int i = 0; i < pMenu->ItemCount(); ++i)
     {
         const UINT id = pMenu->ItemIdAt(i);
-        if (id == 0 || std::cmp_equal(id, -1)) continue;   // separator / popup
+        if (id == 0 || id == static_cast<UINT>(-1)) continue;   // separator / popup
         state.m_nIndex = static_cast<UINT>(i);
         state.m_nID = id;
         state.Update(this, true);
@@ -420,7 +533,7 @@ void CStatusBar::OnPaint()
     const COLORREF barFace = DarkMode::SystemColor(
         DarkMode::IsDarkModeActive() ? COLOR_MENUBAR : COLOR_BTNFACE);
     dc.FillSolidRect(rcClient, barFace);
-    StockObjectSelection selectFont(&dc, DEFAULT_GUI_FONT);
+    GdiObjectSelection selectFont(&dc, GetAppFont(m_hWnd));
     dc.SetBkMode(TRANSPARENT);
 
     const auto rects = LayoutPanes();
@@ -510,9 +623,6 @@ bool CTabControl::Create(const RECT& rect, CWnd* pParentWnd, const UINT nID, con
         tabStyle |= TCS_BOTTOM;
     if (!CreateEx(0, WC_TABCONTROLW, nullptr, tabStyle, rect, pParentWnd, nID)) return false;
     SendNativeMessage(TCM_SETUNICODEFORMAT, true, 0);
-    SetFont(static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT)));
-    UpdateNativePadding();
-    RebuildNativeTabs();
     return true;
 }
 
@@ -589,6 +699,13 @@ LRESULT CTabControl::OnNcHitTest(const CPoint point)
 void CTabControl::OnSize(UINT, int, int)
 {
     CallDefaultHandler(); LayoutPanes(); Invalidate(false);
+}
+
+void CTabControl::OnFontSizeChanged(int, int)
+{
+    RebuildNativeTabs();
+    LayoutPanes();
+    Invalidate(false);
 }
 
 bool CTabControl::OnEraseBkgnd(CDC*)
@@ -703,7 +820,7 @@ void CTabControl::OnPaint()
     dc.FillSolidRect(rcStrip.left, paneEdge, rcStrip.Width(), 1, stripBorder);
 
     HFONT font = GetFont();
-    if (font == nullptr) font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    if (font == nullptr) font = GetAppFont(m_hWnd);
     GdiObjectSelection selectFont(&dc, font);
     CFont boldFont(font, FW_BOLD);
     dc.SetBkMode(TRANSPARENT);
@@ -1006,7 +1123,7 @@ void CTabControl::UpdatePaintedTabRects(const CRect& rcStrip, const bool bottomT
 
     const int dpi = GetWindowDpi(m_hWnd);
     const auto scale = [dpi](const int value) { return MulDiv(value, dpi, 96); };
-    const int tabVisualHeight = std::clamp(rcStrip.Height() - scale(4), 0, scale(18));
+    const int tabVisualHeight = std::clamp(rcStrip.Height() - scale(4), 0, ::ScaleForDpi(18, m_hWnd));
     const int leftInset = scale(labelOnlyTabs ? 2 : 3);
     const int overlap = scale(labelOnlyTabs ? 1 : 2);
     const int rightExpansion = scale(labelOnlyTabs ? 2 : 4);
@@ -1630,7 +1747,7 @@ bool CPropertySheet::OnInitDialog()
             const HWND button = CreateWindowExW(0, WC_BUTTONW, text, WS_CHILD | WS_VISIBLE | WS_TABSTOP | style,
                 x, btnY, btnW, btnH, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(id)),
                 GetAppInstance(), nullptr);
-            ::SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), true);
+            ::SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(button)), true);
             return button;
         };
     createButton(bx, IDOK, L"IDS_GENERIC_OK", BS_DEFPUSHBUTTON);

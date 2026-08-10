@@ -376,7 +376,7 @@ int CFlameGraphView::ComputeRowHeight(CDC* pDC) const
 {
     int rowHeight = ScaleForDpi(CFlameGraph::ROW_HEIGHT);
 
-    StockObjectSelection soFont(pDC, DEFAULT_GUI_FONT);
+    GdiObjectSelection soFont(pDC, GetAppFont(m_hWnd));
     if (const auto metrics = pDC->TextMetrics())
     {
         // Breadcrumbs have one scaled fill inset and one text inset on each edge.

@@ -201,7 +201,7 @@ public:
     inline static Setting<bool> ShowStatusBar{ OptionsGeneral, L"ShowStatusBar", true };
     inline static Setting<bool> ShowTimeSpent{ OptionsFileTree, L"ShowTimeSpent", true };
     inline static Setting<bool> ShowToolBar{ OptionsGeneral, L"ShowToolBar", true };
-    inline static Setting<bool> LargeToolBar{ OptionsGeneral, L"LargeToolBar", false };
+    inline static Setting<int> ToolBarSizePercent{ OptionsGeneral, L"ToolBarSizePercent", 0, 0, 200 };
     inline static Setting<bool> ShowVisualization{ OptionsTreeMap, L"ShowVisualization", true };
     inline static Setting<bool> ShowUnknown{ OptionsGeneral, L"ShowUnknown", false };
     inline static Setting<bool> SkipDupeDetectionCloudLinks{ OptionsGeneral, L"SkipDupeDetectionCloudLinks", true };
@@ -261,6 +261,7 @@ public:
     inline static Setting<double> SubSplitterPos{ OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0 };
     inline static Setting<int> ConfigPage{ OptionsGeneral, L"ConfigPage", 0 };
     inline static Setting<int> DarkMode{ OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS };
+    inline static Setting<int> FontSizePercent{ OptionsGeneral, L"FontSizePercent", 0, 0, 200 };
     inline static Setting<int> LanguageId{ OptionsGeneral, L"LanguageId", 0 };
     // 0=Low, 1=Normal, 2=High
     inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority", 1, 0, 2 };
@@ -332,6 +333,7 @@ public:
     static bool IsColumnVisible(const std::vector<int>& visibility, int subitem) noexcept;
     static void SetColumnVisible(std::vector<int>& visibility, int subitem, bool visible);
     static void LoadAppSettings();
+    static void RescaleFontDependentState(int oldPercent, int newPercent);
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);

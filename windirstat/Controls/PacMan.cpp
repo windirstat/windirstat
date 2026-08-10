@@ -118,13 +118,20 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
     // Draw sleepy graphic
     const COLORREF zColor = DarkMode::IsDarkModeActive() ? 0x888888 : 0x000000;
-    static const Gdiplus::Font font{ wds::strFontArial, 6.0f, Gdiplus::FontStyleBold };
+    static int cachedFontSizePercent = 0;
+    static std::optional<Gdiplus::Font> font;
+    const int fontSizePercent = GetFontSizePercent();
+    if (!font || cachedFontSizePercent != fontSizePercent)
+    {
+        font.emplace(wds::strFontArial, 6.0f * fontSizePercent / 100.0f, Gdiplus::FontStyleBold);
+        cachedFontSizePercent = fontSizePercent;
+    }
     const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
     for (const auto x : { 1.0f, 2.0f, 3.0f })
     {
         const auto deltaX = x * static_cast<float>(rc.Width()) / 3.0f;
         const auto deltaY = (x + 1) * static_cast<float>(rc.Height()) / 18.0f;
-        graphics.DrawString(L"z", 1, &font, { rc.left + deltaX, rc.top - deltaY }, &zBrush);
+        graphics.DrawString(L"z", 1, &*font, { rc.left + deltaX, rc.top - deltaY }, &zBrush);
     }
 }
 

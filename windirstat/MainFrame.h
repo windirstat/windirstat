@@ -214,6 +214,7 @@ public:
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
     bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
+    bool m_fontSizeUpdatePending = false;
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
@@ -224,7 +225,7 @@ public:
 
     CStatusBar m_wndStatusBar; // Status bar
     CToolBar m_wndToolBar;     // Toolbar
-    CSize m_defaultButtonSize;  // Toolbar button size at creation (pre-SetMetrics, DPI-scaled)
+    CSize m_defaultButtonSize;  // Toolbar button size at creation, before DPI and size scaling
     int m_watcherAutoScrollOnImage = -1;
     int m_watcherAutoScrollOffImage = -1;
     CWdsProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
@@ -283,8 +284,10 @@ protected:
     void OnViewLargestFiles() const { GetFileTabbedView()->SetActiveTopView(); }
     void OnViewDuplicateFiles() const { GetFileTabbedView()->SetActiveDupeView(); }
     void OnViewSearchResults() const { GetFileTabbedView()->SetActiveSearchView(); }
-    void OnViewLargeToolBar();
-    void OnUpdateViewLargeToolBar(CCmdUI* pCmdUI) const;
+    void OnViewToolBarSize(UINT commandId);
+    void OnUpdateViewToolBarSize(CCmdUI* pCmdUI) const;
+    void OnViewFontSize(UINT commandId);
+    void OnUpdateViewFontSize(CCmdUI* pCmdUI) const;
     void OnAdvancedShadowCopy(UINT nID);
     void OnAdvancedDefrag(UINT nID);
     void OnAdvancedChkdsk(UINT nID);
@@ -308,6 +311,7 @@ protected:
     LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
     UINT OnPowerBroadcast(UINT, LPARAM);
     void OnSysColorChange();
+    void OnSettingChange(UINT, LPCTSTR);
     LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam) const;
     void OnNcPaint();
     bool OnNcActivate(bool bActive);
@@ -316,12 +320,13 @@ public:
     static CMainFrame* Get() { return s_Singleton; }
     void UpdateFrameTitleForScan(LPCWSTR scanName);
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item) const;
-    void RebuildToolBar();
-    void SetWatcherToolBarButtons(bool visible);
+    void RebuildToolBar(bool rebuildButtons = true);
+    void SetWatcherToolBarButtons(bool visible, bool updateLayout = true);
     void RebuildLayout(bool resetPositions = false);
     bool CreateFromResource(UINT nIDResource) override;
 
 private:
+    void ApplyFontSize(int percent, bool rebuildToolBar = false);
     void BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hVisualization);
     void ConfigureSplitterCallbacks(int topo, int perm);
 };
@@ -400,6 +405,7 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Window<&ThisClass::OnInitMenuPopup>(WM_INITMENUPOPUP),
         Route::Window<&ThisClass::OnSize>(WM_SIZE),
         Route::Window<&ThisClass::OnSysColorChange>(WM_SYSCOLORCHANGE),
+        Route::Window<&ThisClass::OnSettingChange>(WM_SETTINGCHANGE),
         Route::Window<&ThisClass::OnPowerBroadcast>(WM_POWERBROADCAST),
         Route::Window<&ThisClass::OnTimer>(WM_TIMER),
         Route::Window<&ThisClass::OnNcPaint>(WM_NCPAINT),
@@ -411,8 +417,10 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Command<&CMainFrame::OnViewLargestFiles>(ID_VIEW_LARGEST_FILES),
         Route::Command<&CMainFrame::OnViewDuplicateFiles>(ID_VIEW_DUPLICATE_FILES),
         Route::Command<&CMainFrame::OnViewSearchResults>(ID_VIEW_SEARCH_RESULTS),
-        Route::Command<&CMainFrame::OnViewLargeToolBar>(ID_VIEW_LARGE_TOOLBAR),
-        Route::Update<&CMainFrame::OnUpdateViewLargeToolBar>(ID_VIEW_LARGE_TOOLBAR),
+        Route::Command<&CMainFrame::OnViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
+        Route::Update<&CMainFrame::OnUpdateViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
+        Route::Command<&CMainFrame::OnViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
+        Route::Update<&CMainFrame::OnUpdateViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
         Route::Command<&ThisClass::OnAdvancedShadowCopy>(ID_TOOLS_SHADOW_COPY_BASE, ID_TOOLS_SHADOW_COPY_BASE + wds::alphaSize),
         Route::Command<&ThisClass::OnAdvancedDefrag>(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize),
         Route::Command<&ThisClass::OnAdvancedChkdsk>(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize),

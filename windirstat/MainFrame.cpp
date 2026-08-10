@@ -547,9 +547,8 @@ int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     m_wndToolBar.Create(this);
 
-    // Save the default button size (DPI-scaled) before any SetMetrics call
-    const auto initialButtonSize = m_wndToolBar.ButtonSize();
-    m_defaultButtonSize = { ScaleForDpi(initialButtonSize.cx), ScaleForDpi(initialButtonSize.cy) };
+    // Save the unscaled default button size before any SetMetrics call
+    m_defaultButtonSize = m_wndToolBar.ButtonSize();
     RebuildToolBar();
 
     // Show or hide status bar if requested
@@ -863,6 +862,9 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
     // Exit early if shutting down
     if (nIDEvent != ID_WDS_CONTROL || m_shuttingDown) return;
+
+    if (m_fontSizeUpdatePending && IsWindowEnabled())
+        ApplyFontSize(ResolveTextScalePercent(COptions::FontSizePercent));
 
     // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;

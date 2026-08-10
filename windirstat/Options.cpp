@@ -90,6 +90,9 @@ void COptions::PreProcessPersistedSettings()
 
 void COptions::PostProcessPersistedSettings()
 {
+    if (FontSizePercent != 0) FontSizePercent = std::clamp<int>(FontSizePercent, 100, 200);
+    if (ToolBarSizePercent != 0) ToolBarSizePercent = std::clamp<int>(ToolBarSizePercent, 100, 200);
+
     // File-tree visibility is also consumed by non-UI exports, so initialize its defaults before any view exists.
     if (auto& visibility = FileTreeColumnVisibility.Obj(); visibility.empty())
     {
@@ -169,6 +172,30 @@ void COptions::LoadAppSettings()
     // Odr-use the final inline Setting to initialize and register all Settings before loading persisted values.
     static_cast<void>(MainWindowPlacement.Obj());
     PreProcessPersistedSettings();
+    FontSizePercent.ReadPersistedProperty();
+    ToolBarSizePercent.ReadPersistedProperty();
+    ::SetFontSizePercent(ResolveTextScalePercent(FontSizePercent));
+    ::SetToolBarSizePercent(ResolveTextScalePercent(ToolBarSizePercent));
     PersistedSetting::ReadPersistedProperties();
     PostProcessPersistedSettings();
+}
+
+void COptions::RescaleFontDependentState(const int oldPercent, const int newPercent)
+{
+    if (oldPercent == newPercent) return;
+
+    for (Setting<RECT>* setting : { &AboutWindowRect, &DriveSelectWindowRect, &SearchWindowRect })
+    {
+        RECT& rect = setting->Obj();
+        rect.right = rect.left + MulDiv(rect.right - rect.left, newPercent, oldPercent);
+        rect.bottom = rect.top + MulDiv(rect.bottom - rect.top, newPercent, oldPercent);
+        SanitizeRect(rect);
+    }
+
+    for (Setting<std::vector<int>>* setting : { &DriveListColumnWidths, &DupeViewColumnWidths,
+        &FileTreeColumnWidths, &ExtViewColumnWidths, &TopViewColumnWidths, &SearchViewColumnWidths,
+        &WatcherColumnWidths, &PermsViewColumnWidths })
+    {
+        for (int& width : setting->Obj()) width = MulDiv(width, newPercent, oldPercent);
+    }
 }

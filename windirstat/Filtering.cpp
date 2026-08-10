@@ -203,7 +203,7 @@ void CFiltering::CompileFilters()
                    std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0;
 
     // Rebuild toolbar to reflect status
-    CMainFrame::Get()->RebuildToolBar();
+    if (auto* frame = CMainFrame::Get(); frame != nullptr) frame->RebuildToolBar();
 }
 
 std::wstring_view CFiltering::WithoutTrailingBackslashes(std::wstring_view path)

@@ -43,6 +43,7 @@ class CStorageAnalyticsView final : public MessageTarget<CStorageAnalyticsView, 
 {
 public:
     CStorageAnalyticsView();
+    void OnFontSizeChanged(int, int) override;
     ~CStorageAnalyticsView() override = default;
 
     void OnDraw(CDC* pDC) override;

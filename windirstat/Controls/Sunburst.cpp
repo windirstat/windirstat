@@ -90,7 +90,7 @@ namespace
         static const std::wstring fontFamilyName = []
         {
             LOGFONTW logFont{};
-            const auto stockFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+            const HFONT stockFont = GetAppFont();
             if (stockFont != nullptr
                 && GetObjectW(stockFont, sizeof(logFont), &logFont) == sizeof(logFont)
                 && logFont.lfFaceName[0] != L'\0')
@@ -212,8 +212,8 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
     m_maxDepth = std::clamp(maxDepth, 1, MAX_DEPTH);
     m_dpiX = dpiX;
     m_dpiY = dpiY;
-    m_dpiScale = (static_cast<double>(dpiX) + dpiY)
-        / (2.0 * USER_DEFAULT_SCREEN_DPI);
+    m_dpiScale = (static_cast<double>(dpiX) + dpiY) * GetFontSizePercent()
+        / (2.0 * USER_DEFAULT_SCREEN_DPI * 100.0);
     m_separatorWidth = static_cast<float>(std::max(1.0, m_dpiScale));
     m_center = rc.Center();
     m_outerRadius = std::max(0.0,
@@ -535,7 +535,7 @@ double CSunburst::GetLabelPriority(const LayoutEntry& entry) const
     if (entry.item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
         return 0.0;
 
-    const double dpiScale = static_cast<double>(m_dpiY) / USER_DEFAULT_SCREEN_DPI;
+    const double dpiScale = m_dpiScale;
     if (entry.depth == 0)
     {
         const double half = entry.outerRadius * 0.70;
@@ -571,8 +571,7 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
         ? std::wstring_view{ L"\u2026" } : entry.item->GetNameView(true);
     if (name.empty()) return false;
 
-    const Gdiplus::REAL dpiScale = static_cast<Gdiplus::REAL>(m_dpiY)
-        / USER_DEFAULT_SCREEN_DPI;
+    const auto dpiScale = static_cast<Gdiplus::REAL>(m_dpiScale);
     const COLORREF itemColor = GetItemColor(entry);
     const Gdiplus::SolidBrush textBrush(ToGdiColor(GetContrastingMonochrome(itemColor)));
     if (entry.depth == 0)

@@ -77,7 +77,7 @@ void CFlameGraph::DrawFlameGraph(CDC* pdc) const
 {
     if (pdc == nullptr || m_layoutRoot == nullptr || m_renderArea.IsEmpty()) return;
 
-    StockObjectSelection soFont(pdc, DEFAULT_GUI_FONT);
+    GdiObjectSelection soFont(pdc, GetAppFont());
     ScopedBkMode soBkMode(pdc, TRANSPARENT);
     RenderLayout(pdc, false);
 }
@@ -86,7 +86,7 @@ void CFlameGraph::DrawBreadcrumbs(CDC* pdc) const
 {
     if (pdc == nullptr || m_breadcrumbs.empty()) return;
 
-    StockObjectSelection soFont(pdc, DEFAULT_GUI_FONT);
+    GdiObjectSelection soFont(pdc, GetAppFont());
     ScopedBkMode soBkMode(pdc, TRANSPARENT);
     RenderLayout(pdc, true);
 }

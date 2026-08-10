@@ -51,7 +51,7 @@ class CLayout final
     class CSizeGripper final : public MessageTarget<CSizeGripper, CWnd>
     {
     public:
-        const int m_width = 14;
+        const int m_width = ScaleForDpi(14);
 
         CSizeGripper() = default;
         void Create(CWnd* parent, CRect rc);

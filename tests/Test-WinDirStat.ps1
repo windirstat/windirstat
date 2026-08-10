@@ -157,6 +157,10 @@ $script:SettingsMinScanningThreads = 1
 $script:SettingsMaxScanningThreads = 16
 $script:SettingsMinDarkMode = 0
 $script:SettingsMaxDarkMode = 2
+$script:SettingsMinFontSizePercent = 0
+$script:SettingsMaxFontSizePercent = 200
+$script:SettingsMinToolBarSizePercent = 0
+$script:SettingsMaxToolBarSizePercent = 200
 $script:SettingsMinSelectDrivesRadio = 0
 $script:SettingsMaxSelectDrivesRadio = 2
 $script:SettingsMinFolderHistoryCount = 0
@@ -3161,7 +3165,7 @@ function New-PortableIni {
         'ShowEmptyRecycleBinPrompt=0', 'ShowCreateHardlinkPrompt=0', 'ShowRemoveMotwPrompt=0',
         'ShowDisableHibernatePrompt=0', 'ShowRemoveShadowCopiesPrompt=0', 'ShowDismCleanupPrompt=0',
         'ShowDismResetPrompt=0', 'ShowSetDatesPrompt=0', 'ShowRemoveEmptyFoldersPrompt=0',
-        'ScanForDuplicates=1', 'ProcessHardlinks=0',
+        'ScanForDuplicates=1', 'ProcessHardlinks=0', 'FontSizePercent=100', 'ToolBarSizePercent=100',
         'MainWindowPlacement=2C0000000200000003000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF32000000320000003204000032030000'
     )
     $iniLines += $OptionLines
@@ -3449,6 +3453,30 @@ function Test-MenuNavigation {
     } else {
         Assert-Fail $g 'Options menu contains expected items' "Missing: $($missingOptions -join ', ')"
     }
+    $expectedScaleItems = @('Use Windows Setting', '100%', '125%', '150%', '175%', '200%')
+    foreach ($scaleMenuName in @('Font Size', 'Toolbar Size')) {
+        $scaleMenu = $optionsMenuItems |
+            Where-Object { $_.ItemName -eq $scaleMenuName -and $_.IsSubmenu } |
+            Select-Object -First 1
+        Assert-That $g "Options exposes an enabled $scaleMenuName submenu" `
+            ([bool]($scaleMenu -and $scaleMenu.IsEnabled)) "$scaleMenuName submenu missing or disabled"
+        $scaleItems = @($allItems | Where-Object {
+            $_.MenuName -eq "Options -> $scaleMenuName" -and $_.CommandId -notin @(0, [uint32]::MaxValue)
+        })
+        $disabledScaleItems = @($scaleItems | Where-Object { !$_.IsEnabled })
+        $scaleItemNames = @($scaleItems.ItemName | Sort-Object)
+        Assert-That $g "$scaleMenuName submenu exposes Windows and five enabled percentages" `
+            ($scaleItems.Count -eq 6 -and $disabledScaleItems.Count -eq 0 -and
+                ($scaleItemNames -join '|') -ceq (@($expectedScaleItems | Sort-Object) -join '|')) `
+            "Found: $($scaleItemNames -join ', '); disabled=$($disabledScaleItems.Count)"
+        $checkedScaleItems = @($scaleItems | Where-Object { $_.IsChecked })
+        Assert-That $g "$scaleMenuName submenu selects the configured 100% choice" `
+            ($checkedScaleItems.Count -eq 1 -and $checkedScaleItems[0].ItemName -ceq '100%') `
+            "Checked=$($checkedScaleItems.ItemName -join ', ')"
+    }
+    $legacyLargeToolBarItems = @($optionsMenuItems | Where-Object { $_.ItemName -eq 'Large Toolbar Icons' })
+    Assert-That $g 'Options no longer exposes Large Toolbar Icons' `
+        ($legacyLargeToolBarItems.Count -eq 0) "Found $($legacyLargeToolBarItems.Count) legacy item(s)"
     $showVisualizationItems = @($optionsMenuItems | Where-Object {
         $_.ItemName -eq 'Show Visualization' -and $_.CommandId -eq 32772
     })
@@ -9881,12 +9909,12 @@ function Add-SettingsTestHarness {
         'ShowDisableHibernatePrompt', 'ShowRemoveShadowCopiesPrompt', 'ShowDismCleanupPrompt',
         'ShowDismResetPrompt', 'ShowSetDatesPrompt', 'ShowRemoveEmptyFoldersPrompt',
         'ShowMicrosoftProgress', 'ShowFileTypes', 'ShowFreeSpace', 'ShowStatusBar'
-        'ShowTimeSpent', 'ShowToolBar', 'LargeToolBar', 'ShowVisualization', 'ShowUnknown'
+        'ShowTimeSpent', 'ShowToolBar', 'ToolBarSizePercent', 'ShowVisualization', 'ShowUnknown'
         'SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning', 'AutoElevate', 'TreeMapGrid'
         'TreeMapShowExtensions', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine', 'UseWindowsLocaleSetting', 'ProcessHardlinks', 'ConfigPage'
         'LanguageId', 'FileHashAlgorithm', 'ProcessPriority', 'LargeFileCount', 'MinimizeViewThreshold', 'ScanningThreads', 'SelectDrivesRadio', 'SizeProportionIndent', 'FileTreeColorCount'
         'FilteringSizeMinimum', 'FilteringSizeUnits', 'FilteringMaxAgeDays', 'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapHeightFactor', 'TreeMapLightSourceX'
-        'TreeMapLightSourceY', 'TreeMapScaleFactor', 'TreeMapStyle', 'GraphPaneStyle', 'TreeMapMaxDepth', 'DarkMode', 'FolderHistoryCount', 'DriveListColumnOrder', 'DriveListColumnWidths'
+        'TreeMapLightSourceY', 'TreeMapScaleFactor', 'TreeMapStyle', 'GraphPaneStyle', 'TreeMapMaxDepth', 'DarkMode', 'FontSizePercent', 'FolderHistoryCount', 'DriveListColumnOrder', 'DriveListColumnWidths'
         'DriveListColumnVisibility', 'DupeViewColumnOrder', 'DupeViewColumnWidths', 'DupeViewColumnVisibility', 'FileTreeColumnOrder', 'FileTreeColumnWidths', 'FileTreeColumnVisibility', 'ExtViewColumnOrder'
         'ExtViewColumnWidths', 'ExtViewColumnVisibility', 'SearchViewColumnOrder', 'SearchViewColumnWidths', 'SearchViewColumnVisibility', 'TopViewColumnOrder', 'TopViewColumnWidths', 'TopViewColumnVisibility'
         'WatcherColumnOrder', 'WatcherColumnWidths', 'WatcherColumnVisibility', 'PermsViewColumnVisibility', 'SelectDrivesDrives', 'SelectDrivesFolder', 'FilteringExcludeDirs', 'FilteringExcludeFiles'
@@ -10318,7 +10346,7 @@ $filteringSettings = @(
 
 $visualSettings = @(
     'AboutWindowRect', 'ConfigPage', 'DarkMode', 'DriveSelectWindowRect', 'FileTreeColors', 'FileTreeColorCount',
-    'GroupUnregisteredTypes', 'LargeToolBar', 'LayoutPermutation', 'LayoutTopology', 'ListFullRowSelection',
+    'GroupUnregisteredTypes', 'LayoutPermutation', 'LayoutTopology', 'ListFullRowSelection',
     'ListGrid', 'ListStripes', 'MainSplitterPos', 'MainWindowPlacement', 'MinimizeViewThreshold', 'PacmanAnimation',
     'PermsColor', 'PermsColorAccount', 'PermsColorLevel', 'SearchWindowRect', 'ShowFileTypes', 'ShowStatusBar',
     'ShowTimeSpent', 'ShowToolBar', 'SizeProportionIndent', 'SubSplitterPos',
@@ -10531,6 +10559,9 @@ $settingCases = @(
     New-SettingCase PermsExcludeRegex -Section PermissionsView -Entry ExcludeRegex -Default '' -ExplicitInput '^BUILTIN\\Users$' -ExplicitExpected '^BUILTIN\\Users$'
     New-SettingCase ScanningThreads -Default 4 -ExplicitInput 7 -ExplicitExpected 7 -Minimum $script:SettingsMinScanningThreads -Maximum $script:SettingsMaxScanningThreads -BoundsOrder 5
     New-SettingCase DarkMode -Minimum $script:SettingsMinDarkMode -Maximum $script:SettingsMaxDarkMode -BoundsOrder 6
+    New-SettingCase FontSizePercent -Default 0 -ExplicitInput 150 -ExplicitExpected 150 -Minimum $script:SettingsMinFontSizePercent -Maximum $script:SettingsMaxFontSizePercent -BoundsOrder 14
+    New-SettingCase ToolBarSizePercent -Default 0 -ExplicitInput 150 -ExplicitExpected 150 `
+        -Minimum $script:SettingsMinToolBarSizePercent -Maximum $script:SettingsMaxToolBarSizePercent -BoundsOrder 15
     New-SettingCase TreeMapFolderFramesDrawThreshold -Section TreeMapView -Default $script:SettingsDefaultTreeMapFolderFramesDrawThreshold -ExplicitInput 17 -ExplicitExpected 17 -Minimum $script:SettingsMinTreeMapFolderFramesDrawThreshold -Maximum $script:SettingsMaxTreeMapFolderFramesDrawThreshold -BoundsOrder 10
     New-SettingCase SelectDrivesRadio -Section DriveSelect -Default 0 -ExplicitInput 2 -ExplicitExpected 2 -Minimum $script:SettingsMinSelectDrivesRadio -Maximum $script:SettingsMaxSelectDrivesRadio -BoundsOrder 7
     New-SettingCase FolderHistoryCount -Section DriveSelect -Default 10 -ExplicitInput 3 -ExplicitExpected 3 -Minimum $script:SettingsMinFolderHistoryCount -Maximum $script:SettingsMaxFolderHistoryCount -BoundsOrder 8
@@ -10787,6 +10818,17 @@ try {
         param($ctx)
 
         Invoke-SettingsBounds $ctx High
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'TextScale_NormalizesReservedValues' `
+        -Behavior ('Nonzero font and toolbar sizes below 100 should normalize to the minimum explicit ' +
+            'percentage.') -Body {
+        param($ctx)
+
+        Invoke-SettingsProbeCases $ctx @(
+            @{ Name = 'ReservedFontSize'; Values = @('Options', 'FontSizePercent', 50); Expected = @('Font size', 'FontSizePercent', 100) }
+            @{ Name = 'ReservedToolBarSize'; Values = @('Options', 'ToolBarSizePercent', 50); Expected = @('Toolbar size', 'ToolBarSizePercent', 100) }
+        )
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Item_PercentageModesAndPausedTime' `

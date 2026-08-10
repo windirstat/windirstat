@@ -302,11 +302,11 @@ template <> void Setting<WINDOWPLACEMENT>::ReadPersistedProperty()
 {
     if (ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(WINDOWPLACEMENT)))
     {
-        // Scale rcNormalPosition from stored 96 DPI values to current DPI
-        m_value.rcNormalPosition.left = ScaleForDpi(m_value.rcNormalPosition.left);
-        m_value.rcNormalPosition.top = ScaleForDpi(m_value.rcNormalPosition.top);
-        m_value.rcNormalPosition.right = ScaleForDpi(m_value.rcNormalPosition.right);
-        m_value.rcNormalPosition.bottom = ScaleForDpi(m_value.rcNormalPosition.bottom);
+        // The user owns the main-window size; only adjust it for the display DPI.
+        m_value.rcNormalPosition.left = ScaleForScreenDpi(m_value.rcNormalPosition.left);
+        m_value.rcNormalPosition.top = ScaleForScreenDpi(m_value.rcNormalPosition.top);
+        m_value.rcNormalPosition.right = ScaleForScreenDpi(m_value.rcNormalPosition.right);
+        m_value.rcNormalPosition.bottom = ScaleForScreenDpi(m_value.rcNormalPosition.bottom);
     }
 }
 
@@ -314,10 +314,10 @@ template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 {
     // Scale rcNormalPosition from current DPI to 96 DPI for storage
     WINDOWPLACEMENT normalizedWp = m_value;
-    normalizedWp.rcNormalPosition.left = UnscaleForDpi(m_value.rcNormalPosition.left);
-    normalizedWp.rcNormalPosition.top = UnscaleForDpi(m_value.rcNormalPosition.top);
-    normalizedWp.rcNormalPosition.right = UnscaleForDpi(m_value.rcNormalPosition.right);
-    normalizedWp.rcNormalPosition.bottom = UnscaleForDpi(m_value.rcNormalPosition.bottom);
+    normalizedWp.rcNormalPosition.left = UnscaleForScreenDpi(m_value.rcNormalPosition.left);
+    normalizedWp.rcNormalPosition.top = UnscaleForScreenDpi(m_value.rcNormalPosition.top);
+    normalizedWp.rcNormalPosition.right = UnscaleForScreenDpi(m_value.rcNormalPosition.right);
+    normalizedWp.rcNormalPosition.bottom = UnscaleForScreenDpi(m_value.rcNormalPosition.bottom);
     GetPersistedSettingStorage().WriteBinary(m_section, m_entry,
         std::as_bytes(std::span{ &normalizedWp, 1 }));
 }
@@ -396,11 +396,11 @@ template <> void Setting<RECT>::ReadPersistedProperty()
 {
     if (ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(RECT)))
     {
-        // Scale from stored 96 DPI values to current DPI
-        m_value.left = ScaleForDpi(m_value.left);
-        m_value.top = ScaleForDpi(m_value.top);
-        m_value.right = ScaleForDpi(m_value.right);
-        m_value.bottom = ScaleForDpi(m_value.bottom);
+        const RECT stored = m_value;
+        m_value.left = ScaleForScreenDpi(stored.left);
+        m_value.top = ScaleForScreenDpi(stored.top);
+        m_value.right = m_value.left + ScaleForDpi(stored.right - stored.left);
+        m_value.bottom = m_value.top + ScaleForDpi(stored.bottom - stored.top);
     }
 }
 
@@ -408,10 +408,10 @@ template <> void Setting<RECT>::WritePersistedProperty()
 {
     // Scale from current DPI to 96 DPI for storage
     RECT normalizedRect;
-    normalizedRect.left = UnscaleForDpi(m_value.left);
-    normalizedRect.top = UnscaleForDpi(m_value.top);
-    normalizedRect.right = UnscaleForDpi(m_value.right);
-    normalizedRect.bottom = UnscaleForDpi(m_value.bottom);
+    normalizedRect.left = UnscaleForScreenDpi(m_value.left);
+    normalizedRect.top = UnscaleForScreenDpi(m_value.top);
+    normalizedRect.right = normalizedRect.left + UnscaleForDpi(m_value.right - m_value.left);
+    normalizedRect.bottom = normalizedRect.top + UnscaleForDpi(m_value.bottom - m_value.top);
     GetPersistedSettingStorage().WriteBinary(m_section, m_entry,
         std::as_bytes(std::span{ &normalizedRect, 1 }));
 }

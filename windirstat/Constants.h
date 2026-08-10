@@ -38,9 +38,10 @@ namespace wds
     inline constexpr auto Gi = Mi * Ki;
     inline constexpr auto Ti = Gi * Ki;
 
-    inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
-    inline constexpr auto strThemesKey   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
-    inline constexpr auto strUninstall   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\WinDirStat";
+    inline constexpr auto strAccessibilityKey = L"Software\\Microsoft\\Accessibility";
+    inline constexpr auto strExplorerKey      = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
+    inline constexpr auto strThemesKey        = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+    inline constexpr auto strUninstall        = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\WinDirStat";
 
     inline constexpr auto strInvalidAttributes     = L"??????";
     inline constexpr auto chrAttributeReadonly     = L'R'; /*FILE_ATTRIBUTE_READONLY*/
