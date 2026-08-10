@@ -190,10 +190,9 @@ void CFiltering::CompileFilters()
     MaxAgeFileTimeCutoff = {};
     if (COptions::FilteringMaxAgeDays > 0)
     {
-        const FILETIME ft = CurrentSystemFileTime();
-        uint64_t t = (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        uint64_t t = std::bit_cast<uint64_t>(CurrentSystemFileTime());
         t -= COptions::FilteringMaxAgeDays.Obj() * 864'000'000'000ULL; // 100ns ticks per day
-        MaxAgeFileTimeCutoff ={ static_cast<DWORD>(t), static_cast<DWORD>(t >> 32) };
+        MaxAgeFileTimeCutoff = std::bit_cast<FILETIME>(t);
     }
 
     // Cache whether any filter is active so callers can short-circuit cheaply

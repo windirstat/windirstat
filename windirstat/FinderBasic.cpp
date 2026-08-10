@@ -302,8 +302,7 @@ ULONGLONG FinderBasic::GetIndex() const
 
 FILETIME FinderBasic::GetLastWriteTime() const
 {
-    return { m_currentInfo->LastWriteTime.LowPart,
-        static_cast<DWORD>(m_currentInfo->LastWriteTime.HighPart) };
+    return std::bit_cast<FILETIME>(m_currentInfo->LastWriteTime);
 }
 
 std::wstring FinderBasic::GetFilePath() const
