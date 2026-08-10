@@ -1118,26 +1118,3 @@ void CItem::ScanItemsFinalize(CItem* item)
         }
     }
 }
-
-std::vector<CItem*> CItem::GetItemsRecursive(const std::vector<CItem*>& initialItems, const std::function<bool(CItem*)>& task)
-{
-    std::vector<CItem*> files;
-    std::vector childStack{ initialItems };
-    while (!childStack.empty())
-    {
-        const auto& item = childStack.back();
-        childStack.pop_back();
-        if (item->HasChildren())
-        {
-            for (const auto& child : item->GetChildren())
-            {
-                childStack.push_back(child);
-            }
-        }
-        else if (task(item))
-        {
-            files.emplace_back(item);
-        }
-    }
-    return files;
-}

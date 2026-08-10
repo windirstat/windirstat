@@ -218,8 +218,6 @@ public:
     void UpdateStatsFromDisk();
     static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
     static void ScanItemsFinalize(CItem* item);
-    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,
-        const std::function<bool(CItem*)>& task = [](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); });
 
     // CTreeMap Interface
     bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
@@ -273,6 +271,24 @@ public:
     {
         if (unsetVal) m_type = (m_type & ~type);
         else m_type = bitOp ? (m_type | type) : ((m_type & ~Mask) | type);
+    }
+
+    template<typename Predicate = decltype([](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); }) >
+    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems, Predicate&& predicate = {})
+    {
+        std::vector<CItem*> items;
+        for (std::vector childStack{ initialItems }; !childStack.empty();)
+        {
+            CItem* item = childStack.back();
+            childStack.pop_back();
+            if (item->HasChildren())
+            {
+                const auto& children = item->GetChildren();
+                childStack.insert(childStack.end(), children.begin(), children.end());
+            }
+            else if (std::invoke(predicate, item)) items.emplace_back(item);
+        }
+        return items;
     }
 
     void SetReparseType(const ITEMTYPE type) noexcept { SetType<ITRP_MASK>(type); }
