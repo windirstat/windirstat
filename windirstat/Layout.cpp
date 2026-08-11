@@ -129,17 +129,13 @@ void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
         wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER);
 }
 
-bool CLayout::CSizeGripper::OnEraseBkgnd(CDC* pDC) const
-{
-    CRect rc = ClientRect();
-    pDC->FillSolidRect(rc, DarkMode::SystemColor(CTLCOLOR_DLG));
-    return true;
-}
-
 void CLayout::CSizeGripper::OnPaint()
 {
     // Draw three diagonal shadow lines
     CPaintDC dc(this);
+    DrawThemeParentBackgroundEx(Handle(), dc.Handle(),
+        DTPB_USEERASEBKGND | DTPB_USECTLCOLORSTATIC, nullptr);
+
     for (int offset : {1, 5, 9})
     {
         DrawShadowLine(&dc, { offset, m_width }, { m_width, offset });

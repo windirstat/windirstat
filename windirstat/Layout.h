@@ -65,7 +65,6 @@ class CLayout final
     protected:
         void OnPaint();
         LRESULT OnNcHitTest(CPoint point) const;
-        bool OnEraseBkgnd(CDC* pDC) const;
     };
 
     class CPositioner final
@@ -143,7 +142,6 @@ inline std::span<const RouteEntry> CLayout::CSizeGripper::Routes()
     {
         Route::Window<&ThisClass::OnPaint>(WM_PAINT),
         Route::Window<&ThisClass::OnNcHitTest>(WM_NCHITTEST),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
     };
     return entries;
 }
