@@ -23,7 +23,7 @@
 
 class COptions;
 
-constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
+constexpr size_t USERDEFINEDCLEANUPACCELERATORCOUNT = 10;
 constexpr auto TREELISTCOLORCOUNT = 8;
 constexpr auto PERMSRULECOUNT = 5;
 
@@ -124,6 +124,7 @@ struct USERDEFINEDCLEANUP
     // This will not transfer the property persistent settings but allows
     // this to be used as a generalized structure in the cleanup page
     USERDEFINEDCLEANUP(const USERDEFINEDCLEANUP& other) { *this = other; }
+    USERDEFINEDCLEANUP(USERDEFINEDCLEANUP&&) noexcept = default;
     USERDEFINEDCLEANUP& operator=(const USERDEFINEDCLEANUP& other)
     {
         Title = other.Title.Obj();
@@ -150,6 +151,7 @@ struct USERDEFINEDCLEANUP
 class COptions final
 {
     inline static LPCWSTR OptionsGeneral = L"Options";
+    inline static LPCWSTR OptionsCleanups = L"Cleanups";
     inline static LPCWSTR OptionsTreeMap = L"TreeMapView";
     inline static LPCWSTR OptionsFileTree = L"FileTreeView";
     inline static LPCWSTR OptionsDupeTree = L"DupeView";
@@ -260,6 +262,8 @@ public:
     inline static Setting<double> MainSplitterPos{ OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0 };
     inline static Setting<double> SubSplitterPos{ OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0 };
     inline static Setting<int> ConfigPage{ OptionsGeneral, L"ConfigPage", 0 };
+    inline static Setting<int> UserDefinedCleanupCount{ OptionsCleanups, L"Count", 0, 0,
+        std::numeric_limits<int>::max() };
     inline static Setting<int> DarkMode{ OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS };
     inline static Setting<int> FontSizePercent{ OptionsGeneral, L"FontSizePercent", 0, 0, 200 };
     inline static Setting<int> LanguageId{ OptionsGeneral, L"LanguageId", 0 };
@@ -336,6 +340,7 @@ public:
     static void RescaleFontDependentState(int oldPercent, int newPercent);
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
+    static void SetUserDefinedCleanups(const std::vector<USERDEFINEDCLEANUP>& cleanups);
     static void SetTreeMapOptions(const CTreeMap::Options& options);
 
     static LCID GetLocaleForFormatting();

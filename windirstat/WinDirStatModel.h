@@ -123,6 +123,7 @@ public:
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
+    void RunUserDefinedCleanup(size_t index);
     void StartScanningEngine(std::vector<CItem*> items);
     enum StopReason : uint8_t { Default, Stop, Abort };
     void StopScanningEngine(StopReason stopReason = Stop);
@@ -136,7 +137,6 @@ public:
     void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);
-    static bool AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const;
     void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath);

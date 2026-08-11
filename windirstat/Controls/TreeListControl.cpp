@@ -888,9 +888,9 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
         point = ToScreen(CPoint(rcTitle.left, rcTitle.bottom));
     }
 
-    CMenu menu = CMenu::LoadResource(IDR_POPUP_TREE);
-    Localization::UpdateMenu(menu);
-    CMenu* sub = menu.SubmenuAt(0);
+    m_contextMenu = CMenu::LoadResource(IDR_POPUP_TREE);
+    Localization::UpdateMenu(m_contextMenu);
+    CMenu* sub = m_contextMenu.SubmenuAt(0);
     if (sub == nullptr) return;
 
     // Populate default menu items
@@ -915,7 +915,7 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     }
 
     // Update dynamic menu items
-    CMainFrame::Get()->UpdateDynamicMenuItems(sub);
+    CMainFrame::Get()->UpdateDynamicMenuItems(sub, &m_contextMenu);
 
     // Show popup menu and act accordingly.
     //

@@ -189,7 +189,7 @@ public:
     bool IsScanSuspended() const;
 
     void UpdateProgress();
-    void UpdateDynamicMenuItems(CMenu* menu) const;
+    void UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader = nullptr) const;
     std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, bool removeItems = true) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
@@ -254,6 +254,7 @@ protected:
     void OnTimer(UINT_PTR nIDEvent);
     void OnClose();
     void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, bool bSysMenu);
+    LRESULT OnMenuCommand(WPARAM position, LPARAM menuHandle);
     void OnUpdateEnableControl(CCmdUI* pCmdUI);
     void OnSize(UINT nType, int cx, int cy);
     void OnUpdateViewShowVisualization(CCmdUI* pCmdUI) const;
@@ -403,6 +404,7 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Window<&ThisClass::OnCreate>(WM_CREATE),
         Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
         Route::Window<&ThisClass::OnInitMenuPopup>(WM_INITMENUPOPUP),
+        Route::Window<&ThisClass::OnMenuCommand>(WM_MENUCOMMAND),
         Route::Window<&ThisClass::OnSize>(WM_SIZE),
         Route::Window<&ThisClass::OnSysColorChange>(WM_SYSCOLORCHANGE),
         Route::Window<&ThisClass::OnSettingChange>(WM_SETTINGCHANGE),

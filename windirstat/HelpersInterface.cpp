@@ -615,7 +615,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
             { FCONTROL,      L"Ctrl"  }, { FALT,        L"Alt"   }, { FSHIFT,      L"Shift" } },
         SpecialKeys[] = {
             // Directional Keys
-            { VK_UP,         L"Up"    }, { VK_DOWN,     L"Down"  }, { VK_LEFT,     L"Left"  }, { VK_RIGHT,     L"Right" },
+            { VK_UP,         L"↑"     }, { VK_DOWN,     L"↓"     }, { VK_LEFT,     L"←"     }, { VK_RIGHT,     L"→"     },
             // Numpad Keys
             { VK_ADD,        L"Num +" }, { VK_SUBTRACT, L"Num -" }, { VK_MULTIPLY, L"Num *" }, { VK_DIVIDE,    L"Num /" },
             { VK_DECIMAL,    L"Num ." },

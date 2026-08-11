@@ -40,28 +40,17 @@ protected:
     void OnSomethingChanged();
     void UpdateControlStatus();
     void CheckEmptyTitle();
+    bool HasCurrentUdc() const noexcept;
+    void MoveCurrentUdc(int offset);
 
-    std::unique_ptr<USERDEFINEDCLEANUP[]> m_udc = std::make_unique<USERDEFINEDCLEANUP[]>(USERDEFINEDCLEANUPCOUNT);
+    std::vector<USERDEFINEDCLEANUP> m_udc;
     int m_current = -1; // currently selected user defined cleanup
+    bool m_updating = false;
 
     // Dialog data
     CListBox m_customCleanupList;
     CComboBox m_ctlRefreshPolicy;
-
     CEdit m_ctlTitle;
-    CButton m_ctlWorksForDrives;
-    CButton m_ctlWorksForDirectories;
-    CButton m_ctlWorksForFiles;
-    CButton m_ctlWorksForUncPaths;
-    CEdit m_ctlCommandLine;
-    CButton m_ctlRecurseIntoSubdirectories;
-    CButton m_ctlAskForConfirmation;
-    CButton m_ctlShowConsoleWindow;
-    CButton m_ctlWaitForCompletion;
-    CStatic m_ctlHintSp;
-    CStatic m_ctlHintSn;
-    CButton m_ctlUp;
-    CButton m_ctlDown;
 
 public:
     static std::span<const RouteEntry> Routes();
@@ -70,10 +59,8 @@ protected:
     void OnLbnSelchangeList();
     void OnBnClickedEnabled();
     void OnEnChangeTitle();
-    void OnBnClickedWorksfordrives();
-    void OnBnClickedWorksfordirectories();
-    void OnBnClickedModified();
-    void OnBnClickedRecurseintosubdirectories();
+    void OnBnClickedAdd();
+    void OnBnClickedRemove();
     void OnBnClickedUp();
     void OnBnClickedDown();
     void OnBnClickedHelpbutton();
@@ -87,16 +74,18 @@ inline std::span<const RouteEntry> CPageCleanups::Routes()
         Route::Control<&ThisClass::OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
         Route::Control<&ThisClass::OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
         Route::Control<&ThisClass::OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
-        Route::Control<&ThisClass::OnBnClickedWorksfordrives>(BN_CLICKED, IDC_WORKSFORDRIVES),
-        Route::Control<&ThisClass::OnBnClickedWorksfordirectories>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
-        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WORKSFORFILES),
-        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
-        Route::Control<&ThisClass::OnBnClickedModified>(EN_CHANGE, IDC_COMMANDLINE),
-        Route::Control<&ThisClass::OnBnClickedRecurseintosubdirectories>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
-        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
-        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
-        Route::Control<&ThisClass::OnBnClickedModified>(BN_CLICKED, IDC_WAITFORCOMPLETION),
-        Route::Control<&ThisClass::OnBnClickedModified>(CBN_SELENDOK, IDC_REFRESHPOLICY),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDRIVES),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORFILES),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
+        Route::Control<&ThisClass::OnSomethingChanged>(EN_CHANGE, IDC_COMMANDLINE),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
+        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION),
+        Route::Control<&ThisClass::OnSomethingChanged>(CBN_SELENDOK, IDC_REFRESHPOLICY),
+        Route::Control<&ThisClass::OnBnClickedAdd>(BN_CLICKED, IDC_ADD_CLEANUP),
+        Route::Control<&ThisClass::OnBnClickedRemove>(BN_CLICKED, IDC_REMOVE_CLEANUP),
         Route::Control<&ThisClass::OnBnClickedUp>(BN_CLICKED, IDC_UP),
         Route::Control<&ThisClass::OnBnClickedDown>(BN_CLICKED, IDC_DOWN),
         Route::Control<&ThisClass::OnBnClickedHelpbutton>(BN_CLICKED, IDC_HELPBUTTON),

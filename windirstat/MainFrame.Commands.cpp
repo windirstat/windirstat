@@ -25,6 +25,8 @@
 #include "ExtensionView.h"
 #include "ProgressDlg.h"
 
+static const int UdcMenuTag = 0;
+
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const bool bSysMenu)
 {
     CFrameWnd::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
@@ -43,7 +45,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const boo
     }
 
     // If the menu being opened is populate it
-    if (pPopupMenu->ItemCount() == 1 && pPopupMenu->ItemIdAt(0) == 0)
+    if (pPopupMenu->ItemCount() == 1 && (pPopupMenu->ItemState(0, MF_BYPOSITION) & MF_SEPARATOR) != 0)
     {
         while (pPopupMenu->ItemCount() > 0)
         {
@@ -159,14 +161,11 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
     return { subMenu, subMenuPos };
 }
 
-void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
+void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
 {
-    const auto& items = CWinDirStatModel::Get()->GetAllSelected();
-    const bool scanReady = CWinDirStatModel::Get()->IsScanSettled();
-
-    // get list of paths from items
-    std::vector<std::wstring> paths;
-    for (auto& item : items) paths.push_back(item->GetPath());
+    CWinDirStatModel* model = CWinDirStatModel::Get();
+    const auto& items = model->GetAllSelected();
+    const bool scanReady = model->IsScanSettled();
 
     // locate compress menu
     auto [compressMenu, compressMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_COMPRESS_MENU), false);
@@ -188,28 +187,58 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     }
 
     auto[customMenu, customMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP));
-    for (UINT iCurrent = 0; customMenu != nullptr && iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
+    if (customMenu == nullptr) return;
+
+    if (menuHeader == nullptr) menuHeader = GetMenu();
+    MENUINFO headerInfo{ .cbSize = sizeof(headerInfo), .fMask = MIM_STYLE };
+    if (menuHeader != nullptr && ::GetMenuInfo(menuHeader->Handle(), &headerInfo))
+    {
+        headerInfo.fMask |= MIM_APPLYTOSUBMENUS;
+        headerInfo.dwStyle |= MNS_NOTIFYBYPOS;
+        ::SetMenuInfo(menuHeader->Handle(), &headerInfo);
+    }
+
+    MENUINFO customMenuInfo{ .cbSize = sizeof(customMenuInfo), .fMask = MIM_MENUDATA,
+        .dwMenuData = reinterpret_cast<ULONG_PTR>(&UdcMenuTag) };
+    ::SetMenuInfo(customMenu->Handle(), &customMenuInfo);
+
+    for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); ++iCurrent)
     {
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
         if (!udc.Enabled) continue;
 
-        std::wstring string = std::vformat(Localization::Lookup(IDS_UDCsCTRLd),
-            std::make_wformat_args(udc.Title.Obj(), iCurrent));
+        const std::wstring string = iCurrent < USERDEFINEDCLEANUPACCELERATORCOUNT ?
+            Localization::Format(IDS_UDCsCTRLd, udc.Title.Obj(), iCurrent) : udc.Title.Obj();
 
-        bool udcValid = scanReady && GetLogicalFocus() == LF_FILETREE && !items.empty();
-        if (udcValid) for (const auto& item : items)
-        {
-            udcValid &= CWinDirStatModel::Get()->UserDefinedCleanupWorksForItem(&udc, item);
-        }
+        const bool udcValid = scanReady && GetLogicalFocus() == LF_FILETREE && !items.empty() &&
+            std::ranges::all_of(items,
+                [&](const auto& item) { return model->UserDefinedCleanupWorksForItem(&udc, item); });
 
-        customMenu->Append(MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
-        customMenu->SetItemEnabled(ID_USERDEFINEDCLEANUP0 + iCurrent, udcValid,
-            CMenu::ItemLookup::Command);
+        const int position = customMenu->ItemCount();
+        customMenu->Append(MF_STRING, 0, string.c_str());
+        MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo), .fMask = MIIM_DATA, .dwItemData = iCurrent };
+        customMenu->SetItemInfo(position, &itemInfo);
+        customMenu->SetItemEnabled(position, udcValid);
     }
 
     // conditionally disable menu if empty
-    if (customMenu)
-        menu->SetItemEnabled(customMenuPos, customMenu->ItemCount() > 0 && scanReady);
+    menu->SetItemEnabled(customMenuPos, customMenu->ItemCount() > 0 && scanReady);
+}
+
+LRESULT CMainFrame::OnMenuCommand(const WPARAM position, const LPARAM menuHandle)
+{
+    CMenu* menu = CMenu::FromHandle(reinterpret_cast<HMENU>(menuHandle));
+    MENUINFO menuInfo{ .cbSize = sizeof(menuInfo), .fMask = MIM_MENUDATA };
+    if (menu == nullptr || !::GetMenuInfo(menu->Handle(), &menuInfo)) return CallDefaultHandler();
+
+    const bool userDefinedCleanupMenu = menuInfo.dwMenuData == reinterpret_cast<ULONG_PTR>(&UdcMenuTag);
+    MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo),
+        .fMask = static_cast<UINT>(userDefinedCleanupMenu ? MIIM_DATA : MIIM_ID) };
+    if (!menu->GetItemInfo(static_cast<UINT>(position), &itemInfo)) return CallDefaultHandler();
+
+    if (userDefinedCleanupMenu) CWinDirStatModel::Get()->RunUserDefinedCleanup(itemInfo.dwItemData);
+    else if (itemInfo.wID != 0 && itemInfo.wID != static_cast<UINT>(-1)) SendMessage(WM_COMMAND, itemInfo.wID);
+    return 0;
 }
 
 void CMainFrame::OnAdvancedShadowCopy(const UINT nID)

@@ -152,6 +152,7 @@ protected:
     bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
     LOGICAL_FOCUS m_logicalFocus = static_cast<LOGICAL_FOCUS>(0);
     bool m_blockFirstColumnReorder = false;
+    CMenu m_contextMenu; // Keep the menu alive until its queued WM_MENUCOMMAND is dispatched.
 
 public:
     static std::span<const RouteEntry> Routes();

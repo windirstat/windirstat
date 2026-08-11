@@ -80,16 +80,47 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 
 void COptions::PreProcessPersistedSettings()
 {
-    // Reserve space so the copy/move constructors are not called
-    UserDefinedCleanups.reserve(USERDEFINEDCLEANUPCOUNT);
-    for (const int i : std::views::iota(0, USERDEFINEDCLEANUPCOUNT))
+    UserDefinedCleanupCount = -1;
+    UserDefinedCleanupCount.ReadPersistedProperty();
+    UserDefinedCleanups.clear();
+    try
     {
-        UserDefinedCleanups.emplace_back(L"Cleanups\\UserDefinedCleanup" + std::format(L"{:02}", i));
+        // A missing count identifies settings written before cleanups became dynamic. Load the former ten slots so
+        // PostProcessPersistedSettings can retain the configured ones; a new installation still collapses to empty.
+        constexpr int legacyCleanupCount = 10;
+        const int count = UserDefinedCleanupCount < 0 ?
+            legacyCleanupCount : UserDefinedCleanupCount.Obj();
+        UserDefinedCleanups.reserve(static_cast<size_t>(count));
+        for (const int i : std::views::iota(0, count))
+        {
+            UserDefinedCleanups.emplace_back(std::format(L"{}\\UserDefinedCleanup{:02}", OptionsCleanups, i));
+        }
+    }
+    catch (const std::exception&)
+    {
+        UserDefinedCleanups.clear();
     }
 }
 
 void COptions::PostProcessPersistedSettings()
 {
+    if (UserDefinedCleanupCount < 0)
+    {
+        const auto isUnusedLegacyCleanup = [](const USERDEFINEDCLEANUP& cleanup)
+        {
+            const bool options[] = { cleanup.Enabled.Obj(), cleanup.WorksForDrives.Obj(),
+                cleanup.WorksForDirectories.Obj(), cleanup.WorksForFiles.Obj(), cleanup.WorksForUncPaths.Obj(),
+                cleanup.RecurseIntoSubdirectories.Obj(), cleanup.AskForConfirmation.Obj(),
+                cleanup.ShowConsoleWindow.Obj(), cleanup.WaitForCompletion.Obj() };
+            return cleanup.VirginTitle.Obj() && cleanup.CommandLine.Obj().empty() &&
+                std::ranges::none_of(options, std::identity{}) && cleanup.RefreshPolicy.Obj() == RP_NO_REFRESH;
+        };
+        while (!UserDefinedCleanups.empty() && isUnusedLegacyCleanup(UserDefinedCleanups.back()))
+        {
+            UserDefinedCleanups.pop_back();
+        }
+    }
+    UserDefinedCleanupCount = static_cast<int>(UserDefinedCleanups.size());
     if (FontSizePercent != 0) FontSizePercent = std::clamp<int>(FontSizePercent, 100, 200);
     if (ToolBarSizePercent != 0) ToolBarSizePercent = std::clamp<int>(ToolBarSizePercent, 100, 200);
 
@@ -135,13 +166,25 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
 
     // Adjust Title to language default Title
-    for (const int i : std::views::iota(0, USERDEFINEDCLEANUPCOUNT))
+    for (const auto i : std::views::iota(size_t{0}, UserDefinedCleanups.size()))
     {
         if (UserDefinedCleanups[i].Title.Obj().empty() || UserDefinedCleanups[i].VirginTitle)
         {
             UserDefinedCleanups[i].Title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, i);
         }
     }
+}
+
+void COptions::SetUserDefinedCleanups(const std::vector<USERDEFINEDCLEANUP>& cleanups)
+{
+    UserDefinedCleanups.clear();
+    UserDefinedCleanups.reserve(cleanups.size());
+    for (const auto i : std::views::iota(size_t{0}, cleanups.size()))
+    {
+        UserDefinedCleanups.emplace_back(std::format(L"{}\\UserDefinedCleanup{:02}", OptionsCleanups, i));
+        UserDefinedCleanups.back() = cleanups[i];
+    }
+    UserDefinedCleanupCount = static_cast<int>(UserDefinedCleanups.size());
 }
 
 bool COptions::IsColumnVisible(const std::vector<int>& visibility, const int subitem) noexcept

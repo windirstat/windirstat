@@ -694,43 +694,43 @@ void CWinDirStatModel::OnExecuteDism()
 
 void CWinDirStatModel::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
-    const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
-    if (!IsScanSettled())
-    {
-        return pCmdUI->Enable(false);
-    }
+    const UINT i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
+    if (!IsScanSettled() || i >= COptions::UserDefinedCleanups.size()) return pCmdUI->Enable(false);
 
     const auto& items = GetSelectedItemsView();
-    bool allowControl = (FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus()) &&
-        COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
-    if (allowControl) for (const auto & item : items)
-    {
-        allowControl &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
-    }
+    auto& udc = COptions::UserDefinedCleanups[i];
+    const bool allowControl = (FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus()) &&
+        udc.Enabled && !items.empty() && std::ranges::all_of(items,
+            [&](const auto& item) { return UserDefinedCleanupWorksForItem(&udc, item); });
 
     pCmdUI->Enable(allowControl);
 }
 
 void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
 {
-    if (!IsScanSettled())
-    {
-        return;
-    }
+    RunUserDefinedCleanup(id - ID_USERDEFINEDCLEANUP0);
+}
 
-    USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
+void CWinDirStatModel::RunUserDefinedCleanup(const size_t index)
+{
+    if (!IsScanSettled() || index >= COptions::UserDefinedCleanups.size() ||
+        !COptions::UserDefinedCleanups[index].Enabled) return;
+
+    USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[index];
     const auto & items = GetAllSelected();
+    const bool worksForAll = std::ranges::all_of(items,
+        [&](const auto& item) { return UserDefinedCleanupWorksForItem(udc, item); });
+    assert(worksForAll);
+
+    std::wstring detail = udc->Title.Obj();
+    if (udc->RecurseIntoSubdirectories)
+        detail = std::format(L"{}; {}", detail, GetLocalizedMenuText(IDS_PAGE_CLEANUPS_RECURSE));
+    if (items.empty() || !worksForAll ||
+        !ConfirmOperation(IDS_USER_DEFINED_CLEANUP, udc->AskForConfirmation, items, detail)) return;
+
     std::vector<CItem*> refreshQueue;
     for (const auto & item : items)
     {
-        assert(UserDefinedCleanupWorksForItem(udc, item));
-        if (!UserDefinedCleanupWorksForItem(udc, item))
-        {
-            return;
-        }
-
-        if (!AskForConfirmation(udc, item)) continue;
-
         try
         {
             PerformUserDefinedCleanup(udc, item);
@@ -743,10 +743,7 @@ void CWinDirStatModel::OnUserDefinedCleanup(const UINT id)
     }
 
     // process refresh queue
-    if (!refreshQueue.empty())
-    {
-        RefreshItem(refreshQueue);
-    }
+    if (!refreshQueue.empty()) RefreshItem(refreshQueue);
 }
 
 void CWinDirStatModel::OnTreeMapSelectParent()

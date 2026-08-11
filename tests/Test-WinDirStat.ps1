@@ -4436,6 +4436,74 @@ function Test-SettingsDialog {
         Assert-Fail $g 'Settings tab control' 'No Tab control found in dialog'
     }
 
+    $cleanupsTab = if ($tabCtrl) {
+        $tabItems | Where-Object { $_.Current.Name.Trim() -eq 'Cleanups' } | Select-Object -First 1
+    } else { $null }
+    if ($cleanupsTab -and (Select-TabItem $cleanupsTab)) {
+        Start-Sleep -Milliseconds 250
+        $cleanupList = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::List) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_LIST'))
+        $addCleanup = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_ADD_CLEANUP'))
+        $removeCleanup = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_REMOVE_CLEANUP'))
+        $upCleanup = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_UP'))
+        $downCleanup = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Button) `
+            -AutomationId ([string] (Get-ResourceId 'IDC_DOWN'))
+
+        if (@($cleanupList, $addCleanup, $removeCleanup, $upCleanup, $downCleanup) -contains $null) {
+            Assert-Fail $g 'Cleanups controls present' 'The cleanup list or one of its buttons was not found'
+        }
+        else {
+            $glyphs = @($addCleanup, $removeCleanup, $upCleanup, $downCleanup).Current.Name -join ''
+            Assert-That $g 'Cleanups buttons use centered glyphs' ($glyphs -ceq '+−↑↓') "Found '$glyphs'"
+
+            $listBounds = $cleanupList.Current.BoundingRectangle
+            $buttonBounds = @($addCleanup, $removeCleanup, $upCleanup, $downCleanup).Current.BoundingRectangle
+            $addBounds, $removeBounds, $upBounds, $downBounds = $buttonBounds
+            $tolerance = [Math]::Max(2.0, $removeBounds.Width / 8)
+            $layoutReady = $buttonBounds.Where({ $_.Width -ge $listBounds.Width / 3 }).Count -eq 0 -and
+                $buttonBounds.Where({ $_.Top -le $listBounds.Bottom }).Count -eq 0 -and
+                [Math]::Abs($addBounds.Left - $listBounds.Left) -le $tolerance -and
+                [Math]::Abs($downBounds.Right - $listBounds.Right) -le $tolerance
+            Assert-That $g 'Cleanups buttons are compact and aligned below the list' $layoutReady
+
+            $cleanupItems = @(Find-UiaAll -Root $cleanupList `
+                -Type ([System.Windows.Automation.ControlType]::ListItem))
+            $addReady = $addCleanup.Current.IsEnabled
+            $removeReady = !$removeCleanup.Current.IsEnabled
+            Assert-That $g 'Fresh Cleanups page enables its add glyph' $addReady
+            Assert-That $g 'Fresh Cleanups page disables its remove glyph' $removeReady
+            Assert-That $g 'Fresh Cleanups list starts empty' ($cleanupItems.Count -eq 0) `
+                "Found $($cleanupItems.Count) cleanup item(s)"
+
+            if ($addReady -and $removeReady -and $cleanupItems.Count -eq 0) {
+                Invoke-Button $addCleanup
+                Start-Sleep -Milliseconds 250
+                $cleanupItems = @(Find-UiaAll -Root $cleanupList `
+                    -Type ([System.Windows.Automation.ControlType]::ListItem))
+                $removeEnabled = $removeCleanup.Current.IsEnabled
+                Assert-That $g 'Clicking add creates one cleanup and enables remove' `
+                    ($cleanupItems.Count -eq 1 -and $removeEnabled) `
+                    "Found $($cleanupItems.Count) cleanup item(s); remove enabled=$removeEnabled"
+
+                if ($removeEnabled) {
+                    Invoke-Button $removeCleanup
+                    Start-Sleep -Milliseconds 250
+                    $cleanupItems = @(Find-UiaAll -Root $cleanupList `
+                        -Type ([System.Windows.Automation.ControlType]::ListItem))
+                    Assert-That $g 'Clicking remove restores the empty cleanup state' `
+                        ($cleanupItems.Count -eq 0 -and !$removeCleanup.Current.IsEnabled) `
+                        "Found $($cleanupItems.Count) item(s); remove=$($removeCleanup.Current.IsEnabled)"
+                }
+            }
+        }
+    }
+    else {
+        Assert-Fail $g 'Cleanups page selected for add/remove checks' 'Could not select Cleanups'
+    }
+
     if (!$tabCtrl -or !(& $selectGeneralPage $dialog)) {
         Send-Keys '{ESC}' 300
         Assert-Fail $g 'General settings page selected for persistence checks' 'Could not select General'
@@ -9912,7 +9980,7 @@ function Add-SettingsTestHarness {
         'ShowTimeSpent', 'ShowToolBar', 'ToolBarSizePercent', 'ShowVisualization', 'ShowUnknown'
         'SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning', 'AutoElevate', 'TreeMapGrid'
         'TreeMapShowExtensions', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine', 'UseWindowsLocaleSetting', 'ProcessHardlinks', 'ConfigPage'
-        'LanguageId', 'FileHashAlgorithm', 'ProcessPriority', 'LargeFileCount', 'MinimizeViewThreshold', 'ScanningThreads', 'SelectDrivesRadio', 'SizeProportionIndent', 'FileTreeColorCount'
+        'LanguageId', 'FileHashAlgorithm', 'ProcessPriority', 'LargeFileCount', 'MinimizeViewThreshold', 'ScanningThreads', 'SelectDrivesRadio', 'SizeProportionIndent', 'FileTreeColorCount', 'UserDefinedCleanupCount'
         'FilteringSizeMinimum', 'FilteringSizeUnits', 'FilteringMaxAgeDays', 'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapHeightFactor', 'TreeMapLightSourceX'
         'TreeMapLightSourceY', 'TreeMapScaleFactor', 'TreeMapStyle', 'GraphPaneStyle', 'TreeMapMaxDepth', 'DarkMode', 'FontSizePercent', 'FolderHistoryCount', 'DriveListColumnOrder', 'DriveListColumnWidths'
         'DriveListColumnVisibility', 'DupeViewColumnOrder', 'DupeViewColumnWidths', 'DupeViewColumnVisibility', 'FileTreeColumnOrder', 'FileTreeColumnWidths', 'FileTreeColumnVisibility', 'ExtViewColumnOrder'
@@ -10212,6 +10280,7 @@ namespace WdsSettingsTest
 
         bool includeItemProbe = false;
         bool saveSettings = false;
+        bool mutateCleanups = false;
         std::wstring outputPath;
         for (int i = 1; i < argc; ++i)
         {
@@ -10224,12 +10293,25 @@ namespace WdsSettingsTest
             {
                 saveSettings = true;
             }
+            else if (arg == L"/wds-settings-mutate-cleanups" || arg == L"--wds-settings-mutate-cleanups")
+            {
+                mutateCleanups = true;
+            }
             else if ((arg == L"/wds-settings-dump" || arg == L"--wds-settings-dump") && i + 1 < argc)
             {
                 outputPath = argv.Get()[++i];
             }
         }
         if (outputPath.empty()) return;
+        if (mutateCleanups)
+        {
+            auto cleanups = COptions::UserDefinedCleanups;
+            auto& cleanup = cleanups.emplace_back();
+            cleanup.Title.Obj() = L"Saved cleanup beyond accelerator range";
+            cleanup.Enabled = true;
+            cleanup.VirginTitle = false;
+            COptions::SetUserDefinedCleanups(cleanups);
+        }
         if (saveSettings) PersistedSetting::WritePersistedProperties();
 
         std::ofstream out(outputPath, std::ios::binary);
@@ -10292,7 +10374,8 @@ function Invoke-SettingsDump {
         [Parameter(Mandatory)] [System.Collections.Specialized.OrderedDictionary] $Sections,
         [Parameter(Mandatory)] [string] $Name,
         [switch] $ItemProbe,
-        [switch] $Save
+        [switch] $Save,
+        [switch] $MutateCleanups
     )
 
     $safeName = $Name -replace '[^A-Za-z0-9_.-]', '_'
@@ -10309,6 +10392,7 @@ function Invoke-SettingsDump {
     $arguments = @('/wds-settings-dump', $jsonPath)
     if ($ItemProbe) { $arguments += '/wds-settings-item-probe' }
     if ($Save) { $arguments += '/wds-settings-save' }
+    if ($MutateCleanups) { $arguments += '/wds-settings-mutate-cleanups' }
     $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments $arguments -WorkingDirectory $runRoot
     if ($run.ExitCode -ne 0) { throw "Settings dump exited with code $($run.ExitCode). StdErr: $($run.StdErr)" }
     if (!(Test-Path -LiteralPath $jsonPath)) { throw "Settings dump did not create JSON output: $jsonPath" }
@@ -10317,6 +10401,22 @@ function Invoke-SettingsDump {
         Dump = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
         CommandLine = $run.CommandLine; ExitCode = $run.ExitCode; ElapsedSeconds = $run.ElapsedSeconds
         IniPath = $scenarioIni; RunnerIniPath = $runnerIni; JsonPath = $jsonPath
+    }
+}
+
+function Invoke-SettingsReload {
+    param([pscustomobject] $Context, [string] $Exe, [pscustomobject] $First)
+
+    $jsonPath = $First.JsonPath -replace '\.json$', '-roundtrip.json'
+    if (Test-Path -LiteralPath $jsonPath) { Remove-Item -LiteralPath $jsonPath -Force }
+    $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @('/wds-settings-dump', $jsonPath) `
+        -WorkingDirectory $runRoot
+    Assert-Equal $Context 'Reload exits successfully' $run.ExitCode 0
+    if (!(Test-Path -LiteralPath $jsonPath)) { throw "Settings reload did not create JSON output: $jsonPath" }
+    [pscustomobject] @{
+        Dump = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        CommandLine = $run.CommandLine
+        ElapsedSeconds = $First.ElapsedSeconds + $run.ElapsedSeconds
     }
 }
 
@@ -10553,6 +10653,7 @@ $settingCases = @(
     New-SettingCase @('UseWindowsLocaleSetting', 'ProcessHardlinks') -Default $true -ExplicitInput 0 -ExplicitExpected $false
     New-SettingCase FileHashAlgorithm -Default $script:HashAlgorithm.XXHASH -ExplicitInput $script:HashAlgorithm.SHA256 -ExplicitExpected $script:HashAlgorithm.SHA256 -Minimum $script:SettingsMinHashAlgorithm -Maximum $script:SettingsMaxHashAlgorithm -BoundsOrder 1
     New-SettingCase ProcessPriority -Default 1 -ExplicitInput 2 -ExplicitExpected 2 -Minimum 0 -Maximum 2 -BoundsOrder 2
+    New-SettingCase UserDefinedCleanupCount -Section Cleanups -Entry Count -Default 0 -ExplicitInput 12 -ExplicitExpected 12
     New-SettingCase FilteringMaxAgeDays -Default 0 -ExplicitInput 14 -ExplicitExpected 14
     New-SettingCase LargeFileCount -Default 50 -ExplicitInput 123 -ExplicitExpected 123 -Minimum $script:SettingsMinLargeFileCount -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 3
     New-SettingCase MinimizeViewThreshold -ExplicitInput 42 -ExplicitExpected 42 -Minimum $script:SettingsMinMinimizeViewThreshold -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 4
@@ -10693,7 +10794,7 @@ try {
         }
     }))
 
-    [void] $results.Add((Invoke-Scenario -Name 'Defaults_LoadAndDerivedBehavior' -Behavior 'Default non-visual settings should load with expected values, default cleanup titles, and default reparse following restrictions.' -Body {
+    [void] $results.Add((Invoke-Scenario -Name 'Defaults_LoadAndDerivedBehavior' -Behavior 'Default non-visual settings should load with expected values, no custom cleanups, and default reparse following restrictions.' -Body {
         param($ctx)
 
         $sections = [ordered] @{}
@@ -10703,11 +10804,7 @@ try {
         Assert-SettingCases $ctx $s $settingCases Default
         Assert-True $ctx 'LanguageId is available' ([int] $s.LanguageId -in @($s.LanguageList))
         Assert-EqualCases $ctx @(
-            'Reparse none follows', $s.ReparseFollowing.None, $true; 'Reparse mount default blocked', $s.ReparseFollowing.MountPoint, $false; 'Reparse symlink default blocked', $s.ReparseFollowing.SymbolicLink, $false; 'Reparse junction default blocked', $s.ReparseFollowing.Junction, $false; 'Reparse other default follows', $s.ReparseFollowing.OtherReparsePoint, $true; 'UserDefinedCleanups count', @($s.UserDefinedCleanups).Count, 10
-        )
-        Assert-True $ctx 'Default cleanup 0 title populated' (![string]::IsNullOrWhiteSpace($s.UserDefinedCleanups[0].Title))
-        Assert-EqualCases $ctx @(
-            'Default cleanup 0 enabled', $s.UserDefinedCleanups[0].Enabled, $false; 'Default cleanup 0 refresh policy', $s.UserDefinedCleanups[0].RefreshPolicy, 0
+            'Reparse none follows', $s.ReparseFollowing.None, $true; 'Reparse mount default blocked', $s.ReparseFollowing.MountPoint, $false; 'Reparse symlink default blocked', $s.ReparseFollowing.SymbolicLink, $false; 'Reparse junction default blocked', $s.ReparseFollowing.Junction, $false; 'Reparse other default follows', $s.ReparseFollowing.OtherReparsePoint, $true; 'UserDefinedCleanups count', @($s.UserDefinedCleanups).Count, 0
         )
 
         $dump
@@ -10737,6 +10834,16 @@ try {
             Title = ''
             VirginTitle = 1
         }
+        $sections['Cleanups\UserDefinedCleanup11'] = [ordered] @{
+            Title = 'Cleanup beyond accelerator range'
+            Enable = 1
+            VirginTitle = 0
+        }
+        $sections['Cleanups\UserDefinedCleanup99'] = [ordered] @{
+            Title = 'Stale cleanup outside count'
+            Enable = 1
+            VirginTitle = 0
+        }
 
         $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'ExplicitValues_LoadExactly'
         $s = $dump.Dump
@@ -10748,12 +10855,108 @@ try {
             'Cleanup 00 ask', $s.UserDefinedCleanups[0].AskForConfirmation, $true; 'Cleanup 00 console', $s.UserDefinedCleanups[0].ShowConsoleWindow, $true; 'Cleanup 00 wait', $s.UserDefinedCleanups[0].WaitForCompletion, $true; 'Cleanup 00 refresh policy', $s.UserDefinedCleanups[0].RefreshPolicy, 2
         )
         Assert-True $ctx 'Cleanup 01 virgin title localized' (![string]::IsNullOrWhiteSpace($s.UserDefinedCleanups[1].Title))
-        Assert-True $ctx 'Cleanup 01 title replaced' ($s.UserDefinedCleanups[1].Title -ne '')
+        Assert-EqualCases $ctx @(
+            'Arbitrary cleanup count', @($s.UserDefinedCleanups).Count, 12
+            'Cleanup 11 title', $s.UserDefinedCleanups[11].Title, 'Cleanup beyond accelerator range'
+            'Cleanup 11 enabled', $s.UserDefinedCleanups[11].Enabled, $true
+        )
         Assert-EqualCases $ctx @(
             'Reparse mount allowed', $s.ReparseFollowing.MountPoint, $true; 'Reparse symlink allowed', $s.ReparseFollowing.SymbolicLink, $true; 'Reparse junction allowed', $s.ReparseFollowing.Junction, $true
         )
 
         $dump
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'LegacyCleanups_MigrateWithoutCount' `
+        -Behavior 'Configured cleanup slots from releases before Cleanups\Count should load and acquire a count.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        $sections['Cleanups\UserDefinedCleanup03'] = [ordered] @{
+            Title = 'Legacy configured cleanup'
+            CommandLine = 'cmd /c echo legacy'
+            Enable = 1
+            VirginTitle = 0
+            WorksForFiles = 1
+            RefreshPolicy = 1
+        }
+        $sections['Cleanups\UserDefinedCleanup05'] = [ordered] @{
+            Title = 'Legacy custom-title-only cleanup'
+            VirginTitle = 0
+        }
+        $sections['Cleanups\UserDefinedCleanup09'] = [ordered] @{
+            Title = 'Legacy trailing default cleanup'
+            VirginTitle = 1
+        }
+
+        $first = Invoke-SettingsDump -Exe $testExe -Sections $sections `
+            -Name 'LegacyCleanups_MigrateWithoutCount' -Save
+        Assert-EqualCases $ctx @(
+            'Migration retains slots through the last configured cleanup',
+                @($first.Dump.UserDefinedCleanups).Count, 6
+            'Migration records the inferred cleanup count', $first.Dump.UserDefinedCleanupCount, 6
+            'Migration preserves the configured title',
+                $first.Dump.UserDefinedCleanups[3].Title, 'Legacy configured cleanup'
+            'Migration preserves the configured command',
+                $first.Dump.UserDefinedCleanups[3].CommandLine, 'cmd /c echo legacy'
+            'Migration preserves the configured refresh policy',
+                $first.Dump.UserDefinedCleanups[3].RefreshPolicy, 1
+            'Migration preserves a custom-title-only cleanup',
+                $first.Dump.UserDefinedCleanups[5].Title, 'Legacy custom-title-only cleanup'
+        )
+        Assert-True $ctx 'Migration preserves the enabled state' $first.Dump.UserDefinedCleanups[3].Enabled
+        Assert-True $ctx 'Migration preserves file applicability' $first.Dump.UserDefinedCleanups[3].WorksForFiles
+        $savedLines = [System.IO.File]::ReadAllLines($first.RunnerIniPath)
+        Assert-True $ctx 'Migration persists the inferred cleanup count' ($savedLines -ccontains 'Count=6')
+
+        $roundTrip = Invoke-SettingsReload $ctx $testExe $first
+        Assert-Equal $ctx 'Reload uses the migrated cleanup count' @($roundTrip.Dump.UserDefinedCleanups).Count 6
+        Assert-Equal $ctx 'Reload preserves the migrated cleanup' `
+            $roundTrip.Dump.UserDefinedCleanups[3].Title 'Legacy configured cleanup'
+        Assert-Equal $ctx 'Reload preserves the custom-title-only cleanup' `
+            $roundTrip.Dump.UserDefinedCleanups[5].Title 'Legacy custom-title-only cleanup'
+
+        $roundTrip
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'DynamicCleanups_ExplicitZeroIgnoresLegacySlots' `
+        -Behavior 'An explicit zero count should remain authoritative when obsolete fixed cleanup sections remain.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValue $sections 'Cleanups' 'Count' 0
+        Set-IniValue $sections 'Cleanups\UserDefinedCleanup00' 'CommandLine' 'cmd /c echo stale'
+        $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections `
+            -Name 'DynamicCleanups_ExplicitZeroIgnoresLegacySlots'
+        Assert-Equal $ctx 'Explicit zero cleanup count remains empty' @($dump.Dump.UserDefinedCleanups).Count 0
+
+        $dump
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'DynamicCleanups_SaveRoundTrip' `
+        -Behavior 'A cleanup added beyond the accelerator range should persist after rebuilding the dynamic setting collection.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValue $sections 'Cleanups' 'Count' 12
+        $first = Invoke-SettingsDump -Exe $testExe -Sections $sections `
+            -Name 'DynamicCleanups_SaveRoundTrip' -MutateCleanups -Save
+        Assert-Equal $ctx 'Mutation grows cleanup collection beyond twelve' `
+            (@($first.Dump.UserDefinedCleanups).Count) 13
+        Assert-Equal $ctx 'Mutation creates cleanup beyond accelerator range' `
+            $first.Dump.UserDefinedCleanups[12].Title 'Saved cleanup beyond accelerator range'
+
+        $roundTrip = Invoke-SettingsReload $ctx $testExe $first
+        Assert-Equal $ctx 'Reload preserves dynamic cleanup count' `
+            (@($roundTrip.Dump.UserDefinedCleanups).Count) 13
+        Assert-Equal $ctx 'Reload preserves cleanup beyond accelerator range' `
+            $roundTrip.Dump.UserDefinedCleanups[12].Title 'Saved cleanup beyond accelerator range'
+        Assert-True $ctx 'Reload preserves cleanup enabled state' $roundTrip.Dump.UserDefinedCleanups[12].Enabled
+
+        $roundTrip
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Portable_LongMultilineFilteringRoundTrip' `
@@ -10782,18 +10985,11 @@ try {
         Assert-True $ctx 'Portable INI contains no orphaned exclusion lines' (
             @($savedLines | Where-Object { $paths -ccontains $_ }).Count -eq 0)
 
-        $roundTripJson = Join-Path (Split-Path -Parent $first.JsonPath) 'settings-roundtrip.json'
-        $roundTripRun = Invoke-ProcessWithTimeout -FileName $testExe `
-            -Arguments @('/wds-settings-dump', $roundTripJson) -WorkingDirectory $runRoot
-        Assert-Equal $ctx 'Reload saved portable settings exits successfully' $roundTripRun.ExitCode 0
-        $roundTrip = Get-Content -LiteralPath $roundTripJson -Raw -Encoding UTF8 | ConvertFrom-Json
+        $roundTrip = Invoke-SettingsReload $ctx $testExe $first
         Assert-True $ctx 'Reload preserves every long exclusion line exactly' `
-            ($roundTrip.FilteringExcludeDirs -ceq $expected)
+            ($roundTrip.Dump.FilteringExcludeDirs -ceq $expected)
 
-        [pscustomobject] @{
-            CommandLine = $roundTripRun.CommandLine
-            ElapsedSeconds = $first.ElapsedSeconds + $roundTripRun.ElapsedSeconds
-        }
+        $roundTrip
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'GraphPaneStyle_IgnoresLegacySettings' `

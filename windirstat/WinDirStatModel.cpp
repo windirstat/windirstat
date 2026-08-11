@@ -699,18 +699,6 @@ bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Set
     return true;
 }
 
-// UDC confirmation dialog.
-//
-bool CWinDirStatModel::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
-{
-    if (!udc->AskForConfirmation) return true;
-
-    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
-        Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
-        udc->Title.Obj(), item->GetPath());
-    return IDYES == ShowMessageBox(msg, MB_YESNO);
-}
-
 void CWinDirStatModel::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     CWaitCursor wc;

@@ -163,6 +163,8 @@
 #define IDC_PROMPT_SET_DATES            1145
 #define IDC_PROMPT_REMOVE_EMPTY         1146
 #define IDC_DELETION_BIN_WARNING        1147
+#define IDC_ADD_CLEANUP                 1148
+#define IDC_REMOVE_CLEANUP              1149
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -296,7 +298,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32976
-#define _APS_NEXT_CONTROL_VALUE         1148
+#define _APS_NEXT_CONTROL_VALUE         1150
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
