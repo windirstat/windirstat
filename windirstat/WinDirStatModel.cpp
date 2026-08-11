@@ -295,6 +295,17 @@ bool CWinDirStatModel::IsScanSettled() const
     return IsRootDone() && !IsScanRunning();
 }
 
+void CWinDirStatModel::RunPendingHeapCleanup()
+{
+    if (!m_heapMinPending.load(std::memory_order_relaxed) || IsScanRunning()) return;
+
+    if (m_heapMinTask.valid() &&
+        m_heapMinTask.wait_for(std::chrono::seconds::zero()) != std::future_status::ready) return;
+
+    m_heapMinTask = std::async(std::launch::async, [] { (void) _heapmin(); });
+    m_heapMinPending.store(false, std::memory_order_relaxed);
+}
+
 CItem* CWinDirStatModel::GetRootItem() const
 {
     return m_rootItem;

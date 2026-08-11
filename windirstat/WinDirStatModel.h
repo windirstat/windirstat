@@ -112,6 +112,7 @@ public:
     bool IsRootDone() const;
     bool IsScanRunning() const;
     bool IsScanSettled() const;
+    void RunPendingHeapCleanup();
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
     bool IsZoomed() const;
@@ -185,6 +186,8 @@ private:
     std::vector<CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
+    std::atomic_bool m_heapMinPending = false;
+    std::future<void> m_heapMinTask; // Heap cleanup that does not extend scan state
     std::jthread m_thread; // Wrapper thread so we do not occupy the UI thread
 
     // Cache selected items so command-update handlers can use a non-owning view

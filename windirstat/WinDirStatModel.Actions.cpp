@@ -1248,8 +1248,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             }
         });
 
-        // Force heap cleanup after scan
-        (void) _heapmin();
+        // Defer heap cleanup until the timer observes that this thread has exited.
+        m_heapMinPending.store(true, std::memory_order_relaxed);
     });
 }
 

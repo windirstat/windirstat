@@ -895,6 +895,8 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         }
     }
 
+    CWinDirStatModel::Get()->RunPendingHeapCleanup();
+
     CFrameWnd::OnTimer(nIDEvent);
 }
 
