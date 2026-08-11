@@ -1,4 +1,4 @@
-#Requires -Version 7.6
+﻿#Requires -Version 7.6
 <#
 .SYNOPSIS
     WinDirStat combined test suite.
@@ -2442,9 +2442,14 @@ public static class MouseHelper {
         mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN, ax, ay, 0, UIntPtr.Zero);
         mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTUP,   ax, ay, 0, UIntPtr.Zero);
     }
-    public static void RightClick() {
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_RIGHTUP,   0, 0, 0, UIntPtr.Zero);
+    public static void RightClick(int x, int y) {
+        SetCursorPos(x, y);
+        int sw = GetSystemMetrics(0); if (sw <= 0) sw = 1920;
+        int sh = GetSystemMetrics(1); if (sh <= 0) sh = 1080;
+        uint ax = (uint)((x * 65536) / sw);
+        uint ay = (uint)((y * 65536) / sh);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_RIGHTDOWN, ax, ay, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_RIGHTUP,   ax, ay, 0, UIntPtr.Zero);
     }
     public static void CtrlLeftClick(int x, int y) {
         SetCursorPos(x, y);
@@ -4109,8 +4114,13 @@ function Test-Toolbar {
                 $folderRadio = $radios | Where-Object { $_.Current.Name -like '*Folder*' } | Select-Object -First 1
                 if ($folderRadio) {
                     try {
-                        $sel = $folderRadio.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-                        $sel.Select(); Start-Sleep -Milliseconds 200
+                        try {
+                            $sel = $folderRadio.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                            $sel.Select(); Start-Sleep -Milliseconds 200
+                        } catch {
+                            Click-Element $folderRadio
+                            Start-Sleep -Milliseconds 200
+                        }
                         Assert-Pass $g 'Individual Folder radio selectable in Drive Select dialog (functional)'
                     } catch { Assert-Skip $g 'Folder radio selection' "SelectionItemPattern failed: $_" }
                 }
@@ -5973,7 +5983,7 @@ function Test-ContextMenu {
         try {
             [void][MouseHelper]::SetCursorPos($cp.X, $cp.Y)
             Start-Sleep -Milliseconds 200
-            [MouseHelper]::RightClick()
+            [MouseHelper]::RightClick($cp.X, $cp.Y)
             Start-Sleep -Milliseconds 700
 
             $deadline = [System.DateTime]::UtcNow.AddSeconds(3)
@@ -7700,10 +7710,11 @@ function Start-UiScanSession {
         [string] $ScanPath,
         [string] $Group,
         [string] $Label,
-        [int] $ScanTimeoutMs = ([Math]::Max($TimeoutSeconds * 1000, 60000))
+        [int] $ScanTimeoutMs = ([Math]::Max($TimeoutSeconds * 1000, 60000)),
+        [string[]] $OptionLines = @()
     )
 
-    $win = Start-App -Exe $Exe
+    $win = Start-App -Exe $Exe -OptionLines $OptionLines
     if (!$win) { Assert-Fail $Group "App launches for $Label" 'Window not found'; return $null }
     Assert-Pass $Group "App launches for $Label"
 
@@ -7725,6 +7736,175 @@ function Start-UiScanSession {
     $script:win = $win
     $script:tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
     return $win
+}
+
+function Test-RemoveEmptyFoldersReparseSafety {
+    param([string] $Exe)
+    Write-GroupHeader 'Remove Empty Folders: Reparse Safety'
+    $g = 'RemoveEmptyReparse'
+    $workRoot = Join-Path $BuildRoot 'remove-empty-reparse-test'
+    $scanRoot = Join-Path $workRoot 'scan-root'
+    $targetRoot = Join-Path $workRoot 'junction-target'
+    $targetLeaf = Join-Path $targetRoot 'nested\leaf'
+    $targetSentinel = Join-Path $targetRoot 'keep.bin'
+    $swappedTarget = Join-Path $workRoot 'replacement-target'
+    $swappedSentinel = Join-Path $swappedTarget 'keep.bin'
+    $junction = Join-Path $scanRoot 'followed-junction'
+    $swapped = Join-Path $scanRoot 'swapped-after-scan'
+    $ordinaryEmpty = Join-Path $scanRoot 'ordinary-empty'
+    $win = $null
+
+    try {
+        try {
+            if (Test-Path -LiteralPath $workRoot) { Remove-TestArtifacts -Path $workRoot }
+            New-Item -ItemType Directory -Force -Path $scanRoot, $targetLeaf, $swapped, `
+                (Join-Path $ordinaryEmpty 'child') | Out-Null
+            New-TestFile -Path (Join-Path $scanRoot 'keep.bin') -Size 4096 -Seed 241
+            New-TestFile -Path $targetSentinel -Size 4096 -Seed 242
+            New-TestFile -Path $swappedSentinel -Size 4096 -Seed 243
+            New-Item -ItemType Junction -Path $junction -Target $targetRoot -ErrorAction Stop | Out-Null
+            Assert-Pass $g 'Junction and empty-directory fixtures created'
+        }
+        catch {
+            Assert-Fail $g 'Create reparse-safety fixture' $_.Exception.Message
+            return
+        }
+
+        $win = Start-UiScanSession -Exe $Exe -ScanPath $scanRoot -Group $g -Label 'excluded-junction safety'
+        if (!$win) { return }
+
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $scanRoot -TargetPath $scanRoot
+        if (!$nativeRoot -or
+            -not [NativeListViewHelper]::SelectSingleItem([IntPtr] $nativeRoot.ListView, [int] $nativeRoot.Index) -or
+            -not [NativeListViewHelper]::FocusListView([IntPtr] $nativeRoot.ListView)) {
+            Assert-Fail $g 'Select scan root with excluded junction' 'The native All Files root row was unavailable'
+            return
+        }
+        Start-Sleep -Milliseconds 250
+
+        if (!(Invoke-Win32CommandId -Window $win -CommandId (Get-ResourceId 'ID_CLEANUP_REMOVE_EMPTY'))) {
+            Assert-Fail $g 'Invoke Remove Empty Folders with excluded junction' 'WM_COMMAND dispatch failed'
+            return
+        }
+        Wait-OpComplete -Window $win
+        $win = $script:win
+
+        Assert-That $g 'Ordinary empty subtree removed with default exclusions' `
+            (-not (Test-Path -LiteralPath $ordinaryEmpty)) 'The control empty directory remained after cleanup'
+        $excludedJunction = Get-Item -LiteralPath $junction -Force -ErrorAction SilentlyContinue
+        $excludedJunctionPreserved = $null -ne $excludedJunction -and
+            ($excludedJunction.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
+        Assert-That $g 'Excluded nonempty junction preserved' $excludedJunctionPreserved `
+            'Cleanup removed a junction that was excluded from enumeration'
+        $excludedTargetPreserved = (Test-Path -LiteralPath $targetLeaf) -and
+            (Test-Path -LiteralPath $targetSentinel)
+        Assert-That $g 'Excluded junction target preserved' $excludedTargetPreserved `
+            'Cleanup affected the excluded junction target'
+        if (!$excludedJunctionPreserved -or !$excludedTargetPreserved) { return }
+
+        Stop-App
+        New-Item -ItemType Directory -Force -Path $swapped, (Join-Path $ordinaryEmpty 'child') | Out-Null
+
+        $win = Start-UiScanSession -Exe $Exe -ScanPath $scanRoot -Group $g `
+            -Label 'remove-empty reparse safety' -OptionLines @('ExcludeJunctions=0')
+        if (!$win) { return }
+
+        [System.IO.Directory]::Delete($swapped, $false)
+        New-Item -ItemType Junction -Path $swapped -Target $swappedTarget -ErrorAction Stop | Out-Null
+        Assert-Pass $g 'Ordinary scanned directory replaced with a junction'
+
+        $nativeJunction = Find-NativeAllFilesRow -Window $win -ScanRoot $scanRoot -TargetPath $junction
+        if (!$nativeJunction -or
+            -not [NativeListViewHelper]::SelectSingleItem(
+                [IntPtr] $nativeJunction.ListView, [int] $nativeJunction.Index
+            ) -or
+            -not [NativeListViewHelper]::FocusListView([IntPtr] $nativeJunction.ListView)) {
+            Assert-Fail $g 'Select followed junction for expansion' 'The followed junction row was unavailable'
+            return
+        }
+        Send-Keys '{RIGHT}' 400
+
+        $linkedNested = Join-Path $junction 'nested'
+        $nativeNested = Find-NativeAllFilesRow -Window $win -ScanRoot $scanRoot -TargetPath $linkedNested
+        if (!$nativeNested -or
+            -not [NativeListViewHelper]::SelectSingleItem(
+                [IntPtr] $nativeNested.ListView, [int] $nativeNested.Index
+            ) -or
+            -not [NativeListViewHelper]::FocusListView([IntPtr] $nativeNested.ListView)) {
+            Assert-Fail $g 'Select linked parent for expansion' 'The linked parent row was unavailable'
+            return
+        }
+        Send-Keys '{RIGHT}' 400
+
+        $linkedLeaf = Join-Path $junction 'nested\leaf'
+        $nativeLeaf = Find-NativeAllFilesRow -Window $win -ScanRoot $scanRoot -TargetPath $linkedLeaf
+        if (!$nativeLeaf -or
+            -not [NativeListViewHelper]::SelectSingleItem([IntPtr] $nativeLeaf.ListView, [int] $nativeLeaf.Index) -or
+            -not [NativeListViewHelper]::FocusListView([IntPtr] $nativeLeaf.ListView)) {
+            Assert-Fail $g 'Select directory below followed junction' 'The linked target row was unavailable'
+            return
+        }
+        Assert-Pass $g 'Directory below followed junction selected'
+        Start-Sleep -Milliseconds 250
+
+        if (!(Invoke-Win32CommandId -Window $win -CommandId (Get-ResourceId 'ID_CLEANUP_REMOVE_EMPTY'))) {
+            Assert-Fail $g 'Invoke Remove Empty Folders for linked descendant' 'WM_COMMAND dispatch failed'
+            return
+        }
+        Wait-OpComplete -Window $win
+        $win = $script:win
+        Assert-That $g 'Selected directory below junction preserved' (Test-Path -LiteralPath $targetLeaf) `
+            'Cleanup escaped through a selected reparse-point ancestor'
+
+        $nativeRoot = Find-NativeAllFilesRow -Window $win -ScanRoot $scanRoot -TargetPath $scanRoot
+        if (!$nativeRoot -or
+            -not [NativeListViewHelper]::SelectSingleItem([IntPtr] $nativeRoot.ListView, [int] $nativeRoot.Index) -or
+            -not [NativeListViewHelper]::FocusListView([IntPtr] $nativeRoot.ListView)) {
+            Assert-Fail $g 'Select scan root' 'The native All Files root row was unavailable'
+            return
+        }
+        Assert-Pass $g 'Scan root selected'
+        Start-Sleep -Milliseconds 250
+
+        if (!(Invoke-Win32CommandId -Window $win -CommandId (Get-ResourceId 'ID_CLEANUP_REMOVE_EMPTY'))) {
+            Assert-Fail $g 'Invoke Remove Empty Folders' 'WM_COMMAND dispatch failed'
+            return
+        }
+        Wait-OpComplete -Window $win
+        $win = $script:win
+
+        Assert-That $g 'Ordinary empty subtree removed' (-not (Test-Path -LiteralPath $ordinaryEmpty)) `
+            'The control empty directory remained after cleanup'
+        $junctionItem = Get-Item -LiteralPath $junction -Force -ErrorAction SilentlyContinue
+        $junctionPreserved = $null -ne $junctionItem -and
+            ($junctionItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
+        Assert-That $g 'Followed junction preserved' $junctionPreserved `
+            'Cleanup removed the followed junction'
+        Assert-That $g 'Followed target subtree preserved' (Test-Path -LiteralPath $targetLeaf) `
+            'Cleanup traversed the junction and removed target directories'
+        $swappedItem = Get-Item -LiteralPath $swapped -Force -ErrorAction SilentlyContinue
+        $swappedPreserved = $null -ne $swappedItem -and
+            ($swappedItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
+        Assert-That $g 'Post-scan replacement junction preserved' $swappedPreserved `
+            'Cleanup removed a directory that became a junction after scanning'
+        Assert-That $g 'Post-scan replacement target preserved' (Test-Path -LiteralPath $swappedSentinel) `
+            'Cleanup affected the replacement junction target'
+    }
+    catch {
+        Assert-Fail $g 'Execute reparse-safety cleanup checks' $_.Exception.Message
+    }
+    finally {
+        try { Stop-App } catch {}
+        if (-not $KeepArtifacts) {
+            foreach ($link in @($junction, $swapped)) {
+                try {
+                    if ([System.IO.Directory]::Exists($link)) { [System.IO.Directory]::Delete($link, $false) }
+                }
+                catch {}
+            }
+        }
+        Remove-TestArtifacts -Path $workRoot
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -7865,9 +8045,46 @@ function Show-AllFilesExpanded {
         if ($allTab) { Select-TabItem $allTab | Out-Null; Start-Sleep -Milliseconds 400 }
     }
     Focus-Window $Window
+
+    if ($script:tabCtrl) {
+        try {
+            $tabHwnd = [IntPtr] $script:tabCtrl.Current.NativeWindowHandle
+            if ($tabHwnd -ne [IntPtr]::Zero) {
+                $lvs = @([NativeListViewHelper]::GetVisibleListViewsIncludingEmpty($tabHwnd))
+                if ($lvs.Count -gt 0) {
+                    [NativeListViewHelper]::FocusListView($lvs[0]) | Out-Null
+                }
+            }
+        } catch {}
+    }
+
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(4)
+    while ([System.DateTime]::UtcNow -lt $deadline) {
+        $expandables = @(Find-UiaAll -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem)) |
+            Where-Object {
+                try {
+                    $ec = $_.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+                    $ec -and $ec.Current.ExpandCollapseState -ne [System.Windows.Automation.ExpandCollapseState]::Expanded
+                } catch { $false }
+            }
+        $expList = @($expandables)
+        if ($expList.Count -eq 0) { break }
+        foreach ($item in $expList) {
+            try {
+                $ec = $item.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+                $ec.Expand()
+            } catch {}
+            try {
+                $sp = $item.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                $sp.Select()
+            } catch {}
+        }
+        Start-Sleep -Milliseconds 200
+    }
+
     Send-Keys '{HOME}' 250
-    Send-Keys '{MULTIPLY}' 700   # NumPad * expands the whole subtree of the selected (root) node
-    Start-Sleep -Milliseconds 300
+    Send-Keys '{MULTIPLY}' 700
+    Start-Sleep -Milliseconds 400
 }
 
 function Expand-DupeRowsByKeyboard {
@@ -9211,10 +9428,13 @@ function Invoke-UiSuite {
             }
         }
 
-        # -- Phase 4: file operations (delete / refresh) -------------------------
+        # -- Phase 4: remove-empty reparse safety -------------------------------
+        & $runPhase 'Remove-empty reparse safety' { Test-RemoveEmptyFoldersReparseSafety -Exe $ExePath }
+
+        # -- Phase 4b: file operations (delete / refresh) ------------------------
         & $runPhase 'File operations (delete/refresh)' { Test-FileOperations -Exe $ExePath }
 
-        # -- Phase 4b: file-op verification (compress/sparse/dedup/motw) ---------
+        # -- Phase 4c: file-op verification (compress/sparse/dedup/motw) ---------
         & $runPhase 'File-op verification' { Test-FileOpsVerification -Exe $ExePath }
 
     }
