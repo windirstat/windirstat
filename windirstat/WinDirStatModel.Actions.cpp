@@ -1365,19 +1365,33 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
     const auto& roots = GetAllSelected();
     if (roots.empty()) return;
 
+    const auto isUnsafeDirectory = [](const CItem* item) noexcept
+    {
+        if (!item->IsTypeOrFlag(IT_DIRECTORY)) return false;
+
+        const DWORD attributes = item->GetAttributes();
+        return attributes == INVALID_FILE_ATTRIBUTES ||
+            (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+    };
+
     // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
-    // Such a directory is wholly empty, so all of its descendants qualify as well. Each item is
-    // recorded before its children are pushed, so ancestors precede descendants; reversing then
-    // yields a bottom-up order suitable for RemoveDirectory, which only removes empty folders and
-    // so is guaranteed to find each parent empty once its children have been processed.
+    // Do not enter reparse-point branches: excluded links have no modeled files, while followed
+    // links expose directories outside the selected physical tree. Each item is recorded before
+    // its children are pushed, so reversing the result yields the required bottom-up order.
     std::vector<CItem*> emptyDirs;
-    std::vector stack(roots.begin(), roots.end());
+    std::vector<CItem*> stack;
+    for (CItem* root : roots)
+    {
+        const CItem* ancestor = root;
+        while (ancestor != nullptr && !isUnsafeDirectory(ancestor)) ancestor = ancestor->GetParent();
+        if (ancestor == nullptr) stack.push_back(root);
+    }
     std::unordered_set<CItem*> visited;
     for (CWaitCursor wc; !stack.empty();)
     {
         CItem* item = stack.back();
         stack.pop_back();
-        if (!visited.insert(item).second) continue;
+        if (!visited.insert(item).second || isUnsafeDirectory(item)) continue;
         if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
         {
             emptyDirs.push_back(item);
@@ -1401,7 +1415,12 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
         {
             if (pdlg->IsCancelled()) break;
 
-            if (RemoveDirectory(item->GetPathLong().c_str()))
+            const std::wstring path = item->GetPathLong();
+            const DWORD attributes = GetFileAttributes(path.c_str());
+            const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
+            if (attributes == INVALID_FILE_ATTRIBUTES || typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
+
+            if (RemoveDirectory(path.c_str()))
             {
                 deletedCount++;
                 deletedDirs.insert(item);
