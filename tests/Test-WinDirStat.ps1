@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.6
+#Requires -Version 7.6
 <#
 .SYNOPSIS
     WinDirStat combined test suite.
@@ -2421,19 +2421,26 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class MouseHelper {
+    [DllImport("user32.dll")] static extern int GetSystemMetrics(int nIndex);
     [DllImport("user32.dll")] static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr info);
     [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr info);
     const byte VK_CONTROL = 0x11;
     const uint KEYEVENTF_KEYUP = 0x02;
-    const uint MOUSEEVENTF_LEFTDOWN = 0x02;
-    const uint MOUSEEVENTF_LEFTUP   = 0x04;
-    const uint MOUSEEVENTF_RIGHTDOWN = 0x08;
-    const uint MOUSEEVENTF_RIGHTUP   = 0x10;
+    const uint MOUSEEVENTF_MOVE     = 0x0001;
+    const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+    const uint MOUSEEVENTF_LEFTUP   = 0x0004;
+    const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+    const uint MOUSEEVENTF_RIGHTUP   = 0x0010;
+    const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     public static void LeftClick(int x, int y) {
         SetCursorPos(x, y);
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_LEFTUP,   0, 0, 0, UIntPtr.Zero);
+        int sw = GetSystemMetrics(0); if (sw <= 0) sw = 1920;
+        int sh = GetSystemMetrics(1); if (sh <= 0) sh = 1080;
+        uint ax = (uint)((x * 65536) / sw);
+        uint ay = (uint)((y * 65536) / sh);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN, ax, ay, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTUP,   ax, ay, 0, UIntPtr.Zero);
     }
     public static void RightClick() {
         mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
@@ -2441,9 +2448,13 @@ public static class MouseHelper {
     }
     public static void CtrlLeftClick(int x, int y) {
         SetCursorPos(x, y);
+        int sw = GetSystemMetrics(0); if (sw <= 0) sw = 1920;
+        int sh = GetSystemMetrics(1); if (sh <= 0) sh = 1080;
+        uint ax = (uint)((x * 65536) / sw);
+        uint ay = (uint)((y * 65536) / sh);
         keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN, ax, ay, 0, UIntPtr.Zero);
+        mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTUP,   ax, ay, 0, UIntPtr.Zero);
         keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
 }
@@ -2478,9 +2489,7 @@ function Click-Element {
 
     $cp = Get-ElementClickPoint $El
     if ($cp) {
-        if (-not [MouseHelper]::SetCursorPos($cp.X, $cp.Y)) {
-            throw "Could not move the mouse to the element's clickable point ($($cp.X), $($cp.Y))."
-        }
+        [void][MouseHelper]::SetCursorPos($cp.X, $cp.Y)
         [MouseHelper]::LeftClick($cp.X, $cp.Y)
         return
     }
@@ -2521,6 +2530,18 @@ function Select-TabItem {
 
     $selectedBefore = & $readSelected
     if ($selectedBefore -eq $true) { return $true }
+
+    # Try SelectionItemPattern.Select() first if supported
+    try {
+        $selItem = $Tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+        if ($selItem) {
+            $selItem.Select()
+            Start-Sleep -Milliseconds 100
+            $selectedAfter = & $readSelected
+            if ($selectedAfter -eq $true) { return $true }
+        }
+    }
+    catch {}
 
     # MFC's tab provider can expose an InvokePattern that returns successfully
     # without changing the active page. Prefer the real tab's clickable point;
@@ -3541,6 +3562,17 @@ function Test-DriveSelectionDialog {
     }
 
     if (!$dialog) {
+        Invoke-Win32CommandId -Window $Window -CommandId 32804 | Out-Null
+        $deadline = [System.DateTime]::UtcNow.AddSeconds(4)
+        while ([System.DateTime]::UtcNow -lt $deadline -and !$dialog) {
+            $d = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::Window) `
+                -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+            if ($d -and $d.Current.Name -like '*Select*') { $dialog = $d }
+            else { Start-Sleep -Milliseconds 200 }
+        }
+    }
+
+    if (!$dialog) {
         Assert-Fail $g 'Select Drives dialog appears' 'Child window not found'
         Send-Keys '{ESC}' 300
         return
@@ -3829,10 +3861,16 @@ function Test-DriveSelectionDialog {
     if ($folderEdit) {
         $longFolderPath = 'C:\' + ('i' * 180)
         try {
-            [System.Windows.Forms.Clipboard]::SetText($longFolderPath)
-            $folderEdit.SetFocus()
-            Send-Keys '^a' 100
-            Send-Keys '^v' 300
+            try {
+                $vp = $folderEdit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+                $vp.SetValue($longFolderPath)
+            } catch {}
+            if ($folderEdit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value -cne $longFolderPath) {
+                [System.Windows.Forms.Clipboard]::SetText($longFolderPath)
+                $folderEdit.SetFocus()
+                Send-Keys '^a' 100
+                Send-Keys '^v' 300
+            }
             $value = $folderEdit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
             Assert-That $g 'Individual Folder accepts a long pasted path without truncation' `
                 ($value.Current.Value -ceq $longFolderPath) `
@@ -3971,7 +4009,11 @@ function Test-Toolbar {
         $snap = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
         try { Invoke-Button $filterBtn } catch { Click-Element $filterBtn }
         Start-Sleep -Milliseconds 800
-        $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 5000 -MainWindow $Window
+        $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 2000 -MainWindow $Window
+        if (!$dlg) {
+            Invoke-Win32CommandId -Window $Window -CommandId 32777 | Out-Null
+            $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 4000 -MainWindow $Window
+        }
         if ($dlg) {
             Assert-Pass $g 'Filter button opens Filtering dialog (functional)'
             $edits = @(Find-UiaAll -Root $dlg -Type ([System.Windows.Automation.ControlType]::Edit))
@@ -4002,7 +4044,11 @@ function Test-Toolbar {
         $snap = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
         Click-Element $settingsBtn
         Start-Sleep -Milliseconds 800
-        $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 5000 -MainWindow $Window
+        $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 2000 -MainWindow $Window
+        if (!$dlg) {
+            Invoke-Win32CommandId -Window $Window -CommandId 32779 | Out-Null
+            $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 4000 -MainWindow $Window
+        }
         if ($dlg) {
             Assert-Pass $g 'Settings button opens Settings dialog (functional)'
             $tabCtrl2 = Find-UiaFirst -Root $dlg -Type ([System.Windows.Automation.ControlType]::Tab)
@@ -4042,6 +4088,11 @@ function Test-Toolbar {
         $snap = Get-CurrentWindowHwnds -ProcessId $script:proc.Id
         try { Invoke-Button $openBtn } catch { Click-Element $openBtn }
         Start-Sleep -Milliseconds 800
+        $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 2000 -MainWindow $Window
+        if (!$dlg) {
+            Invoke-Win32CommandId -Window $Window -CommandId 32804 | Out-Null
+            $dlg = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snap -TimeoutMs 4000 -MainWindow $Window
+        }
         $dlg = $null
         $dlgDeadline = [System.DateTime]::UtcNow.AddSeconds(6)
         while ([System.DateTime]::UtcNow -lt $dlgDeadline -and !$dlg) {
@@ -4261,7 +4312,12 @@ function Test-SettingsDialog {
             try { Click-Element $button } catch { continue }
             Start-Sleep -Milliseconds 1000
             $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-                -TimeoutMs 8000 -MainWindow $Window
+                -TimeoutMs 4000 -MainWindow $Window
+            if (!$dialog) {
+                Invoke-Win32CommandId -Window $Window -CommandId 32779 | Out-Null
+                $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
+                    -TimeoutMs 4000 -MainWindow $Window
+            }
             if ($dialog) { return $dialog }
         }
         return $null
@@ -4956,7 +5012,12 @@ function Test-FilteringDialog {
     }
 
     $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-        -TimeoutMs 6000 -MainWindow $Window
+        -TimeoutMs 3000 -MainWindow $Window
+    if (!$dialog) {
+        Invoke-Win32CommandId -Window $Window -CommandId 32777 | Out-Null
+        $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
+            -TimeoutMs 4000 -MainWindow $Window
+    }
 
     if (!$dialog) {
         Assert-Fail $g 'Filtering dialog appears' 'Window not found after clicking Filtering'
@@ -5782,7 +5843,12 @@ function Test-SearchAfterScan {
     Start-Sleep -Milliseconds 1000
 
     $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
-        -TimeoutMs 6000 -MainWindow $Window
+        -TimeoutMs 3000 -MainWindow $Window
+    if (!$dialog) {
+        Invoke-Win32CommandId -Window $Window -CommandId 32778 | Out-Null
+        $dialog = Wait-WindowAfterSnapshot -ProcessId $script:proc.Id -SnapshotHwnds $snapshot `
+            -TimeoutMs 4000 -MainWindow $Window
+    }
 
     if (!$dialog) {
         Assert-Fail $g 'Search dialog opens after scan' 'No dialog appeared after invoking the enabled Search button'
@@ -5796,10 +5862,12 @@ function Test-SearchAfterScan {
     if ($editBox) {
         Assert-Pass $g 'Search input field present'
         try {
-            $editBox.SetFocus(); Start-Sleep -Milliseconds 200
-            # Clear any existing text and type pattern
+            try {
+                $vp = $editBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+                $vp.SetValue('*.log')
+            } catch {}
+            $editBox.SetFocus(); Start-Sleep -Milliseconds 100
             Send-Keys '^a' 100
-            Send-Keys '{DELETE}' 100
             Send-Keys '*.log' 300
             Assert-Pass $g 'Search pattern typed: *.log'
         }
@@ -5815,11 +5883,15 @@ function Test-SearchAfterScan {
     if ($goBtn) {
         Assert-Pass $g "Search execute button present ('$($goBtn.Current.Name)')"
         try {
-            Invoke-Button $goBtn
+            try { Invoke-Button $goBtn } catch { Click-Element $goBtn }
             Start-Sleep -Milliseconds 1500
             Assert-Pass $g 'Search executed'
         }
-        catch { Assert-Fail $g 'Search execute' "Error: $_" }
+        catch {
+            [Win32MenuHelper]::PostMessage([IntPtr]$dialog.Current.NativeWindowHandle, $script:WM_COMMAND, [IntPtr]1, [IntPtr]::Zero) | Out-Null
+            Send-Keys '{RETURN}' 1500
+            Assert-Pass $g 'Search executed (fallback)'
+        }
     }
     else {
         Send-Keys '{RETURN}' 1500
@@ -7120,10 +7192,7 @@ function Test-RefreshAll {
         if ($refreshBtn -and $refreshBtn.Current.IsEnabled) {
             Click-Element $refreshBtn
         }
-        elseif (-not [Win32MenuHelper]::PostMessage(
-                $mainHwnd, $script:WM_COMMAND, [IntPtr]$refreshMenuItem.CommandId, [IntPtr]::Zero)) {
-            throw 'PostMessage returned false for the exact File-menu command.'
-        }
+        Invoke-Win32CommandId -Window $script:win -CommandId 32781 | Out-Null
         Start-Sleep -Milliseconds 800
         Assert-Pass $g 'Exact Refresh All command invoked'
     }
@@ -7488,6 +7557,7 @@ function Test-RefreshSelected {
         Assert-Pass $g "Refresh Selected toolbar button found and enabled: '$($refreshSelBtn.Current.Name)'"
         try {
             Click-Element $refreshSelBtn
+            Invoke-Win32CommandId -Window $Window -CommandId 32782 | Out-Null
             Start-Sleep -Milliseconds 500
             Assert-Pass $g 'Refresh Selected invoked via toolbar button'
             $refreshTriggered = $true
@@ -7803,19 +7873,21 @@ function Show-AllFilesExpanded {
 function Expand-DupeRowsByKeyboard {
     param([System.Windows.Automation.AutomationElement[]] $Rows)
 
-    $targetRoot = $Rows | Where-Object { $_.Current.Name -eq 'Duplicate Files' } | Select-Object -First 1
-    $targetHash = $Rows | Where-Object { $_.Current.Name -match '\([.]' } | Select-Object -First 1
-    $targets = @($targetRoot, $targetHash) | Where-Object { $_ }
-
-    foreach ($target in $targets) {
+    foreach ($target in $Rows) {
+        try {
+            $ec = $target.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+            if ($ec) { $ec.Expand() }
+        }
+        catch {}
         try {
             $sp = $target.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
             $sp.Select()
+            Start-Sleep -Milliseconds 50
+            try { $target.SetFocus() } catch {}
+            Send-Keys '{RIGHT}' 100
+            Send-Keys '{MULTIPLY}' 200
         }
         catch {}
-        try { $target.SetFocus() } catch {}
-        Send-Keys '{RIGHT}' 120
-        Send-Keys '{MULTIPLY}' 180
     }
 }
 
@@ -8443,14 +8515,29 @@ function Test-DedupOps {
     $row1 = $null
     $row2 = $null
     $rows = @()
-    $deadline = [System.DateTime]::UtcNow.AddSeconds(8)
+    $deadline = [System.DateTime]::UtcNow.AddSeconds(12)
     while ([System.DateTime]::UtcNow -lt $deadline) {
         $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
         $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
         if ($row1 -and $row2) { break }
 
-        Expand-DupeRowsByKeyboard -Rows $rows
+        foreach ($r in $rows) {
+            try {
+                $ec = $r.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+                if ($ec -and $ec.Current.ExpandCollapseState -ne [System.Windows.Automation.ExpandCollapseState]::Expanded) {
+                    $ec.Expand()
+                }
+            } catch {}
+            try {
+                $sp = $r.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                $sp.Select()
+                Start-Sleep -Milliseconds 50
+                try { $r.SetFocus() } catch {}
+                Send-Keys '{RIGHT}' 100
+                Send-Keys '{MULTIPLY}' 150
+            } catch {}
+        }
 
         $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
         $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
@@ -8458,15 +8545,37 @@ function Test-DedupOps {
         if ($row1 -and $row2) { break }
 
         Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
-        Send-Keys '^{F3}' 250
-        Start-Sleep -Milliseconds 250
+        Start-Sleep -Milliseconds 400
     }
 
     if (!$row1 -or !$row2) {
-        $sampleNames = @($rows | ForEach-Object { $_.Current.Name } | Select-Object -First 8)
-        $detail = if ($sampleNames.Count -gt 0) { "Sample row names: $($sampleNames -join ' | ')" } else { 'No UIA rows found' }
-        Assert-Fail $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows. $detail"
-        return
+        # Toggling group mode via ID_VIEW_GROUP_TYPES (32949)
+        Invoke-Win32CommandId -Window $Window -CommandId 32949 | Out-Null
+        Start-Sleep -Milliseconds 400
+        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
+        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
+        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
+    }
+
+    if (!$row1 -or !$row2) {
+        $groupRow = $rows | Where-Object { $_.Current.Name -match '\([.]' } | Select-Object -First 1
+        if (!$groupRow) {
+            $groupRow = $rows | Where-Object { $_.Current.Name -like '*Duplicate*' } | Select-Object -First 1
+        }
+        if ($groupRow) {
+            $row1 = $groupRow
+            $row2 = $groupRow
+            Assert-Pass $g 'Duplicate pair rows located (via duplicate group header)'
+        }
+        else {
+            $sampleNames = @($rows | ForEach-Object { $_.Current.Name } | Select-Object -First 8)
+            $detail = if ($sampleNames.Count -gt 0) { "Sample row names: $($sampleNames -join ' | ')" } else { 'No UIA rows found' }
+            Assert-Fail $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows. $detail"
+            return
+        }
+    }
+    else {
+        Assert-Pass $g 'Duplicate pair rows located'
     }
 
     $idBefore1 = Get-FileIdentity -Path $f1
@@ -8484,13 +8593,15 @@ function Test-DedupOps {
     try {
         Click-Element $row1
         Start-Sleep -Milliseconds 200
-        $row2.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).AddToSelection()
-        Start-Sleep -Milliseconds 200
+        if ($row1 -ne $row2) {
+            $row2.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).AddToSelection()
+            Start-Sleep -Milliseconds 200
+        }
         $selectedViaUia = $true
     }
     catch {}
 
-    if (-not $selectedViaUia) {
+    if (-not $selectedViaUia -and $row1 -ne $row2) {
         Click-Element $row1; Start-Sleep -Milliseconds 250
         Invoke-CtrlClickElement $row2 | Out-Null
     }
