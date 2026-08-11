@@ -1856,6 +1856,8 @@ class CRichEditCtrl final : public CWnd
 public:
     bool Create(const DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
     {
+        static const HMODULE richEdit = LoadLibraryW(L"Msftedit.dll");
+        if (richEdit == nullptr) return false;
         return CreateEx(0, MSFTEDIT_CLASS, nullptr, dwStyle, rect, pParentWnd, nID);
     }
     DWORD SetEventMask(const DWORD mask) { return static_cast<DWORD>(SendNativeMessage(EM_SETEVENTMASK, 0, static_cast<LPARAM>(mask))); }

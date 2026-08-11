@@ -382,7 +382,6 @@ bool CDirStatApp::InitInstance()
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
     (void)CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     (void)InitCommonControlsEx(&ctrls);
-    if (LoadLibraryW(L"Msftedit.dll") == nullptr) LoadLibraryW(L"Riched20.dll");
 
     // Initialize GDI Plus
     const Gdiplus::GdiplusStartupInput gdiplusStartupInput;
