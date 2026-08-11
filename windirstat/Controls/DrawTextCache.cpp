@@ -174,7 +174,7 @@ void DrawTextCache::TouchEntry(const CacheMap::iterator& it)
         m_leastRecentList, it->second.second);
 }
 
-void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept
+void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, const CacheEntry& entry) noexcept
 {
     // Create memory DC
     CDC memDC(pDC);

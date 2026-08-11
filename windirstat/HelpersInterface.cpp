@@ -37,7 +37,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
     for (int count = 0; n > 0; ++count, n /= 10)
     {
         if (count && count % 3 == 0) buffer[--pos] = sep;
-        buffer[--pos] = L'0' + (n % 10);
+        buffer[--pos] = L'0' + n % 10;
     }
 
     return { buffer.begin() + pos, buffer.end() - 1 };
@@ -121,10 +121,10 @@ std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
         ULONGLONG threshold;
         const std::wstring& (*suffix)();
     } units[] = {
-        {Ti, Ti - (Gi / 2), GetSpec_TiB},
-        {Gi, Gi - (Mi / 2), GetSpec_GiB},
-        {Mi, Mi - (Ki / 2), GetSpec_MiB},
-        {Ki, Ki,            GetSpec_KiB},
+        {Ti, Ti - Gi / 2, GetSpec_TiB},
+        {Gi, Gi - Mi / 2, GetSpec_GiB},
+        {Mi, Mi - Ki / 2, GetSpec_MiB},
+        {Ki, Ki,          GetSpec_KiB},
     };
 
     for (const auto& [bytes, threshold, suffix] : units) [[msvc::flatten]]

@@ -93,11 +93,11 @@ void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int
 void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, const int padding)
 {
     // Expand checkbox width to the leftmost visible button
-    if (pTargetControl == &m_listView && (m_checkbox.GetStyle() & WS_VISIBLE))
+    if (pTargetControl == &m_listView && m_checkbox.GetStyle() & WS_VISIBLE)
     {
         for (const CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
         {
-            if (pBtn->Handle() && (pBtn->GetStyle() & WS_VISIBLE))
+            if (pBtn->Handle() && pBtn->GetStyle() & WS_VISIBLE)
             {
                 CRect cbRect = WindowRectInClient(m_checkbox.Handle());
                 const CRect btnRect = WindowRectInClient(pBtn->Handle());
@@ -124,8 +124,8 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
     }
 
     // Calculate shift: control height + spacing to next control, and optional padding
-    const int shiftAmount = std::max<int>(0, ((minYBelow != INT_MAX) ?
-        (minYBelow - targetRect.top) : targetRect.Height()) - ScaleForDpi(padding));
+    const int shiftAmount = std::max<int>(0, (minYBelow != INT_MAX ?
+        minYBelow - targetRect.top : targetRect.Height()) - ScaleForDpi(padding));
 
     // Shift controls below target upward
     ShiftControls(controlsToShift, -shiftAmount);
@@ -349,8 +349,8 @@ void CMessageBoxDlg::OnListViewGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) cons
 void CMessageBoxDlg::OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto* listView = reinterpret_cast<NMLISTVIEW*>(pNMHDR);
-    *pResult = ((listView->uChanged & LVIF_STATE) != 0 &&
-        ((listView->uNewState ^ listView->uOldState) & LVIS_SELECTED) != 0);
+    *pResult = (listView->uChanged & LVIF_STATE) != 0 &&
+        ((listView->uNewState ^ listView->uOldState) & LVIS_SELECTED) != 0;
 }
 
 void CMessageBoxDlg::OnButtonLeft()

@@ -97,14 +97,14 @@ private:
         const CRect& rect, UINT format) const noexcept;
 
     // Create cached bitmap for the text
-    std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
+    static std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format) noexcept;
 
     // Move key to front of LRU list
     void TouchEntry(const CacheMap::iterator& it);
 
     // Paint cached entry to DC
-    void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept;
+    static void PaintCachedEntry(CDC* pDC, const CRect& rect, const CacheEntry& entry) noexcept;
 
     CacheMap m_cache;
     LRUList m_leastRecentList;

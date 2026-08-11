@@ -139,7 +139,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     allow &= allowEarly || IsScanSettled();
     if (!allow) { pCmdUI->Enable(false); return; }
 
-    const auto items = (!allowNone || extra != nullptr) ?
+    const auto items = !allowNone || extra != nullptr ?
         GetSelectedItemsView() : std::span<CItem* const>{};
     allow &= allowNone || !items.empty();
     allow &= allowMany || items.size() <= 1;
