@@ -520,7 +520,7 @@ void CDirStatApp::OnFilter()
 
 void CDirStatApp::LaunchHelp()
 {
-    ShellExecute(*GetMainWindow(), L"open", Localization::LookupNeutral(IDS_URL_HELP).c_str(),
+    ShellExecute(GetMainWindowHandle(), L"open", Localization::LookupNeutral(IDS_URL_HELP).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -531,7 +531,7 @@ void CDirStatApp::OnHelpManual()
 
 void CDirStatApp::OnReportBug()
 {
-    ShellExecute(*GetMainWindow(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
+    ShellExecute(GetMainWindowHandle(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }
 

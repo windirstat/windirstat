@@ -291,7 +291,7 @@ void CWinDirStatModel::OnCleanupEmptyRecycleBin() const
 
     CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [](CProgressDlg*)
     {
-        SHEmptyRecycleBin(*GetMainWindow(), nullptr,
+        SHEmptyRecycleBin(GetMainWindowHandle(), nullptr,
             SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
     }).ShowModal();
 
@@ -490,7 +490,7 @@ void CWinDirStatModel::OnCommandPromptHere()
         std::wstring params = std::format(L"/K TITLE {} - \"{}\" {}", wds::strWinDirStat, path, uncmod);
 
         // Launch command prompt
-        ShellExecuteWrapper(cmd, params, L"open", *GetMainWindow(), path);
+        ShellExecuteWrapper(cmd, params, L"open", GetMainWindowHandle(), path);
     }
 }
 
@@ -519,7 +519,7 @@ void CWinDirStatModel::OnPowerShellHere()
     // launch a command prompt for each path
     for (const auto& path : paths)
     {
-        ShellExecuteWrapper(pwsh, L"", L"open", *GetMainWindow(), path);
+        ShellExecuteWrapper(pwsh, L"", L"open", GetMainWindowHandle(), path);
     }
 }
 

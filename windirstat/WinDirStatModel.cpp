@@ -396,7 +396,7 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
     // Launch properties dialog
     SHELLEXECUTEINFO sei{};
     sei.cbSize = sizeof(sei);
-    sei.hwnd = *GetMainWindow();
+    sei.hwnd = GetMainWindowHandle();
     sei.lpVerb = verb.empty() ? nullptr : verb.c_str();
     sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_IDLIST | SEE_MASK_NOZONECHECKS;
     sei.lpIDList = pidl;
@@ -630,7 +630,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         };
 
         if (COptions::ShowMicrosoftProgress)
-            doDelete(*GetMainWindow(), flags);
+            doDelete(GetMainWindowHandle(), flags);
         else
             CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
                 { doDelete(*pdlg, flags | FOF_NO_UI); }).ShowModal();

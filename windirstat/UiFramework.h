@@ -106,6 +106,7 @@ inline bool IsKeyDown(const int virtualKey) noexcept
 class CWnd;
 HINSTANCE GetAppInstance();
 CWnd* GetMainWindow();
+HWND GetMainWindowHandle() noexcept;
 
 // Application command constants referenced by the shim itself (full set near EOF).
 inline constexpr UINT ID_APPLY_NOW = 0x3021;
@@ -2428,6 +2429,11 @@ inline int CWinApp::Run()
 
 // ---- Application globals -------------------------------------------------------
 inline CWnd* GetMainWindow() { return g_pApp ? g_pApp->m_pMainWnd : nullptr; }
+inline HWND GetMainWindowHandle() noexcept
+{
+    const CWnd* mainWindow = GetMainWindow();
+    return mainWindow != nullptr ? mainWindow->Handle() : nullptr;
+}
 inline HINSTANCE GetAppInstance() { return GetModuleHandleW(nullptr); }
 
 // -----------------------------------------------------------------------------
