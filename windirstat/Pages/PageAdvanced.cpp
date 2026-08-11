@@ -119,12 +119,12 @@ void CPageAdvanced::OnEnChangeLargestFileCount()
     if (!IsInitialized())
         return;
 
-    std::wstring count = GetText(IDC_LARGEST_FILE_COUNT);
-    count = count.empty() ? L"0" :
+    const std::wstring count = GetText(IDC_LARGEST_FILE_COUNT);
+    const std::wstring normalizedCount = count.empty() ? L"0" :
         std::to_wstring(std::clamp(std::stoi(count),
         COptions::LargeFileCount.Min(), COptions::LargeFileCount.Max()));
 
-    SetText(IDC_LARGEST_FILE_COUNT, count);
+    if (count != normalizedCount) SetText(IDC_LARGEST_FILE_COUNT, normalizedCount);
 }
 
 void CPageAdvanced::OnEnChangeFolderHistoryCount()
@@ -132,10 +132,10 @@ void CPageAdvanced::OnEnChangeFolderHistoryCount()
     if (!IsInitialized())
         return;
 
-    std::wstring count = GetText(IDC_FOLDER_HISTORY_COUNT);
-    count = count.empty() ? L"0" :
+    const std::wstring count = GetText(IDC_FOLDER_HISTORY_COUNT);
+    const std::wstring normalizedCount = count.empty() ? L"0" :
         std::to_wstring(std::clamp(std::stoi(count),
         COptions::FolderHistoryCount.Min(), COptions::FolderHistoryCount.Max()));
 
-    SetText(IDC_FOLDER_HISTORY_COUNT, count);
+    if (count != normalizedCount) SetText(IDC_FOLDER_HISTORY_COUNT, normalizedCount);
 }
