@@ -63,8 +63,6 @@ bool CPageTreeMap::PreprocessMessage(MSG* pMsg)
 
 void CPageTreeMap::InitializePage()
 {
-    ValuesAltered(); // m_undo is invalid
-
     m_preview.SubclassDlgItem(IDC_PREVIEW, this);
     m_styleCombo.SubclassDlgItem(IDC_TREEMAPSTYLE, this);
     m_highlightColor.SubclassDlgItem(IDC_TREEMAPHIGHLIGHTCOLOR, this);
@@ -75,6 +73,7 @@ void CPageTreeMap::InitializePage()
     m_scaleFactor.SubclassDlgItem(IDC_SCALEFACTOR, this);
     m_lightSource.SubclassDlgItem(IDC_LIGHTSOURCE, this);
     m_resetButton.SubclassDlgItem(IDC_RESET, this);
+    ValuesAltered(); // m_undo is invalid
 
     m_brightness.SetPageSize(10);
     m_cushionShading.SetPageSize(10);
