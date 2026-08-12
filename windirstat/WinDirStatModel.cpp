@@ -115,8 +115,8 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
-        SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
-        SmartPointer ppszName(CoTaskMemFree, static_cast<LPWSTR>(nullptr));
+        CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidl;
+        CComHeapPtr<wchar_t> ppszName;
         CComPtr<IShellItem> psi;
         if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
             SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) != S_OK ||
@@ -125,7 +125,8 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
             assert(false);
         }
 
-        const std::wstring name = ppszName != nullptr ? *ppszName : Localization::Lookup(IDS_THISPC);
+        const std::wstring name = ppszName != nullptr ?
+            static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto& rootFolder : selections)
         {

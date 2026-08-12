@@ -648,10 +648,11 @@ void CWinDirStatModel::RemoveLocalProfiles(const std::wstring_view whereClause) 
     }).ShowModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
-    SmartPointer profilePath(CoTaskMemFree, static_cast<PWSTR>(nullptr));
+    CComHeapPtr<wchar_t> profilePath;
     if (SHGetKnownFolderPath(FOLDERID_UserProfiles, 0, nullptr, &profilePath) == S_OK && profilePath)
     {
-        if (CItem* profileItem = GetRootItem()->FindItemByPath(profilePath.Get()); profileItem != nullptr)
+        if (CItem* profileItem = GetRootItem()->FindItemByPath(static_cast<wchar_t*>(profilePath));
+            profileItem != nullptr)
         {
             RefreshItem(profileItem);
         }

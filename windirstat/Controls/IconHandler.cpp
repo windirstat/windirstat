@@ -157,7 +157,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     if (flags & SHGFI_PIDL)
     {
         // Assume folder id numeric encoded as string
-        SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
+        CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidl;
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
             success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(

@@ -607,7 +607,7 @@ void CDirStatApp::LegacyUninstall()
 
     // Remove shortcuts and start menu items for all users
     constexpr auto startMenuLocation = L"Microsoft\\Windows\\Start Menu\\Programs\\WinDirStat";
-    SmartPointer usersPath(CoTaskMemFree, static_cast<PWSTR>(nullptr));
+    CComHeapPtr<wchar_t> usersPath;
     if (SHGetKnownFolderPath(FOLDERID_UserProfiles, 0, nullptr, &usersPath) != S_OK) return;
     if (const fs::path usersDir(static_cast<LPWSTR>(usersPath)); fs::exists(usersDir, ec))
     {
