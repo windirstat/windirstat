@@ -927,6 +927,7 @@ void CMainFrame::OnSysColorChange()
 void CMainFrame::OnSettingChange(const UINT flags, const LPCTSTR section)
 {
     CFrameWnd::OnSettingChange(flags, section);
+    ApplyWindowsTextScale();
     OnSysColorChange();
 }
 
