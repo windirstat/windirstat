@@ -388,14 +388,14 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
     if (item->IsTypeOrFlag(ITF_RESERVED)) return;
 
     // Determine path to feed into shell function
-    SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
+    CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> pidl;
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
     }
     else
     {
-        pidl = ILCreateFromPath(item->GetPath().c_str());
+        pidl.Attach(ILCreateFromPath(item->GetPath().c_str()));
     }
 
     // Ignore unresolvable (e.g., deleted) files

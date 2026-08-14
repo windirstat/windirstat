@@ -439,8 +439,7 @@ void CWinDirStatModel::OnExplorerSelect()
     for (const auto& path : paths)
     {
         // create path pidl
-        SmartPointer parent(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
-        parent = ILCreateFromPath(path.c_str());
+        CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> parent(ILCreateFromPath(path.c_str()));
 
         // ignore unresolvable (e.g., deleted) files
         if (parent == nullptr)
