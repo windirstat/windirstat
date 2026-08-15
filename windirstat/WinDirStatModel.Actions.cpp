@@ -1097,9 +1097,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             }
 
             // Handle non-root item by removing from parent
-            item->GetParent()->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
-            item->GetParent()->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
-            item->GetParent()->RemoveChild(item);
+            CItem* const parent = item->GetParent();
+            if (GetZoomItem() == item) SetZoomItem(parent);
+            // Direct multi-root branches are not included in the synthetic root's folder count.
+            if (!parent->IsTypeOrFlag(IT_MYCOMPUTER))
+            {
+                parent->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
+                parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
+            }
+            parent->RemoveChild(item);
         }
     }
     InvalidateSelectionCache();

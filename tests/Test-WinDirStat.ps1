@@ -7704,6 +7704,165 @@ function Test-RefreshSelected {
     Focus-Window $script:win
 }
 
+function Test-RemovedMultiRootRefreshTarget {
+    param([string] $Exe)
+    Write-GroupHeader 'Removed Multi-Root Refresh Target'
+    $g = 'RemovedMultiRoot'
+    $testRoot = Join-Path $script:workRoot 'removed-multi-root'
+    $sourceRoots = @(
+        (Join-Path $testRoot 'removed'),
+        (Join-Path $testRoot 'survivor')
+    )
+    $mappedDrives = [System.Collections.Generic.List[string]]::new()
+
+    try {
+        if (Test-Path -LiteralPath $testRoot) { Remove-TestArtifacts -Path $testRoot }
+        New-Item -ItemType Directory -Force -Path $sourceRoots | Out-Null
+        New-TestFile -Path (Join-Path $sourceRoots[0] 'removed.bin') -Size 4096 -Seed 251
+        New-TestFile -Path (Join-Path $sourceRoots[1] 'survivor.bin') -Size 4096 -Seed 252
+
+        foreach ($code in 90..68) {
+            if ($mappedDrives.Count -eq 2) { break }
+            $letter = [char] $code
+            if (Test-Path -LiteralPath "${letter}:\") { continue }
+
+            $substOutput = & subst "${letter}:" $sourceRoots[$mappedDrives.Count] 2>&1
+            if ($LASTEXITCODE -eq 0) { [void] $mappedDrives.Add("${letter}:") }
+            elseif ($Details) { Write-ColoredLine "    SUBST ${letter}: failed: $substOutput" DarkGray }
+        }
+        if ($mappedDrives.Count -ne 2) {
+            Assert-Skip $g 'Two temporary drive letters available' 'Could not create two SUBST drives'
+            return
+        }
+
+        $targetDrive = $mappedDrives[0]
+        $survivorDrive = $mappedDrives[1]
+        $arguments = $mappedDrives -join ' '
+        $win = Start-App -Exe $Exe -Arguments $arguments -OptionLines @('UseFastScanEngine=0')
+        if (!$win) { Assert-Fail $g 'Multi-root app launches' 'Window not found'; return }
+        Assert-Pass $g "Multi-root app launches for $targetDrive and $survivorDrive"
+
+        if (!(Wait-ScanDone -TimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 60000)))) {
+            Assert-Fail $g 'Multi-root scan completes' 'Scan did not complete'
+            return
+        }
+        $win = Wait-Window -ProcessId $script:proc.Id -TitleContains 'WinDirStat' -TimeoutMs 5000
+        if (!$win) { Assert-Fail $g 'Main window after multi-root scan' 'Lost window reference'; return }
+        $script:win = $win
+        Assert-Pass $g 'Multi-root scan completes'
+
+        $mainHwnd = [IntPtr] $win.Current.NativeWindowHandle
+        $targetRows = [System.Collections.Generic.List[object]]::new()
+        foreach ($listView in [NativeListViewHelper]::GetVisibleListViews($mainHwnd)) {
+            $texts = @([NativeListViewHelper]::GetItemTexts($listView))
+            $hasSurvivor = @($texts | Where-Object {
+                $_ -and $_.IndexOf($survivorDrive, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+            }).Count -gt 0
+            if (!$hasSurvivor) { continue }
+
+            for ($index = 0; $index -lt $texts.Count; $index++) {
+                if (!$texts[$index] -or
+                    $texts[$index].IndexOf($targetDrive, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
+                    continue
+                }
+                [void] $targetRows.Add([pscustomobject]@{
+                    ListView = [IntPtr] $listView
+                    Index = $index
+                    Text = $texts[$index]
+                })
+            }
+        }
+        if ($targetRows.Count -ne 1) {
+            Assert-Fail $g 'Direct multi-root branch located' "Found $($targetRows.Count) matching rows"
+            return
+        }
+
+        $targetRow = $targetRows[0]
+        if (-not [NativeListViewHelper]::SelectSingleItem(
+                [IntPtr] $targetRow.ListView, [int] $targetRow.Index
+            ) -or -not [NativeListViewHelper]::FocusListView([IntPtr] $targetRow.ListView)) {
+            Assert-Fail $g 'Direct multi-root branch selected' 'Native list selection failed'
+            return
+        }
+        Assert-Pass $g "Direct multi-root branch selected: '$($targetRow.Text)'"
+
+        $zoomInId = Get-ResourceId 'ID_TREEMAP_ZOOMIN'
+        $zoomOutId = Get-ResourceId 'ID_TREEMAP_ZOOMOUT'
+        $zoomResetId = Get-ResourceId 'ID_TREEMAP_ZOOMRESET'
+        $refreshSelectedId = Get-ResourceId 'ID_REFRESH_SELECTED'
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $zoomInId)) {
+            Assert-Fail $g 'Zoom into direct branch' 'WM_COMMAND dispatch failed'
+            return
+        }
+        Start-Sleep -Milliseconds 300
+        $zoomOutBefore = @(Get-Win32MenuItems -hwnd $mainHwnd) |
+            Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+        if (!$zoomOutBefore -or !$zoomOutBefore.IsEnabled) {
+            Assert-Fail $g 'Direct branch becomes zoom root' 'Zoom Out did not become enabled'
+            return
+        }
+        Assert-Pass $g 'Direct branch becomes zoom root'
+
+        $substOutput = & subst $targetDrive /D 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Assert-Fail $g 'Remove refreshed drive mapping' "$substOutput"
+            return
+        }
+        Assert-Pass $g "Refreshed drive mapping removed: $targetDrive"
+
+        if (!(Invoke-Win32CommandId -Window $win -CommandId $refreshSelectedId)) {
+            Assert-Fail $g 'Refresh removed direct branch' 'WM_COMMAND dispatch failed'
+            return
+        }
+        if (!(Wait-ScanDone -TimeoutMs ([Math]::Max($TimeoutSeconds * 1000, 30000))) -or
+            !$script:proc -or $script:proc.HasExited) {
+            Assert-Fail $g 'Removed direct-branch refresh completes' 'Application exited or scan timed out'
+            return
+        }
+        Assert-Pass $g 'Removed direct-branch refresh completes without crashing'
+
+        $zoomItems = @(Get-Win32MenuItems -hwnd $mainHwnd)
+        $zoomOut = $zoomItems | Where-Object { $_.CommandId -eq $zoomOutId } | Select-Object -First 1
+        $zoomReset = $zoomItems | Where-Object { $_.CommandId -eq $zoomResetId } | Select-Object -First 1
+        Assert-That $g 'Zoom falls back to the surviving synthetic root' `
+            ($zoomOut -and $zoomReset -and !$zoomOut.IsEnabled -and !$zoomReset.IsEnabled) `
+            'Zoom Out or Zoom Reset remained enabled after the zoom target was removed'
+
+        $verifyCsv = Join-Path $testRoot 'removed-multi-root.csv'
+        $exportedCsv = Invoke-CsvExportFromMenu -Window $win -OutPath $verifyCsv
+        if (!$exportedCsv) {
+            Assert-Fail $g 'Export refreshed multi-root model' 'CSV export did not produce a file'
+            return
+        }
+        $rows = @(Read-CsvRows -Csv $exportedCsv)
+        Assert-That $g 'Synthetic root folder count remains zero' ([uint64] $rows[0].Folders -eq 0) `
+            "Expected 0, got $($rows[0].Folders)"
+
+        $normalizedNames = @($rows | ForEach-Object { Normalize-ComparePath $_.Name })
+        $targetNorm = Normalize-ComparePath "${targetDrive}\"
+        $survivorNorm = Normalize-ComparePath "${survivorDrive}\"
+        $survivorFileNorm = Normalize-ComparePath "${survivorDrive}\survivor.bin"
+        Assert-That $g 'Removed direct branch is absent from the model' `
+            (@($normalizedNames | Where-Object {
+                $_ -ieq $targetNorm -or $_.StartsWith("$targetNorm\", [System.StringComparison]::OrdinalIgnoreCase)
+            }).Count -eq 0) 'The removed drive or one of its children remained in the export'
+        Assert-That $g 'Surviving direct branch remains in the model' `
+            (@($normalizedNames | Where-Object { $_ -ieq $survivorNorm }).Count -eq 1) `
+            'The surviving drive root was missing or duplicated'
+        Assert-That $g 'Surviving branch contents remain in the model' `
+            (@($normalizedNames | Where-Object { $_ -ieq $survivorFileNorm }).Count -eq 1) `
+            'The surviving drive file was missing or duplicated'
+    }
+    catch {
+        Assert-Fail $g 'Removed multi-root refresh regression executes' $_.Exception.Message
+    }
+    finally {
+        try { Stop-App } catch {}
+        foreach ($drive in $mappedDrives) { & subst $drive /D 2>&1 | Out-Null }
+        Remove-TestArtifacts -Path $testRoot
+    }
+}
+
 function Start-UiScanSession {
     param(
         [string] $Exe,
@@ -9431,10 +9590,13 @@ function Invoke-UiSuite {
         # -- Phase 4: remove-empty reparse safety -------------------------------
         & $runPhase 'Remove-empty reparse safety' { Test-RemoveEmptyFoldersReparseSafety -Exe $ExePath }
 
-        # -- Phase 4b: file operations (delete / refresh) ------------------------
+        # -- Phase 4b: removed direct multi-root refresh -------------------------
+        & $runPhase 'Removed multi-root refresh target' { Test-RemovedMultiRootRefreshTarget -Exe $ExePath }
+
+        # -- Phase 4c: file operations (delete / refresh) ------------------------
         & $runPhase 'File operations (delete/refresh)' { Test-FileOperations -Exe $ExePath }
 
-        # -- Phase 4c: file-op verification (compress/sparse/dedup/motw) ---------
+        # -- Phase 4d: file-op verification (compress/sparse/dedup/motw) ---------
         & $runPhase 'File-op verification' { Test-FileOpsVerification -Exe $ExePath }
 
     }
