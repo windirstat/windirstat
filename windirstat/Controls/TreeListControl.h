@@ -67,10 +67,10 @@ public:
     virtual CTreeListItem* GetAncestorCheckItem() { return this; }
 
     void DrawPacman(CDC* pdc, const CRect& rc) const;
-    CTreeListItem* GetParent() const;
-    void SetParent(CTreeListItem* parent);
+    CTreeListItem* GetParent() const { return m_parent; }
+    void SetParent(CTreeListItem* parent) { m_parent = parent; }
     bool IsAncestorOf(const CTreeListItem* item) const;
-    bool HasChildren() const;
+    bool HasChildren() const { return GetTreeListChildCount() > 0; }
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
     bool IsVisible() const override { return m_visualInfo.get() != nullptr; }
@@ -105,14 +105,14 @@ public:
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
-    CTreeListItem* GetItem(int i) const;
+    CTreeListItem* GetItem(const int i) const { return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i)); }
     bool IsItemSelected(const CTreeListItem* item) const;
     void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false, bool scroll = false);
     void ExpandPathToItem(const CTreeListItem* item);
     void DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width) const;
     void EnsureItemVisible(const CTreeListItem* item);
-    void ExpandItem(const CTreeListItem* item);
-    int FindTreeItem(const CTreeListItem* item) const;
+    void ExpandItem(const CTreeListItem* item) { ExpandItem(FindTreeItem(item), false); }
+    int FindTreeItem(const CTreeListItem* item) const { return FindListItem(item); }
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);

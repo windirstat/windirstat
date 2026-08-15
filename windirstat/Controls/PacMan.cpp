@@ -37,21 +37,6 @@ void CPacman::Reset()
     m_moving       = false;
 }
 
-void CPacman::SetGlobalSuspendState(const bool suspend)
-{
-    m_suspended = suspend;
-}
-
-void CPacman::Start()
-{
-    m_moving = true;
-}
-
-void CPacman::Stop()
-{
-    m_done = true;
-}
-
 void CPacman::UpdatePosition()
 {
     m_lastUpdate = GetTickCount64();

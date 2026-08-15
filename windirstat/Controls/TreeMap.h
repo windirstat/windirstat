@@ -216,14 +216,14 @@ public:
     static std::unique_ptr<CItem> BuildDemoTree();
 
     // Good values
-    static Options GetDefaults();
+    static Options GetDefaults() { return DefaultOptions; }
 
     // Construct the treemap generator and register the callback interface.
     CTreeMap();
 
     // Alter the options
     void SetOptions(const Options* options);
-    Options GetOptions() const;
+    Options GetOptions() const { return m_options; }
 
     void RecurseCheckTree(const CItem* item);
 

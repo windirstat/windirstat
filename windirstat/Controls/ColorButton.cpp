@@ -21,11 +21,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-COLORREF CColorButton::CPreview::GetColor() const
-{
-    return m_color;
-}
-
 void CColorButton::CPreview::SetColor(const COLORREF color)
 {
     m_color = color;
@@ -53,16 +48,6 @@ void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point) cons
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-COLORREF CColorButton::GetColor() const
-{
-    return m_preview.GetColor();
-}
-
-void CColorButton::SetColor(const COLORREF color)
-{
-    m_preview.SetColor(color);
-}
 
 void CColorButton::OnPaint()
 {

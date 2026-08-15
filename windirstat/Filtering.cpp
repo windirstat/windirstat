@@ -131,11 +131,6 @@ std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
 
 // --- Public methods ---
 
-bool CFiltering::IsFilterActive()
-{
-    return FilterActive;
-}
-
 void CFiltering::CompileFilters()
 {
     ExcludeDirsRegex.clear();

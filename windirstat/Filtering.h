@@ -37,7 +37,7 @@ public:
     static bool FilterActive;
 
     static void CompileFilters();
-    static bool IsFilterActive();
+    static bool IsFilterActive() { return FilterActive; }
     static std::wstring_view WithoutTrailingBackslashes(std::wstring_view path);
     static bool MatchesAnyPath(const std::wstring& path, const std::vector<std::wregex>& patterns);
     static bool IsFilteredOut(const std::wstring& directoryName);

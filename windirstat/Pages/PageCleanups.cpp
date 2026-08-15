@@ -156,11 +156,6 @@ void CPageCleanups::UpdateControlStatus()
     GetDlgItem(IDC_DOWN)->EnableWindow(hasCurrent && std::cmp_less(m_current + 1, m_udc.size()));
 }
 
-bool CPageCleanups::HasCurrentUdc() const noexcept
-{
-    return m_current >= 0 && std::cmp_less(m_current, m_udc.size());
-}
-
 void CPageCleanups::OnBnClickedEnabled()
 {
     OnSomethingChanged();

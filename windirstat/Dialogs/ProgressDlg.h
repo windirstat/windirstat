@@ -25,7 +25,7 @@ public:
 
 protected:
     void OnPaint();
-    bool OnEraseBkgnd(CDC* pDC);
+    bool OnEraseBkgnd(CDC*) { return true; }
 public:
     static std::span<const RouteEntry> Routes();
 

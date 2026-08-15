@@ -193,11 +193,6 @@ bool CFlameGraph::IsBreadcrumb(const CItem* item) const
     return found != m_layout.end() && found->second.breadcrumb;
 }
 
-int CFlameGraph::GetBreadcrumbHeight() const
-{
-    return m_breadcrumbs.empty() ? 0 : m_rowHeight;
-}
-
 bool CFlameGraph::TryGetItemRectangle(const CItem* item, CRect& rectangle) const
 {
     const auto found = m_layout.find(item);

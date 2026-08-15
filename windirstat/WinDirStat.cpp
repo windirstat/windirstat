@@ -147,18 +147,6 @@ COLORREF CDirStatApp::GetAlternativeColor(const COLORREF clrDefault, const std::
     return clrDefault;
 }
 
-COLORREF CDirStatApp::AltColor() const
-{
-    // Return property value
-    return m_altColor;
-}
-
-COLORREF CDirStatApp::AltEncryptionColor() const
-{
-    // Return property value
-    return m_altEncryptionColor;
-}
-
 std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
 {
     // Fetch current working set

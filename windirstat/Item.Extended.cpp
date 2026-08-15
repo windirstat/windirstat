@@ -267,7 +267,6 @@ std::wstring CItem::GetText(const int subitem) const
 
 COLORREF CItem::GetItemTextColor() const
 {
-    // Get the file/folder attributes
     const DWORD attr = GetAttributes();
 
     // This happens e.g. on a Unicode-capable FS when using ANSI APIs
@@ -478,11 +477,6 @@ ULONGLONG CItem::TmiGetSize() const noexcept
 
 // --- Drive / Volume Specific ---
 
-bool CItem::IsRootItem() const noexcept
-{
-    return IsTypeOrFlag(ITF_ROOTITEM);
-}
-
 bool CItem::SupportsSpaceItems() const noexcept
 {
     return IsTypeOrFlag(IT_DRIVE) ||
@@ -572,11 +566,6 @@ ULONGLONG CItem::GetProgressPos() const
     }
 
     return 0;
-}
-
-int CItem::GetSizeProportionWidth()
-{
-    return 105;
 }
 
 CItem* CItem::FindRecyclerItem() const

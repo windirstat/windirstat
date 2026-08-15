@@ -29,11 +29,6 @@ void CExtensionView::SysColorChanged()
     m_extensionListControl.SysColorChanged();
 }
 
-bool CExtensionView::IsShowTypes() const
-{
-    return m_showTypes;
-}
-
 void CExtensionView::ShowTypes(const bool show)
 {
     m_showTypes = show;
@@ -153,9 +148,4 @@ void CExtensionView::OnSize(UINT /*nType*/, const int cx, const int cy)
 void CExtensionView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     m_extensionListControl.SetFocus();
-}
-
-bool CExtensionView::OnEraseBkgnd(CDC* /*pDC*/)
-{
-    return true;
 }

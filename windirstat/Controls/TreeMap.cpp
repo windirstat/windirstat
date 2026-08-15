@@ -282,11 +282,6 @@ std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
     }
 }
 
-CTreeMap::Options CTreeMap::GetDefaults()
-{
-    return DefaultOptions;
-}
-
 CTreeMap::CTreeMap()
 {
     SetOptions(&DefaultOptions);
@@ -306,11 +301,6 @@ void CTreeMap::SetOptions(const Options* options)
     m_lx = lx / len;
     m_ly = ly / len;
     m_lz = lz / len;
-}
-
-CTreeMap::Options CTreeMap::GetOptions() const
-{
-    return m_options;
 }
 
 void CTreeMap::ClearLayout()

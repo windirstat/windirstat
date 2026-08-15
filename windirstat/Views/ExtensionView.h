@@ -33,7 +33,7 @@ public:
     ~CExtensionView() override = default;
 
     void SysColorChanged();
-    bool IsShowTypes() const;
+    bool IsShowTypes() const { return m_showTypes; }
     void ShowTypes(bool show);
 
     void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
@@ -50,7 +50,7 @@ protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSize(UINT nType, int cx, int cy);
     void OnSetFocus(CWnd* pOldWnd);
-    bool OnEraseBkgnd(CDC* pDC);
+    bool OnEraseBkgnd(CDC*) { return true; }
 };
 
 inline std::span<const RouteEntry> CExtensionView::Routes()

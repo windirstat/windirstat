@@ -242,11 +242,6 @@ CMenu::operator bool() const noexcept
     return m_hMenu != nullptr;
 }
 
-HMENU CMenu::Handle() const noexcept
-{
-    return m_hMenu;
-}
-
 HMENU CMenu::Detach() noexcept
 {
     const HMENU menu = m_hMenu;
@@ -577,26 +572,6 @@ void CTabControl::SetContentBackgroundColor(const COLORREF color)
     if (IsWindow(m_hWnd)) Invalidate(false);
 }
 
-int CTabControl::TabCount() const
-{
-    return static_cast<int>(m_tabs.size());
-}
-
-int CTabControl::ActiveTab() const
-{
-    return m_activeTab;
-}
-
-CWnd* CTabControl::TabWindow(const int index) const
-{
-    return index >= 0 && index < TabCount() ? m_tabs[index].window : nullptr;
-}
-
-bool CTabControl::IsTabVisible(const int index) const
-{
-    return index >= 0 && index < TabCount() && m_tabs[index].visible;
-}
-
 std::wstring_view CTabControl::TabLabel(const int index) const
 {
     return index >= 0 && index < TabCount() ? m_tabs[index].label : std::wstring_view();
@@ -642,11 +617,6 @@ int CTabControl::AddTab(CWnd* window, const std::wstring_view label)
     LayoutPanes();
     Invalidate(false);
     return static_cast<int>(m_tabs.size()) - 1;
-}
-
-bool CTabControl::SelectTab(const int i)
-{
-    return ActivateTab(i, true);
 }
 
 bool CTabControl::PreprocessMessage(MSG* pMsg)
@@ -714,11 +684,6 @@ void CTabControl::OnFontSizeChanged(int, int)
     RebuildNativeTabs();
     LayoutPanes();
     Invalidate(false);
-}
-
-bool CTabControl::OnEraseBkgnd(CDC*)
-{
-    return true;
 }
 
 void CTabControl::OnLButtonDown(UINT, const CPoint point)
@@ -1166,11 +1131,6 @@ bool CTabControl::UsesLabelOnlyTabs() const
         {
             return tab.visible && tab.window != nullptr;
         });
-}
-
-int CTabControl::TabStripHeight() const
-{
-    return ::ScaleForDpi(22, m_hWnd);
 }
 
 void CTabControl::LayoutPanes()

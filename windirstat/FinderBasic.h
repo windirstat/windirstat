@@ -88,14 +88,16 @@ public:
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
-    inline DWORD GetAttributes() const override;
-    inline std::wstring GetFileName() const override;
-    inline ULONGLONG GetFileSizePhysical() const override;
-    inline ULONGLONG GetFileSizeLogical() const override;
-    inline FILETIME GetLastWriteTime() const override;
-    std::wstring GetFilePath() const override;
-    inline ULONGLONG GetIndex() const override;
-    inline DWORD GetReparseTag() const override;
+    DWORD GetAttributes() const override { return m_currentInfo->FileAttributes; }
+    std::wstring GetFileName() const override { return m_name; }
+    ULONGLONG GetFileSizePhysical() const override { return m_currentInfo->AllocationSize.QuadPart; }
+    ULONGLONG GetFileSizeLogical() const override { return m_currentInfo->EndOfFile.QuadPart; }
+    FILETIME GetLastWriteTime() const override { return std::bit_cast<FILETIME>(m_currentInfo->LastWriteTime); }
+    // m_base is kept in clean Win32 form (the NT \??\ form lives only in
+    // m_baseNt), so the full path is a direct concatenation with the name
+    std::wstring GetFilePath() const override { return m_base + m_name; }
+    ULONGLONG GetIndex() const override;
+    DWORD GetReparseTag() const override { return m_reparseTag; }
     bool IsReserved() const override { return false; }
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});

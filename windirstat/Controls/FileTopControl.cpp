@@ -37,11 +37,6 @@ void CFileTopControl::ProcessTop(CItem * item)
     m_queuedSet.push(item);
 }
 
-void CFileTopControl::ClearPendingItems()
-{
-    m_queuedSet.clear();
-}
-
 void CFileTopControl::SortItems()
 {
 

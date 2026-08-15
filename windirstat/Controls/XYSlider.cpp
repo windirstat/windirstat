@@ -47,21 +47,6 @@ void CXySlider::Initialize()
     }
 }
 
-void CXySlider::GetRange(CSize& range) const
-{
-    range = m_externalRange;
-}
-
-void CXySlider::SetRange(const CSize & range)
-{
-    m_externalRange = range;
-}
-
-CPoint CXySlider::GetPos() const
-{
-    return m_externalPos;
-}
-
 LRESULT CXySlider::OnSetPos(WPARAM, const LPARAM lparam)
 {
     const auto point = std::bit_cast<PPOINT>(lparam);
@@ -275,16 +260,6 @@ void CXySlider::HighlightGripper(const bool on)
 {
     m_gripperHighlight = on;
     RedrawWindow();
-}
-
-UINT CXySlider::OnGetDlgCode()
-{
-    return DLGC_WANTARROWS;
-}
-
-LRESULT CXySlider::OnNcHitTest(CPoint /*point*/)
-{
-    return HTCLIENT;
 }
 
 void CXySlider::OnSetFocus(CWnd* pOldWnd)

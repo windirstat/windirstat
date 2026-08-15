@@ -40,7 +40,7 @@ protected:
     void OnSomethingChanged();
     void UpdateControlStatus();
     void CheckEmptyTitle();
-    bool HasCurrentUdc() const noexcept;
+    bool HasCurrentUdc() const noexcept { return m_current >= 0 && std::cmp_less(m_current, m_udc.size()); }
     void MoveCurrentUdc(int offset);
 
     std::vector<USERDEFINEDCLEANUP> m_udc;

@@ -49,7 +49,7 @@ public:
     // rectangle cache owned by the treemap projection.
     bool TryGetItemRectangle(const CItem* item, CRect& rectangle) const;
     bool IsBreadcrumb(const CItem* item) const;
-    int GetBreadcrumbHeight() const;
+    int GetBreadcrumbHeight() const { return m_breadcrumbs.empty() ? 0 : m_rowHeight; }
     void ClearLayout();
     void TrimMemory();
 

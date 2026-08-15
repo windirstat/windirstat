@@ -86,11 +86,6 @@ std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
     }
 }
 
-const std::wstring& CExtensionListControl::CListItem::GetExtension() const
-{
-    return m_extension;
-}
-
 HICON CExtensionListControl::CListItem::GetIcon()
 {
     if (m_icon != nullptr) return m_icon;
@@ -235,16 +230,6 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     SortItems();
 }
 
-void CExtensionListControl::SetRootSize(const ULONGLONG totalBytes)
-{
-    m_rootSize = totalBytes;
-}
-
-ULONGLONG CExtensionListControl::GetRootSize() const
-{
-    return m_rootSize;
-}
-
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
     auto view = std::views::iota(0, GetItemCount());
@@ -271,11 +256,6 @@ std::wstring CExtensionListControl::GetSelectedExtension() const
 
     const CListItem* item = GetListItem(selected);
     return item->GetExtension();
-}
-
-CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i) const
-{
-    return static_cast<CListItem*>(GetItem(i));
 }
 
 bool CExtensionListControl::IsSelectedAggregate() const

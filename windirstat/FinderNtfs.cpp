@@ -402,41 +402,6 @@ bool FinderNtfs::FindFile(const CItem* item)
     return FindNext();
 }
 
-DWORD FinderNtfs::GetAttributes() const
-{
-    return m_currentRecord->Attributes;
-}
-
-ULONGLONG FinderNtfs::GetIndex() const
-{
-    return m_currentRecordName->BaseRecord;
-}
-
-DWORD FinderNtfs::GetReparseTag() const
-{
-    return m_currentRecord->ReparsePointTag;
-}
-
-std::wstring FinderNtfs::GetFileName() const
-{
-    return m_currentRecordName->FileName;
-}
-
-ULONGLONG FinderNtfs::GetFileSizePhysical() const
-{
-    return m_currentRecord->PhysicalSize;
-}
-
-ULONGLONG FinderNtfs::GetFileSizeLogical() const
-{
-    return m_currentRecord->LogicalSize;
-}
-
-FILETIME FinderNtfs::GetLastWriteTime() const
-{
-    return m_currentRecord->LastModifiedTime;
-}
-
 std::wstring FinderNtfs::GetFilePath() const
 {
     // Get full path to folder or file
@@ -448,9 +413,4 @@ std::wstring FinderNtfs::GetFilePath() const
     if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.length());
     if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.length());
     return path;
-}
-
-bool FinderNtfs::IsReserved() const
-{
-    return m_index < FinderNtfsContext::NtfsReservedMax;
 }

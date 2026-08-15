@@ -57,7 +57,7 @@ class CSettingsSheet final : public MessageTarget<CSettingsSheet, CPropertySheet
 {
 public:
     CSettingsSheet();
-    void SetRestartRequired(bool changed);
+    void SetRestartRequired(const bool changed) { m_restartRequest = changed; }
     bool OnInitDialog() override;
     static bool ShowSettings(int initialPage = -1, bool refreshOnFilteringChange = true);
 
@@ -186,14 +186,14 @@ public:
     void UpdateProgressRange(ULONGLONG range);
     void SetProgressComplete();
     void SuspendState(bool suspend);
-    bool IsScanSuspended() const;
+    bool IsScanSuspended() const { return m_scanSuspend; }
 
     void UpdateProgress();
     void UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader = nullptr) const;
     std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, bool removeItems = true) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
-    LOGICAL_FOCUS GetLogicalFocus() const;
+    LOGICAL_FOCUS GetLogicalFocus() const { return m_logicalFocus; }
     void MoveFocus(LOGICAL_FOCUS logicalFocus);
     void UpdatePaneText();
 
@@ -315,7 +315,7 @@ protected:
     LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam) const;
     void OnNcPaint();
     bool OnNcActivate(bool bActive);
-    bool OnEraseBkgnd(CDC* pDC);
+    bool OnEraseBkgnd(CDC*) { return true; }
 public:
     static CMainFrame* Get() { return s_Singleton; }
     void UpdateFrameTitleForScan(LPCWSTR scanName);

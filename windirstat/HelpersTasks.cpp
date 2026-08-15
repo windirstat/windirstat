@@ -503,7 +503,6 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     const auto& compressionMap = (algorithm == LZNT1) ?
         compressionStandard : compressionModern;
 
-    // Return cached value
     if (const auto it = compressionMap.find(resolvedVolume); it != compressionMap.end())
     {
         return it->second;

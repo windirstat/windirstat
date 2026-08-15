@@ -78,13 +78,13 @@ public:
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
-    DWORD GetAttributes() const override;
-    ULONGLONG GetIndex() const override;
-    DWORD GetReparseTag() const override;
-    std::wstring GetFileName() const override;
-    ULONGLONG GetFileSizePhysical() const override;
-    ULONGLONG GetFileSizeLogical() const override;
-    FILETIME GetLastWriteTime() const override;
+    DWORD GetAttributes() const override { return m_currentRecord->Attributes; }
+    ULONGLONG GetIndex() const override { return m_currentRecordName->BaseRecord; }
+    DWORD GetReparseTag() const override { return m_currentRecord->ReparsePointTag; }
+    std::wstring GetFileName() const override { return m_currentRecordName->FileName; }
+    ULONGLONG GetFileSizePhysical() const override { return m_currentRecord->PhysicalSize; }
+    ULONGLONG GetFileSizeLogical() const override { return m_currentRecord->LogicalSize; }
+    FILETIME GetLastWriteTime() const override { return m_currentRecord->LastModifiedTime; }
     std::wstring GetFilePath() const override;
-    bool IsReserved() const override;
+    bool IsReserved() const override { return m_index < FinderNtfsContext::NtfsReservedMax; }
 };

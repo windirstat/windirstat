@@ -47,8 +47,8 @@ public:
 
     bool IsFollowingAllowed(DWORD reparseTag = 0) const;
 
-    COLORREF AltColor() const;           // Coloring of compressed items
-    COLORREF AltEncryptionColor() const; // Coloring of encrypted items
+    COLORREF AltColor() const { return m_altColor; } // Coloring of compressed items
+    COLORREF AltEncryptionColor() const { return m_altEncryptionColor; } // Coloring of encrypted items
 
     static std::wstring GetCurrentProcessMemoryInfo();
     CIconHandler* GetIconHandler();

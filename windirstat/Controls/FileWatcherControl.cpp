@@ -191,7 +191,6 @@ HICON CWatcherItem::GetIcon()
         return nullptr;
     }
 
-    // Return previously cached value
     if (m_visualInfo->icon != nullptr)
     {
         return m_visualInfo->icon;

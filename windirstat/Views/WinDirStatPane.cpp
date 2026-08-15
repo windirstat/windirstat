@@ -23,11 +23,6 @@ void CWinDirStatPane::PostNcDestroy()
     delete this;
 }
 
-int CWinDirStatPane::OnCreate(LPCREATESTRUCT /*lpCreateStruct*/)
-{
-    return 0;
-}
-
 void CWinDirStatPane::OnPaint()
 {
     CPaintDC dc(this);

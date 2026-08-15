@@ -52,9 +52,9 @@ protected:
     bool HasValidLayout() const override;
     void ClearVisualizationLayout() override;
     void OnViewEmptied() override;
-    void OnSuspending() override;
-    void OnBeforeSizeChanged() override;
-    void OnInputStateReset() override;
+    void OnSuspending() override { m_forceScrollBarVisible = false; }
+    void OnBeforeSizeChanged() override { if (!m_updatingScrollBar) m_forceScrollBarVisible = false; }
+    void OnInputStateReset() override { m_scrollWheelDeltaRemainder = 0; }
     void OnRenderCacheTrimmed() override;
     bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
     void OnVisualizationChanged(MODEL_CHANGE change) override;

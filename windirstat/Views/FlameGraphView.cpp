@@ -393,11 +393,6 @@ int CFlameGraphView::ComputeFlameFullHeight(const int width)
     return m_flameGraph.PrepareLayout(zoomItem, std::max(0, width), m_rowHeight);
 }
 
-void CFlameGraphView::OnBeforeSizeChanged()
-{
-    if (!m_updatingScrollBar) m_forceScrollBarVisible = false;
-}
-
 void CFlameGraphView::ClearVisualizationLayout()
 {
     m_flameGraph.ClearLayout();
@@ -409,16 +404,6 @@ void CFlameGraphView::OnViewEmptied()
     m_scrollPos = 0;
     m_forceScrollBarVisible = false;
     UpdateScrollBar(m_fullHeight, m_size.cy);
-}
-
-void CFlameGraphView::OnSuspending()
-{
-    m_forceScrollBarVisible = false;
-}
-
-void CFlameGraphView::OnInputStateReset()
-{
-    m_scrollWheelDeltaRemainder = 0;
 }
 
 void CFlameGraphView::OnRenderCacheTrimmed()

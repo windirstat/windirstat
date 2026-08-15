@@ -70,11 +70,6 @@ void CVisualizationPane::OnDraw(CDC* pDC)
     pDC->FillSolidRect(ClientRect(), CGraphView::BackgroundColor);
 }
 
-CGraphView* CVisualizationPane::GetActiveView() const
-{
-    return m_views[static_cast<std::size_t>(m_activePane)];
-}
-
 void CVisualizationPane::SelectPane(const GraphPane pane)
 {
     CGraphView* previous = GetActiveView();

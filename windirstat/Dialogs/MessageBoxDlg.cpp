@@ -70,11 +70,6 @@ WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std:
     return { static_cast<int>(dlg.ShowModal()), dlg.IsCheckboxChecked() };
 }
 
-bool CMessageBoxDlg::IsCheckboxChecked() const
-{
-    return m_checkboxChecked;
-}
-
 void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int shiftAmount)
 {
     for (auto* pCtrl : controls)

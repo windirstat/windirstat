@@ -234,13 +234,13 @@ public:
     ULONGLONG TmiGetSize() const noexcept;
 
     // Drive/Volume Specific
-    bool IsRootItem() const noexcept;
+    bool IsRootItem() const noexcept { return IsTypeOrFlag(ITF_ROOTITEM); }
     bool SupportsSpaceItems() const noexcept;
     std::vector<CItem*> GetDriveItems() const;
     std::vector<CItem*> GetSpaceItems() const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
-    static int GetSizeProportionWidth();
+    static int GetSizeProportionWidth() { return 105; }
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;

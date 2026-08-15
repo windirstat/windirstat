@@ -99,28 +99,28 @@ public:
     void SetScanTitlePrefix(const std::wstring& prefix) const;
 
     COLORREF GetCushionColor(const std::wstring& ext);
-    COLORREF GetZoomColor() const;
+    COLORREF GetZoomColor() const { return RGB(0, 0, 255); }
 
-    CExtensionData* GetExtensionData();
+    CExtensionData* GetExtensionData() { return &m_extensionData; }
     SExtensionRecord* GetExtensionDataRecord(const std::wstring& ext);
-    bool IsExtensionRegistered(const std::wstring& ext) const;
+    bool IsExtensionRegistered(const std::wstring& ext) const { return m_registeredExtensions.contains(ext); }
     ULONGLONG GetRootSize() const;
 
     void RefreshReparsePointItems() const;
 
-    bool HasRootItem() const;
+    bool HasRootItem() const { return m_rootItem != nullptr; }
     bool IsRootDone() const;
     bool IsScanRunning() const;
     bool IsScanSettled() const;
     void RunPendingHeapCleanup();
-    CItem* GetRootItem() const;
-    CItem* GetZoomItem() const;
-    bool IsZoomed() const;
+    CItem* GetRootItem() const { return m_rootItem; }
+    CItem* GetZoomItem() const { return m_zoomItem; }
+    bool IsZoomed() const { return GetZoomItem() != GetRootItem(); }
 
     void SetHighlightExtension(const std::wstring& ext, bool unregistered = false);
-    std::wstring GetHighlightExtension() const;
-    bool IsHighlightUnregistered() const;
-    const std::unordered_set<std::wstring>& GetHighlightExtensions() const;
+    std::wstring GetHighlightExtension() const { return m_highlightExtension; }
+    bool IsHighlightUnregistered() const { return m_highlightUnregistered; }
+    const std::unordered_set<std::wstring>& GetHighlightExtensions() const { return m_highlightExtensions; }
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
@@ -145,8 +145,8 @@ public:
     static std::wstring BuildUserDefinedCleanupCommandLine(const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath);
     void PushReselectChild(CItem* item);
     CItem* PopReselectChild();
-    void ClearReselectChildStack();
-    bool IsReselectChildAvailable() const;
+    void ClearReselectChildStack() { m_reselectChildStack.clear(); }
+    bool IsReselectChildAvailable() const { return !m_reselectChildStack.empty(); }
     static CompressionAlgorithm CompressionIdToAlg(UINT id);
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
@@ -156,7 +156,7 @@ public:
     static bool PermsListHasFocus();
     std::span<CItem* const> GetSelectedItemsView();
     std::vector<CItem*> GetAllSelected();
-    void InvalidateSelectionCache();
+    void InvalidateSelectionCache() { m_selectionCacheValid = false; }
     static CTreeListControl* GetFocusControl();
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 

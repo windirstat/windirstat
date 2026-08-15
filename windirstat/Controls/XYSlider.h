@@ -29,10 +29,10 @@ public:
 
     CXySlider() = default;
 
-    void GetRange(CSize& range) const;
-    void SetRange(const CSize & range);
+    void GetRange(CSize& range) const { range = m_externalRange; }
+    void SetRange(const CSize & range) { m_externalRange = range; }
 
-    CPoint GetPos() const;
+    CPoint GetPos() const { return m_externalPos; }
     void SetPos(CPoint pt);
 
 protected:
@@ -73,8 +73,8 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
-    UINT OnGetDlgCode();
-    LRESULT OnNcHitTest(CPoint point);
+    UINT OnGetDlgCode() { return DLGC_WANTARROWS; }
+    LRESULT OnNcHitTest(CPoint) { return HTCLIENT; }
     void OnSetFocus(CWnd* pOldWnd);
     void OnKillFocus(CWnd* pNewWnd);
     void OnPaint();

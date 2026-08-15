@@ -306,11 +306,6 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
     }
 }
 
-LOGICAL_FOCUS CMainFrame::GetLogicalFocus() const
-{
-    return m_logicalFocus;
-}
-
 void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
 {
     switch (logicalFocus)

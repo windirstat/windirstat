@@ -151,11 +151,6 @@ HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
     return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-bool CWdsProgressCtrl::OnEraseBkgnd(CDC* /*pDC*/)
-{
-    return true;
-}
-
 void CWdsProgressCtrl::OnPaint()
 {
     CPaintDC dc(this);

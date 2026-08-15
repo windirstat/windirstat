@@ -122,21 +122,6 @@ void CDriveItem::SetDriveInformation(const bool success)
     }
 }
 
-bool CDriveItem::IsRemote() const
-{
-    return m_isRemote;
-}
-
-bool CDriveItem::IsMtp() const
-{
-    return m_mtp;
-}
-
-bool CDriveItem::IsSUBSTed() const
-{
-    return m_subst;
-}
-
 int CDriveItem::Compare(const CWdsListItem* baseOther, const int subitem) const
 {
     const CDriveItem* other = reinterpret_cast<const CDriveItem*>(baseOther);
@@ -152,11 +137,6 @@ int CDriveItem::Compare(const CWdsListItem* baseOther, const int subitem) const
     }
 
     return 0;
-}
-
-HICON CDriveItem::GetIcon()
-{
-    return m_icon;
 }
 
 bool CDriveItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -241,11 +221,6 @@ std::wstring CDriveItem::GetText(const int subitem) const
     return s;
 }
 
-std::wstring CDriveItem::GetPath() const
-{
-    return m_path;
-}
-
 std::wstring CDriveItem::GetDrive() const
 {
     return m_mtp ? m_path : ::GetDrive(m_path);
@@ -264,20 +239,10 @@ void CDrivesList::SortItems()
     CWdsListControl::SortItems();
 }
 
-CDriveItem* CDrivesList::GetItem(const int i) const
-{
-    return reinterpret_cast<CDriveItem*>(CWdsListControl::GetItem(i));
-}
-
 void CDrivesList::SelectItem(const CDriveItem* item)
 {
     const int i = FindListItem(item);
     SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
-}
-
-bool CDrivesList::IsItemSelected(const int i) const
-{
-    return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED);
 }
 
 void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)

@@ -355,11 +355,6 @@ void CWdsListControl::SysColorChanged()
     CalculateRowHeight();
 }
 
-int CWdsListControl::GetRowHeight() const
-{
-    return m_rowHeight;
-}
-
 void CWdsListControl::CalculateRowHeight()
 {
     // Create a device context to get font metrics
@@ -402,11 +397,6 @@ void CWdsListControl::ShowFullRowSelection(const bool show)
     }
 }
 
-bool CWdsListControl::IsFullRowSelection() const
-{
-    return m_showFullRowSelect;
-}
-
 COLORREF CWdsListControl::GetHighlightColor() const
 {
     if (HasFocus())
@@ -425,16 +415,6 @@ COLORREF CWdsListControl::GetHighlightTextColor() const
     }
 
     return DarkMode::IsDarkModeActive() ? RGB(255, 255, 255) : RGB(0, 0, 0);
-}
-
-bool CWdsListControl::IsItemStripColor(const int i) const
-{
-    return m_showStripes && i % 2 != 0;
-}
-
-COLORREF CWdsListControl::GetItemBackgroundColor(const int i) const
-{
-    return IsItemStripColor(i) ? m_stripeColor : m_windowColor;
 }
 
 COLORREF CWdsListControl::GetItemSelectionBackgroundColor(const int i) const
@@ -627,11 +607,6 @@ CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) co
     return rc;
 }
 
-bool CWdsListControl::HasFocus() const
-{
-    return ::GetFocus() == m_hWnd;
-}
-
 HFONT CWdsListControl::GetFont() const
 {
     if (m_cachedFont == nullptr) m_cachedFont = CWnd::GetFont();
@@ -748,14 +723,14 @@ int CWdsListControl::SubItemToColumn(const int subitem) const
     return -1;
 }
 
-bool CWdsListControl::IsColumnRequired(const int subitem) const
-{
-    return std::ranges::find(m_requiredColumns, subitem) != m_requiredColumns.end();
-}
-
 bool CWdsListControl::IsColumnVisible(const int subitem) const
 {
     return COptions::IsColumnVisible(*m_columnVisibility, subitem);
+}
+
+bool CWdsListControl::IsColumnRequired(const int subitem) const
+{
+    return std::ranges::find(m_requiredColumns, subitem) != m_requiredColumns.end();
 }
 
 void CWdsListControl::ApplyColumnVisibility(const int column)
@@ -809,11 +784,6 @@ void CWdsListControl::SetColumnVisible(const int subitem, const bool visible)
 
     if (sortingChanged) SortItems();
     else Invalidate();
-}
-
-void CWdsListControl::SetSorting(const SSorting& sorting)
-{
-    m_sorting = sorting;
 }
 
 void CWdsListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
@@ -904,11 +874,6 @@ void CWdsListControl::SortItems()
 
     // Store the current sorted column's index to be cleared next time.
     m_indicatedColumn = m_sorting.column1;
-}
-
-bool CWdsListControl::GetAscendingDefault(int /*column*/)
-{
-    return true;
 }
 
 void CWdsListControl::PostSelectionChanged()

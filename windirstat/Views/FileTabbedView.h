@@ -95,7 +95,7 @@ protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSetFocus(CWnd* pOldWnd);
     void OnSize(UINT nType, int cx, int cy);
-    bool OnEraseBkgnd(CDC* pDC);
+    bool OnEraseBkgnd(CDC*) { return true; }
     LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
     bool PreprocessMessage(MSG* pMsg) override;
 };

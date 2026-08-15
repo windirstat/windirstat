@@ -1282,7 +1282,7 @@ public:
     CMenu& operator=(CMenu&& other) noexcept;
 
     explicit operator bool() const noexcept;
-    HMENU Handle() const noexcept;
+    HMENU Handle() const noexcept { return m_hMenu; }
     HMENU Detach() noexcept;
 
     enum class ItemLookup { Position, Command };
@@ -3223,15 +3223,15 @@ public:
 
     bool Create(const RECT& rect, CWnd* pParentWnd, UINT nID, bool focusTabStrip = false);
     int AddTab(CWnd* window, std::wstring_view label);
-    bool SelectTab(int i);
+    bool SelectTab(const int i) { return ActivateTab(i, true); }
     void SetTabVisible(int i, bool show);
 
     void SetLocation(Location loc);
     void SetContentBackgroundColor(COLORREF color);
-    int TabCount() const;
-    int ActiveTab() const;
-    CWnd* TabWindow(int index) const;
-    bool IsTabVisible(int index) const;
+    int TabCount() const { return static_cast<int>(m_tabs.size()); }
+    int ActiveTab() const { return m_activeTab; }
+    CWnd* TabWindow(const int index) const { return index >= 0 && index < TabCount() ? m_tabs[index].window : nullptr; }
+    bool IsTabVisible(const int index) const { return index >= 0 && index < TabCount() && m_tabs[index].visible; }
     std::wstring_view TabLabel(int index) const;
     void SetTabLabel(int i, std::wstring_view label);
 
@@ -3242,7 +3242,7 @@ protected:
     LRESULT OnNcHitTest(CPoint point);
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
     void OnSize(UINT, int, int);
-    bool OnEraseBkgnd(CDC*);
+    bool OnEraseBkgnd(CDC*) { return true; }
     void OnLButtonDown(UINT, CPoint point);
     void OnLButtonUp(UINT, CPoint);
     void OnSetFocus(CWnd*);
@@ -3270,7 +3270,7 @@ private:
     CRect TabStripRect() const;
     void UpdatePaintedTabRects(const CRect& rcStrip, bool bottomTabs, bool labelOnlyTabs);
     bool UsesLabelOnlyTabs() const;
-    int TabStripHeight() const;
+    int TabStripHeight() const { return ::ScaleForDpi(22, m_hWnd); }
     void LayoutPanes();
 
     std::vector<TabInfo> m_tabs;

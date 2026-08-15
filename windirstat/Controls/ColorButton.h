@@ -34,8 +34,8 @@ constexpr auto COLBN_CHANGED = 0x87;
 class CColorButton final : public MessageTarget<CColorButton, CButton>
 {
 public:
-    COLORREF GetColor() const;
-    void SetColor(COLORREF color);
+    COLORREF GetColor() const { return m_preview.GetColor(); }
+    void SetColor(const COLORREF color) { m_preview.SetColor(color); }
 
 private:
     // The color preview is an own little child window of the button.
@@ -43,7 +43,7 @@ private:
     {
     public:
         CPreview() = default;
-        COLORREF GetColor() const;
+        COLORREF GetColor() const { return m_color; }
         void SetColor(COLORREF color);
 
     private:

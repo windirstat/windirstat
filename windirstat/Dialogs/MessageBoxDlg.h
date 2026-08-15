@@ -42,7 +42,7 @@ public:
     void SetWidthAuto() { m_autoWidth = true; }
 
     // Optional checkbox support
-    bool IsCheckboxChecked() const;
+    bool IsCheckboxChecked() const { return m_checkboxChecked; }
 
 protected:
     enum : std::uint8_t { IDD = IDD_MESSAGEBOX };

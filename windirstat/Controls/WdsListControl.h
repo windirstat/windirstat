@@ -88,18 +88,18 @@ public:
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
     virtual void SysColorChanged();
 
-    int GetRowHeight() const;
+    int GetRowHeight() const { return m_rowHeight; }
     void CalculateRowHeight();
     void ShowGrid(bool show);
     void ShowStripes(bool show);
     void ShowFullRowSelection(bool show);
-    bool IsFullRowSelection() const;
+    bool IsFullRowSelection() const { return m_showFullRowSelect; }
 
     COLORREF GetHighlightColor() const;
     COLORREF GetHighlightTextColor() const;
 
-    bool IsItemStripColor(int i) const;
-    COLORREF GetItemBackgroundColor(int i) const;
+    bool IsItemStripColor(const int i) const { return m_showStripes && i % 2 != 0; }
+    COLORREF GetItemBackgroundColor(const int i) const { return IsItemStripColor(i) ? m_stripeColor : m_windowColor; }
     COLORREF GetItemSelectionBackgroundColor(int i) const;
     COLORREF GetItemSelectionTextColor(int i) const;
 
@@ -108,7 +108,7 @@ public:
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
     void LoadPersistentAttributes();
-    bool HasFocus() const;
+    bool HasFocus() const { return ::GetFocus() == m_hWnd; }
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
     void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
@@ -123,11 +123,11 @@ public:
     int SubItemToColumn(int subitem) const;
     bool IsColumnVisible(int subitem) const;
     void SetColumnVisible(int subitem, bool visible);
-    void SetSorting(const SSorting& sorting);
+    void SetSorting(const SSorting& sorting) { m_sorting = sorting; }
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
     virtual void SortItems();
-    virtual bool GetAscendingDefault(int column);
+    virtual bool GetAscendingDefault(int) { return true; }
     int GetItemCount() const noexcept { return static_cast<int>(m_items.size()); }
     void SetOwnsItems(const bool owns) { m_ownsItems = owns; }
 

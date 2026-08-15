@@ -91,11 +91,6 @@ void CControlView::OnSize(UINT /*nType*/, const int cx, const int cy)
     }
 }
 
-bool CControlView::OnEraseBkgnd(CDC* /*pDC*/)
-{
-    return true;
-}
-
 void CControlView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     GetControl().SetFocus();

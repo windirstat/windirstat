@@ -85,16 +85,6 @@ int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) co
     return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
 }
 
-int CItemSearch::GetTreeListChildCount() const
-{
-    return static_cast<int>(m_children.size());
-}
-
-CTreeListItem* CItemSearch::GetTreeListChild(const int i) const
-{
-    return m_children[i];
-}
-
 HICON CItemSearch::GetIcon()
 {
     // No icon to return if not visible yet
@@ -103,7 +93,6 @@ HICON CItemSearch::GetIcon()
         return nullptr;
     }
 
-    // Return previously cached value
     if (m_visualInfo->icon != nullptr)
     {
         return m_visualInfo->icon;

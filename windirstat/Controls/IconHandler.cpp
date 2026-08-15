@@ -144,7 +144,6 @@ void CIconHandler::DrawIcon(CDC* hdc, const HICON image, const CPoint & pt, cons
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);
 }
 
-// Returns the icon handle
 HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {
     flags |= WDS_SHGFI_DEFAULTS;

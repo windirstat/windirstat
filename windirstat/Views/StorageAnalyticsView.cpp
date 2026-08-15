@@ -249,11 +249,6 @@ void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
     InvalidateRect(nullptr);
 }
 
-bool CStorageAnalyticsView::OnEraseBkgnd(CDC*)
-{
-    return true;
-}
-
 HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     if (nCtlColor == CTLCOLOR_STATIC)

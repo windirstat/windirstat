@@ -238,16 +238,6 @@ COLORREF CWinDirStatModel::GetCushionColor(const std::wstring & ext)
     return record->second.color;
 }
 
-COLORREF CWinDirStatModel::GetZoomColor() const
-{
-    return RGB(0, 0, 255);
-}
-
-CExtensionData* CWinDirStatModel::GetExtensionData()
-{
-    return &m_extensionData;
-}
-
 SExtensionRecord* CWinDirStatModel::GetExtensionDataRecord(const std::wstring& ext)
 {
     std::scoped_lock guard(m_extensionMutex);
@@ -273,11 +263,6 @@ void CWinDirStatModel::RebuildRegisteredExtensions()
 }
 
 // True if the extension was present in the HKEY_CLASSES_ROOT snapshot (registered on this PC)
-bool CWinDirStatModel::IsExtensionRegistered(const std::wstring& ext) const
-{
-    return m_registeredExtensions.contains(ext);
-}
-
 ULONGLONG CWinDirStatModel::GetRootSize() const
 {
     assert(m_rootItem != nullptr);
@@ -296,11 +281,6 @@ void CWinDirStatModel::RefreshReparsePointItems() const
     {
         RecurseRefreshReparsePoints(root);
     }
-}
-
-bool CWinDirStatModel::HasRootItem() const
-{
-    return m_rootItem != nullptr;
 }
 
 bool CWinDirStatModel::IsRootDone() const
@@ -333,21 +313,6 @@ void CWinDirStatModel::RunPendingHeapCleanup()
     m_heapMinPending.store(false, std::memory_order_relaxed);
 }
 
-CItem* CWinDirStatModel::GetRootItem() const
-{
-    return m_rootItem;
-}
-
-CItem* CWinDirStatModel::GetZoomItem() const
-{
-    return m_zoomItem;
-}
-
-bool CWinDirStatModel::IsZoomed() const
-{
-    return GetZoomItem() != GetRootItem();
-}
-
 void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
     m_highlightExtension = ext;
@@ -365,21 +330,6 @@ void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const boo
     }
 
     CMainFrame::Get()->UpdatePaneText();
-}
-
-std::wstring CWinDirStatModel::GetHighlightExtension() const
-{
-    return m_highlightExtension;
-}
-
-bool CWinDirStatModel::IsHighlightUnregistered() const
-{
-    return m_highlightUnregistered;
-}
-
-const std::unordered_set<std::wstring>& CWinDirStatModel::GetHighlightExtensions() const
-{
-    return m_highlightExtensions;
 }
 
 // The root item has been deleted.
@@ -909,16 +859,6 @@ CItem* CWinDirStatModel::PopReselectChild()
     return item;
 }
 
-void CWinDirStatModel::ClearReselectChildStack()
-{
-    m_reselectChildStack.clear();
-}
-
-bool CWinDirStatModel::IsReselectChildAvailable() const
-{
-    return !m_reselectChildStack.empty();
-}
-
 bool CWinDirStatModel::FileTreeHasFocus()
 {
     return LF_FILETREE == CMainFrame::Get()->GetLogicalFocus();
@@ -1015,9 +955,4 @@ std::vector<CItem*> CWinDirStatModel::GetAllSelected()
 {
     const auto selection = GetSelectedItemsView();
     return { selection.begin(), selection.end() };
-}
-
-void CWinDirStatModel::InvalidateSelectionCache()
-{
-    m_selectionCacheValid = false;
 }

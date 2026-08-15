@@ -118,16 +118,6 @@ int CTreeListItem::Compare(const CWdsListItem* baseOther, const int subitem) con
     return m_parent->Compare(other->m_parent, subitem);
 }
 
-CTreeListItem* CTreeListItem::GetParent() const
-{
-    return m_parent;
-}
-
-void CTreeListItem::SetParent(CTreeListItem* parent)
-{
-    m_parent = parent;
-}
-
 bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
 {
     for (auto parent = item; parent != nullptr; parent = parent->GetParent())
@@ -138,11 +128,6 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
         }
     }
     return false;
-}
-
-bool CTreeListItem::HasChildren() const
-{
-    return GetTreeListChildCount() > 0;
 }
 
 bool CTreeListItem::IsExpanded() const
@@ -223,11 +208,6 @@ bool CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, cons
         SetExtendedStyle(GetExtendedStyle() | dwExStyle);
     }
     return bRet;
-}
-
-CTreeListItem* CTreeListControl::GetItem(const int i) const
-{
-    return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i));
 }
 
 bool CTreeListControl::IsItemSelected(const CTreeListItem* item) const
@@ -367,11 +347,6 @@ bool CTreeListControl::DeleteItem(const int i)
         SetSelectionMark(target);
     }
     return deleted;
-}
-
-int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
-{
-    return FindListItem(item);
 }
 
 void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width) const
@@ -637,11 +612,6 @@ void CTreeListControl::ToggleSelectedItem()
     {
         ToggleExpansion(FindTreeItem(item));
     }
-}
-
-void CTreeListControl::ExpandItem(const CTreeListItem* item)
-{
-    ExpandItem(FindTreeItem(item), false);
 }
 
 void CTreeListControl::ExpandItem(const int i, const bool scroll)

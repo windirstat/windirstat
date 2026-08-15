@@ -37,11 +37,6 @@ CSettingsSheet::CSettingsSheet()
 {
 }
 
-void CSettingsSheet::SetRestartRequired(const bool changed)
-{
-    m_restartRequest = changed;
-}
-
 bool CSettingsSheet::OnEraseBkgnd(CDC* pDC) const
 {
     if (!DarkMode::IsDarkModeActive())
@@ -294,11 +289,6 @@ CMainFrame::~CMainFrame()
     s_Singleton = nullptr;
 }
 
-bool CMainFrame::OnEraseBkgnd(CDC* /*pDC*/)
-{
-    return true;
-}
-
 void CMainFrame::OnSetFocus(CWnd* pOldWnd)
 {
     CFrameWnd::OnSetFocus(pOldWnd);
@@ -377,11 +367,6 @@ void CMainFrame::SetProgressComplete()
     CFileTreeControl::Get()->SortItems();
     CFileDupeControl::Get()->SortItems();
     CFileTopControl::Get()->SortItems();
-}
-
-bool CMainFrame::IsScanSuspended() const
-{
-    return m_scanSuspend;
 }
 
 void CMainFrame::SuspendState(const bool suspend)

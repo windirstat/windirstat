@@ -49,7 +49,7 @@ public:
 static std::span<const RouteEntry> Routes();
 
 protected:
-    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    int OnCreate(LPCREATESTRUCT) { return 0; }
     int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message) override;
     void OnPaint();
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);

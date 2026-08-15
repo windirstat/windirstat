@@ -53,14 +53,14 @@ public:
 
     int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
-    std::wstring GetPath() const;
+    std::wstring GetPath() const { return m_path; }
     std::wstring GetDrive() const;
-    bool IsRemote() const;
-    bool IsMtp() const;
-    bool IsSUBSTed() const;
+    bool IsRemote() const { return m_isRemote; }
+    bool IsMtp() const { return m_mtp; }
+    bool IsSUBSTed() const { return m_subst; }
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    HICON GetIcon() override;
+    HICON GetIcon() override { return m_icon; }
 
 private:
     CDrivesList* m_driveList; // Backpointer
@@ -92,9 +92,9 @@ class CDrivesList final : public MessageTarget<CDrivesList, CWdsListControl>
     friend class CSelectDrivesDlg;
 public:
     CDrivesList();
-    CDriveItem* GetItem(int i) const;
+    CDriveItem* GetItem(const int i) const { return reinterpret_cast<CDriveItem*>(CWdsListControl::GetItem(i)); }
     void SelectItem(const CDriveItem* item);
-    bool IsItemSelected(int i) const;
+    bool IsItemSelected(const int i) const { return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED); }
     bool IsSorting() const { return m_sortInProgress; }
     void SortItems() override;
 

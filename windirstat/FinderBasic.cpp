@@ -275,46 +275,9 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     return FindNext();
 }
 
-DWORD FinderBasic::GetAttributes() const
-{
-    return m_currentInfo->FileAttributes;
-}
-
-std::wstring FinderBasic::GetFileName() const
-{
-    return m_name;
-}
-
-ULONGLONG FinderBasic::GetFileSizePhysical() const
-{
-    return m_currentInfo->AllocationSize.QuadPart;
-}
-
-ULONGLONG FinderBasic::GetFileSizeLogical() const
-{
-    return m_currentInfo->EndOfFile.QuadPart;
-}
-
 ULONGLONG FinderBasic::GetIndex() const
 {
     return m_context->SupportsFileId ? m_currentInfo->IdInfo.FileId.QuadPart : 0;
-}
-
-FILETIME FinderBasic::GetLastWriteTime() const
-{
-    return std::bit_cast<FILETIME>(m_currentInfo->LastWriteTime);
-}
-
-std::wstring FinderBasic::GetFilePath() const
-{
-    // m_base is kept in clean Win32 form (the NT \??\ form lives only in
-    // m_baseNt), so the full path is a direct concatenation with the name
-    return m_base + m_name;
-}
-
-DWORD FinderBasic::GetReparseTag() const
-{
-    return m_reparseTag;
 }
 
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)

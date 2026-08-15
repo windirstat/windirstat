@@ -34,7 +34,7 @@ GraphPane GetActivePaneType() const { return m_activePane; }
     void SelectPane(GraphPane pane);
     void ShowVisualization(bool show);
     bool IsVisualizationShown() const { return m_showVisualization; }
-    CGraphView* GetActiveView() const;
+    CGraphView* GetActiveView() const { return m_views[static_cast<std::size_t>(m_activePane)]; }
 
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     HoverInfo GetHoverInfo() const override;

@@ -69,11 +69,6 @@ CItemPerm::CItemPerm(const std::wstring& path, const DWORD attributes,
     m_item = std::make_unique<CItem>(m_isContainer ? IT_DIRECTORY : IT_FILE, path, FILETIME{}, 0, 0, 0, attributes, 0, 0);
 }
 
-std::wstring CItemPerm::GetAppliesText() const
-{
-    return GetAppliesName(m_applies, m_isContainer);
-}
-
 std::wstring CItemPerm::GetText(const int subitem) const
 {
     if (subitem == COL_ITEMPERM_NAME) return m_item->GetPath();
@@ -110,7 +105,6 @@ HICON CItemPerm::GetIcon()
         return nullptr;
     }
 
-    // Return previously cached value
     if (m_visualInfo->icon != nullptr)
     {
         return m_visualInfo->icon;

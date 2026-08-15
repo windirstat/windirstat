@@ -46,7 +46,7 @@ protected:
         bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
         std::wstring GetText(int subitem) const override;
 
-        const std::wstring& GetExtension() const;
+        const std::wstring& GetExtension() const { return m_extension; }
         HICON GetIcon() override;
         int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
@@ -76,13 +76,13 @@ public:
     bool GetAscendingDefault(int subitem) override;
     void Initialize();
     void SetExtensionData(const CExtensionData* ed);
-    void SetRootSize(ULONGLONG totalBytes);
-    ULONGLONG GetRootSize() const;
+    void SetRootSize(const ULONGLONG totalBytes) { m_rootSize = totalBytes; }
+    ULONGLONG GetRootSize() const { return m_rootSize; }
     void SelectExtension(const std::wstring& ext);
     std::wstring GetSelectedExtension() const;
 
 protected:
-    CListItem* GetListItem(int i) const;
+    CListItem* GetListItem(const int i) const { return static_cast<CListItem*>(GetItem(i)); }
     bool IsSelectedAggregate() const;
     void OnItemContextMenu(CPoint point) override;
 
