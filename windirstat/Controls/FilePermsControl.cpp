@@ -79,8 +79,13 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItem(const CItem* item, const boo
 std::vector<const CItem*> CFilePermsControl::BuildScanList(const CItem* docRoot, std::unordered_set<const CItem*>& roots)
 {
     // Root-level items list every permission; deeper items only their explicit (non-inherited) ones
-    if (docRoot->IsTypeOrFlag(IT_MYCOMPUTER)) for (const CItem* c : docRoot->GetChildren()) roots.insert(c);
-    else roots.insert(docRoot);
+    // Exclude shell-only roots because security descriptor queries require filesystem paths
+    if (docRoot->IsTypeOrFlag(IT_MYCOMPUTER))
+    {
+        for (const CItem* child : docRoot->GetChildren())
+            if (child->SupportsFilesystemApis()) roots.insert(child);
+    }
+    else if (docRoot->SupportsFilesystemApis()) roots.insert(docRoot);
 
     // Snapshot every real-path item so worker threads never touch the live tree
     std::vector<const CItem*> items;
@@ -89,6 +94,7 @@ std::vector<const CItem*> CFilePermsControl::BuildScanList(const CItem* docRoot,
     {
         const CItem* item = stack.back();
         stack.pop_back();
+        if (!item->SupportsFilesystemApis()) continue;
         if (!item->IsLeaf()) for (const CItem* child : item->GetChildren()) stack.push_back(child);
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE) && !item->IsTypeOrFlag(ITF_RESERVED)) items.push_back(item);
     }

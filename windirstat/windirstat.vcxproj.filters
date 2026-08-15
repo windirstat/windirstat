@@ -290,6 +290,9 @@
     <ClInclude Include="FinderBasic.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
+    <ClInclude Include="FinderMtp.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
     <ClInclude Include="FinderNtfs.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
@@ -509,6 +512,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="FinderBasic.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderMtp.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="FinderNtfs.cpp">

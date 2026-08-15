@@ -512,6 +512,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Pages\PagePrompts.h" />
     <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
+    <ClInclude Include="FinderMtp.h" />
     <ClInclude Include="FinderNtfs.h" />
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
@@ -590,6 +591,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\ControlView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
+    <ClCompile Include="FinderMtp.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="HelpersTasks.cpp">
     </ClCompile>

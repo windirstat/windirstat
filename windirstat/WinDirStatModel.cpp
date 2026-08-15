@@ -23,6 +23,7 @@
 #include "FileWatcherControl.h"
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
+#include "FinderMtp.h"
 #include "ProgressDlg.h"
 
 CWinDirStatModel::CWinDirStatModel()
@@ -104,22 +105,36 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [&](const std::wstring& str) {
         return std::regex_match(str, driveMatch);
     }));
+    // Count MTP roots so mixed multi-root scans can be validated
+    const auto mtpCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& path)
+    {
+        return FinderMtp::IsPath(path);
+    }));
 
     // Reject an empty path list
     if (selections.empty()) return false;
 
-    // Multiple selections are supported only when every selection is a drive
-    if (selections.size() >= 2 && selections.size() != driveCount) return false;
+    // Multiple selections are supported only when every selection is a drive or MTP root
+    if (selections.size() >= 2 && selections.size() != driveCount + mtpCount) return false;
+
+    // Build and register an MTP root with its display name and shell path
+    const auto createMtpItem = [](const std::wstring& path, const ITEMTYPE flags)
+    {
+        std::wstring name = FinderMtp::GetDisplayName(path);
+        if (name.empty()) name = path;
+        const auto item = new CItem(IT_DIRECTORY | ITF_MTP | flags, name);
+        item->SetIndex(FinderMtp::RegisterPath(path, path));
+        return item;
+    };
 
     // Determine if we should add multiple drives under a single node
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
-        CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidl;
         CComHeapPtr<wchar_t> ppszName;
         CComPtr<IShellItem> psi;
-        if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
-            SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) != S_OK ||
+        if (FAILED(SHGetKnownFolderItem(FOLDERID_ComputerFolder, KF_FLAG_DEFAULT, nullptr,
+            IID_PPV_ARGS(&psi))) ||
             FAILED(psi->GetDisplayName(SIGDN_NORMALDISPLAY, &ppszName)))
         {
             assert(false);
@@ -128,16 +143,19 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         const std::wstring name = ppszName != nullptr ?
             static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
+        // Add filesystem drives and registered MTP roots under This PC
         for (const auto& rootFolder : selections)
         {
-            const auto drive = new CItem(IT_DRIVE, rootFolder);
-            m_rootItem->AddChild(drive);
+            m_rootItem->AddChild(FinderMtp::IsPath(rootFolder) ?
+                createMtpItem(rootFolder, ITF_NONE) : new CItem(IT_DRIVE, rootFolder));
         }
     }
     else
     {
+        // Create a storage-specific root for a single selection
         const ITEMTYPE type = driveCount == 1 ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem = new CItem(type | ITF_ROOTITEM, selections.front());
+        m_rootItem = mtpCount == 1 ? createMtpItem(selections.front(), ITF_ROOTITEM) :
+            new CItem(type | ITF_ROOTITEM, selections.front());
         m_rootItem->UpdateStatsFromDisk();
     }
 
@@ -158,12 +176,20 @@ bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
 
     // Determine root spec string using GetNameView to avoid temporary allocations
     std::wstring spec(loadedRoot->GetNameView());
+    // Preserve registered MTP paths when rebuilding single- or multi-root scan specs
     if (loadedRoot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
-            [](const CItem* obj) -> std::wstring { return GetDrive(obj->GetNameView()); });
+            [](const CItem* obj) -> std::wstring
+            {
+                return obj->IsMtpRoot() ? obj->GetPath() : GetDrive(obj->GetNameView());
+            });
         spec = JoinString(folders);
+    }
+    else if (loadedRoot->IsTypeOrFlag(ITF_MTP))
+    {
+        spec = loadedRoot->GetPath();
     }
     else if (loadedRoot->IsTypeOrFlag(IT_DRIVE))
     {
@@ -373,7 +399,8 @@ void CWinDirStatModel::UnlinkRoot()
 //
 bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
-    return item != nullptr && (
+    // Restrict command-based cleanups to items addressable by filesystem APIs
+    return item != nullptr && item->SupportsFilesystemApis() && (
         (item->IsTypeOrFlag(IT_DRIVE) && udc->WorksForDrives) ||
         (item->IsTypeOrFlag(IT_DIRECTORY) && udc->WorksForDirectories) ||
         (item->IsTypeOrFlag(IT_FILE) && udc->WorksForFiles) ||
@@ -387,7 +414,7 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
     // Ignore if special reserved item
     if (item->IsTypeOrFlag(ITF_RESERVED)) return;
 
-    // Determine path to feed into shell function
+    // Resolve filesystem paths and registered MTP PIDLs to shell identities
     CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> pidl;
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
@@ -395,7 +422,7 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
     }
     else
     {
-        pidl.Attach(ILCreateFromPath(item->GetPath().c_str()));
+        pidl.Attach(CreateShellPidl(item));
     }
 
     // Ignore unresolvable (e.g., deleted) files
@@ -553,6 +580,9 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         auto childrenView = items | std::views::transform(&CItem::GetChildren) | std::views::join;
         itemsToDelete.assign(childrenView.begin(), childrenView.end());
     }
+    // MTP items require shell deletion instead of direct filesystem calls
+    const bool hasMtpItems = std::ranges::any_of(itemsToDelete,
+        [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
 
     // Calculate total item count for progress tracking
     size_t totalItems = 0;
@@ -561,8 +591,10 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         totalItems += static_cast<size_t>(1 + item->GetItemsCount());
     }
 
+    // Use direct parallel deletion only for filesystem items without shell progress UI
     bool cancelled = false;
-    if (!toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
+    if (!hasMtpItems && !toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(
+        totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
         {
             // Collect items depth-first and separate into files and directories
             std::vector<const CItem*> files;
@@ -630,13 +662,19 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
         const auto doDelete = [&](const HWND hwnd, const DWORD opFlags)
         {
+            // Initialize COM on whichever thread executes the shell operation
+            const ComApartmentScope com;
+            if (!com) return;
+
+            // Configure one shell operation for filesystem and MTP items
             CComPtr<IFileOperation> fileOperation;
             if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
                 FAILED(fileOperation->SetOwnerWindow(hwnd)) ||
                 FAILED(fileOperation->SetOperationFlags(opFlags)))
                 return;
-            if (const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete))
-                fileOperation->DeleteItems(psia);
+            // Queue the complete shell selection and execute it as one deletion
+            const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete, true);
+            if (psia == nullptr || FAILED(fileOperation->DeleteItems(psia))) return;
             const HRESULT res = fileOperation->PerformOperations();
             if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
         };
@@ -657,7 +695,14 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
     }
 
     // Refresh the items and recycler directories
-    std::vector<CItem*> itemsToRefresh = items;
+    std::vector<CItem*> itemsToRefresh;
+    // Refresh an MTP file's parent after its shell identity is deleted
+    for (auto* item : items)
+    {
+        CItem* refresh = item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
+        if (refresh != nullptr && std::ranges::find(itemsToRefresh, refresh) == itemsToRefresh.end())
+            itemsToRefresh.push_back(refresh);
+    }
     itemsToRefresh.insert(itemsToRefresh.end(), recyclers.begin(), recyclers.end());
     RefreshItem(itemsToRefresh);
 }

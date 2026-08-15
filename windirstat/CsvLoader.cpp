@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "CsvLoader.h"
+#include "FinderMtp.h"
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -196,32 +197,48 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
     const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
     const std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
 {
+    // Preserve MTP paths before parsing mutates the name buffer
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
+    const bool isMtp = (type & ITF_MTP) != 0;
+    const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
 
     const auto itType = IT_MASK & type;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
-    const bool isInRoot  = itType == IT_DRIVE;
-    const bool useFullPath = isRoot || isInRoot;
 
     const LPWSTR lookupPath = namePath.data();
-    LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
-    if (!useFullPath && displayName != nullptr)
+    LPWSTR displayName = lookupPath;
+    CItem* parent = nullptr;
+    if (!isRoot && itType != IT_DRIVE)
     {
-        displayName[0] = wds::chrNull;
-        displayName = &displayName[1];
+        if (LPWSTR separator = wcsrchr(lookupPath, L'\\'); separator != nullptr)
+        {
+            separator[0] = wds::chrNull;
+            if (const auto found = parentMap.find(lookupPath); found != parentMap.end())
+            {
+                parent = found->second;
+                displayName = &separator[1];
+            }
+            else separator[0] = wds::chrBackslash;
+        }
     }
-    else
-    {
-        displayName = lookupPath;
-    }
+
+    const bool isMtpRoot = isMtp && (isRoot || parent == nullptr && newroot != nullptr &&
+        newroot->IsTypeOrFlag(IT_MYCOMPUTER));
+    const bool isInRoot = itType == IT_DRIVE || isMtpRoot;
+    if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
 
-    CItem* newitem = new CItem(type, displayName, FromTimeString(lastChange),
+    // Refresh the device name and register its live shell path for later MTP operations
+    std::wstring mtpName;
+    if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
+    CItem* newitem = new CItem(type, mtpName.empty() ? displayName : mtpName.c_str(), FromTimeString(lastChange),
         wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(),  nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
+    if (isMtpRoot)
+        newitem->SetIndex(FinderMtp::RegisterPath(mtpPath, !mtpName.empty() ? mtpPath : std::wstring{}));
 
     if (isRoot)
     {
@@ -232,11 +249,9 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
         if (!newroot) { delete newitem; return nullptr; }
         newroot->AddChild(newitem, true);
     }
-    else if (const auto parent = parentMap.find(lookupPath); parent != parentMap.end())
-    {
-        parent->second->AddChild(newitem, true);
-    }
-    else { delete newitem; return nullptr; }
+    else parent->AddChild(newitem, true);
+
+    assert(newitem->IsMtpRoot() == isMtpRoot);
 
     if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
     {
@@ -477,6 +492,8 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
+        // MTP indices are process-local path registrations and must not be serialized
+        const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
         std::format_to(std::ostreambuf_iterator(outf), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
@@ -486,7 +503,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
             static_cast<std::uint32_t>(itemType),
-            item->GetIndex());
+            index);
         if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
     }
     outf.flush();
@@ -517,6 +534,8 @@ static bool SaveResultsJson(std::ofstream& outf,
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
+        // MTP indices are process-local path registrations and must not be serialized
+        const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
 
         // Write one JSON object per item
         outf << "{\r\n";
@@ -529,7 +548,7 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << jk[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
         std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
             jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType),
-            jk[FIELD_INDEX], item->GetIndex());
+            jk[FIELD_INDEX], index);
         if (includeOwner)
             outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
         outf << "\r\n}";

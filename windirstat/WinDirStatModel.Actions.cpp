@@ -22,6 +22,7 @@
 #include "FileSearchControl.h"
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
+#include "FinderMtp.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
@@ -52,8 +53,30 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return model->GetZoomItem() != model->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* i) { return i != nullptr && i->GetParent() != nullptr; };
     static bool (*reselectAvail)(CItem*) = [](CItem*) { return model->IsReselectChildAvailable(); };
-    static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
-    static bool (*hasRecycleBin)(CItem*) = [](CItem* i) { return i != nullptr && !i->IsRootItem() && IsLocalDrive(i->GetPath()); };
+
+    // Define item capability checks for shell and filesystem-specific commands.
+    static bool (*isShellChild)(CItem*) = [](CItem* item)
+    {
+        return item != nullptr && !item->IsRootItem() && !item->IsMtpRoot() && item->HasShellIdentity();
+    };
+    static bool (*hasShellIdentity)(CItem*) = [](CItem* item)
+    {
+        return item != nullptr && item->HasShellIdentity();
+    };
+    static bool (*filesystemOnly)(CItem*) = [](CItem* item)
+    {
+        if (item == nullptr) item = model->GetRootItem();
+        return item != nullptr && item->SupportsFilesystemApis();
+    };
+    static bool (*isRefreshable)(CItem*) = [](CItem* item)
+    {
+        return item != nullptr && (!item->IsTypeOrFlag(ITF_MTP) ||
+            (item->HasShellIdentity() && !item->IsTypeOrFlag(IT_FILE)));
+    };
+    static bool (*hasRecycleBin)(CItem*) = [](CItem* i)
+    {
+        return i != nullptr && i->SupportsFilesystemApis() && !i->IsRootItem() && IsLocalDrive(i->GetPath());
+    };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone(); };
@@ -63,43 +86,49 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
-    static bool (*isVhdFile)(CItem*) = [](CItem* i) { return i != nullptr && IsElevationActive() && (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx")); };
+    static bool (*isVhdFile)(CItem*) = [](CItem* i)
+    {
+        return i != nullptr && i->SupportsFilesystemApis() && IsElevationActive() &&
+            (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx"));
+    };
     static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*) { return IsStorageSenseAvailable(); };
+    static constexpr ITEMTYPE shellTypes = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE;
 
+    // Map each command to its selection rules and shell or filesystem capability requirements.
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus        types
-        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isShellChild } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, hasRecycleBin } },
         { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_STORAGE_SENSE,   { true,  true,  false, LF_NONE,     ITF_ANY, isStorageSenseAvailable } },
-        { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isShellChild } },
         { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, notRoot } },
-        { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
-        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isShellChild } },
+        { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
+        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE, hasShellIdentity } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     ITF_ANY, isHibernate } },
-        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     shellTypes, hasShellIdentity } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     shellTypes, hasShellIdentity } },
         { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, isVhdFile } },
         { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
-        { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_SPARSIFY_FILE,   { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_CLEANUP_SPARSIFY_FILE,   { false, true,  false, LF_NONE,     IT_FILE, filesystemOnly } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
         { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
-        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
+        { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     IT_FILE, hasShellIdentity } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     ITF_ANY } },
         { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     ITF_ANY, isDriveOrDirOrFile } },
@@ -109,7 +138,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_INDICATOR_SIZE,          { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_POPUP_CANCEL,            { true,  true,  true,  LF_NONE,     ITF_ANY } },
         { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     shellTypes, isRefreshable } },
         { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     ITF_ANY, isDupeTabVisible } },
         { ID_SAVE_PERMISSIONS,        { true,  true,  false, LF_NONE,     ITF_ANY, isPermsTabVisible } },
         { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     ITF_ANY } },
@@ -117,7 +146,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY } },
+        { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE, ITF_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE, ITF_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE, ITF_ANY, isZoomed } },
@@ -426,47 +455,44 @@ void CWinDirStatModel::OnTreeMapZoomReset()
 
 void CWinDirStatModel::OnExplorerSelect()
 {
-    // accumulate a unique set of paths
-    const auto& items = GetAllSelected();
-    std::unordered_set<std::wstring>paths;
-    for (const auto& item : items)
+    // Group child PIDLs by shell parent so each containing folder opens once.
+    using PidlHolder = SmartPointer<PIDLIST_ABSOLUTE, decltype(&CoTaskMemFree)>;
+    struct SelectionGroup
     {
-        // use function to determine parent to address non-drive rooted paths
-        std::filesystem::path target(item->GetPath());
-        paths.insert(target.parent_path());
+        PCIDLIST_ABSOLUTE parent;
+        std::vector<PCUITEMID_CHILD> children;
+    };
+
+    std::vector<PidlHolder> pidls;
+    std::vector<SelectionGroup> groups;
+
+    // Resolve each selected item and retain its parent and child PIDLs through shell invocation.
+    for (const auto* item : GetAllSelected())
+    {
+        PidlHolder absolute(CoTaskMemFree, CreateShellPidl(item));
+        PidlHolder parent(CoTaskMemFree, absolute != nullptr ? ILCloneFull(absolute) : nullptr);
+        if (parent == nullptr || !ILRemoveLastID(parent)) continue;
+
+        auto group = std::ranges::find_if(groups, [&](const SelectionGroup& candidate)
+        {
+            return ILIsEqual(candidate.parent, parent);
+        });
+        if (group == groups.end())
+        {
+            groups.push_back({ parent, {} });
+            pidls.emplace_back(CoTaskMemFree, parent.Detach());
+            group = std::prev(groups.end());
+        }
+
+        group->children.push_back(ILFindLastID(absolute));
+        pidls.emplace_back(CoTaskMemFree, absolute.Detach());
     }
 
-    for (const auto& path : paths)
+    // Open every resolved parent folder with all of its selected children highlighted.
+    for (auto& group : groups)
     {
-        // create path pidl
-        CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> parent(ILCreateFromPath(path.c_str()));
-
-        // ignore unresolvable (e.g., deleted) files
-        if (parent == nullptr)
-        {
-            assert(false);
-            return;
-        }
-
-        // structures to hold and track pidls for children
-        std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlCleanup;
-        std::vector<LPITEMIDLIST> pidl;
-
-        // create list of children from paths
-        for (auto & item : items)
-        {
-            // not processing this path yet
-            std::filesystem::path target(item->GetPath());
-            if (target.parent_path() == path)
-            {
-                pidl.push_back(ILCreateFromPath(item->GetPath().c_str()));
-                pidlCleanup.emplace_back(CoTaskMemFree, pidl.back());
-            }
-        }
-
-        // attempt to open the items in the shell
-        (void) SHOpenFolderAndSelectItems(parent, static_cast<UINT>(pidl.size()),
-            const_cast<LPCITEMIDLIST*>(pidl.data()), 0);
+        (void) SHOpenFolderAndSelectItems(group.parent, static_cast<UINT>(group.children.size()),
+            group.children.data(), 0);
     }
 }
 
@@ -553,6 +579,10 @@ void CWinDirStatModel::OnCleanupMoveTo()
     // Show progress dialog and move files
     CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
     {
+        // Initialize an STA for the shell file operation on this worker thread.
+        const ComApartmentScope com;
+        if (!com) return;
+
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
         CComPtr<IShellItem> destShellItem;
@@ -565,8 +595,8 @@ void CWinDirStatModel::OnCleanupMoveTo()
             return;
         }
 
-        if (const CComPtr<IShellItemArray> psia = CreateShellItemArray(items))
-            fileOperation->MoveItems(psia, destShellItem);
+        const CComPtr<IShellItemArray> psia = CreateShellItemArray(items, true);
+        if (psia == nullptr || FAILED(fileOperation->MoveItems(psia, destShellItem))) return;
 
         // Do all moves
         const HRESULT res = fileOperation->PerformOperations();
@@ -777,27 +807,34 @@ void CWinDirStatModel::OnCleanupOpenTarget()
 void CWinDirStatModel::OnCleanupProperties()
 {
     const auto& selected = GetAllSelected();
-    const CComPtr<IShellItemArray> psia = CreateShellItemArray(selected);
-    if (!psia) return;
 
+    // Open every property sheet individually when the selection contains virtual MTP items.
+    if (std::ranges::any_of(selected, [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); }))
+    {
+        for (const auto& item : selected) OpenItem(item, L"properties");
+        return;
+    }
+
+    // Show one shared property sheet for selections that support shell aggregation.
+    const CComPtr<IShellItemArray> psia = CreateShellItemArray(selected, true);
     CComPtr<IDataObject> pDataObj;
-    if (SUCCEEDED(psia->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&pDataObj))) &&
+    if (psia && SUCCEEDED(psia->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&pDataObj))) &&
         SUCCEEDED(SHMultiFileProperties(pDataObj, 0))) return;
 
-    for (const auto& item : selected)
-        OpenItem(item, L"properties");
+    // Fall back to opening a property sheet for each item when aggregation fails.
+    for (const auto& item : selected) OpenItem(item, L"properties");
 }
 
 void CWinDirStatModel::OnComputeHash()
 {
-    // Compute the hash in the message thread
+    // Compute the hashes in a worker thread
     std::wstring hashResult;
-    const auto& items = GetAllSelected();
-    const ULONGLONG logicalSize = items.front()->GetSizeLogical();
+    CItem* const item = GetAllSelected().front();
+    const ULONGLONG logicalSize = item->GetSizeLogical();
     const size_t totalBlocks = static_cast<size_t>(logicalSize / wds::Mi + (logicalSize % wds::Mi != 0));
     CProgressDlg(totalBlocks, CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
-        hashResult = ComputeFileHashes(items.front()->GetPath(), pdlg);
+        hashResult = ComputeFileHashes(item, pdlg);
     }).ShowModal();
 
     if (!hashResult.empty())
@@ -929,21 +966,15 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
 
 void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
 {
-    // get list of paths from items
     const auto selected = GetAllSelected();
-    std::vector<std::wstring> paths;
-    paths.reserve(selected.size());
-    for (const auto& item : selected)
-        paths.emplace_back(item->GetPath());
-
-    // query current context menu
-    if (paths.empty()) return;
+    if (selected.empty()) return;
 
     // Keep OLE alive on this thread so shell clipboard verbs can use delayed rendering.
     if (thread_local SmartPointer oleInit([](PVOID) noexcept { OleUninitialize(); }, PVOID{});
         oleInit == nullptr && SUCCEEDED(OleInitialize(nullptr))) oleInit = reinterpret_cast<PVOID>(1);
 
-        const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->Handle(), paths);
+    // Query the shell context menu for the selected filesystem or MTP items.
+    const CComPtr contextMenu = GetContextMenu(selected);
     if (contextMenu == nullptr) return;
 
     // create placeholder menu
@@ -1044,10 +1075,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             item->SetExpanded(iter->second.wasExpanded);
 
         // Handle if item to be refreshed has been removed or filtered
-        if (CFiltering::IsFilteredOut(item) ||
-            item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
-            !FinderBasic::DoesFileExist(item->GetFolderPath(),
-                item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))
+        bool exists = true;
+        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE))
+        {
+            // Resolve existence through the matching filesystem or MTP backend.
+            exists = item->IsTypeOrFlag(ITF_MTP) ? FinderMtp::DoesFileExist(item) :
+                FinderBasic::DoesFileExist(item->GetFolderPath(),
+                    item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring());
+        }
+        if (CFiltering::IsFilteredOut(item) || !exists)
         {
             // Remove item from list so we do not rescan it
             std::erase(items, item);
@@ -1109,7 +1145,10 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];
             auto* basicCtx = &queueContextBasic[queue.first];
-            queue.second.StartThreads(COptions::ScanningThreads, [queuePtr, ntfsCtx, basicCtx]
+
+            // Use one worker per MTP volume while retaining configured parallelism for filesystems.
+            const unsigned int threads = FinderMtp::IsPath(queue.first) ? 1 : COptions::ScanningThreads;
+            queue.second.StartThreads(threads, [queuePtr, ntfsCtx, basicCtx]
             {
                 CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx);
             });
@@ -1291,7 +1330,8 @@ void CWinDirStatModel::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
     const auto drive = selected.front()->GetParentDrive();
     for (const auto* item : selected)
     {
-        if (!item->IsTypeOrFlag(IT_FILE) ||
+        // Exclude virtual items because hard links require filesystem files.
+        if (!item->SupportsFilesystemApis() || !item->IsTypeOrFlag(IT_FILE) ||
             item->GetParentDrive() != drive)
         {
             return pCmdUI->Enable(false);
@@ -1321,6 +1361,7 @@ void CWinDirStatModel::OnToolsSetDates()
 {
     if (!ConfirmOperation(IDS_MENU_SET_DATES, COptions::ShowSetDatesPrompt)) return;
 
+    // Collect filesystem directories while excluding virtual shell items.
     CWaitCursor wc;
     std::vector<CItem*> directories;
     auto stack = GetAllSelected();
@@ -1329,6 +1370,7 @@ void CWinDirStatModel::OnToolsSetDates()
     {
         CItem* item = stack.back();
         stack.pop_back();
+        if (!item->SupportsFilesystemApis()) continue;
         if (item->IsTypeOrFlag(IT_DIRECTORY))
         {
             directories.push_back(item);
@@ -1374,7 +1416,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
             (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
     };
 
-    // Collect every directory whose entire subtree contains no files (GetFilesCount() == 0).
+    // Collect every filesystem directory whose entire subtree contains no files (GetFilesCount() == 0).
     // Do not enter reparse-point branches: excluded links have no modeled files, while followed
     // links expose directories outside the selected physical tree. Each item is recorded before
     // its children are pushed, so reversing the result yields the required bottom-up order.
@@ -1382,6 +1424,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
     std::vector<CItem*> stack;
     for (CItem* root : roots)
     {
+        if (!root->SupportsFilesystemApis()) continue;
         const CItem* ancestor = root;
         while (ancestor != nullptr && !isUnsafeDirectory(ancestor)) ancestor = ancestor->GetParent();
         if (ancestor == nullptr) stack.push_back(root);

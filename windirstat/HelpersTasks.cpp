@@ -698,16 +698,45 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 }
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProgressDlg)
+static std::mutex mtpStreamMutex;
+
+HRESULT OpenMtpStream(const CItem* item, CComPtr<IStream>& stream)
 {
-    // Open file with smart pointer
-    const SmartPointer hFile(CloseHandle, CreateFile(filePath.c_str(),
-        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE)
+    // Serialize shell binding while resolving the MTP item to a readable content stream
+    const std::scoped_lock lock(mtpStreamMutex);
+    const SmartPointer pidl(CoTaskMemFree, CreateShellPidl(item));
+    CComPtr<IBindCtx> bindContext;
+    CComPtr<IShellItem> shellItem;
+    BIND_OPTS options{ sizeof(BIND_OPTS), 0, STGM_READ | STGM_SHARE_DENY_NONE };
+    HRESULT result = pidl ? CreateBindCtx(0, &bindContext) : E_FAIL;
+    if (FAILED(result) || FAILED(result = bindContext->SetBindOptions(&options)) ||
+        FAILED(result = SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellItem)))) return result;
+    return shellItem->BindToHandler(bindContext, BHID_Stream, IID_PPV_ARGS(&stream));
+}
+
+HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, const ULONG size, ULONG* bytesRead)
+{
+    // Use native reads for filesystem handles and serialize reads from shell-backed streams
+    if (!stream) return ReadFile(file, buffer, size, bytesRead, nullptr) ? S_OK :
+        HRESULT_FROM_WIN32(GetLastError());
+    const std::scoped_lock lock(mtpStreamMutex);
+    return stream->Read(buffer, size, bytesRead);
+}
+
+std::wstring ComputeFileHashes(const CItem* item, CProgressDlg* pProgressDlg)
+{
+    // Open MTP content through the shell and filesystem content through a native handle
+    const ComApartmentScope com;
+    SmartPointer hFile(CloseHandle, HANDLE{});
+    CComPtr<IStream> fileStream;
+    if (item->IsTypeOrFlag(ITF_MTP))
     {
-        return TranslateError();
+        if (!com) return TranslateError(CO_E_NOTINITIALIZED);
+        if (const HRESULT result = OpenMtpStream(item, fileStream); FAILED(result)) return TranslateError(result);
     }
+    else if ((hFile = CreateFile(item->GetPathLong().c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE) return TranslateError();
 
     // Initialize all hash contexts
     using HashContext = struct HashContext {
@@ -768,9 +797,11 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     constexpr size_t BUFFER_SIZE = wds::Mi; // 1MB chunks
     std::vector<BYTE> buffer(BUFFER_SIZE);
     DWORD bytesRead;
+    HRESULT readResult = S_OK;
 
     // Update all valid hashes with the same buffer in parallel
-    while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
+    while (SUCCEEDED(readResult = ReadFileContent(hFile, fileStream,
+        buffer.data(), BUFFER_SIZE, &bytesRead)) && bytesRead > 0)
     {
         if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
@@ -779,10 +810,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
                 else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
         pProgressDlg->Increment();
+        // Some shell streams report the final successful partial read with S_FALSE
+        if (readResult == S_FALSE) break;
     }
+    if (FAILED(readResult)) return TranslateError(readResult);
 
     // Finalize all hashes and convert to hex strings
-    std::wstring result = filePath + L"\n\n";
+    std::wstring result = item->GetPath() + L"\n\n";
     for (auto& ctx : contexts)
     {
         if (ctx.xxHash.IsValid())

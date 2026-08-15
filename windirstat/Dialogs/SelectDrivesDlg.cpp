@@ -19,6 +19,7 @@
 #include "Filtering.h"
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
+#include "FinderMtp.h"
 
 namespace
 {
@@ -34,6 +35,9 @@ namespace
     // Return: false, if drive not accessible
     bool RetrieveDriveInformation(const std::wstring& path, std::wstring& name, ULONGLONG& total, ULONGLONG& freeBytes)
     {
+        // Query MTP devices through their Shell storage metadata
+        if (FinderMtp::IsPath(path)) return FinderMtp::GetDriveInfo(path, name, total, freeBytes);
+
         name = FormatVolumeNameOfRootPath(path);
         std::tie(total, freeBytes) = CDirStatApp::GetFreeDiskSpace(path);
         return total != 0;
@@ -48,13 +52,14 @@ namespace
 
 /////////////////////////////////////////////////////////////////////////////
 
-CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
+CDriveItem::CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstring name)
     : m_driveList(list)
     , m_path(pszPath)
+    , m_mtp(FinderMtp::IsPath(m_path))
     , m_icon(GetIconHandler()->FetchShellIcon(m_path))
-    , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path.c_str()))
-    , m_subst(IsSUBSTedDrive(m_path))
-    , m_name(m_path) {}
+    , m_isRemote(!m_mtp && DRIVE_REMOTE == ::GetDriveType(m_path.c_str()))
+    , m_subst(!m_mtp && IsSUBSTedDrive(m_path))
+    , m_name(m_mtp && !name.empty() ? std::move(name) : m_path) {}
 
 CDriveItem::~CDriveItem()
 {
@@ -85,7 +90,7 @@ void CDriveItem::StartQuery(const HWND dialog)
         // these writes are visible to the GUI thread when it handles the message.
         if (success)
         {
-            m_name = name;
+            if (!name.empty()) m_name = std::move(name);
             m_totalBytes = total;
             m_freeBytes = free;
         }
@@ -120,6 +125,11 @@ void CDriveItem::SetDriveInformation(const bool success)
 bool CDriveItem::IsRemote() const
 {
     return m_isRemote;
+}
+
+bool CDriveItem::IsMtp() const
+{
+    return m_mtp;
 }
 
 bool CDriveItem::IsSUBSTed() const
@@ -238,7 +248,7 @@ std::wstring CDriveItem::GetPath() const
 
 std::wstring CDriveItem::GetDrive() const
 {
-    return ::GetDrive(m_path);
+    return m_mtp ? m_path : ::GetDrive(m_path);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -398,6 +408,19 @@ bool CSelectDrivesDlg::OnInitDialog()
                 m_driveList.SelectItem(item);
             }
         }
+
+        // Add shell-backed portable devices alongside the filesystem drive list
+        for (const auto& device : FinderMtp::GetDevices())
+        {
+            const auto item = new CDriveItem(&m_driveList, device.path, device.name);
+            m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
+            item->StartQuery(m_hWnd);
+
+            if (std::ranges::find(m_selectedDrives, device.path) != m_selectedDrives.end())
+            {
+                m_driveList.SelectItem(item);
+            }
+        }
         m_driveList.SortItems();
         m_suppressItemChanged = wasSuppressingItemChanged;
     }
@@ -407,7 +430,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     for (const int i : std::views::iota(0, m_driveList.GetItemCount()))
     {
         if (const CDriveItem* item = m_driveList.GetItem(i);
-            !item->IsRemote() && !item->IsSUBSTed())
+            !item->IsMtp() && !item->IsRemote() && !item->IsSUBSTed())
         {
             localDrives.emplace_back(item->GetDrive());
         }
@@ -465,7 +488,8 @@ void CSelectDrivesDlg::OnOK()
         }
 
         // m_drives is the set of paths actually handed to the scanner
-        if ((m_radio == RADIO_TARGET_DRIVES_ALL && !item->IsRemote() && !item->IsSUBSTed()) ||
+        // Keep "All Local Drives" limited to direct filesystem volumes
+        if ((m_radio == RADIO_TARGET_DRIVES_ALL && !item->IsMtp() && !item->IsRemote() && !item->IsSUBSTed()) ||
             (m_radio == RADIO_TARGET_DRIVES_SUBSET && selected))
         {
             m_drives.emplace_back(item->GetDrive());

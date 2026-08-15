@@ -43,6 +43,9 @@
 #include <gdiplus.h>
 #include <olectl.h>
 #include <powrprof.h>
+#include <PortableDeviceApi.h>
+#include <PortableDevice.h>
+#include <propkey.h>
 #include <psapi.h>
 #include <richedit.h>
 #include <sal.h>
@@ -119,6 +122,7 @@
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "msimg32.lib")
 #pragma comment(lib, "powrprof.lib")
+#pragma comment(lib, "PortableDeviceGuids.lib")
 #pragma comment(lib, "propsys.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "shlwapi.lib")

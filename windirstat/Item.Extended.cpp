@@ -417,9 +417,16 @@ HICON CItem::GetIcon()
         return m_visualInfo->icon;
     }
 
+    // Supply shell-compatible paths and attributes for MTP icon lookup
     const CItem* refItem = GetLinkedItem();
+    const bool mtp = refItem->IsTypeOrFlag(ITF_MTP);
+    const std::wstring iconPath = mtp && !refItem->IsMtpRoot() ?
+        L"C:\\~" + (refItem->IsTypeOrFlag(IT_FILE) ? refItem->GetExtension() : std::wstring{}) : refItem->GetPath();
+    const DWORD attributes = mtp ?
+        (refItem->IsTypeOrFlag(IT_DIRECTORY) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL) :
+        refItem->GetAttributes();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_visualInfo->control, refItem->GetPath(), refItem->GetAttributes(), &m_visualInfo->icon, nullptr));
+        m_visualInfo->control, iconPath, attributes, &m_visualInfo->icon, nullptr));
 
     return m_visualInfo->icon;
 }
@@ -501,10 +508,10 @@ std::vector<CItem*> CItem::GetDriveItems() const
 
     if (root->IsTypeOrFlag(IT_MYCOMPUTER))
     {
+        // Ignore non-drive roots such as MTP devices
         for (const auto& child : root->GetChildren())
         {
-            assert(child->IsTypeOrFlag(IT_DRIVE));
-            drives.push_back(child);
+            if (child->IsTypeOrFlag(IT_DRIVE)) drives.push_back(child);
         }
     }
     else if (root->IsTypeOrFlag(IT_DRIVE))
@@ -574,20 +581,20 @@ int CItem::GetSizeProportionWidth()
 
 CItem* CItem::FindRecyclerItem() const
 {
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
+    CItem* drive = GetParentDrive();
+    if (drive == nullptr) return nullptr;
 
-        // There is no cross-platform way to consistently identify the recycle bin
-        // so attempt to find an item with the most probable values
-        for (const std::wstring_view possible : { std::wstring_view(L"$RECYCLE.BIN"), std::wstring_view(L"RECYCLER"), std::wstring_view(L"RECYCLED") })
+    // There is no cross-platform way to consistently identify the recycle bin
+    // so attempt to find an item with the most probable values
+    for (const std::wstring_view possible :
+        { std::wstring_view(L"$RECYCLE.BIN"), std::wstring_view(L"RECYCLER"), std::wstring_view(L"RECYCLED") })
+    {
+        for (const auto& child : drive->GetChildren())
         {
-            for (const auto& child : p->GetChildren())
+            if (child->IsTypeOrFlag(IT_DIRECTORY) &&
+                _wcsicmp(child->GetNameView().data(), possible.data()) == 0)
             {
-                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetNameView().data(), possible.data()) == 0)
-                {
-                    return child;
-                }
+                return child;
             }
         }
     }
@@ -1032,24 +1039,25 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
         return {};
     }
 
-    // Open file for reading - avoid files that are actively being written to
-    const SmartPointer hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
-        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE)
+    // Open content for reading - avoid filesystem files that are actively being written to
+    SmartPointer hFile(CloseHandle, HANDLE{});
+    CComPtr<IStream> fileStream;
+    if (IsTypeOrFlag(ITF_MTP))
     {
-        return {};
+        if (FAILED(OpenMtpStream(this, fileStream))) return {};
     }
+    else if ((hFile = CreateFile(GetPathLong().c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE) return {};
 
     // Hash data one read at a time
-    DWORD iReadResult = 0;
+    HRESULT iReadResult = E_FAIL;
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
     ULONGLONG totalBytesHashed = 0;
 
-    while ((iReadResult = ReadFile(hFile, fileBuffer.data(), static_cast<DWORD>(
-        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())),
-        &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
+    while (SUCCEEDED(iReadResult = ReadFileContent(hFile, fileStream, fileBuffer.data(), static_cast<DWORD>(
+        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())), &iReadBytes)) && iReadBytes > 0)
     {
         UpwardDrivePacman();
 
@@ -1063,7 +1071,7 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
 
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
-        if (totalBytesHashed >= hashSizeLimit) break;
+        if (totalBytesHashed >= hashSizeLimit || iReadResult == S_FALSE) break;
 
         queue->WaitIfSuspended();
     }
@@ -1071,7 +1079,7 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
     // Complete the hashing process and check on errors.
     if (useXxHash)
     {
-        if (iReadResult == 0) return {};
+        if (FAILED(iReadResult)) return {};
         XXH64_canonical_t canonical;
         XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(xxHasher));
         return { canonical.digest, canonical.digest + sizeof(canonical.digest) };
@@ -1081,7 +1089,7 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
     // so the reusable hash handle is reset for the next call.
     if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
         hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
-        iFinishResult != 0 || iReadResult == 0 || iHashResult != 0)
+        iFinishResult != 0 || FAILED(iReadResult) || iHashResult != 0)
     {
         return {};
     }
@@ -1099,10 +1107,11 @@ ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
     assert(IsTypeOrFlag(IT_MYCOMPUTER));
 
+    // Sum each root's storage-specific scan range
     ULONGLONG range = 0;
     for (const auto& child : GetChildren())
     {
-        range += child->GetProgressRangeDrive();
+        range += child->GetProgressRange();
     }
     return range;
 }

@@ -19,6 +19,7 @@
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
 #include "CsvLoader.h"
+#include "FinderMtp.h"
 
 CIconHandler* GetIconHandler()
 {
@@ -305,6 +306,13 @@ private:
                 if (paramSpilt.empty())
                 {
                     m_invalidPath = true;
+                    continue;
+                }
+                // Preserve valid MTP shell paths without filesystem normalization.
+                if (FinderMtp::IsPath(paramSpilt) && FinderMtp::DoesFileExist(paramSpilt))
+                {
+                    if (!m_path.empty()) m_path += wds::chrPipe;
+                    m_path += paramSpilt;
                     continue;
                 }
                 std::error_code ec;

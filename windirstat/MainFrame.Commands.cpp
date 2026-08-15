@@ -52,13 +52,8 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const boo
             pPopupMenu->Remove(0, MF_BYPOSITION);
         }
 
-        std::vector<std::wstring> paths;
-        for (const auto& item : CWinDirStatModel::Get()->GetAllSelected())
-        {
-            paths.push_back(item->GetPath());
-        }
-
-        if (const CComPtr contextMenu = GetContextMenu(Handle(), paths);
+        // Populate the placeholder submenu with verbs for the selected shell items.
+        if (const CComPtr contextMenu = GetContextMenu(CWinDirStatModel::Get()->GetAllSelected());
             contextMenu != nullptr)
         {
             (void) contextMenu->QueryContextMenu(pPopupMenu->Handle(), 0,

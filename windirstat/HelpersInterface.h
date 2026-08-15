@@ -19,6 +19,33 @@
 
 #include "pch.h"
 
+class ComApartmentScope final
+{
+public:
+    explicit ComApartmentScope(const DWORD flags = COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE) noexcept :
+        // Keep a successful COM initialization active for this scope's lifetime.
+        m_initialized(SUCCEEDED(CoInitializeEx(nullptr, flags)))
+    {
+    }
+
+    ~ComApartmentScope() noexcept
+    {
+        // Balance every successful initialization when the scope ends.
+        if (m_initialized) CoUninitialize();
+    }
+
+    ComApartmentScope(const ComApartmentScope&) = delete;
+    ComApartmentScope& operator=(const ComApartmentScope&) = delete;
+
+    explicit operator bool() const noexcept
+    {
+        return m_initialized;
+    }
+
+private:
+    const bool m_initialized;
+};
+
 // Interface helpers declarations
 
 // Locale and formatting
@@ -77,12 +104,14 @@ std::wstring GetLocalizedMenuText(std::wstring_view textId, std::wstring_view de
 
 // Shell item array
 class CItem;
-CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items);
+PIDLIST_ABSOLUTE CreateShellPidl(const std::wstring& path);
+PIDLIST_ABSOLUTE CreateShellPidl(const CItem* item);
+CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, bool allOrNothing = false);
 
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
-IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
+CComPtr<IContextMenu> GetContextMenu(const std::vector<CItem*>& items);
 
 // Application info
 std::wstring GetAppTitle();

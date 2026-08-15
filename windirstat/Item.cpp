@@ -19,6 +19,7 @@
 #include "Item.h"
 #include "Filtering.h"
 #include "FinderBasic.h"
+#include "FinderMtp.h"
 #include "FinderNtfs.h"
 
 // --- Construction / Destruction ---
@@ -99,6 +100,8 @@ CItem::~CItem()
             delete current;
         }
     }
+    // Release any MTP shell metadata registered to this item
+    FinderMtp::UnregisterPath(m_index);
 }
 
 // --- Hierarchy ---
@@ -109,34 +112,46 @@ const std::vector<CItem*>& CItem::GetChildren() const noexcept
     return m_folderInfo->m_children;
 }
 
-CItem* CItem::GetParent() const noexcept
+CItem* CItem::GetEnumRoot() const noexcept
 {
-    return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
+    // Resolve the selected folder, drive, or MTP branch without crossing a multi-root container.
+    auto* item = const_cast<CItem*>(this);
+    while (!item->IsTypeOrFlag(ITF_ROOTITEM) && item->GetParent() != nullptr &&
+        !item->GetParent()->IsTypeOrFlag(IT_MYCOMPUTER)) item = item->GetParent();
+    return item;
 }
 
 CItem* CItem::GetParentDrive() const noexcept
 {
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        if (p->IsTypeOrFlag(IT_DRIVE)) return const_cast<CItem*>(p);
-    }
-    return nullptr;
+    CItem* enumRoot = GetEnumRoot();
+    return enumRoot->IsTypeOrFlag(IT_DRIVE) ? enumRoot : nullptr;
 }
 
 CItem* CItem::GetVolumeRoot() const noexcept
 {
-    auto p = const_cast<CItem*>(this);
-    for (; p->GetParent() != nullptr; p = p->GetParent())
+    // Prefer a nearer mounted volume before falling back to the enumeration root.
+    CItem* enumRoot = GetEnumRoot();
+    for (auto* item = const_cast<CItem*>(this); item != enumRoot; item = item->GetParent())
     {
-        if (p->IsTypeOrFlag(IT_DRIVE)) return p;
-        if (p->IsTypeOrFlag(ITRP_MOUNT)) return p;
+        if (item->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT)) return item;
     }
+    return enumRoot;
+}
 
-    return p;
+bool CItem::IsMtpRoot() const noexcept
+{
+    return IsTypeOrFlag(ITF_MTP) && GetEnumRoot() == this;
+}
+
+bool CItem::HasShellIdentity() const noexcept
+{
+    return !IsTypeOrFlag(ITF_MTP) || FinderMtp::HasShellIdentity(m_index);
 }
 
 void CItem::AddChild(CItem* child, const bool addOnly)
 {
+    if (IsTypeOrFlag(ITF_MTP)) child->SetFlag(ITF_MTP);
+
     if (!addOnly)
     {
         UpwardAddSizePhysical(child->GetSizePhysical());
@@ -261,11 +276,15 @@ void CItem::RemoveAllChildren() const
 
 CItem* CItem::AddDirectory(const Finder& finder)
 {
-    const bool follow = !finder.IsProtectedReparsePoint() &&
+    // Bypass filesystem reparse restrictions when traversing MTP directories
+    const bool follow = IsTypeOrFlag(ITF_MTP) || !finder.IsProtectedReparsePoint() &&
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
     auto* const child = new CItem(IT_DIRECTORY, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
+    // Preserve MTP shell metadata under the child index for later access
+    if (IsTypeOrFlag(ITF_MTP))
+        child->SetIndex(FinderMtp::RegisterPath({}, finder.GetShellPath(), finder.GetShellPidl()));
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
@@ -282,6 +301,9 @@ CItem* CItem::AddFile(const Finder& finder)
 {
     auto* const child = new CItem(IT_FILE, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
+    // Preserve MTP shell metadata under the child index for later access
+    if (IsTypeOrFlag(ITF_MTP))
+        child->SetIndex(FinderMtp::RegisterPath({}, finder.GetShellPath(), finder.GetShellPidl()));
     child->SetSizePhysical(finder.GetFileSizePhysical());
     child->SetSizeLogical(finder.GetFileSizeLogical());
     child->SetLastChange(finder.GetLastWriteTime());
@@ -299,26 +321,6 @@ CItem* CItem::AddFile(const Finder& finder)
 ULONGLONG CItem::GetSizePhysical() const noexcept
 {
     return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
-}
-
-ULONGLONG CItem::GetSizeLogical() const noexcept
-{
-    return m_sizeLogical;
-}
-
-ULONGLONG CItem::GetSizePhysicalRaw() const noexcept
-{
-    return m_sizePhysical;
-}
-
-void CItem::SetSizePhysical(const ULONGLONG size) noexcept
-{
-    m_sizePhysical = size;
-}
-
-void CItem::SetSizeLogical(const ULONGLONG size) noexcept
-{
-    m_sizeLogical = size;
 }
 
 void CItem::UpwardAddSizePhysical(const ULONGLONG bytes) noexcept
@@ -443,18 +445,6 @@ double CItem::GetAbsoluteFraction() const noexcept
     return static_cast<double>(size) / static_cast<double>(rootSize);
 }
 
-ULONG CItem::GetFilesCount() const noexcept
-{
-    if (IsLeaf()) return 0;
-    return m_folderInfo->m_files;
-}
-
-ULONG CItem::GetFoldersCount() const noexcept
-{
-    if (IsLeaf()) return 0;
-    return m_folderInfo->m_subdirs;
-}
-
 ULONGLONG CItem::GetItemsCount() const noexcept
 {
     if (IsLeaf()) return 0;
@@ -502,21 +492,6 @@ void CItem::ExtensionDataProcessChildren(const bool remove)
 
 // --- Attributes & Properties ---
 
-FILETIME CItem::GetLastChange() const noexcept
-{
-    return m_lastChange;
-}
-
-void CItem::SetLastChange(const FILETIME& t) noexcept
-{
-    m_lastChange = t;
-}
-
-void CItem::SetAttributes(const DWORD attr) noexcept
-{
-    m_attributes = LOWORD(attr);
-}
-
 DWORD CItem::GetAttributes() const noexcept
 {
     return m_attributes == LOWORD(INVALID_FILE_ATTRIBUTES)
@@ -542,16 +517,6 @@ USHORT CItem::GetSortAttributes() const noexcept
     return ret;
 }
 
-void CItem::SetIndex(const ULONGLONG index) noexcept
-{
-    m_index = index;
-}
-
-ULONGLONG CItem::GetIndex() const noexcept
-{
-    return m_index;
-}
-
 DWORD CItem::GetReparseTag() const noexcept
 {
     if (IsTypeOrFlag(ITRP_SYMLINK)) return IO_REPARSE_TAG_SYMLINK;
@@ -571,6 +536,8 @@ void CItem::SetReparseTag(const DWORD reparseType) noexcept
 
 std::wstring CItem::GetOwner(const bool force) const
 {
+    // Skip filesystem security queries for MTP items
+    if (IsTypeOrFlag(ITF_MTP)) return {};
     if (!IsVisible() && !force)
     {
         return {};
@@ -665,6 +632,29 @@ std::wstring CItem::GetPath() const
         return {};
     }
 
+    // Reconstruct MTP paths from the registered root and item ancestry
+    if (IsTypeOrFlag(ITF_MTP))
+    {
+        thread_local std::vector<const CItem*> pathParts;
+        pathParts.clear();
+        const CItem* root = GetEnumRoot();
+        for (const CItem* part = this; part != root; part = part->GetParent())
+        {
+            pathParts.push_back(part);
+        }
+
+        std::wstring path = root->IsTypeOrFlag(ITF_MTP) ? FinderMtp::GetPath(root->m_index) : std::wstring{};
+        if (!path.empty())
+        {
+            for (const CItem* part : pathParts | std::views::reverse)
+            {
+                if (!path.ends_with(L'\\')) path += L'\\';
+                path += part->GetNameView();
+            }
+            return path;
+        }
+    }
+
     std::wstring path = GetPathWithoutSlash();
     if (IsTypeOrFlag(IT_DRIVE))
     {
@@ -741,11 +731,15 @@ int CItem::ComparePath(const CItem* other) const
 
 std::wstring CItem::GetPathLong() const
 {
+    if (IsTypeOrFlag(ITF_MTP)) return GetPath();
     return FinderBasic::MakeLongPathCompatible(GetPath());
 }
 
 std::wstring CItem::GetFolderPath() const
 {
+    if (IsTypeOrFlag(ITF_MTP))
+        return IsTypeOrFlag(IT_FILE) && GetParent() != nullptr ? GetParent()->GetPath() : GetPath();
+
     std::wstring path = GetPath();
     if (IsTypeOrFlag(IT_FILE))
     {
@@ -759,6 +753,7 @@ std::wstring CItem::GetFolderPath() const
 
 bool CItem::HasUncPath() const
 {
+    if (IsTypeOrFlag(ITF_MTP)) return false;
     return GetPath().starts_with(L"\\\\");
 }
 
@@ -882,12 +877,6 @@ void CItem::UpwardSetUndone() noexcept
     }
 }
 
-ULONG CItem::GetReadJobs() const noexcept
-{
-    if (IsLeaf()) return 0;
-    return m_folderInfo->m_jobs;
-}
-
 void CItem::UpwardAddReadJobs(const ULONG count) const noexcept
 {
     if (IsLeaf() || count == 0) return;
@@ -972,6 +961,9 @@ void CItem::SortItemsBySizeLogical() const
 
 void CItem::UpdateStatsFromDisk()
 {
+    // Keep MTP metadata supplied by device enumeration
+    if (IsTypeOrFlag(ITF_MTP)) return;
+
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
         FinderBasic finder(true);
@@ -1013,8 +1005,10 @@ void CItem::UpdateStatsFromDisk()
 
 void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic)
 {
+    // Reuse one finder for each storage backend throughout this worker
     FinderNtfs finderNtfs(&contextNtfs);
     FinderBasic finderBasic(&contextBasic);
+    FinderMtp finderMtp;
 
     for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
     {
@@ -1039,8 +1033,10 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))
         {
-            Finder* finder = contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
-                reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
+            // Select the enumeration backend for the queued item
+            Finder* finder = item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
+                contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
+                static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
             for (bool b = finder->FindFile(item); b; b = finder->FindNext())
             {

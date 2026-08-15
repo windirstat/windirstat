@@ -43,7 +43,7 @@ class CDrivesList;
 class CDriveItem final : public CWdsListItem
 {
 public:
-    CDriveItem(CDrivesList* list, const std::wstring& pszPath);
+    CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstring name = {});
     ~CDriveItem() override;
 
     void StartQuery(HWND dialog);
@@ -56,6 +56,7 @@ public:
     std::wstring GetPath() const;
     std::wstring GetDrive() const;
     bool IsRemote() const;
+    bool IsMtp() const;
     bool IsSUBSTed() const;
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
@@ -64,6 +65,7 @@ public:
 private:
     CDrivesList* m_driveList; // Backpointer
     std::wstring m_path; // e.g. "C:\""
+    bool m_mtp = false;
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 

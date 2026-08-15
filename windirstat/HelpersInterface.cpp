@@ -19,6 +19,7 @@
 #include "pch.h"
 #include "HelpersInterface.h"
 #include "Item.h"
+#include "FinderMtp.h"
 #include "Options.h"
 #include "Localization.h"
 #include "Version.h"
@@ -446,24 +447,52 @@ std::wstring GetLocalizedMenuText(const std::wstring_view textId, const std::wst
 }
 
 // Shell item array
-CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items)
+PIDLIST_ABSOLUTE CreateShellPidl(const std::wstring& path)
 {
+    // Strip the app's MTP marker so the shell can parse the underlying namespace path
+    const std::wstring shellPath = FinderMtp::IsPath(path) ? FinderMtp::StripPrefix(path) : path;
+    PIDLIST_ABSOLUTE pidl = nullptr;
+    if (FAILED(SHParseDisplayName(shellPath.c_str(), nullptr, &pidl, 0, nullptr))) return nullptr;
+    return pidl;
+}
+
+PIDLIST_ABSOLUTE CreateShellPidl(const CItem* item)
+{
+    if (item == nullptr) return nullptr;
+    if (!item->IsTypeOrFlag(ITF_MTP)) return CreateShellPidl(item->GetPath());
+
+    // Prefer the registered MTP PIDL, then rebuild one from the stored shell path
+    if (PIDLIST_ABSOLUTE pidl = FinderMtp::CloneShellPidl(item->GetIndex()); pidl != nullptr) return pidl;
+    const std::wstring shellPath = FinderMtp::GetShellPath(item->GetIndex());
+    return shellPath.empty() ? nullptr : CreateShellPidl(shellPath);
+}
+
+CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, const bool allOrNothing)
+{
+    // Keep resolved PIDLs alive while collecting the raw pointers required by the shell
     std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlHolders;
     std::vector<LPCITEMIDLIST> pidls;
     pidlHolders.reserve(items.size());
+    pidls.reserve(items.size());
 
+    // Resolve each application item and optionally fail rather than return a partial selection
     for (const auto& item : items)
     {
         PIDLIST_ABSOLUTE pidl = nullptr;
         if (item->IsTypeOrFlag(IT_MYCOMPUTER))
             SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
         else
-            pidl = ILCreateFromPath(item->GetPath().c_str());
-        if (!pidl) continue;
+            pidl = CreateShellPidl(item);
+        if (!pidl)
+        {
+            if (allOrNothing) return {};
+            continue;
+        }
         pidlHolders.emplace_back(CoTaskMemFree, pidl);
         pidls.push_back(pidl);
     }
 
+    // Aggregate the resolved PIDLs into a shell item array
     CComPtr<IShellItemArray> psia;
     if (!pidls.empty())
         SHCreateShellItemArrayFromIDLists(static_cast<UINT>(pidls.size()), pidls.data(), &psia);
@@ -471,35 +500,15 @@ CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items)
 }
 
 // Context menu
-IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& paths)
+CComPtr<IContextMenu> GetContextMenu(const std::vector<CItem*>& items)
 {
-    // structures to hold and track pidls for children
-    std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlsForCleanup;
-    std::vector<LPCITEMIDLIST> pidlsRelatives;
+    // Require a complete shell selection before requesting its context-menu handler
+    const CComPtr<IShellItemArray> shellItems = CreateShellItemArray(items, true);
+    if (shellItems == nullptr) return {};
 
-    // create list of children from paths
-    for (auto& path : paths)
-    {
-        const LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
-        if (pidl == nullptr) return nullptr;
-        pidlsForCleanup.emplace_back(CoTaskMemFree, const_cast<LPITEMIDLIST>(pidl));
-
-        CComPtr<IShellFolder> pParentFolder;
-        LPCITEMIDLIST pidlRelative;
-        if (FAILED(SHBindToParent(pidl, IID_IShellFolder, reinterpret_cast<LPVOID*>(&pParentFolder), &pidlRelative))) return nullptr;
-        pidlsRelatives.push_back(pidlRelative);
-
-        // on last item, return the context menu
-        if (pidlsRelatives.size() == paths.size())
-        {
-            IContextMenu* pContextMenu = nullptr;
-            if (FAILED(pParentFolder->GetUIObjectOf(hwnd, static_cast<UINT>(pidlsRelatives.size()),
-                pidlsRelatives.data(), IID_IContextMenu, nullptr, reinterpret_cast<LPVOID*>(&pContextMenu)))) return nullptr;
-            return pContextMenu;
-        }
-    }
-
-    return nullptr;
+    CComPtr<IContextMenu> contextMenu;
+    if (FAILED(shellItems->BindToHandler(nullptr, BHID_SFUIObject, IID_PPV_ARGS(&contextMenu)))) return {};
+    return contextMenu;
 }
 
 // Application info

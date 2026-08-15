@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "IconHandler.h"
 #include "HelpersInterface.h"
+#include "FinderMtp.h"
 
 CIconHandler::~CIconHandler()
 {
@@ -154,7 +155,15 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     SHFILEINFO sfi{};
     bool success = false;
 
-    if (flags & SHGFI_PIDL)
+    // Resolve MTP virtual paths to PIDLs so the shell can return their native icons
+    if (FinderMtp::IsPath(path))
+    {
+        const SmartPointer pidl(CoTaskMemFree, CreateShellPidl(path));
+        flags = flags & ~SHGFI_USEFILEATTRIBUTES | SHGFI_PIDL;
+        success = pidl != nullptr && std::bit_cast<HIMAGELIST>(::SHGetFileInfo(
+            static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), 0, &sfi, sizeof(sfi), flags)) != nullptr;
+    }
+    else if (flags & SHGFI_PIDL)
     {
         // Assume folder id numeric encoded as string
         CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidl;
