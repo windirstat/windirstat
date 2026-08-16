@@ -2,7 +2,18 @@
 # WinDirStat 2.8.x (Upcoming)
 
 Enhancements
-- Added Free Space / Unknown items when scanning administrative share drive paths
+- Added scanning support for MTP portable devices
+- Added volume / free space stats for administrative share drive paths
+- Added configurable font / toolbar scaling with Windows text size support
+- Added support for an arbitrary number of custom cleanups
+- Improved Simplified Chinese translation (thanks @wcxu21)
+- Migrated the UI framework from MFC to native Win32/GDI
+
+Bug Fixes
+- Corrected Remove Empty Folders potentially removing reparse point targets
+- Corrected folder counts and zoom state after removing multi-root scan targets
+- Corrected invalid attributes being lost when loading CSV/JSON results
+- Corrected WinGet upgrades for MSI installations using non-English locales
 
 <a name="windirstat-2.8.0"></a>
 # WinDirStat 2.8.0
