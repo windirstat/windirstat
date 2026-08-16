@@ -15,22 +15,23 @@
            verifications (Compress / Sparsify / Deduplicate-with-Hardlink /
            Remove Mark-Of-The-Web) on single AND multiple selections, each
            validated against the real file system from PowerShell
-        4. Reparse / link behavior (symlinks, junctions, mount points) — formats
+        4. MTP device scan and CSV save/load round-trip when a device is connected
+        5. Reparse / link behavior (symlinks, junctions, mount points) — formats
            the two configured scratch drives when present and elevated
-        5. Edge cases (deep paths, unicode, attributes, file properties)
-        6. Enumeration parity — one known tree scanned through many root
+        6. Edge cases (deep paths, unicode, attributes, file properties)
+        7. Enumeration parity — one known tree scanned through many root
            spellings (trailing slash, lowercase drive, \\?\, UNC, \\?\UNC\,
            \\tsclient), through redirected roots (subst, junction, symlink),
            and across FAT32 / ReFS / NTFS, each compared against a PowerShell
            ground truth
-        7. UNC share-root scanning regression coverage
-        8. Permissions export (CSV and JSON)
-        9. Command-line parsing, validation, and quiet-mode termination
+        8. UNC share-root scanning regression coverage
+        9. Permissions export (CSV and JSON)
+        10. Command-line parsing, validation, and quiet-mode termination
 
     EVERY suite runs by default; no opt-in switches are required.  Suites whose
-    prerequisites are not met (no MSBuild, not elevated, scratch drives absent,
-    a non-NTFS work volume, …) skip gracefully with a clear reason instead of
-    failing.  Use -Only / -Skip to narrow the run while debugging.
+    prerequisites are not met (no MSBuild, no connected MTP device, not elevated,
+    scratch drives absent, a non-NTFS work volume, …) skip gracefully with a clear
+    reason instead of failing.  Use -Only / -Skip to narrow the run while debugging.
 
 .NOTES
     The reparse suite AND the enumeration suite's FileSystems group FORMAT the
@@ -9613,6 +9614,234 @@ function Invoke-UiSuite {
 }
 
 # #############################################################################
+# MTP SUITE  (connected-device scan and CSV save/load round-trip)
+# #############################################################################
+function Invoke-MtpSuite {
+    $g = 'MtpRoundTrip'
+
+    # Device selection and CSV re-export use the interactive desktop. Serialize
+    # them with the UI suite so independently sharded runs cannot steal focus.
+    $uiMutex = [System.Threading.Mutex]::new($false, 'Global\WinDirStat-E2E-UI-Automation')
+    $uiLockHeld = $false
+    try {
+        $uiLockHeld = $uiMutex.WaitOne([System.TimeSpan]::FromMinutes(15))
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $uiLockHeld = $true
+    }
+    if (!$uiLockHeld) {
+        $uiMutex.Dispose()
+        Assert-Fail $g 'Acquire global UI-automation lock' 'Timed out waiting for another UI suite'
+        return
+    }
+
+    $script:workRoot = Join-Path $BuildRoot 'mtp-test'
+    $sourceCsv = Join-Path $script:workRoot 'mtp-scan.csv'
+    $roundTripCsv = Join-Path $script:workRoot 'mtp-roundtrip.csv'
+
+    try {
+        New-Item -ItemType Directory -Force -Path $script:workRoot | Out-Null
+        $win = Start-App -Exe $ExePath -OptionLines @('ScanForDuplicates=0', 'UseFastScanEngine=0')
+        if (!$win) {
+            Assert-Fail $g 'Open MTP target selection' 'App window did not appear'
+            return
+        }
+
+        # The modal target dialog may be top-level or nested below its disabled owner.
+        # Resolve them separately in case Wait-Window observed the dialog first.
+        $initialWindowName = $win.Current.Name
+        $dialog = if ($initialWindowName -like '*Select*') { $win } else { $null }
+        $mainWindow = if ($initialWindowName -notlike '*Select*') { $win } else { $null }
+        $deadline = [System.DateTime]::UtcNow.AddMilliseconds($script:DefaultDialogTimeoutMs)
+        while ([System.DateTime]::UtcNow -lt $deadline -and (!$dialog -or !$mainWindow)) {
+            $windows = @(Get-ChildWindows -ProcessId $script:proc.Id)
+            if (!$dialog) {
+                $dialog = $windows | Where-Object { $_.Current.Name -like '*Select*' } | Select-Object -First 1
+            }
+            if (!$mainWindow) {
+                $mainWindow = $windows | Where-Object {
+                    $_.Current.Name -like '*WinDirStat*' -and $_.Current.Name -notlike '*Select*'
+                } | Select-Object -First 1
+            }
+            if (!$dialog -and $mainWindow) {
+                $dialog = @(Find-UiaAll -Root $mainWindow -Type ([System.Windows.Automation.ControlType]::Window) `
+                    -Scope ([System.Windows.Automation.TreeScope]::Descendants)) |
+                    Where-Object { $_.Current.Name -like '*Select*' } |
+                    Select-Object -First 1
+            }
+            if (!$dialog -or !$mainWindow) { Start-Sleep -Milliseconds 200 }
+        }
+        if (!$dialog -or !$mainWindow) {
+            Assert-Fail $g 'Open MTP target selection' 'Select Target dialog or main window was not found'
+            return
+        }
+        $win = $mainWindow
+        $script:win = $mainWindow
+
+        # WinDirStat's list contains only supported drive-letter volumes followed
+        # by devices returned from FinderMtp. Volume labels end in "(C:)" and an
+        # inaccessible volume retains its raw "C:\" path, leaving other rows as MTP.
+        $driveGrid = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::DataGrid)
+        $driveHwnd = if ($driveGrid) { [IntPtr] $driveGrid.Current.NativeWindowHandle } else { [IntPtr]::Zero }
+        if ($driveHwnd -eq [IntPtr]::Zero) {
+            Assert-Fail $g 'Inspect MTP targets' 'Native target list was not found'
+            return
+        }
+
+        $driveTexts = @()
+        $deadline = [System.DateTime]::UtcNow.AddMilliseconds($script:DefaultDialogTimeoutMs)
+        while ([System.DateTime]::UtcNow -lt $deadline -and $driveTexts.Count -eq 0) {
+            try { $driveTexts = @([NativeListViewHelper]::GetItemTexts($driveHwnd)) }
+            catch { $driveTexts = @() }
+            if ($driveTexts.Count -eq 0) { Start-Sleep -Milliseconds 200 }
+        }
+        if ($driveTexts.Count -eq 0) {
+            Assert-Fail $g 'Inspect MTP targets' 'Target list did not become readable'
+            return
+        }
+        $mtpIndices = @(for ($i = 0; $i -lt $driveTexts.Count; $i++) {
+            if ($driveTexts[$i] -notmatch '(?i)(?:\([a-z]:\)|^[a-z]:\\?$)') { $i }
+        })
+        if ($mtpIndices.Count -eq 0) {
+            Assert-Skip $g 'Scan, save, and load MTP results' 'No connected MTP device is exposed in Select Target'
+            return
+        }
+
+        $deviceName = $driveTexts[$mtpIndices[0]]
+        Write-LabelValue 'Device' $deviceName DarkCyan
+        Assert-Pass $g "Connected MTP device detected: $deviceName"
+
+        if (![NativeListViewHelper]::SelectSingleItem($driveHwnd, $mtpIndices[0])) {
+            Assert-Fail $g 'Select connected MTP device' "Could not select '$deviceName'"
+            return
+        }
+        $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
+        $subsetRadio = [Win32MenuHelper]::GetDlgItem(
+            $dialogHwnd, (Get-ResourceId 'IDC_RADIO_TARGET_DRIVES_SUBSET'))
+        if ($subsetRadio -eq [IntPtr]::Zero) {
+            Assert-Fail $g 'Select connected MTP device' 'Individual Drives radio was not found'
+            return
+        }
+        [Win32MenuHelper]::SendMessage(
+            $subsetRadio, $script:BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+
+        foreach ($optionId in @('IDC_SCAN_DUPLICATES', 'IDC_FAST_SCAN_CHECKBOX')) {
+            $option = [Win32MenuHelper]::GetDlgItem($dialogHwnd, (Get-ResourceId $optionId))
+            if ($option -ne [IntPtr]::Zero) {
+                [Win32MenuHelper]::SendMessage(
+                    $option, $script:BM_SETCHECK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+            }
+        }
+        if (![Win32MenuHelper]::PostMessage(
+                $dialogHwnd, $script:WM_COMMAND, [IntPtr] $script:IDOK, [IntPtr]::Zero)) {
+            Assert-Fail $g 'Start MTP scan' 'Could not submit the target-selection dialog'
+            return
+        }
+        $deadline = [System.DateTime]::UtcNow.AddMilliseconds($script:DefaultDialogTimeoutMs)
+        while ([System.DateTime]::UtcNow -lt $deadline -and [Win32MenuHelper]::IsWindow($dialogHwnd)) {
+            Start-Sleep -Milliseconds 100
+        }
+        if ([Win32MenuHelper]::IsWindow($dialogHwnd)) {
+            Assert-Fail $g 'Start MTP scan' 'Target-selection dialog did not accept the MTP device'
+            return
+        }
+
+        if (!(Wait-ScanDone -TimeoutMs ($TimeoutSeconds * 1000))) {
+            Assert-Fail $g 'Scan connected MTP device' "Scan did not finish within $TimeoutSeconds seconds"
+            return
+        }
+        Assert-Pass $g 'Scan connected MTP device'
+
+        $savedCsv = Invoke-CsvExportFromMenu -Window $win -OutPath $sourceCsv
+        if (!$savedCsv) {
+            Assert-Fail $g 'Save MTP scan to CSV' 'Save Results did not create a CSV'
+            return
+        }
+        Assert-Pass $g 'Save MTP scan to CSV'
+
+        $sourceRows = @(Read-CsvRows -Csv $savedCsv)
+        $invalidMtpRows = @($sourceRows | Where-Object {
+            try {
+                $attributes = [Convert]::ToUInt32(([string] $_.'WinDirStat Attributes').Replace('0x', ''), 16)
+                return ($attributes -band 2147483648L) -eq 0
+            }
+            catch { return $true }
+        })
+        Assert-That $g 'Every exported row retains the MTP flag' `
+            ($invalidMtpRows.Count -eq 0) "$($invalidMtpRows.Count) row(s) lacked ITF_MTP"
+
+        $rootRows = @($sourceRows | Where-Object {
+            try {
+                $attributes = [Convert]::ToUInt32(([string] $_.'WinDirStat Attributes').Replace('0x', ''), 16)
+                return ($attributes -band [uint32] 0x10000000) -ne 0
+            }
+            catch { return $false }
+        })
+        Assert-That $g 'CSV contains one MTP root row' `
+            ($rootRows.Count -eq 1 -and ([string] $rootRows[0].Name).StartsWith(
+                'mtp:', [System.StringComparison]::OrdinalIgnoreCase)) `
+            "Found $($rootRows.Count) root row(s)"
+
+        $nonzeroIndices = @($sourceRows | Where-Object { $_.Index -cne '0x0000000000000000' })
+        Assert-That $g 'MTP process-local indices are not serialized' `
+            ($nonzeroIndices.Count -eq 0) "$($nonzeroIndices.Count) row(s) had a nonzero index"
+
+        Stop-App
+        $loadArguments = Join-ProcessArguments -Arguments @('/loadfrom', $sourceCsv)
+        $win = Start-App -Exe $ExePath -Arguments $loadArguments -OptionLines @('ScanForDuplicates=0')
+        if (!$win) {
+            Assert-Fail $g 'Load MTP results from CSV' 'App window did not appear'
+            return
+        }
+        if (!(Wait-ScanDone -TimeoutMs ($TimeoutSeconds * 1000))) {
+            Assert-Fail $g 'Load MTP results from CSV' "Loaded model did not settle within $TimeoutSeconds seconds"
+            return
+        }
+
+        $driveDialog = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Window) `
+            -Scope ([System.Windows.Automation.TreeScope]::Descendants)
+        Assert-That $g 'Loading MTP CSV suppresses the target-selection dialog' `
+            (!$driveDialog -or $driveDialog.Current.Name -notlike '*Select*') 'Target-selection dialog opened'
+
+        $reExportedCsv = Invoke-CsvExportFromMenu -Window $win -OutPath $roundTripCsv
+        if (!$reExportedCsv) {
+            Assert-Fail $g 'Re-export loaded MTP results' 'Save Results did not create a CSV'
+            return
+        }
+        Assert-Pass $g 'Load MTP results from CSV and re-export them'
+
+        $roundTripRows = @(Read-CsvRows -Csv $reExportedCsv)
+        $columns = @(
+            'Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes',
+            'Last Change', 'WinDirStat Attributes', 'Index'
+        )
+        $getSignatures = {
+            param([object[]] $Rows)
+            @($Rows | ForEach-Object {
+                $row = $_
+                ($columns | ForEach-Object { [string] $row.$_ }) -join [char] 0x1F
+            } | Sort-Object)
+        }.GetNewClosure()
+        $sourceSignatures = @(& $getSignatures -Rows $sourceRows)
+        $roundTripSignatures = @(& $getSignatures -Rows $roundTripRows)
+        $matches = $sourceSignatures.Count -eq $roundTripSignatures.Count
+        for ($i = 0; $matches -and $i -lt $sourceSignatures.Count; $i++) {
+            $matches = $sourceSignatures[$i] -ceq $roundTripSignatures[$i]
+        }
+        Assert-That $g 'MTP CSV load preserves every path and exported field' $matches `
+            "Before=$($sourceRows.Count) row(s); after=$($roundTripRows.Count) row(s)"
+    }
+    finally {
+        try { Stop-App } catch {}
+        Remove-TestArtifacts -Path $script:workRoot
+        if ($uiLockHeld) {
+            try { $uiMutex.ReleaseMutex() } catch {}
+        }
+        $uiMutex.Dispose()
+    }
+}
+
+# #############################################################################
 # FILTERING SUITE  (CSV / regex / glob / size filtering, headless CLI scans)
 # #############################################################################
 function Invoke-FilteringSuite {
@@ -14026,6 +14255,7 @@ $allSuites = [ordered]@{
     Filtering   = 'Invoke-FilteringSuite'
     Settings    = 'Invoke-SettingsSuite'
     Ui          = 'Invoke-UiSuite'
+    Mtp         = 'Invoke-MtpSuite'
     Reparse     = 'Invoke-ReparseSuite'
     EdgeCases   = 'Invoke-EdgeCasesSuite'
     Enumeration = 'Invoke-EnumerationSuite'

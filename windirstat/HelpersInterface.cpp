@@ -309,7 +309,7 @@ std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR de
 // Attribute parsing
 DWORD ParseAttributes(const std::wstring_view& attributes) noexcept
 {
-    if (attributes == wds::strInvalidAttributes) return 0;
+    if (attributes == wds::strInvalidAttributes) return INVALID_FILE_ATTRIBUTES;
 
     DWORD attr = 0;
     for (const WCHAR ch : attributes)

@@ -8,7 +8,7 @@ setlocal EnableDelayedExpansion
 :: Usage:
 ::   Run-Tests.cmd [options passed through to Test-WinDirStat.ps1]
 ::
-:: All tests live in a single script, Test-WinDirStat.ps1, which runs nine
+:: All tests live in a single script, Test-WinDirStat.ps1, which runs ten
 :: suites in one pass and prints one unified summary:
 ::
 ::   Filtering  - CSV filtering / regex / glob / size (headless CLI scans)
@@ -21,6 +21,8 @@ setlocal EnableDelayedExpansion
 ::                Remove Mark-Of-The-Web) on single AND multiple selections,
 ::                each validated against the real file system; large-corpus
 ::                count/extension/dupe checks; and a pause/resume stress phase.
+::   Mtp        - connected-device scan plus CSV save/load round-trip. Skips
+::                when Windows does not expose an MTP device.
 ::   Reparse    - symlinks / junctions / mount points.  FORMATS the two scratch
 ::                drives (LINK_TEST_DRIVE_ONE / LINK_TEST_DRIVE_TWO, default
 ::                E: / F:) and runs only when elevated AND both drives exist;
