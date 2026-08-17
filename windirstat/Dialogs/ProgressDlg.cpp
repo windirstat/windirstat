@@ -104,7 +104,13 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
             std::format(L"{}: {}%", m_message, FormatDouble(percent)) :
             std::format(L"{}: {}% ({} / {})",
                 m_message, FormatDouble(percent), FormatCount(current), FormatCount(m_total));
-        m_messageCtrl.SetText(progressText.c_str());
+        if (m_messageCtrl.Text() != progressText)
+        {
+            m_messageCtrl.SetRedraw(false);
+            m_messageCtrl.SetText(progressText.c_str());
+            m_messageCtrl.SetRedraw(true);
+            m_messageCtrl.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
+        }
     }
     CDialog::OnTimer(nIDEvent);
 }
