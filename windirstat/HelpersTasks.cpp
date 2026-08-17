@@ -845,7 +845,7 @@ void SetProcessPriority(const int level) noexcept
         HIGH_PRIORITY_CLASS
     };
     constexpr ULONG ProcessIoPriority = 33;
-    const auto priority = static_cast<size_t>(std::clamp(level, 0, 2));
+    const auto priority = static_cast<size_t>(std::clamp<int>(level, LOW, HIGH));
 
     if (!SetPriorityClass(GetCurrentProcess(), cpuPriorities[priority]))
     {
