@@ -226,8 +226,6 @@ public:
 
     // CTreeMap Interface
     bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const noexcept { return tmiRect; }
-    void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
     int TmiGetChildCount() const noexcept;
     CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
@@ -337,7 +335,6 @@ private:
     ULONGLONG m_index = 0;                     // Index of item for special scan types
     FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
     ITEMTYPE m_type;                           // Indicates our type.
-    CSmallRect tmiRect = {};                   // Treemap rectangle
     USHORT m_attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_nameLen = 0;                      // Length of name string
 };
