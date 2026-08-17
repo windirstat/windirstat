@@ -41,6 +41,13 @@ enum DARKMODE : std::uint8_t
     DM_USE_WINDOWS
 };
 
+enum PROCESSPRIORITY : std::uint8_t
+{
+    LOW    = 0,
+    NORMAL = 1,
+    HIGH   = 2
+};
+
 enum class GraphPane : std::uint8_t
 {
     TreeMap,
@@ -262,13 +269,11 @@ public:
     inline static Setting<double> MainSplitterPos{ OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0 };
     inline static Setting<double> SubSplitterPos{ OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0 };
     inline static Setting<int> ConfigPage{ OptionsGeneral, L"ConfigPage", 0 };
-    inline static Setting<int> UserDefinedCleanupCount{ OptionsCleanups, L"Count", 0, 0,
-        std::numeric_limits<int>::max() };
+    inline static Setting<int> UserDefinedCleanupCount{ OptionsCleanups, L"Count", 0, 0, std::numeric_limits<int>::max() };
     inline static Setting<int> DarkMode{ OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS };
     inline static Setting<int> FontSizePercent{ OptionsGeneral, L"FontSizePercent", 0, 0, 200 };
     inline static Setting<int> LanguageId{ OptionsGeneral, L"LanguageId", 0 };
-    // 0=Low, 1=Normal, 2=High
-    inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority", 1, 0, 2 };
+    inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority", NORMAL, LOW, HIGH };
     inline static Setting<int> FileHashAlgorithm{ OptionsGeneral, L"FileHashAlgorithm", HASH_XXHASH, HASH_MD5, HASH_XXHASH };
     inline static Setting<int> LargeFileCount{ OptionsGeneral, L"LargeFileCount", 50, 0, 10000 };
     inline static Setting<int> MinimizeViewThreshold{ OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000 };
@@ -290,8 +295,7 @@ public:
     inline static Setting<int> GraphPaneStyle{ OptionsTreeMap, L"GraphPaneStyle", EncodeGraphPane(GraphPane::TreeMap), 0, MaxPersistedGraphPane };
     inline static Setting<int> TreeMapMaxDepth{ OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64 };
     inline static Setting<int> FolderHistoryCount{ OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100 };
-    inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology",
-        LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_VISUALIZATION_FULL };
+    inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_VISUALIZATION_FULL };
     inline static Setting<int> LayoutPermutation{ OptionsGeneral, L"LayoutPermutation", 0, 0, 3 };
     inline static Setting<RECT> AboutWindowRect{ OptionsGeneral, L"AboutWindowRect" };
     inline static Setting<RECT> DriveSelectWindowRect{ OptionsDriveSelect, L"WindowRect" };
