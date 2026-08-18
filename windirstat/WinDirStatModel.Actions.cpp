@@ -424,7 +424,8 @@ void CWinDirStatModel::OnViewShowUnknown()
 
 void CWinDirStatModel::OnTreeMapZoomIn()
 {
-    const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    auto* item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    if (item != nullptr) item = item->GetLinkedItem();
     if (item != nullptr)
     {
         SetZoomItem(item->IsRootItem() ? GetRootItem() :
@@ -639,16 +640,18 @@ void CWinDirStatModel::OnDisableHibernateFile()
     DisableHibernate();
 
     // See if there is a hibernate file on any drive to refresh
+    std::vector<CItem*> refresh;
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
         for (const auto& child : drive->GetChildren())
         {
             if (_wcsicmp(child->GetNameView().data(), L"hiberfil.sys") == 0)
             {
-                StartScanningEngine({ child });
+                refresh.push_back(child);
             }
         }
     }
+    if (!refresh.empty()) StartScanningEngine(std::move(refresh));
 }
 
 void CWinDirStatModel::OnRemoveRoamingProfiles() const
@@ -778,7 +781,8 @@ void CWinDirStatModel::RunUserDefinedCleanup(const size_t index)
 
 void CWinDirStatModel::OnTreeMapSelectParent()
 {
-    const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    auto* item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+    if (item != nullptr) item = item->GetLinkedItem();
     if (item == nullptr || item->GetParent() == nullptr) return;
 
     PushReselectChild(item);
@@ -1000,6 +1004,16 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     CWaitCursor wc;
     StopScanningEngine();
 
+    // Resolve hardlink references before their derived snapshot can be discarded.
+    for (auto*& item : items)
+        if (item != nullptr && item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
+    std::erase_if(items, [](const CItem* item)
+    {
+        return item != nullptr && item->IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX);
+    });
+    std::unordered_set<CItem*> uniqueItems;
+    std::erase_if(items, [&](CItem* item) { return !uniqueItems.insert(item).second; });
+
     // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
     for (const auto item : items)
@@ -1023,13 +1037,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Do not attempt to update visualizations while scanning
     CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(true);
 
-    // If scanning drive(s) just rescan the child nodes
-    if (items.size() == 1 && items.front()->IsTypeOrFlag(IT_MYCOMPUTER))
-    {
-        items.front()->ResetScanStartTime();
-        items = items.front()->GetChildren();
-    }
-
     // Prune descendants: if both an ancestor and a descendant are in the list,
     // remove any descendant since it will be rescanned as part of the ancestor scan
     std::erase_if(items, [&](const CItem* item) {
@@ -1038,8 +1045,30 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         });
     });
 
-    // Remove items in UI thread so we do not conflict with the timer updates
+    // If scanning drive(s) just rescan the child nodes
+    if (items.size() == 1 && items.front()->IsTypeOrFlag(IT_MYCOMPUTER))
+    {
+        items.front()->ResetScanStartTime();
+        items = items.front()->GetChildren();
+    }
+
     const auto selectedItems = GetAllSelected();
+    std::unordered_set<CItem*> doneItems;
+    for (auto* item : items)
+        if (item->IsDone()) doneItems.insert(item);
+
+    // Hardlink results are a derived snapshot and cannot outlive mutations to their target drive.
+    std::unordered_set<CItem*> affectedDrives;
+    for (auto* item : items)
+        if (CItem* drive = item->GetParentDrive(); drive != nullptr) affectedDrives.insert(drive);
+    for (auto* drive : affectedDrives)
+    {
+        if (const CItem* hardlinks = drive->FindHardlinksItem();
+            hardlinks != nullptr && hardlinks->IsAncestorOf(GetZoomItem())) SetZoomItem(drive);
+        drive->RemoveHardlinksItem();
+    }
+
+    // Remove items in UI thread so we do not conflict with the timer updates
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
     for (auto item : std::vector(items))
@@ -1057,7 +1086,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Skip pruning if it is a new element
-        if (!item->IsDone()) continue;
+        if (!doneItems.contains(item)) continue;
 
         // Remove item from tree
         item->ExtensionDataProcessChildren(true);
@@ -1205,12 +1234,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         auto drives = GetRootItem()->GetDriveItems();
         if (COptions::ProcessHardlinks) std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
         {
-            // Create hardlink item if it doesn't exist
-            if (drive->FindHardlinksItem() == nullptr)
-            {
-                drive->CreateHardlinksItem();
-            }
-
+            // Existing snapshots belong to drives untouched by this scan.
+            if (drive->FindHardlinksItem() != nullptr) return;
+            drive->CreateHardlinksItem();
             drive->DoHardlinkAdjustment();
         });
         else std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)

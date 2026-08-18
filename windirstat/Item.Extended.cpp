@@ -195,7 +195,7 @@ std::wstring CItem::GetText(const int subitem) const
     }
 
     case COL_NAME:
-        return GetName(true);
+        return IsTypeOrFlag(IT_HLINKS_FILE) ? GetLinkedItem()->GetPath() : GetName(true);
 
     case COL_OWNER:
         if (IsTypeOrFlag(IT_FILE, IT_DIRECTORY))
@@ -303,6 +303,12 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         {
             return usignum(GetItemType(), other->GetItemType());
         }
+        if (IsTypeOrFlag(IT_HLINKS_FILE))
+        {
+            const std::wstring path = GetLinkedItem()->GetPath();
+            const std::wstring otherPath = other->GetLinkedItem()->GetPath();
+            return signum(_wcsicmp(path.c_str(), otherPath.c_str()));
+        }
         return signum(_wcsicmp(m_name.get(), other->m_name.get()));
     }
 
@@ -397,7 +403,8 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))    {
+    // Hardlink snapshot rows must not enqueue callbacks that can outlive the snapshot.
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))    {
         m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_visualInfo->icon;
     }
@@ -448,18 +455,13 @@ void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 
 CItem* CItem::GetLinkedItem() noexcept
 {
-    // For IT_HLINKS_FILE, the name stores the full path
-    if (IsTypeOrFlag(IT_HLINKS_FILE))
-    {
-        const std::wstring storedPath{ m_name.get(), m_nameLen };
-        if (CItem* linkedItem = FindItemByPath(storedPath); linkedItem != nullptr)
-        {
-            return linkedItem;
-        }
-    }
+    return const_cast<CItem*>(std::as_const(*this).GetLinkedItem());
+}
 
-    // Default: return this item
-    return this;
+const CItem* CItem::GetLinkedItem() const noexcept
+{
+    return IsTypeOrFlag(IT_HLINKS_FILE) ?
+        reinterpret_cast<const CItem*>(static_cast<std::uintptr_t>(m_index)) : this;
 }
 
 // --- CTreeMap Interface ---
@@ -796,6 +798,22 @@ void CItem::RemoveHardlinksItem()
 
     if (const auto hardlinks = FindHardlinksItem(); hardlinks != nullptr)
     {
+        std::unordered_map<CItem*, ULONGLONG> parentSizes;
+        for (const auto* indexSet : hardlinks->GetChildren())
+            for (const auto* indexFolder : indexSet->GetChildren())
+                for (auto* fileRef : indexFolder->GetChildren())
+                {
+                    CItem* item = fileRef->GetLinkedItem();
+                    if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
+                    item->SetFlag(ITF_HARDLINK, true);
+                    parentSizes[item->GetParent()] += item->GetSizePhysicalRaw();
+                }
+        for (const auto& [parent, size] : parentSizes)
+        {
+            parent->UpwardAddSizePhysical(size);
+            parent->UpwardSetUndone();
+        }
+
         UpwardSetUndone();
         UpwardSubtractSizePhysical(hardlinks->GetSizePhysical());
         RemoveChild(hardlinks);
@@ -828,8 +846,8 @@ void CItem::DoHardlinkAdjustment()
                 if (const auto [it, inserted] = indexMapInitial.try_emplace(index, child); !inserted)
                 {
                     auto& existing = indexDupes[index];
-                    if (existing.empty()) existing.emplace_back(it->second);
-                    existing.emplace_back(child);
+                    if (existing.empty()) existing = { it->second, child };
+                    else existing.emplace_back(child);
                 }
             }
             // Do not descend into reparse points since indexes may be from other volumes
@@ -839,32 +857,22 @@ void CItem::DoHardlinkAdjustment()
             }
         }
     }
+    decltype(indexMapInitial){}.swap(indexMapInitial);
 
     // Get the hardlinks container and its Index Set children
     const auto hardlinksItem = FindHardlinksItem();
     if (hardlinksItem == nullptr) return;
 
     const auto& indexSets = hardlinksItem->GetChildren();
+    std::unordered_map<CItem*, ULONGLONG> parentSizes;
+    const std::wstring indexLabel = Localization::Lookup(IDS_COL_INDEX);
+    auto hardlinksSize = 0ull;
 
     // Process hardlinks - create hierarchical structure
     for (const auto& [index, list] : indexDupes)
     {
-        bool skipAdd = false;
         auto itemSize = 0ull;
-
-        // Check if any items already have the hardlink flag (already processed)
-        for (const auto* item : list)
-        {
-            if (item->IsTypeOrFlag(ITF_HARDLINK)) { skipAdd = true; break; }
-        }
-
-        if (skipAdd) continue;
-
-        // Calculate the maximum physical size among all hardlinks with this index
-        for (const auto* item : list)
-        {
-            itemSize = std::max(itemSize, item->GetSizePhysicalRaw());
-        }
+        auto itemSizeMin = std::numeric_limits<ULONGLONG>::max();
 
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
         constexpr auto INDEX_SET_COUNT = 20u;
@@ -874,24 +882,23 @@ void CItem::DoHardlinkAdjustment()
         if (indexSetItem == nullptr) continue;
 
         // Create "Index N" folder under the appropriate Index Set
-        const auto indexFolder = new CItem(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", Localization::Lookup(IDS_COL_INDEX), index));
+        const auto indexFolder = new CItem(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", indexLabel, index));
         indexFolder->SetIndex(index);
+        indexFolder->m_folderInfo->m_children.reserve(list.size());
 
         // Add file reference entries under the Index folder
         for (auto* item : list)
         {
+            const ULONGLONG size = item->GetSizePhysicalRaw();
+            itemSize = std::max(itemSize, size);
+            itemSizeMin = std::min(itemSizeMin, size);
+
             // Subtract physical size from the file's original parent hierarchy
-            item->GetParent()->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
-            item->GetParent()->UpwardSetUndone();
+            parentSizes[item->GetParent()] += size;
             item->SetFlag(ITF_HARDLINK);
 
-            // Create a file reference entry with just the full path
-            // GetName() will extract the filename, GetLinkedItem() will use the path
-            const auto fileRef = new CItem(IT_HLINKS_FILE, item->GetPath());
-            fileRef->SetIndex(item->GetIndex());
-            fileRef->SetSizePhysical(item->GetSizePhysicalRaw());
-            fileRef->SetSizeLogical(item->GetSizeLogical());
-            fileRef->SetLastChange(item->GetLastChange());
+            // Store only a direct reference; the snapshot is discarded before tree mutations.
+            const auto fileRef = new CItem(item);
 
             // Add to index folder without propagating size upward (addOnly=true)
             indexFolder->AddChild(fileRef, true);
@@ -899,28 +906,27 @@ void CItem::DoHardlinkAdjustment()
 
         // Set the physical size on the Index folder - this is what tallies upward
         indexFolder->SetSizePhysical(itemSize);
+        if (itemSizeMin != itemSize) indexFolder->SortItemsBySizePhysical();
+        indexFolder->SetFlag(ITF_DONE);
 
         // Mark index set as undone so it will be re-sorted
         indexSetItem->SetFlag(ITF_DONE, true);
 
-        // Add to Index Set - this will propagate the size upward
-        indexSetItem->AddChild(indexFolder);
+        indexSetItem->SetSizePhysical(indexSetItem->GetSizePhysical() + itemSize);
+        hardlinksSize += itemSize;
+        indexSetItem->AddChild(indexFolder, true);
+    }
+    hardlinksItem->UpwardAddSizePhysical(hardlinksSize);
+    for (const auto& [parent, size] : parentSizes)
+    {
+        parent->UpwardSubtractSizePhysical(size);
+        parent->UpwardSetUndone();
     }
 
-    // Now sort all the Index Sets and their children, and mark done
+    // Now sort all the Index Sets and mark done
     for (auto* indexSet : hardlinksItem->GetChildren())
     {
         if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
-
-        // Sort Index folders within this Index Set
-        for (auto* indexFolder : indexSet->GetChildren())
-        {
-            if (!indexFolder->IsTypeOrFlag(IT_HLINKS_IDX)) continue;
-
-            // Sort file references within this Index folder by size
-            indexFolder->SortItemsBySizePhysical();
-            indexFolder->SetFlag(ITF_DONE);
-        }
 
         // Sort Index folders within this Index Set by size
         indexSet->SortItemsBySizePhysical();
@@ -930,49 +936,6 @@ void CItem::DoHardlinkAdjustment()
     // Sort Index Sets within Hardlinks by size and mark done
     hardlinksItem->SortItemsBySizePhysical();
     hardlinksItem->UpwardSetUndone();
-}
-
-std::vector<CItem*> CItem::FindItemsBySameIndex() const
-{
-    // Only search if we have a valid non-zero index
-    const ULONGLONG targetIndex = GetIndex();
-    if (targetIndex == 0)
-    {
-        return {};
-    }
-
-    // Get the parent drive - we only search within the same drive
-    auto* driveItem = GetParentDrive();
-    if (driveItem == nullptr)
-    {
-        return {};
-    }
-
-    // Use a stack-based traversal to search through all items under the drive
-    std::vector<CItem*> results;
-    for (std::vector itemStack({ driveItem }); !itemStack.empty();)
-    {
-        CItem* current = itemStack.back();
-        itemStack.pop_back();
-
-        // Check if this item has the same index (but is not the current item itself)
-        if (current != this && current->GetIndex() == targetIndex)
-        {
-            results.push_back(current);
-        }
-
-        // Add all children to the stack for traversal
-        else if (!current->IsLeaf() &&
-            (current->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
-        {
-            for (auto* child : current->GetChildren())
-            {
-                itemStack.push_back(child);
-            }
-        }
-    }
-
-    return results;
 }
 
 std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)

@@ -126,6 +126,7 @@ public:
 
     // Construction / Destruction
     CItem(ITEMTYPE type, const std::wstring& name);
+    explicit CItem(CItem* linkedItem);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
@@ -140,6 +141,7 @@ public:
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
     CItem* GetLinkedItem() noexcept override;
+    const CItem* GetLinkedItem() const noexcept;
 
     // Hierarchy / Navigation
     const std::vector<CItem*>& GetChildren() const noexcept;
@@ -256,7 +258,6 @@ public:
     CItem* FindHardlinksIndexItem() const;
     void RemoveHardlinksItem();
     void DoHardlinkAdjustment();
-    std::vector<CItem*> FindItemsBySameIndex() const;
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     ITEMTYPE GetItemType() const noexcept { return m_type & IT_MASK; }

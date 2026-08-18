@@ -54,6 +54,15 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
     }
 }
 
+CItem::CItem(CItem* linkedItem) : m_type(IT_HLINKS_FILE)
+{
+    assert(linkedItem != nullptr);
+    m_sizePhysical = linkedItem->GetSizePhysicalRaw();
+    m_sizeLogical = linkedItem->GetSizeLogical();
+    m_index = reinterpret_cast<std::uintptr_t>(linkedItem);
+    m_lastChange = linkedItem->GetLastChange();
+}
+
 CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastChange,
     const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONGLONG index,
     const DWORD attributes, const ULONG files, const ULONG subdirs)
@@ -101,7 +110,7 @@ CItem::~CItem()
         }
     }
     // Release any MTP shell metadata registered to this item
-    FinderMtp::UnregisterPath(m_index);
+    if (IsTypeOrFlag(ITF_MTP)) FinderMtp::UnregisterPath(m_index);
 }
 
 // --- Hierarchy ---
@@ -150,6 +159,9 @@ bool CItem::HasShellIdentity() const noexcept
 
 void CItem::AddChild(CItem* child, const bool addOnly)
 {
+    assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
+        GetParentDrive()->GetReadJobs() > 0 || FindHardlinksItem() == nullptr);
+
     if (IsTypeOrFlag(ITF_MTP)) child->SetFlag(ITF_MTP);
 
     if (!addOnly)
@@ -175,6 +187,9 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
 void CItem::RemoveChild(CItem* child) const
 {
+    assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || child->GetParentDrive() == nullptr ||
+        child->FindHardlinksItem() == nullptr);
+
     if (IsVisible())
     {
         CMainFrame::Get()->InvokeInMessageThread([this, child]
@@ -189,73 +204,14 @@ void CItem::RemoveChild(CItem* child) const
         children.erase(it);
     }
 
-    // Check if this child is a hardlink
-    if (COptions::ProcessHardlinks && child->IsTypeOrFlag(ITF_HARDLINK) && child->GetIndex() > 0)
-    {
-        // Find remaining items with the same index
-        if (const auto sameIndexItems = child->FindItemsBySameIndex(); sameIndexItems.size() == 1)
-        {
-            // Only one remaining item - it's no longer a hardlink
-            CItem* remainingItem = sameIndexItems[0];
-            remainingItem->SetFlag(ITF_HARDLINK, true);  // Clear the flag
-
-            // Find and update the hardlink structure
-            if (const CItem* hardlinksItem = remainingItem->FindHardlinksItem(); hardlinksItem != nullptr)
-            {
-                // Find the Index folder for this index and remove it
-                for (auto* indexSet : hardlinksItem->GetChildren())
-                {
-                    if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
-                    for (auto* indexFolder : indexSet->GetChildren())
-                    {
-                        if (indexFolder->IsTypeOrFlag(IT_HLINKS_IDX) && indexFolder->GetIndex() == child->GetIndex())
-                        {
-                            // Subtract size and remove the index folder
-                            indexSet->UpwardSubtractSizePhysical(indexFolder->GetSizePhysical());
-                            indexSet->RemoveChild(indexFolder);
-
-                            // Restore size to the remaining item's hierarchy
-                            remainingItem->GetParent()->UpwardAddSizePhysical(remainingItem->GetSizePhysicalRaw());
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else if (sameIndexItems.size() > 1)
-        {
-            // Multiple items still exist - just remove this file's reference from the hardlink structure
-            if (const CItem* hardlinksItem = child->FindHardlinksItem(); hardlinksItem != nullptr)
-            {
-                for (const auto* indexSet : hardlinksItem->GetChildren())
-                {
-                    if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
-                    for (const auto* indexFolder : indexSet->GetChildren())
-                    {
-                        if (indexFolder->IsTypeOrFlag(IT_HLINKS_IDX) && indexFolder->GetIndex() == child->GetIndex())
-                        {
-                            // Find and remove the file reference matching this child
-                            for (auto* fileRef : indexFolder->GetChildren())
-                            {
-                                if (fileRef->IsTypeOrFlag(IT_HLINKS_FILE) && fileRef->GetNameView() == child->GetNameView())
-                                {
-                                    indexFolder->RemoveChild(fileRef);
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     delete child;
 }
 
 void CItem::RemoveAllChildren() const
 {
+    assert(!IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
+        FindHardlinksItem() == nullptr);
+
     if (IsRootItem())
     {
         CWinDirStatModel::Get()->GetExtensionData()->clear();
@@ -596,6 +552,7 @@ std::wstring CItem::GetName(const bool stripDrivePrefix) const noexcept
 
 std::wstring_view CItem::GetNameView(const bool stripDrivePrefix) const noexcept
 {
+    if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetNameView(stripDrivePrefix);
     if (stripDrivePrefix && IsTypeOrFlag(IT_DRIVE))
     {
         return std::wstring_view(m_name.get(), m_nameLen).substr(std::size(L"?:"));
@@ -627,6 +584,8 @@ std::wstring CItem::GetExtension() const
 
 std::wstring CItem::GetPath() const
 {
+    if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetPath();
+
     if (IsTypeOrFlag(IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         return {};
@@ -961,6 +920,9 @@ void CItem::SortItemsBySizeLogical() const
 
 void CItem::UpdateStatsFromDisk()
 {
+    assert(!IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
+        FindHardlinksItem() == nullptr);
+
     // Keep MTP metadata supplied by device enumeration
     if (IsTypeOrFlag(ITF_MTP)) return;
 
