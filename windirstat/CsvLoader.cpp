@@ -288,7 +288,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         line.resize(size - static_cast<size_t>(1));
 
         // Parse all fields
-        for (size_t pos = 0; pos < line.length(); pos++)
+        for (size_t pos = 0; pos < line.length(); pos++) [[msvc::forceinline_calls]]
         {
             const size_t comma = line.find(L',', pos);
             size_t end = comma == std::wstring::npos ? line.length() : comma;
@@ -432,7 +432,7 @@ static std::vector<const CItem*> CollectItems(CItem* rootItem)
     items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
 
     std::vector queue({ rootItem });
-    while (!queue.empty())
+    while (!queue.empty()) [[msvc::forceinline_calls]]
     {
         const CItem* qitem = queue.back();
         queue.pop_back();
@@ -458,7 +458,7 @@ static std::unordered_map<const CItem*, LONGLONG>
     ComputeAdjustedSizes(const std::vector<const CItem*>& items)
 {
     std::unordered_map<const CItem*, LONGLONG> adjustedSizes;
-    for (const auto* item : items)
+    for (const auto* item : items) [[msvc::forceinline_calls]]
     {
         if (item->IsTypeOrFlag(IT_DRIVE))
             if (const auto hlinks = item->FindHardlinksItem(); hlinks != nullptr)

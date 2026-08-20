@@ -1000,7 +1000,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
                 static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
-            for (bool b = finder->FindFile(item); b; b = finder->FindNext())
+            for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
                 if (finder->IsDirectory())
                 {
