@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Auszuschließende Dateinamenmuster:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Einzuschließende Ordnerpfade:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Einzuschließende Dateinamenmuster:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ungültiger Filter:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dateien älter als (0 = deaktiviert):
-IDS_PAGE_FILTERING_SIZE_MIN=Dateien ausschließen, die kleiner sind als:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dateien nach Alter ausschließen (0 = deaktiviert):
+IDS_PAGE_FILTERING_SIZE_MIN=Dateien nach Größe ausschließen:
 IDS_PAGE_FILTERING_TITLE=Filter
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listen Sie eine Ausschlussregel pro Zeile auf. Beispiele:
 IDS_PAGE_FILTERING_USE_REGEX=Reguläre Ausdrücke anstelle von Glob-Mustern verwenden

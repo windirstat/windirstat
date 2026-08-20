@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Vzory názvů souborů k vyloučení:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Cesty ke složkám k zahrnutí:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Vzory názvů souborů k zahrnutí:
 IDS_PAGE_FILTERING_INVALID_FILTER=Neplatný filtr:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Vyloučit soubory starší než (0 = vypnuto):
-IDS_PAGE_FILTERING_SIZE_MIN=Vyloučit soubory menší než:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Vyloučit soubory podle stáří (0 = vypnuto):
+IDS_PAGE_FILTERING_SIZE_MIN=Vyloučit soubory podle velikosti:
 IDS_PAGE_FILTERING_TITLE=Filtrování
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Uveďte jednu výjimku na řádek. Příklady:
 IDS_PAGE_FILTERING_USE_REGEX=Namísto zástupných znaků použít regulární výraz

@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Filnamnsmönster att utesluta:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Mappsökvägar att inkludera:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Filnamnsmönster att inkludera:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ogiltigt filter:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Exkludera filer äldre än (0 = inaktiverat):
-IDS_PAGE_FILTERING_SIZE_MIN=Uteslut filer mindre än:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Exkludera filer efter ålder (0 = inaktiverat):
+IDS_PAGE_FILTERING_SIZE_MIN=Exkludera filer efter storlek:
 IDS_PAGE_FILTERING_TITLE=Filtrering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Ange ett undantag per rad. Exempel:
 IDS_PAGE_FILTERING_USE_REGEX=Använd reguljärt uttryck i stället för jokertecken

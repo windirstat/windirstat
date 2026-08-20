@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Шаблони імен файлів для в�
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Шляхи до папок для включення:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Шаблони імен файлів для включення:
 IDS_PAGE_FILTERING_INVALID_FILTER=Неправильний фільтр:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Виключати файли, старіші за (0 = вимкнено):
-IDS_PAGE_FILTERING_SIZE_MIN=Виключити файли менші за:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Виключати файли за віком (0 = вимкнено):
+IDS_PAGE_FILTERING_SIZE_MIN=Виключати файли за розміром:
 IDS_PAGE_FILTERING_TITLE=Фільтрація
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Вкажіть одне виключення на рядок. Приклади:
 IDS_PAGE_FILTERING_USE_REGEX=Використовувати регулярні вирази замість глобальних шаблонів

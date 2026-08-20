@@ -37,6 +37,8 @@ protected:
     void OnOK() override;
     void SetToolTips();
     CComboBox m_ctlFilteringSizeUnits;
+    CComboBox m_ctlFilteringSizeComparison;
+    CComboBox m_ctlFilteringMaxAgeComparison;
     CEdit m_ctrlFilteringExcludeFiles;
     CEdit m_ctrlFilteringExcludeDirs;
     CEdit m_ctrlFilteringIncludeFiles;
@@ -65,7 +67,9 @@ inline std::span<const RouteEntry> CPageFiltering::Routes()
         Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_SIZE_MIN),
         Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MIN_UNITS),
         Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MIN_UNITS),
+        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_SIZE_COMPARISON),
         Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MAX_AGE_DAYS),
+        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MAX_AGE_COMPARISON),
     };
     return entries;
 }

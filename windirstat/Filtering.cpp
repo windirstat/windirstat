@@ -51,6 +51,17 @@ static std::wstring MatchDirectoryAndDescendants(std::wstring pattern)
     return L"(?:" + pattern + L")(?:\\\\.*)?";
 }
 
+static bool CompareThreshold(const ULONGLONG value, const ULONGLONG threshold, const int comparison)
+{
+    return comparison == 1 ? (value > threshold) : (value < threshold);
+}
+
+static bool CompareFileAge(const FILETIME& lastWriteTime, const FILETIME& cutoff, const int comparison)
+{
+    const int lastWriteCmp = CompareFileTime(&lastWriteTime, &cutoff);
+    return comparison == 1 ? (lastWriteCmp < 0) : (lastWriteCmp > 0);
+}
+
 // Extracts the longest fixed-path prefix from an include-dir pattern that can
 // be used as a scan anchor (i.e., the deepest directory that must exist for
 // the pattern to ever match). Examples:
@@ -267,16 +278,17 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
         return true;
     }
 
-    // Exclude files below the minimum size threshold
-    if (SizeMinimumCalculated > 0 && fileSizeLogical < SizeMinimumCalculated)
+    // Exclude files beyond the size threshold based on comparison selection
+    if (SizeMinimumCalculated > 0 &&
+        CompareThreshold(fileSizeLogical, SizeMinimumCalculated, COptions::FilteringSizeComparison))
     {
         return true;
     }
 
-    // Exclude files older than the max-age cutoff
+    // Exclude files outside the max-age cutoff based on comparison selection
     if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
     {
-        if (CompareFileTime(&lastWriteTime, &MaxAgeFileTimeCutoff) < 0)
+        if (CompareFileAge(lastWriteTime, MaxAgeFileTimeCutoff, COptions::FilteringMaxAgeComparison))
             return true;
     }
 

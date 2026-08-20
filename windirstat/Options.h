@@ -283,7 +283,9 @@ public:
     inline static Setting<int> FileTreeColorCount{ OptionsFileTree, L"FileTreeColorCount", 8, 1, TREELISTCOLORCOUNT };
     inline static Setting<int> FilteringSizeMinimum{ OptionsGeneral, L"FilteringSizeMinimum", 0 };
     inline static Setting<int> FilteringSizeUnits{ OptionsGeneral, L"FilteringSizeUnits", 0 };
+    inline static Setting<int> FilteringSizeComparison{ OptionsGeneral, L"FilteringSizeComparison", 0, 0, 1 };
     inline static Setting<int> FilteringMaxAgeDays{ OptionsGeneral, L"FilteringMaxAgeDays", 0 };
+    inline static Setting<int> FilteringMaxAgeComparison{ OptionsGeneral, L"FilteringMaxAgeComparison", 1, 0, 1 };
     inline static Setting<int> TreeMapAmbientLightPercent{ OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100 };
     inline static Setting<int> TreeMapBrightness{ OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100 };
     inline static Setting<int> TreeMapFolderFramesDrawThreshold{ OptionsTreeMap, L"TreeMapFolderFramesDrawThreshold", CTreeMap::GetDefaults().folderFramesDrawThreshold, 3, 128 };

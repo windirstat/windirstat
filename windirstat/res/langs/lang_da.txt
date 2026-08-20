@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Filnavnemønstre, der skal udelukkes:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Mappestier, der skal medtages:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Filnavnemønstre, der skal medtages:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ugyldigt filter:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ekskluder filer ældre end (0 = deaktiveret):
-IDS_PAGE_FILTERING_SIZE_MIN=Udeluk filer med færre end:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Udeluk filer efter alder (0 = deaktiveret):
+IDS_PAGE_FILTERING_SIZE_MIN=Udeluk filer efter størrelse:
 IDS_PAGE_FILTERING_TITLE=Filtrering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Angiv én undtagelse pr. linje. Eksempler:
 IDS_PAGE_FILTERING_USE_REGEX=Brug regulære udtryk i stedet for glob-mønstre

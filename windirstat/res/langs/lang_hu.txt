@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Fájlnév-minták kizárása:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Felvenni kívánt mappaelérési utak:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Felvenni kívánt fájlnév-minták:
 IDS_PAGE_FILTERING_INVALID_FILTER=Érvénytelen szűrő:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Kizárja az ennél régebbi fájlokat (0 = kikapcsolva):
-IDS_PAGE_FILTERING_SIZE_MIN=Ennél kisebb fájlok kizárása:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Fájlok kizárása kor alapján (0 = kikapcsolva):
+IDS_PAGE_FILTERING_SIZE_MIN=Fájlok kizárása méret alapján:
 IDS_PAGE_FILTERING_TITLE=Szűrés
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Soroljon fel egy kizárást soronként. Példák:
 IDS_PAGE_FILTERING_USE_REGEX=Használjon reguláris kifejezést globális minták helyett

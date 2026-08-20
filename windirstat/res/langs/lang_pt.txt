@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Padrões de nomes de arquivos para excluir:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Caminhos de pastas para incluir:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Padrões de nomes de arquivos para incluir:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtro inválido:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ficheiros mais antigos que (0 = desativado):
-IDS_PAGE_FILTERING_SIZE_MIN=Excluir arquivos menores que:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Excluir ficheiros por idade (0 = desativado):
+IDS_PAGE_FILTERING_SIZE_MIN=Excluir ficheiros por tamanho:
 IDS_PAGE_FILTERING_TITLE=Filtragem
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Liste uma exclusão por linha. Exemplos:
 IDS_PAGE_FILTERING_USE_REGEX=Use expressões regulares em vez de padrões glob

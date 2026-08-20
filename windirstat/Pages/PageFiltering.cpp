@@ -28,6 +28,8 @@ CPageFiltering::CPageFiltering(const bool refreshOnFilteringChange) :
 void CPageFiltering::InitializePage()
 {
     m_ctlFilteringSizeUnits.SubclassDlgItem(IDC_FILTERING_MIN_UNITS, this);
+    m_ctlFilteringSizeComparison.SubclassDlgItem(IDC_FILTERING_SIZE_COMPARISON, this);
+    m_ctlFilteringMaxAgeComparison.SubclassDlgItem(IDC_FILTERING_MAX_AGE_COMPARISON, this);
     m_ctrlFilteringExcludeFiles.SubclassDlgItem(IDC_FILTERING_EXCLUDE_FILES, this);
     m_ctrlFilteringExcludeDirs.SubclassDlgItem(IDC_FILTERING_EXCLUDE_DIRS, this);
     m_ctrlFilteringIncludeFiles.SubclassDlgItem(IDC_FILTERING_INCLUDE_FILES, this);
@@ -38,11 +40,17 @@ void CPageFiltering::InitializePage()
     m_ctlFilteringSizeUnits.AddString(GetSpec_MiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_GiB().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_TiB().c_str());
+    m_ctlFilteringSizeComparison.AddString(L"<");
+    m_ctlFilteringSizeComparison.AddString(L">");
+    m_ctlFilteringMaxAgeComparison.AddString(L"<");
+    m_ctlFilteringMaxAgeComparison.AddString(L">");
 
     SetText(IDC_FILTERING_SIZE_MIN, std::to_wstring(COptions::FilteringSizeMinimum));
     SetComboSelection(IDC_FILTERING_MIN_UNITS, COptions::FilteringSizeUnits);
+    SetComboSelection(IDC_FILTERING_SIZE_COMPARISON, COptions::FilteringSizeComparison);
     SetChecked(IDC_FILTERING_USE_REGEX, COptions::FilteringUseRegex);
     SetText(IDC_FILTERING_MAX_AGE_DAYS, std::to_wstring(COptions::FilteringMaxAgeDays));
+    SetComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON, COptions::FilteringMaxAgeComparison);
     SetText(IDC_FILTERING_EXCLUDE_DIRS, COptions::FilteringExcludeDirs.Obj());
     SetText(IDC_FILTERING_EXCLUDE_FILES, COptions::FilteringExcludeFiles.Obj());
     SetText(IDC_FILTERING_INCLUDE_DIRS, COptions::FilteringIncludeDirs.Obj());
@@ -61,6 +69,8 @@ void CPageFiltering::AdjustControls()
     if (DarkMode::IsDarkModeActive())
     {
         CSettingsPage::AdjustControls();
+        DarkMode::AdjustControls(m_ctlFilteringSizeComparison.Handle());
+        DarkMode::AdjustControls(m_ctlFilteringMaxAgeComparison.Handle());
         DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.Handle());
         DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.Handle());
         DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.Handle());
@@ -95,8 +105,10 @@ void CPageFiltering::OnOK()
 {
     const int filteringSizeMinimum = std::stoi(GetText(IDC_FILTERING_SIZE_MIN));
     const int filteringSizeUnits = ComboSelection(IDC_FILTERING_MIN_UNITS);
+    const int filteringSizeComparison = std::clamp<int>(ComboSelection(IDC_FILTERING_SIZE_COMPARISON), 0, 1);
     const bool filteringUseRegex = IsChecked(IDC_FILTERING_USE_REGEX);
     const int filteringMaxAgeDays = std::stoi(GetText(IDC_FILTERING_MAX_AGE_DAYS));
+    const int filteringMaxAgeComparison = std::clamp<int>(ComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON), 0, 1);
     const std::wstring filteringExcludeFiles = GetText(IDC_FILTERING_EXCLUDE_FILES);
     const std::wstring filteringExcludeDirs = GetText(IDC_FILTERING_EXCLUDE_DIRS);
     const std::wstring filteringIncludeFiles = GetText(IDC_FILTERING_INCLUDE_FILES);
@@ -106,6 +118,8 @@ void CPageFiltering::OnOK()
         COptions::FilteringSizeUnits != filteringSizeUnits ||
         COptions::FilteringUseRegex != filteringUseRegex ||
         COptions::FilteringMaxAgeDays != filteringMaxAgeDays ||
+        COptions::FilteringSizeComparison != filteringSizeComparison ||
+        COptions::FilteringMaxAgeComparison != filteringMaxAgeComparison ||
         COptions::FilteringExcludeFiles.Obj() != filteringExcludeFiles ||
         COptions::FilteringExcludeDirs.Obj() != filteringExcludeDirs ||
         COptions::FilteringIncludeFiles.Obj() != filteringIncludeFiles ||
@@ -113,8 +127,10 @@ void CPageFiltering::OnOK()
 
     COptions::FilteringSizeMinimum = filteringSizeMinimum;
     COptions::FilteringSizeUnits = filteringSizeUnits;
+    COptions::FilteringSizeComparison = filteringSizeComparison;
     COptions::FilteringUseRegex = filteringUseRegex;
     COptions::FilteringMaxAgeDays = filteringMaxAgeDays;
+    COptions::FilteringMaxAgeComparison = filteringMaxAgeComparison;
     COptions::FilteringExcludeFiles.Obj() = filteringExcludeFiles;
     COptions::FilteringExcludeDirs.Obj() = filteringExcludeDirs;
     COptions::FilteringIncludeFiles.Obj() = filteringIncludeFiles;

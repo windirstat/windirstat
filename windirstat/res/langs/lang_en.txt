@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=File name patterns to exclude:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Folder paths to include:
 IDS_PAGE_FILTERING_INCLUDE_FILES=File name patterns to include:
 IDS_PAGE_FILTERING_INVALID_FILTER=Invalid filter:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Exclude files older than (0 = disabled):
-IDS_PAGE_FILTERING_SIZE_MIN=Exclude files less than:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Exclude files by age (0 = disabled):
+IDS_PAGE_FILTERING_SIZE_MIN=Exclude files by size:
 IDS_PAGE_FILTERING_TITLE=Filtering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=List one exclusion per line. Examples:
 IDS_PAGE_FILTERING_USE_REGEX=Use regular expression instead of glob patterns

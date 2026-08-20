@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Filnavnmønstre som skal utelates:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Mappebaner som skal inkluderes:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Filnavnmønstre som skal inkluderes:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ugyldig filter:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ekskluder filer eldre enn (0 = deaktivert):
-IDS_PAGE_FILTERING_SIZE_MIN=Utelat filer mindre enn:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ekskluder filer etter alder (0 = deaktivert):
+IDS_PAGE_FILTERING_SIZE_MIN=Ekskluder filer etter størrelse:
 IDS_PAGE_FILTERING_TITLE=Filtrering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=List opp ett unntak per linje. Eksempler:
 IDS_PAGE_FILTERING_USE_REGEX=Bruk regulære uttrykk i stedet for glob-mønstre

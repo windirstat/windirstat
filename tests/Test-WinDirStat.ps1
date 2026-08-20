@@ -10703,7 +10703,9 @@ function Add-SettingsTestHarness {
         'SkipDupeDetectionCloudLinks', 'ShowDupeDetectionCloudLinksWarning', 'AutoElevate', 'TreeMapGrid'
         'TreeMapShowExtensions', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'UseBackupRestore', 'UseDrawTextCache', 'UseFastScanEngine', 'UseWindowsLocaleSetting', 'ProcessHardlinks', 'ConfigPage'
         'LanguageId', 'FileHashAlgorithm', 'ProcessPriority', 'LargeFileCount', 'MinimizeViewThreshold', 'ScanningThreads', 'SelectDrivesRadio', 'SizeProportionIndent', 'FileTreeColorCount', 'UserDefinedCleanupCount'
-        'FilteringSizeMinimum', 'FilteringSizeUnits', 'FilteringMaxAgeDays', 'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapHeightFactor', 'TreeMapLightSourceX'
+        'FilteringSizeMinimum', 'FilteringSizeUnits', 'FilteringSizeComparison', 'FilteringMaxAgeDays',
+        'FilteringMaxAgeComparison', 'TreeMapAmbientLightPercent', 'TreeMapBrightness',
+        'TreeMapFolderFramesDrawThreshold', 'TreeMapHeightFactor', 'TreeMapLightSourceX'
         'TreeMapLightSourceY', 'TreeMapScaleFactor', 'TreeMapStyle', 'GraphPaneStyle', 'TreeMapMaxDepth', 'DarkMode', 'FontSizePercent', 'FolderHistoryCount', 'DriveListColumnOrder', 'DriveListColumnWidths'
         'DriveListColumnVisibility', 'DupeViewColumnOrder', 'DupeViewColumnWidths', 'DupeViewColumnVisibility', 'FileTreeColumnOrder', 'FileTreeColumnWidths', 'FileTreeColumnVisibility', 'ExtViewColumnOrder'
         'ExtViewColumnWidths', 'ExtViewColumnVisibility', 'SearchViewColumnOrder', 'SearchViewColumnWidths', 'SearchViewColumnVisibility', 'TopViewColumnOrder', 'TopViewColumnWidths', 'TopViewColumnVisibility'
@@ -11160,8 +11162,10 @@ $filteringSettings = @(
     'FilteringUseRegex',
     'FilteringSizeMinimum',
     'FilteringSizeUnits',
+    'FilteringSizeComparison',
     'FilteringExcludeDirs',
     'FilteringExcludeFiles',
+    'FilteringMaxAgeComparison',
     'FilteringIncludeDirs',
     'FilteringIncludeFiles'
 )
@@ -11376,7 +11380,9 @@ $settingCases = @(
     New-SettingCase FileHashAlgorithm -Default $script:HashAlgorithm.XXHASH -ExplicitInput $script:HashAlgorithm.SHA256 -ExplicitExpected $script:HashAlgorithm.SHA256 -Minimum $script:SettingsMinHashAlgorithm -Maximum $script:SettingsMaxHashAlgorithm -BoundsOrder 1
     New-SettingCase ProcessPriority -Default 1 -ExplicitInput 2 -ExplicitExpected 2 -Minimum 0 -Maximum 2 -BoundsOrder 2
     New-SettingCase UserDefinedCleanupCount -Section Cleanups -Entry Count -Default 0 -ExplicitInput 12 -ExplicitExpected 12
+    New-SettingCase FilteringSizeComparison -Default 0 -ExplicitInput 1 -ExplicitExpected 1 -Minimum 0 -Maximum 1
     New-SettingCase FilteringMaxAgeDays -Default 0 -ExplicitInput 14 -ExplicitExpected 14
+    New-SettingCase FilteringMaxAgeComparison -Default 1 -ExplicitInput 0 -ExplicitExpected 0 -Minimum 0 -Maximum 1
     New-SettingCase LargeFileCount -Default 50 -ExplicitInput 123 -ExplicitExpected 123 -Minimum $script:SettingsMinLargeFileCount -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 3
     New-SettingCase MinimizeViewThreshold -ExplicitInput 42 -ExplicitExpected 42 -Minimum $script:SettingsMinMinimizeViewThreshold -Maximum $script:SettingsMaxBoundedCount -BoundsOrder 4
     New-SettingCase PermsExcludeRegex -Section PermissionsView -Entry ExcludeRegex -Default '' -ExplicitInput '^BUILTIN\\Users$' -ExplicitExpected '^BUILTIN\\Users$'

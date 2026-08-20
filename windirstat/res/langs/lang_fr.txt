@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Modèles de noms de fichiers à exclure:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Chemins de dossiers à inclure:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Modèles de noms de fichiers à inclure:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtre invalide:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Fichiers de plus de (0 = désactivé) :
-IDS_PAGE_FILTERING_SIZE_MIN=Exclure les fichiers de moins de :
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Exclure les fichiers selon leur âge (0 = désactivé) :
+IDS_PAGE_FILTERING_SIZE_MIN=Exclure les fichiers selon leur taille :
 IDS_PAGE_FILTERING_TITLE=Filtrage
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listez une exclusion par ligne. Exemples:
 IDS_PAGE_FILTERING_USE_REGEX=Utiliser des expressions régulières au lieu de modèles glob

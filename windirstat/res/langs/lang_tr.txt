@@ -209,8 +209,8 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Hariç tutulacak dosya adı patternleri:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Dahil edilecek dizin yolları:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Dahil edilecek dosya adı desenleri:
 IDS_PAGE_FILTERING_INVALID_FILTER=Geçersiz filtre:
-IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dosyalar şundan eski (0 = devre dışı):
-IDS_PAGE_FILTERING_SIZE_MIN=Şundan küçük dosyaları hariç tut:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dosyaları yaşa göre hariç tut (0 = devre dışı):
+IDS_PAGE_FILTERING_SIZE_MIN=Dosyaları boyuta göre hariç tut:
 IDS_PAGE_FILTERING_TITLE=Filtreleme
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Her satıra bir istisna yazın. Örnekler:
 IDS_PAGE_FILTERING_USE_REGEX=Glob pattern yerine regex kullanın
