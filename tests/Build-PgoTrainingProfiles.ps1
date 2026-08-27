@@ -336,7 +336,6 @@ function New-BaselineSettings {
             ShowDismCleanupPrompt      = '0'
             ShowDismResetPrompt        = '0'
             ShowSetDatesPrompt         = '0'
-            ShowRemoveEmptyFoldersPrompt = '0'
             ShowDupeDetectionCloudLinksWarning = '0'
 
             # Predictable scanning behavior
