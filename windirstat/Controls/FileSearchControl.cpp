@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "ItemSearch.h"
 #include "FileTreeView.h"
+#include "FinderBasic.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr(), COptions::SearchViewColumnVisibility.Ptr(), LF_SEARCHLIST, false)
 {
@@ -149,6 +150,85 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     }
 
     if (totals) m_rootItem->SetTotals(*totals);
+    SortItems();
+    ExpandItem(0);
+}
+
+void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
+{
+    // Update tab visibility to show search tab if results exist
+    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
+
+    // Drop items that are descendants of another selected item, so a nested pair can't
+    // end up as two overlapping topmost matches - no duplicate-tracking set is needed below.
+    std::vector<CItem*> stack;
+    stack.reserve(items.size());
+    ULONGLONG totalItems = 0;
+    for (CItem* item : items)
+    {
+        const bool hasSelectedAncestor = std::ranges::any_of(items, [&](const CItem* other)
+        {
+            return other != item && other->IsAncestorOf(item);
+        });
+        if (!hasSelectedAncestor)
+        {
+            totalItems += item->GetItemsCount();
+            stack.push_back(item);
+        }
+    }
+
+    // Only the topmost directory of each empty branch is kept - removing it (via Delete /
+    // Delete to Recycle Bin) takes the whole branch with it, so descendants don't need entries.
+    std::vector<CItem*> results;
+    CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
+    {
+        // Remove previous results
+        SetRootItem();
+        m_rootItem->SetLimitExceeded(false);
+
+        std::unordered_map<std::wstring, bool> checkedFolders;
+
+        while (!stack.empty() && !pdlg->IsCancelled())
+        {
+            pdlg->Increment();
+            CItem* item = stack.back();
+            stack.pop_back();
+            if (FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders))
+            {
+                // Cap like the existing text search, so a drive full of leftover empty
+                // folders doesn't dump everything into the result view at once; stop the
+                // scan itself once hit instead of collecting everything first.
+                if (results.size() >= COptions::SearchMaxResults)
+                {
+                    m_rootItem->SetLimitExceeded(true);
+                    break;
+                }
+                results.push_back(item);
+                continue;
+            }
+            // Don't descend into followed links: their children live outside the selected
+            // physical tree, so an empty folder found there isn't one the user asked about.
+            if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
+            {
+                stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+            }
+        }
+    }).ShowModal();
+
+    // Add found items to the interface - a snapshot, like every other scan result: a folder
+    // listed here can still gain a file before the user gets around to deleting it.
+    CWaitCursor wait;
+    CollapseItem(0);
+
+    const ScopedRedrawPause lock(this);
+    m_itemTracker.reserve(results.size());
+    for (CItem* result : results)
+    {
+        auto searchItem = new CItemSearch(result);
+        m_itemTracker.emplace(result, searchItem);
+        m_rootItem->AddSearchItemChild(searchItem);
+    }
+
     SortItems();
     ExpandItem(0);
 }

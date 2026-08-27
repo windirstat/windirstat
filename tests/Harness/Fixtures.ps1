@@ -124,7 +124,7 @@ function Set-TestSettings {
             LanguageId = 9; DarkMode = 0; UseFastScanEngine = 0; ScanningThreads = 4; UseBackupRestore = 0
             ShowElevationPrompt = 0; AutoElevate = 0; ShowFreeSpace = 0; ShowUnknown = 0; ProcessHardlinks = 0
             ShowDeletePermanentlyWarning = 0; ShowCreateHardlinkPrompt = 0; ShowRemoveMotwPrompt = 0
-            ShowRemoveEmptyFoldersPrompt = 0; ShowSetDatesPrompt = 0; FontSizePercent = 100; ToolBarSizePercent = 100
+            ShowSetDatesPrompt = 0; FontSizePercent = 100; ToolBarSizePercent = 100
             ShowFileTypes = 1; ShowVisualization = 1; GroupUnregisteredTypes = 0
             LayoutTopology = 0; LayoutPermutation = 0; UseSizeSuffixes = 0; UseWindowsLocale = 0
         }
