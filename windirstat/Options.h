@@ -221,8 +221,6 @@ public:
         L"ShowDismResetPrompt", true, CheckboxBind(IDC_PROMPT_DISM_RESET) };
     inline static Setting<bool> ShowSetDatesPrompt{ OptionsGeneral,
         L"ShowSetDatesPrompt", true, CheckboxBind(IDC_PROMPT_SET_DATES) };
-    inline static Setting<bool> ShowRemoveEmptyFoldersPrompt{ OptionsGeneral,
-        L"ShowRemoveEmptyFoldersPrompt", true, CheckboxBind(IDC_PROMPT_REMOVE_EMPTY) };
     inline static Setting<bool> ShowMicrosoftProgress{ OptionsGeneral,
         L"ShowMicrosoftProgress", false, CheckboxBind(IDC_SHOW_MICROSOFT_PROGRESS) };
     inline static Setting<bool> ShowFileTypes{ OptionsGeneral, L"ShowFileTypes", true };

@@ -565,10 +565,17 @@ function Test-CleanupReparseReplacement {
     Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
-    Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
-        'Ordinary empty directories are actually removed'
+    $empty = Join-Path $root 'empty'
+    $results = Get-AppList $app -TabName 'Search Results'
+    Wait-Until { $empty -in [NativeListViewHelper]::GetItemTexts($results) } `
+        'The empty-folder search lists the ordinary empty directory' | Out-Null
+    $texts = @([NativeListViewHelper]::GetItemTexts($results))
+    Assert-True ($stale -notin $texts) `
+        'A directory replaced with a junction after scanning is not listed as empty'
+    Assert-True ([IO.Directory]::Exists($empty)) `
+        'Searching for empty folders removes nothing'
     Assert-True ([IO.Directory]::Exists($target)) `
-        'Cleanup does not traverse an ordinary directory replaced with a junction after scanning'
+        'The search does not traverse an ordinary directory replaced with a junction after scanning'
     Assert-True (([IO.File]::GetAttributes($stale) -band [IO.FileAttributes]::ReparsePoint) -ne 0) `
         'The replacement junction is preserved'
 }
@@ -785,7 +792,7 @@ Register-Scenario interaction.dedup-groups Interaction `
     'Hardlink deduplication retains independent sources within multiple hash groups' `
     Test-DeduplicateGroups -Tags Desktop,Filesystem -Requires Windows,Desktop,Ntfs
 Register-Scenario interaction.cleanup-reparse Interaction `
-    'Empty-folder cleanup rechecks reparse boundaries after external replacement' `
+    'Empty-folder search rechecks reparse boundaries after external replacement' `
     Test-CleanupReparseReplacement -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
 foreach ($collapsed in $false, $true) {
     $state = if ($collapsed) { 'collapsed' } else { 'expanded' }

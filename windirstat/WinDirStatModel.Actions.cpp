@@ -1547,91 +1547,10 @@ void CWinDirStatModel::OnToolsSetDates()
     }).ShowModal();
 }
 
-void CWinDirStatModel::OnCleanupRemoveEmpty()
+void CWinDirStatModel::OnSearchEmptyFolders()
 {
-    const auto& roots = GetAllSelected();
-    if (roots.empty()) return;
-
-    const auto isUnsafeDirectory = [](const CItem* item) noexcept
-    {
-        if (!item->IsTypeOrFlag(IT_DIRECTORY)) return false;
-
-        const DWORD attributes = item->GetAttributes();
-        return attributes == INVALID_FILE_ATTRIBUTES ||
-            (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-    };
-
-    // Collect every filesystem directory whose entire subtree contains no files (GetFilesCount() == 0).
-    // Do not enter reparse-point branches: excluded links have no modeled files, while followed
-    // links expose directories outside the selected physical tree. Each item is recorded before
-    // its children are pushed, so reversing the result yields the required bottom-up order.
-    std::vector<CItem*> emptyDirs;
-    std::vector<CItem*> stack;
-    for (CItem* root : roots)
-    {
-        if (!root->SupportsFilesystemApis()) continue;
-        const CItem* ancestor = root;
-        while (ancestor != nullptr && !isUnsafeDirectory(ancestor)) ancestor = ancestor->GetParent();
-        if (ancestor == nullptr) stack.push_back(root);
-    }
-    std::unordered_set<CItem*> visited;
-    for (CWaitCursor wc; !stack.empty();)
-    {
-        CItem* item = stack.back();
-        stack.pop_back();
-        if (!visited.insert(item).second || isUnsafeDirectory(item)) continue;
-        if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
-        {
-            emptyDirs.push_back(item);
-        }
-        if (item->HasChildren())
-        {
-            stack.append_range(item->GetChildren());
-        }
-    }
-
-    if (emptyDirs.empty()) return;
-    if (!ConfirmOperation(IDS_MENU_REMOVE_EMPTY, COptions::ShowRemoveEmptyFoldersPrompt, emptyDirs)) return;
-
-    size_t deletedCount = 0;
-    std::unordered_set<const CItem*> deletedDirs;
-    std::unordered_set<CItem*> parentsToRefresh;
-    std::ranges::reverse(emptyDirs);
-    CProgressDlg(emptyDirs.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
-    {
-        for (const CItem* item : emptyDirs)
-        {
-            if (pdlg->IsCancelled()) break;
-
-            const std::wstring path = item->GetPathLong();
-            const DWORD attributes = GetFileAttributes(path.c_str());
-            const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
-            if (attributes == INVALID_FILE_ATTRIBUTES || typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
-
-            if (RemoveDirectory(path.c_str()))
-            {
-                deletedCount++;
-                deletedDirs.insert(item);
-                if (CItem* parent = item->GetParent())
-                {
-                    parentsToRefresh.insert(parent);
-                }
-                pdlg->Increment();
-            }
-        }
-    }).ShowModal();
-
-    // Refresh parents of deleted items that were not themselves deleted
-    std::erase_if(parentsToRefresh, [&](const CItem* parent) {
-        return deletedDirs.contains(parent);
-    });
-
-    if (!parentsToRefresh.empty())
-    {
-        RefreshItem(std::vector(parentsToRefresh.begin(), parentsToRefresh.end()));
-    }
-    else if (deletedCount > 0)
-    {
-        RefreshItem(roots);
-    }
+    const auto& items = GetAllSelected();
+    if (items.empty()) return;
+    CFileSearchControl::Get()->SearchEmptyFolders(items);
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }

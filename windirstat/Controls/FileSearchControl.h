@@ -38,6 +38,7 @@ public:
     CItemSearch* GetRootItem() const { return m_rootItem; }
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
+    void SearchEmptyFolders(const std::vector<CItem*>& items);
     void RemoveItem(CItem* item);
     void RestoreItems();
     void AfterDeleteAllItems() override;

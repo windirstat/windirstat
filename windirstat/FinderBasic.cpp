@@ -354,3 +354,38 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
         p.parent_path().wstring(),
         p.filename().wstring());
 }
+
+// Rules out what the caller would otherwise have to check itself: not a directory, a reparse
+// point (symlink/junction/mount/cloud - following it could walk outside the selected tree),
+// the search root, or a directory the model already knows holds files. GetFilesCount() can
+// still undercount (excluded hidden/protected files, filter rules), so whatever survives is
+// verified against the real filesystem: empty only if its entire subtree holds no files and
+// no directory symlinks. Results are cached so a chain of N nested empty directories costs
+// O(N) rather than O(N^2).
+bool FinderBasic::IsEmptyFolderOnDisk(const CItem* item, std::unordered_map<std::wstring, bool>& checkedFolders)
+{
+    if (item == nullptr || !item->IsTypeOrFlag(IT_DIRECTORY) || item->IsTypeOrFlag(ITRP_MASK)
+        || item->IsRootItem() || item->GetFilesCount() != 0) return false;
+
+    const auto isEmptySubtree = [&](auto& self, const std::wstring& path) -> bool
+    {
+        if (const auto found = checkedFolders.find(path); found != checkedFolders.end()) return found->second;
+
+        std::error_code ec;
+        std::filesystem::directory_iterator it(path, ec);
+        if (ec) return checkedFolders.emplace(path, false).first->second;
+
+        // increment(ec) rather than ++it: a failure mid-iteration reports through ec
+        // instead of throwing, so a directory vanishing under us cannot escape here.
+        for (; it != std::filesystem::directory_iterator(); it.increment(ec))
+        {
+            if (ec || it->symlink_status(ec).type() != std::filesystem::file_type::directory ||
+                !self(self, it->path().native()))
+                return checkedFolders.emplace(path, false).first->second;
+        }
+
+        return checkedFolders.emplace(path, !ec).first->second;
+    };
+
+    return isEmptySubtree(isEmptySubtree, item->GetPathLong());
+}
