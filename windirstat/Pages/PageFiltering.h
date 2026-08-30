@@ -56,20 +56,19 @@ protected:
 
 inline std::span<const RouteEntry> CPageFiltering::Routes()
 {
-    using ThisClass = CPageFiltering;
     static constexpr std::array entries
     {
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_DIRS),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_FILES),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_DIRS),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_FILES),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_FILTERING_USE_REGEX),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_SIZE_MIN),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MIN_UNITS),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MIN_UNITS),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_SIZE_COMPARISON),
-        Route::Control<&ThisClass::OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MAX_AGE_DAYS),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MAX_AGE_COMPARISON),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_DIRS),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_FILES),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_DIRS),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_FILES),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_FILTERING_USE_REGEX),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_SIZE_MIN),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MIN_UNITS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MIN_UNITS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_SIZE_COMPARISON),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MAX_AGE_DAYS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MAX_AGE_COMPARISON),
     };
     return entries;
 }

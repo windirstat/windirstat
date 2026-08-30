@@ -71,24 +71,22 @@ protected:
 
 inline std::span<const RouteEntry> CColorButton::CPreview::Routes()
 {
-    using ThisClass = CPreview;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CColorButton::Routes()
 {
-    using ThisClass = CColorButton;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
-        Route::ReflectControl<&ThisClass::OnBnClicked>(BN_CLICKED),
-        Route::Window<&ThisClass::OnEnable>(WM_ENABLE),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::ReflectControl<&OnBnClicked>(BN_CLICKED),
+        Route::Window<&OnEnable>(WM_ENABLE),
     };
     return entries;
 }

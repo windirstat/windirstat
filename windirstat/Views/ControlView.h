@@ -55,17 +55,16 @@ protected:
 
 inline std::span<const RouteEntry> CControlView::Routes()
 {
-    using ThisClass = CControlView;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnInitMenuPopup>(WM_INITMENUPOPUP),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Notify<&ThisClass::OnLvnItemChanged>(LVN_ITEMCHANGED, ID_WDS_CONTROL),
-        Route::Update<&ThisClass::OnUpdatePopupToggle>(ID_POPUP_TOGGLE),
-        Route::Command<&ThisClass::OnPopupToggle>(ID_POPUP_TOGGLE),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnInitMenuPopup>(WM_INITMENUPOPUP),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Notify<&OnLvnItemChanged>(LVN_ITEMCHANGED, ID_WDS_CONTROL),
+        Route::Update<&OnUpdatePopupToggle>(ID_POPUP_TOGGLE),
+        Route::Command<&OnPopupToggle>(ID_POPUP_TOGGLE),
     };
     return entries;
 }

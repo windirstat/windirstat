@@ -362,10 +362,9 @@ protected:
 
 inline std::span<const RouteEntry> CTreeMapPreview::Routes()
 {
-    using ThisClass = CTreeMapPreview;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&OnPaint>(WM_PAINT),
     };
     return entries;
 }

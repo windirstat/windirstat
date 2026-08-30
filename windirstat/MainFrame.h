@@ -334,112 +334,108 @@ private:
 
 inline std::span<const RouteEntry> CSettingsSheet::Routes()
 {
-    using ThisClass = CSettingsSheet;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CWdsSplitterWnd::Routes()
 {
-    using ThisClass = CWdsSplitterWnd;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&OnSize>(WM_SIZE),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CPacmanControl::Routes()
 {
-    using ThisClass = CPacmanControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CMainFrame::Routes()
 {
-    using ThisClass = CMainFrame;
     static constexpr std::array entries
     {
-        Route::Command<&ThisClass::OnConfigure>(ID_CONFIGURE),
-        Route::Command<&ThisClass::OnViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),
-        Route::Command<&ThisClass::OnViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
-        Route::Command<&ThisClass::OnViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
-        Route::Command<&ThisClass::OnViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
-        Route::Command<&ThisClass::OnViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
-        Route::Command<&ThisClass::OnViewSunburst>(ID_VIEW_SUNBURST),
-        Route::Command<&ThisClass::OnViewTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
-        Route::Command<&ThisClass::OnViewTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
-        Route::Command<&ThisClass::OnViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
-        Route::Window<&ThisClass::OnEnterSizeMove>(WM_ENTERSIZEMOVE),
-        Route::Window<&ThisClass::OnExitSizeMove>(WM_EXITSIZEMOVE),
-        Route::Window<&ThisClass::OnCallbackRequest>(WM_CALLBACKUI),
-        Route::Window<&ThisClass::OnUahDrawMenu>(DarkMode::WM_UAHDRAWMENU),
-        Route::Window<&ThisClass::OnUahDrawMenu>(DarkMode::WM_UAHDRAWMENUITEM),
-        Route::Registered<&ThisClass::OnTaskButtonCreated>(s_TaskBarMessage),
-        Route::Update<&ThisClass::OnUpdateViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
-        Route::Update<&ThisClass::OnUpdateViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
-        Route::Update<&ThisClass::OnUpdateViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
-        Route::Update<&ThisClass::OnUpdateViewSunburst>(ID_VIEW_SUNBURST),
-        Route::Update<&ThisClass::OnUpdateViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),
-        Route::Update<&ThisClass::OnUpdateViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
-        Route::Update<&ThisClass::OnUpdateTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
-        Route::Update<&ThisClass::OnUpdateTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
-        Route::Update<&ThisClass::OnUpdateViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
-        Route::Command<&ThisClass::OnViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
-        Route::Update<&ThisClass::OnUpdateViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
-        Route::Command<&ThisClass::OnViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
-        Route::Update<&ThisClass::OnUpdateViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
-        Route::Update<&ThisClass::OnUpdateViewShowWatcher>(ID_TOOLS_WATCHER),
-        Route::Window<&ThisClass::OnClose>(WM_CLOSE),
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
-        Route::Window<&ThisClass::OnInitMenuPopup>(WM_INITMENUPOPUP),
-        Route::Window<&ThisClass::OnMenuCommand>(WM_MENUCOMMAND),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Window<&ThisClass::OnSysColorChange>(WM_SYSCOLORCHANGE),
-        Route::Window<&ThisClass::OnSettingChange>(WM_SETTINGCHANGE),
-        Route::Window<&ThisClass::OnPowerBroadcast>(WM_POWERBROADCAST),
-        Route::Window<&ThisClass::OnTimer>(WM_TIMER),
-        Route::Window<&ThisClass::OnNcPaint>(WM_NCPAINT),
-        Route::Window<&ThisClass::OnNcActivate>(WM_NCACTIVATE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
-        Route::Command<&CMainFrame::OnViewAllFiles>(ID_VIEW_ALL_FILES),
-        Route::Command<&CMainFrame::OnViewLargestFiles>(ID_VIEW_LARGEST_FILES),
-        Route::Command<&CMainFrame::OnViewDuplicateFiles>(ID_VIEW_DUPLICATE_FILES),
-        Route::Command<&CMainFrame::OnViewSearchResults>(ID_VIEW_SEARCH_RESULTS),
-        Route::Command<&CMainFrame::OnViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
-        Route::Update<&CMainFrame::OnUpdateViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
-        Route::Command<&CMainFrame::OnViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
-        Route::Update<&CMainFrame::OnUpdateViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
-        Route::Command<&ThisClass::OnAdvancedShadowCopy>(ID_TOOLS_SHADOW_COPY_BASE, ID_TOOLS_SHADOW_COPY_BASE + wds::alphaSize),
-        Route::Command<&ThisClass::OnAdvancedDefrag>(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize),
-        Route::Command<&ThisClass::OnAdvancedChkdsk>(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize),
-        Route::Command<&CMainFrame::OnToolsWatcher>(ID_TOOLS_WATCHER),
-        Route::Command<&CMainFrame::OnWatcherStart>(ID_WATCHER_START),
-        Route::Update<&CMainFrame::OnUpdateWatcherStart>(ID_WATCHER_START),
-        Route::Command<&CMainFrame::OnWatcherPause>(ID_WATCHER_PAUSE),
-        Route::Update<&CMainFrame::OnUpdateWatcherPause>(ID_WATCHER_PAUSE),
-        Route::Command<&CMainFrame::OnWatcherAutoScroll>(ID_WATCHER_AUTOSCROLL),
-        Route::Update<&CMainFrame::OnUpdateWatcherAutoScroll>(ID_WATCHER_AUTOSCROLL),
-        Route::Command<&CMainFrame::OnWatcherClear>(ID_WATCHER_CLEAR),
-        Route::Update<&CMainFrame::OnUpdateWatcherClear>(ID_WATCHER_CLEAR),
-        Route::Command<&CMainFrame::OnToolsPermissions>(ID_TOOLS_PERMISSIONS),
-        Route::Update<&ThisClass::OnUpdateToolsPermissions>(ID_TOOLS_PERMISSIONS),
-        Route::Command<&CMainFrame::OnToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
-        Route::Update<&CMainFrame::OnUpdateToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
-        Route::Command<&CMainFrame::OnViewWindowLayout>(ID_VIEW_WINDOW_LAYOUT),
+        Route::Command<&OnConfigure>(ID_CONFIGURE),
+        Route::Command<&OnViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),
+        Route::Command<&OnViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
+        Route::Command<&OnViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
+        Route::Command<&OnViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
+        Route::Command<&OnViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
+        Route::Command<&OnViewSunburst>(ID_VIEW_SUNBURST),
+        Route::Command<&OnViewTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
+        Route::Command<&OnViewTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
+        Route::Command<&OnViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
+        Route::Window<&OnEnterSizeMove>(WM_ENTERSIZEMOVE),
+        Route::Window<&OnExitSizeMove>(WM_EXITSIZEMOVE),
+        Route::Window<&OnCallbackRequest>(WM_CALLBACKUI),
+        Route::Window<&OnUahDrawMenu>(DarkMode::WM_UAHDRAWMENU),
+        Route::Window<&OnUahDrawMenu>(DarkMode::WM_UAHDRAWMENUITEM),
+        Route::Registered<&OnTaskButtonCreated>(s_TaskBarMessage),
+        Route::Update<&OnUpdateViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
+        Route::Update<&OnUpdateViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
+        Route::Update<&OnUpdateViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
+        Route::Update<&OnUpdateViewSunburst>(ID_VIEW_SUNBURST),
+        Route::Update<&OnUpdateViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),
+        Route::Update<&OnUpdateViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
+        Route::Update<&OnUpdateTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
+        Route::Update<&OnUpdateTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
+        Route::Update<&OnUpdateViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
+        Route::Command<&OnViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
+        Route::Update<&OnUpdateViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
+        Route::Command<&OnViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
+        Route::Update<&OnUpdateViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
+        Route::Update<&OnUpdateViewShowWatcher>(ID_TOOLS_WATCHER),
+        Route::Window<&OnClose>(WM_CLOSE),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::Window<&OnInitMenuPopup>(WM_INITMENUPOPUP),
+        Route::Window<&OnMenuCommand>(WM_MENUCOMMAND),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnSysColorChange>(WM_SYSCOLORCHANGE),
+        Route::Window<&OnSettingChange>(WM_SETTINGCHANGE),
+        Route::Window<&OnPowerBroadcast>(WM_POWERBROADCAST),
+        Route::Window<&OnTimer>(WM_TIMER),
+        Route::Window<&OnNcPaint>(WM_NCPAINT),
+        Route::Window<&OnNcActivate>(WM_NCACTIVATE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Command<&OnViewAllFiles>(ID_VIEW_ALL_FILES),
+        Route::Command<&OnViewLargestFiles>(ID_VIEW_LARGEST_FILES),
+        Route::Command<&OnViewDuplicateFiles>(ID_VIEW_DUPLICATE_FILES),
+        Route::Command<&OnViewSearchResults>(ID_VIEW_SEARCH_RESULTS),
+        Route::Command<&OnViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
+        Route::Update<&OnUpdateViewToolBarSize>(ID_VIEW_TOOLBAR_SIZE_100, ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS),
+        Route::Command<&OnViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
+        Route::Update<&OnUpdateViewFontSize>(ID_VIEW_FONT_SIZE_100, ID_VIEW_FONT_SIZE_USE_WINDOWS),
+        Route::Command<&OnAdvancedShadowCopy>(ID_TOOLS_SHADOW_COPY_BASE, ID_TOOLS_SHADOW_COPY_BASE + wds::alphaSize),
+        Route::Command<&OnAdvancedDefrag>(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize),
+        Route::Command<&OnAdvancedChkdsk>(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize),
+        Route::Command<&OnToolsWatcher>(ID_TOOLS_WATCHER),
+        Route::Command<&OnWatcherStart>(ID_WATCHER_START),
+        Route::Update<&OnUpdateWatcherStart>(ID_WATCHER_START),
+        Route::Command<&OnWatcherPause>(ID_WATCHER_PAUSE),
+        Route::Update<&OnUpdateWatcherPause>(ID_WATCHER_PAUSE),
+        Route::Command<&OnWatcherAutoScroll>(ID_WATCHER_AUTOSCROLL),
+        Route::Update<&OnUpdateWatcherAutoScroll>(ID_WATCHER_AUTOSCROLL),
+        Route::Command<&OnWatcherClear>(ID_WATCHER_CLEAR),
+        Route::Update<&OnUpdateWatcherClear>(ID_WATCHER_CLEAR),
+        Route::Command<&OnToolsPermissions>(ID_TOOLS_PERMISSIONS),
+        Route::Update<&OnUpdateToolsPermissions>(ID_TOOLS_PERMISSIONS),
+        Route::Command<&OnToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
+        Route::Update<&OnUpdateToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
+        Route::Command<&OnViewWindowLayout>(ID_VIEW_WINDOW_LAYOUT),
     };
     return entries;
 }

@@ -192,22 +192,21 @@ protected:
 
 inline std::span<const RouteEntry> CWdsListControl::Routes()
 {
-    using ThisClass = CWdsListControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnSelectionChanged>(WM_SELECTION_CHANGED),
-        Route::Notify<&ThisClass::OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
-        Route::Notify<&ThisClass::OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
-        Route::Notify<&ThisClass::OnHdnItemClick>(HDN_ITEMCLICK, 0),
-        Route::Notify<&ThisClass::OnHdnItemDblClick>(HDN_ITEMDBLCLICK, 0),
-        Route::Notify<&ThisClass::OnCustomDraw>(NM_CUSTOMDRAW, 0),
-        Route::ReflectNotify<&ThisClass::OnLvnGetDispInfo>(LVN_GETDISPINFO),
-        Route::Window<&ThisClass::OnContextMenu>(WM_CONTEXTMENU),
-        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnSettingChange>(WM_SETTINGCHANGE),
-        Route::Window<&ThisClass::OnShowWindow>(WM_SHOWWINDOW),
-        Route::Window<&ThisClass::OnSetFont>(WM_SETFONT),
+        Route::Window<&OnSelectionChanged>(WM_SELECTION_CHANGED),
+        Route::Notify<&OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
+        Route::Notify<&OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
+        Route::Notify<&OnHdnItemClick>(HDN_ITEMCLICK, 0),
+        Route::Notify<&OnHdnItemDblClick>(HDN_ITEMDBLCLICK, 0),
+        Route::Notify<&OnCustomDraw>(NM_CUSTOMDRAW, 0),
+        Route::ReflectNotify<&OnLvnGetDispInfo>(LVN_GETDISPINFO),
+        Route::Window<&OnContextMenu>(WM_CONTEXTMENU),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnSettingChange>(WM_SETTINGCHANGE),
+        Route::Window<&OnShowWindow>(WM_SHOWWINDOW),
+        Route::Window<&OnSetFont>(WM_SETFONT),
     };
     return entries;
 }

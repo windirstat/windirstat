@@ -68,27 +68,26 @@ protected:
 
 inline std::span<const RouteEntry> CPageCleanups::Routes()
 {
-    using ThisClass = CPageCleanups;
     static constexpr std::array entries
     {
-        Route::Control<&ThisClass::OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
-        Route::Control<&ThisClass::OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
-        Route::Control<&ThisClass::OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDRIVES),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORFILES),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
-        Route::Control<&ThisClass::OnSomethingChanged>(EN_CHANGE, IDC_COMMANDLINE),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
-        Route::Control<&ThisClass::OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION),
-        Route::Control<&ThisClass::OnSomethingChanged>(CBN_SELENDOK, IDC_REFRESHPOLICY),
-        Route::Control<&ThisClass::OnBnClickedAdd>(BN_CLICKED, IDC_ADD_CLEANUP),
-        Route::Control<&ThisClass::OnBnClickedRemove>(BN_CLICKED, IDC_REMOVE_CLEANUP),
-        Route::Control<&ThisClass::OnBnClickedUp>(BN_CLICKED, IDC_UP),
-        Route::Control<&ThisClass::OnBnClickedDown>(BN_CLICKED, IDC_DOWN),
-        Route::Control<&ThisClass::OnBnClickedHelpbutton>(BN_CLICKED, IDC_HELPBUTTON),
+        Route::Control<&OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
+        Route::Control<&OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
+        Route::Control<&OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDRIVES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORFILES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
+        Route::Control<&OnSomethingChanged>(EN_CHANGE, IDC_COMMANDLINE),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION),
+        Route::Control<&OnSomethingChanged>(CBN_SELENDOK, IDC_REFRESHPOLICY),
+        Route::Control<&OnBnClickedAdd>(BN_CLICKED, IDC_ADD_CLEANUP),
+        Route::Control<&OnBnClickedRemove>(BN_CLICKED, IDC_REMOVE_CLEANUP),
+        Route::Control<&OnBnClickedUp>(BN_CLICKED, IDC_UP),
+        Route::Control<&OnBnClickedDown>(BN_CLICKED, IDC_DOWN),
+        Route::Control<&OnBnClickedHelpbutton>(BN_CLICKED, IDC_HELPBUTTON),
     };
     return entries;
 }

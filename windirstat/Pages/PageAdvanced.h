@@ -48,26 +48,25 @@ protected:
 
 inline std::span<const RouteEntry> CPageAdvanced::Routes()
 {
-    using ThisClass = CPageAdvanced;
     static constexpr std::array entries
     {
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_BACKUP_RESTORE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_DIRECTORY),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_DIRECTORY),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_COMBO_THREADS),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_HASH_ALGORITHM),
-        Route::Control<&ThisClass::OnSettingChanged>(CBN_SELENDOK, IDC_PROCESS_PRIORITY),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_VOLUME_MOUNT_POINTS),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_JUNCTIONS),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_DIRECTORY),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_SKIP_CLOUD_LINKS),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_FILE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_FILE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_FILE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_PROCESS_HARDLINKS),
-        Route::Control<&CPageAdvanced::OnBnClickedResetPreferences>(BN_CLICKED, IDC_RESET_PREFERENCES),
-        Route::Control<&CPageAdvanced::OnEnChangeLargestFileCount>(EN_CHANGE, IDC_LARGEST_FILE_COUNT),
-        Route::Control<&CPageAdvanced::OnEnChangeFolderHistoryCount>(EN_CHANGE, IDC_FOLDER_HISTORY_COUNT),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_BACKUP_RESTORE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_DIRECTORY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_DIRECTORY),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_COMBO_THREADS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_HASH_ALGORITHM),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_PROCESS_PRIORITY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_VOLUME_MOUNT_POINTS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_JUNCTIONS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_DIRECTORY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SKIP_CLOUD_LINKS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PROCESS_HARDLINKS),
+        Route::Control<&OnBnClickedResetPreferences>(BN_CLICKED, IDC_RESET_PREFERENCES),
+        Route::Control<&OnEnChangeLargestFileCount>(EN_CHANGE, IDC_LARGEST_FILE_COUNT),
+        Route::Control<&OnEnChangeFolderHistoryCount>(EN_CHANGE, IDC_FOLDER_HISTORY_COUNT),
     };
     return entries;
 }

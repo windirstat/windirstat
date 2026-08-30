@@ -913,19 +913,18 @@ void CTabControl::OnPaint()
 
 std::span<const RouteEntry> CTabControl::Routes()
 {
-    using ThisClass = CTabControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnNcHitTest>(WM_NCHITTEST),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
-        Route::Window<&ThisClass::OnLButtonUp>(WM_LBUTTONUP),
-        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&ThisClass::OnKillFocus>(WM_KILLFOCUS),
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::ReflectNotify<&ThisClass::OnNativeSelChange>(TCN_SELCHANGE),
+        Route::Window<&OnNcHitTest>(WM_NCHITTEST),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnLButtonUp>(WM_LBUTTONUP),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::ReflectNotify<&OnNativeSelChange>(TCN_SELCHANGE),
     };
     return entries;
 }
@@ -1521,11 +1520,10 @@ LRESULT CPropertySheet::OnTabChanged(const WPARAM w, LPARAM)
 
 std::span<const RouteEntry> CPropertySheet::Routes()
 {
-    using ThisClass = CPropertySheet;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnTabChanged>(WM_WDS_TAB_CHANGED),
-        Route::Window<&ThisClass::OnClose>(WM_CLOSE),
+        Route::Window<&OnTabChanged>(WM_WDS_TAB_CHANGED),
+        Route::Window<&OnClose>(WM_CLOSE),
     };
     return entries;
 }
