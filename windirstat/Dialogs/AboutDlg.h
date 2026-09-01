@@ -70,23 +70,21 @@ protected:
 
 inline std::span<const RouteEntry> CAboutDlg::WdsTabControl::Routes()
 {
-    using ThisClass = WdsTabControl;
     static constexpr std::array entries
     {
-        Route::Notify<&ThisClass::OnEnLinkText>(EN_LINK, ID_WDS_CONTROL),
-        Route::Notify<&ThisClass::OnEnMsgFilter>(EN_MSGFILTER, ID_WDS_CONTROL),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
+        Route::Notify<&OnEnLinkText>(EN_LINK, ID_WDS_CONTROL),
+        Route::Notify<&OnEnMsgFilter>(EN_MSGFILTER, ID_WDS_CONTROL),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CAboutDlg::Routes()
 {
-    using ThisClass = CAboutDlg;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
-        Route::Window<&ThisClass::OnTabChanged>(WM_WDS_TAB_CHANGED),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnTabChanged>(WM_WDS_TAB_CHANGED),
     };
     return entries;
 }

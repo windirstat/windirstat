@@ -115,28 +115,26 @@ private:
 
 inline std::span<const RouteEntry> CCenteredEdit::Routes()
 {
-    using ThisClass = CCenteredEdit;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnNcCalcSize>(WM_NCCALCSIZE),
-        Route::Window<&ThisClass::OnChar>(WM_CHAR),
+        Route::Window<&OnNcCalcSize>(WM_NCCALCSIZE),
+        Route::Window<&OnChar>(WM_CHAR),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CStorageAnalyticsView::Routes()
 {
-    using ThisClass = CStorageAnalyticsView;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
-        Route::Control<&CStorageAnalyticsView::OnBtnRecalculate>(BN_CLICKED, 1001),
-        Route::Control<&CStorageAnalyticsView::OnComboUnitSelChange>(CBN_SELCHANGE, 1007),
-        Route::Control<&CStorageAnalyticsView::OnEditChangeRange>(EN_CHANGE, 2000, 2100),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&OnBtnRecalculate>(BN_CLICKED, 1001),
+        Route::Control<&OnComboUnitSelChange>(CBN_SELCHANGE, 1007),
+        Route::Control<&OnEditChangeRange>(EN_CHANGE, 2000, 2100),
     };
     return entries;
 }

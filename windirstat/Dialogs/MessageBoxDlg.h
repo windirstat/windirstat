@@ -110,18 +110,17 @@ int ShowMessageBox(HWND wnd, const std::wstring& message, const std::wstring& ti
 
 inline std::span<const RouteEntry> CMessageBoxDlg::Routes()
 {
-    using ThisClass = CMessageBoxDlg;
     static constexpr std::array entries
     {
-        Route::Control<&ThisClass::OnButtonLeft>(BN_CLICKED, IDC_MESSAGE_BUTTONLEFT),
-        Route::Control<&ThisClass::OnButtonMiddle>(BN_CLICKED, IDC_MESSAGE_BUTTONMIDDLE),
-        Route::Control<&ThisClass::OnButtonRight>(BN_CLICKED, IDC_MESSAGE_BUTTONRIGHT),
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Notify<&ThisClass::OnListViewCustomDraw>(NM_CUSTOMDRAW, IDC_MESSAGE_LISTVIEW),
-        Route::Notify<&ThisClass::OnListViewGetDispInfo>(LVN_GETDISPINFO, IDC_MESSAGE_LISTVIEW),
-        Route::Notify<&ThisClass::OnListViewItemChanging>(LVN_ITEMCHANGING, IDC_MESSAGE_LISTVIEW),
+        Route::Control<&OnButtonLeft>(BN_CLICKED, IDC_MESSAGE_BUTTONLEFT),
+        Route::Control<&OnButtonMiddle>(BN_CLICKED, IDC_MESSAGE_BUTTONMIDDLE),
+        Route::Control<&OnButtonRight>(BN_CLICKED, IDC_MESSAGE_BUTTONRIGHT),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Notify<&OnListViewCustomDraw>(NM_CUSTOMDRAW, IDC_MESSAGE_LISTVIEW),
+        Route::Notify<&OnListViewGetDispInfo>(LVN_GETDISPINFO, IDC_MESSAGE_LISTVIEW),
+        Route::Notify<&OnListViewItemChanging>(LVN_ITEMCHANGING, IDC_MESSAGE_LISTVIEW),
     };
     return entries;
 }

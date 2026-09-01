@@ -86,11 +86,10 @@ protected:
 
 inline std::span<const RouteEntry> CFlameGraphView::Routes()
 {
-    using ThisClass = CFlameGraphView;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnMouseWheel>(WM_MOUSEWHEEL),
-        Route::Window<&ThisClass::OnVScroll>(WM_VSCROLL),
+        Route::Window<&OnMouseWheel>(WM_MOUSEWHEEL),
+        Route::Window<&OnVScroll>(WM_VSCROLL),
     };
     return entries;
 }

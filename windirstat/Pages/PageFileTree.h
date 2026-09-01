@@ -64,22 +64,21 @@ protected:
 
 inline std::span<const RouteEntry> CPageFileTree::Routes()
 {
-    using ThisClass = CPageFileTree;
     static constexpr std::array entries
     {
-        Route::Notify<&ThisClass::OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7),
-        Route::Window<&ThisClass::OnVScroll>(WM_VSCROLL),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_PACMANANIMATION),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_SHOWTIMESPENT),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FOLDERS),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ITEMS),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FILES),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ATTRIBUTES),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_LAST_CHANGE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_OWNER),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_PERCENTAGE),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_LOGICAL),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_PHYSICAL),
+        Route::Notify<&OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7),
+        Route::Window<&OnVScroll>(WM_VSCROLL),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PACMANANIMATION),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOWTIMESPENT),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FOLDERS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ITEMS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FILES),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ATTRIBUTES),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_LAST_CHANGE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_OWNER),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_PERCENTAGE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_LOGICAL),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_PHYSICAL),
     };
     return entries;
 }

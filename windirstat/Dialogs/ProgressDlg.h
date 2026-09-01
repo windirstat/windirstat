@@ -94,23 +94,21 @@ private:
 
 inline std::span<const RouteEntry> CProgressDlg::Routes()
 {
-    using ThisClass = CProgressDlg;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnTimer>(WM_TIMER),
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
-        Route::Control<&ThisClass::OnCancel>(BN_CLICKED, IDCANCEL),
+        Route::Window<&OnTimer>(WM_TIMER),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&OnCancel>(BN_CLICKED, IDCANCEL),
     };
     return entries;
 }
 
 inline std::span<const RouteEntry> CWdsProgressCtrl::Routes()
 {
-    using ThisClass = CWdsProgressCtrl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
     };
     return entries;
 }

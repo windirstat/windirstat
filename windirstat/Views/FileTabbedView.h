@@ -102,14 +102,13 @@ protected:
 
 inline std::span<const RouteEntry> CFileTabbedView::Routes()
 {
-    using ThisClass = CFileTabbedView;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnChangeActiveTab>(WM_WDS_TAB_CHANGED),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnChangeActiveTab>(WM_WDS_TAB_CHANGED),
     };
     return entries;
 }

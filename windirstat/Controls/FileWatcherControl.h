@@ -110,11 +110,10 @@ protected:
 
 inline std::span<const RouteEntry> CFileWatcherControl::Routes()
 {
-    using ThisClass = CFileWatcherControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
-        Route::Window<&ThisClass::OnWatcherChange>(WM_WATCHER_CHANGE),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::Window<&OnWatcherChange>(WM_WATCHER_CHANGE),
     };
     return entries;
 }

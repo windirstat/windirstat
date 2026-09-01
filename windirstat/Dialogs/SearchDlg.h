@@ -41,18 +41,16 @@ protected:
     void OnBnClickedOk();
     void OnChangeSearchTerm();
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-
 };
 
 inline std::span<const RouteEntry> SearchDlg::Routes()
 {
-    using ThisClass = SearchDlg;
     static constexpr std::array entries
     {
-        Route::Control<&SearchDlg::OnBnClickedOk>(BN_CLICKED, IDOK),
-        Route::Control<&SearchDlg::OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
-        Route::Control<&SearchDlg::OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&OnBnClickedOk>(BN_CLICKED, IDOK),
+        Route::Control<&OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
+        Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
     };
     return entries;
 }

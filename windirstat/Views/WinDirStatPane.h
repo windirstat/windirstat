@@ -61,12 +61,11 @@ protected:
 
 inline std::span<const RouteEntry> CWinDirStatPane::Routes()
 {
-    using ThisClass = CWinDirStatPane;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnMouseActivate>(WM_MOUSEACTIVATE),
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnMouseActivate>(WM_MOUSEACTIVATE),
+        Route::Window<&OnPaint>(WM_PAINT),
     };
     return entries;
 }

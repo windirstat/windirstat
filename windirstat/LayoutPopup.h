@@ -82,19 +82,18 @@ protected:
 
 inline std::span<const RouteEntry> CLayoutPopup::Routes()
 {
-    using ThisClass = CLayoutPopup;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnPaint>(WM_PAINT),
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnMouseMove>(WM_MOUSEMOVE),
-        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
-        Route::Window<&ThisClass::OnLButtonUp>(WM_LBUTTONUP),
-        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
-        Route::Window<&ThisClass::OnKillFocus>(WM_KILLFOCUS),
-        Route::Window<&ThisClass::OnActivateApp>(WM_ACTIVATEAPP),
-        Route::Window<&ThisClass::OnCaptureChanged>(WM_CAPTURECHANGED),
-        Route::Window<&CLayoutPopup::OnMouseLeave>(WM_MOUSELEAVE),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnMouseMove>(WM_MOUSEMOVE),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnLButtonUp>(WM_LBUTTONUP),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&OnActivateApp>(WM_ACTIVATEAPP),
+        Route::Window<&OnCaptureChanged>(WM_CAPTURECHANGED),
+        Route::Window<&OnMouseLeave>(WM_MOUSELEAVE),
     };
     return entries;
 }
