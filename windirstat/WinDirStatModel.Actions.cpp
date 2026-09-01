@@ -1175,7 +1175,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         for (auto& queue : m_queues)
         {
             queueContextNtfs.try_emplace(queue.first);
-            queueContextBasic.try_emplace(queue.first);
+            queueContextBasic.try_emplace(queue.first, queue.first);
 
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];

@@ -24,7 +24,15 @@
 class FinderBasicContext final
 {
 public:
+    FinderBasicContext() = default;
+    explicit FinderBasicContext(std::wstring rootPath) : RootPath(std::move(rootPath))
+    {
+        if (!RootPath.empty() && RootPath.back() != L'\\') RootPath += L'\\';
+    }
+
     std::atomic<bool> SupportsFileId = false;
+    std::wstring RootPath;
+    std::optional<ULONGLONG> VolumeCapacity;
     ULONG ClusterSize = 0;
     bool IsRemoteVolume = false;
     std::once_flag InitOnce;
@@ -75,8 +83,10 @@ class FinderBasic final : public Finder
     SmartPointer<HANDLE, decltype(&CloseHandle)> m_handle{CloseHandle, HANDLE{}};
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
+    std::optional<ULONGLONG> m_baseCapacity;
     bool m_statMode = false;
     bool m_isUncPath = false;
+    bool m_baseCapacityQueried = false;
 
 public:
 

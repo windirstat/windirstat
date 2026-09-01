@@ -52,6 +52,17 @@ bool FinderBasic::FindNext()
                 GetDriveType(m_base.substr(0, 3).c_str()) == DRIVE_REMOTE);
             const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
 
+            FILE_REMOTE_PROTOCOL_INFO protocolInfo = {};
+            if (m_context->IsRemoteVolume &&
+                GetFileInformationByHandleEx(m_handle, FileRemoteProtocolInfo,
+                    &protocolInfo, sizeof(protocolInfo)) && protocolInfo.Protocol == WNNC_NET_9P)
+            {
+                ULARGE_INTEGER volumeCapacity;
+                const std::wstring& rootPath = m_context->RootPath.empty() ? m_base : m_context->RootPath;
+                if (GetDiskFreeSpaceEx(rootPath.c_str(), nullptr, &volumeCapacity, nullptr))
+                    m_context->VolumeCapacity = volumeCapacity.QuadPart;
+            }
+
             if (!m_isUncPath)
             {
                 const NTSTATUS status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
@@ -172,6 +183,35 @@ bool FinderBasic::FindNext()
             }
         }
 
+        // The WSL 9P redirector can replace a valid zero allocation with the logical
+        // size. Drop impossible values, querying the current mount only when the cached
+        // root capacity is exceeded. Zero-capacity filesystems have no disk-backed size.
+        if (m_context->VolumeCapacity.has_value() && !IsDirectory() &&
+            m_currentInfo->AllocationSize.QuadPart > 0 &&
+            static_cast<ULONGLONG>(m_currentInfo->AllocationSize.QuadPart) > m_context->VolumeCapacity.value())
+        {
+            if (!m_baseCapacityQueried)
+            {
+                m_baseCapacityQueried = true;
+                if (m_context->VolumeCapacity.value() == 0)
+                {
+                    m_baseCapacity = 0;
+                }
+                else
+                {
+                    ULARGE_INTEGER baseCapacity;
+                    if (GetDiskFreeSpaceEx(m_base.c_str(), nullptr, &baseCapacity, nullptr))
+                        m_baseCapacity = baseCapacity.QuadPart;
+                }
+            }
+            if (m_baseCapacity.has_value() &&
+                static_cast<ULONGLONG>(m_currentInfo->AllocationSize.QuadPart) > m_baseCapacity.value())
+            {
+                m_currentInfo->AllocationSize.QuadPart = 0;
+                if (m_baseCapacity.value() == 0) m_currentInfo->EndOfFile.QuadPart = 0;
+            }
+        }
+
         // Correct physical size. Skip for UNC paths: GetCompressedFileSize issues
         // IOCTLs (e.g. FileCompressionInformation) that some redirectors (RDP
         // tsclient) do not implement and may block indefinitely.
@@ -221,6 +261,8 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     m_initialAttributes = attr;
     m_currentInfo = nullptr;
     m_reparseTag = 0;
+    m_baseCapacity.reset();
+    m_baseCapacityQueried = false;
     m_base = strFolder;
     m_search = strName;
 
