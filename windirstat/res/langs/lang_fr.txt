@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Recherche
 IDS_SEARCH_WHOLE_PHRASE=Rechercher la phrase entière
 IDS_SHADOW_COPY_FAILED=Échec de la création du cliché instantané pour {}
 IDS_sITEMSs= ({} éléments; {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Proportion de la taille par rapport à l'analyse complète : {}%\nProportion de la taille par rapport au dossier parent : {}%
 IDS_SPEC_BYTES=octets
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Iskanje
 IDS_SEARCH_WHOLE_PHRASE=Išči celoten stavek
 IDS_SHADOW_COPY_FAILED=Ustvarjanje senčne kopije za {} ni uspelo
 IDS_sITEMSs= ({} elementov, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Delež skupne velikosti skeniranih podatkov: {}%\nDelež velikosti nadrejene mape: {}%
 IDS_SPEC_BYTES=bajti
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Búsqueda
 IDS_SEARCH_WHOLE_PHRASE=Buscar frase completa
 IDS_SHADOW_COPY_FAILED=No se pudo crear la copia sombra para {}
 IDS_sITEMSs= ({} Items, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Proporción de tamaño respecto al análisis completo: {}%\nProporción de tamaño respecto a la carpeta superior: {}%
 IDS_SPEC_BYTES=bytes
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Keresés
 IDS_SEARCH_WHOLE_PHRASE=Teljes kifejezés keresése
 IDS_SHADOW_COPY_FAILED=Az árnyékmásolat létrehozása sikertelen: {}
 IDS_sITEMSs= ({} elem, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=A teljes vizsgálat méretéhez viszonyított arány: {}%\nA szülőmappa méretéhez viszonyított arány: {}%
 IDS_SPEC_BYTES=bájt
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

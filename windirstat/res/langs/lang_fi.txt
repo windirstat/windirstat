@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Haku
 IDS_SEARCH_WHOLE_PHRASE=Hae koko ilmaus
 IDS_SHADOW_COPY_FAILED=Varjokopion luonti epäonnistui kohteelle {}
 IDS_sITEMSs= ({} kohdetta, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Osuus skannauksen kokonaiskoosta: {}%\nOsuus yläkansion koosta: {}%
 IDS_SPEC_BYTES=tavua
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

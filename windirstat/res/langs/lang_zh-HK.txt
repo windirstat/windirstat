@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=搜尋
 IDS_SEARCH_WHOLE_PHRASE=搜尋整個詞組
 IDS_SHADOW_COPY_FAILED=無法為 {} 建立陰影複本
 IDS_sITEMSs=（{} 個項目，{}）
+IDS_SIZE_PROPORTION_TOOLTIPss=佔整個掃描的大小比例：{}%\n佔上層資料夾的大小比例：{}%
 IDS_SPEC_BYTES=位元組
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

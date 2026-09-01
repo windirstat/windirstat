@@ -1899,7 +1899,28 @@ public:
         ti.lpszText = const_cast<LPWSTR>(lpszText);
         return static_cast<bool>(SendNativeMessage(TTM_ADDTOOLW, 0, &ti));
     }
+    bool AddTool(CWnd* pWnd, const UINT_PTR id, const RECT& rect, const LPCWSTR lpszText)
+    {
+        if (pWnd == nullptr) return false;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.uFlags = TTF_SUBCLASS;
+        ti.hwnd = pWnd->m_hWnd;
+        ti.uId = id;
+        ti.rect = rect;
+        ti.lpszText = const_cast<LPWSTR>(lpszText);
+        return static_cast<bool>(SendNativeMessage(TTM_ADDTOOLW, 0, &ti));
+    }
     void Activate() { SendNativeMessage(TTM_ACTIVATE, true); }
+    void Pop() { SendNativeMessage(TTM_POP); }
+    void SetToolRect(CWnd* pWnd, const UINT_PTR id, const RECT& rect)
+    {
+        if (pWnd == nullptr) return;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.hwnd = pWnd->m_hWnd;
+        ti.uId = id;
+        ti.rect = rect;
+        SendNativeMessage(TTM_NEWTOOLRECTW, 0, &ti);
+    }
     void SetMaxTipWidth(const int w) { SendNativeMessage(TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(w)); }
     void RelayEvent(MSG* pMsg) { SendNativeMessage(TTM_RELAYEVENT, 0, pMsg); }
 };

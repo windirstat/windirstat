@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Zoeken
 IDS_SEARCH_WHOLE_PHRASE=Zoek hele zin
 IDS_SHADOW_COPY_FAILED=Kan geen schaduwkopie maken voor {}
 IDS_sITEMSs= ({} items, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Grootteverhouding ten opzichte van de volledige scan: {}%\nGrootteverhouding ten opzichte van de bovenliggende map: {}%
 IDS_SPEC_BYTES=bytes
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

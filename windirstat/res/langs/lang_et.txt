@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Otsing
 IDS_SEARCH_WHOLE_PHRASE=Otsi tervet fraasi
 IDS_SHADOW_COPY_FAILED=Varukoopia loomine ebaõnnestus: {}
 IDS_sITEMSs= ({} üksust, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Osakaal skannitud andmete kogumahust: {}%\nOsakaal ülemkausta mahust: {}%
 IDS_SPEC_BYTES=baiti
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

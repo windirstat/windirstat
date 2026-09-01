@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Поиск
 IDS_SEARCH_WHOLE_PHRASE=Искать всю фразу
 IDS_SHADOW_COPY_FAILED=Не удалось создать теневую копию для {}
 IDS_sITEMSs= ({} Items, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Доля от общего объёма просканированных данных: {}%\nДоля от объёма родительской папки: {}%
 IDS_SPEC_BYTES=байт
 IDS_SPEC_GiB=ГиБ
 IDS_SPEC_KiB=КиБ

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Arama
 IDS_SEARCH_WHOLE_PHRASE=İfadenin tümünü ara
 IDS_SHADOW_COPY_FAILED={} için gölge kopya oluşturulamadı
 IDS_sITEMSs= ({} Öğe, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Toplam taranan boyuta oranı: {}%\nÜst klasörün boyutuna oranı: {}%
 IDS_SPEC_BYTES=bayt
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

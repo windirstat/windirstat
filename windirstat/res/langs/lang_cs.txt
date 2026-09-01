@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Hledání
 IDS_SEARCH_WHOLE_PHRASE=Hledat celou frázi
 IDS_SHADOW_COPY_FAILED=Nepodařilo se vytvořit stínovou kopii pro {}
 IDS_sITEMSs= ({} položek, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Podíl na celkové velikosti prohledaných dat: {}%\nPodíl na velikosti nadřazené složky: {}%
 IDS_SPEC_BYTES=bajtů
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

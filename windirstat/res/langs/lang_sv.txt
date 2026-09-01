@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Sök
 IDS_SEARCH_WHOLE_PHRASE=Sök hela frasen
 IDS_SHADOW_COPY_FAILED=Misslyckades med att skapa skuggkopia för {}
 IDS_sITEMSs= ({} objekt, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Storleksandel av hela genomsökningen: {}%\nStorleksandel av den överordnade mappen: {}%
 IDS_SPEC_BYTES=bytes
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=검색
 IDS_SEARCH_WHOLE_PHRASE=전체 구문 검색
 IDS_SHADOW_COPY_FAILED={}에 대한 섀도 복사본을 만들지 못했습니다
 IDS_sITEMSs= ({} 항목, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=전체 검사에서 차지하는 크기 비율: {}%\n상위 폴더에서 차지하는 크기 비율: {}%
 IDS_SPEC_BYTES=바이트
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Suche
 IDS_SEARCH_WHOLE_PHRASE=Ganze Phrase suchen
 IDS_SHADOW_COPY_FAILED=Erstellen der Schattenkopie für {} fehlgeschlagen
 IDS_sITEMSs= ({} Elemente; {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Größenanteil am gesamten Scan: {}%\nGrößenanteil am übergeordneten Ordner: {}%
 IDS_SPEC_BYTES=Bytes
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

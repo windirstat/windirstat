@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=Søk
 IDS_SEARCH_WHOLE_PHRASE=Søk etter hele uttrykket
 IDS_SHADOW_COPY_FAILED=Kunne ikke opprette skyggekopi for {}
 IDS_sITEMSs= ({} Elementer, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=Størrelsesandel av hele skanningen: {}%\nStørrelsesandel av den overordnede mappen: {}%
 IDS_SPEC_BYTES=bytes
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB

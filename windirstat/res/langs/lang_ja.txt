@@ -295,6 +295,7 @@ IDS_SEARCH_TITLE=検索
 IDS_SEARCH_WHOLE_PHRASE=フレーズ全体を検索
 IDS_SHADOW_COPY_FAILED={} のシャドウコピー作成に失敗しました
 IDS_sITEMSs= ({} 項目, {})
+IDS_SIZE_PROPORTION_TOOLTIPss=スキャン全体に占めるサイズの割合：{}%\n親フォルダーに占めるサイズの割合：{}%
 IDS_SPEC_BYTES=バイト
 IDS_SPEC_GiB=GiB
 IDS_SPEC_KiB=KiB
