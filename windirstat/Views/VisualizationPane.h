@@ -57,12 +57,11 @@ protected:
 
 inline std::span<const RouteEntry> CVisualizationPane::Routes()
 {
-    using ThisClass = CVisualizationPane;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnCreate>(WM_CREATE),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&ThisClass::OnSize>(WM_SIZE),
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnSize>(WM_SIZE),
     };
     return entries;
 }

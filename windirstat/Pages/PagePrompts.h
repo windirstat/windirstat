@@ -43,15 +43,14 @@ public:
 
 inline std::span<const RouteEntry> CPagePrompts::Routes()
 {
-    using ThisClass = CPagePrompts;
     static constexpr std::array entries
     {
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_DELETION_WARNING),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_ELEVATION_PROMPT),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_CLOUD_LINKS_WARNING),
-        Route::Control<&ThisClass::OnSettingChanged>(BN_CLICKED, IDC_SHOW_MICROSOFT_PROGRESS),
-        Route::Control<&ThisClass::OnSettingRangeChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_ELEVATION_PROMPT),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_CLOUD_LINKS_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOW_MICROSOFT_PROGRESS),
+        Route::Control<&OnSettingRangeChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
     };
     return entries;
 }

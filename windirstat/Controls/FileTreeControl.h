@@ -54,17 +54,16 @@ protected:
 
 inline std::span<const RouteEntry> CFileTreeControl::Routes()
 {
-    using ThisClass = CFileTreeControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnHScroll>(WM_HSCROLL),
-        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
-        Route::Window<&ThisClass::OnLButtonDown>(WM_LBUTTONDOWN),
-        Route::Window<&ThisClass::OnMouseMove>(WM_MOUSEMOVE),
-        Route::Window<&ThisClass::OnMouseWheel>(WM_MOUSEWHEEL),
-        Route::Window<&ThisClass::OnSetCursor>(WM_SETCURSOR),
-        Route::Window<&ThisClass::OnVScroll>(WM_VSCROLL),
-        Route::Notify<&ThisClass::OnTtnGetDispInfo>(TTN_GETDISPINFOW, PortionToolTipId),
+        Route::Window<&OnHScroll>(WM_HSCROLL),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnMouseMove>(WM_MOUSEMOVE),
+        Route::Window<&OnMouseWheel>(WM_MOUSEWHEEL),
+        Route::Window<&OnSetCursor>(WM_SETCURSOR),
+        Route::Window<&OnVScroll>(WM_VSCROLL),
+        Route::Notify<&OnTtnGetDispInfo>(TTN_GETDISPINFOW, PortionToolTipId),
     };
     return entries;
 }

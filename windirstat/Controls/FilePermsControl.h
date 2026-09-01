@@ -55,10 +55,9 @@ protected:
 
 inline std::span<const RouteEntry> CFilePermsControl::Routes()
 {
-    using ThisClass = CFilePermsControl;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnDestroy>(WM_DESTROY),
+        Route::Window<&OnDestroy>(WM_DESTROY),
     };
     return entries;
 }

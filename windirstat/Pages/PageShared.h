@@ -63,11 +63,10 @@ protected:
 
 inline std::span<const RouteEntry> CSettingsPage::Routes()
 {
-    using ThisClass = CSettingsPage;
     static constexpr std::array entries
     {
-        Route::Window<&ThisClass::OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&ThisClass::OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
     };
     return entries;
 }

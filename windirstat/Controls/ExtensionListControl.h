@@ -102,19 +102,17 @@ protected:
     void OnSearchExtension() const;
     void OnExcludeExtension() const;
 };
-
 inline std::span<const RouteEntry> CExtensionListControl::Routes()
 {
-    using ThisClass = CExtensionListControl;
     static constexpr std::array entries
     {
-        Route::ReflectNotify<&ThisClass::OnLvnDeleteItem>(LVN_DELETEITEM),
-        Route::ReflectNotify<&ThisClass::OnNMDblclk>(NM_DBLCLK),
-        Route::Window<&ThisClass::OnSetFocus>(WM_SETFOCUS),
-        Route::ReflectNotify<&ThisClass::OnLvnItemChanged>(LVN_ITEMCHANGED),
-        Route::Command<&CExtensionListControl::OnSearchExtension>(ID_EXTLIST_SEARCH_EXTENSION),
-        Route::Command<&CExtensionListControl::OnExcludeExtension>(ID_FILTER_EXCLUDE_ITEM),
-        Route::Window<&ThisClass::OnKeyDown>(WM_KEYDOWN),
+        Route::ReflectNotify<&OnLvnDeleteItem>(LVN_DELETEITEM),
+        Route::ReflectNotify<&OnNMDblclk>(NM_DBLCLK),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::ReflectNotify<&OnLvnItemChanged>(LVN_ITEMCHANGED),
+        Route::Command<&OnSearchExtension>(ID_EXTLIST_SEARCH_EXTENSION),
+        Route::Command<&OnExcludeExtension>(ID_FILTER_EXCLUDE_ITEM),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
     };
     return entries;
 }
