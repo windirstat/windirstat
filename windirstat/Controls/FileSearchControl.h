@@ -39,6 +39,7 @@ public:
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
     void SearchEmptyFolders(const std::vector<CItem*>& items);
+    void PopulateSearchResults(const std::vector<CItem*>& matchedItems, const std::optional<CItemSearch::SizeTotals>& totals);
     void RemoveItems(std::span<CItem* const> items);
     void RestoreItems();
     void AfterDeleteAllItems() override;

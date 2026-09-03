@@ -136,6 +136,11 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface
+    PopulateSearchResults(matchedItems, totals);
+}
+
+void CFileSearchControl::PopulateSearchResults(const std::vector<CItem*>& matchedItems, const std::optional<CItemSearch::SizeTotals>& totals)
+{
     CWaitCursor wait;
     CollapseItem(0);
 
@@ -180,6 +185,7 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
     // Only the topmost directory of each empty branch is kept - removing it (via Delete /
     // Delete to Recycle Bin) takes the whole branch with it, so descendants don't need entries.
     std::vector<CItem*> results;
+    std::optional<CItemSearch::SizeTotals> totals;
     CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         // Remove previous results
@@ -213,24 +219,12 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
                 stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
             }
         }
+        totals = CItemSearch::CalculateTotals(results, [pdlg] { return pdlg->IsCancelled(); });
     }).ShowModal();
 
     // Add found items to the interface - a snapshot, like every other scan result: a folder
     // listed here can still gain a file before the user gets around to deleting it.
-    CWaitCursor wait;
-    CollapseItem(0);
-
-    const ScopedRedrawPause lock(this);
-    m_itemTracker.reserve(results.size());
-    for (CItem* result : results)
-    {
-        auto searchItem = new CItemSearch(result);
-        m_itemTracker.emplace(result, searchItem);
-        m_rootItem->AddSearchItemChild(searchItem);
-    }
-
-    SortItems();
-    ExpandItem(0);
+    PopulateSearchResults(results, totals);
 }
 
 void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
