@@ -136,6 +136,11 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface
+    PopulateSearchResults(matchedItems);
+}
+
+void CFileSearchControl::PopulateSearchResults(const std::vector<CItem*>& matchedItems)
+{
     CWaitCursor wait;
     CollapseItem(0);
 
@@ -217,20 +222,7 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
 
     // Add found items to the interface - a snapshot, like every other scan result: a folder
     // listed here can still gain a file before the user gets around to deleting it.
-    CWaitCursor wait;
-    CollapseItem(0);
-
-    const ScopedRedrawPause lock(this);
-    m_itemTracker.reserve(results.size());
-    for (CItem* result : results)
-    {
-        auto searchItem = new CItemSearch(result);
-        m_itemTracker.emplace(result, searchItem);
-        m_rootItem->AddSearchItemChild(searchItem);
-    }
-
-    SortItems();
-    ExpandItem(0);
+    PopulateSearchResults(results);
 }
 
 void CFileSearchControl::RemoveItem(CItem* item)
