@@ -147,9 +147,15 @@ CItem* CItem::GetVolumeRoot() const noexcept
     return enumRoot;
 }
 
+bool CItem::IsScanRoot() const noexcept
+{
+    // True for the tree root and for every selection placed directly under a multi-root container
+    return GetEnumRoot() == this;
+}
+
 bool CItem::IsMtpRoot() const noexcept
 {
-    return IsTypeOrFlag(ITF_MTP) && GetEnumRoot() == this;
+    return IsTypeOrFlag(ITF_MTP) && IsScanRoot();
 }
 
 bool CItem::HasShellIdentity() const noexcept
@@ -929,7 +935,8 @@ void CItem::UpdateStatsFromDisk()
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
         FinderBasic finder(true);
-        if (finder.FindFile(GetFolderPath(), IsTypeOrFlag(ITF_ROOTITEM) ? std::wstring() : GetName(), GetAttributes()))
+        // A scan root stores its full path as its name, so it must be looked up without a name filter
+        if (finder.FindFile(GetFolderPath(), IsScanRoot() ? std::wstring() : GetName(), GetAttributes()))
         {
             SetLastChange(finder.GetLastWriteTime());
             SetAttributes(finder.GetAttributes());
@@ -945,7 +952,7 @@ void CItem::UpdateStatsFromDisk()
                 ExtensionDataAdd();
             }
         }
-        else if (IsTypeOrFlag(ITF_ROOTITEM) && GetAttributes() == INVALID_FILE_ATTRIBUTES)
+        else if (IsScanRoot() && GetAttributes() == INVALID_FILE_ATTRIBUTES)
         {
             // Correct potential invalid attributes on root items
             if (const DWORD attr = GetFileAttributes(GetPathLong().c_str()); attr != INVALID_FILE_ATTRIBUTES)

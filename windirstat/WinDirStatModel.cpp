@@ -91,8 +91,9 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     // Expand All Files view to full window during scan
     CMainFrame::Get()->ExpandFileTabbedView();
 
-    // Decode list of folders to scan
+    // Decode list of folders to scan, discarding blanks left by trailing or doubled separators
     std::vector<std::wstring> selections = SplitString(pathSpec);
+    std::erase_if(selections, [](const std::wstring& path) { return path.empty(); });
 
     // Prepare for new root and delete any existing data
     ClearScanState();
@@ -100,12 +101,12 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     // Persist the full scan spec, which may contain pipe-separated roots.
     Get()->SetScanPathSpec(pathSpec);
 
-    // Count number of drives for validation
+    // Count number of drives to type the root of a single-selection scan
     const std::wregex driveMatch(LR"(^[A-Za-z]:[\\]?$)", std::regex_constants::optimize);
     const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [&](const std::wstring& str) {
         return std::regex_match(str, driveMatch);
     }));
-    // Count MTP roots so mixed multi-root scans can be validated
+    // Count MTP roots so a single portable-device selection can be recognized
     const auto mtpCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& path)
     {
         return FinderMtp::IsPath(path);
@@ -113,9 +114,6 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
 
     // Reject an empty path list
     if (selections.empty()) return false;
-
-    // Multiple selections are supported only when every selection is a drive or MTP root
-    if (selections.size() >= 2 && selections.size() != driveCount + mtpCount) return false;
 
     // Build and register an MTP root with its display name and shell path
     const auto createMtpItem = [](const std::wstring& path, const ITEMTYPE flags)
@@ -127,7 +125,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         return item;
     };
 
-    // Determine if we should add multiple drives under a single node
+    // Determine if we should add multiple roots under a single node
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
@@ -143,11 +141,21 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         const std::wstring name = ppszName != nullptr ?
             static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
-        // Add filesystem drives and registered MTP roots under This PC
+        // Add filesystem drives, arbitrary folders and registered MTP roots under This PC
         for (const auto& rootFolder : selections)
         {
-            m_rootItem->AddChild(FinderMtp::IsPath(rootFolder) ?
-                createMtpItem(rootFolder, ITF_NONE) : new CItem(IT_DRIVE, rootFolder));
+            if (FinderMtp::IsPath(rootFolder))
+            {
+                m_rootItem->AddChild(createMtpItem(rootFolder, ITF_NONE));
+                continue;
+            }
+
+            const bool isDrive = std::regex_match(rootFolder, driveMatch);
+            const auto child = new CItem(isDrive ? IT_DRIVE : IT_DIRECTORY, rootFolder);
+            m_rootItem->AddChild(child);
+
+            // Folder roots are never visited by the drive metadata pass, so read their stats here
+            if (!isDrive) child->UpdateStatsFromDisk();
         }
     }
     else
@@ -183,7 +191,8 @@ bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
         std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring
             {
-                return obj->IsMtpRoot() ? obj->GetPath() : GetDrive(obj->GetNameView());
+                // GetPath() already yields the registered MTP path or the stored folder path
+                return obj->IsTypeOrFlag(IT_DRIVE) ? GetDrive(obj->GetNameView()) : obj->GetPath();
             });
         spec = JoinString(folders);
     }

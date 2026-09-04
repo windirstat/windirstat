@@ -423,18 +423,30 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.clear();
     if (m_radio == RADIO_TARGET_FOLDER)
     {
-        if (!m_folderName.empty() && m_folderName.back() == L':') m_folderName.push_back(L'\\');
-        m_folderName = ResolveFullPath(m_folderName);
+        // Normalize every pipe-separated path on its own and rebuild the spec from the results
+        std::vector<std::wstring> folders;
+        for (auto& part : SplitString(m_folderName))
+        {
+            if (part.empty()) continue;
+            if (part.back() == L':') part.push_back(L'\\');
+            folders.emplace_back(ResolveFullPath(part));
+        }
+        m_folderName = JoinString(folders);
 
-        // Remove the folder from the most recently used list to avoid duplicates
-        const std::wstring& folderName = m_folderName;
-        std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folderName](const std::wstring& s) {
-            return _wcsicmp(s.c_str(), folderName.c_str()) == 0;
-        });
+        // Record each folder on its own rather than the joined spec: the history is persisted
+        // with JoinString/SplitString on the same separator, so a joined spec stored as one
+        // entry would come back as several after a restart.
+        for (const auto& folder : folders | std::views::reverse)
+        {
+            // Remove the folder from the most recently used list to avoid duplicates
+            std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folder](const std::wstring& s) {
+                return _wcsicmp(s.c_str(), folder.c_str()) == 0;
+            });
 
-        // Insert it at the beginning of the used list
-        COptions::SelectDrivesFolder.Obj().insert(
-          COptions::SelectDrivesFolder.Obj().begin(), folderName);
+            // Insert it at the beginning of the used list
+            COptions::SelectDrivesFolder.Obj().insert(
+                COptions::SelectDrivesFolder.Obj().begin(), folder);
+        }
 
         // Limit the folder history to the configured count
         COptions::SelectDrivesFolder.Obj().resize(std::min(static_cast<size_t>(COptions::FolderHistoryCount),
@@ -490,8 +502,11 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
     case RADIO_TARGET_FOLDER:
         if (!currentFolder.empty())
         {
-            enableOk = (currentFolder.size() >= 2 && currentFolder.starts_with(L"\\\\")) ||
-                       FinderBasic::DoesFileExist(currentFolder);
+            // Every pipe-separated path must be a UNC path or exist on disk
+            enableOk = std::ranges::all_of(SplitString(currentFolder), [](const std::wstring& part)
+            {
+                return !part.empty() && (part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part));
+            });
         }
         break;
     default:
@@ -680,7 +695,10 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
     const std::wstring& path = *selectedFolder;
 
     if (!FinderBasic::DoesFileExist(path)) return;
-    SetText(IDC_BROWSE_FOLDER, path);
+
+    // Append to the current selection so several folders can be picked one after another
+    const std::wstring current = GetText(IDC_BROWSE_FOLDER);
+    SetText(IDC_BROWSE_FOLDER, current.empty() ? path : current + wds::chrPipe + path);
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
     UpdateButtons();
