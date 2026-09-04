@@ -222,9 +222,12 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
         }
     }
 
-    const bool isMtpRoot = isMtp && (isRoot || parent == nullptr && newroot != nullptr &&
-        newroot->IsTypeOrFlag(IT_MYCOMPUTER));
-    const bool isInRoot = itType == IT_DRIVE || isMtpRoot;
+    // Rows are written parent-before-child, so a row under a multi-root container whose parent
+    // cannot be resolved is one of the scan roots and keeps its full path as its name
+    const bool isMultiRoot = parent == nullptr && newroot != nullptr &&
+        newroot->IsTypeOrFlag(IT_MYCOMPUTER);
+    const bool isMtpRoot = isMtp && (isRoot || isMultiRoot);
+    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot && itType == IT_DIRECTORY;
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
