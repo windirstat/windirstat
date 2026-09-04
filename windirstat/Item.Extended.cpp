@@ -314,8 +314,14 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
     case COL_SIZE_PROPORTION:
     {
-        return MustShowReadJobs() ? usignum(GetReadJobs(), other->GetReadJobs()) :
-            signum(GetFraction() - other->GetFraction());
+        if (MustShowReadJobs() && !COptions::PacmanAnimation)
+        {
+            return usignum(GetReadJobs(), other->GetReadJobs());
+        }
+
+        // Pacman hides the read-job count, so keep the column's normal size ordering.
+        return COptions::TreeMapUseLogical ? usignum(GetSizeLogical(), other->GetSizeLogical()) :
+            usignum(GetSizePhysical(), other->GetSizePhysical());
     }
 
     case COL_PERCENTAGE:

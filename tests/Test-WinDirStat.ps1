@@ -10848,6 +10848,7 @@ namespace WdsSettingsTest
 
         const bool originalLogical = COptions::TreeMapUseLogical.Obj();
         const bool originalAbsolute = COptions::UseAbsolutePercentages.Obj();
+        const bool originalPacman = COptions::PacmanAnimation.Obj();
         const auto toBasisPoints = [](const double fraction)
         {
             return static_cast<int>(std::lround(fraction * 10000.0));
@@ -10874,8 +10875,37 @@ namespace WdsSettingsTest
 
         const PercentageValues physical = measure(false);
         const PercentageValues logical = measure(true);
+
+        CItem sortParent(IT_DIRECTORY, L"sort-parent");
+        sortParent.SetSizePhysical(1000);
+        sortParent.SetSizeLogical(1000);
+
+        auto* sortFirst = new CItem(IT_DIRECTORY, L"sort-first");
+        sortFirst->SetSizePhysical(900);
+        sortFirst->SetSizeLogical(100);
+        auto* sortSecond = new CItem(IT_DIRECTORY, L"sort-second");
+        sortSecond->SetSizePhysical(100);
+        sortSecond->SetSizeLogical(900);
+        sortParent.AddChild(sortFirst, true);
+        sortParent.AddChild(sortSecond, true);
+
+        sortFirst->UpwardAddReadJobs(1);
+        sortSecond->UpwardAddReadJobs(2);
+        COptions::TreeMapUseLogical = false;
+        COptions::PacmanAnimation = false;
+        const int physicalReadJobOrder = sortFirst->CompareSibling(sortSecond, COL_SIZE_PROPORTION);
+        COptions::PacmanAnimation = true;
+        const int physicalSizeProportionOrder = sortFirst->CompareSibling(sortSecond, COL_SIZE_PROPORTION);
+
+        sortFirst->UpwardAddReadJobs(2);
+        COptions::TreeMapUseLogical = true;
+        const int logicalSizeProportionOrder = sortFirst->CompareSibling(sortSecond, COL_SIZE_PROPORTION);
+        COptions::PacmanAnimation = false;
+        const int logicalReadJobOrder = sortFirst->CompareSibling(sortSecond, COL_SIZE_PROPORTION);
+
         COptions::TreeMapUseLogical = originalLogical;
         COptions::UseAbsolutePercentages = originalAbsolute;
+        COptions::PacmanAnimation = originalPacman;
 
         CItem clock(IT_DIRECTORY, L"clock");
         CItem::ResumeScanClock();
@@ -10901,11 +10931,15 @@ namespace WdsSettingsTest
         Field(out, first, "PhysicalTreeMapSize", physical.treeMapSize);
         Field(out, first, "PhysicalRelativeTextMatches", physical.relativeTextMatches);
         Field(out, first, "PhysicalAbsoluteTextMatches", physical.absoluteTextMatches);
+        Field(out, first, "PhysicalReadJobOrder", physicalReadJobOrder);
+        Field(out, first, "PhysicalSizeProportionOrder", physicalSizeProportionOrder);
         Field(out, first, "LogicalRelativeBasisPoints", logical.relativeBasisPoints);
         Field(out, first, "LogicalAbsoluteBasisPoints", logical.absoluteBasisPoints);
         Field(out, first, "LogicalTreeMapSize", logical.treeMapSize);
         Field(out, first, "LogicalRelativeTextMatches", logical.relativeTextMatches);
         Field(out, first, "LogicalAbsoluteTextMatches", logical.absoluteTextMatches);
+        Field(out, first, "LogicalSizeProportionOrder", logicalSizeProportionOrder);
+        Field(out, first, "LogicalReadJobOrder", logicalReadJobOrder);
         Field(out, first, "PausedBefore", pausedBefore);
         Field(out, first, "PausedAfter", pausedAfter);
         Field(out, first, "ResumedTicks", resumedTicks);
@@ -11756,8 +11790,8 @@ try {
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Item_PercentageModesAndPausedTime' `
-        -Behavior ('Issues #227/#381/#455: percentages honor relative/absolute and physical/logical modes; ' +
-            'while elapsed time excludes suspension.') `
+        -Behavior ('Issues #227/#381/#455/#654: percentages and proportion sorting honor display modes; elapsed ' +
+            'time excludes suspension.') `
         -Body {
         param($ctx)
 
@@ -11769,9 +11803,13 @@ try {
             'Physical relative fraction', $probe.PhysicalRelativeBasisPoints, 2500
             'Physical absolute fraction', $probe.PhysicalAbsoluteBasisPoints, 1000
             'Physical treemap size', $probe.PhysicalTreeMapSize, 100
+            'Physical read-job order without Pacman', $probe.PhysicalReadJobOrder, -1
+            'Physical size order with Pacman', $probe.PhysicalSizeProportionOrder, 1
             'Logical relative fraction', $probe.LogicalRelativeBasisPoints, 5000
             'Logical absolute fraction', $probe.LogicalAbsoluteBasisPoints, 2500
             'Logical treemap size', $probe.LogicalTreeMapSize, 500
+            'Logical size order with Pacman', $probe.LogicalSizeProportionOrder, -1
+            'Logical read-job order without Pacman', $probe.LogicalReadJobOrder, 1
         )
         Assert-BooleanCases $ctx @(
             'Physical relative percentage text', $probe.PhysicalRelativeTextMatches, $true

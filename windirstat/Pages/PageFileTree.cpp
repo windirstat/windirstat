@@ -51,6 +51,7 @@ void CPageFileTree::InitializePage()
 
 void CPageFileTree::OnOK()
 {
+    const bool pacmanChanged = COptions::PacmanAnimation != IsChecked(IDC_PACMANANIMATION);
     COptions::PacmanAnimation = IsChecked(IDC_PACMANANIMATION);
     COptions::ShowTimeSpent = IsChecked(IDC_SHOWTIMESPENT);
 
@@ -76,6 +77,7 @@ void CPageFileTree::OnOK()
     }
 
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
+    if (const auto control = CFileTreeControl::Get(); pacmanChanged && control != nullptr) control->SortItems();
 }
 
 void CPageFileTree::EnableButtons()
