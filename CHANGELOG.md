@@ -4,12 +4,23 @@
 Enhancements
 - Added scanning support for MTP portable devices
 - Added volume / free space stats for administrative share drive paths
+- Added size proportion tooltips showing percentages of the total scan and parent folder
 - Added configurable font / toolbar scaling with Windows text size support
 - Added support for an arbitrary number of custom cleanups
+- Added greater-than / less-than comparisons for file size and age exclusions
+- Improved hardlink processing performance and memory usage
 - Improved Simplified Chinese translation (thanks @wcxu21)
 - Migrated the UI framework from MFC to native Win32/GDI
 
 Bug Fixes
+- Corrected hardlink deduplication overwriting files when multiple hash groups are selected
+- Corrected hardlink size accounting and references after refreshing or removing files
+- Corrected size proportion sorting with Pacman animation and logical / physical size modes
+- Corrected inflated sizes for WSL pseudo-files accessed through network shares
+- Corrected clipped comparison controls in filtering settings (thanks @harryytm)
+- Corrected progress dialog flickering during text updates
+- Corrected a crash when requesting administrator elevation
+- Corrected scan completion stalls during memory cleanup
 - Corrected Remove Empty Folders potentially removing reparse point targets
 - Corrected folder counts and zoom state after removing multi-root scan targets
 - Corrected invalid attributes being lost when loading CSV/JSON results
