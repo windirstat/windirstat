@@ -69,6 +69,9 @@ param(
     # tiny; the corpus exercises count/extension/dupe verification at scale.
     [int] $LargeFileCount = 20000,
 
+    # With -Only Ui, run only the deduplication regressions.
+    [switch] $DedupOnly,
+
     # --- Suite selection (optional; default = run everything) ----------------
     # Comma/space-separated suite name(s). Passed as a single string so it works
     # with `pwsh -File` (which cannot bind multi-element array arguments).
@@ -1449,6 +1452,7 @@ public static class NativeListViewHelper
     private const uint MK_LBUTTON = 0x0001;
     private const uint VK_TAB = 0x09;
     private const uint VK_ESCAPE = 0x1B;
+    private const uint VK_RIGHT = 0x27;
     private const uint VK_DOWN = 0x28;
     private const uint VK_F9 = 0x78;
     private const uint LVIF_TEXT = 0x0001;
@@ -1826,6 +1830,7 @@ public static class NativeListViewHelper
 
     public static bool PostTab(IntPtr window) { return PostKey(window, VK_TAB); }
     public static bool PostEscape(IntPtr window) { return PostKey(window, VK_ESCAPE); }
+    public static bool PostRight(IntPtr window) { return PostKey(window, VK_RIGHT); }
     public static bool PostDown(IntPtr window) { return PostKey(window, VK_DOWN); }
     public static bool PostF9(IntPtr window) { return PostKey(window, VK_F9); }
 
@@ -8395,8 +8400,12 @@ function New-FileOpsVerifyRoot {
     if ($DedupOnly) {
         $dedupDir = Join-Path $Root 'dedup'
         New-Item -ItemType Directory -Force -Path $dedupDir | Out-Null
-        New-TestFile -Path (Join-Path $dedupDir 'd_src.bin')  -Size 65536 -Seed 211
-        New-TestFile -Path (Join-Path $dedupDir 'd_copy.bin') -Size 65536 -Seed 211
+        foreach ($group in @('d', 'e')) {
+            $seed = if ($group -eq 'd') { 211 } else { 212 }
+            foreach ($name in @('src', 'copy')) {
+                New-TestFile -Path (Join-Path $dedupDir "$($group)_$name.bin") -Size 65536 -Seed $seed
+            }
+        }
         return
     }
 
@@ -8851,232 +8860,163 @@ function Test-MotwOps {
     }
 }
 
-# Count how many of the given rows report themselves selected via UIA
-# SelectionItemPattern (the dupe list is a CListCtrl, so items support it).
-function Get-SelectedRowCount {
-    param([System.Windows.Automation.AutomationElement[]] $Rows)
-    $n = 0
-    foreach ($r in $Rows) {
-        try {
-            $sp = $r.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-            if ($sp.Current.IsSelected) { $n++ }
-        }
-        catch {}
-    }
-    return $n
-}
-
 function Test-DedupOps {
-    param([System.Windows.Automation.AutomationElement] $Window, [string] $ScanRoot)
-    Write-GroupHeader 'File Op: Deduplicate with Hardlink'
-    $g = 'OpDedup'
-    $dir = Join-Path $ScanRoot 'dedup'
-    $viewDuplicateFilesCommandId = Get-ResourceId 'ID_VIEW_DUPLICATE_FILES'
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [string] $ScanRoot,
+        [ValidateSet('Groups', 'Files', 'Singletons')] [string] $Selection = 'Groups'
+    )
+    Write-GroupHeader "File Op: Deduplicate Multiple $Selection (#655)"
+    $g = "OpDedup/$Selection"
+    $files = @('d_src.bin', 'd_copy.bin', 'e_src.bin', 'e_copy.bin') |
+        ForEach-Object { Join-Path (Join-Path $ScanRoot 'dedup') $_ }
+    # Require independent files in two content groups so cross-group linking cannot pass unnoticed.
+    $before = @($files | ForEach-Object { Get-FileIdentity -Path $_ })
+    $hashes = @($files | ForEach-Object { (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash })
+    if (@($before | Where-Object { !$_.Id }).Count -gt 0 -or
+        @($before.Id | Select-Object -Unique).Count -ne 4 -or
+        $hashes[0] -cne $hashes[1] -or $hashes[2] -cne $hashes[3] -or $hashes[0] -ceq $hashes[2]) {
+        Assert-Fail $g 'Two distinct duplicate pairs prepared' 'Expected four independent files in two content groups'
+        return
+    }
+    Assert-Pass $g 'Two equal-sized duplicate pairs have different contents and four distinct file ids'
 
-    if (!$script:tabCtrl) { Assert-Fail $g 'Duplicate Files tab' 'Tab control reference not available after a duplicate-enabled scan'; return }
+    if (!$script:tabCtrl) { Assert-Fail $g 'Duplicate Files tab' 'Tab control not available after scan'; return }
     $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
     $dupeTab = $tabItems | Where-Object { $_.Current.Name -like '*Duplicate*' } | Select-Object -First 1
-    if (!$dupeTab) {
-        Assert-Fail $g 'Duplicate Files tab present' 'Tab not found after a duplicate-enabled scan'
+    if (!$dupeTab -or !(Select-TabItem $dupeTab)) {
+        Assert-Fail $g 'Duplicate Files tab selectable' 'Tab not found or could not be selected'
         return
     }
-    if (!(Select-TabItem $dupeTab)) { Assert-Fail $g 'Duplicate Files tab selectable' 'Could not select tab'; return }
-    Start-Sleep -Milliseconds 900
-    Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
-    Start-Sleep -Milliseconds 600
-    Assert-Pass $g 'Duplicate Files tab selected for dedup'
-
-    $f1 = Join-Path $dir 'd_src.bin'
-    $f2 = Join-Path $dir 'd_copy.bin'
-
-    $row1 = $null
-    $row2 = $null
-    $rows = @()
-    $deadline = [System.DateTime]::UtcNow.AddSeconds(12)
-    while ([System.DateTime]::UtcNow -lt $deadline) {
-        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
-        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
-        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
-        if ($row1 -and $row2) { break }
-
-        foreach ($r in $rows) {
-            try {
-                $ec = $r.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-                if ($ec -and $ec.Current.ExpandCollapseState -ne [System.Windows.Automation.ExpandCollapseState]::Expanded) {
-                    $ec.Expand()
-                }
-            } catch {}
-            try {
-                $sp = $r.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-                $sp.Select()
-                Start-Sleep -Milliseconds 50
-                try { $r.SetFocus() } catch {}
-                Send-Keys '{RIGHT}' 100
-                Send-Keys '{MULTIPLY}' 150
-            } catch {}
-        }
-
-        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
-        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
-        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
-        if ($row1 -and $row2) { break }
-
-        Invoke-Win32CommandId -Window $Window -CommandId $viewDuplicateFilesCommandId | Out-Null
-        Start-Sleep -Milliseconds 400
-    }
-
-    if (!$row1 -or !$row2) {
-        # Toggling group mode via ID_VIEW_GROUP_TYPES (32949)
-        Invoke-Win32CommandId -Window $Window -CommandId 32949 | Out-Null
-        Start-Sleep -Milliseconds 400
-        $rows = @(Find-DuplicateRows -TabControl $script:tabCtrl)
-        $row1 = $rows | Where-Object { $_.Current.Name -ilike '*d_src.bin*' } | Select-Object -First 1
-        $row2 = $rows | Where-Object { $_.Current.Name -ilike '*d_copy.bin*' } | Select-Object -First 1
-    }
-
-    if (!$row1 -or !$row2) {
-        $groupRow = $rows | Where-Object { $_.Current.Name -match '\([.]' } | Select-Object -First 1
-        if (!$groupRow) {
-            $groupRow = $rows | Where-Object { $_.Current.Name -like '*Duplicate*' } | Select-Object -First 1
-        }
-        if ($groupRow) {
-            $row1 = $groupRow
-            $row2 = $groupRow
-            Assert-Pass $g 'Duplicate pair rows located (via duplicate group header)'
-        }
-        else {
-            $sampleNames = @($rows | ForEach-Object { $_.Current.Name } | Select-Object -First 8)
-            $detail = if ($sampleNames.Count -gt 0) { "Sample row names: $($sampleNames -join ' | ')" } else { 'No UIA rows found' }
-            Assert-Fail $g 'Duplicate pair rows located' "d_src.bin / d_copy.bin not exposed as UIA rows. $detail"
-            return
-        }
-    }
-    else {
-        Assert-Pass $g 'Duplicate pair rows located'
-    }
-
-    $idBefore1 = Get-FileIdentity -Path $f1
-    $idBefore2 = Get-FileIdentity -Path $f2
-    $hashBefore1 = (Get-FileHash -LiteralPath $f1 -Algorithm SHA256).Hash
-    $hashBefore2 = (Get-FileHash -LiteralPath $f2 -Algorithm SHA256).Hash
-    if ($idBefore1.Id -and $idBefore2.Id -and $idBefore1.Id -ne $idBefore2.Id) {
-        Assert-Pass $g 'Duplicate pair are distinct files before dedup (different NTFS file ids)'
-    } else {
-        Assert-Fail $g 'Duplicate pair distinct before dedup' "Expected distinct native ids (1=$($idBefore1.Id), 2=$($idBefore2.Id))"
+    Invoke-Win32CommandId -Window $Window -CommandId (Get-ResourceId 'ID_VIEW_DUPLICATE_FILES') | Out-Null
+    Start-Sleep -Milliseconds 300
+    $listViews = @([NativeListViewHelper]::GetVisibleListViewsIncludingEmpty(
+        [IntPtr] $script:tabCtrl.Current.NativeWindowHandle))
+    if ($listViews.Count -ne 1) {
+        Assert-Fail $g 'Duplicate list available' "Expected one visible list, found $($listViews.Count)"
         return
     }
-
-    $selectedViaUia = $false
-    try {
-        Click-Element $row1
-        Start-Sleep -Milliseconds 200
-        if ($row1 -ne $row2) {
-            $row2.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).AddToSelection()
-            Start-Sleep -Milliseconds 200
+    $listView = $listViews[0]
+    [NativeListViewHelper]::FocusListView($listView) | Out-Null
+    $texts = @([NativeListViewHelper]::GetItemTexts($listView))
+    if ($Selection -ne 'Groups') {
+        # Expand bottom-up so inserted file rows do not shift the remaining group indices.
+        for ($i = $texts.Count - 1; $i -ge 0; $i--) {
+            if ($texts[$i] -notmatch '^[0-9a-f]+ \(\.bin\)$') { continue }
+            if (![NativeListViewHelper]::SelectSingleItem($listView, $i) -or
+                ![NativeListViewHelper]::PostRight($listView)) {
+                Assert-Fail $g 'Expand duplicate groups' "Could not expand row $i"
+                return
+            }
+            Start-Sleep -Milliseconds 150
         }
-        $selectedViaUia = $true
+        $texts = @([NativeListViewHelper]::GetItemTexts($listView))
     }
-    catch {}
-
-    if (-not $selectedViaUia -and $row1 -ne $row2) {
-        Click-Element $row1; Start-Sleep -Milliseconds 250
-        Invoke-CtrlClickElement $row2 | Out-Null
-    }
-
-    try { $row1.SetFocus(); Start-Sleep -Milliseconds 150 } catch {}
-
-    $selCount = Get-SelectedRowCount -Rows @($row1, $row2)
-    if ($selCount -lt 2) {
-        Assert-Skip $g 'Select duplicate pair (2 rows)' "Only $selCount/2 rows confirmed selected; the owner-drawn duplicate list did not accept a 2-item UIA selection. WinDirStat correctly disables Deduplicate without 2 selected files (expected)."
+    $indices = @(for ($i = 0; $i -lt $texts.Count; $i++) {
+        if (($Selection -eq 'Groups' -and $texts[$i] -match '^[0-9a-f]+ \(\.bin\)$') -or
+            ($Selection -eq 'Files' -and $texts[$i] -in $files) -or
+            ($Selection -eq 'Singletons' -and $texts[$i] -in @($files[0], $files[2]))) { $i }
+    })
+    $expectedCount = if ($Selection -eq 'Files') { 4 } else { 2 }
+    if ($indices.Count -ne $expectedCount -or ![NativeListViewHelper]::SelectItems($listView, [int[]] $indices)) {
+        Assert-Fail $g "Select $expectedCount duplicate $Selection together" "Rows: $($texts -join ' | ')"
         return
     }
-    Assert-Pass $g "Duplicate pair selected (d_src.bin + d_copy.bin; $selCount/2 confirmed selected via UIA)"
+    Assert-Pass $g "$expectedCount duplicate $Selection selected together"
 
-    $r = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Deduplicate'
-    if ($r -eq $true) {
-        Assert-Pass $g 'Deduplicate with Hardlink menu item invoked'
-    }
-    elseif ($r -eq 'disabled') {
-        Assert-Fail $g 'Deduplicate with Hardlink enabled' "Two same-volume duplicate files are selected, but the menu action is disabled"
-        return
-    }
-    else {
-        Assert-Fail $g 'Deduplicate with Hardlink menu item' 'Item not found in Clean Up menu'
+    $result = Invoke-CleanUpMenuItem -Window $Window -LeafName 'Deduplicate'
+    if ($result -ne $true) {
+        Assert-Fail $g 'Deduplicate enabled for multiple groups' "Menu invocation returned: $result"
         return
     }
     Wait-OpComplete -Window $Window
 
-    $idAfter1 = Get-FileIdentity -Path $f1
-    $idAfter2 = Get-FileIdentity -Path $f2
-    if ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id -and $idAfter1.Links -ge 2) {
-        Assert-Pass $g "Dedup: d_src.bin and d_copy.bin are now one hardlink (shared id, $($idAfter1.Links) links) (verified on disk)"
+    # Check contents and file identities to detect data loss from linking different content groups.
+    $after = @($files | ForEach-Object { Get-FileIdentity -Path $_ })
+    foreach ($i in 0..3) {
+        $actualHash = (Get-FileHash -LiteralPath $files[$i] -Algorithm SHA256).Hash
+        Assert-That $g "Dedup preserves $(Split-Path -Leaf $files[$i])" ($actualHash -ceq $hashes[$i]) `
+            "SHA-256 changed: expected $($hashes[$i]), actual $actualHash"
     }
-    elseif ($idAfter1.Id -and $idAfter2.Id -and $idAfter1.Id -eq $idAfter2.Id) {
-        Assert-Pass $g 'Dedup: duplicate pair now share the same NTFS file id (verified on disk)'
+    if ($Selection -eq 'Singletons') {
+        foreach ($i in 0..3) {
+            Assert-That $g "Singleton selection leaves $(Split-Path -Leaf $files[$i]) unchanged" `
+                ($after[$i].Id -eq $before[$i].Id -and $after[$i].Links -eq 1) `
+                "File id or link count changed: $($before[$i].Id) -> $($after[$i].Id), $($after[$i].Links) links"
+        }
+        return
     }
-    else {
-        Assert-Fail $g 'Dedup creates a shared hardlink' "After dedup ids differ (1=$($idAfter1.Id), 2=$($idAfter2.Id), links=$($idAfter1.Links))"
+    foreach ($i in @(0, 2)) {
+        Assert-That $g "Duplicate pair $($i / 2 + 1) shares a hardlink" `
+            ($after[$i].Id -and $after[$i].Id -eq $after[$i + 1].Id -and $after[$i].Links -ge 2) `
+            "File ids: $($after[$i].Id), $($after[$i + 1].Id); links: $($after[$i].Links)"
     }
-    $hashAfter1 = (Get-FileHash -LiteralPath $f1 -Algorithm SHA256).Hash
-    $hashAfter2 = (Get-FileHash -LiteralPath $f2 -Algorithm SHA256).Hash
-    Assert-That $g 'Dedup preserves both file contents' `
-        ($hashAfter1 -ceq $hashBefore1 -and $hashAfter2 -ceq $hashBefore2) `
-        'SHA-256 changed after hardlink creation'
+    Assert-That $g 'Different content groups keep distinct file ids' `
+        ($after[0].Id -and $after[2].Id -and $after[0].Id -ne $after[2].Id) `
+        "Different content groups were linked together: $($after[0].Id), $($after[2].Id)"
 }
 
-# Orchestrates file-operation verification in two scans:
+# Orchestrates file-operation verification in two phases:
 # 1) compression/sparse/motw on the general fixture
-# 2) dedup on a reset fixture containing only d_src.bin + d_copy.bin
+# 2) dedup on reset fixtures containing two duplicate pairs
 function Test-FileOpsVerification {
-    param([string] $Exe)
+    param([string] $Exe, [switch] $DedupOnly)
     Write-GroupHeader 'File Operations Verification Setup'
     $g = 'OpVerifySetup'
 
     $verifyRoot = $script:opsVerifyScan
-    try {
-        New-FileOpsVerifyRoot -Root $verifyRoot
-        Assert-Pass $g "File-op verification root created: $verifyRoot"
-    }
-    catch {
-        Assert-Fail $g 'File-op verification root created' "Error: $_"
-        return
-    }
-
-    $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'file-op verification'
-    if (!$win) { return }
-
-    foreach ($phase in @(
-        { Test-ShellCutClipboard -Window $script:win -ScanRoot $verifyRoot },
-        { Test-CompressionOps -Window $script:win -ScanRoot $verifyRoot },
-        { Test-SparsifyOps    -Window $script:win -ScanRoot $verifyRoot },
-        { Test-MotwOps        -Window $script:win -ScanRoot $verifyRoot }
-    )) {
-        try { & $phase } catch { Assert-Fail 'OpVerify' 'File-op phase executes' $_.Exception.Message }
-        Assert-WindowReady $script:win
-    }
-
-    try { Stop-App } catch {}
-
-    try {
-        New-FileOpsVerifyRoot -Root $verifyRoot -DedupOnly
-        $dedupFileCount = @(Get-ChildItem -LiteralPath $verifyRoot -Recurse -File).Count
-        if ($dedupFileCount -ne 2) {
-            Assert-Fail $g 'Dedup verification fixture prepared' "Expected 2 files, found $dedupFileCount at $verifyRoot"
+    if (!$DedupOnly) {
+        try {
+            New-FileOpsVerifyRoot -Root $verifyRoot
+            Assert-Pass $g "File-op verification root created: $verifyRoot"
+        }
+        catch {
+            Assert-Fail $g 'File-op verification root created' "Error: $_"
             return
         }
-        Assert-Pass $g "Dedup verification fixture prepared with 2 files: $verifyRoot"
-    }
-    catch {
-        Assert-Fail $g 'Dedup verification fixture prepared' "Error: $_"
-        return
+
+        $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'file-op verification'
+        if (!$win) { return }
+
+        foreach ($phase in @(
+            { Test-ShellCutClipboard -Window $script:win -ScanRoot $verifyRoot },
+            { Test-CompressionOps -Window $script:win -ScanRoot $verifyRoot },
+            { Test-SparsifyOps    -Window $script:win -ScanRoot $verifyRoot },
+            { Test-MotwOps        -Window $script:win -ScanRoot $verifyRoot }
+        )) {
+            try { & $phase } catch { Assert-Fail 'OpVerify' 'File-op phase executes' $_.Exception.Message }
+            Assert-WindowReady $script:win
+        }
+
+        try { Stop-App } catch {}
     }
 
-    $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'dedup verification'
-    if (!$win) { return }
+    # Use fresh files and scans for each selection mode so prior hardlinks cannot hide failures.
+    foreach ($selection in @('Groups', 'Files', 'Singletons')) {
+        $verifyRoot = Join-Path $script:opsVerifyScan $selection
+        try {
+            New-FileOpsVerifyRoot -Root $verifyRoot -DedupOnly
+            $dedupFileCount = @(Get-ChildItem -LiteralPath $verifyRoot -Recurse -File).Count
+            if ($dedupFileCount -ne 4) {
+                Assert-Fail $g 'Dedup verification fixture prepared' `
+                    "Expected 4 files, found $dedupFileCount at $verifyRoot"
+                return
+            }
+            Assert-Pass $g "Dedup verification fixture prepared with 4 files: $verifyRoot"
+        }
+        catch {
+            Assert-Fail $g 'Dedup verification fixture prepared' "Error: $_"
+            return
+        }
 
-    try { Test-DedupOps -Window $script:win -ScanRoot $verifyRoot }
-    catch { Assert-Fail 'OpVerify' 'Dedup phase executes' $_.Exception.Message }
-    Assert-WindowReady $script:win
+        $win = Start-UiScanSession -Exe $Exe -ScanPath $verifyRoot -Group $g -Label 'dedup verification'
+        if (!$win) { return }
+
+        try { Test-DedupOps -Window $script:win -ScanRoot $verifyRoot -Selection $selection }
+        catch { Assert-Fail 'OpVerify' "Dedup $selection phase executes" $_.Exception.Message }
+        Assert-WindowReady $script:win
+        Stop-App
+    }
 }
 
 function Test-StorageAnalytics {
@@ -9517,6 +9457,10 @@ function Invoke-UiSuite {
     }
 
     try {
+        if ($DedupOnly) {
+            Test-FileOpsVerification -Exe $ExePath -DedupOnly
+            return
+        }
         Write-ColoredLine '  Setting up UI scan data...' DarkGray
         if (!(Test-Path -LiteralPath $script:workRoot)) { New-Item -ItemType Directory -Force -Path $script:workRoot | Out-Null }
         New-ScanRoot -Root $script:scanRoot
