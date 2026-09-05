@@ -223,9 +223,6 @@
 #define ID_CLEANUP_DISM_RESET           32818
 #define ID_CLEANUP_REMOVE_ROAMING       32819
 #define ID_CLEANUP_OPEN_IN_PWSH         32820
-#define ID_INDICATOR_DISK               32821
-#define ID_INDICATOR_RAM                32822
-#define ID_INDICATOR_IDLE               32823
 #define ID_CLEANUP_EMPTY_FOLDER         32824
 #define ID_CLEANUP_HIBERNATE            32825
 #define ID_TREEMAP_LOGICAL_SIZE         32826
@@ -242,7 +239,6 @@
 #define ID_CLEANUP_MOVE_TO              32838
 #define ID_CLEANUP_OPTIMIZE_VHD         32839
 #define ID_EXTLIST_SEARCH_EXTENSION     32840
-#define ID_INDICATOR_SIZE               32841
 #define ID_CLEANUP_REMOVE_MOTW          32842
 #define ID_CLEANUP_CREATE_HARDLINK      32843
 #define ID_CLEANUP_SPARSIFY_FILE        32844

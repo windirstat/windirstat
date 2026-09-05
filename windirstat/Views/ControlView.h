@@ -58,7 +58,6 @@ inline std::span<const RouteEntry> CControlView::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnCreate>(WM_CREATE),
-        Route::Window<&OnInitMenuPopup>(WM_INITMENUPOPUP),
         Route::Window<&OnSize>(WM_SIZE),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
         Route::Window<&OnSetFocus>(WM_SETFOCUS),

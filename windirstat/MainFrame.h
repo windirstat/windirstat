@@ -255,7 +255,6 @@ protected:
     void OnClose();
     void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, bool bSysMenu);
     LRESULT OnMenuCommand(WPARAM position, LPARAM menuHandle);
-    void OnUpdateEnableControl(CCmdUI* pCmdUI);
     void OnSize(UINT nType, int cx, int cy);
     void OnUpdateViewShowVisualization(CCmdUI* pCmdUI) const;
     void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);

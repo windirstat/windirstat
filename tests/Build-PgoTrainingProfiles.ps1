@@ -124,7 +124,7 @@ $ErrorActionPreference = 'Stop'
 
 # --- Constants -------------------------------------------------------------
 
-# MFC's Setting<std::wstring> stores embedded newlines as ASCII 0x1E.
+# WinDirStat's Setting<std::wstring> stores embedded newlines as ASCII 0x1E.
 # Filtering.cpp splits the decoded value on \n, so we have to write 0x1E
 # as the inter-pattern delimiter inside the .ini.
 $RS = [char] 0x1E
@@ -312,7 +312,7 @@ $SectionWatcher     = 'Watcher'
 $SectionDriveSelect = 'DriveSelect'
 
 function Format-MultiPattern {
-    # Joins multiple regex / glob patterns with the record separator MFC uses.
+    # Joins multiple regex / glob patterns with the record separator WinDirStat uses.
     param([Parameter(Mandatory)] [AllowEmptyCollection()] [string[]] $Patterns)
     return ($Patterns -join $RS)
 }

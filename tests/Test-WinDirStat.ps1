@@ -1413,7 +1413,7 @@ public static class Win32MenuHelper {
 }
 '@
 
-# The All Files hierarchy is a virtual SysListView32.  Its MFC accessibility
+# The All Files hierarchy is a virtual SysListView32.  Its accessibility
 # provider exposes file rows through UIA, but can omit directory rows entirely.
 # This helper reads and selects native list-view rows in the target process so
 # Refresh Selected can be tested against an actual directory without falling
@@ -1909,7 +1909,7 @@ function Get-Win32MenuItems {
     $menu = [Win32MenuHelper]::GetMenu($hwnd)
     if ($menu -eq [IntPtr]::Zero) { return @() }
 
-    # Force MFC to refresh all menu item states by sending WM_INITMENUPOPUP
+    # Refresh all menu item states by sending WM_INITMENUPOPUP
     # for each top-level submenu.  Without this, GetMenuState returns cached state
     # from the last time the menu was physically opened, which can be stale when
     # logical focus has changed since then (e.g. the dupe list now has focus but
@@ -2208,8 +2208,7 @@ function Find-DuplicateRows {
 function Invoke-Button {
     param([System.Windows.Automation.AutomationElement] $Btn)
 
-    # A synchronous UIA Invoke can end an MFC modal loop while it is in the idle
-    # phase, tripping CWnd::RunModalLoop's ContinueModal assertion in Debug builds.
+    # Queue native button clicks so modal dialogs close through their own message loop.
     $hwnd = [IntPtr]$Btn.Current.NativeWindowHandle
     if ($hwnd -ne [IntPtr]::Zero -and
         [NativeListViewHelper]::GetWindowClassName($hwnd) -eq 'Button') {
@@ -2345,7 +2344,7 @@ function Close-OpenDialogs {
         }
 
         # Only dismiss the enabled/topmost modal. Closing nested parent and child
-        # dialogs together can unwind their MFC modal loops out of order.
+        # dialogs together can unwind their modal loops out of order.
         $dialog = $null
         foreach ($candidate in $childDlgs) {
             try {
@@ -2524,11 +2523,11 @@ function Select-TabItem {
 
     if (!$Tab) { return $false }
 
-    # Some providers expose SelectionItemPattern even though MFC tabs commonly
-    # expose only InvokePattern.  When selection state is available, require the
-    # requested tab to actually become selected instead of treating a click that
-    # merely did not throw as success.  A $null result means the provider offers
-    # no readable selection state, so successful invocation is the best signal.
+    # Some tab providers expose only InvokePattern. When selection state is
+    # available, require the requested tab to actually become selected instead of
+    # treating a click that merely did not throw as success. A $null result means
+    # the provider offers no readable selection state, so successful invocation
+    # is the best signal.
     $readSelected = {
         try {
             $selection = $Tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
@@ -2554,7 +2553,7 @@ function Select-TabItem {
     }
     catch {}
 
-    # MFC's tab provider can expose an InvokePattern that returns successfully
+    # Some tab providers expose an InvokePattern that returns successfully
     # without changing the active page. Prefer the real tab's clickable point;
     # Click-Element itself falls back to InvokePattern when no point is exposed.
     foreach ($interactionAttempt in 1..2) {
@@ -4180,54 +4179,6 @@ function Test-StatusBar {
         Assert-Pass $g "Status bar visible on screen ($([int]$rect.Width) × $([int]$rect.Height) px)"
     } else {
         Assert-Fail $g 'Status bar visible on screen' "Bounding rectangle is empty or zero-sized: $rect"
-    }
-
-    # Read status bar pane texts via Win32 SB_GETTEXTW message.
-    # WinDirStat's status bar uses GDI for rendering but still stores pane text
-    # via CStatusBar::SetPaneText, which is retrievable via SB_GETTEXTW.
-    Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-public static class StatusBarReader {
-    [DllImport("user32.dll", CharSet=CharSet.Unicode)]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, StringBuilder lParam);
-    [DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-    const uint SB_GETPARTS   = 0x0406;
-    const uint SB_GETTEXTW   = 0x040D;
-    public static string[] GetAllPaneTexts(IntPtr hwnd) {
-        int count = (int)SendMessage(hwnd, SB_GETPARTS, IntPtr.Zero, IntPtr.Zero).ToInt64();
-        if (count <= 0 || count > 32) count = 8;
-        var result = new string[count];
-        for (int i = 0; i < count; i++) {
-            var sb = new StringBuilder(512);
-            SendMessage(hwnd, SB_GETTEXTW, (IntPtr)i, sb);
-            result[i] = sb.ToString();
-        }
-        return result;
-    }
-}
-'@ -ErrorAction SilentlyContinue
-
-    $sbHwnd = [IntPtr]$sb.Current.NativeWindowHandle
-    if ($sbHwnd -ne [IntPtr]::Zero) {
-        try {
-            $paneTexts = [StatusBarReader]::GetAllPaneTexts($sbHwnd)
-            $nonEmpty  = @($paneTexts | Where-Object { $_.Length -gt 0 })
-            if ($nonEmpty.Count -gt 0) {
-                Assert-Pass $g "$($nonEmpty.Count) status bar pane(s) have text content (functional)"
-                if ($Details) { Write-ColoredLine "    Status bar panes: $($nonEmpty -join ' | ')" DarkGray }
-            } else {
-                # Pre-scan, panes may be blank — verify the HWND itself is valid as a minimum
-                Assert-Pass $g "Status bar HWND valid (panes are empty pre-scan, will populate after scan)"
-            }
-        }
-        catch {
-            Assert-Skip $g 'Status bar pane text read via Win32' "SB_GETTEXTW failed: $_"
-        }
-    } else {
-        Assert-Skip $g 'Status bar Win32 text read' 'NativeWindowHandle is zero'
     }
 }
 
@@ -6110,7 +6061,7 @@ function Test-KeyboardFocusCycle {
             param([string] $Expected, [string] $Label)
             $selectedName = & $getSelectedTabName
             if ($null -eq $selectedName) {
-                Assert-Skip $g $Label 'The MFC tab provider does not expose SelectionItemPattern state'
+                Assert-Skip $g $Label 'The tab provider does not expose SelectionItemPattern state'
             }
             elseif ($selectedName -like "*$Expected*") {
                 Assert-Pass $g $Label "Selected: '$selectedName'"
@@ -6708,7 +6659,7 @@ function Test-InitialTreePopulation {
         }
 
         # -- Size verification: cross-check expected sizes on disk ---------------
-        # WinDirStat's All Files list uses custom-drawn MFC columns; the size
+        # WinDirStat's All Files list uses custom-drawn columns; the size
         # and date values are GDI-painted and are NOT exposed via UIA item Name
         # or ValuePattern.  Verify on disk that the files exist with the exact
         # sizes written by New-OpsTestRoot — the UI can only display accurate
@@ -8299,8 +8250,8 @@ function Find-TreeRow {
 }
 
 # Select one or more exact files in the All Files hierarchy. Native virtual-list
-# selection keeps this coverage available when MFC omits collapsed file rows
-# from UIA; coordinate/Ctrl-click remains a cross-bitness fallback.
+# selection keeps this coverage available when the accessibility provider omits
+# collapsed file rows; coordinate/Ctrl-click remains a cross-bitness fallback.
 function Select-TreeFiles {
     param([System.Windows.Automation.AutomationElement] $Window, [string[]] $FullPaths)
 
@@ -13969,8 +13920,8 @@ function Invoke-CliSuite {
         New-TestFile -Path $fileOne -Size 31 -Seed 11
         New-TestFile -Path $fileTwo -Size 47 -Seed 23
 
-        # MFC accepts both '-' and '/' flag prefixes, the app lower-cases flag
-        # names, and output flags may follow their positional scan target.
+        # The command-line parser accepts both '-' and '/' prefixes and lower-cases
+        # flag names. Output flags may follow their positional scan target.
         Write-GroupHeader 'CLI parsing'
         $g = 'Cli/Parsing'
         $orderedOut = Join-Path $workRoot 'target-before-flag.csv'

@@ -400,11 +400,6 @@ void CMainFrame::UpdatePaneText()
     LayoutProgress();
 }
 
-void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(true);
-}
-
 void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 {
     CFrameWnd::OnSize(nType, cx, cy);

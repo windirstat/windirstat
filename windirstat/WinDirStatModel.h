@@ -357,10 +357,6 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Update<&OnUpdateCentralHandler>(ID_POPUP_CANCEL),
         Route::Command<&OnFilterExcludeItem>(ID_FILTER_EXCLUDE_ITEM),
         Route::Update<&OnUpdateCentralHandler>(ID_FILTER_EXCLUDE_ITEM),
-        Route::Update<&OnUpdateCentralHandler>(ID_INDICATOR_RAM),
-        Route::Update<&OnUpdateCentralHandler>(ID_INDICATOR_DISK),
-        Route::Update<&OnUpdateCentralHandler>(ID_INDICATOR_IDLE),
-        Route::Update<&OnUpdateCentralHandler>(ID_INDICATOR_SIZE),
         Route::Command<&OnContextMenuExplore>(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD),
     };
     return entries;

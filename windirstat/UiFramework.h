@@ -1141,9 +1141,7 @@ public:
     void OnLButtonDown(UINT, CPoint) { CallDefaultHandler(); }
     void OnLButtonUp(UINT, CPoint) { CallDefaultHandler(); }
     void OnLButtonDblClk(UINT, CPoint) { CallDefaultHandler(); }
-    void OnMButtonDown(UINT, CPoint) { CallDefaultHandler(); }
     void OnMouseMove(UINT, CPoint) { CallDefaultHandler(); }
-    void OnMouseLeave() { CallDefaultHandler(); }
     bool OnMouseWheel(UINT, short, CPoint) { return static_cast<bool>(CallDefaultHandler()); }
     void OnKeyDown(UINT, UINT, UINT) { CallDefaultHandler(); }
     void OnChar(UINT, UINT, UINT) { CallDefaultHandler(); }
@@ -1151,22 +1149,18 @@ public:
     void OnKillFocus(CWnd*) { CallDefaultHandler(); }
     void OnContextMenu(CWnd*, CPoint) { CallDefaultHandler(); }
     void OnTimer(UINT_PTR) { CallDefaultHandler(); }
-    void OnInitMenuPopup(CMenu*, UINT, bool) { CallDefaultHandler(); }
     void OnSysColorChange() { CallDefaultHandler(); }
-    UINT OnPowerBroadcast(UINT, LPARAM) { return static_cast<UINT>(CallDefaultHandler()); }
     bool OnNcActivate(bool) { return static_cast<bool>(CallDefaultHandler()); }
     HBRUSH OnCtlColor(CDC*, CWnd*, UINT) { return reinterpret_cast<HBRUSH>(CallDefaultHandler()); }
     LRESULT OnNcHitTest(CPoint) { return CallDefaultHandler(); }
     void OnGetMinMaxInfo(MINMAXINFO*) { CallDefaultHandler(); }
     void OnEnable(bool) { CallDefaultHandler(); }
     bool OnSetCursor(CWnd*, UINT, UINT) { return static_cast<bool>(CallDefaultHandler()); }
-    void OnActivateApp(bool, DWORD) { CallDefaultHandler(); }
     void OnCaptureChanged(CWnd*) { CallDefaultHandler(); }
     void OnSettingChange(UINT, LPCTSTR) { CallDefaultHandler(); }
     void OnShowWindow(bool, UINT) { CallDefaultHandler(); }
     void OnHScroll(UINT, UINT, CWnd*) { CallDefaultHandler(); }
     void OnVScroll(UINT, UINT, CWnd*) { CallDefaultHandler(); }
-    UINT OnGetDlgCode() { return static_cast<UINT>(CallDefaultHandler()); }
     void OnNcCalcSize(bool, NCCALCSIZE_PARAMS*) { CallDefaultHandler(); }
     virtual int OnMouseActivate(CWnd*, UINT, UINT) { return static_cast<int>(CallDefaultHandler()); }
     bool IsTopParentActive() const

@@ -17,8 +17,6 @@
 
 #pragma once
 
-// Exclude rarely-used declarations from Windows headers.
-#define VC_EXTRALEAN
 #define NOMINMAX
 
 #define _ATL_NO_HOSTING

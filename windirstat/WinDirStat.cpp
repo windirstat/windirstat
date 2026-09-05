@@ -372,7 +372,6 @@ bool CDirStatApp::InitInstance()
 
     // Set app to prefer dark mode
     DarkMode::SetAppDarkMode();
-    CWinApp::InitInstance();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };

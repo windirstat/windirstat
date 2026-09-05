@@ -39,16 +39,14 @@ IF NOT DEFINED VSPATH (
 ECHO Found Visual Studio:
 ECHO   %VSPATH%
 ECHO.
-ECHO Installing C++ workload, VS 2022 v143 platform toolset, MFC, ARM64 tools, and recommended Windows SDK...
+ECHO Installing C++ workload, VS 2022 v143 platform toolset, ATL, ARM64 tools, and recommended Windows SDK...
 
 START /WAIT "" "%VSSETUP%" modify --installPath "%VSPATH%" --channelId "%VSCHANNEL%" ^
     --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended ^
     --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64 ^
-    --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.MFC --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.MFC.ARM64 ^
     --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.ATL --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.ATL.ARM64 ^
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 ^
-    --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.ATLMFC ^
-    --add Microsoft.VisualStudio.Component.VC.ATL.ARM64 --add Microsoft.VisualStudio.Component.VC.MFC.ARM64 ^
+    --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.ATL.ARM64 ^
     --removeOos true --norestart --quiet
 SET "RC=!ERRORLEVEL!"
 IF "%RC%"=="3010" SET "VS_REBOOT_REQUIRED=1"

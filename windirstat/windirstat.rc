@@ -15,7 +15,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // Neutral resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(1252)
 
@@ -37,26 +36,12 @@ BEGIN
     IDS_FILTER_EXAMPLE_DIRS_REGEX "C:\\\\Windows\\\\Sys.*\nC:\\\\ProgramData"
 END
 
-STRINGTABLE
-BEGIN
-    ID_INDICATOR_DISK       "-"
-    ID_INDICATOR_RAM        "-"
-    ID_INDICATOR_IDLE       "-"
-END
-
-STRINGTABLE
-BEGIN
-    ID_INDICATOR_SIZE       "-"
-END
-
-#endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
@@ -89,11 +74,9 @@ END
 
 3 TEXTINCLUDE
 BEGIN
-    "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(65001)\r\n"
     "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
-    "#endif\r\n"
     "\0"
 END
 
@@ -857,72 +840,6 @@ IDR_LANGS               TEXT                    "res\\lang_combined.bin"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_PAGE_FILTERING AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_ADVANCED AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_GENERAL AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_TREELIST AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_CLEANUPS AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_SELECTDRIVES AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_TREEMAP AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_ABOUTBOX AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_SEARCH AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_MESSAGEBOX AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PROGRESS AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_PAGE_PROMPTS AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog Info
 //
 
@@ -975,7 +892,6 @@ BEGIN
     0
 END
 
-#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -985,11 +901,9 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-#if !defined(AFX_RESOURCE_DLL)
 LANGUAGE 9, 1
 #pragma code_page(65001)
 #include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

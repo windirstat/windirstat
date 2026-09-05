@@ -141,7 +141,6 @@ void CWdsSplitterWnd::PostNcDestroy()
 {
     // Reset row/column state before the embedded splitter is created again.
     ResetPanes();
-    CSplitterWnd::PostNcDestroy();
 }
 
 void CWdsSplitterWnd::StopTracking(const bool bAccept)
