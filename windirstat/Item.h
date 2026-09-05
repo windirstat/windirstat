@@ -151,6 +151,7 @@ public:
     CItem* GetEnumRoot() const noexcept;
     CItem* GetParentDrive() const noexcept;
     CItem* GetVolumeRoot() const noexcept;
+    bool IsScanRoot() const noexcept;
     bool IsMtpRoot() const noexcept;
     bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP); }
     bool HasShellIdentity() const noexcept;
