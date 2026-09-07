@@ -162,14 +162,8 @@ protected:
     void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     void BrowseFolders(bool append);
-    void OnBnClickedBrowseButton()
-    {
-        BrowseFolders(false);
-    }
-    void OnBnClickedAddFolder()
-    {
-        BrowseFolders(true);
-    }
+    void OnBnClickedBrowseButton() { BrowseFolders(false); }
+    void OnBnClickedAddFolder() { BrowseFolders(true); }
     void OnBnClickedFilterButton();
     bool PreprocessMessage(MSG* pMsg) override;
     void OnEditchangeBrowseFolder();
