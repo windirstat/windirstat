@@ -31,6 +31,8 @@ int ResolveTextScalePercent(const int configuredPercent) noexcept
         std::min(ReadWindowsTextScalePercent(), 200);
 }
 
+static std::map<std::pair<int, int>, HFONT> s_appFonts;
+
 HFONT GetAppFont(const HWND window)
 {
     const int dpi = GetWindowDpi(window);
@@ -38,8 +40,7 @@ HFONT GetAppFont(const HWND window)
     if (window != nullptr) GetClassNameW(window, className.data(), static_cast<int>(className.size()));
     const int percent = wcscmp(className.data(), TOOLBARCLASSNAMEW) == 0 ? GetToolBarSizePercent() : GetFontSizePercent();
     const std::pair key(dpi, percent);
-    static std::map<std::pair<int, int>, CFont> fonts;
-    if (const auto found = fonts.find(key); found != fonts.end()) return found->second;
+    if (const auto found = s_appFonts.find(key); found != s_appFonts.end()) return found->second;
 
     NONCLIENTMETRICSW metrics{ .cbSize = sizeof(metrics) };
     using SystemParametersInfoForDpiFn = BOOL(WINAPI*)(UINT, UINT, PVOID, UINT, UINT);
@@ -65,7 +66,10 @@ HFONT GetAppFont(const HWND window)
     const int sourcePercent = systemMetrics ? ReadWindowsTextScalePercent() : 100;
     metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, percent, sourcePercent);
     metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, percent, sourcePercent);
-    return fonts.try_emplace(key, metrics.lfMessageFont).first->second;
+    // Keep fonts alive for controls that still use them, and reuse identical metrics after a settings broadcast.
+    static std::map<std::array<BYTE, sizeof(LOGFONTW)>, CFont> fonts;
+    const auto fontKey = std::bit_cast<std::array<BYTE, sizeof(LOGFONTW)>>(metrics.lfMessageFont);
+    return s_appFonts.emplace(key, fonts.try_emplace(fontKey, metrics.lfMessageFont).first->second).first->second;
 }
 
 static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
@@ -92,6 +96,7 @@ static BOOL CALLBACK NotifyFontSizeChangedCallback(const HWND window, const LPAR
 void ApplyAppFont(const HWND window, const int oldPercent)
 {
     if (!IsWindow(window)) return;
+    if (oldPercent != 0) s_appFonts.clear();
     SetAppFontCallback(window, 0);
     EnumChildWindows(window, SetAppFontCallback, 0);
     if (oldPercent == 0) return;

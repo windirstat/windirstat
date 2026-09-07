@@ -325,8 +325,7 @@ public:
     bool CreateFromResource(UINT nIDResource) override;
 
 private:
-    void ApplyFontSize(int percent, bool rebuildToolBar = false);
-    void ApplyWindowsTextScale();
+    void OnFontSizeChanged(int oldPercent, int newPercent) override;
     void BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hVisualization);
     void ConfigureSplitterCallbacks(int topo, int perm);
 };

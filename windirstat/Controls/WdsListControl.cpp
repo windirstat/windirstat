@@ -336,6 +336,8 @@ void CWdsListControl::OnColumnsInserted(
 
 void CWdsListControl::OnFontSizeChanged(const int oldPercent, const int newPercent)
 {
+    if (oldPercent == newPercent) return;
+
     for (int& width : m_defaultColumnWidths) width = MulDiv(width, newPercent, oldPercent);
     for (const int column : std::views::iota(0, m_columnCount))
     {
