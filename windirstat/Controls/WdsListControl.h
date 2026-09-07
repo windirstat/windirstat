@@ -89,6 +89,7 @@ public:
     virtual void SysColorChanged();
 
     int GetRowHeight() const { return m_rowHeight; }
+    int GetIconSize() const { return m_iconSize; }
     void CalculateRowHeight();
     void ShowGrid(bool show);
     void ShowStripes(bool show);
@@ -153,6 +154,7 @@ protected:
     COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
     COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
     int m_rowHeight = 20;              // Height of an item
+    int m_iconSize = 16;
     int m_columnCount = 0;
     bool m_showGrid = false;           // Whether to draw a grid
     bool m_showStripes = false;        // Whether to show stripes

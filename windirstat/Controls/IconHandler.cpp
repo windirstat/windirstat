@@ -440,7 +440,7 @@ namespace Icons
 
     HICON IconFromFontChar(const WCHAR ch, const COLORREF clr, const bool bold, const int iconSize)
     {
-        const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
+        const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXICON);
         return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold); });
     }
 }

@@ -516,8 +516,7 @@ public:
     bool Ellipse(const LPCRECT rc) noexcept { return Ellipse(rc->left, rc->top, rc->right, rc->bottom); }
     bool Polygon(const POINT* p, const int n) noexcept { return ::Polygon(m_hDC, p, n); }
     bool Polyline(const POINT* p, const int n) noexcept { return ::Polyline(m_hDC, p, n); }
-    void DrawTreeConnector(const CRect& nodeRect, COLORREF background, bool toTop, bool toBottom,
-        bool toRight, bool showPlus = false, bool showMinus = false);
+    void DrawTreeExpander(const CRect& nodeRect, bool expanded);
 
     void FillSolidRect(const LPCRECT rc, const COLORREF clr) noexcept
     {

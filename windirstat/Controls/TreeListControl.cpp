@@ -367,101 +367,21 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, con
         return;
     }
 
+    remainingRect.left += (indentationLevel - 1) * indentStep;
+
     // Width-only calculation (early exit)
-    const int visualIndent = indentationLevel - 1;
     if (width != nullptr)
     {
-        remainingRect.left += visualIndent * indentStep + rowHeight;
-        rcRest.right = remainingRect.left;
+        rcRest.right = remainingRect.left + rowHeight;
         *width = rcRest.Width();
         return;
     }
 
-    // Determine connector symbols
-    const int rowIndex = FindTreeItem(item);
-    const COLORREF bgColor = IsItemStripColor(rowIndex) ? m_stripeColor : m_windowColor;
-
-    // Cache ancestors to draw connecting lines
-    // Use static vector to avoid repeated allocations in the draw loop
-    static std::vector<const CTreeListItem*> ancestors;
-    ancestors.clear();
-    ancestors.reserve(indentationLevel + 1);
-    for (auto p = item; p != nullptr; p = p->GetParent())
+    if (item->HasChildren())
     {
-        ancestors.push_back(p);
-    }
-
-    // Lambda to check if a node is the last child of its parent
-    // Optimized to use list position for the current item if possible
-    auto isVisualLastChild = [&](const CTreeListItem* node, const bool isCurrentItem)
-    {
-        // For the current item (if not expanded), check the next item in the list
-        // This avoids iterating through thousands of siblings for leaf nodes
-        if (isCurrentItem && !node->IsExpanded())
-        {
-            const int nextIndex = rowIndex + 1;
-
-            // If we are at the end of the list, we are definitely the last child
-            if (nextIndex >= GetItemCount()) return true;
-            return GetItem(nextIndex)->GetIndent() < node->GetIndent();
-        }
-
-        const auto* parent = node->GetParent();
-        const int count = parent ? parent->GetTreeListChildCount() : 0;
-        if (count <= 1) return true;
-
-        const auto& sorting = m_sorting;
-        const int sub1 = ColumnToSubItem(sorting.column1);
-        const int sub2 = ColumnToSubItem(sorting.column2);
-
-        // Check if any sibling comes after this node in sort order
-        const bool asc1 = sorting.ascending1;
-        const bool asc2 = sorting.ascending2;
-
-        return !std::ranges::any_of(std::views::iota(0, count), [&](const int k) {
-            const auto* sibling = parent->GetTreeListChild(k);
-            if (sibling == node) return false;
-
-            int cmp = sibling->Compare(node, sub1);
-            const bool use2 = (cmp == 0);
-            if (use2) cmp = sibling->Compare(node, sub2);
-
-            const bool asc = use2 ? asc2 : asc1;
-            return (asc && cmp > 0) || (!asc && cmp < 0);
-        });
-    };
-
-    // Draw connectors for each indentation level
-    for (const int i : std::views::iota(1, indentationLevel + 1))
-    {
-        // Ancestors are stored in reverse order (Item -> Root)
-        // Ancestors[indentationLevel - i] gives the ancestor at level 'i'
-        const CTreeListItem* ancestor = ancestors[indentationLevel - i];
-        const bool isCurrentItem = (i == indentationLevel);
-
-        const bool isLast = isVisualLastChild(ancestor, isCurrentItem);
-        CRect rcColumn(remainingRect.left, remainingRect.top, remainingRect.left + rowHeight, remainingRect.bottom);
-
-        if (isCurrentItem)
-        {
-            // Draw L-shaped connector for the item itself
-            pDC->DrawTreeConnector(rcColumn, bgColor, true, !isLast, true,
-                item->HasChildren() && !item->IsExpanded(),
-                item->HasChildren() && item->IsExpanded());
-        }
-        else
-        {
-            // Draw vertical line for ancestors if they are not the last child
-            if (!isLast) pDC->DrawTreeConnector(rcColumn, bgColor, true, true, false);
-            remainingRect.left += indentStep;
-        }
-    }
-
-    // Draw line under node icon if applicable
-    if (item->HasChildren() && item->IsExpanded())
-    {
-        const CRect rcIcon{POINT{ remainingRect.left + indentStep, remainingRect.top },SIZE{ rowHeight, rowHeight }};
-        pDC->DrawTreeConnector(rcIcon, bgColor, false, true, false);
+        const CRect nodeRect(remainingRect.left, remainingRect.top,
+            remainingRect.left + rowHeight, remainingRect.bottom);
+        pDC->DrawTreeExpander(nodeRect, item->IsExpanded());
     }
 
     // Set up plus/minus hit rect for click detection

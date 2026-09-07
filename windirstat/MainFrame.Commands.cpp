@@ -652,11 +652,11 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
     const SIZE buttonSize
     {
         ScaleForToolBarDpi(m_defaultButtonSize.cx, m_wndToolBar),
-        std::max(ScaleForToolBarDpi(m_defaultButtonSize.cy, m_wndToolBar),
-            ::ScaleForDpi(m_defaultButtonSize.cy, m_wndToolBar))
+        ScaleForToolBarDpi(m_defaultButtonSize.cy, m_wndToolBar)
     };
 
     if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
+    m_wndToolBar.SetFont(GetAppFont(m_wndToolBar));
     if (!rebuildButtons) { m_wndToolBar.SetButtonSize(buttonSize); m_wndToolBar.UpdateLayout(); return; }
 
     // Remove all existing buttons

@@ -134,8 +134,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
         rcRest.left += GENERAL_INDENT;
     }
 
-    // Get default small icon parameters
-    static const CSize sizeImage(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+    const CSize sizeImage(list->GetIconSize(), list->GetIconSize());
 
     if (width == nullptr)
     {
@@ -148,7 +147,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     }
 
     // Decrease size of the remainder rectangle from left
-    rcRest.left += sizeImage.cy;
+    rcRest.left += sizeImage.cx;
 
     GdiObjectSelection sofont(pdc, list->GetFont());
 
@@ -359,14 +358,14 @@ void CWdsListControl::CalculateRowHeight()
 {
     // Create a device context to get font metrics
     if (!IsWindow(m_hWnd)) return;
+    m_iconSize = ScaleForDpi(16);
     CClientDC dc(this);
     GdiObjectSelection sofont(&dc, GetFont());
 
     if (const auto metrics = dc.TextMetrics())
     {
-        // Row height = font height + padding
-        // Make sure it's odd number for dotted connector mating
-        m_rowHeight = (metrics->tmHeight + (LABEL_Y_MARGIN * 2) + 1) | 1;
+        // Row height accommodates both the text and icon, plus padding.
+        m_rowHeight = (std::max<int>(metrics->tmHeight, m_iconSize) + (LABEL_Y_MARGIN * 2) + 1) | 1;
     }
 }
 

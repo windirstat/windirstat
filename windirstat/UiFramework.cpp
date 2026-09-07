@@ -34,7 +34,9 @@ int ResolveTextScalePercent(const int configuredPercent) noexcept
 HFONT GetAppFont(const HWND window)
 {
     const int dpi = GetWindowDpi(window);
-    const int percent = GetFontSizePercent();
+    std::array<WCHAR, MAX_CLASS_NAME> className{};
+    if (window != nullptr) GetClassNameW(window, className.data(), static_cast<int>(className.size()));
+    const int percent = wcscmp(className.data(), TOOLBARCLASSNAMEW) == 0 ? GetToolBarSizePercent() : GetFontSizePercent();
     const std::pair key(dpi, percent);
     static std::map<std::pair<int, int>, CFont> fonts;
     if (const auto found = fonts.find(key); found != fonts.end()) return found->second;
@@ -138,36 +140,33 @@ void InitializeDialogFontAndSize(const HWND dialog)
     ApplyAppFont(dialog);
 }
 
-void CDC::DrawTreeConnector(const CRect& nodeRect, const COLORREF background, const bool toTop,
-    const bool toBottom, const bool toRight, const bool showPlus, const bool showMinus)
+void CDC::DrawTreeExpander(const CRect& nodeRect, const bool expanded)
 {
-    const int centerX = nodeRect.left + nodeRect.Width() / 2;
-    const int centerY = nodeRect.top + nodeRect.Height() / 2;
-    const COLORREF lineColor = DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96);
-    const LOGBRUSH connectorBrush{ BS_SOLID, lineColor, 0 };
-    const CPen connectorPen(PS_GEOMETRIC | PS_DOT, 1, &connectorBrush);
-    GdiObjectSelection selectConnector(this, &connectorPen);
+    Gdiplus::Graphics graphics(m_hDC);
+    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
 
-    if (toBottom && toTop) MoveTo(centerX, nodeRect.top), LineTo(centerX, nodeRect.bottom);
-    else if (toBottom) MoveTo(centerX, centerY), LineTo(centerX, nodeRect.bottom);
-    else if (toTop) MoveTo(centerX, nodeRect.top), LineTo(centerX, centerY);
-    if (toRight) MoveTo(centerX + 1, centerY), LineTo(nodeRect.right, centerY);
-    if (!showPlus && !showMinus) return;
+    const BYTE shade = DarkMode::IsDarkModeActive() ? 180 : 80;
+    Gdiplus::Pen pen(Gdiplus::Color(255, shade, shade, shade), std::max(1.0f, nodeRect.Height() / 15.0f));
+    pen.SetStartCap(Gdiplus::LineCapRound);
+    pen.SetEndCap(Gdiplus::LineCapRound);
+    pen.SetLineJoin(Gdiplus::LineJoinRound);
 
-    const int boxSize = nodeRect.Height() / 2 | 1;
-    const int halfBox = boxSize / 2;
-    const CRect box(centerX - halfBox, centerY - halfBox,
-        centerX - halfBox + boxSize, centerY - halfBox + boxSize);
-    const LOGBRUSH boxBrush{ BS_SOLID, lineColor, 0 };
-    const CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, 1, &boxBrush);
-    const CBrush backgroundBrush(background);
-    GdiObjectSelection selectBoxPen(this, &boxPen);
-    GdiObjectSelection selectBackground(this, &backgroundBrush);
-    RoundRect(box, CPoint(2, 2));
-
-    const int margin = nodeRect.Height() / 8;
-    MoveTo(box.left + margin, centerY), LineTo(box.right - margin, centerY);
-    if (showPlus) MoveTo(centerX, box.top + margin), LineTo(centerX, box.bottom - margin);
+    const float centerX = nodeRect.left + nodeRect.Width() / 2.0f;
+    const float centerY = nodeRect.top + nodeRect.Height() / 2.0f;
+    const float size = std::max(2.0f, nodeRect.Height() / 5.0f);
+    if (expanded)
+    {
+        const Gdiplus::PointF points[] = { {centerX - size, centerY - size / 2.0f},
+            {centerX, centerY + size / 2.0f}, {centerX + size, centerY - size / 2.0f} };
+        graphics.DrawLines(&pen, points, _countof(points));
+    }
+    else
+    {
+        const Gdiplus::PointF points[] = { {centerX - size / 2.0f, centerY - size},
+            {centerX + size / 2.0f, centerY}, {centerX - size / 2.0f, centerY + size} };
+        graphics.DrawLines(&pen, points, _countof(points));
+    }
 }
 
 void CWinApp::RunTaskWithUiUpdates(const std::function<void()>& task)
@@ -480,10 +479,8 @@ void CSplitterWnd::DrawBackground(CDC& dc, CRect rect) const
                 continue;
 
             CRect paneRect = WindowRectInClient(pane->Handle());
-            paneRect.Inflate(PaneBorderSize, PaneBorderSize);
+            paneRect.Inflate(1, 1);
             dc.Draw3dRect(paneRect, paneEdge, paneEdge);
-            paneRect.Deflate(1, 1);
-            dc.Draw3dRect(paneRect, paneFace, paneFace);
         }
     }
 }
