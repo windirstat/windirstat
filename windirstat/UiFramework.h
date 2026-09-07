@@ -2202,6 +2202,7 @@ public:
 
     static std::optional<std::wstring> PickFile(FilePickerMode mode, std::wstring filter);
     static std::optional<std::wstring> PickFolder(CWnd* parent = nullptr);
+    static std::vector<std::wstring> PickFolders(CWnd* parent = nullptr, bool multiSelect = true);
     static std::optional<COLORREF> PickColor(COLORREF initial);
 
     virtual INT_PTR ShowModal()

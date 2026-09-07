@@ -1274,16 +1274,34 @@ std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::ws
 
 std::optional<std::wstring> CDialog::PickFolder(CWnd* parent)
 {
-    CComPtr<IFileOpenDialog> dialog;
-    if (FAILED(dialog.CoCreateInstance(CLSID_FileOpenDialog)) ||
-        FAILED(dialog->SetOptions(FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_DONTADDTORECENT)) ||
-        FAILED(dialog->SetTitle(L"WinDirStat")) || FAILED(dialog->Show(GetDialogOwner(parent)))) return std::nullopt;
+    auto folders = PickFolders(parent, false);
+    return folders.empty() ? std::nullopt : std::optional(std::move(folders.front()));
+}
 
-    CComPtr<IShellItem> result;
-    CComHeapPtr<wchar_t> path;
-    if (FAILED(dialog->GetResult(&result)) || FAILED(result->GetDisplayName(SIGDN_FILESYSPATH, &path)) || path == nullptr)
-        return std::nullopt;
-    return std::wstring(path);
+std::vector<std::wstring> CDialog::PickFolders(CWnd* parent, const bool multiSelect)
+{
+    CComPtr<IFileOpenDialog> dialog;
+    DWORD options = 0;
+    if (FAILED(dialog.CoCreateInstance(CLSID_FileOpenDialog)) || FAILED(dialog->GetOptions(&options)) ||
+        FAILED(dialog->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_DONTADDTORECENT |
+            (multiSelect ? FOS_ALLOWMULTISELECT : 0))) ||
+        FAILED(dialog->SetTitle(L"WinDirStat")) || FAILED(dialog->Show(GetDialogOwner(parent)))) return {};
+
+    CComPtr<IShellItemArray> results;
+    DWORD count = 0;
+    if (FAILED(dialog->GetResults(&results)) || FAILED(results->GetCount(&count))) return {};
+
+    std::vector<std::wstring> folders;
+    folders.reserve(count);
+    for (DWORD i = 0; i < count; ++i)
+    {
+        CComPtr<IShellItem> result;
+        CComHeapPtr<wchar_t> path;
+        if (FAILED(results->GetItemAt(i, &result)) ||
+            FAILED(result->GetDisplayName(SIGDN_FILESYSPATH, &path)) || path == nullptr) return {};
+        folders.emplace_back(path);
+    }
+    return folders;
 }
 
 std::optional<COLORREF> CDialog::PickColor(const COLORREF initial)
