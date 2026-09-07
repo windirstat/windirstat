@@ -423,26 +423,32 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.clear();
     if (m_radio == RADIO_TARGET_FOLDER)
     {
-        // Split pipe-separated list and normalize each path individually
-        std::wstring normalizedSpec;
-        for (auto part : SplitString(m_folderName))
+        // Normalize every pipe-separated path on its own and rebuild the spec from the results
+        std::vector<std::wstring> folders;
+        for (auto& part : SplitString(m_folderName))
         {
-            TrimString(part);
             if (part.empty()) continue;
-            if (part.back() == L':') part += L'\\';
-            part = ResolveFullPath(part);
-            m_drives.emplace_back(part);
-            if (!normalizedSpec.empty()) normalizedSpec += wds::chrPipe;
-            normalizedSpec += part;
+            if (part.back() == L':') part.push_back(L'\\');
+            folders.emplace_back(ResolveFullPath(part));
         }
-        m_folderName = normalizedSpec;
+        m_folderName = JoinString(folders);
 
-        // Save the full pipe-spec as one history entry
-        std::erase_if(COptions::SelectDrivesFolder.Obj(), [&normalizedSpec](const std::wstring& s) {
-            return _wcsicmp(s.c_str(), normalizedSpec.c_str()) == 0;
-        });
-        COptions::SelectDrivesFolder.Obj().insert(
-            COptions::SelectDrivesFolder.Obj().begin(), normalizedSpec);
+        // Record each folder on its own rather than the joined spec: the history is persisted
+        // with JoinString/SplitString on the same separator, so a joined spec stored as one
+        // entry would come back as several after a restart.
+        for (const auto& folder : folders | std::views::reverse)
+        {
+            // Remove the folder from the most recently used list to avoid duplicates
+            std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folder](const std::wstring& s) {
+                return _wcsicmp(s.c_str(), folder.c_str()) == 0;
+            });
+
+            // Insert it at the beginning of the used list
+            COptions::SelectDrivesFolder.Obj().insert(
+                COptions::SelectDrivesFolder.Obj().begin(), folder);
+        }
+
+        // Limit the folder history to the configured count
         COptions::SelectDrivesFolder.Obj().resize(std::min(static_cast<size_t>(COptions::FolderHistoryCount),
             COptions::SelectDrivesFolder.Obj().size()));
     }
@@ -496,13 +502,10 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
     case RADIO_TARGET_FOLDER:
         if (!currentFolder.empty())
         {
-            // All pipe-separated paths must be accessible
-            const auto parts = SplitString(currentFolder);
-            enableOk = !parts.empty() && std::ranges::all_of(parts, [](std::wstring part) {
-                TrimString(part);
-                if (part.empty()) return false;
-                return (part.size() >= 2 && part.starts_with(L"\\\\")) ||
-                       FinderBasic::DoesFileExist(part);
+            // Every pipe-separated path must be a UNC path or exist on disk
+            enableOk = std::ranges::all_of(SplitString(currentFolder), [](const std::wstring& part)
+            {
+                return !part.empty() && (part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part));
             });
         }
         break;
@@ -671,7 +674,11 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
 
 std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
 {
-    return m_drives; // valid for all modes after OnOK(); folder mode now populates m_drives too
+    if (m_radio == RADIO_TARGET_FOLDER)
+    {
+        return { m_folderName };
+    }
+    return m_drives; // valid for both RADIO_TARGET_DRIVES_ALL and RADIO_TARGET_DRIVES_SUBSET
 }
 
 HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
@@ -688,13 +695,10 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
     const std::wstring& path = *selectedFolder;
 
     if (!FinderBasic::DoesFileExist(path)) return;
-    // Append to existing selection with pipe separator
-    std::wstring current = GetText(IDC_BROWSE_FOLDER);
-    if (current.empty())
-        m_folderName = path;
-    else
-        m_folderName = current + wds::chrPipe + path;
-    SetText(IDC_BROWSE_FOLDER, m_folderName);
+
+    // Append to the current selection so several folders can be picked one after another
+    const std::wstring current = GetText(IDC_BROWSE_FOLDER);
+    SetText(IDC_BROWSE_FOLDER, current.empty() ? path : current + wds::chrPipe + path);
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
     UpdateButtons();

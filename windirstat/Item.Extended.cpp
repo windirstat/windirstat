@@ -760,9 +760,11 @@ void CItem::CreateHardlinksItem()
 
 CItem* CItem::FindHardlinksItem() const
 {
-    const CItem* driveItem = GetParentDrive();
-    if (driveItem == nullptr) return nullptr;
-    const auto& children = driveItem->GetChildren();
+    // Folder roots have no parent drive and therefore no hardlinks container
+    const CItem* parentDrive = GetParentDrive();
+    if (parentDrive == nullptr) return nullptr;
+
+    const auto& children = parentDrive->GetChildren();
     const auto it = std::ranges::find_if(children,
         [](const auto& child) { return child->IsTypeOrFlag(IT_HLINKS); });
 

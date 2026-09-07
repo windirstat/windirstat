@@ -222,12 +222,12 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
         }
     }
 
-    const bool isMtpRoot = isMtp && (isRoot || parent == nullptr && newroot != nullptr &&
-        newroot->IsTypeOrFlag(IT_MYCOMPUTER));
-
-    // A folder without a parent in the map must be a root (either an explicit multi-root or we're loading a partial tree)
-    const bool isMultiRoot = !isRoot && itType != IT_DRIVE && parent == nullptr && newroot != nullptr && newroot->IsTypeOrFlag(IT_MYCOMPUTER);
-    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot || (type & ITF_MULTIROOT) != 0;
+    // Rows are written parent-before-child, so a row under a multi-root container whose parent
+    // cannot be resolved is one of the scan roots and keeps its full path as its name
+    const bool isMultiRoot = parent == nullptr && newroot != nullptr &&
+        newroot->IsTypeOrFlag(IT_MYCOMPUTER);
+    const bool isMtpRoot = isMtp && (isRoot || isMultiRoot);
+    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot && itType == IT_DIRECTORY;
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
@@ -492,7 +492,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
     for (const auto* item : items)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA & ~ITF_MULTIROOT;
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
@@ -534,7 +534,7 @@ static bool SaveResultsJson(std::ofstream& outf,
         firstItem = false;
 
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA & ~ITF_MULTIROOT;
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
