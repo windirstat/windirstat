@@ -147,9 +147,15 @@ CItem* CItem::GetVolumeRoot() const noexcept
     return enumRoot;
 }
 
+bool CItem::IsScanRoot() const noexcept
+{
+    // True for the tree root and for every selection placed directly under a multi-root container
+    return IsTypeOrFlag(ITF_ROOTITEM) || GetParent() == nullptr || GetParent()->IsTypeOrFlag(IT_MYCOMPUTER);
+}
+
 bool CItem::IsMtpRoot() const noexcept
 {
-    return IsTypeOrFlag(ITF_MTP) && GetEnumRoot() == this;
+    return IsTypeOrFlag(ITF_MTP) && IsScanRoot();
 }
 
 bool CItem::HasShellIdentity() const noexcept
@@ -929,7 +935,8 @@ void CItem::UpdateStatsFromDisk()
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
         FinderBasic finder(true);
-        if (finder.FindFile(GetFolderPath(), IsTypeOrFlag(ITF_ROOTITEM) ? std::wstring() : GetName(), GetAttributes()))
+        // A scan root stores its full path as its name, so it must be looked up without a name filter
+        if (finder.FindFile(GetFolderPath(), IsScanRoot() ? std::wstring() : GetName(), GetAttributes()))
         {
             SetLastChange(finder.GetLastWriteTime());
             SetAttributes(finder.GetAttributes());
@@ -945,7 +952,7 @@ void CItem::UpdateStatsFromDisk()
                 ExtensionDataAdd();
             }
         }
-        else if (IsTypeOrFlag(ITF_ROOTITEM) && GetAttributes() == INVALID_FILE_ATTRIBUTES)
+        else if (IsScanRoot() && GetAttributes() == INVALID_FILE_ATTRIBUTES)
         {
             // Correct potential invalid attributes on root items
             if (const DWORD attr = GetFileAttributes(GetPathLong().c_str()); attr != INVALID_FILE_ATTRIBUTES)
@@ -965,11 +972,11 @@ void CItem::UpdateStatsFromDisk()
     }
 }
 
-void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic)
+void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
+    std::unordered_map<const CItem*, FinderBasicContext>* folderContexts)
 {
-    // Reuse one finder for each storage backend throughout this worker
+    // Reuse the NTFS and MTP finders throughout this worker
     FinderNtfs finderNtfs(&contextNtfs);
-    FinderBasic finderBasic(&contextBasic);
     FinderMtp finderMtp;
 
     for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
@@ -995,6 +1002,17 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))
         {
+            auto* basicContext = &contextBasic;
+            if (folderContexts != nullptr)
+            {
+                // Descendants keep the context of the root initially assigned to this queue.
+                const CItem* root = item->GetVolumeRoot();
+                auto context = folderContexts->find(root);
+                while (context == folderContexts->end()) context = folderContexts->find(root = root->GetParent());
+                basicContext = &context->second;
+            }
+            FinderBasic finderBasic(basicContext);
+
             // Select the enumeration backend for the queued item
             Finder* finder = item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?

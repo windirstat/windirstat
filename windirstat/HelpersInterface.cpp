@@ -306,6 +306,35 @@ std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR de
     return selections;
 }
 
+std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec)
+{
+    std::vector<std::pair<std::wstring, std::wstring>> roots;
+    for (auto& path : SplitString(pathSpec))
+    {
+        if (path.empty()) continue;
+        const bool isMtp = FinderMtp::IsPath(path);
+        if (!isMtp)
+        {
+            if (path.back() == L':') path += L'\\';
+            const SmartPointer fullPath(free, _wfullpath(nullptr, path.c_str(), 0));
+            if (fullPath != nullptr) path = fullPath.Get();
+        }
+
+        // Compare complete components, treating ordinary and extended paths alike.
+        std::wstring key = MakeLower(isMtp ? path : Finder::MakeLongPathCompatible(path));
+        while (key.ends_with(L'\\')) key.pop_back();
+        key += L'\\';
+        if (std::ranges::any_of(roots, [&key](const auto& root) { return key.starts_with(root.second); })) continue;
+        std::erase_if(roots, [&key](const auto& root) { return root.second.starts_with(key); });
+        roots.emplace_back(std::move(path), std::move(key));
+    }
+
+    std::vector<std::wstring> paths;
+    paths.reserve(roots.size());
+    for (auto& [path, key] : roots) paths.emplace_back(std::move(path));
+    return paths;
+}
+
 // Attribute parsing
 DWORD ParseAttributes(const std::wstring_view& attributes) noexcept
 {

@@ -325,6 +325,15 @@ namespace Icons
         g.FillEllipse(&ringRed2,  27, 30, 10, 10);
     }
 
+    void PaintFolderAppend(Graphics& g)
+    {
+        PaintFileSelect(g);
+        const SolidBrush badgeBrush(C(40, 140, 50)), plusBrush(C(255, 255, 255));
+        g.FillEllipse(&badgeBrush, 36, 36, 28, 28);
+        g.FillRectangle(&plusBrush, 41, 47, 18, 6);
+        g.FillRectangle(&plusBrush, 47, 41, 6, 18);
+    }
+
     void PaintFilter(Graphics& g, const bool active)
     {
         const Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };

@@ -110,7 +110,7 @@ private:
 
 //
 // CSelectDrivesDlg. The initial dialog, where the user can select
-// one or more drives or a folder for scanning.
+// one or more drives or folders for scanning.
 //
 class CSelectDrivesDlg final : public MessageTarget<CSelectDrivesDlg, CLayoutDialog>
 {
@@ -137,8 +137,10 @@ protected:
     CComboBox m_browseList;
     CButton m_okButton;
     CStatic m_browseButton;
+    CStatic m_addFolderButton;
     CStatic m_filterButton;
     SmartPointer<HICON, decltype(&DestroyIcon)> m_browseIcon{ &DestroyIcon };
+    SmartPointer<HICON, decltype(&DestroyIcon)> m_addFolderIcon{ &DestroyIcon };
     SmartPointer<HICON, decltype(&DestroyIcon)> m_filterIcon{ &DestroyIcon };
     std::vector<std::wstring> m_selectedDrives;
     bool m_suppressItemChanged = false;
@@ -159,7 +161,9 @@ protected:
     void OnBnDoubleclickedRadio();
     void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    void OnBnClickedBrowseButton();
+    void BrowseFolders(bool append);
+    void OnBnClickedBrowseButton() { BrowseFolders(false); }
+    void OnBnClickedAddFolder() { BrowseFolders(true); }
     void OnBnClickedFilterButton();
     bool PreprocessMessage(MSG* pMsg) override;
     void OnEditchangeBrowseFolder();
@@ -181,6 +185,7 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
     static constexpr std::array entries
     {
         Route::Control<&OnBnClickedBrowseButton>(STN_CLICKED, IDC_BROWSE_BUTTON),
+        Route::Control<&OnBnClickedAddFolder>(STN_CLICKED, IDC_ADD_FOLDER),
         Route::Control<&OnBnClickedFilterButton>(STN_CLICKED, IDC_FILTER_BUTTON),
         Route::Control<&OnBnClickedFastScanCheckbox>(BN_CLICKED, IDC_FAST_SCAN_CHECKBOX),
         Route::Control<&OnBnClickedRadioTargetDrivesAll>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_ALL),

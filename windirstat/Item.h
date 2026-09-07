@@ -151,6 +151,7 @@ public:
     CItem* GetEnumRoot() const noexcept;
     CItem* GetParentDrive() const noexcept;
     CItem* GetVolumeRoot() const noexcept;
+    bool IsScanRoot() const noexcept;
     bool IsMtpRoot() const noexcept;
     bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP); }
     bool HasShellIdentity() const noexcept;
@@ -223,7 +224,8 @@ public:
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
-    static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
+    static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
+        std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr);
     static void ScanItemsFinalize(CItem* item);
 
     // CTreeMap Interface
