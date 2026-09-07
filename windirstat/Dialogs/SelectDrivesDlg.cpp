@@ -42,12 +42,6 @@ namespace
         std::tie(total, freeBytes) = CDirStatApp::GetFreeDiskSpace(path);
         return total != 0;
     }
-
-    std::wstring ResolveFullPath(const std::wstring& relativePath)
-    {
-        const SmartPointer path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
-        return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
-    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -297,6 +291,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDC_RADIO_TARGET_DRIVES_SUBSET, 0, 0, 1, 0);
     m_layout.AddControl(IDC_RADIO_TARGET_FOLDER, 0, 1, 0, 0);
     m_layout.AddControl(IDC_BROWSE_BUTTON, 1, 1, 0, 0);
+    m_layout.AddControl(IDC_ADD_FOLDER, 1, 1, 0, 0);
     m_layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
     m_layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
@@ -424,13 +419,8 @@ void CSelectDrivesDlg::OnOK()
     if (m_radio == RADIO_TARGET_FOLDER)
     {
         // Normalize every pipe-separated path on its own and rebuild the spec from the results
-        std::vector<std::wstring> folders;
-        for (auto& part : SplitString(m_folderName))
-        {
-            if (part.empty()) continue;
-            if (part.back() == L':') part.push_back(L'\\');
-            folders.emplace_back(ResolveFullPath(part));
-        }
+        const auto folders = NormalizeScanPaths(m_folderName);
+        if (folders.empty()) return;
         m_folderName = JoinString(folders);
 
         // Record each folder on its own rather than the joined spec: the history is persisted
@@ -503,9 +493,11 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
         if (!currentFolder.empty())
         {
             // Every pipe-separated path must be a UNC path or exist on disk
-            enableOk = std::ranges::all_of(SplitString(currentFolder), [](const std::wstring& part)
+            auto folders = SplitString(currentFolder);
+            std::erase(folders, std::wstring{});
+            enableOk = !folders.empty() && std::ranges::all_of(folders, [](const std::wstring& part)
             {
-                return !part.empty() && (part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part));
+                return part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part);
             });
         }
         break;
@@ -687,18 +679,16 @@ HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
     return brush ? brush : CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
-void CSelectDrivesDlg::OnBnClickedBrowseButton()
+void CSelectDrivesDlg::BrowseFolders(const bool append)
 {
     // Show dialog and validate results
-    const auto selectedFolder = PickFolder(this);
-    if (!selectedFolder) return;
-    const std::wstring& path = *selectedFolder;
+    const auto folders = PickFolders(this);
+    if (folders.empty()) return;
 
-    if (!FinderBasic::DoesFileExist(path)) return;
-
-    // Append to the current selection so several folders can be picked one after another
-    const std::wstring current = GetText(IDC_BROWSE_FOLDER);
-    SetText(IDC_BROWSE_FOLDER, current.empty() ? path : current + wds::chrPipe + path);
+    const std::wstring selected = JoinString(folders);
+    const std::wstring current = append ? GetText(IDC_BROWSE_FOLDER) : std::wstring{};
+    SetText(IDC_BROWSE_FOLDER, JoinString(NormalizeScanPaths(
+        current.empty() ? selected : current + wds::chrPipe + selected)));
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
     UpdateButtons();

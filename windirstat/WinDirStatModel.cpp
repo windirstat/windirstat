@@ -91,29 +91,21 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     // Expand All Files view to full window during scan
     CMainFrame::Get()->ExpandFileTabbedView();
 
-    // Decode list of folders to scan, discarding blanks left by trailing or doubled separators
-    std::vector<std::wstring> selections = SplitString(pathSpec);
-    std::erase_if(selections, [](const std::wstring& path) { return path.empty(); });
+    // Decode list of folders to scan, discarding blanks and selections already covered by another root
+    const std::vector<std::wstring> selections = NormalizeScanPaths(pathSpec);
+    if (selections.empty()) return false;
 
     // Prepare for new root and delete any existing data
     ClearScanState();
 
     // Persist the full scan spec, which may contain pipe-separated roots.
-    Get()->SetScanPathSpec(pathSpec);
+    Get()->SetScanPathSpec(JoinString(selections));
 
-    // Count number of drives to type the root of a single-selection scan
-    const std::wregex driveMatch(LR"(^[A-Za-z]:[\\]?$)", std::regex_constants::optimize);
-    const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [&](const std::wstring& str) {
-        return std::regex_match(str, driveMatch);
-    }));
-    // Count MTP roots so a single portable-device selection can be recognized
-    const auto mtpCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& path)
+    const auto isDrivePath = [](const std::wstring& path)
     {
-        return FinderMtp::IsPath(path);
-    }));
-
-    // Reject an empty path list
-    if (selections.empty()) return false;
+        return path.size() == 3 && path[1] == L':' && path[2] == L'\\' &&
+            (path[0] >= L'A' && path[0] <= L'Z' || path[0] >= L'a' && path[0] <= L'z');
+    };
 
     // Build and register an MTP root with its display name and shell path
     const auto createMtpItem = [](const std::wstring& path, const ITEMTYPE flags)
@@ -150,7 +142,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
                 continue;
             }
 
-            const bool isDrive = std::regex_match(rootFolder, driveMatch);
+            const bool isDrive = isDrivePath(rootFolder);
             const auto child = new CItem(isDrive ? IT_DRIVE : IT_DIRECTORY, rootFolder);
             m_rootItem->AddChild(child);
 
@@ -161,8 +153,8 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     else
     {
         // Create a storage-specific root for a single selection
-        const ITEMTYPE type = driveCount == 1 ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem = mtpCount == 1 ? createMtpItem(selections.front(), ITF_ROOTITEM) :
+        const ITEMTYPE type = isDrivePath(selections.front()) ? IT_DRIVE : IT_DIRECTORY;
+        m_rootItem = FinderMtp::IsPath(selections.front()) ? createMtpItem(selections.front(), ITF_ROOTITEM) :
             new CItem(type | ITF_ROOTITEM, selections.front());
         m_rootItem->UpdateStatsFromDisk();
     }

@@ -150,7 +150,7 @@ CItem* CItem::GetVolumeRoot() const noexcept
 bool CItem::IsScanRoot() const noexcept
 {
     // True for the tree root and for every selection placed directly under a multi-root container
-    return GetEnumRoot() == this;
+    return IsTypeOrFlag(ITF_ROOTITEM) || GetParent() == nullptr || GetParent()->IsTypeOrFlag(IT_MYCOMPUTER);
 }
 
 bool CItem::IsMtpRoot() const noexcept
@@ -972,11 +972,11 @@ void CItem::UpdateStatsFromDisk()
     }
 }
 
-void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic)
+void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
+    std::unordered_map<const CItem*, FinderBasicContext>* folderContexts)
 {
-    // Reuse one finder for each storage backend throughout this worker
+    // Reuse the NTFS and MTP finders throughout this worker
     FinderNtfs finderNtfs(&contextNtfs);
-    FinderBasic finderBasic(&contextBasic);
     FinderMtp finderMtp;
 
     for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
@@ -1002,6 +1002,17 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))
         {
+            auto* basicContext = &contextBasic;
+            if (folderContexts != nullptr)
+            {
+                // Descendants keep the context of the root initially assigned to this queue.
+                const CItem* root = item->GetVolumeRoot();
+                auto context = folderContexts->find(root);
+                while (context == folderContexts->end()) context = folderContexts->find(root = root->GetParent());
+                basicContext = &context->second;
+            }
+            FinderBasic finderBasic(basicContext);
+
             // Select the enumeration backend for the queued item
             Finder* finder = item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?

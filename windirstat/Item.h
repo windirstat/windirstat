@@ -55,8 +55,7 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_SET  = 1u << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
-    ITF_MULTIROOT  = 1u << 14, // Indicates one of several roots under a multi-folder scan
-    IT_MASK        = 0x00003FFF,
+    IT_MASK        = 0x0000FFFF,
 
     ITHASH_NONE    = 0u,       // Indicates no hash
     ITHASH_SKIP    = 1u << 16, // Indicates cannot be hashed (unreadable)
@@ -225,7 +224,8 @@ public:
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
-    static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
+    static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
+        std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr);
     static void ScanItemsFinalize(CItem* item);
 
     // CTreeMap Interface
