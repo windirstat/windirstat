@@ -277,6 +277,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     m_okButton.SubclassDlgItem(IDOK, this);
     m_browseList.SubclassDlgItem(IDC_BROWSE_FOLDER, this);
     m_browseButton.SubclassDlgItem(IDC_BROWSE_BUTTON, this);
+    m_addFolderButton.SubclassDlgItem(IDC_ADD_FOLDER, this);
     m_filterButton.SubclassDlgItem(IDC_FILTER_BUTTON, this);
 
     Localization::UpdateDialogs(*this);
@@ -339,6 +340,8 @@ bool CSelectDrivesDlg::OnInitDialog()
 
     m_browseIcon = Icons::MakeIcon(ScaleForDpi(16), Icons::PaintFileSelect);
     m_browseButton.SetIcon(m_browseIcon);
+    m_addFolderIcon = Icons::MakeIcon(ScaleForDpi(16), Icons::PaintFolderAppend);
+    m_addFolderButton.SetIcon(m_addFolderIcon);
     UpdateFilterButton();
 
     ShowWindow(SW_SHOWNORMAL);

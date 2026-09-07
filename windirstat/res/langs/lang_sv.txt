@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Varning
 IDS_DELETE_WARNING=Du är på väg att ta bort de filer som listas nedan från din dator. Det är ditt ansvar att kontrollera om det är säkert att ta bort dessa filer. Att ta bort viktiga systemfiler kan leda till funktionsfel i systemet.\n\nVill du fortsätta?
 IDS_DONT_SHOW_AGAIN=Visa inte detta meddelande igen.
 IDS_DRIVE_ITEM_FREEsTOTALs={} ledigt av {}
-IDS_DRIVES_ADD=&Lägg till...
 IDS_DRIVES_ALL=&Alla lokala enheter
 IDS_DRIVES_FOLDER=Enskilda &mappar
 IDS_DRIVES_SUBSET=Ensk&ilda enheter

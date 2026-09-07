@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Figyelmeztetés
 IDS_DELETE_WARNING=Az alábbi fájlokat törölni készül a számítógépéről. Önt terheli a felelősség annak ellenőrzéséért, hogy ezen fájlok törlése biztonságos-e. Fontos rendszerfájlok törlése rendszerhibához vezethet.\n\nFolytatja?
 IDS_DONT_SHOW_AGAIN=Ne jelenjen meg többé ez az üzenet.
 IDS_DRIVE_ITEM_FREEsTOTALs={} szabad a(z) {} -ból
-IDS_DRIVES_ADD=&Hozzáadás...
 IDS_DRIVES_ALL=Minden helyi megh&ajtó
 IDS_DRIVES_FOLDER=&Mappák
 IDS_DRIVES_SUBSET=&Kijelölt meghajtó(k)

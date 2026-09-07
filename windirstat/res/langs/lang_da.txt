@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Advarsel
 IDS_DELETE_WARNING=Du er ved at slette filerne nedenfor fra din computer. Det er dit ansvar at kontrollere, om det er sikkert at slette disse filer. Sletning af vigtige systemfiler kan resultere i systemfejl.\n\nVil du fortsætte?
 IDS_DONT_SHOW_AGAIN=&Vis ikke denne besked igen.
 IDS_DRIVE_ITEM_FREEsTOTALs={} fri for {}
-IDS_DRIVES_ADD=&Tilføj...
 IDS_DRIVES_ALL=Alle lokale drev
 IDS_DRIVES_FOLDER=Individuelle &mapper
 IDS_DRIVES_SUBSET=&Individuelle drev

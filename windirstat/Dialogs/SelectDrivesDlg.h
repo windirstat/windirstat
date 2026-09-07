@@ -137,8 +137,10 @@ protected:
     CComboBox m_browseList;
     CButton m_okButton;
     CStatic m_browseButton;
+    CStatic m_addFolderButton;
     CStatic m_filterButton;
     SmartPointer<HICON, decltype(&DestroyIcon)> m_browseIcon{ &DestroyIcon };
+    SmartPointer<HICON, decltype(&DestroyIcon)> m_addFolderIcon{ &DestroyIcon };
     SmartPointer<HICON, decltype(&DestroyIcon)> m_filterIcon{ &DestroyIcon };
     std::vector<std::wstring> m_selectedDrives;
     bool m_suppressItemChanged = false;
@@ -189,7 +191,7 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
     static constexpr std::array entries
     {
         Route::Control<&OnBnClickedBrowseButton>(STN_CLICKED, IDC_BROWSE_BUTTON),
-        Route::Control<&OnBnClickedAddFolder>(BN_CLICKED, IDC_ADD_FOLDER),
+        Route::Control<&OnBnClickedAddFolder>(STN_CLICKED, IDC_ADD_FOLDER),
         Route::Control<&OnBnClickedFilterButton>(STN_CLICKED, IDC_FILTER_BUTTON),
         Route::Control<&OnBnClickedFastScanCheckbox>(BN_CLICKED, IDC_FAST_SCAN_CHECKBOX),
         Route::Control<&OnBnClickedRadioTargetDrivesAll>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_ALL),

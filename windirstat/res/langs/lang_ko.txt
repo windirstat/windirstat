@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=경고
 IDS_DELETE_WARNING=아래 나열된 파일들을 컴퓨터에서 삭제하려고 합니다. 이 파일들을 삭제해도 안전한지 확인하는 책임은 사용자에게 있습니다. 중요한 시스템 파일을 삭제하면 시스템이 오작동할 수 있습니다.\n\n계속하시겠습니까?
 IDS_DONT_SHOW_AGAIN=이 메시지를 다시 표시하지 않습니다(&D).
 IDS_DRIVE_ITEM_FREEsTOTALs={} 사용 가능 / 전체 {}
-IDS_DRIVES_ADD=추가(&D)...
 IDS_DRIVES_ALL=모든 물리적 드라이브(&A)
 IDS_DRIVES_FOLDER=개별 폴더(&F)
 IDS_DRIVES_SUBSET=개별 드라이브(&I)

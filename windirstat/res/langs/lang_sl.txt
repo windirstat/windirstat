@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Opozorilo
 IDS_DELETE_WARNING=Na tem mestu boste izbrisali spodaj navedene datoteke iz vašega računalnika. Vaša odgovornost je preveriti, ali je brisanje teh datotek varno. Brisanje pomembnih sistemskih datotek lahko povzroči okvaro sistema.\n\nŽelite nadaljevati?
 IDS_DONT_SHOW_AGAIN=&Ne prikaži več tega sporočila.
 IDS_DRIVE_ITEM_FREEsTOTALs={} prosto od {}
-IDS_DRIVES_ADD=&Dodaj...
 IDS_DRIVES_ALL=Vsi &lokalni pogoni
 IDS_DRIVES_FOLDER=Posamezne &mape
 IDS_DRIVES_SUBSET=Posamezni &pogoni

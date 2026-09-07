@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Warnung
 IDS_DELETE_WARNING=Sie sind im Begriff, die unten aufgeführten Dateien von Ihrem Computer zu löschen. Sie sind selbst verantwortlich dafür zu prüfen, ob das Löschen dieser Dateien sicher ist. Das Löschen wichtiger Systemdateien könnte zu Systemfehlern führen.\n\nMöchten Sie fortfahren?
 IDS_DONT_SHOW_AGAIN=Diese Meldung nicht mehr anzeigen.
 IDS_DRIVE_ITEM_FREEsTOTALs={} frei von {}
-IDS_DRIVES_ADD=&Hinzufügen...
 IDS_DRIVES_ALL=&Alle lokalen Laufwerke
 IDS_DRIVES_FOLDER=Einzelne &Verzeichnisse
 IDS_DRIVES_SUBSET=&Einzelne Laufwerke

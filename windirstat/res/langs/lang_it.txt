@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Avvertenza
 IDS_DELETE_WARNING=Verranno eliminati dal computer i file elencati qui di seguito.\nÈ tua responsabilità verificare se l'eliminazione di questi file è sicura.\nL’eliminazione di file di sistema importanti potrebbe causare un malfunzionamento del sistema.\n\nVuoi continuare?
 IDS_DONT_SHOW_AGAIN=Non visualizzare più questo messaggio.
 IDS_DRIVE_ITEM_FREEsTOTALs={} liberi su {}
-IDS_DRIVES_ADD=A&ggiungi...
 IDS_DRIVES_ALL=&Tutte le unità locali
 IDS_DRIVES_FOLDER=&Cartelle personalizzate
 IDS_DRIVES_SUBSET=&Singole unità

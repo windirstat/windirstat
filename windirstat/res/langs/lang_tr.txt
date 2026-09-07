@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Uyarı
 IDS_DELETE_WARNING=Aşağıda listelenen dosyaları bilgisayarınızdan silmek üzere olduğunuz. Bu dosyaları silmenin güvenli olup olmadığını kontrol etmek sizin sorumluluğunuzdadır. Önemli sistem dosyalarının silinmesi sistemin çalışmamasına neden olabilir.\n\nDevam etmek istiyor musunuz?
 IDS_DONT_SHOW_AGAIN=Bu mesajı bir daha gösterme.
 IDS_DRIVE_ITEM_FREEsTOTALs={} boş, toplam {}
-IDS_DRIVES_ADD=&Ekle...
 IDS_DRIVES_ALL=&Tüm Yerel Sürücüler
 IDS_DRIVES_FOLDER=&Dizinler
 IDS_DRIVES_SUBSET=&Tek Sürücüler

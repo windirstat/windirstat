@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Avertissement
 IDS_DELETE_WARNING=Vous êtes sur le point de supprimer les fichiers listés ci-dessous de votre ordinateur. Il vous appartient de vérifier si la suppression de ces fichiers est sans danger. La suppression de fichiers système importants pourrait entraîner un dysfonctionnement du système.\n\nSouhaitez-vous continuer ?
 IDS_DONT_SHOW_AGAIN=Ne plus afficher ce message.
 IDS_DRIVE_ITEM_FREEsTOTALs={} libre sur {}
-IDS_DRIVES_ADD=A&jouter...
 IDS_DRIVES_ALL=Tous les lecteurs loc&aux
 IDS_DRIVES_FOLDER=&Dossiers individuels
 IDS_DRIVES_SUBSET=Certains &lecteurs

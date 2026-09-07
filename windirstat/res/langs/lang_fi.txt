@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Veroitus
 IDS_DELETE_WARNING=Olet poistamassa alla lueteltuja tiedostoja tietokoneeltasi. On sinun vastuullasi varmistaa, onko näiden tiedostojen poistaminen turvallista. Tärkeiden järjestelmätiedostojen poistaminen voi johtaa järjestelmän toimintahäiriöihin.\n\nHaluatko jatkaa?
 IDS_DONT_SHOW_AGAIN=Älä näytä tätä viestiä uudelleen.
 IDS_DRIVE_ITEM_FREEsTOTALs={} vapaata, {} yhteensä
-IDS_DRIVES_ADD=&Lisää...
 IDS_DRIVES_ALL=Kaikki &paikalliset asemat
 IDS_DRIVES_FOLDER=&Kansiot
 IDS_DRIVES_SUBSET=&Valitut asemat

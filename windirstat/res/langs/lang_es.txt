@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=Advertencia
 IDS_DELETE_WARNING=Está a punto de eliminar los archivos indicados a continuación de su equipo. Es su responsabilidad verificar si es seguro eliminar estos archivos. La eliminación de archivos de sistema importantes podría provocar un mal funcionamiento del sistema.\n\n¿Desea continuar?
 IDS_DONT_SHOW_AGAIN=No mostrar este mensaje de nuevo.
 IDS_DRIVE_ITEM_FREEsTOTALs={} libre de {}
-IDS_DRIVES_ADD=&Añadir...
 IDS_DRIVES_ALL=&Todos los Discos Locales
 IDS_DRIVES_FOLDER=&Carpetas individuales
 IDS_DRIVES_SUBSET=Discos &Individuales

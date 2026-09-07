@@ -51,7 +51,6 @@ IDS_DELETE_TITLE=警告
 IDS_DELETE_WARNING=您即將從電腦中刪除下列檔案。您有責任確認刪除此等檔案是否安全。刪除重要的系統檔案可能導致系統故障。\n\n是否要繼續？
 IDS_DONT_SHOW_AGAIN=不再顯示此訊息。
 IDS_DRIVE_ITEM_FREEsTOTALs=剩餘 {}，共 {}
-IDS_DRIVES_ADD=新增(&D)...
 IDS_DRIVES_ALL=所有本機磁碟(&A)
 IDS_DRIVES_FOLDER=個別資料夾(&F)
 IDS_DRIVES_SUBSET=個別磁碟機(&I)
