@@ -18,48 +18,55 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPageAdvanced. "Settings" property page "Advanced".
 //
-class CPageAdvanced final : public CMFCPropertyPage
+class CPageAdvanced final : public MessageTarget<CPageAdvanced, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageAdvanced)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_ADVANCED };
 
     CPageAdvanced();
     ~CPageAdvanced() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
-    BOOL m_excludeJunctions = TRUE;
-    BOOL m_excludeVolumeMountPoints = TRUE;
-    BOOL m_excludeSymbolicLinksDirectory = TRUE;
-    BOOL m_skipDupeDetectionCloudLinks = TRUE;
-    BOOL m_skipHiddenDirectory = FALSE;
-    BOOL m_skipProtectedDirectory = FALSE;
-    BOOL m_excludeSymbolicLinksFile = TRUE;
-    BOOL m_skipHiddenFile = FALSE;
-    BOOL m_skipProtectedFile = FALSE;
-    BOOL m_useBackupRestore = FALSE;
-    BOOL m_processHardlinks = TRUE;
-    int m_scanningThreads = 0;
-    int m_fileHashAlgorithm = HASH_SHA512;
-    CStringW m_largestFileCount;
-    CStringW m_folderHistoryCount;
+public:
+    static std::span<const RouteEntry> Routes();
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnEnChangeLargestFileCount();
-    afx_msg void OnEnChangeFolderHistoryCount();
-    afx_msg void OnSettingChanged();
-    afx_msg void OnBnClickedResetPreferences();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+protected:
+    CComboBox m_priorityCombo;
+
+    void OnEnChangeLargestFileCount();
+    void OnEnChangeFolderHistoryCount();
+    void OnBnClickedResetPreferences();
 };
+
+inline std::span<const RouteEntry> CPageAdvanced::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_BACKUP_RESTORE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_DIRECTORY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_DIRECTORY),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_COMBO_THREADS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_HASH_ALGORITHM),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_PROCESS_PRIORITY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_VOLUME_MOUNT_POINTS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_JUNCTIONS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_DIRECTORY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SKIP_CLOUD_LINKS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_SYMLINKS_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_HIDDEN_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_FILE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PROCESS_HARDLINKS),
+        Route::Control<&OnBnClickedResetPreferences>(BN_CLICKED, IDC_RESET_PREFERENCES),
+        Route::Control<&OnEnChangeLargestFileCount>(EN_CHANGE, IDC_LARGEST_FILE_COUNT),
+        Route::Control<&OnEnChangeFolderHistoryCount>(EN_CHANGE, IDC_FOLDER_HISTORY_COUNT),
+    };
+    return entries;
+}

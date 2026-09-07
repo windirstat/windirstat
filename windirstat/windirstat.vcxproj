@@ -38,28 +38,28 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -67,7 +67,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
@@ -75,7 +75,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -496,7 +496,10 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Controls\DrawTextCache.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
+    <ClInclude Include="Controls\TreeMapLayout.h" />
+    <ClInclude Include="Controls\HilbertMooreTreeMap.h" />
     <ClInclude Include="Controls\FlameGraph.h" />
+    <ClInclude Include="Controls\Sunburst.h" />
     <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Controls\FileSearchControl.h" />
     <ClInclude Include="DarkMode.h" />
@@ -509,6 +512,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Pages\PagePrompts.h" />
     <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
+    <ClInclude Include="FinderMtp.h" />
     <ClInclude Include="FinderNtfs.h" />
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
@@ -536,21 +540,25 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Pages\PageCleanups.h" />
     <ClInclude Include="Pages\PageGeneral.h" />
     <ClInclude Include="Pages\PageFileTree.h" />
+    <ClInclude Include="Pages\PageShared.h" />
     <ClInclude Include="Pages\PageTreeMap.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SelectObject.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Views\ExtensionView.h" />
     <ClInclude Include="Views\WinDirStatPane.h" />
+    <ClInclude Include="Views\GraphView.h" />
+    <ClInclude Include="Views\VisualizationPane.h" />
     <ClInclude Include="Views\StorageAnalyticsView.h" />
     <ClInclude Include="Views\FileTabbedView.h" />
     <ClInclude Include="Views\FileTreeView.h" />
     <ClInclude Include="Views\TreeMapView.h" />
     <ClInclude Include="Views\FlameGraphView.h" />
+    <ClInclude Include="Views\SunburstView.h" />
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
+    <ClInclude Include="UiFramework.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\ExtensionListControl.cpp" />
@@ -564,10 +572,14 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\DrawTextCache.cpp" />
     <ClCompile Include="Controls\TreeListControl.cpp" />
     <ClCompile Include="Controls\TreeMap.cpp" />
+    <ClCompile Include="Controls\TreeMapLayout.cpp" />
+    <ClCompile Include="Controls\HilbertMooreTreeMap.cpp" />
     <ClCompile Include="Controls\FlameGraph.cpp" />
+    <ClCompile Include="Controls\Sunburst.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DarkMode.cpp" />
+    <ClCompile Include="UiFramework.cpp" />
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
     <ClCompile Include="WinDirStatModel.cpp">
@@ -579,6 +591,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\ControlView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
+    <ClCompile Include="FinderMtp.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="HelpersTasks.cpp">
     </ClCompile>
@@ -610,6 +623,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     </ClCompile>
     <ClCompile Include="Pages\PageFileTree.cpp">
     </ClCompile>
+    <ClCompile Include="Pages\PageShared.cpp" />
     <ClCompile Include="Pages\PageTreeMap.cpp">
     </ClCompile>
     <ClCompile Include="Property.cpp" />
@@ -624,11 +638,14 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     </ClCompile>
     <ClCompile Include="Views\ExtensionView.cpp" />
     <ClCompile Include="Views\WinDirStatPane.cpp" />
+    <ClCompile Include="Views\GraphView.cpp" />
+    <ClCompile Include="Views\VisualizationPane.cpp" />
     <ClCompile Include="Views\StorageAnalyticsView.cpp" />
     <ClCompile Include="Views\FileTabbedView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />
     <ClCompile Include="Views\TreeMapView.cpp" />
     <ClCompile Include="Views\FlameGraphView.cpp" />
+    <ClCompile Include="Views\SunburstView.cpp" />
     <ClCompile Include="WinDirStat.cpp">
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
@@ -685,8 +702,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
   </PropertyGroup>
   <Target Name="DownloadXXHash" BeforeTargets="PrepareForBuild">
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(XXHashHeaderPath)'))" />
-    <Exec Condition="!Exists('$(XXHashHeaderPath)') Or !Exists('$(XXHashSourcePath)')"
-          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$tag = 'v0.8.3'; try { $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/Cyan4973/xxHash/releases/latest' -UseBasicParsing -TimeoutSec 5; if ($release.tag_name) { $tag = $release.tag_name } } catch {}; if (!(Test-Path '$(XXHashHeaderPath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.h') -OutFile '$(XXHashHeaderPath)' -UseBasicParsing }; if (!(Test-Path '$(XXHashSourcePath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.c') -OutFile '$(XXHashSourcePath)' -UseBasicParsing }&quot;" />
+    <Exec Condition="!Exists('$(XXHashHeaderPath)') Or !Exists('$(XXHashSourcePath)')" Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$tag = 'v0.8.3'; try { $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/Cyan4973/xxHash/releases/latest' -UseBasicParsing -TimeoutSec 5; if ($release.tag_name) { $tag = $release.tag_name } } catch {}; if (!(Test-Path '$(XXHashHeaderPath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.h') -OutFile '$(XXHashHeaderPath)' -UseBasicParsing }; if (!(Test-Path '$(XXHashSourcePath)')) { Invoke-WebRequest -Uri ('https://raw.githubusercontent.com/Cyan4973/xxHash/' + $tag + '/xxhash.c') -OutFile '$(XXHashSourcePath)' -UseBasicParsing }&quot;" />
   </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="PropertySheets">

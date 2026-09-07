@@ -75,7 +75,7 @@ public:
     ACCESS_MASK GetAccessMask() const { return m_mask; }
     bool IsDeny() const { return m_deny; }
     bool IsInheritanceDisabled() const { return m_inheritanceDisabled; }
-    std::wstring GetAppliesText() const;
+    std::wstring GetAppliesText() const { return GetAppliesName(m_applies, m_isContainer); }
 
     // Rights summarization and inheritance-scope helpers
     static PERMSLEVEL ComputeRightsLevel(ACCESS_MASK mask);

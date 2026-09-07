@@ -31,35 +31,62 @@ constexpr auto COLBN_CHANGED = 0x87;
 // When the user chose a color, the parent is notified via WM_NOTIFY
 // and the notification code COLBN_CHANGED.
 //
-class CColorButton final : public CButton
+class CColorButton final : public MessageTarget<CColorButton, CButton>
 {
 public:
-    COLORREF GetColor() const;
-    void SetColor(COLORREF color);
+    COLORREF GetColor() const { return m_preview.GetColor(); }
+    void SetColor(const COLORREF color) { m_preview.SetColor(color); }
 
 private:
     // The color preview is an own little child window of the button.
-    class CPreview final : public CWnd
+    class CPreview final : public MessageTarget<CPreview, CWnd>
     {
     public:
         CPreview() = default;
-        COLORREF GetColor() const;
+        COLORREF GetColor() const { return m_color; }
         void SetColor(COLORREF color);
 
     private:
         COLORREF m_color = 0;
 
-        DECLARE_MESSAGE_MAP()
-        afx_msg void OnPaint();
-        afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    public:
+        static std::span<const RouteEntry> Routes();
+
+    protected:
+        void OnPaint();
+        void OnLButtonDown(UINT nFlags, CPoint point) const;
     };
 
     CPreview m_preview;
 
+public:
+    static std::span<const RouteEntry> Routes();
+
 protected:
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnPaint();
-    afx_msg void OnDestroy();
-    afx_msg void OnBnClicked();
-    afx_msg void OnEnable(BOOL bEnable);
+    void OnPaint();
+    void OnDestroy();
+    void OnBnClicked();
+    void OnEnable(bool bEnable);
 };
+
+inline std::span<const RouteEntry> CColorButton::CPreview::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CColorButton::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::ReflectControl<&OnBnClicked>(BN_CLICKED),
+        Route::Window<&OnEnable>(WM_ENABLE),
+    };
+    return entries;
+}

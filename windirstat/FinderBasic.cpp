@@ -20,16 +20,16 @@
 
 #pragma comment(lib,"ntdll.lib")
 
-static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
-    PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
-    ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
-    PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
-        static_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile")));
+using NtQueryDirectoryFileFn = NTSTATUS(WINAPI*)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID,
+    ULONG, FILE_INFORMATION_CLASS, BOOLEAN, PUNICODE_STRING, BOOLEAN);
+static const auto NtQueryDirectoryFile = reinterpret_cast<NtQueryDirectoryFileFn>(
+    GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile"));
 
 bool FinderBasic::FindNext()
 {
+    const bool firstRun = (m_currentInfo == nullptr);
     bool success = false;
-    if (m_firstRun || m_currentInfo->NextEntryOffset == 0)
+    if (firstRun || m_currentInfo->NextEntryOffset == 0)
     {
         UNICODE_STRING uSearch
         {
@@ -38,19 +38,37 @@ bool FinderBasic::FindNext()
             .Buffer = m_search.data()
         };
 
-        constexpr auto BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
-        thread_local std::vector<LARGE_INTEGER> m_directoryInfo(BUFFER_SIZE / sizeof(LARGE_INTEGER));
+        constexpr auto LOCAL_BUFFER_SIZE = static_cast<ULONG>(4 * wds::Mi);
+        constexpr auto REMOTE_BUFFER_SIZE = static_cast<ULONG>(64 * wds::Ki);
+        thread_local std::vector<LARGE_INTEGER> m_directoryInfo(LOCAL_BUFFER_SIZE / sizeof(LARGE_INTEGER));
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
 
         std::call_once(m_context->InitOnce, [&]
         {
+            // Larger buffers fail on older network redirectors (issue #631).
+            m_context->IsRemoteVolume = m_isUncPath || (m_base.find(L":\\", 1) == 1 &&
+                GetDriveType(m_base.substr(0, 3).c_str()) == DRIVE_REMOTE);
+            const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
+
+            FILE_REMOTE_PROTOCOL_INFO protocolInfo = {};
+            if (m_context->IsRemoteVolume &&
+                GetFileInformationByHandleEx(m_handle, FileRemoteProtocolInfo,
+                    &protocolInfo, sizeof(protocolInfo)) && protocolInfo.Protocol == WNNC_NET_9P)
+            {
+                ULARGE_INTEGER volumeCapacity;
+                const std::wstring& rootPath = m_context->RootPath.empty() ? m_base : m_context->RootPath;
+                if (GetDiskFreeSpaceEx(rootPath.c_str(), nullptr, &volumeCapacity, nullptr))
+                    m_context->VolumeCapacity = volumeCapacity.QuadPart;
+            }
+
             if (!m_isUncPath)
             {
                 const NTSTATUS status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                    m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
-                    FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
+                    m_directoryInfo.data(), bufferSize,
+                    static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation), false,
+                    (uSearch.Length > 0) ? &uSearch : nullptr, true);
                 m_context->SupportsFileId = (status == 0);
 
                 DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
@@ -62,11 +80,12 @@ bool FinderBasic::FindNext()
             }
         });
 
+        const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
         const auto QueryDirectory = [&](const FILE_INFORMATION_CLASS infoClass)
         {
             return NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                m_directoryInfo.data(), BUFFER_SIZE, infoClass, FALSE,
-                (uSearch.Length > 0) ? &uSearch : nullptr, (m_firstRun) ? TRUE : FALSE);
+                m_directoryInfo.data(), bufferSize, infoClass, false,
+                (uSearch.Length > 0) ? &uSearch : nullptr, firstRun);
         };
 
         constexpr NTSTATUS STATUS_INVALID_INFO_CLASS = static_cast<NTSTATUS>(0xC0000003L);
@@ -113,7 +132,7 @@ bool FinderBasic::FindNext()
         // special case for reparse points on the initial run since it will
         // return the attributes on the destination folder and not the reparse
         // point attributes itself that we want
-        if (m_firstRun)
+        if (firstRun)
         {
             // Use cached value passed in from previous capture
             if (m_name == L".")
@@ -154,14 +173,42 @@ bool FinderBasic::FindNext()
                 handle != INVALID_HANDLE_VALUE)
             {
                 DWORD returned = 0;
-                if (auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
+                if (const auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
                     DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
                         buf->data(), static_cast<DWORD>(buf->size()), &returned, nullptr))
                 {
-                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf->data());
-                    if (Finder::IsJunction(rp))
+                    if (auto& rp = *reinterpret_cast<REPARSE_DATA_BUFFER*>(buf->data()); IsJunction(rp))
                         m_reparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
                 }
+            }
+        }
+
+        // The WSL 9P redirector can replace a valid zero allocation with the logical
+        // size. Drop impossible values, querying the current mount only when the cached
+        // root capacity is exceeded. Zero-capacity filesystems have no disk-backed size.
+        if (m_context->VolumeCapacity.has_value() && !IsDirectory() &&
+            m_currentInfo->AllocationSize.QuadPart > 0 &&
+            static_cast<ULONGLONG>(m_currentInfo->AllocationSize.QuadPart) > m_context->VolumeCapacity.value())
+        {
+            if (!m_baseCapacityQueried)
+            {
+                m_baseCapacityQueried = true;
+                if (m_context->VolumeCapacity.value() == 0)
+                {
+                    m_baseCapacity = 0;
+                }
+                else
+                {
+                    ULARGE_INTEGER baseCapacity;
+                    if (GetDiskFreeSpaceEx(m_base.c_str(), nullptr, &baseCapacity, nullptr))
+                        m_baseCapacity = baseCapacity.QuadPart;
+                }
+            }
+            if (m_baseCapacity.has_value() &&
+                static_cast<ULONGLONG>(m_currentInfo->AllocationSize.QuadPart) > m_baseCapacity.value())
+            {
+                m_currentInfo->AllocationSize.QuadPart = 0;
+                if (m_baseCapacity.value() == 0) m_currentInfo->EndOfFile.QuadPart = 0;
             }
         }
 
@@ -177,8 +224,8 @@ bool FinderBasic::FindNext()
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
-            const DWORD lowPart = GetCompressedFileSize(GetFilePathLongCached().c_str(), &highPart);
-            if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
+            if (const DWORD lowPart = GetCompressedFileSize(GetFilePathLongCached().c_str(), &highPart);
+                lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
             {
                 m_currentInfo->AllocationSize.LowPart = lowPart;
                 m_currentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
@@ -200,11 +247,8 @@ bool FinderBasic::FindNext()
         }
     }
 
-    m_firstRun = false;
-
     if (success && !m_statMode && (m_name == L"." || m_name == L"..")) return FindNext();
-    else return success;
-}
+    return success;}
 
 bool FinderBasic::FindFile(const CItem* item)
 {
@@ -214,10 +258,11 @@ bool FinderBasic::FindFile(const CItem* item)
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // initialize run
-    m_firstRun = true;
     m_initialAttributes = attr;
     m_currentInfo = nullptr;
     m_reparseTag = 0;
+    m_baseCapacity.reset();
+    m_baseCapacityQueried = false;
     m_base = strFolder;
     m_search = strName;
 
@@ -265,54 +310,16 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
         VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_baseNt.data());
-        return FALSE;
+        return false;
     }
 
     // do initial search
     return FindNext();
 }
 
-DWORD FinderBasic::GetAttributes() const
-{
-    return m_currentInfo->FileAttributes;
-}
-
-std::wstring FinderBasic::GetFileName() const
-{
-    return m_name;
-}
-
-ULONGLONG FinderBasic::GetFileSizePhysical() const
-{
-    return m_currentInfo->AllocationSize.QuadPart;
-}
-
-ULONGLONG FinderBasic::GetFileSizeLogical() const
-{
-    return m_currentInfo->EndOfFile.QuadPart;
-}
-
 ULONGLONG FinderBasic::GetIndex() const
 {
     return m_context->SupportsFileId ? m_currentInfo->IdInfo.FileId.QuadPart : 0;
-}
-
-FILETIME FinderBasic::GetLastWriteTime() const
-{
-    return { m_currentInfo->LastWriteTime.LowPart,
-        static_cast<DWORD>(m_currentInfo->LastWriteTime.HighPart) };
-}
-
-std::wstring FinderBasic::GetFilePath() const
-{
-    // m_base is kept in clean Win32 form (the NT \??\ form lives only in
-    // m_baseNt), so the full path is a direct concatenation with the name
-    return m_base + m_name;
-}
-
-DWORD FinderBasic::GetReparseTag() const
-{
-    return m_reparseTag;
 }
 
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)

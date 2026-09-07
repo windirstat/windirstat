@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "Filtering.h"
-#include "Finder.h"
 #include "HelpersInterface.h"
 #include "Options.h"
 
@@ -34,7 +33,7 @@ bool      CFiltering::FilterActive          = false;
 
 // --- Private helpers ---
 
-static bool HasUnescapedTrailingDollar(std::wstring_view pattern)
+static bool HasUnescapedTrailingDollar(const std::wstring_view pattern)
 {
     if (pattern.empty() || pattern.back() != L'$') return false;
 
@@ -52,12 +51,23 @@ static std::wstring MatchDirectoryAndDescendants(std::wstring pattern)
     return L"(?:" + pattern + L")(?:\\\\.*)?";
 }
 
+static bool CompareThreshold(const ULONGLONG value, const ULONGLONG threshold, const int comparison)
+{
+    return comparison == 1 ? (value > threshold) : (value < threshold);
+}
+
+static bool CompareFileAge(const FILETIME& lastWriteTime, const FILETIME& cutoff, const int comparison)
+{
+    const int lastWriteCmp = CompareFileTime(&lastWriteTime, &cutoff);
+    return comparison == 1 ? (lastWriteCmp < 0) : (lastWriteCmp > 0);
+}
+
 // Extracts the longest fixed-path prefix from an include-dir pattern that can
 // be used as a scan anchor (i.e., the deepest directory that must exist for
 // the pattern to ever match). Examples:
 //   "C:\Windows\Sys*" -> "C:\Windows"
 //   "*\foo" -> ""
-std::wstring CFiltering::ExtractIncludeAnchor(std::wstring_view pattern, const bool useRegex)
+std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, const bool useRegex)
 {
     constexpr std::wstring_view literalEscapes = LR"(\.+*?^$|()[]{}/)";
     constexpr std::wstring_view regexSpecials = LR"(.+*?^$|()[]{})";
@@ -105,7 +115,7 @@ std::wstring CFiltering::ExtractIncludeAnchor(std::wstring_view pattern, const b
 
 // In path filters, treat single backslashes as Windows separators even in regex
 // mode. Already escaped separators and escaped regex metacharacters are preserved.
-std::wstring CFiltering::NormalizePathRegex(std::wstring_view pattern)
+std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
 {
     constexpr std::wstring_view preservedEscapes = L"\\.+*?()[]{}^$|";
     std::wstring result;
@@ -131,11 +141,6 @@ std::wstring CFiltering::NormalizePathRegex(std::wstring_view pattern)
 }
 
 // --- Public methods ---
-
-bool CFiltering::IsFilterActive()
-{
-    return FilterActive;
-}
 
 void CFiltering::CompileFilters()
 {
@@ -191,11 +196,9 @@ void CFiltering::CompileFilters()
     MaxAgeFileTimeCutoff = {};
     if (COptions::FilteringMaxAgeDays > 0)
     {
-        FILETIME ft;
-        GetSystemTimeAsFileTime(&ft); // Windows 7 compatible
-        uint64_t t = (uint64_t(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        uint64_t t = std::bit_cast<uint64_t>(CurrentSystemFileTime());
         t -= COptions::FilteringMaxAgeDays.Obj() * 864'000'000'000ULL; // 100ns ticks per day
-        MaxAgeFileTimeCutoff ={ DWORD(t), DWORD(t >> 32) };
+        MaxAgeFileTimeCutoff = std::bit_cast<FILETIME>(t);
     }
 
     // Cache whether any filter is active so callers can short-circuit cheaply
@@ -205,7 +208,7 @@ void CFiltering::CompileFilters()
                    std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0;
 
     // Rebuild toolbar to reflect status
-    CMainFrame::Get()->RebuildToolBar();
+    if (auto* frame = CMainFrame::Get(); frame != nullptr) frame->RebuildToolBar();
 }
 
 std::wstring_view CFiltering::WithoutTrailingBackslashes(std::wstring_view path)
@@ -251,7 +254,7 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
 }
 
 bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
-    ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
+    const ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
 {
     if (!FilterActive) return false;
 
@@ -275,16 +278,17 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
         return true;
     }
 
-    // Exclude files below the minimum size threshold
-    if (SizeMinimumCalculated > 0 && fileSizeLogical < SizeMinimumCalculated)
+    // Exclude files beyond the size threshold based on comparison selection
+    if (SizeMinimumCalculated > 0 &&
+        CompareThreshold(fileSizeLogical, SizeMinimumCalculated, COptions::FilteringSizeComparison))
     {
         return true;
     }
 
-    // Exclude files older than the max-age cutoff
+    // Exclude files outside the max-age cutoff based on comparison selection
     if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
     {
-        if (CompareFileTime(&lastWriteTime, &MaxAgeFileTimeCutoff) < 0)
+        if (CompareFileAge(lastWriteTime, MaxAgeFileTimeCutoff, COptions::FilteringMaxAgeComparison))
             return true;
     }
 

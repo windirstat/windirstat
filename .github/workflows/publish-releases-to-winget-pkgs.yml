@@ -31,14 +31,34 @@ jobs:
     if: ${{ needs.get-version.outputs.skip != 'true' }}
     runs-on: windows-latest
     steps:
-      - name: Call winget-releaser action
-        uses: vedantmgoyal9/winget-releaser@main
+      - uses: actions/checkout@v4
+      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
         with:
-          identifier: WinDirStat.WinDirStat
-          version: ${{ needs.get-version.outputs.version }}
-          installers-regex: '\.(msi|msixbundle)$'
-          token: ${{ secrets.WINGET_TOKEN }}
-          release-notes-url: https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md#windirstat-${{ needs.get-version.outputs.version }}
+          version: v1.21.1
+      - name: Install Komac 2.16.0
+        # This version writes --output manifests before --dry-run exits, allowing the locale correction below.
+        run: |
+          cargo binstall komac@2.16.0 --no-confirm
+          if ((komac --version) -ne "komac 2.16.0") { throw "Unexpected Komac version." }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Publish corrected WinGet manifests
+        run: |
+          $Parameters = @{
+              PackageIdentifier = "WinDirStat.WinDirStat"
+              PackageVersion = "${{ needs.get-version.outputs.version }}"
+              ReleaseRepository = "${{ github.repository }}"
+              ReleaseTag = "${{ github.ref_name }}"
+              ReleaseNotesUrl = "https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md" +
+                  "#windirstat-${{ needs.get-version.outputs.version }}"
+          }
+          .\.github\scripts\Publish-WinGetPackage.ps1 @Parameters
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          KOMAC_FORK_OWNER: ${{ github.repository_owner }}
 
   publish-chocolatey:
     needs: get-version

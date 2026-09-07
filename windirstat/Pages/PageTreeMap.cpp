@@ -23,32 +23,27 @@ namespace
     constexpr UINT c_MaxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreeMap, CMFCPropertyPage)
-
 CPageTreeMap::CPageTreeMap()
-    : CMFCPropertyPage(IDD)
+    : MessageTarget(IDD)
 {
 }
 
-BOOL CPageTreeMap::PreTranslateMessage(MSG* pMsg)
+bool CPageTreeMap::PreprocessMessage(MSG* pMsg)
 {
     if (pMsg->message == WM_MOUSEWHEEL)
     {
-        CPoint pt(pMsg->pt);
-        ScreenToClient(&pt);
-        CWnd* pWnd = ChildWindowFromPoint(pt);
+        const CPoint pt = ToClient(pMsg->pt);
 
-        if (pWnd != nullptr)
+        if (CWnd* pWnd = ChildWindowFromPoint(pt); pWnd != nullptr)
         {
-            int nID = pWnd->GetDlgCtrlID();
-
-            if (nID == IDC_BRIGHTNESS || nID == IDC_CUSHIONSHADING ||
+            if (const int nID = pWnd->GetDlgCtrlID();
+                nID == IDC_BRIGHTNESS || nID == IDC_CUSHIONSHADING ||
                 nID == IDC_HEIGHT || nID == IDC_SCALEFACTOR)
             {
-                CSliderCtrl* pSlider = (CSliderCtrl*)pWnd;
-                short zDelta = (short)HIWORD(pMsg->wParam);
+                CSliderCtrl* pSlider = static_cast<CSliderCtrl*>(pWnd);
+                const short zDelta = static_cast<short>(HIWORD(pMsg->wParam));
 
-                int currentPos = pSlider->GetPos();
+                const int currentPos = pSlider->GetPos();
 
                 // Perform "Natural Scroll" (Up = Increase)
                 if (zDelta > 0)
@@ -59,82 +54,25 @@ BOOL CPageTreeMap::PreTranslateMessage(MSG* pMsg)
                 OnSomethingChanged();
                 ValuesAltered();
 
-                return TRUE;
+                return true;
             }
         }
     }
-    return CMFCPropertyPage::PreTranslateMessage(pMsg);
+    return CSettingsPage::PreprocessMessage(pMsg);
 }
 
-void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
+void CPageTreeMap::InitializePage()
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-
-    DDX_Control(pDX, IDC_PREVIEW, m_preview);
-    DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_highlightColor);
-    DDX_Control(pDX, IDC_TREEMAPGRIDCOLOR, m_gridColor);
-    DDX_Control(pDX, IDC_BRIGHTNESS, m_brightness);
-    DDX_Control(pDX, IDC_CUSHIONSHADING, m_cushionShading);
-    DDX_Control(pDX, IDC_HEIGHT, m_height);
-    DDX_Control(pDX, IDC_SCALEFACTOR, m_scaleFactor);
-    DDX_Control(pDX, IDC_LIGHTSOURCE, m_lightSource);
-    DDX_Control(pDX, IDC_RESET, m_resetButton);
-
-    if (!pDX->m_bSaveAndValidate)
-    {
-        UpdateOptions(false);
-        UpdateStatics();
-        m_preview.SetOptions(&m_options);
-    }
-
-    DDX_Radio(pDX, IDC_KDIRSTAT, m_style);
-    DDX_Check(pDX, IDC_TREEMAPGRID, m_grid);
-
-    DDX_Text(pDX, IDC_STATICBRIGHTNESS, m_sBrightness);
-    DDX_Slider(pDX, IDC_BRIGHTNESS, m_nBrightness);
-
-    DDX_Text(pDX, IDC_STATICCUSHIONSHADING, m_sCushionShading);
-    DDX_Slider(pDX, IDC_CUSHIONSHADING, m_nCushionShading);
-
-    DDX_Text(pDX, IDC_STATICHEIGHT, m_sHeight);
-    DDX_Slider(pDX, IDC_HEIGHT, m_nHeight);
-
-    DDX_Text(pDX, IDC_STATICSCALEFACTOR, m_sScaleFactor);
-    DDX_Slider(pDX, IDC_SCALEFACTOR, m_nScaleFactor);
-
-    DDX_XySlider(pDX, IDC_LIGHTSOURCE, m_ptLightSource);
-
-    if (pDX->m_bSaveAndValidate)
-    {
-        UpdateOptions();
-    }
-}
-
-BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
-    ON_WM_HSCROLL()
-    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
-    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
-    ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
-    ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnSetModified)
-    ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
-    ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
-    ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
-
-HBRUSH CPageTreeMap::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageTreeMap::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
+    m_preview.SubclassDlgItem(IDC_PREVIEW, this);
+    m_styleCombo.SubclassDlgItem(IDC_TREEMAPSTYLE, this);
+    m_highlightColor.SubclassDlgItem(IDC_TREEMAPHIGHLIGHTCOLOR, this);
+    m_gridColor.SubclassDlgItem(IDC_TREEMAPGRIDCOLOR, this);
+    m_brightness.SubclassDlgItem(IDC_BRIGHTNESS, this);
+    m_cushionShading.SubclassDlgItem(IDC_CUSHIONSHADING, this);
+    m_height.SubclassDlgItem(IDC_HEIGHT, this);
+    m_scaleFactor.SubclassDlgItem(IDC_SCALEFACTOR, this);
+    m_lightSource.SubclassDlgItem(IDC_LIGHTSOURCE, this);
+    m_resetButton.SubclassDlgItem(IDC_RESET, this);
     ValuesAltered(); // m_undo is invalid
 
     m_brightness.SetPageSize(10);
@@ -146,61 +84,70 @@ BOOL CPageTreeMap::OnInitDialog()
 
     m_options = COptions::TreeMapOptions;
     m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
+    for (const std::wstring& style : SplitString(
+        Localization::Lookup(IDS_PAGE_TREEMAP_STYLES), L','))
+    {
+        m_styleCombo.AddString(style.c_str());
+    }
+    assert(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
 
-    UpdateData(FALSE);
-
-    return TRUE;
+    UpdateOptions(false);
+    UpdateStatics();
+    m_preview.SetOptions(&m_options);
 }
 
 void CPageTreeMap::OnOK()
 {
-    UpdateData();
+    UpdateOptions(true);
 
     COptions::SetTreeMapOptions(m_options);
     COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
-
-    CMFCPropertyPage::OnOK();
 }
 
 void CPageTreeMap::UpdateOptions(const bool save)
 {
     if (save)
     {
-        m_options.SetBrightnessPercent(m_nBrightness);
-        m_options.SetAmbientLightPercent(100 - m_nCushionShading);
-        m_options.SetHeightPercent(m_nHeight);
-        m_options.SetScaleFactorPercent(m_nScaleFactor);
-        m_options.SetLightSourcePoint(m_ptLightSource);
-        m_options.style = m_style == 0 ? CTreeMap::KDirStatStyle : CTreeMap::SequoiaViewStyle;
-        m_options.grid = FALSE != m_grid;
+        m_options.SetBrightnessPercent(m_brightness.GetPos());
+        m_options.SetAmbientLightPercent(100 - m_cushionShading.GetPos());
+        m_options.SetHeightPercent(m_height.GetPos());
+        m_options.SetScaleFactorPercent(m_scaleFactor.GetPos());
+        m_options.SetLightSourcePoint(m_lightSource.GetPos());
+        m_options.style = static_cast<TreeMapLayout::Style>(ComboSelection(IDC_TREEMAPSTYLE));
+        m_options.grid = IsChecked(IDC_TREEMAPGRID);
         m_options.gridColor = m_gridColor.GetColor();
     }
     else
     {
-        m_nBrightness = m_options.GetBrightnessPercent();
-        m_nCushionShading = 100 - m_options.GetAmbientLightPercent();
-        m_nHeight = m_options.GetHeightPercent();
-        m_nScaleFactor = m_options.GetScaleFactorPercent();
-        m_ptLightSource = m_options.GetLightSourcePoint();
-        m_style = m_options.style == CTreeMap::KDirStatStyle ? 0 : 1;
-        m_grid = m_options.grid;
+        m_brightness.SetPos(m_options.GetBrightnessPercent());
+        m_cushionShading.SetPos(100 - m_options.GetAmbientLightPercent());
+        m_height.SetPos(m_options.GetHeightPercent());
+        m_scaleFactor.SetPos(m_options.GetScaleFactorPercent());
+        m_lightSource.SetPos(m_options.GetLightSourcePoint());
+        SetComboSelection(IDC_TREEMAPSTYLE, static_cast<int>(m_options.style));
+        SetChecked(IDC_TREEMAPGRID, m_options.grid);
         m_gridColor.SetColor(m_options.gridColor);
     }
 }
 
 void CPageTreeMap::UpdateStatics()
 {
-    m_sBrightness.Format(L"%d", m_nBrightness);
-    m_sCushionShading.Format(L"%d", m_nCushionShading);
-    m_sHeight.Format(L"%d", m_nHeight / (c_MaxHeight / 100));
-    m_sScaleFactor.Format(L"%d", m_nScaleFactor);
+    SetText(IDC_STATICBRIGHTNESS, std::to_wstring(m_brightness.GetPos()));
+    SetText(IDC_STATICCUSHIONSHADING, std::to_wstring(m_cushionShading.GetPos()));
+    SetText(IDC_STATICHEIGHT, std::to_wstring(m_height.GetPos() / (c_MaxHeight / 100)));
+    SetText(IDC_STATICSCALEFACTOR, std::to_wstring(m_scaleFactor.GetPos()));
 }
 
 void CPageTreeMap::OnSomethingChanged()
 {
-    UpdateData();
-    UpdateData(FALSE);
+    if (!IsInitialized())
+        return;
+
+    UpdateOptions(true);
+    UpdateStatics();
+    m_preview.SetOptions(&m_options);
+    m_preview.Invalidate();
     SetModified();
 }
 
@@ -208,7 +155,7 @@ void CPageTreeMap::ValuesAltered(const bool altered)
 {
     m_altered = altered;
     const std::wstring s = m_altered ? Localization::Lookup(IDS_RESET_DEFAULTS) : Localization::Lookup(IDS_BACK_TO_SETTINGS);
-    m_resetButton.SetWindowText(s.c_str());
+    m_resetButton.SetText(s.c_str());
 }
 
 void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
@@ -223,7 +170,7 @@ void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
     OnSomethingChanged();
 }
 
-void CPageTreeMap::OnHScroll(UINT, UINT, CScrollBar*)
+void CPageTreeMap::OnHScroll(UINT, UINT, CWnd*)
 {
     OnSomethingChanged();
     ValuesAltered();
@@ -261,6 +208,9 @@ void CPageTreeMap::OnBnClickedReset()
     m_options.lightSourceY = o.lightSourceY;
 
     ValuesAltered(!m_altered);
-    UpdateData(FALSE);
+    UpdateOptions(false);
+    UpdateStatics();
+    m_preview.SetOptions(&m_options);
+    m_preview.Invalidate();
     SetModified();
 }

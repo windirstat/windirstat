@@ -30,7 +30,7 @@ public:
     static CFileTopControl* Get() { return m_singleton; }
     CItemTop* GetRootItem() const { return m_rootItem; }
     void ProcessTop(CItem* item);
-    void ClearPendingItems();
+    void ClearPendingItems() { m_queuedSet.clear(); }
     void RemoveItem(CItem* item);
     void SortItems() override;
     void AfterDeleteAllItems() override;
@@ -52,5 +52,4 @@ protected:
     std::unordered_map<CItem*, CItemTop*> m_itemTracker;
     size_t m_previousTopN = 0;
 
-    DECLARE_MESSAGE_MAP()
 };

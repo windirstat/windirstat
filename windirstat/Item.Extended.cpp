@@ -18,7 +18,38 @@
 #include "pch.h"
 #include "Item.h"
 
-static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static constexpr wchar_t AsciiLower(const wchar_t value) noexcept
+{
+    return value >= L'A' && value <= L'Z' ? value + (L'a' - L'A') : value;
+}
+
+static constexpr bool StartsWithNoCase(const std::wstring_view value, const std::wstring_view prefix) noexcept
+{
+    if (value.size() < prefix.size()) return false;
+    for (size_t i = 0; i < prefix.size(); ++i)
+    {
+        if (AsciiLower(value[i]) != AsciiLower(prefix[i])) return false;
+    }
+    return true;
+}
+
+static constexpr bool IsDriveAdministrativeSharePath(std::wstring_view path) noexcept
+{
+    while (path.ends_with(L'\\')) path.remove_suffix(1);
+
+    constexpr std::wstring_view longUncPrefix = LR"(\\?\UNC\)";
+    if (StartsWithNoCase(path, longUncPrefix)) path.remove_prefix(longUncPrefix.size());
+    else if (path.starts_with(L"\\\\")) path.remove_prefix(2);
+    else return false;
+
+    const size_t separator = path.find(L'\\');
+    if (separator == 0 || separator == std::wstring_view::npos || path.size() != separator + 3) return false;
+
+    const wchar_t drive = path[separator + 1];
+    return (drive >= L'A' && drive <= L'Z' || drive >= L'a' && drive <= L'z') && path.back() == L'$';
+}
+
+static void CloseBCryptAlgHandle(const BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
 static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 #pragma comment(lib, "crypt32.lib")
@@ -61,38 +92,32 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     if (showReadJobs)
     {
         constexpr SIZE sizeDeflatePacman = { 1, 2 };
-        rc.DeflateRect(sizeDeflatePacman);
+        rc.Deflate(sizeDeflatePacman);
         DrawPacman(pdc, rc);
     }
     else
     {
-        rc.DeflateRect(2, 4);
-        rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
+        rc.Deflate(2, 4);
+        rc.left += GetIndent() * ScaleForDpi(COptions::SizeProportionIndent);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
-        const auto blendColor = [](COLORREF from, COLORREF to, double amount) {
-            const auto ch = [amount](BYTE a, BYTE b) {
+        const auto blendColor = [](const COLORREF from, const COLORREF to, double amount) {
+            const auto ch = [amount](const BYTE a, const BYTE b) {
                 return static_cast<BYTE>(std::lround(a + (b - a) * std::clamp(amount, 0.0, 1.0)));
             };
             return RGB(ch(GetRValue(from), GetRValue(to)), ch(GetGValue(from), GetGValue(to)), ch(GetBValue(from), GetBValue(to)));
         };
         // Blend toward white in dark mode, toward black in light mode
-        const auto blendDark = [&](COLORREF c, double d, double l) {
+        const auto blendDark = [&](const COLORREF c, const double d, const double l) {
             return dark ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
         };
-
-        // Walk to root and compute this item's fraction of the total tree size
-        const CItem* root = this;
-        while (root->GetParent() != nullptr) root = root->GetParent();
-        const ULONGLONG rootSize = COptions::TreeMapUseLogical ? root->GetSizeLogical() : root->GetSizePhysical();
-        const double absoluteFraction = rootSize == 0 ? 0.0 :
-            (COptions::TreeMapUseLogical ? static_cast<double>(GetSizeLogical()) : static_cast<double>(GetSizePhysical())) / static_cast<double>(rootSize);
 
         // Derive palette for track, subtree bar, and absolute bar
         const COLORREF neutralBack  = dark ? RGB(40, 40, 40) : RGB(225, 225, 225);
         const double subtreeFraction = GetFraction();
+        const double absoluteFraction = GetAbsoluteFraction();
         const COLORREF color         = GetPercentageColor();
         const COLORREF trackFill     = blendDark(neutralBack,  0.10, 0.06);
         const COLORREF trackBorder   = blendDark(trackFill,   0.18, 0.18);
@@ -102,21 +127,21 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
         const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
 
-        const auto drawRoundRect = [&](CRect r, COLORREF fill, COLORREF border) {
+        const auto drawRoundRect = [&](CRect r, const COLORREF fill, const COLORREF border) {
             pdc->SetDCBrushColor(fill);
             pdc->SetDCPenColor(border);
-            CSelectStockObject sb(pdc, DC_BRUSH);
-            CSelectStockObject sp(pdc, DC_PEN);
+            StockObjectSelection sb(pdc, DC_BRUSH);
+            StockObjectSelection sp(pdc, DC_PEN);
             pdc->RoundRect(r, CPoint(3, 3));
         };
 
         // Draw the track background and border
         drawRoundRect(rc, trackFill, trackBorder);
-        rc.DeflateRect(1, 1);
+        rc.Deflate(1, 1);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         // Maps a [0,1] fraction to an x-coordinate within rc
-        const auto fractionX = [&rc](double f) {
+        const auto fractionX = [&rc](const double f) {
             return rc.left + static_cast<int>(std::lround(rc.Width() * std::clamp(f, 0.0, 1.0)));
         };
 
@@ -136,7 +161,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         // Draw the absolute bar inset vertically within the subtree bar
         CRect rcAbsolute = rc;
         rcAbsolute.right = fractionX(std::min(subtreeFraction, absoluteFraction));
-        rcAbsolute.DeflateRect(0, 2);
+        rcAbsolute.Deflate(0, 2);
         if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
         {
             drawRoundRect(rcAbsolute, absoluteFill, absoluteFill);
@@ -170,7 +195,7 @@ std::wstring CItem::GetText(const int subitem) const
     }
 
     case COL_NAME:
-        return GetName(true);
+        return IsTypeOrFlag(IT_HLINKS_FILE) ? GetLinkedItem()->GetPath() : GetName(true);
 
     case COL_OWNER:
         if (IsTypeOrFlag(IT_FILE, IT_DIRECTORY))
@@ -192,11 +217,12 @@ std::wstring CItem::GetText(const int subitem) const
         break;
 
     case COL_PERCENTAGE:
-        if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
+        if ((COptions::ShowTimeSpent && MustShowReadJobs()) ||
+            (!COptions::UseAbsolutePercentages && IsRootItem()))
         {
             return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
         }
-        return FormatDouble(GetFraction() * 100) + L"%";
+        return FormatDouble((COptions::UseAbsolutePercentages ? GetAbsoluteFraction() : GetFraction()) * 100) + L"%";
 
     case COL_ITEMS:
         if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
@@ -233,7 +259,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         break;
 
-    default: ASSERT(FALSE);
+    default: assert(false);
     }
 
     return {};
@@ -241,7 +267,6 @@ std::wstring CItem::GetText(const int subitem) const
 
 COLORREF CItem::GetItemTextColor() const
 {
-    // Get the file/folder attributes
     const DWORD attr = GetAttributes();
 
     // This happens e.g. on a Unicode-capable FS when using ANSI APIs
@@ -278,23 +303,30 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         {
             return usignum(GetItemType(), other->GetItemType());
         }
+        if (IsTypeOrFlag(IT_HLINKS_FILE))
+        {
+            const std::wstring path = GetLinkedItem()->GetPath();
+            const std::wstring otherPath = other->GetLinkedItem()->GetPath();
+            return signum(_wcsicmp(path.c_str(), otherPath.c_str()));
+        }
         return signum(_wcsicmp(m_name.get(), other->m_name.get()));
     }
 
     case COL_SIZE_PROPORTION:
     {
-        if (MustShowReadJobs())
+        if (MustShowReadJobs() && !COptions::PacmanAnimation)
         {
             return usignum(GetReadJobs(), other->GetReadJobs());
         }
-        else
-        {
-            return signum(GetFraction() - other->GetFraction());
-        }
+
+        // Pacman hides the read-job count, so keep the column's normal size ordering.
+        return COptions::TreeMapUseLogical ? usignum(GetSizeLogical(), other->GetSizeLogical()) :
+            usignum(GetSizePhysical(), other->GetSizePhysical());
     }
 
     case COL_PERCENTAGE:
     {
+        // Siblings have the same parent and root, so both percentage modes have identical sort order.
         return signum(GetFraction() - other->GetFraction());
     }
 
@@ -356,7 +388,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
 HICON CItem::GetIcon()
 {
-    ASSERT(IsVisible());
+    assert(IsVisible());
 
     // Return cached icon if available
     if (m_visualInfo->icon != nullptr)
@@ -369,42 +401,44 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetMyComputerImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_FREESPACE))
-    {
+    if (IsTypeOrFlag(IT_FREESPACE))    {
         m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_UNKNOWN))
-    {
+    if (IsTypeOrFlag(IT_UNKNOWN))    {
         m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
-    {
+    // Hardlink snapshot rows must not enqueue callbacks that can outlive the snapshot.
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))    {
         m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_MOUNT))
-    {
+    if (IsTypeOrFlag(ITRP_MOUNT))    {
         m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_SYMLINK))
-    {
+    if (IsTypeOrFlag(ITRP_SYMLINK))    {
         m_visualInfo->icon = GetIconHandler()->GetSymbolicLinkImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_JUNCTION))
-    {
+    if (IsTypeOrFlag(ITRP_JUNCTION))    {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
         m_visualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
         return m_visualInfo->icon;
     }
 
+    // Supply shell-compatible paths and attributes for MTP icon lookup
     const CItem* refItem = GetLinkedItem();
+    const bool mtp = refItem->IsTypeOrFlag(ITF_MTP);
+    const std::wstring iconPath = mtp && !refItem->IsMtpRoot() ?
+        L"C:\\~" + (refItem->IsTypeOrFlag(IT_FILE) ? refItem->GetExtension() : std::wstring{}) : refItem->GetPath();
+    const DWORD attributes = mtp ?
+        (refItem->IsTypeOrFlag(IT_DIRECTORY) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL) :
+        refItem->GetAttributes();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_visualInfo->control, refItem->GetPath(), refItem->GetAttributes(), &m_visualInfo->icon, nullptr));
+        m_visualInfo->control, iconPath, attributes, &m_visualInfo->icon, nullptr));
 
     return m_visualInfo->icon;
 }
@@ -414,12 +448,12 @@ void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
     if (!IsRootItem() && this == CWinDirStatModel::Get()->GetZoomItem())
     {
         CRect rc = rcLabel;
-        rc.InflateRect(1, 0);
+        rc.Inflate(1, 0);
         rc.bottom++;
 
-        CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
-        CSelectObject sopen(pdc, &pen);
+        StockObjectSelection sobrush(pdc, NULL_BRUSH);
+        const CPen pen(PS_SOLID, 2, CWinDirStatModel::Get()->GetZoomColor());
+        GdiObjectSelection sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
     }
@@ -427,18 +461,13 @@ void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 
 CItem* CItem::GetLinkedItem() noexcept
 {
-    // For IT_HLINKS_FILE, the name stores the full path
-    if (IsTypeOrFlag(IT_HLINKS_FILE))
-    {
-        const std::wstring storedPath{ m_name.get(), m_nameLen };
-        if (CItem* linkedItem = FindItemByPath(storedPath); linkedItem != nullptr)
-        {
-            return linkedItem;
-        }
-    }
+    return const_cast<CItem*>(std::as_const(*this).GetLinkedItem());
+}
 
-    // Default: return this item
-    return this;
+const CItem* CItem::GetLinkedItem() const noexcept
+{
+    return IsTypeOrFlag(IT_HLINKS_FILE) ?
+        reinterpret_cast<const CItem*>(static_cast<std::uintptr_t>(m_index)) : this;
 }
 
 // --- CTreeMap Interface ---
@@ -456,9 +485,10 @@ ULONGLONG CItem::TmiGetSize() const noexcept
 
 // --- Drive / Volume Specific ---
 
-bool CItem::IsRootItem() const noexcept
+bool CItem::SupportsSpaceItems() const noexcept
 {
-    return IsTypeOrFlag(ITF_ROOTITEM);
+    return IsTypeOrFlag(IT_DRIVE) ||
+        (IsRootItem() && IsTypeOrFlag(IT_DIRECTORY) && IsDriveAdministrativeSharePath(GetNameView()));
 }
 
 std::vector<CItem*> CItem::GetDriveItems() const
@@ -480,10 +510,10 @@ std::vector<CItem*> CItem::GetDriveItems() const
 
     if (root->IsTypeOrFlag(IT_MYCOMPUTER))
     {
+        // Ignore non-drive roots such as MTP devices
         for (const auto& child : root->GetChildren())
         {
-            if (child->IsTypeOrFlag(IT_DRIVE))
-                drives.push_back(child);
+            if (child->IsTypeOrFlag(IT_DRIVE)) drives.push_back(child);
         }
     }
     else if (root->IsTypeOrFlag(IT_DRIVE))
@@ -492,6 +522,17 @@ std::vector<CItem*> CItem::GetDriveItems() const
     }
 
     return drives;
+}
+
+std::vector<CItem*> CItem::GetSpaceItems() const
+{
+    std::vector<CItem*> items = GetDriveItems();
+    if (!items.empty()) return items;
+
+    const CItem* root = this;
+    while (root->GetParent() != nullptr) root = root->GetParent();
+    if (root->SupportsSpaceItems()) items.push_back(const_cast<CItem*>(root));
+    return items;
 }
 
 ULONGLONG CItem::GetProgressRange() const
@@ -509,7 +550,7 @@ ULONGLONG CItem::GetProgressRange() const
         return 0;
     }
 
-    ASSERT(FALSE);
+    assert(false);
     return 0;
 }
 
@@ -535,27 +576,22 @@ ULONGLONG CItem::GetProgressPos() const
     return 0;
 }
 
-int CItem::GetSizeProportionWidth()
-{
-    return 105;
-}
-
 CItem* CItem::FindRecyclerItem() const
 {
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
+    CItem* drive = GetParentDrive();
+    if (drive == nullptr) return nullptr;
 
-        // There is no cross-platform way to consistently identify the recycle bin
-        // so attempt to find an item with the most probable values
-        for (const std::wstring_view possible : { std::wstring_view(L"$RECYCLE.BIN"), std::wstring_view(L"RECYCLER"), std::wstring_view(L"RECYCLED") })
+    // There is no cross-platform way to consistently identify the recycle bin
+    // so attempt to find an item with the most probable values
+    for (const std::wstring_view possible :
+        { std::wstring_view(L"$RECYCLE.BIN"), std::wstring_view(L"RECYCLER"), std::wstring_view(L"RECYCLED") })
+    {
+        for (const auto& child : drive->GetChildren())
         {
-            for (const auto& child : p->GetChildren())
+            if (child->IsTypeOrFlag(IT_DIRECTORY) &&
+                _wcsicmp(child->GetNameView().data(), possible.data()) == 0)
             {
-                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetNameView().data(), possible.data()) == 0)
-                {
-                    return child;
-                }
+                return child;
             }
         }
     }
@@ -565,7 +601,7 @@ CItem* CItem::FindRecyclerItem() const
 
 void CItem::CreateFreeSpaceItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -597,15 +633,18 @@ void CItem::UpdateFreeSpaceItem()
                 child->UpdateFreeSpaceItem();
         }
     }
-    else if (IsTypeOrFlag(IT_DRIVE))
+    else if (SupportsSpaceItems())
     {
         auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
         // Recreate name based on updated free space and percentage
-        SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
-            FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
-                IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
-            FormatDouble(total == 0 ? 0.0 : 100.0 * free / total)));
+        if (IsTypeOrFlag(IT_DRIVE))
+        {
+            SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
+                FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
+                    IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
+                FormatDouble(total == 0 ? 0.0 : 100.0 * free / total)));
+        }
 
         // Update freespace item if it exists
         if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
@@ -614,12 +653,12 @@ void CItem::UpdateFreeSpaceItem()
             freeSpaceItem->UpwardAddSizePhysical(free);
         }
     }
-    else ASSERT(FALSE);
+    else assert(false);
 }
 
 void CItem::RemoveFreeSpaceItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(SupportsSpaceItems());
 
     if (const auto freespace = FindFreeSpaceItem(); freespace != nullptr)
     {
@@ -631,7 +670,7 @@ void CItem::RemoveFreeSpaceItem()
 
 void CItem::CreateUnknownItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(SupportsSpaceItems());
 
     UpwardSetUndone();
 
@@ -651,7 +690,7 @@ CItem* CItem::FindUnknownItem() const
 
 void CItem::UpdateUnknownItem() const
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(SupportsSpaceItems());
 
     CItem* unknown = FindUnknownItem();
     if (unknown == nullptr)
@@ -672,7 +711,7 @@ void CItem::UpdateUnknownItem() const
 
 void CItem::RemoveUnknownItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(SupportsSpaceItems());
 
     if (const auto unknown = FindUnknownItem(); unknown != nullptr)
     {
@@ -682,7 +721,7 @@ void CItem::RemoveUnknownItem()
     }
 }
 
-void CItem::UpwardDrivePacman()
+void CItem::UpwardDrivePacman() const
 {
     if (!COptions::PacmanAnimation)
     {
@@ -701,7 +740,7 @@ void CItem::UpwardDrivePacman()
 
 void CItem::CreateHardlinksItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(IsTypeOrFlag(IT_DRIVE));
 
     const auto hardlinks = new CItem(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
 
@@ -763,10 +802,26 @@ CItem* CItem::FindHardlinksIndexItem() const
 
 void CItem::RemoveHardlinksItem()
 {
-    ASSERT(IsTypeOrFlag(IT_DRIVE));
+    assert(IsTypeOrFlag(IT_DRIVE));
 
     if (const auto hardlinks = FindHardlinksItem(); hardlinks != nullptr)
     {
+        std::unordered_map<CItem*, ULONGLONG> parentSizes;
+        for (const auto* indexSet : hardlinks->GetChildren())
+            for (const auto* indexFolder : indexSet->GetChildren())
+                for (auto* fileRef : indexFolder->GetChildren())
+                {
+                    CItem* item = fileRef->GetLinkedItem();
+                    if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
+                    item->SetFlag(ITF_HARDLINK, true);
+                    parentSizes[item->GetParent()] += item->GetSizePhysicalRaw();
+                }
+        for (const auto& [parent, size] : parentSizes)
+        {
+            parent->UpwardAddSizePhysical(size);
+            parent->UpwardSetUndone();
+        }
+
         UpwardSetUndone();
         UpwardSubtractSizePhysical(hardlinks->GetSizePhysical());
         RemoveChild(hardlinks);
@@ -799,8 +854,8 @@ void CItem::DoHardlinkAdjustment()
                 if (const auto [it, inserted] = indexMapInitial.try_emplace(index, child); !inserted)
                 {
                     auto& existing = indexDupes[index];
-                    if (existing.empty()) existing.emplace_back(it->second);
-                    existing.emplace_back(child);
+                    if (existing.empty()) existing = { it->second, child };
+                    else existing.emplace_back(child);
                 }
             }
             // Do not descend into reparse points since indexes may be from other volumes
@@ -810,32 +865,22 @@ void CItem::DoHardlinkAdjustment()
             }
         }
     }
+    decltype(indexMapInitial){}.swap(indexMapInitial);
 
     // Get the hardlinks container and its Index Set children
     const auto hardlinksItem = FindHardlinksItem();
     if (hardlinksItem == nullptr) return;
 
     const auto& indexSets = hardlinksItem->GetChildren();
+    std::unordered_map<CItem*, ULONGLONG> parentSizes;
+    const std::wstring indexLabel = Localization::Lookup(IDS_COL_INDEX);
+    auto hardlinksSize = 0ull;
 
     // Process hardlinks - create hierarchical structure
     for (const auto& [index, list] : indexDupes)
     {
-        bool skipAdd = false;
         auto itemSize = 0ull;
-
-        // Check if any items already have the hardlink flag (already processed)
-        for (const auto* item : list)
-        {
-            if (item->IsTypeOrFlag(ITF_HARDLINK)) { skipAdd = true; break; }
-        }
-
-        if (skipAdd) continue;
-
-        // Calculate the maximum physical size among all hardlinks with this index
-        for (const auto* item : list)
-        {
-            itemSize = std::max(itemSize, item->GetSizePhysicalRaw());
-        }
+        auto itemSizeMin = std::numeric_limits<ULONGLONG>::max();
 
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
         constexpr auto INDEX_SET_COUNT = 20u;
@@ -845,24 +890,23 @@ void CItem::DoHardlinkAdjustment()
         if (indexSetItem == nullptr) continue;
 
         // Create "Index N" folder under the appropriate Index Set
-        const auto indexFolder = new CItem(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", Localization::Lookup(IDS_COL_INDEX), index));
+        const auto indexFolder = new CItem(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", indexLabel, index));
         indexFolder->SetIndex(index);
+        indexFolder->m_folderInfo->m_children.reserve(list.size());
 
         // Add file reference entries under the Index folder
         for (auto* item : list)
         {
+            const ULONGLONG size = item->GetSizePhysicalRaw();
+            itemSize = std::max(itemSize, size);
+            itemSizeMin = std::min(itemSizeMin, size);
+
             // Subtract physical size from the file's original parent hierarchy
-            item->GetParent()->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
-            item->GetParent()->UpwardSetUndone();
+            parentSizes[item->GetParent()] += size;
             item->SetFlag(ITF_HARDLINK);
 
-            // Create a file reference entry with just the full path
-            // GetName() will extract the filename, GetLinkedItem() will use the path
-            const auto fileRef = new CItem(IT_HLINKS_FILE, item->GetPath());
-            fileRef->SetIndex(item->GetIndex());
-            fileRef->SetSizePhysical(item->GetSizePhysicalRaw());
-            fileRef->SetSizeLogical(item->GetSizeLogical());
-            fileRef->SetLastChange(item->GetLastChange());
+            // Store only a direct reference; the snapshot is discarded before tree mutations.
+            const auto fileRef = new CItem(item);
 
             // Add to index folder without propagating size upward (addOnly=true)
             indexFolder->AddChild(fileRef, true);
@@ -870,28 +914,27 @@ void CItem::DoHardlinkAdjustment()
 
         // Set the physical size on the Index folder - this is what tallies upward
         indexFolder->SetSizePhysical(itemSize);
+        if (itemSizeMin != itemSize) indexFolder->SortItemsBySizePhysical();
+        indexFolder->SetFlag(ITF_DONE);
 
         // Mark index set as undone so it will be re-sorted
         indexSetItem->SetFlag(ITF_DONE, true);
 
-        // Add to Index Set - this will propagate the size upward
-        indexSetItem->AddChild(indexFolder);
+        indexSetItem->SetSizePhysical(indexSetItem->GetSizePhysical() + itemSize);
+        hardlinksSize += itemSize;
+        indexSetItem->AddChild(indexFolder, true);
+    }
+    hardlinksItem->UpwardAddSizePhysical(hardlinksSize);
+    for (const auto& [parent, size] : parentSizes)
+    {
+        parent->UpwardSubtractSizePhysical(size);
+        parent->UpwardSetUndone();
     }
 
-    // Now sort all the Index Sets and their children, and mark done
+    // Now sort all the Index Sets and mark done
     for (auto* indexSet : hardlinksItem->GetChildren())
     {
         if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
-
-        // Sort Index folders within this Index Set
-        for (auto* indexFolder : indexSet->GetChildren())
-        {
-            if (!indexFolder->IsTypeOrFlag(IT_HLINKS_IDX)) continue;
-
-            // Sort file references within this Index folder by size
-            indexFolder->SortItemsBySizePhysical();
-            indexFolder->SetFlag(ITF_DONE);
-        }
 
         // Sort Index folders within this Index Set by size
         indexSet->SortItemsBySizePhysical();
@@ -903,50 +946,7 @@ void CItem::DoHardlinkAdjustment()
     hardlinksItem->UpwardSetUndone();
 }
 
-std::vector<CItem*> CItem::FindItemsBySameIndex() const
-{
-    // Only search if we have a valid non-zero index
-    const ULONGLONG targetIndex = GetIndex();
-    if (targetIndex == 0)
-    {
-        return {};
-    }
-
-    // Get the parent drive - we only search within the same drive
-    auto* driveItem = GetParentDrive();
-    if (driveItem == nullptr)
-    {
-        return {};
-    }
-
-    // Use a stack-based traversal to search through all items under the drive
-    std::vector<CItem*> results;
-    for (std::vector itemStack({ driveItem }); !itemStack.empty();)
-    {
-        CItem* current = itemStack.back();
-        itemStack.pop_back();
-
-        // Check if this item has the same index (but is not the current item itself)
-        if (current != this && current->GetIndex() == targetIndex)
-        {
-            results.push_back(current);
-        }
-
-        // Add all children to the stack for traversal
-        else if (!current->IsLeaf() &&
-            (current->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
-        {
-            for (auto* child : current->GetChildren())
-            {
-                itemStack.push_back(child);
-            }
-        }
-    }
-
-    return results;
-}
-
-std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
+std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
@@ -957,7 +957,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
     thread_local SmartPointer hashAlgHandle(CloseBCryptAlgHandle, BCRYPT_ALG_HANDLE{});
     thread_local SmartPointer hashHandle(BCryptDestroyHash, BCRYPT_HASH_HANDLE{});
-    thread_local SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHasher(FreeXxHashState, nullptr);
+    thread_local SmartPointer<XXH3_state_t*> xxHasher(FreeXxHashState, nullptr);
 
     if (useXxHash)
     {
@@ -999,24 +999,25 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         return {};
     }
 
-    // Open file for reading - avoid files that are actively being written to
-    const SmartPointer hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
-        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE)
+    // Open content for reading - avoid filesystem files that are actively being written to
+    SmartPointer hFile(CloseHandle, HANDLE{});
+    CComPtr<IStream> fileStream;
+    if (IsTypeOrFlag(ITF_MTP))
     {
-        return {};
+        if (FAILED(OpenMtpStream(this, fileStream))) return {};
     }
+    else if ((hFile = CreateFile(GetPathLong().c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE) return {};
 
     // Hash data one read at a time
-    DWORD iReadResult = 0;
+    HRESULT iReadResult = E_FAIL;
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
     ULONGLONG totalBytesHashed = 0;
 
-    while ((iReadResult = ReadFile(hFile, fileBuffer.data(), static_cast<DWORD>(
-        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())),
-        &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
+    while (SUCCEEDED(iReadResult = ReadFileContent(hFile, fileStream, fileBuffer.data(), static_cast<DWORD>(
+        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())), &iReadBytes)) && iReadBytes > 0)
     {
         UpwardDrivePacman();
 
@@ -1030,7 +1031,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
-        if (totalBytesHashed >= hashSizeLimit) break;
+        if (totalBytesHashed >= hashSizeLimit || iReadResult == S_FALSE) break;
 
         queue->WaitIfSuspended();
     }
@@ -1038,7 +1039,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // Complete the hashing process and check on errors.
     if (useXxHash)
     {
-        if (iReadResult == 0) return {};
+        if (FAILED(iReadResult)) return {};
         XXH64_canonical_t canonical;
         XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(xxHasher));
         return { canonical.digest, canonical.digest + sizeof(canonical.digest) };
@@ -1048,7 +1049,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // so the reusable hash handle is reset for the next call.
     if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
         hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
-        iFinishResult != 0 || iReadResult == 0 || iHashResult != 0)
+        iFinishResult != 0 || FAILED(iReadResult) || iHashResult != 0)
     {
         return {};
     }
@@ -1064,12 +1065,13 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
-    ASSERT(IsTypeOrFlag(IT_MYCOMPUTER));
+    assert(IsTypeOrFlag(IT_MYCOMPUTER));
 
+    // Sum each root's storage-specific scan range
     ULONGLONG range = 0;
     for (const auto& child : GetChildren())
     {
-        range += child->GetProgressRangeDrive();
+        range += child->GetProgressRange();
     }
     return range;
 }

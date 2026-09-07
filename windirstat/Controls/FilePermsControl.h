@@ -21,7 +21,7 @@
 #include "TreeListControl.h"
 #include "ItemPerm.h"
 
-class CFilePermsControl final : public CTreeListControl
+class CFilePermsControl final : public MessageTarget<CFilePermsControl, CTreeListControl>
 {
 public:
     CFilePermsControl();
@@ -30,7 +30,6 @@ public:
     static CFilePermsControl* Get() { return m_singleton; }
 
     bool StartScan();
-    void StopScan();
     std::vector<const CItemPerm*> GetPermItems() const;
 
     // Headless parallel scan of the whole tree; used by the silent command-line export
@@ -47,6 +46,18 @@ protected:
     // Read one item's DACL and build a row per qualifying ACE; safe to call from worker threads
     static std::vector<CItemPerm*> ScanItem(const CItem* item, bool includeInherited, const std::optional<std::wregex>& excludeRegex);
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnDestroy();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnDestroy();
 };
+
+inline std::span<const RouteEntry> CFilePermsControl::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnDestroy>(WM_DESTROY),
+    };
+    return entries;
+}

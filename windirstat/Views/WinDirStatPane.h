@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include <span>
 
 class CItem;
 enum MODEL_CHANGE : std::uint8_t;
@@ -33,36 +32,40 @@ struct HoverInfo
 // CWinDirStatPane. A plain child window base for splitter/tab panes.
 // It supplies the small subset of pane behavior this UI uses.
 //
-class CWinDirStatPane : public CWnd
+class CWinDirStatPane : public MessageTarget<CWinDirStatPane, CWnd>
 {
-protected:
-    DECLARE_DYNAMIC(CWinDirStatPane)
-
+public:
     CWinDirStatPane() = default;
     ~CWinDirStatPane() override = default;
 
-    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
     void PostNcDestroy() override;
 
     virtual void OnDraw(CDC* pDC);
 
-public:
     virtual void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item);
     virtual HoverInfo GetHoverInfo() const { return {}; }
     virtual void SuspendRecalculationDrawing(bool /*suspend*/) {}
 
+static std::span<const RouteEntry> Routes();
+
 protected:
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
-    afx_msg void OnPaint();
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    int OnCreate(LPCREATESTRUCT) { return 0; }
+    int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message) override;
+    void OnPaint();
+    bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 
     void NotifyOtherPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
     void ShowGraphContextMenu(CItem* clickedItem, CPoint point,
         std::span<const UINT> persistentCommands);
 };
+
+inline std::span<const RouteEntry> CWinDirStatPane::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnMouseActivate>(WM_MOUSEACTIVATE),
+        Route::Window<&OnPaint>(WM_PAINT),
+    };
+    return entries;
+}

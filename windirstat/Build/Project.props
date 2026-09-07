@@ -2,7 +2,18 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<_PropertySheetDisplayName>Project-specific overrides (late)</_PropertySheetDisplayName>
+		<Production Condition="'$(Production)' == ''">0</Production>
+		<VersionFileFlags>0</VersionFileFlags>
+		<VersionFileFlags Condition="'$(Configuration)' == 'Debug'">VS_FF_DEBUG</VersionFileFlags>
 	</PropertyGroup>
+	<ItemDefinitionGroup>
+		<ClCompile>
+			<PreprocessorDefinitions>PRODUCTION=$(Production);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+		</ClCompile>
+		<ResourceCompile>
+			<PreprocessorDefinitions>PRODUCTION=$(Production);ACTUAL_FILEFLAGS=$(VersionFileFlags);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+		</ResourceCompile>
+	</ItemDefinitionGroup>
 	<ItemDefinitionGroup Condition="'$(Configuration)'=='Release' AND '$(PlatformToolset)'!='ClangCL'">
 		<Link>
 			<AdditionalOptions>/release %(AdditionalOptions)</AdditionalOptions>

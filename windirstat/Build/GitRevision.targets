@@ -21,7 +21,7 @@
 			<GitExecutableFullPath Condition="'%(_GitFilteredExecPaths.Identity)' == ''"></GitExecutableFullPath>
 		</PropertyGroup>
 	</Target>
-	<Target Name="GetGitRevision" DependsOnTargets="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
+	<Target Name="GetGitRevision" DependsOnTargets="FindGitExecutablePath">
 		<Message Importance="high" Text="Detecting Git revision, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />
 		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; rev-parse HEAD" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitRevision" />
@@ -44,7 +44,7 @@
 			</ResourceCompile>
 		</ItemGroup>		
 	</Target>
-	<Target Name="GetGitDate" DependsOnTargets="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
+	<Target Name="GetGitDate" DependsOnTargets="FindGitExecutablePath">
 		<Message Importance="high" Text="Detecting Git commit date, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />	
 		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; log -1 --format=%%25cd --date=format:&quot;%%25Y-%%25m-%%25d&quot;" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitDate" />
@@ -67,7 +67,7 @@
 			</ResourceCompile>
 		</ItemGroup>		
 	</Target>
-	<Target Name="GetGitCount" DependsOnTargets="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
+	<Target Name="GetGitCount" DependsOnTargets="FindGitExecutablePath">
 		<Message Importance="high" Text="Detecting Git commit count, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />
 		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; rev-list --count --all" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitCount" />

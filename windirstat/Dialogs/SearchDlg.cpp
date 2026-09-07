@@ -22,37 +22,19 @@
 
 // SearchDlg dialog
 
-IMPLEMENT_DYNAMIC(SearchDlg, CLayoutDialogEx)
-
 SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
-    : CLayoutDialogEx(IDD_SEARCH, COptions::SearchWindowRect.Ptr(), pParent)
+    : MessageTarget(IDD_SEARCH, COptions::SearchWindowRect.Ptr(), pParent)
 {
 }
-
-void SearchDlg::DoDataExchange(CDataExchange* pDX)
-{
-    CDialogEx::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_SEARCH_WHOLE_PHRASE, m_searchWholePhrase);
-    DDX_Check(pDX, IDC_SEARCH_CASE, m_searchCase);
-    DDX_Check(pDX, IDC_SEARCH_REGEX, m_searchRegex);
-    DDX_Text(pDX, IDC_SEARCH_TERM, m_searchTerm);
-}
-
-BEGIN_MESSAGE_MAP(SearchDlg, CLayoutDialogEx)
-    ON_BN_CLICKED(IDOK, &SearchDlg::OnBnClickedOk)
-    ON_EN_CHANGE(IDC_SEARCH_TERM, &SearchDlg::OnChangeSearchTerm)
-    ON_BN_CLICKED(IDC_SEARCH_REGEX, &SearchDlg::OnChangeSearchTerm)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
 
 // SearchDlg message handlers
 
-BOOL SearchDlg::OnInitDialog()
+bool SearchDlg::OnInitDialog()
 {
-    CDialogEx::OnInitDialog();
+    CDialog::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
+    DarkMode::AdjustControls(Handle());
 
     ModifyStyle(0, WS_CLIPCHILDREN);
 
@@ -65,26 +47,23 @@ BOOL SearchDlg::OnInitDialog()
 
     m_layout.OnInitDialog(true);
 
-    m_searchTerm = COptions::SearchTerm.Obj().c_str();
-    m_searchWholePhrase = COptions::SearchWholePhrase;
-    m_searchCase = COptions::SearchCase;
-    m_searchRegex = COptions::SearchRegex;
-    UpdateData(FALSE);
+    SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
+    SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
+    SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
+    SetChecked(IDC_SEARCH_REGEX, COptions::SearchRegex);
 
     OnChangeSearchTerm();
-    return TRUE;
+    return true;
 }
 
 void SearchDlg::OnBnClickedOk()
 {
-    UpdateData();
+    COptions::SearchTerm.Obj() = GetText(IDC_SEARCH_TERM);
+    COptions::SearchWholePhrase = IsChecked(IDC_SEARCH_WHOLE_PHRASE);
+    COptions::SearchCase = IsChecked(IDC_SEARCH_CASE);
+    COptions::SearchRegex = IsChecked(IDC_SEARCH_REGEX);
 
-    COptions::SearchTerm.Obj() = m_searchTerm;
-    COptions::SearchWholePhrase = (FALSE != m_searchWholePhrase);
-    COptions::SearchCase = (FALSE != m_searchCase);
-    COptions::SearchRegex = (FALSE != m_searchRegex);
-
-    CLayoutDialogEx::OnOK();
+    CLayoutDialog::OnOK();
 
     // Process search request
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
@@ -98,22 +77,23 @@ void SearchDlg::OnBnClickedOk()
 
 void SearchDlg::OnChangeSearchTerm()
 {
-    UpdateData();
+    const std::wstring searchTerm = GetText(IDC_SEARCH_TERM);
+    const bool searchRegex = IsChecked(IDC_SEARCH_REGEX);
+    const bool searchCase = IsChecked(IDC_SEARCH_CASE);
 
     // Auto-enable whole phrase search if * is present and not in regex mode
-    if (!m_searchRegex && m_searchTerm.Find(L'*') != -1)
+    if (!searchRegex && searchTerm.find(L'*') != std::wstring::npos)
     {
-        m_searchWholePhrase = TRUE;
-        UpdateData(FALSE);
+        SetChecked(IDC_SEARCH_WHOLE_PHRASE, true);
     }
 
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
-        m_searchTerm.GetString(), m_searchCase, m_searchRegex);
+        searchTerm, searchCase, searchRegex);
     GetDlgItem(IDOK)->EnableWindow(regexTest.flags() & std::regex_constants::optimize);
 }
 
 HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }

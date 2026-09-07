@@ -31,32 +31,13 @@ public:
     virtual void ReadPersistedProperty() = 0;
     virtual void WritePersistedProperty() = 0;
 
-    PersistedSetting()
-    {
-        GetPropertySet().push_back(this);
-    }
+    PersistedSetting();
+    virtual ~PersistedSetting();
 
-    virtual ~PersistedSetting()
-    {
-        std::erase(GetPropertySet(), this);
-    }
-
-    static void ReadPersistedProperties()
-    {
-        for (const auto & p : GetPropertySet())
-        {
-            p->ReadPersistedProperty();
-        }
-    }
-
-    static void WritePersistedProperties()
-    {
-        for (const auto & p : GetPropertySet())
-        {
-            if (p->m_section.empty()) continue;
-            p->WritePersistedProperty();
-        }
-    }
+    static void UseRegistryStorage() noexcept;
+    static void UseIniStorage(std::wstring path);
+    static void ReadPersistedProperties();
+    static void WritePersistedProperties();
 };
 
 template <typename T = void>
@@ -83,7 +64,7 @@ public:
 
     // Copy assignment operators
     T& operator=(const T& other) noexcept { return (m_value = other); }
-    T& operator=(const Setting& other) noexcept { return (m_value = other.m_value); }
+    T& operator=(const Setting& other) noexcept { return m_value = other.m_value; }
 
     // Math operators
     T& operator++() noexcept { return ++m_value; }
@@ -100,8 +81,8 @@ public:
     // Forces identical type assignment
     template <typename T2> T2& operator=(const T2&) = delete;
 
-    Setting(const std::wstring& section, const std::wstring& entry, const T& defaultValue = {}, const T& checkMin = {}, const T& checkMax = {}) :
-        m_value(defaultValue), m_min(checkMin), m_max(checkMax)
+    Setting(const std::wstring& section, const std::wstring& entry, T defaultValue = {}, T checkMin = {}, T checkMax = {}) :
+        m_value(std::move(defaultValue)), m_min(std::move(checkMin)), m_max(std::move(checkMax))
     {
         m_entry = entry;
         m_section = section;

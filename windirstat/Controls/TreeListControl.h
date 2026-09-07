@@ -67,16 +67,15 @@ public:
     virtual CTreeListItem* GetAncestorCheckItem() { return this; }
 
     void DrawPacman(CDC* pdc, const CRect& rc) const;
-    CTreeListItem* GetParent() const;
-    void SetParent(CTreeListItem* parent);
+    CTreeListItem* GetParent() const { return m_parent; }
+    void SetParent(CTreeListItem* parent) { m_parent = parent; }
     bool IsAncestorOf(const CTreeListItem* item) const;
-    bool HasChildren() const;
+    bool HasChildren() const { return GetTreeListChildCount() > 0; }
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
-    bool IsVisible() const { return m_visualInfo.get() != nullptr; }
+    bool IsVisible() const override { return m_visualInfo.get() != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
-    void SetIndent(unsigned char indent) const;
     CRect GetPlusMinusRect() const;
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
@@ -95,27 +94,25 @@ private:
 //
 // CTreeListControl. A CListCtrl, which additionally behaves and looks like a tree control.
 //
-class CTreeListControl : public CWdsListControl
+class CTreeListControl : public MessageTarget<CTreeListControl, CWdsListControl>
 {
-    DECLARE_DYNAMIC(CTreeListControl)
-
-    CTreeListControl(std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {}, LOGICAL_FOCUS logicalFocus = static_cast<LOGICAL_FOCUS>(0), bool blockFirstColumnReorder = false);
+public:
+    CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder);
     ~CTreeListControl() override = default;
-    virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
-    void SysColorChanged() override;
+    virtual bool CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     virtual void SetRootItem(CTreeListItem* root = nullptr);
     virtual void AfterDeleteAllItems() {}
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
-    CTreeListItem* GetItem(int i) const;
+    CTreeListItem* GetItem(const int i) const { return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i)); }
     bool IsItemSelected(const CTreeListItem* item) const;
     void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false, bool scroll = false);
     void ExpandPathToItem(const CTreeListItem* item);
-    void DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width);
+    void DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width) const;
     void EnsureItemVisible(const CTreeListItem* item);
-    void ExpandItem(const CTreeListItem* item);
-    int FindTreeItem(const CTreeListItem* item) const;
+    void ExpandItem(const CTreeListItem* item) { ExpandItem(FindTreeItem(item), false); }
+    int FindTreeItem(const CTreeListItem* item) const { return FindListItem(item); }
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);
@@ -123,9 +120,8 @@ class CTreeListControl : public CWdsListControl
     template <class T = CTreeListItem> std::vector<T*> GetAllSelected(bool visual = false)
     {
         std::vector<T*> array;
-        for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
+        for (int i = FirstSelectedIndex(); i >= 0; i = NextSelectedIndex(i))
         {
-            const int i = GetNextSelectedItem(pos);
             const auto item = visual ? reinterpret_cast<T*>(GetItem(i)) :
                 reinterpret_cast<T*>(GetItem(i)->GetLinkedItem());
             if (item != nullptr) array.push_back(item);
@@ -135,18 +131,16 @@ class CTreeListControl : public CWdsListControl
 
     template <class T = CTreeListItem> T* GetFirstSelectedItem()
     {
-        POSITION pos = GetFirstSelectedItemPosition();
-        if (pos == nullptr) return nullptr;
-        const int i = GetNextSelectedItem(pos);
-        if (pos != nullptr) return nullptr;
-
-        return reinterpret_cast<T*>(GetItem(i));
+        const int selected = FirstSelectedIndex();
+        if (selected < 0 || NextSelectedIndex(selected) >= 0) return nullptr;
+        return reinterpret_cast<T*>(GetItem(selected));
     }
 
 protected:
+    void OnItemContextMenu(CPoint pt) override;
     void OnItemDoubleClick(int i);
     void InsertItem(int i, CTreeListItem* item);
-    void DeleteItem(int i);
+    bool DeleteItem(int i) override;
     void CollapseItem(int i);
     void ExpandItem(int i, bool scroll = true);
     void ToggleExpansion(int i);
@@ -158,13 +152,29 @@ protected:
     bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
     LOGICAL_FOCUS m_logicalFocus = static_cast<LOGICAL_FOCUS>(0);
     bool m_blockFirstColumnReorder = false;
+    CMenu m_contextMenu; // Keep the menu alive until its queued WM_MENUCOMMAND is dispatched.
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg BOOL OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam) override;
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    void OnLButtonDblClk(UINT nFlags, CPoint point);
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnSetFocus(CWnd* pOldWnd);
+    bool OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult) const;
+    LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam) override;
 };
+
+inline std::span<const RouteEntry> CTreeListControl::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&OnLButtonDblClk>(WM_LBUTTONDBLCLK),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Notify<&OnHeaderEndDrag>(HDN_ENDDRAG, 0),
+    };
+    return entries;
+}

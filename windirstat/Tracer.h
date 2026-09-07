@@ -17,51 +17,30 @@
 
 #pragma once
 
-#ifdef _DEBUG
 #include "pch.h"
 
-#define VTRACE(x, ...) CWDSTracerConsole::ProcessOutput(std::source_location::current(), x, ##__VA_ARGS__)
-
-class CWDSTracerConsole final
+struct TraceCall final
 {
-    FILE* handleErr;
-    FILE* handleOut;
-    FILE* handleIn;
+    std::wstring_view format;
+    std::source_location location;
 
-public:
-    CWDSTracerConsole()
+    template <std::size_t N>
+    TraceCall(const wchar_t (&value)[N],
+        std::source_location caller = std::source_location::current()) noexcept
+        : format(value, N - 1), location(caller)
     {
-        AllocConsole();
-        ::SetConsoleTitle(L"WinDirStat Debug Trace Output");
-
-        // Redirect console output to new console
-        _wfreopen_s(&handleErr, L"CONOUT$", L"w", stderr);
-        _wfreopen_s(&handleOut, L"CONOUT$", L"w", stdout);
-        _wfreopen_s(&handleIn, L"CONIN$", L"r", stdin);
-
-        // Disable buffering
-        if (handleOut != nullptr) (void) setvbuf(handleOut, nullptr, _IONBF, 0);
-        if (handleErr != nullptr) (void) setvbuf(handleErr, nullptr, _IONBF, 0);
-    }
-
-    ~CWDSTracerConsole()
-    {
-        std::wcout << L"Press any key to close this window.\n";
-        std::wcin.get();
-        FreeConsole();
-    }
-
-    static void ProcessOutput(const std::source_location& loc, std::wstring_view format, auto&&... args)
-    {
-        std::string fileName = loc.file_name();
-        const auto pos = fileName.find_last_of('\\');
-        if (pos != std::string::npos) fileName = fileName.substr(pos + 1);
-        std::string errorPrefix = fileName + ":" + std::to_string(loc.line());
-        std::wcout << std::format(L"[{}] {}\n", std::wstring(errorPrefix.begin(), errorPrefix.end()),
-            std::vformat(format, std::make_wformat_args(args...)));
     }
 };
 
-#else
-#define VTRACE(x, ...) __noop
-#endif // _DEBUG
+void VTRACE(const TraceCall& trace, [[maybe_unused]] auto&&... args)
+{
+    if constexpr (IsDebugBuild)
+    {
+        std::string fileName = trace.location.file_name();
+        if (const auto pos = fileName.find_last_of('\\'); pos != std::string::npos) fileName = fileName.substr(pos + 1);
+
+        const std::wstring output = std::format(L"[{}:{}] {}\n", std::wstring(fileName.begin(), fileName.end()),
+            trace.location.line(), std::vformat(trace.format, std::make_wformat_args(args...)));
+        OutputDebugStringW(output.c_str());
+    }
+}

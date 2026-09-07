@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "TreeMap.h"
+#include "TreeMapLayout.h"
 #include "Item.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
@@ -24,23 +25,11 @@ static constexpr COLORREF BGR(auto b, auto g, auto r)
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
 
-static constexpr COLORREF DimColor(COLORREF rgb, float factor = 0.9f) noexcept
-{
-    factor = std::clamp(factor, 0.0f, 1.0f);
-    return RGB(
-        static_cast<BYTE>(GetRValue(rgb) * factor),
-        static_cast<BYTE>(GetGValue(rgb) * factor),
-        static_cast<BYTE>(GetBValue(rgb) * factor)
-    );
-}
-
 // Define the "brightness" of an RBG value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
 // all having the same brightness of 0.6
 // Later in RenderCushion() this number is used again to
 // scale the colors.
-
-static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 using Surface = std::array<double, 4>;
 
@@ -52,13 +41,13 @@ struct DrawStateInfo
     double ridgeHeight = 0.0;
     bool asRoot = false;
     int depth = 0;
+    TreeMapLayout::State layoutState;
 };
 
 struct LayoutScratch
 {
-    std::vector<double> childWidth;
-    std::vector<double> rows;
-    std::vector<int> childrenPerRow;
+    std::vector<ULONGLONG> childWeights;
+    std::vector<TreeMapLayout::ChildRegion> childRegions;
 };
 
 struct PreparedColor
@@ -69,21 +58,17 @@ struct PreparedColor
 
 constexpr UINT EXTENSION_TEXT_FLAGS = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
 constexpr int EXTENSION_TEXT_PADDING = 4;
-const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
-    CPoint(-1, -1),
+const std::array EXTENSION_SHADOW_OFFSETS = {
     CPoint(0, -1),
-    CPoint(1, -1),
     CPoint(-1, 0),
     CPoint(1, 0),
-    CPoint(-1, 1),
-    CPoint(0, 1),
-    CPoint(1, 1)
+    CPoint(0, 1)
 };
 
-[[nodiscard]] PreparedColor PrepareRenderColor(const DWORD color, const double brightness)
+PreparedColor PrepareRenderColor(const DWORD color, const double brightness)
 {
     const COLORREF baseColor = static_cast<COLORREF>(color);
-    PreparedColor prepared{ baseColor, brightness };
+    PreparedColor prepared{ .color = baseColor, .brightness = brightness };
 
     if ((color & CTreeMap::COLORFLAG_MASK) == 0)
     {
@@ -91,7 +76,7 @@ const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
     }
 
     const DWORD flags = color & CTreeMap::COLORFLAG_MASK;
-    prepared.color = CColorSpace::MakeBrightColor(baseColor, PALETTE_BRIGHTNESS);
+    prepared.color = CColorSpace::MakeBrightColor(baseColor, CColorSpace::GraphPaletteBrightness);
 
     if ((flags & CTreeMap::COLORFLAG_DARKER) != 0)
     {
@@ -105,9 +90,9 @@ const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
     return prepared;
 }
 
-[[nodiscard]] COLORREF MakeBitmapColor(const COLORREF color, const double brightness)
+COLORREF MakeBitmapColor(const COLORREF color, const double brightness)
 {
-    const double factor = brightness / PALETTE_BRIGHTNESS;
+    const double factor = brightness / CColorSpace::GraphPaletteBrightness;
 
     int red = static_cast<int>(GetRValue(color) * factor);
     int green = static_cast<int>(GetGValue(color) * factor);
@@ -117,9 +102,9 @@ const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
     return BGR(blue, green, red);
 }
 
-static COLORREF GetDepthColor(int depth) noexcept
+static COLORREF GetDepthColor(const int depth) noexcept
 {
-    static constexpr std::array<COLORREF, 7> palette = {
+    static constexpr std::array palette = {
         RGB(240, 128, 128), // Light Coral (Red)
         RGB(244, 200, 120), // Tan / Light Orange
         RGB(250, 250, 160), // Light Yellow
@@ -131,7 +116,13 @@ static COLORREF GetDepthColor(int depth) noexcept
     return (depth <= 0) ? RGB(200, 200, 200) : palette[static_cast<std::size_t>(depth - 1) % palette.size()];
 }
 
-[[nodiscard]] bool PrepareRenderArea(CDC* const pdc, CRect& rc, const bool drawOuterFrame)
+void FillSolidRect(HDC dc, const RECT& rc, const COLORREF color)
+{
+    ScopedBkColor background(dc, color);
+    ExtTextOutW(dc, 0, 0, ETO_OPAQUE, &rc, nullptr, 0, nullptr);
+}
+
+bool PrepareRenderArea(HDC dc, CRect& rc, const bool drawOuterFrame)
 {
     if (rc.Width() <= 0 || rc.Height() <= 0)
     {
@@ -143,12 +134,12 @@ static COLORREF GetDepthColor(int depth) noexcept
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
         // change, when grid is switched on and off.
-        CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
-        CSelectObject sopen(pdc, &pen);
-        pdc->MoveTo(rc.right - 1, rc.top);
-        pdc->LineTo(rc.right - 1, rc.bottom);
-        pdc->MoveTo(rc.left, rc.bottom - 1);
-        pdc->LineTo(rc.right, rc.bottom - 1);
+        const CPen pen(PS_SOLID, 1, DarkMode::SystemColor(COLOR_3DSHADOW));
+        GdiObjectSelection selectPen(dc, &pen);
+        MoveToEx(dc, rc.right - 1, rc.top, nullptr);
+        LineTo(dc, rc.right - 1, rc.bottom);
+        MoveToEx(dc, rc.left, rc.bottom - 1, nullptr);
+        LineTo(dc, rc.right, rc.bottom - 1);
     }
 
     rc.right--;
@@ -157,41 +148,40 @@ static COLORREF GetDepthColor(int depth) noexcept
     return rc.Width() > 0 && rc.Height() > 0;
 }
 
-void BlitBitmap(CDC* const pdc, const CRect& rc, const std::vector<COLORREF>& bitmapBits)
+void BlitBitmap(HDC dc, const CRect& rc, const std::vector<COLORREF>& bitmapBits)
 {
     // Use SetDIBitsToDevice for compatibility with Remote Desktop at <32-bit depth
     const BITMAPINFO bmi{ .bmiHeader = { .biSize = sizeof(BITMAPINFOHEADER),
         .biWidth = rc.Width(), .biHeight = -rc.Height(), .biPlanes = 1,
         .biBitCount = 32, .biCompression = BI_RGB } };
-    ::SetDIBitsToDevice(pdc->GetSafeHdc(), rc.left, rc.top, rc.Width(), rc.Height(),
+    SetDIBitsToDevice(dc, rc.left, rc.top, rc.Width(), rc.Height(),
         0, 0, 0, rc.Height(), bitmapBits.data(), &bmi, DIB_RGB_COLORS);
 }
 
-[[nodiscard]] bool CanDrawExtensionLabel(const CRect& rc, const CSize& textSize)
+bool CanDrawExtensionLabel(const CRect& rc, const CSize& textSize)
 {
     return textSize.cx + EXTENSION_TEXT_PADDING <= rc.Width()
         && textSize.cy + EXTENSION_TEXT_PADDING <= rc.Height();
 }
 
-void DrawShadowedExtensionText(CDC* const pdc, const std::wstring_view text, const CRect& rc)
+void DrawShadowedExtensionText(HDC dc, const std::wstring_view text, const CRect& rc)
 {
-    CSaveDC saveDc(pdc);
-    pdc->IntersectClipRect(rc);
+    ScopedDcState saveDc(dc);
+    IntersectClipRect(dc, rc.left, rc.top, rc.right, rc.bottom);
 
     {
-        CSetTextColor soShadowTextColor(pdc, RGB(0, 0, 0));
+        ScopedTextColor shadowTextColor(dc, RGB(0, 0, 0));
         for (const CPoint& offset : EXTENSION_SHADOW_OFFSETS)
         {
-            CRect shadowRc = rc;
-            shadowRc.OffsetRect(offset);
-            pdc->DrawText(text.data(), static_cast<int>(text.size()), &shadowRc, EXTENSION_TEXT_FLAGS);
+            CRect shadowRc = rc + offset;
+            DrawTextW(dc, text.data(), static_cast<int>(text.size()), &shadowRc, EXTENSION_TEXT_FLAGS);
         }
     }
 
     {
-        CSetTextColor soTextColor(pdc, RGB(255, 255, 255));
+        ScopedTextColor textColor(dc, RGB(255, 255, 255));
         CRect textRc = rc;
-        pdc->DrawText(text.data(), static_cast<int>(text.size()), &textRc, EXTENSION_TEXT_FLAGS);
+        DrawTextW(dc, text.data(), static_cast<int>(text.size()), &textRc, EXTENSION_TEXT_FLAGS);
     }
 }
 
@@ -201,7 +191,7 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
     palette.resize(std::size(DefaultCushionColors));
     std::ranges::transform(DefaultCushionColors, palette.begin(),
-        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
+        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, CColorSpace::GraphPaletteBrightness); });
 }
 
 std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
@@ -292,11 +282,6 @@ std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
     }
 }
 
-CTreeMap::Options CTreeMap::GetDefaults()
-{
-    return DefaultOptions;
-}
-
 CTreeMap::CTreeMap()
 {
     SetOptions(&DefaultOptions);
@@ -304,7 +289,7 @@ CTreeMap::CTreeMap()
 
 void CTreeMap::SetOptions(const Options* options)
 {
-    ASSERT(options != nullptr);
+    assert(options != nullptr);
     m_options = *options;
 
     // Derive normalized vector here for performance
@@ -318,17 +303,193 @@ void CTreeMap::SetOptions(const Options* options)
     m_lz = lz / len;
 }
 
-CTreeMap::Options CTreeMap::GetOptions() const
+void CTreeMap::ClearLayout()
 {
-    return m_options;
+    m_layoutRoot = nullptr;
+    m_layoutArea.Clear();
+    m_hitTestColumns = 0;
+    m_hitTestRows = 0;
+    m_visibleItems.clear();
+    m_itemToVisibleIndex.clear();
+    m_hitTestCellOffsets.clear();
+    m_hitTestEntries.clear();
 }
 
-#ifdef _DEBUG
+void CTreeMap::TrimMemory()
+{
+    ClearLayout();
+    decltype(m_visibleItems){}.swap(m_visibleItems);
+    decltype(m_itemToVisibleIndex){}.swap(m_itemToVisibleIndex);
+    decltype(m_hitTestCellOffsets){}.swap(m_hitTestCellOffsets);
+    decltype(m_hitTestEntries){}.swap(m_hitTestEntries);
+    decltype(m_bitmapBits){}.swap(m_bitmapBits);
+}
+
+void CTreeMap::AddVisibleItem(CItem* const item, const CRect& rectangle, const int depth)
+{
+    if (item == nullptr || rectangle.Width() <= 0 || rectangle.Height() <= 0) return;
+
+    const std::size_t index = m_visibleItems.size();
+    const auto [iterator, inserted] = m_itemToVisibleIndex.try_emplace(item, index);
+    assert(inserted);
+    if (!inserted)
+    {
+        m_visibleItems[iterator->second] = { item, rectangle, depth };
+        return;
+    }
+
+    m_visibleItems.push_back({ item, rectangle, depth });
+}
+
+void CTreeMap::BuildHitTestIndex()
+{
+    m_hitTestCellOffsets.clear();
+    m_hitTestEntries.clear();
+    m_hitTestColumns = 0;
+    m_hitTestRows = 0;
+    if (m_layoutArea.IsEmpty() || m_visibleItems.empty()) return;
+
+    m_hitTestColumns = (m_layoutArea.Width() + HitTestCellSize - 1) / HitTestCellSize;
+    m_hitTestRows = (m_layoutArea.Height() + HitTestCellSize - 1) / HitTestCellSize;
+    const std::size_t cellCount = static_cast<std::size_t>(m_hitTestColumns)
+        * static_cast<std::size_t>(m_hitTestRows);
+    m_hitTestCellOffsets.assign(cellCount + 1, 0);
+
+    const auto visitCells = [this](const CRect& rectangle, auto&& visitor)
+    {
+        CRect clipped;
+        if (!clipped.Intersect(rectangle, m_layoutArea)) return;
+
+        const int firstColumn = (clipped.left - m_layoutArea.left) / HitTestCellSize;
+        const int lastColumn = (clipped.right - 1 - m_layoutArea.left) / HitTestCellSize;
+        const int firstRow = (clipped.top - m_layoutArea.top) / HitTestCellSize;
+        const int lastRow = (clipped.bottom - 1 - m_layoutArea.top) / HitTestCellSize;
+
+        for (const int row : std::views::iota(firstRow, lastRow + 1))
+        {
+            for (const int column : std::views::iota(firstColumn, lastColumn + 1))
+            {
+                std::invoke(visitor,
+                    static_cast<std::size_t>(row) * m_hitTestColumns + column);
+            }
+        }
+    };
+
+    struct IndexedRegion
+    {
+        std::size_t visibleIndex;
+        CRect rectangle;
+    };
+
+    // Index only the area owned exclusively by a nonterminal item. In normal
+    // layouts direct children tile one rectangular inset, so indexing every
+    // ancestor's full rectangle would multiply storage by hierarchy depth.
+    std::vector<CRect> childBounds(m_visibleItems.size());
+    std::vector<ULONGLONG> childAreas(m_visibleItems.size(), 0);
+    std::vector hasVisibleChildren(m_visibleItems.size(), false);
+    for (const VisibleItem& child : m_visibleItems)
+    {
+        const CItem* const parent = child.item->GetParent();
+        const auto parentFound = m_itemToVisibleIndex.find(parent);
+        if (parentFound == m_itemToVisibleIndex.end()) continue;
+
+        const std::size_t parentIndex = parentFound->second;
+        if (hasVisibleChildren[parentIndex])
+        {
+            CRect combined;
+            combined.Union(childBounds[parentIndex], child.rectangle);
+            childBounds[parentIndex] = combined;
+        }
+        else
+        {
+            childBounds[parentIndex] = child.rectangle;
+            hasVisibleChildren[parentIndex] = true;
+        }
+        childAreas[parentIndex] += static_cast<ULONGLONG>(child.rectangle.Width())
+            * static_cast<ULONGLONG>(child.rectangle.Height());
+    }
+
+    std::vector<IndexedRegion> indexedRegions;
+    indexedRegions.reserve(m_visibleItems.size() * 2);
+    const auto addRegion = [&indexedRegions](const std::size_t index, const CRect rectangle)
+    {
+        if (rectangle.Width() > 0 && rectangle.Height() > 0)
+            indexedRegions.push_back({ index, rectangle });
+    };
+
+    for (const std::size_t index : std::views::iota(std::size_t{ 0 }, m_visibleItems.size()))
+    {
+        const CRect outer = m_visibleItems[index].rectangle;
+        if (!hasVisibleChildren[index])
+        {
+            addRegion(index, outer);
+            continue;
+        }
+
+        const CRect inner = childBounds[index];
+        const bool contained = outer.left <= inner.left && inner.right <= outer.right
+            && outer.top <= inner.top && inner.bottom <= outer.bottom;
+        const ULONGLONG boundingArea = static_cast<ULONGLONG>(inner.Width())
+            * static_cast<ULONGLONG>(inner.Height());
+        if (!contained || childAreas[index] != boundingArea)
+        {
+            // Preserve hit correctness if release data violates the normal
+            // rectangular child partition invariant.
+            addRegion(index, outer);
+            continue;
+        }
+
+        addRegion(index, CRect(outer.left, outer.top, outer.right, inner.top));
+        addRegion(index, CRect(outer.left, inner.bottom, outer.right, outer.bottom));
+        addRegion(index, CRect(outer.left, inner.top, inner.left, inner.bottom));
+        addRegion(index, CRect(inner.right, inner.top, outer.right, inner.bottom));
+    }
+
+    for (const auto& [_, rectangle] : indexedRegions)
+    {
+        visitCells(rectangle, [this](const std::size_t cell)
+        {
+            ++m_hitTestCellOffsets[cell + 1];
+        });
+    }
+
+    for (std::size_t cell = 1; cell < m_hitTestCellOffsets.size(); ++cell)
+    {
+        m_hitTestCellOffsets[cell] += m_hitTestCellOffsets[cell - 1];
+    }
+
+    std::vector<std::size_t> nextEntry = m_hitTestCellOffsets;
+    m_hitTestEntries.resize(m_hitTestCellOffsets.back());
+    for (const auto& [visibleIndex, rectangle] : indexedRegions)
+    {
+        visitCells(rectangle,
+            [&nextEntry, this, index = visibleIndex](const std::size_t cell)
+        {
+            m_hitTestEntries[nextEntry[cell]++] = index;
+        });
+    }
+}
+
+bool CTreeMap::HasValidLayout(const CItem* const root) const
+{
+    return root != nullptr && root == m_layoutRoot
+        && m_itemToVisibleIndex.contains(root) && !m_hitTestCellOffsets.empty();
+}
+
+bool CTreeMap::TryGetItemRectangle(const CItem* const item, CRect& rectangle) const
+{
+    const auto found = m_itemToVisibleIndex.find(item);
+    if (found == m_itemToVisibleIndex.end()) return false;
+
+    rectangle = m_visibleItems[found->second].rectangle;
+    return true;
+}
+
 void CTreeMap::RecurseCheckTree(const CItem* item)
 {
     if (item->TmiIsLeaf())
     {
-        ASSERT(item->TmiGetChildCount() == 0);
+        assert(item->TmiGetChildCount() == 0);
     }
     else
     {
@@ -338,59 +499,81 @@ void CTreeMap::RecurseCheckTree(const CItem* item)
         {
             const CItem* child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
-            ASSERT(size <= last);
+            assert(size <= last);
             sum += size;
             last = size;
             RecurseCheckTree(child);
         }
-        ASSERT(sum == item->TmiGetSize());
+        assert(sum == item->TmiGetSize());
     }
 }
-#endif
-
-void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options)
+void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options)
 {
+    ClearLayout();
+
     // Validate parameters and options
-    ASSERT(pdc != nullptr && root != nullptr);
-    if (pdc == nullptr || root == nullptr)
+    assert(dc != nullptr && root != nullptr);
+    if (dc == nullptr || root == nullptr)
     {
         // Parameter check fallback
         return;
     }
 
-#ifdef _DEBUG
-    RecurseCheckTree(root);
-#endif // _DEBUG
+    if constexpr (IsDebugBuild) RecurseCheckTree(root);
 
     if (options != nullptr)
     {
         SetOptions(options);
     }
 
-    if (!PrepareRenderArea(pdc, rc, !m_options.grid))
+    if (!PrepareRenderArea(dc, rc, !m_options.grid))
     {
         return;
     }
 
-    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
+    GdiObjectSelection selectFont(dc, GetAppFont());
 
     TEXTMETRIC tm{};
-    pdc->GetTextMetrics(&tm);
+    GetTextMetricsW(dc, &tm);
     const int headerHeight = tm.tmHeight + 2;
 
-    m_renderArea = rc;
+    const int renderWidth = rc.Width();
+    const int renderHeight = rc.Height();
+    m_layoutRoot = root;
+    m_layoutArea = CRect(0, 0, renderWidth, renderHeight);
 
     if (root->TmiGetSize() == 0)
     {
-        pdc->FillSolidRect(rc, RGB(0, 0, 0));
+        FillSolidRect(dc, rc, RGB(0, 0, 0));
+        AddVisibleItem(root, m_layoutArea, 0);
+        BuildHitTestIndex();
         return;
     }
 
-    // Allocate bitmap buffers and configure options
-    const int renderWidth = rc.Width();
-    const int renderHeight = rc.Height();
     const size_t pixelCount = static_cast<size_t>(renderWidth) * static_cast<size_t>(renderHeight);
-    std::vector<COLORREF> bitmapBits(pixelCount, MakeBitmapColor(m_options.gridColor, PALETTE_BRIGHTNESS));
+    BitmapView bitmap{};
+    bool rendersIntoDc = false;
+    DIBSECTION dibSection{};
+    const HGDIOBJ selectedBitmap = GetCurrentObject(dc, OBJ_BITMAP);
+    if (selectedBitmap != nullptr
+        && ::GetObject(selectedBitmap, sizeof(dibSection), &dibSection) == sizeof(dibSection)
+        && dibSection.dsBm.bmBits != nullptr && dibSection.dsBm.bmBitsPixel == 32
+        && dibSection.dsBmih.biHeight < 0 && rc.left >= 0 && rc.top >= 0
+        && rc.right <= dibSection.dsBm.bmWidth && rc.bottom <= dibSection.dsBm.bmHeight)
+    {
+        GdiFlush();
+        bitmap.stride = static_cast<size_t>(dibSection.dsBm.bmWidthBytes) / sizeof(COLORREF);
+        bitmap.bits = static_cast<COLORREF*>(dibSection.dsBm.bmBits)
+            + static_cast<size_t>(rc.top) * bitmap.stride + rc.left;
+        rendersIntoDc = true;
+    }
+    else
+    {
+        m_bitmapBits.resize(pixelCount);
+        bitmap = { m_bitmapBits.data(), static_cast<size_t>(renderWidth) };
+    }
+    DrawSolidRect(bitmap, CRect(0, 0, renderWidth, renderHeight),
+        m_options.gridColor, CColorSpace::GraphPaletteBrightness);
 
     const int gridWidth = m_options.grid ? 1 : 0;
     const bool cushionShading = IsCushionShading();
@@ -410,160 +593,36 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
     std::vector<FolderDrawInfo> foldersToDraw;
     foldersToDraw.reserve(128);
 
-    auto pushChildState = [this, &stack](CItem* child, const CRect& childRect, const DrawStateInfo& parentState)
+    auto pushChildState = [this, &stack](CItem* child, const CRect& childRect,
+        const DrawStateInfo& parentState,
+        const TreeMapLayout::State layoutState)
     {
         stack.push_back({ parentState.surface, childRect, child,
-            parentState.ridgeHeight * m_options.scaleFactor, false, parentState.depth + 1 });
+            parentState.ridgeHeight * m_options.scaleFactor, false,
+            parentState.depth + 1, layoutState });
     };
 
-    // Lay out children using KDirStat style
-    auto pushKDirStatChildren = [this, &layoutScratch, &pushChildState](CItem* item, const DrawStateInfo& state)
+    auto pushChildren = [this, &layoutScratch, &pushChildState](
+        CItem* item, const DrawStateInfo& state)
     {
-        const bool horizontalRows =
-            KDirStat_ArrangeChildren(item, layoutScratch.childWidth, layoutScratch.rows, layoutScratch.childrenPerRow);
+        const int childCount = item->TmiGetChildCount();
+        layoutScratch.childWeights.resize(childCount);
+        for (const int i : std::views::iota(0, childCount))
+            layoutScratch.childWeights[i] = item->TmiGetChild(i)->TmiGetSize();
 
-        const double rowOrigin = horizontalRows ? state.rc.top : state.rc.left;
-        const int rowExtent = horizontalRows ? state.rc.Height() : state.rc.Width();
-        const int columnExtent = horizontalRows ? state.rc.Width() : state.rc.Height();
+        TreeMapLayout::ArrangeChildren({
+            .style = m_options.style,
+            .bounds = state.rc,
+            .parentWeight = item->TmiGetSize(),
+            .weights = layoutScratch.childWeights,
+            .state = state.layoutState,
+        }, layoutScratch.childRegions);
 
-        double top = rowOrigin;
-        size_t childIndex = 0;
-        for (const size_t rowIndex : std::views::iota(0u, layoutScratch.rows.size()))
+        for (const int i : std::views::iota(0, childCount))
         {
-            const double fBottom = top + layoutScratch.rows[rowIndex] * rowExtent;
-            const int bottom = (rowIndex + 1 == layoutScratch.rows.size())
-                ? (horizontalRows ? state.rc.bottom : state.rc.right)
-                : static_cast<int>(fBottom);
-
-            double left = horizontalRows ? state.rc.left : state.rc.top;
-            for (int childInRow = 0; childInRow < layoutScratch.childrenPerRow[rowIndex]; ++childInRow, ++childIndex)
-            {
-                CItem* child = item->TmiGetChild(static_cast<int>(childIndex));
-                const double fRight = left + layoutScratch.childWidth[childIndex] * columnExtent;
-                const bool lastChild = childInRow + 1 == layoutScratch.childrenPerRow[rowIndex]
-                    || (childIndex + 1 < layoutScratch.childWidth.size() && layoutScratch.childWidth[childIndex + 1] == 0.0);
-                const int right = lastChild
-                    ? (horizontalRows ? state.rc.right : state.rc.bottom)
-                    : static_cast<int>(fRight);
-
-                const CRect rcChild = horizontalRows
-                    ? CRect(static_cast<int>(left), static_cast<int>(top), right, bottom)
-                    : CRect(static_cast<int>(top), static_cast<int>(left), bottom, right);
-
-                pushChildState(child, rcChild, state);
-                left = fRight;
-            }
-
-            top = fBottom;
-        }
-    };
-
-    // Lay out children using SequoiaView style
-    auto pushSequoiaViewChildren = [this, &pushChildState](CItem* item, const DrawStateInfo& state)
-    {
-        CRect remaining = state.rc;
-        ULONGLONG remainingSize = item->TmiGetSize();
-        ASSERT(remainingSize > 0);
-
-        const int maxChild = item->TmiGetChildCount();
-        if (maxChild == 0)
-        {
-            return;
-        }
-
-        const double sizePerSquarePixel = static_cast<double>(remainingSize) / remaining.Width() / remaining.Height();
-        int head = 0;
-
-        while (head < maxChild)
-        {
-            ASSERT(remaining.Width() > 0 && remaining.Height() > 0);
-
-            const bool horizontal = remaining.Width() >= remaining.Height();
-            const int rowThickness = horizontal ? remaining.Height() : remaining.Width();
-            const double hh = rowThickness * rowThickness * sizePerSquarePixel;
-            ASSERT(hh > 0);
-
-            const int rowBegin = head;
-            int rowEnd = head;
-
-            double worst = DBL_MAX;
-            const ULONGLONG rmax = item->TmiGetChild(rowBegin)->TmiGetSize();
-            ULONGLONG sum = 0;
-
-            while (rowEnd < maxChild)
-            {
-                const ULONGLONG childSize = item->TmiGetChild(rowEnd)->TmiGetSize();
-                if (childSize == 0)
-                {
-                    rowEnd = maxChild;
-                    break;
-                }
-
-                const double nextSum = static_cast<double>(sum) + childSize;
-                const double ss = nextSum * nextSum;
-                const double nextWorst = std::max(hh * rmax / ss, ss / hh / childSize);
-
-                if (nextWorst > worst)
-                {
-                    break;
-                }
-
-                sum += childSize;
-                ++rowEnd;
-                worst = nextWorst;
-            }
-
-            if (sum == 0)
-            {
-                for (const int i : std::views::iota(head, maxChild))
-                {
-                    item->TmiGetChild(i)->TmiSetRectangle(CRect(-1, -1, -1, -1));
-                }
-                break;
-            }
-
-            const int remainingExtent = horizontal ? remaining.Width() : remaining.Height();
-            const int rowWidth = (sum < remainingSize)
-                ? std::clamp(static_cast<int>(static_cast<double>(sum) / remainingSize * remainingExtent), 1, remainingExtent)
-                : remainingExtent;
-
-            CRect rcRow = remaining;
-            if (horizontal) rcRow.right = rcRow.left + rowWidth;
-            else rcRow.bottom = rcRow.top + rowWidth;
-
-            double fBegin = horizontal ? rcRow.top : rcRow.left;
-            for (const int i : std::views::iota(rowBegin, rowEnd))
-            {
-                const ULONGLONG childSize = item->TmiGetChild(i)->TmiGetSize();
-                const double fraction = static_cast<double>(childSize) / sum;
-                const double fEnd = fBegin + fraction * (horizontal ? rcRow.Height() : rcRow.Width());
-
-                const bool lastChild = i + 1 == rowEnd
-                    || (i + 1 < item->TmiGetChildCount() && item->TmiGetChild(i + 1)->TmiGetSize() == 0);
-                const int end = lastChild
-                    ? (horizontal ? rcRow.bottom : rcRow.right)
-                    : static_cast<int>(fEnd);
-
-                const CRect rcChild = horizontal
-                    ? CRect(rcRow.left, static_cast<int>(fBegin), rcRow.right, end)
-                    : CRect(static_cast<int>(fBegin), rcRow.top, end, rcRow.bottom);
-
-                pushChildState(item->TmiGetChild(i), rcChild, state);
-                fBegin = fEnd;
-            }
-
-            (horizontal ? remaining.left : remaining.top) += rowWidth;
-            remainingSize -= sum;
-            head += rowEnd - rowBegin;
-
-            if (remaining.Width() <= 0 || remaining.Height() <= 0)
-            {
-                for (const int i : std::views::iota(head, maxChild))
-                {
-                    item->TmiGetChild(i)->TmiSetRectangle(CRect(-1, -1, -1, -1));
-                }
-                break;
-            }
+            const auto& childRegion = layoutScratch.childRegions[i];
+            if (childRegion.bounds.IsEmpty()) continue;
+            pushChildState(item->TmiGetChild(i), childRegion.bounds, state, childRegion.state);
         }
     };
 
@@ -574,7 +633,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         stack.pop_back();
 
         CItem* const item = state.item;
-        item->TmiSetRectangle(state.rc);
+        AddVisibleItem(item, state.rc, state.depth);
 
         if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
         {
@@ -588,7 +647,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
         if (item->TmiIsLeaf())
         {
-            RenderLeaf(bitmapBits, item, state.surface);
+            RenderLeaf(bitmap, item, state.rc, state.surface);
             continue;
         }
 
@@ -598,8 +657,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         {
             std::wstring_view name = item->GetNameView(true);
             const int textWidth = state.rc.Width() - 8;
-            const bool showHeader = (state.rc.Height() > headerHeight) &&
-                (pdc->GetTextExtent(name.data(), static_cast<int>(name.size())).cx <= textWidth);
+            CSize nameSize;
+            GetTextExtentPoint32W(dc, name.data(), static_cast<int>(name.size()), &nameSize);
+            const bool showHeader = state.rc.Height() > headerHeight && nameSize.cx <= textWidth;
 
             foldersToDraw.push_back({ item, state.rc, state.depth, showHeader });
             state.rc.left += 1;
@@ -609,70 +669,42 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
             if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
             {
-                std::vector<CItem*> pending;
-                pending.reserve(32);
-                for (const int i : std::views::iota(0, item->TmiGetChildCount()))
-                {
-                    pending.push_back(item->TmiGetChild(i));
-                }
-
-                while (!pending.empty())
-                {
-                    CItem* child = pending.back();
-                    pending.pop_back();
-
-                    child->TmiSetRectangle(CRect(-1, -1, -1, -1));
-                    for (const int i : std::views::iota(0, child->TmiGetChildCount()))
-                    {
-                        pending.push_back(child->TmiGetChild(i));
-                    }
-                }
                 continue;
             }
         }
 
-        switch (m_options.style)
-        {
-        case KDirStatStyle:
-            pushKDirStatChildren(item, state);
-            break;
-
-        case SequoiaViewStyle:
-        default:
-            pushSequoiaViewChildren(item, state);
-            break;
-        }
+        pushChildren(item, state);
     }
 
-    // Copy the rendered bitmap to the DC
-    BlitBitmap(pdc, rc, bitmapBits);
+    BuildHitTestIndex();
+
+    if (!rendersIntoDc) BlitBitmap(dc, rc, m_bitmapBits);
 
     // Render directory frames and labels
     if (m_options.showFolderFrames)
     {
-        CSetBkMode soBkMode(pdc, TRANSPARENT);
+        ScopedBkMode backgroundMode(dc, TRANSPARENT);
         const CPoint rcOffset = rc.TopLeft();
 
         for (const auto& folder : foldersToDraw)
         {
-            CRect rcFolder = folder.rc;
-            rcFolder.OffsetRect(rcOffset);
+            CRect rcFolder = folder.rc + rcOffset;
 
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
-                CBrush borderBrush(DimColor(GetDepthColor(folder.depth)));
-                pdc->FrameRect(&rcFolder, &borderBrush);
+                const CBrush borderBrush(CColorSpace::DimColor(GetDepthColor(folder.depth)));
+                FrameRect(dc, &rcFolder, borderBrush);
 
                 if (folder.showHeader)
                 {
                     CRect rcHeader(rcFolder.left + 1, rcFolder.top + 1, rcFolder.right - 1, rcFolder.top + headerHeight);
                     const COLORREF headerColor = GetDepthColor(folder.depth);
-                    pdc->FillSolidRect(&rcHeader, headerColor);
+                    FillSolidRect(dc, rcHeader, headerColor);
 
                     CRect rcText(rcHeader.left + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
                     std::wstring_view name = folder.item->GetNameView(true);
-                    pdc->SetTextColor(RGB(0, 0, 0));
-                    pdc->DrawText(name.data(), static_cast<int>(name.size()), &rcText,
+                    SetTextColor(dc, RGB(0, 0, 0));
+                    DrawTextW(dc, name.data(), static_cast<int>(name.size()), &rcText,
                         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
                 }
             }
@@ -681,74 +713,47 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
     if (m_options.showExtensions)
     {
-        DrawTreeMapLabels(pdc, root, rc.TopLeft());
+        DrawTreeMapLabels(dc, rc.TopLeft());
     }
 }
 
-CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
+CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point) const
 {
-    ASSERT(item != nullptr);
-    if (item == nullptr)
-    {
+    if (item == nullptr || !m_layoutArea.Contains(point)
+        || m_hitTestColumns <= 0 || m_hitTestRows <= 0) return nullptr;
+
+    const auto start = m_itemToVisibleIndex.find(item);
+    if (start == m_itemToVisibleIndex.end()
+        || !m_visibleItems[start->second].rectangle.Contains(point)) return nullptr;
+
+    const int column = (point.x - m_layoutArea.left) / HitTestCellSize;
+    const int row = (point.y - m_layoutArea.top) / HitTestCellSize;
+    if (column < 0 || column >= m_hitTestColumns || row < 0 || row >= m_hitTestRows)
         return nullptr;
-    }
 
-    if (!item->TmiGetRectangle().PtInRect(point))
+    CItem* bestItem = item;
+    int bestDepth = m_visibleItems[start->second].depth;
+    const std::size_t cell = static_cast<std::size_t>(row) * m_hitTestColumns + column;
+    const std::size_t begin = m_hitTestCellOffsets[cell];
+    const std::size_t end = m_hitTestCellOffsets[cell + 1];
+    for (const std::size_t entry : std::views::iota(begin, end))
     {
-        return nullptr;
+        const std::size_t candidateIndex = m_hitTestEntries[entry];
+        const VisibleItem& candidate = m_visibleItems[candidateIndex];
+        if (candidate.depth > bestDepth && candidate.rectangle.Contains(point))
+        {
+            bestItem = candidate.item;
+            bestDepth = candidate.depth;
+        }
     }
 
-    const int gridWidth = m_options.grid ? 1 : 0;
-    CItem* current = item;
-
-    while (true)
-    {
-        const CRect& rc = current->TmiGetRectangle();
-        ASSERT(rc.PtInRect(point));
-
-        if (rc.Width() <= gridWidth || rc.Height() <= gridWidth || current->TmiIsLeaf() || current->TmiGetSize() == 0)
-        {
-            return current;
-        }
-
-        ASSERT(current->TmiGetSize() > 0 && current->TmiGetChildCount() > 0);
-
-        CItem* next = nullptr;
-        for (const int i : std::views::iota(0, current->TmiGetChildCount()))
-        {
-            CItem* child = current->TmiGetChild(i);
-            if (child->TmiGetSize() == 0) break; // children sorted by size; remainder are zero-size
-
-#ifdef _DEBUG
-            // An empty rectangle is the sentinel for a child that was not laid out
-            // this pass (e.g. a folder frame whose interior collapsed); non-zero-size
-            // children with empty rectangles are never hit-tested, so skip bounds check.
-            const CRect rcChild(child->TmiGetRectangle());
-            ASSERT(rcChild.IsRectEmpty() ||
-                   (rc.left <= rcChild.left && rcChild.right <= rc.right &&
-                    rc.top <= rcChild.top && rcChild.bottom <= rc.bottom));
-#endif
-
-            if (child->TmiGetRectangle().PtInRect(point))
-            {
-                next = child;
-                break;
-            }
-        }
-
-        if (next == nullptr)
-        {
-            return current;
-        }
-
-        current = next;
-    }
+    return bestItem;
 }
 
-void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color, const Options* options)
+void CTreeMap::DrawColorPreview(HDC dc, const CRect& rc, const COLORREF color, const Options* options)
 {
-    ASSERT(pdc != nullptr);
-    if (pdc == nullptr || rc.Width() <= 0 || rc.Height() <= 0)
+    assert(dc != nullptr);
+    if (dc == nullptr || rc.Width() <= 0 || rc.Height() <= 0)
     {
         return;
     }
@@ -758,34 +763,34 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
         SetOptions(options);
     }
 
+    const CRect local(0, 0, rc.Width(), rc.Height());
     Surface surface{};
-    AddRidge(rc, surface, m_options.height * m_options.scaleFactor);
+    AddRidge(local, surface, m_options.height * m_options.scaleFactor);
 
-    m_renderArea = rc;
+    m_bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
+    const BitmapView bitmap{ m_bitmapBits.data(), static_cast<size_t>(rc.Width()) };
+    RenderRectangle(bitmap, local, surface, color);
 
-    std::vector<COLORREF> bitmapBits(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
-    RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
-
-    if (CSaveDC saveDc(pdc); true)
+    if (ScopedDcState saveDc(dc); true)
     {
-        CRgn rgn;
-        rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, 3, 3);
-        pdc->SelectClipRgn(&rgn, RGN_AND);
-        BlitBitmap(pdc, rc, bitmapBits);
+        const CRgn region(rc.left, rc.top, rc.right, rc.bottom, 3, 3);
+        ExtSelectClipRgn(dc, region, RGN_AND);
+        BlitBitmap(dc, rc, m_bitmapBits);
     }
 
     if (m_options.grid)
     {
-        pdc->SetDCPenColor(m_options.gridColor);
-        CSelectStockObject sp(pdc, DC_PEN);
-        CSelectStockObject sb(pdc, NULL_BRUSH);
-        pdc->RoundRect(rc, CPoint(3, 3));
+        SetDCPenColor(dc, m_options.gridColor);
+        StockObjectSelection selectPen(dc, DC_PEN);
+        StockObjectSelection selectBrush(dc, NULL_BRUSH);
+        RoundRect(dc, rc.left, rc.top, rc.right, rc.bottom, 3, 3);
     }
 }
 
-void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const
+void CTreeMap::RenderLeaf(const BitmapView bitmap, const CItem* item,
+    const CRect& rectangle, const std::array<double, 4>& surface) const
 {
-    CRect rc = item->TmiGetRectangle();
+    CRect rc = rectangle;
 
     if (m_options.grid)
     {
@@ -800,7 +805,7 @@ void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, cons
     RenderRectangle(bitmap, rc, surface, item->TmiGetGraphColor());
 }
 
-void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const
+void CTreeMap::RenderRectangle(const BitmapView bitmap, const CRect& rc, const std::array<double, 4>& surface, const DWORD color) const
 {
     if (rc.Width() <= 0 || rc.Height() <= 0)
     {
@@ -819,138 +824,6 @@ void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, c
     }
 }
 
-// Helper functions for KDirStat style
-bool CTreeMap::KDirStat_ArrangeChildren(
-    const CItem* parent,
-    std::vector<double>& childWidth,
-    std::vector<double>& rows,
-    std::vector<int>& childrenPerRow
-) const
-{
-    ASSERT(!parent->TmiIsLeaf());
-
-    const int childCount = parent->TmiGetChildCount();
-    childWidth.clear();
-    rows.clear();
-    childrenPerRow.clear();
-
-    childWidth.reserve(childCount);
-    rows.reserve(childCount);
-    childrenPerRow.reserve(childCount);
-
-    if (childCount == 0)
-    {
-        return true;
-    }
-
-    if (parent->TmiGetSize() == 0)
-    {
-        rows.emplace_back(1.0);
-        childrenPerRow.emplace_back(childCount);
-        childWidth.resize(childCount, 1.0 / childCount);
-        return true;
-    }
-
-    const CRect& parentRect = parent->TmiGetRectangle();
-    const bool horizontalRows = parentRect.Width() >= parentRect.Height();
-
-    double width = 1.0;
-    if (horizontalRows)
-    {
-        if (parentRect.Height() > 0)
-        {
-            width = static_cast<double>(parentRect.Width()) / parentRect.Height();
-        }
-    }
-    else if (parentRect.Width() > 0)
-    {
-        width = static_cast<double>(parentRect.Height()) / parentRect.Width();
-    }
-
-    childWidth.resize(childCount);
-    for (int nextChild = 0, childrenUsed = 0; nextChild < childCount; nextChild += childrenUsed)
-    {
-        rows.emplace_back(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
-        childrenPerRow.emplace_back(childrenUsed);
-    }
-
-    return horizontalRows;
-}
-
-double CTreeMap::KDirStat_CalculateNextRow(
-    const CItem* parent,
-    const int nextChild,
-    const double width,
-    int& childrenUsed,
-    std::vector<double>& childWidth
-) const
-{
-    static constexpr double s_minProportion = 0.4;
-    ASSERT(s_minProportion < 1.);
-
-    ASSERT(nextChild < parent->TmiGetChildCount());
-    ASSERT(width >= 1.0);
-
-    const double mySize = static_cast<double>(parent->TmiGetSize());
-    ASSERT(mySize > 0);
-    ULONGLONG sizeUsed = 0;
-    double rowHeight = 0;
-
-    int i = nextChild;
-    const auto childCount = parent->TmiGetChildCount();
-    for (; i < childCount; i++)
-    {
-        const ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
-        if (childSize == 0)
-        {
-            ASSERT(i > nextChild); // first child has size > 0
-            break;
-        }
-
-        sizeUsed += childSize;
-        const double virtualRowHeight = static_cast<double>(sizeUsed) / mySize;
-        ASSERT(virtualRowHeight > 0 && virtualRowHeight <= 1);
-
-        // Rectangle(mySize)    = width * 1.0
-        // Rectangle(childSize) = childWidth * virtualRowHeight
-        // Rectangle(childSize) = childSize / mySize * width / virtualRowHeight;
-
-        const double childWidth_ = childSize / mySize * width / virtualRowHeight;
-
-        if (childWidth_ / virtualRowHeight < s_minProportion)
-        {
-            ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
-            break;
-        }
-        rowHeight = virtualRowHeight;
-    }
-    ASSERT(i > nextChild);
-
-    // Now i-1 is the last child used
-    // and rowHeight is the height of the row.
-
-    // We add the rest of the children, if their size is 0.
-    while (i < childCount && parent->TmiGetChild(i)->TmiGetSize() == 0)
-    {
-        i++;
-    }
-
-    childrenUsed = i - nextChild;
-
-    // Now as we know the rowHeight, we compute the widths of our children
-    for (const int j : std::views::iota(0, childrenUsed))
-    {
-        // Rectangle(1.0 * 1.0) = mySize
-        const double rowSize = mySize * rowHeight;
-        const double childSize = static_cast<double>(parent->TmiGetChild(nextChild + j)->TmiGetSize());
-        const double cw = childSize / rowSize;
-        ASSERT(cw >= 0);
-        childWidth[nextChild + j] = cw;
-    }
-
-    return rowHeight;
-}
-
 bool CTreeMap::IsCushionShading() const
 {
     return m_options.ambientLight < 1.0
@@ -958,47 +831,55 @@ bool CTreeMap::IsCushionShading() const
         && m_options.scaleFactor > 0.0;
 }
 
-void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, const COLORREF col, const double brightness) const
+void CTreeMap::DrawSolidRect(const BitmapView bitmap, const CRect& rc, const COLORREF col, const double brightness) const
 {
     const COLORREF pixelColor = MakeBitmapColor(col, brightness);
-    const size_t stride = static_cast<size_t>(m_renderArea.Width());
+    const size_t stride = bitmap.stride;
     const size_t width = static_cast<size_t>(rc.Width());
-    COLORREF* const base = bitmap.data() + rc.left;
+    if (rc.left == 0 && width == stride)
+    {
+        std::fill_n(bitmap.bits + static_cast<size_t>(rc.top) * stride,
+            static_cast<size_t>(rc.Height()) * stride, pixelColor);
+        return;
+    }
 
     for (int iy = rc.top; iy < rc.bottom; ++iy)
     {
-        std::fill_n(base + static_cast<size_t>(iy) * stride, width, pixelColor);
+        std::fill_n(bitmap.bits + static_cast<size_t>(iy) * stride + rc.left,
+            width, pixelColor);
     }
 }
 
-void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
+void CTreeMap::DrawCushion(const BitmapView bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
 {
     const double Ia = m_options.ambientLight;
     const double Is = 1 - Ia;
-    const double brightnessFactor = brightness / PALETTE_BRIGHTNESS;
+    const double brightnessFactor = brightness / CColorSpace::GraphPaletteBrightness;
 
     const double colR = GetRValue(col);
     const double colG = GetGValue(col);
     const double colB = GetBValue(col);
-    const int stride = m_renderArea.Width();
+    const size_t stride = bitmap.stride;
+    const double nxStep = -2 * surface[0];
 
-    for (int iy = rc.top; iy < rc.bottom; ++iy)
+    const auto drawRow = [this, &bitmap, &rc, &surface, Ia, Is, brightnessFactor,
+        colR, colG, colB, stride, nxStep](const int iy)
     {
         const double ny = -(2 * surface[1] * (iy + 0.5) + surface[3]);
         const double ny_ly_lz = ny * m_ly + m_lz;
         const double ny2_1 = ny * ny + 1.0;
-        COLORREF* const row = bitmap.data() + static_cast<size_t>(iy) * static_cast<size_t>(stride);
+        COLORREF* const row = bitmap.bits + static_cast<size_t>(iy) * stride;
+        double nx = -(2 * surface[0] * (rc.left + 0.5) + surface[2]);
 
         for (int ix = rc.left; ix < rc.right; ++ix)
         {
-            const double nx = -(2 * surface[0] * (ix + 0.5) + surface[2]);
             double cosa = (nx * m_lx + ny_ly_lz) / sqrt(nx * nx + ny2_1);
             cosa = std::min<double>(cosa, 1.0);
 
             double pixel = Is * cosa;
             pixel = std::max<double>(pixel, 0.0);
             pixel += Ia;
-            ASSERT(pixel <= 1.0);
+            assert(pixel <= 1.0);
 
             // Now, pixel is the brightness of the pixel, 0...1.0.
             // Apply contrast.
@@ -1015,7 +896,22 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
 
             CColorSpace::NormalizeColor(red, green, blue);
             row[ix] = BGR(blue, green, red);
+            nx += nxStep;
         }
+    };
+
+    const std::size_t pixelCount = static_cast<std::size_t>(rc.Width())
+        * static_cast<std::size_t>(rc.Height());
+    const auto rows = std::views::iota(rc.top, rc.bottom);
+    if (pixelCount >= 512u * 1024u && rc.Width() >= 256 && rc.Height() >= 64)
+    {
+        // MSVC's parallel algorithms use a bounded shared scheduler. Restrict
+        // dispatch to large cushions so normal layouts avoid scheduling cost.
+        std::for_each(std::execution::par, rows.begin(), rows.end(), drawRow);
+    }
+    else
+    {
+        std::ranges::for_each(rows, drawRow);
     }
 }
 
@@ -1024,7 +920,7 @@ void CTreeMap::AddRidge(const CRect& rc, std::array<double, 4>& surface, const d
     const int width = rc.Width();
     const int height = rc.Height();
 
-    ASSERT(width > 0 && height > 0);
+    assert(width > 0 && height > 0);
 
     const double h4 = 4 * h;
 
@@ -1037,76 +933,43 @@ void CTreeMap::AddRidge(const CRect& rc, std::array<double, 4>& surface, const d
     surface[1] -= hf;
 }
 
-void CTreeMap::DrawTreeMapLabels(CDC* pdc, CItem* root, const CPoint& offset) const
+void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset) const
 {
-    ASSERT(pdc != nullptr && root != nullptr);
-    if (pdc == nullptr || root == nullptr)
-    {
-        return;
-    }
+    assert(dc != nullptr);
+    if (dc == nullptr) return;
 
-    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
-    CSetBkMode soBkMode(pdc, TRANSPARENT);
-
-    std::vector<const CItem*> stack;
-    stack.reserve(128);
-    stack.push_back(root);
+    GdiObjectSelection selectFont(dc, GetAppFont());
+    ScopedBkMode backgroundMode(dc, TRANSPARENT);
 
     std::unordered_map<std::wstring, CSize> textExtentCache;
 
-    while (!stack.empty())
+    for (const VisibleItem& visible : m_visibleItems)
     {
-        const CItem* item = stack.back();
-        stack.pop_back();
+        const CItem* item = visible.item;
+        if (!item->TmiIsLeaf()) continue;
 
-        if (item->TmiIsLeaf())
+        const CRect rc = visible.rectangle + offset;
+
+        // Fast size check to avoid string copies, lowercasing, and caching for tiny cushions
+        if (rc.Height() < 16 || rc.Width() < 16) continue;
+
+        std::wstring label = m_options.showExtensions ? item->GetExtension() : L"";
+
+        if (label.empty()) continue;
+
+        auto [cacheIt, inserted] = textExtentCache.try_emplace(label);
+        if (inserted)
         {
-            CRect rc = item->TmiGetRectangle();
-            rc.OffsetRect(offset);
-
-            // Fast size check to avoid string copies, lowercasing, and caching for tiny cushions
-            if (rc.Height() < 16 || rc.Width() < 16)
-            {
-                continue;
-            }
-
-            std::wstring label = m_options.showExtensions ? item->GetExtension() : L"";
-
-            if (label.empty())
-            {
-                continue;
-            }
-
-            auto [cacheIt, inserted] = textExtentCache.try_emplace(label);
-            if (inserted)
-            {
-                ::GetTextExtentPoint32(pdc->GetSafeHdc(), label.c_str(), static_cast<int>(label.size()), &cacheIt->second);
-            }
-            if (!CanDrawExtensionLabel(rc, cacheIt->second))
-            {
-                continue;
-            }
-
-            DrawShadowedExtensionText(pdc, label, rc);
-            continue;
+            GetTextExtentPoint32W(dc, label.c_str(),
+                static_cast<int>(label.size()), &cacheIt->second);
         }
+        if (!CanDrawExtensionLabel(rc, cacheIt->second)) continue;
 
-        for (const int i : std::views::iota(0, item->TmiGetChildCount()))
-        {
-            const CItem* child = item->TmiGetChild(i);
-            if (child->TmiGetSize() > 0)
-            {
-                stack.push_back(child);
-            }
-        }
+        DrawShadowedExtensionText(dc, label, rc);
     }
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-BEGIN_MESSAGE_MAP(CTreeMapPreview, CStatic)
-    ON_WM_PAINT()
-END_MESSAGE_MAP()
 
 CTreeMapPreview::CTreeMapPreview()
 {
@@ -1132,7 +995,7 @@ void CTreeMapPreview::BuildDemoData()
 
 void CTreeMapPreview::OnPaint()
 {
-    CPaintDC dc(this);
-    const CRect rc = ClientRectOf(this);
-    m_treeMap.DrawTreeMap(&dc, rc, m_root);
+    const CPaintDC dc(this);
+    const CRect rc = ClientRect();
+    m_treeMap.DrawTreeMap(dc.Handle(), rc, m_root);
 }

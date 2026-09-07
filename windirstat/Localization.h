@@ -21,7 +21,7 @@
 
 struct string_hash {
     using is_transparent = void;
-    size_t operator()(std::wstring_view txt) const { return std::hash<std::wstring_view>{}(txt); }
+    size_t operator()(const std::wstring_view txt) const { return std::hash<std::wstring_view>{}(txt); }
 };
 
 class Localization final
@@ -35,7 +35,7 @@ public:
 
     static bool Contains(const std::wstring_view name)
     {
-        ASSERT(m_map.contains(name));
+        assert(m_map.contains(name));
         return m_map.contains(name);
     }
 
@@ -47,9 +47,9 @@ public:
 
     static std::wstring LookupNeutral(const UINT res)
     {
-        CStringW name;
-        (void) name.LoadString(AfxGetResourceHandle(), res, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
-        return name.GetString();
+        const std::wstring name = LoadResourceString(GetAppInstance(), res,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
+        return name;
     }
 
     template <typename... Args>
@@ -69,7 +69,7 @@ public:
     }
 
     static void UpdateMenu(CMenu& menu);
-    static void UpdateTabControl(CMFCTabCtrl& tab);
+    static void UpdateTabControl(CTabControl& tab);
     static void UpdateDialogs(CWnd& wnd);
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);

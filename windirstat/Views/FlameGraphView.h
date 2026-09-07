@@ -18,7 +18,7 @@
 #pragma once
 
 #include "pch.h"
-#include "WinDirStatPane.h"
+#include "GraphView.h"
 #include "FlameGraph.h"
 
 class CWinDirStatModel;
@@ -28,75 +28,68 @@ class CItem;
 // CFlameGraphView. The flame graph (icicle plot) window.
 // A standalone pane that parallels CTreeMapView.
 //
-class CFlameGraphView final : public CWinDirStatPane
+class CFlameGraphView final : public MessageTarget<CFlameGraphView, CGraphView>
 {
-protected:
-    DECLARE_DYNCREATE(CFlameGraphView)
-
 public:
     CFlameGraphView() = default;
 
     ~CFlameGraphView() override = default;
 
-    void SuspendRecalculationDrawing(bool suspend) override;
-    bool IsShowTreeMap() const;
-    void ShowTreeMap(bool show);
-    void DrawEmptyView();
-    HoverInfo GetHoverInfo() const override;
-
 protected:
-    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-    void OnDraw(CDC* pDC) override;
-    bool IsDrawn() const;
-    void Inactivate();
-    void EmptyView();
-    void DrawEmptyView(CDC* pDC);
+    const wchar_t* GetWindowClassName() const override
+    {
+        return L"WinDirStatFlameGraphClass";
+    }
+    void DrawEmptyPlaceholder(CDC* pDC, const CRect& rect) override;
+    bool PrepareDrawing(CDC* pDC, CRect& rect) override;
+    void RenderVisualization(CDC* pDC, CRect rect) override;
 
-    void DrawHighlights(CDC* pdc);
-    void DrawHighlightExtension(CDC* pdc);
-    void DrawSelection(CDC* pdc) const;
+    void DrawHighlightExtension(CDC* pdc) override;
+    void DrawSelection(CDC* pdc) override;
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
-    void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
-    CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
-    void DrillDown(CItem* item);
-    void ClearHover();
-    void SetHoverItem(const CItem* item);
-    void InvalidateItem(const CItem* item);
+    CItem* FindItemAtPoint(CPoint point) override;
+    bool HasValidLayout() const override;
+    void ClearVisualizationLayout() override;
+    void OnViewEmptied() override;
+    void OnSuspending() override { m_forceScrollBarVisible = false; }
+    void OnBeforeSizeChanged() override { if (!m_updatingScrollBar) m_forceScrollBarVisible = false; }
+    void OnInputStateReset() override { m_scrollWheelDeltaRemainder = 0; }
+    void OnRenderCacheTrimmed() override;
+    bool CanReuseVisualizationLayout(MODEL_CHANGE change) const override;
+    void OnVisualizationChanged(MODEL_CHANGE change) override;
+
     void DiscardBase(bool invalidateFullHeight);
+    void RenderViewport(CDC* pDC, CRect clip) const;
+    bool ScrollCachedViewport(int oldPosition);
+    void SetScrollPosition(int position);
     void UpdateScrollBar(int fullHeight, int pageHeight);
     bool EnsureFullHeightForInput();
     int ComputeRowHeight(CDC* pDC) const;
-    int ComputeFlameFullHeight(int width) const;
+    int ComputeFlameFullHeight(int width);
 
-    std::wstring m_paneTextOverride;
-    ULONGLONG m_paneSizeOverride = 0;
-    bool m_drawingSuspended = false;
-    bool m_showTreeMap = true;
-    bool m_trackingMouse = false;
     bool m_updatingScrollBar = false;
     bool m_forceScrollBarVisible = false;
-    const CItem* m_hoverItem = nullptr;
     int m_rowHeight = CFlameGraph::ROW_HEIGHT;
     int m_scrollPos = 0;
-    int m_wheelDeltaRemainder = 0;
+    int m_scrollWheelDeltaRemainder = 0;
     int m_fullHeight = 0;
-    CSize m_size{ 0, 0 };
     CFlameGraph m_flameGraph;
-    CBitmap m_bitmap;
-    CSize m_dimmedSize{ 0, 0 };
-    CBitmap m_dimmed;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-    afx_msg void OnMouseLeave();
-    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
 };
+
+inline std::span<const RouteEntry> CFlameGraphView::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnMouseWheel>(WM_MOUSEWHEEL),
+        Route::Window<&OnVScroll>(WM_VSCROLL),
+    };
+    return entries;
+}

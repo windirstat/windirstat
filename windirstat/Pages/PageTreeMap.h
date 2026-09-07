@@ -18,22 +18,22 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 #include "ColorButton.h"
 #include "XYSlider.h"
 
 //
 // CPageTreeMap. "Settings" property page "TreeMap".
 //
-class CPageTreeMap final : public CMFCPropertyPage
+class CPageTreeMap final : public MessageTarget<CPageTreeMap, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageTreeMap)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_TREEMAP };
 
     CPageTreeMap();
     ~CPageTreeMap() override = default;
 
-    virtual BOOL PreTranslateMessage(MSG* pMsg);
+    bool PreprocessMessage(MSG* pMsg) override;
 
 protected:
     void UpdateOptions(bool save = true);
@@ -41,8 +41,7 @@ protected:
     void OnSomethingChanged();
     void ValuesAltered(bool altered = true);
 
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     CTreeMap::Options m_options{}; // Current options
@@ -52,38 +51,41 @@ protected:
 
     CTreeMapPreview m_preview;
 
-    int m_style = 0;
+    CComboBox m_styleCombo;
     CColorButton m_highlightColor;
-    BOOL m_grid = 0;
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;
-    CStringW m_sBrightness;
-    int m_nBrightness = 0;
-
     CSliderCtrl m_cushionShading;
-    CStringW m_sCushionShading;
-    int m_nCushionShading = 0;
-
     CSliderCtrl m_height;
-    CStringW m_sHeight;
-    int m_nHeight = 0;
-
     CSliderCtrl m_scaleFactor;
-    CStringW m_sScaleFactor;
-    int m_nScaleFactor = 0;
-
     CXySlider m_lightSource;
-    CPoint m_ptLightSource;
 
     CButton m_resetButton;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
-    afx_msg void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
-    afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
-    afx_msg void OnSetModified();
-    afx_msg void OnBnClickedReset();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
+    void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
+    void OnHScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
+    void OnLightSourceChanged(NMHDR*, LRESULT*);
+    void OnSetModified();
+    void OnBnClickedReset();
 };
+
+inline std::span<const RouteEntry> CPageTreeMap::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnHScroll>(WM_HSCROLL),
+        Route::Notify<&OnColorChangedTreeMapGrid>(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR),
+        Route::Notify<&OnColorChangedTreeMapHighlight>(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR),
+        Route::Control<&OnSetModified>(CBN_SELCHANGE, IDC_TREEMAPSTYLE),
+        Route::Control<&OnSetModified>(BN_CLICKED, IDC_TREEMAPGRID),
+        Route::Control<&OnBnClickedReset>(BN_CLICKED, IDC_RESET),
+        Route::Notify<&OnLightSourceChanged>(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE),
+    };
+    return entries;
+}

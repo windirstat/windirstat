@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "CsvLoader.h"
+#include "FinderMtp.h"
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -24,7 +25,7 @@ static bool IsJsonPath(const std::wstring& path)
 }
 
 // Wide string → UTF-8; Localization has no reverse equivalent so we keep this here
-static std::string WideToUtf8(std::wstring_view wv)
+static std::string WideToUtf8(const std::wstring_view wv)
 {
     if (wv.empty()) return {};
     const int needed = WideCharToMultiByte(CP_UTF8, 0, wv.data(), static_cast<int>(wv.size()), nullptr, 0, nullptr, nullptr);
@@ -35,7 +36,7 @@ static std::string WideToUtf8(std::wstring_view wv)
 }
 
 // JSON-escape a UTF-8 string and wrap it in double quotes
-static std::string JsonQuote(std::string_view utf8)
+static std::string JsonQuote(const std::string_view utf8)
 {
     std::string out;
     out.reserve(utf8.size() + 2);
@@ -50,13 +51,13 @@ static std::string JsonQuote(std::string_view utf8)
     return out;
 }
 
-static std::string JsonQuoteW(std::wstring_view wv)
+static std::string JsonQuoteW(const std::wstring_view wv)
 {
     return JsonQuote(WideToUtf8(wv));
 }
 
 // Unescape a JSON string value
-static std::string JsonUnescape(std::string_view sv)
+static std::string JsonUnescape(const std::string_view sv)
 {
     std::string out;
     out.reserve(sv.size());
@@ -92,7 +93,7 @@ static bool JsonReadObject(std::istream& in, std::unordered_map<std::wstring, st
         const char* keyStart = p + 1;
         const char* colon = strchr(keyStart, ':');
         if (!colon) continue;
-        const std::wstring key = Localization::ConvertToWideString(JsonUnescape(
+        std::wstring key = Localization::ConvertToWideString(JsonUnescape(
             std::string_view(keyStart, colon)));
 
         // Parse value (string or bare numeric)
@@ -147,7 +148,7 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
         { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
-        { (Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
+        { (Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
@@ -168,7 +169,7 @@ static std::string ToTimePoint(const FILETIME& fileTime)
         sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 }
 
-static FILETIME FromTimeString(std::wstring_view time)
+static FILETIME FromTimeString(const std::wstring_view time)
 {
     // Expected format: YYYY-MM-DDTHH:MM:SSZ
     SYSTEMTIME utc = {};
@@ -183,7 +184,7 @@ static FILETIME FromTimeString(std::wstring_view time)
 }
 
 // CSV quoting: wrap UTF-8 bytes in double quotes (CSV values contain no embedded quotes)
-static std::string QuoteAndConvert(std::wstring_view inc)
+static std::string QuoteAndConvert(const std::wstring_view inc)
 {
     return std::format("\"{}\"", WideToUtf8(inc));
 }
@@ -191,37 +192,56 @@ static std::string QuoteAndConvert(std::wstring_view inc)
 // ── shared item-construction helper ─────────────────────────────────────────
 
 // Build a CItem from decoded field values, attach to tree, and register in parentMap
-static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAttr,
-    std::wstring_view lastChange, std::wstring_view sizePhysical, std::wstring_view sizeLogical,
-    std::wstring_view index, std::wstring_view attributes, std::wstring_view files,
-    std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
+static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view wdsAttr,
+    const std::wstring_view lastChange, const std::wstring_view sizePhysical, const std::wstring_view sizeLogical,
+    const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
+    const std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
 {
+    // Preserve MTP paths before parsing mutates the name buffer
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
+    const bool isMtp = (type & ITF_MTP) != 0;
+    const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
 
     const auto itType = IT_MASK & type;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
-    const bool isInRoot  = itType == IT_DRIVE || (type & ITF_MULTIROOT) != 0;
-    const bool useFullPath = isRoot || isInRoot;
 
-    LPWSTR lookupPath = namePath.data();
-    LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
-    if (!useFullPath && displayName != nullptr)
+    const LPWSTR lookupPath = namePath.data();
+    LPWSTR displayName = lookupPath;
+    CItem* parent = nullptr;
+    if (!isRoot && itType != IT_DRIVE)
     {
-        displayName[0] = wds::chrNull;
-        displayName = &displayName[1];
+        if (LPWSTR separator = wcsrchr(lookupPath, L'\\'); separator != nullptr)
+        {
+            separator[0] = wds::chrNull;
+            if (const auto found = parentMap.find(lookupPath); found != parentMap.end())
+            {
+                parent = found->second;
+                displayName = &separator[1];
+            }
+            else separator[0] = wds::chrBackslash;
+        }
     }
-    else
-    {
-        displayName = lookupPath;
-    }
+
+    const bool isMtpRoot = isMtp && (isRoot || parent == nullptr && newroot != nullptr &&
+        newroot->IsTypeOrFlag(IT_MYCOMPUTER));
+
+    // A folder without a parent in the map must be a root (either an explicit multi-root or we're loading a partial tree)
+    const bool isMultiRoot = !isRoot && itType != IT_DRIVE && parent == nullptr && newroot != nullptr && newroot->IsTypeOrFlag(IT_MYCOMPUTER);
+    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot || (type & ITF_MULTIROOT) != 0;
+    if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
 
-    CItem* newitem = new CItem(type, displayName, FromTimeString(lastChange),
+    // Refresh the device name and register its live shell path for later MTP operations
+    std::wstring mtpName;
+    if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
+    CItem* newitem = new CItem(type, mtpName.empty() ? displayName : mtpName.c_str(), FromTimeString(lastChange),
         wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(),  nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
+    if (isMtpRoot)
+        newitem->SetIndex(FinderMtp::RegisterPath(mtpPath, !mtpName.empty() ? mtpPath : std::wstring{}));
 
     if (isRoot)
     {
@@ -232,11 +252,9 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAt
         if (!newroot) { delete newitem; return nullptr; }
         newroot->AddChild(newitem, true);
     }
-    else if (auto parent = parentMap.find(lookupPath); parent != parentMap.end())
-    {
-        parent->second->AddChild(newitem, true);
-    }
-    else { delete newitem; return nullptr; }
+    else parent->AddChild(newitem, true);
+
+    assert(newitem->IsMtpRoot() == isMtpRoot);
 
     if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
     {
@@ -273,13 +291,13 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         line.resize(size - static_cast<size_t>(1));
 
         // Parse all fields
-        for (size_t pos = 0; pos < line.length(); pos++)
+        for (size_t pos = 0; pos < line.length(); pos++) [[msvc::forceinline_calls]]
         {
             const size_t comma = line.find(L',', pos);
             size_t end = comma == std::wstring::npos ? line.length() : comma;
 
             // Adjust for quoted fields
-            bool quoted = line.at(pos) == L'"';
+            const bool quoted = line.at(pos) == L'"';
             if (quoted)
             {
                 pos = pos + 1;
@@ -348,7 +366,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES),    FIELD_ATTRIBUTES    },
         { Localization::Lookup(IDS_COL_LAST_CHANGE),   FIELD_LAST_CHANGE   },
-        { Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES_WDS },
+        { Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_INDEX),         FIELD_INDEX         },
         { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         }
     };
@@ -416,8 +434,8 @@ static std::vector<const CItem*> CollectItems(CItem* rootItem)
     std::vector<const CItem*> items;
     items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
 
-    std::vector<CItem*> queue({ rootItem });
-    while (!queue.empty())
+    std::vector queue({ rootItem });
+    while (!queue.empty()) [[msvc::forceinline_calls]]
     {
         const CItem* qitem = queue.back();
         queue.pop_back();
@@ -443,7 +461,7 @@ static std::unordered_map<const CItem*, LONGLONG>
     ComputeAdjustedSizes(const std::vector<const CItem*>& items)
 {
     std::unordered_map<const CItem*, LONGLONG> adjustedSizes;
-    for (const auto* item : items)
+    for (const auto* item : items) [[msvc::forceinline_calls]]
     {
         if (item->IsTypeOrFlag(IT_DRIVE))
             if (const auto hlinks = item->FindHardlinksItem(); hlinks != nullptr)
@@ -463,7 +481,8 @@ static std::unordered_map<const CItem*, LONGLONG>
 }
 
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
-    const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes)
+    const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
+    const bool includeOwner)
 {
     // Header
     for (size_t i = 0; i < cols.size(); ++i)
@@ -473,10 +492,12 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
     for (const auto* item : items)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA & ~ITF_MULTIROOT;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
-        std::format_to(std::ostreambuf_iterator<char>(outf), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
+        // MTP indices are process-local path registrations and must not be serialized
+        const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
+        std::format_to(std::ostreambuf_iterator(outf), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -485,8 +506,8 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
             static_cast<std::uint32_t>(itemType),
-            item->GetIndex());
-        if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
+            index);
+        if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
     }
     outf.flush();
     return outf.good();
@@ -497,12 +518,13 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
 static bool SaveResultsJson(std::ofstream& outf,
     const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols,
-    const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes)
+    const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
+    const bool includeOwner)
 {
     // Pre-quote all column key strings once (cols are in FIELD_* index order)
     std::array<std::string, FIELD_COUNT> jk;
     for (size_t i = 0; i < cols.size(); ++i) jk[i] = JsonQuoteW(cols[i]);
-    const std::string jkOwner = COptions::ShowColumnOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
+    const std::string jkOwner = includeOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
 
     outf << "[\r\n";
     bool firstItem = true;
@@ -512,9 +534,11 @@ static bool SaveResultsJson(std::ofstream& outf,
         firstItem = false;
 
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA & ~ITF_MULTIROOT;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
+        // MTP indices are process-local path registrations and must not be serialized
+        const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
 
         // Write one JSON object per item
         outf << "{\r\n";
@@ -525,10 +549,10 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << jk[FIELD_SIZE_PHYSICAL]  << ": " << (item->GetSizePhysicalRaw() + adjustedSize)                << ",\r\n";
         outf << "  " << jk[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
         outf << "  " << jk[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
-        std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
+        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
             jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType),
-            jk[FIELD_INDEX], item->GetIndex());
-        if (COptions::ShowColumnOwner)
+            jk[FIELD_INDEX], index);
+        if (includeOwner)
             outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
         outf << "\r\n}";
     }
@@ -541,8 +565,9 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
 {
     const std::vector<const CItem*> items       = CollectItems(rootItem);
     const auto                      adjustedSizes = ComputeAdjustedSizes(items);
+    const bool includeOwner = COptions::IsColumnVisible(COptions::FileTreeColumnVisibility.Obj(), COL_OWNER);
 
-    std::vector<std::wstring> cols =
+    std::vector cols =
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_FILES),
@@ -551,17 +576,17 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_LAST_CHANGE),
-        Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_INDEX)
     };
-    if (COptions::ShowColumnOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
+    if (includeOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
 
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
     return IsJsonPath(path)
-        ? SaveResultsJson(outf, items, cols, adjustedSizes)
-        : SaveResultsCsv (outf, items, cols, adjustedSizes);
+        ? SaveResultsJson(outf, items, cols, adjustedSizes, includeOwner)
+        : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner);
 }
 
 static std::vector<std::tuple<std::wstring, const CItem*>>
@@ -595,7 +620,7 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
 
     for (const auto& [hash, linkedItem] : dupeItems)
     {
-        std::format_to(std::ostreambuf_iterator<char>(outf), "{},{},{},{},{},{}\r\n",
+        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},{}\r\n",
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),
@@ -647,7 +672,7 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
-    const std::vector<std::wstring> cols =
+    const std::vector cols =
     {
         Localization::Lookup(IDS_COL_HASH),
         Localization::Lookup(IDS_COL_NAME),
@@ -675,7 +700,7 @@ static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstri
 
     for (const auto* item : items)
     {
-        std::format_to(std::ostreambuf_iterator<char>(outf), "{},{},{},{},{},0x{:08X},{}\r\n",
+        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},0x{:08X},{}\r\n",
             QuoteAndConvert(item->GetPath()),
             QuoteAndConvert(item->GetAccount()),
             QuoteAndConvert(CItemPerm::GetAccessTypeName(item->IsDeny())),
@@ -712,7 +737,7 @@ static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstr
         outf << "  " << jAccess  << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
         outf << "  " << jRights  << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
         outf << "  " << jApplies << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
-        std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n", jMask, item->GetAccessMask());
+        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n", jMask, item->GetAccessMask());
         outf << "  " << jInherited << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
         outf << "}";
     }
@@ -726,7 +751,7 @@ bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
-    const std::vector<std::wstring> cols =
+    const std::vector cols =
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_ACCOUNT),

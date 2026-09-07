@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include "ItemDupe.h"
 #include "ItemPerm.h"
 
 bool SaveResults(const std::wstring& path, CItem* rootItem);

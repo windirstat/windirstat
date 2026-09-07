@@ -69,11 +69,6 @@ CItemPerm::CItemPerm(const std::wstring& path, const DWORD attributes,
     m_item = std::make_unique<CItem>(m_isContainer ? IT_DIRECTORY : IT_FILE, path, FILETIME{}, 0, 0, 0, attributes, 0, 0);
 }
 
-std::wstring CItemPerm::GetAppliesText() const
-{
-    return GetAppliesName(m_applies, m_isContainer);
-}
-
 std::wstring CItemPerm::GetText(const int subitem) const
 {
     if (subitem == COL_ITEMPERM_NAME) return m_item->GetPath();
@@ -110,7 +105,6 @@ HICON CItemPerm::GetIcon()
         return nullptr;
     }
 
-    // Return previously cached value
     if (m_visualInfo->icon != nullptr)
     {
         return m_visualInfo->icon;
@@ -213,11 +207,10 @@ COLORREF CItemPerm::GetRuleColor(const std::wstring& account, const ACCESS_MASK 
     }
 
     // Return the color of the first matching rule
-    for (const auto& rule : rules)
+    for (const auto& [accountrule, level, color] : rules)
     {
-        if (!std::regex_search(account, rule.account)) continue;
-        if (rule.level == 0 || LevelSatisfied(mask, static_cast<PERMSLEVEL>(rule.level - 1)))
-            return rule.color;
+        if (!std::regex_search(account, accountrule)) continue;
+        if (level == 0 || LevelSatisfied(mask, static_cast<PERMSLEVEL>(level - 1))) return color;
     }
     return CLR_NONE;
 }

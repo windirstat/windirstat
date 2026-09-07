@@ -18,34 +18,39 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPagePrompts. "Settings" property page "Prompts".
 //
-class CPagePrompts final : public CMFCPropertyPage
+class CPagePrompts final : public MessageTarget<CPagePrompts, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPagePrompts)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_PROMPTS };
 
     CPagePrompts();
     ~CPagePrompts() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
+    static std::span<const CheckboxSettingBinding> CheckboxSettings();
 
-    BOOL m_showDeleteWarning = FALSE;
-    BOOL m_showElevationPrompt = FALSE;
-    BOOL m_showDupeDetectionCloudLinksWarning = FALSE;
-    BOOL m_showMicrosoftProgress = FALSE;
+public:
+    static std::span<const RouteEntry> Routes();
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedSetModified();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };
+
+inline std::span<const RouteEntry> CPagePrompts::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_ELEVATION_PROMPT),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_CLOUD_LINKS_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOW_MICROSOFT_PROGRESS),
+        Route::Control<&OnSettingRangeChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
+    };
+    return entries;
+}

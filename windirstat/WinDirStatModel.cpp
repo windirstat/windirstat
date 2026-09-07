@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "CsvLoader.h"
 #include "FileTreeView.h"
 #include "TreeMapView.h"
 #include "FileTopControl.h"
@@ -24,14 +23,12 @@
 #include "FileWatcherControl.h"
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
-#include "FinderNtfs.h"
-#include "SearchDlg.h"
+#include "FinderMtp.h"
 #include "ProgressDlg.h"
-#include "Filtering.h"
 
 CWinDirStatModel::CWinDirStatModel()
 {
-    ASSERT(nullptr == s_singleton);
+    assert(nullptr == s_singleton);
     s_singleton = this;
 
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
@@ -57,9 +54,6 @@ void CWinDirStatModel::ClearScanState()
     // Stop watchers
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->StopMonitoring();
 
-    // Stop permissions scanner before the tree is torn down
-    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
-
     // Discard pending top-list entries that still point into the old tree.
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->ClearPendingItems();
 
@@ -84,15 +78,15 @@ void CWinDirStatModel::ClearScanState()
     m_zoomItem = nullptr;
 }
 
-BOOL CWinDirStatModel::ResetScan()
+bool CWinDirStatModel::ResetScan()
 {
     ClearScanState();
     SetScanPathSpec(wds::strEmpty);
     NotifyPanes(MODEL_CHANGE_NEW_ROOT);
-    return TRUE;
+    return true;
 }
 
-BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
+bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
 {
     // Expand All Files view to full window during scan
     CMainFrame::Get()->ExpandFileTabbedView();
@@ -111,38 +105,65 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [&](const std::wstring& str) {
         return std::regex_match(str, driveMatch);
     }));
+    // Count MTP roots so mixed multi-root scans can be validated
+    const auto mtpCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& path)
+    {
+        return FinderMtp::IsPath(path);
+    }));
 
     // Reject an empty path list
     if (selections.empty()) return false;
+
+    // Build and register an MTP root with its display name and shell path
+    const auto createMtpItem = [](const std::wstring& path, const ITEMTYPE flags)
+    {
+        std::wstring name = FinderMtp::GetDisplayName(path);
+        if (name.empty()) name = path;
+        const auto item = new CItem(IT_DIRECTORY | ITF_MTP | flags, name);
+        item->SetIndex(FinderMtp::RegisterPath(path, path));
+        return item;
+    };
 
     // Determine if we should add multiple paths under a single node
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
-        SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
-        SmartPointer ppszName(CoTaskMemFree, static_cast<LPWSTR>(nullptr));
+        CComHeapPtr<wchar_t> ppszName;
         CComPtr<IShellItem> psi;
-        if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
-            SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) != S_OK ||
+        if (FAILED(SHGetKnownFolderItem(FOLDERID_ComputerFolder, KF_FLAG_DEFAULT, nullptr,
+            IID_PPV_ARGS(&psi))) ||
             FAILED(psi->GetDisplayName(SIGDN_NORMALDISPLAY, &ppszName)))
         {
-            ASSERT(FALSE);
+            assert(false);
         }
 
-        const std::wstring name = ppszName != nullptr ? *ppszName : Localization::Lookup(IDS_THISPC);
+        const std::wstring name = ppszName != nullptr ?
+            static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
+        // Add filesystem drives and registered MTP roots under This PC
         for (const auto& rootFolder : selections)
         {
-            const ITEMTYPE childType = std::regex_match(rootFolder, driveMatch) ? IT_DRIVE : IT_DIRECTORY;
-            const auto drive = new CItem(childType | ITF_MULTIROOT, rootFolder);
-            m_rootItem->AddChild(drive);
-            drive->UpdateStatsFromDisk();
+            if (FinderMtp::IsPath(rootFolder))
+            {
+                const auto drive = createMtpItem(rootFolder, ITF_NONE);
+                m_rootItem->AddChild(drive);
+                drive->UpdateStatsFromDisk();
+            }
+            else
+            {
+                const ITEMTYPE childType = std::regex_match(rootFolder, driveMatch) ? IT_DRIVE : IT_DIRECTORY;
+                const auto drive = new CItem(childType | ITF_MULTIROOT, rootFolder);
+                m_rootItem->AddChild(drive);
+                drive->UpdateStatsFromDisk();
+            }
         }
     }
     else
     {
+        // Create a storage-specific root for a single selection
         const ITEMTYPE type = driveCount == 1 ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem = new CItem(type | ITF_ROOTITEM, selections.front());
+        m_rootItem = mtpCount == 1 ? createMtpItem(selections.front(), ITF_ROOTITEM) :
+            new CItem(type | ITF_ROOTITEM, selections.front());
         m_rootItem->UpdateStatsFromDisk();
     }
 
@@ -155,7 +176,7 @@ BOOL CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     return true;
 }
 
-BOOL CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
+bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
 {
     CMainFrame::Get()->ExpandFileTabbedView();
 
@@ -163,15 +184,21 @@ BOOL CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
 
     // Determine root spec string using GetNameView to avoid temporary allocations
     std::wstring spec(loadedRoot->GetNameView());
+    // Preserve registered MTP paths when rebuilding single- or multi-root scan specs
     if (loadedRoot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring
             {
+                if (obj->IsMtpRoot()) return obj->GetPath();
                 return obj->IsTypeOrFlag(IT_DRIVE) ? GetDrive(obj->GetNameView()) : std::wstring(obj->GetNameView());
             });
         spec = JoinString(folders);
+    }
+    else if (loadedRoot->IsTypeOrFlag(ITF_MTP))
+    {
+        spec = loadedRoot->GetPath();
     }
     else if (loadedRoot->IsTypeOrFlag(IT_DRIVE))
     {
@@ -216,18 +243,8 @@ void CWinDirStatModel::SetScanTitlePrefix(const std::wstring& prefix) const
 COLORREF CWinDirStatModel::GetCushionColor(const std::wstring & ext)
 {
     const auto& record = GetExtensionData()->find(ext);
-    ASSERT(record != GetExtensionData()->end());
+    assert(record != GetExtensionData()->end());
     return record->second.color;
-}
-
-COLORREF CWinDirStatModel::GetZoomColor() const
-{
-    return RGB(0, 0, 255);
-}
-
-CExtensionData* CWinDirStatModel::GetExtensionData()
-{
-    return &m_extensionData;
 }
 
 SExtensionRecord* CWinDirStatModel::GetExtensionDataRecord(const std::wstring& ext)
@@ -255,22 +272,17 @@ void CWinDirStatModel::RebuildRegisteredExtensions()
 }
 
 // True if the extension was present in the HKEY_CLASSES_ROOT snapshot (registered on this PC)
-bool CWinDirStatModel::IsExtensionRegistered(const std::wstring& ext) const
-{
-    return m_registeredExtensions.contains(ext);
-}
-
 ULONGLONG CWinDirStatModel::GetRootSize() const
 {
-    ASSERT(m_rootItem != nullptr);
-    ASSERT(IsRootDone());
+    assert(m_rootItem != nullptr);
+    assert(IsRootDone());
     return m_rootItem->GetSizePhysical();
 }
 
 // Starts a refresh of all mount points in our tree.
 // Called when the user changes the follow mount points option.
 //
-void CWinDirStatModel::RefreshReparsePointItems()
+void CWinDirStatModel::RefreshReparsePointItems() const
 {
     CWaitCursor wc;
 
@@ -280,11 +292,6 @@ void CWinDirStatModel::RefreshReparsePointItems()
     }
 }
 
-bool CWinDirStatModel::HasRootItem() const
-{
-    return m_rootItem != nullptr;
-}
-
 bool CWinDirStatModel::IsRootDone() const
 {
     return HasRootItem() && m_rootItem->IsDone();
@@ -292,11 +299,11 @@ bool CWinDirStatModel::IsRootDone() const
 
 bool CWinDirStatModel::IsScanRunning() const
 {
-    if (!m_thread.has_value()) return false;
+    if (!m_thread.joinable()) return false;
 
-    DWORD exitCode;
-    GetExitCodeThread(const_cast<std::jthread&>(*m_thread).native_handle(), &exitCode);
-    return (exitCode == STILL_ACTIVE);
+    DWORD exitCode = 0;
+    return GetExitCodeThread(const_cast<std::jthread&>(m_thread).native_handle(), &exitCode) &&
+        exitCode == STILL_ACTIVE;
 }
 
 bool CWinDirStatModel::IsScanSettled() const
@@ -304,19 +311,15 @@ bool CWinDirStatModel::IsScanSettled() const
     return IsRootDone() && !IsScanRunning();
 }
 
-CItem* CWinDirStatModel::GetRootItem() const
+void CWinDirStatModel::RunPendingHeapCleanup()
 {
-    return m_rootItem;
-}
+    if (!m_heapMinPending.load(std::memory_order_relaxed) || IsScanRunning()) return;
 
-CItem* CWinDirStatModel::GetZoomItem() const
-{
-    return m_zoomItem;
-}
+    if (m_heapMinTask.valid() &&
+        m_heapMinTask.wait_for(std::chrono::seconds::zero()) != std::future_status::ready) return;
 
-bool CWinDirStatModel::IsZoomed() const
-{
-    return GetZoomItem() != GetRootItem();
+    m_heapMinTask = std::async(std::launch::async, [] { (void) _heapmin(); });
+    m_heapMinPending.store(false, std::memory_order_relaxed);
 }
 
 void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
@@ -329,28 +332,13 @@ void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const boo
     m_highlightExtensions.clear();
     if (unregistered)
     {
-        for (const auto& [key, rec] : m_extensionData)
+        for (const auto& key : m_extensionData | std::views::keys)
         {
             if (!key.empty() && !IsExtensionRegistered(key)) m_highlightExtensions.insert(key);
         }
     }
 
     CMainFrame::Get()->UpdatePaneText();
-}
-
-std::wstring CWinDirStatModel::GetHighlightExtension() const
-{
-    return m_highlightExtension;
-}
-
-bool CWinDirStatModel::IsHighlightUnregistered() const
-{
-    return m_highlightUnregistered;
-}
-
-const std::unordered_set<std::wstring>& CWinDirStatModel::GetHighlightExtensions() const
-{
-    return m_highlightExtensions;
 }
 
 // The root item has been deleted.
@@ -370,7 +358,8 @@ void CWinDirStatModel::UnlinkRoot()
 //
 bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
-    return item != nullptr && (
+    // Restrict command-based cleanups to items addressable by filesystem APIs
+    return item != nullptr && item->SupportsFilesystemApis() && (
         (item->IsTypeOrFlag(IT_DRIVE) && udc->WorksForDrives) ||
         (item->IsTypeOrFlag(IT_DIRECTORY) && udc->WorksForDirectories) ||
         (item->IsTypeOrFlag(IT_FILE) && udc->WorksForFiles) ||
@@ -379,33 +368,33 @@ bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, c
 
 void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
 {
-    ASSERT(item != nullptr);
+    assert(item != nullptr);
 
     // Ignore if special reserved item
     if (item->IsTypeOrFlag(ITF_RESERVED)) return;
 
-    // Determine path to feed into shell function
-    SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
+    // Resolve filesystem paths and registered MTP PIDLs to shell identities
+    CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> pidl;
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
     }
     else
     {
-        pidl = ILCreateFromPath(item->GetPath().c_str());
+        pidl.Attach(CreateShellPidl(item));
     }
 
     // Ignore unresolvable (e.g., deleted) files
     if (pidl == nullptr)
     {
-        ASSERT(FALSE);
+        assert(false);
         return;
     }
 
     // Launch properties dialog
     SHELLEXECUTEINFO sei{};
     sei.cbSize = sizeof(sei);
-    sei.hwnd = *AfxGetMainWnd();
+    sei.hwnd = GetMainWindowHandle();
     sei.lpVerb = verb.empty() ? nullptr : verb.c_str();
     sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_IDLIST | SEE_MASK_NOZONECHECKS;
     sei.lpIDList = pidl;
@@ -514,7 +503,9 @@ void CWinDirStatModel::RebuildExtensionData()
 
 void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
-    if (COptions::ShowDeleteWarning)
+    auto& showDeleteWarning = toTrashBin ?
+        COptions::ShowDeleteToRecycleBinWarning : COptions::ShowDeletePermanentlyWarning;
+    if (showDeleteWarning)
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;
@@ -524,12 +515,12 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         // Display the file deletion warning dialog with custom width and height
         if (![&]() -> bool {
             const auto result = CMessageBoxDlg::Show(Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING), filePaths,
-                Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+                Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, GetMainWindow(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
 
             if (result.nID != IDYES) return false;
 
             // Save off the deletion warning preference
-            COptions::ShowDeleteWarning = !result.isChecked;
+            showDeleteWarning = !result.isChecked;
             return true;
         }()) return;
     }
@@ -548,6 +539,9 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         auto childrenView = items | std::views::transform(&CItem::GetChildren) | std::views::join;
         itemsToDelete.assign(childrenView.begin(), childrenView.end());
     }
+    // MTP items require shell deletion instead of direct filesystem calls
+    const bool hasMtpItems = std::ranges::any_of(itemsToDelete,
+        [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
 
     // Calculate total item count for progress tracking
     size_t totalItems = 0;
@@ -556,8 +550,10 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         totalItems += static_cast<size_t>(1 + item->GetItemsCount());
     }
 
+    // Use direct parallel deletion only for filesystem items without shell progress UI
     bool cancelled = false;
-    if (!toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(totalItems, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    if (!hasMtpItems && !toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(
+        totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
         {
             // Collect items depth-first and separate into files and directories
             std::vector<const CItem*> files;
@@ -616,31 +612,37 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                 }
             }
             itemsToDelete = std::move(remainingItems);
-        }).DoModal();
+        }).ShowModal();
 
     if (!cancelled && !itemsToDelete.empty())
     {
         DWORD flags = FOFX_SHOWELEVATIONPROMPT | FOF_NOCONFIRMATION;
         if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
 
-        const auto doDelete = [&](HWND hwnd, DWORD opFlags)
+        const auto doDelete = [&](const HWND hwnd, const DWORD opFlags)
         {
+            // Initialize COM on whichever thread executes the shell operation
+            const ComApartmentScope com;
+            if (!com) return;
+
+            // Configure one shell operation for filesystem and MTP items
             CComPtr<IFileOperation> fileOperation;
             if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
                 FAILED(fileOperation->SetOwnerWindow(hwnd)) ||
                 FAILED(fileOperation->SetOperationFlags(opFlags)))
                 return;
-            if (const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete))
-                fileOperation->DeleteItems(psia);
+            // Queue the complete shell selection and execute it as one deletion
+            const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete, true);
+            if (psia == nullptr || FAILED(fileOperation->DeleteItems(psia))) return;
             const HRESULT res = fileOperation->PerformOperations();
             if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
         };
 
         if (COptions::ShowMicrosoftProgress)
-            doDelete(*AfxGetMainWnd(), flags);
+            doDelete(GetMainWindowHandle(), flags);
         else
-            CProgressDlg(0, CProgressDlg::Flags::None, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
-                { doDelete(*pdlg, flags | FOF_NO_UI); }).DoModal();
+            CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
+                { doDelete(*pdlg, flags | FOF_NO_UI); }).ShowModal();
     }
 
     // Create a recycler directories to refresh
@@ -652,13 +654,22 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
     }
 
     // Refresh the items and recycler directories
-    std::vector<CItem*> itemsToRefresh = items;
+    std::vector<CItem*> itemsToRefresh;
+    // Refresh an MTP file's parent after its shell identity is deleted
+    for (auto* item : items)
+    {
+        CItem* refresh = item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
+        if (refresh != nullptr && std::ranges::find(itemsToRefresh, refresh) == itemsToRefresh.end())
+            itemsToRefresh.push_back(refresh);
+    }
     itemsToRefresh.insert(itemsToRefresh.end(), recyclers.begin(), recyclers.end());
     RefreshItem(itemsToRefresh);
 }
 
 void CWinDirStatModel::SetZoomItem(CItem* item)
 {
+    if (item == nullptr) return;
+
     m_zoomItem = item;
     CTreeListControl* pControl = GetFocusControl();
     pControl->Invalidate();
@@ -675,22 +686,33 @@ void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item) const
     Get()->StartScanningEngine(item);
 }
 
-// UDC confirmation dialog.
-//
-void CWinDirStatModel::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
+bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,
+    const std::wstring_view detail)
 {
-    if (!udc->AskForConfirmation)
-    {
-        return;
-    }
+    return ConfirmOperation(operationId, prompt, std::span<CItem* const>{}, detail);
+}
 
-    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
-        Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
-        udc->Title.Obj(), item->GetPath());
-    if (IDYES != WdsMessageBox(msg, MB_YESNO))
-    {
-        AfxThrowUserException();
-    }
+bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,
+    const std::span<CItem* const> affectedItems, const std::wstring_view detail)
+{
+    if (!prompt) return true;
+
+    const std::wstring operation = GetLocalizedMenuText(operationId, detail);
+    assert(!operation.empty());
+    if (operation.empty()) return false;
+
+    std::vector<std::wstring> affectedPaths;
+    affectedPaths.reserve(affectedItems.size());
+    for (const CItem* item : affectedItems) affectedPaths.emplace_back(item->GetPath());
+
+    const auto [nID, isChecked] = CMessageBoxDlg::Show(
+        Localization::Format(IDS_OPERATION_CONFIRMATIONs, operation), affectedPaths,
+        Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, GetMainWindow(),
+        affectedPaths.empty() ? CSize{} : CSize{ 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+    if (nID != IDYES) return false;
+
+    prompt = !isChecked;
+    return true;
 }
 
 void CWinDirStatModel::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item)
@@ -710,7 +732,7 @@ void CWinDirStatModel::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const 
     }
     else
     {
-        ASSERT(item->IsTypeOrFlag(IT_FILE));
+        assert(item->IsTypeOrFlag(IT_FILE));
 
         if (!::PathFileExists(path.c_str()))
         {
@@ -721,7 +743,7 @@ void CWinDirStatModel::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const 
 
     if (udc->RecurseIntoSubdirectories)
     {
-        ASSERT(item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
+        assert(item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
 
         RecursiveUserDefinedCleanup(udc, path, path);
     }
@@ -763,7 +785,7 @@ void CWinDirStatModel::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, cons
     // (Depth first.)
 
     FinderBasic finder;
-    for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNext())
+    for (bool b = finder.FindFile(currentPath); b; b = finder.FindNext())
     {
         if (!finder.IsDirectory())
         {
@@ -804,7 +826,7 @@ void CWinDirStatModel::CallUserDefinedCleanup(const bool isDirectory, const std:
 
     if (wait)
     {
-        WaitForHandleWithRepainting(pi.hProcess);
+        CWinApp::WaitForHandleWithUiUpdates(pi.hProcess);
     }
 
     CloseHandle(pi.hProcess);
@@ -835,7 +857,7 @@ std::wstring CWinDirStatModel::BuildUserDefinedCleanupCommandLine(const std::wst
 
 void CWinDirStatModel::PushReselectChild(CItem* item)
 {
-    m_reselectChildStack.push_back(item);
+    if (item != nullptr) m_reselectChildStack.push_back(item);
 }
 
 CItem* CWinDirStatModel::PopReselectChild()
@@ -844,16 +866,6 @@ CItem* CWinDirStatModel::PopReselectChild()
     CItem* item = m_reselectChildStack.back();
     m_reselectChildStack.pop_back();
     return item;
-}
-
-void CWinDirStatModel::ClearReselectChildStack()
-{
-    m_reselectChildStack.clear();
-}
-
-bool CWinDirStatModel::IsReselectChildAvailable() const
-{
-    return !m_reselectChildStack.empty();
 }
 
 bool CWinDirStatModel::FileTreeHasFocus()
@@ -896,12 +908,12 @@ CTreeListControl* CWinDirStatModel::GetFocusControl()
     return CFileTreeControl::Get();
 }
 
-void CWinDirStatModel::NotifyPanes(MODEL_CHANGE change, CItem* item)
+void CWinDirStatModel::NotifyPanes(const MODEL_CHANGE change, CItem* item)
 {
     NotifyPanesExcept(nullptr, change, item);
 }
 
-void CWinDirStatModel::NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change, CItem* item)
+void CWinDirStatModel::NotifyPanesExcept(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
     InvalidateSelectionCache();
 
@@ -911,7 +923,7 @@ void CWinDirStatModel::NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change, CIte
     }
 }
 
-std::vector<CItem*> CWinDirStatModel::GetAllSelected()
+std::span<CItem* const> CWinDirStatModel::GetSelectedItemsView()
 {
     // Check if we can use cached results
     const auto currentFocus = CMainFrame::Get()->GetLogicalFocus();
@@ -942,13 +954,14 @@ std::vector<CItem*> CWinDirStatModel::GetAllSelected()
 
     // Update cache
     m_cachedFocus = currentFocus;
-    m_cachedSelection = selection;
+    m_cachedSelection = std::move(selection);
     m_selectionCacheValid = true;
 
-    return selection;
+    return m_cachedSelection;
 }
 
-void CWinDirStatModel::InvalidateSelectionCache()
+std::vector<CItem*> CWinDirStatModel::GetAllSelected()
 {
-    m_selectionCacheValid = false;
+    const auto selection = GetSelectedItemsView();
+    return { selection.begin(), selection.end() };
 }

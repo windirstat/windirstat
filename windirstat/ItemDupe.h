@@ -53,14 +53,14 @@ public:
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override;
-    CTreeListItem* GetTreeListChild(int i) const override;
+    int GetTreeListChildCount() const override { return static_cast<int>(m_children.size()); }
+    CTreeListItem* GetTreeListChild(const int i) const override { return m_children[i]; }
     HICON GetIcon() override;
     CItem* GetLinkedItem() noexcept override { return m_item; }
 
     std::wstring GetHash() const { return m_hashString; }
     std::wstring GetHashAndExtensions() const;
-    const std::vector<CItemDupe*>& GetChildren() const;
+    const std::vector<CItemDupe*>& GetChildren() const { return m_children; }
     void AddDupeItemChild(CItemDupe* child);
     void RemoveDupeItemChild(CItemDupe* child);
 };

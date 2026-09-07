@@ -23,45 +23,46 @@
 //
 // CCenteredEdit. Custom edit control that vertically centers its text.
 //
-class CCenteredEdit final : public CEdit
+class CCenteredEdit final : public MessageTarget<CCenteredEdit, CEdit>
 {
 public:
     bool m_isDecimal = false;
 
 protected:
-    afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
-    afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-    DECLARE_MESSAGE_MAP()
+    void OnNcCalcSize(bool bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
+    void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+public:
+    static std::span<const RouteEntry> Routes();
+
 };
 
 //
 // CStorageAnalyticsView. Shows storage tier analytics and cloud cost estimations.
 //
-class CStorageAnalyticsView final : public CWinDirStatPane
+class CStorageAnalyticsView final : public MessageTarget<CStorageAnalyticsView, CWinDirStatPane>
 {
-protected:
+public:
     CStorageAnalyticsView();
+    void OnFontSizeChanged(int, int) override;
     ~CStorageAnalyticsView() override = default;
-    DECLARE_DYNCREATE(CStorageAnalyticsView)
 
     void OnDraw(CDC* pDC) override;
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    afx_msg void OnBtnRecalculate();
-    afx_msg void OnComboUnitSelChange();
-    afx_msg void OnEditChange();
-    afx_msg void OnEditChangeRange(UINT nID);
+    bool PreprocessMessage(MSG* pMsg) override;
+    int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnSize(UINT nType, int cx, int cy);
+    bool OnEraseBkgnd(CDC*) { return true; }
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    void OnBtnRecalculate();
+    void OnComboUnitSelChange();
+    void OnEditChange();
+    void OnEditChangeRange(UINT nID);
 
-    DECLARE_MESSAGE_MAP()
+static std::span<const RouteEntry> Routes();
 
-public:
-    struct TierInfo {
+struct TierInfo {
         std::wstring name;
-        bool hasThreshold = false;
 
         std::unique_ptr<CStatic> lblThreshold;
         std::unique_ptr<CCenteredEdit> editThreshold;
@@ -70,22 +71,23 @@ public:
 
         double thresholdDays = 0.0;
         double costGiB = 0.0;
-        bool active = true;
 
         ULONGLONG filesCount = 0;
         ULONGLONG totalSize = 0;
 
-        COLORREF bgLight, bgDark;
-        COLORREF borderLight, borderDark;
-        COLORREF accent;
+        COLORREF bgLight{}, bgDark{};
+        COLORREF borderLight{}, borderDark{};
+        COLORREF accent{};
+
+        bool active = true;
     };
 
 private:
     // Recalculates metrics by traversing the loaded directory tree
     void Recalculate();
 
-    // Validates inputs and enables/disables the recalculate button
-    bool AreParametersValid();
+    // Validates inputs and optionally applies them to the tiers
+    bool ReadParameters(bool apply);
 
     // Performs a performant single-pass DFS traversal over CItem hierarchy
     void Traverse(CItem* item, FILETIME now);
@@ -93,7 +95,7 @@ private:
     // Helper functions for unit selection and cost label generation
     double GetScaleForSelection(int sel) const;
     double GetActiveUnitScale() const;
-    void UpdateCostLabels();
+    void UpdateCostLabels() const;
 
     std::vector<TierInfo> m_tiers;
 
@@ -110,3 +112,29 @@ private:
     int m_lastUnitSel = 1;
     bool m_hasData = false;
 };
+
+inline std::span<const RouteEntry> CCenteredEdit::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnNcCalcSize>(WM_NCCALCSIZE),
+        Route::Window<&OnChar>(WM_CHAR),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CStorageAnalyticsView::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnCreate>(WM_CREATE),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&OnBtnRecalculate>(BN_CLICKED, 1001),
+        Route::Control<&OnComboUnitSelChange>(CBN_SELCHANGE, 1007),
+        Route::Control<&OnEditChangeRange>(EN_CHANGE, 2000, 2100),
+    };
+    return entries;
+}

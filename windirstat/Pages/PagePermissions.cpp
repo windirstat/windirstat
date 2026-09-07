@@ -19,49 +19,18 @@
 #include "PagePermissions.h"
 #include "ItemPerm.h"
 
-IMPLEMENT_DYNAMIC(CPagePermissions, CMFCPropertyPage)
-
-CPagePermissions::CPagePermissions() : CMFCPropertyPage(IDD) {}
-
-void CPagePermissions::DoDataExchange(CDataExchange* pDX)
+CPagePermissions::CPagePermissions() : MessageTarget(IDD)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    for (const int i : std::views::iota(0, PERMSRULECOUNT))
-    {
-        DDX_Text(pDX, IDC_PERMS_ACCOUNT0 + i, m_account[i]);
-        DDX_Control(pDX, IDC_PERMS_LEVEL0 + i, m_levelCombo[i]);
-        DDX_CBIndex(pDX, IDC_PERMS_LEVEL0 + i, m_level[i]);
-        DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_colorButton[i]);
-        if (pDX->m_bSaveAndValidate) m_color[i] = m_colorButton[i].GetColor();
-        else m_colorButton[i].SetColor(m_color[i]);
-    }
-    DDX_Text(pDX, IDC_PERMS_EXCLUDE, m_excludeRegex);
 }
 
-BEGIN_MESSAGE_MAP(CPagePermissions, CMFCPropertyPage)
-    ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON4, OnColorChanged)
-    ON_CONTROL_RANGE(EN_CHANGE, IDC_PERMS_ACCOUNT0, IDC_PERMS_ACCOUNT4, OnSettingChanged)
-    ON_CONTROL_RANGE(CBN_SELCHANGE, IDC_PERMS_LEVEL0, IDC_PERMS_LEVEL4, OnSettingChanged)
-    ON_EN_CHANGE(IDC_PERMS_EXCLUDE, OnExcludeChanged)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
-
-HBRUSH CPagePermissions::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+void CPagePermissions::InitializePage()
 {
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPagePermissions::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
     // Populate each level selection combo with "any" plus the summarized rights levels
     for (const int i : std::views::iota(0, PERMSRULECOUNT))
     {
+        m_levelCombo[i].SubclassDlgItem(IDC_PERMS_LEVEL0 + i, this);
+        m_colorButton[i].SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
+
         // "Special" is excluded since it is not a meaningful colorization threshold
         m_levelCombo[i].AddString(Localization::Lookup(IDS_PERMS_ANY).c_str());
         for (const int level : std::views::iota(0, static_cast<int>(PERMSLEVEL_SPECIAL)))
@@ -69,46 +38,25 @@ BOOL CPagePermissions::OnInitDialog()
             m_levelCombo[i].AddString(CItemPerm::GetRightsLevelName(static_cast<PERMSLEVEL>(level)).c_str());
         }
 
-        m_account[i] = COptions::PermsColorAccount[i].Obj().c_str();
-        m_level[i] = COptions::PermsColorLevel[i];
-        m_color[i] = COptions::PermsColor[i];
+        SetText(IDC_PERMS_ACCOUNT0 + i, COptions::PermsColorAccount[i].Obj());
+        SetComboSelection(IDC_PERMS_LEVEL0 + i, COptions::PermsColorLevel[i]);
+        m_colorButton[i].SetColor(COptions::PermsColor[i]);
     }
 
-    m_excludeRegex = COptions::PermsExcludeRegex.Obj().c_str();
-
-    UpdateData(FALSE);
-    return TRUE;
+    SetText(IDC_PERMS_EXCLUDE, COptions::PermsExcludeRegex.Obj());
 }
 
 void CPagePermissions::OnOK()
 {
-    UpdateData();
     for (const int i : std::views::iota(0, PERMSRULECOUNT))
     {
-        COptions::PermsColorAccount[i] = std::wstring(m_account[i].GetString());
-        COptions::PermsColorLevel[i] = m_level[i];
-        COptions::PermsColor[i] = m_color[i];
+        COptions::PermsColorAccount[i].Obj() = GetText(IDC_PERMS_ACCOUNT0 + i);
+        COptions::PermsColorLevel[i] = ComboSelection(IDC_PERMS_LEVEL0 + i);
+        COptions::PermsColor[i] = m_colorButton[i].GetColor();
     }
-
-    COptions::PermsExcludeRegex = std::wstring(m_excludeRegex.GetString());
+    COptions::PermsExcludeRegex.Obj() = GetText(IDC_PERMS_EXCLUDE);
 
     // Force colorization to be recomputed and repaint the list
     CItemPerm::InvalidateRuleColors();
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
-    CMFCPropertyPage::OnOK();
-}
-
-void CPagePermissions::OnSettingChanged(UINT)
-{
-    SetModified();
-}
-
-void CPagePermissions::OnExcludeChanged()
-{
-    SetModified();
-}
-
-void CPagePermissions::OnColorChanged(UINT, NMHDR*, LRESULT*)
-{
-    SetModified();
 }

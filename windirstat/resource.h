@@ -101,6 +101,7 @@
 #define IDC_COMBO_THREADS               1079
 #define IDC_TREECOL_ATTRIBUTES          1080
 #define IDC_BROWSE_FOLDER               1081
+#define IDC_TREECOL_PERCENTAGE          1082
 #define IDC_SCAN_DUPLICATES             1083
 #define IDC_RESET_PREFERENCES           1084
 #define IDC_FILTERING_EXCLUDE_DIRS      1085
@@ -138,6 +139,8 @@
 #define IDC_FILTERING_INCLUDE_FILES     1120
 #define IDC_HASH_ALGORITHM              1121
 #define IDC_FILTER_BUTTON               1122
+#define IDC_FILTERING_SIZE_COMPARISON    1150
+#define IDC_FILTERING_MAX_AGE_COMPARISON 1151
 #define IDC_FILTERING_MAX_AGE_DAYS      1124
 #define IDC_PERMS_ACCOUNT0              1125
 #define IDC_PERMS_ACCOUNT1              1126
@@ -150,13 +153,27 @@
 #define IDC_PERMS_LEVEL3                1133
 #define IDC_PERMS_LEVEL4                1134
 #define IDC_PERMS_EXCLUDE               1135
+#define IDC_PROCESS_PRIORITY            1136
+#define IDC_TREEMAPSTYLE                1137
+#define IDC_PROMPT_EMPTY_BIN            1138
+#define IDC_PROMPT_CREATE_HARDLINK      1139
+#define IDC_PROMPT_REMOVE_MOTW          1140
+#define IDC_PROMPT_DISABLE_HIBERNATE    1141
+#define IDC_PROMPT_REMOVE_SHADOW        1142
+#define IDC_PROMPT_DISM_NORMAL          1143
+#define IDC_PROMPT_DISM_RESET           1144
+#define IDC_PROMPT_SET_DATES            1145
+#define IDC_PROMPT_REMOVE_EMPTY         1146
+#define IDC_DELETION_BIN_WARNING        1147
+#define IDC_ADD_CLEANUP                 1148
+#define IDC_REMOVE_CLEANUP              1149
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
 #define ID_TREEMAP_ZOOMOUT              32770
 #define ID_TREEMAP_SELECT_PARENT        32771
-#define ID_VIEW_SHOWTREEMAP             32772
+#define ID_VIEW_SHOWVISUALIZATION       32772
 #define ID_HELP_REPORTBUG               32773
 #define ID_CLEANUP_OPEN_IN_CONSOLE      32774
 #define ID_CLEANUP_DELETE_BIN           32775
@@ -206,9 +223,6 @@
 #define ID_CLEANUP_DISM_RESET           32818
 #define ID_CLEANUP_REMOVE_ROAMING       32819
 #define ID_CLEANUP_OPEN_IN_PWSH         32820
-#define ID_INDICATOR_DISK               32821
-#define ID_INDICATOR_RAM                32822
-#define ID_INDICATOR_IDLE               32823
 #define ID_CLEANUP_EMPTY_FOLDER         32824
 #define ID_CLEANUP_HIBERNATE            32825
 #define ID_TREEMAP_LOGICAL_SIZE         32826
@@ -225,19 +239,17 @@
 #define ID_CLEANUP_MOVE_TO              32838
 #define ID_CLEANUP_OPTIMIZE_VHD         32839
 #define ID_EXTLIST_SEARCH_EXTENSION     32840
-#define ID_INDICATOR_SIZE               32841
 #define ID_CLEANUP_REMOVE_MOTW          32842
 #define ID_CLEANUP_CREATE_HARDLINK      32843
 #define ID_CLEANUP_SPARSIFY_FILE        32844
 #define ID_TOOLS_SET_DATES              32845
-#define ID_TOOLS_REMOVE_EMPTY           32846
+#define ID_CLEANUP_REMOVE_EMPTY         32846
 #define ID_TOOLS_SHADOW_COPY_BASE       32850
 #define ID_TOOLS_DEFRAG_BASE            32880
 #define ID_TOOLS_CHKDSK_BASE            32910
 #define ID_TOOLS_WATCHER                32940
 #define ID_TREEMAP_SHOW_EXTENSIONS      32941
 #define ID_TREEMAP_SHOW_FOLDER_FRAMES   32947
-#define ID_VIEW_LARGE_TOOLBAR           32942
 #define ID_FILTER_EXCLUDE_ITEM          32943
 #define ID_TOOLS_PERMISSIONS            32944
 #define ID_SAVE_PERMISSIONS             32945
@@ -251,6 +263,24 @@
 #define ID_WATCHER_LABEL                32955
 #define ID_VIEW_FLAMEGRAPH              32956
 #define ID_TREEMAP_PHYSICAL_SIZE        32957
+#define ID_VIEW_ABSOLUTE_PERCENTAGES    32958
+#define ID_VIEW_SUNBURST                32959
+#define ID_VIEW_TREEMAP_ROWS            32960
+#define ID_VIEW_TREEMAP_SQUARIFIED      32961
+#define ID_VIEW_TREEMAP_HILBERT         32962
+#define ID_VIEW_TREEMAP_MOORE           32963
+#define ID_VIEW_FONT_SIZE_100           32964
+#define ID_VIEW_FONT_SIZE_125           32965
+#define ID_VIEW_FONT_SIZE_150           32966
+#define ID_VIEW_FONT_SIZE_175           32967
+#define ID_VIEW_FONT_SIZE_200           32968
+#define ID_VIEW_FONT_SIZE_USE_WINDOWS   32969
+#define ID_VIEW_TOOLBAR_SIZE_100        32970
+#define ID_VIEW_TOOLBAR_SIZE_125        32971
+#define ID_VIEW_TOOLBAR_SIZE_150        32972
+#define ID_VIEW_TOOLBAR_SIZE_175        32973
+#define ID_VIEW_TOOLBAR_SIZE_200        32974
+#define ID_VIEW_TOOLBAR_SIZE_USE_WINDOWS 32975
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -265,8 +295,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32958
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_COMMAND_VALUE         32976
+#define _APS_NEXT_CONTROL_VALUE         1152
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -18,22 +18,21 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public CMFCPropertyPage
+class CPageCleanups final : public MessageTarget<CPageCleanups, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageCleanups)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_CLEANUPS };
 
     CPageCleanups();
     ~CPageCleanups() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
     void CurrentUdcToDialog();
@@ -41,51 +40,54 @@ protected:
     void OnSomethingChanged();
     void UpdateControlStatus();
     void CheckEmptyTitle();
+    bool HasCurrentUdc() const noexcept { return m_current >= 0 && std::cmp_less(m_current, m_udc.size()); }
+    void MoveCurrentUdc(int offset);
 
-    std::unique_ptr<USERDEFINEDCLEANUP[]> m_udc = std::make_unique<USERDEFINEDCLEANUP[]>(USERDEFINEDCLEANUPCOUNT);
+    std::vector<USERDEFINEDCLEANUP> m_udc;
     int m_current = -1; // currently selected user defined cleanup
+    bool m_updating = false;
 
     // Dialog data
     CListBox m_customCleanupList;
-    BOOL m_enabled = FALSE;
-    CStringW m_title;
-    BOOL m_worksForDrives = FALSE;
-    BOOL m_worksForDirectories = FALSE;
-    BOOL m_worksForFiles = FALSE;
-    BOOL m_worksForUncPaths = FALSE;
-    CStringW m_commandLine;
-    BOOL m_recurseIntoSubdirectories = FALSE;
-    BOOL m_askForConfirmation = FALSE;
-    BOOL m_showConsoleWindow = FALSE;
-    BOOL m_waitForCompletion = FALSE;
-    int m_refreshPolicy = 0;
     CComboBox m_ctlRefreshPolicy;
-
     CEdit m_ctlTitle;
-    CButton m_ctlWorksForDrives;
-    CButton m_ctlWorksForDirectories;
-    CButton m_ctlWorksForFiles;
-    CButton m_ctlWorksForUncPaths;
-    CEdit m_ctlCommandLine;
-    CButton m_ctlRecurseIntoSubdirectories;
-    CButton m_ctlAskForConfirmation;
-    CButton m_ctlShowConsoleWindow;
-    CButton m_ctlWaitForCompletion;
-    CStatic m_ctlHintSp;
-    CStatic m_ctlHintSn;
-    CButton m_ctlUp;
-    CButton m_ctlDown;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnLbnSelchangeList();
-    afx_msg void OnBnClickedEnabled();
-    afx_msg void OnEnChangeTitle();
-    afx_msg void OnBnClickedWorksfordrives();
-    afx_msg void OnBnClickedWorksfordirectories();
-    afx_msg void OnBnClickedModified();
-    afx_msg void OnBnClickedRecurseintosubdirectories();
-    afx_msg void OnBnClickedUp();
-    afx_msg void OnBnClickedDown();
-    afx_msg void OnBnClickedHelpbutton();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLbnSelchangeList();
+    void OnBnClickedEnabled();
+    void OnEnChangeTitle();
+    void OnBnClickedAdd();
+    void OnBnClickedRemove();
+    void OnBnClickedUp();
+    void OnBnClickedDown();
+    void OnBnClickedHelpbutton();
 };
+
+inline std::span<const RouteEntry> CPageCleanups::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
+        Route::Control<&OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
+        Route::Control<&OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDRIVES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORFILES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
+        Route::Control<&OnSomethingChanged>(EN_CHANGE, IDC_COMMANDLINE),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION),
+        Route::Control<&OnSomethingChanged>(CBN_SELENDOK, IDC_REFRESHPOLICY),
+        Route::Control<&OnBnClickedAdd>(BN_CLICKED, IDC_ADD_CLEANUP),
+        Route::Control<&OnBnClickedRemove>(BN_CLICKED, IDC_REMOVE_CLEANUP),
+        Route::Control<&OnBnClickedUp>(BN_CLICKED, IDC_UP),
+        Route::Control<&OnBnClickedDown>(BN_CLICKED, IDC_DOWN),
+        Route::Control<&OnBnClickedHelpbutton>(BN_CLICKED, IDC_HELPBUTTON),
+    };
+    return entries;
+}

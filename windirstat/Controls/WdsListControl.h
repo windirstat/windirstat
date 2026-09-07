@@ -16,8 +16,6 @@
 //
 
 #pragma once
-#include <span>
-
 #include "pch.h"
 
 class CWdsListControl;
@@ -56,7 +54,7 @@ public:
     // This color is used for the current item
     virtual COLORREF GetItemTextColor() const
     {
-        return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+        return DarkMode::SystemColor(COLOR_WINDOWTEXT);
     }
 
     // Comparison methods for sorting
@@ -77,94 +75,77 @@ public:
 };
 
 //
-// CSetRedrawLock. RAII wrapper for SetRedraw(FALSE)/SetRedraw(TRUE).
-//
-class CSetRedrawLock final
-{
-public:
-    explicit CSetRedrawLock(CWnd* wnd) : m_wnd(wnd) { m_wnd->SetRedraw(FALSE); }
-    ~CSetRedrawLock() { m_wnd->SetRedraw(TRUE); m_wnd->Invalidate(); }
-    CSetRedrawLock(const CSetRedrawLock&) = delete;
-    CSetRedrawLock& operator=(const CSetRedrawLock&) = delete;
-
-private:
-    CWnd* m_wnd;
-};
-
-//
 // CWdsListControl. Must be report view. Deals with CWdsListItems.
 // Can have a grid or not (own implementation, don't set LVS_EX_GRIDLINES). Flicker-free.
 // Also handles sorting functionality (merged from CSortingListControl).
 //
-class CWdsListControl : public CListCtrl
+class CWdsListControl : public MessageTarget<CWdsListControl, CListCtrl>
 {
-    DECLARE_DYNAMIC(CWdsListControl)
-
 public:
-    CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
+    CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility);
     ~CWdsListControl() override = default;
-    void OnColumnsInserted();
+    void OnColumnsInserted(std::initializer_list<int> requiredColumns = {}, std::initializer_list<int> defaultHiddenColumns = {});
+    void OnFontSizeChanged(int oldPercent, int newPercent) override;
     virtual void SysColorChanged();
 
-    int GetRowHeight() const;
+    int GetRowHeight() const { return m_rowHeight; }
+    int GetIconSize() const { return m_iconSize; }
     void CalculateRowHeight();
     void ShowGrid(bool show);
     void ShowStripes(bool show);
     void ShowFullRowSelection(bool show);
-    bool IsFullRowSelection() const;
+    bool IsFullRowSelection() const { return m_showFullRowSelect; }
 
-    COLORREF GetWindowColor() const;
-    COLORREF GetStripeColor() const;
     COLORREF GetHighlightColor() const;
-    COLORREF GetNonFocusHighlightColor() const;
-    COLORREF GetNonFocusHighlightTextColor() const;
     COLORREF GetHighlightTextColor() const;
 
-    bool IsItemStripColor(int i) const;
-    COLORREF GetItemBackgroundColor(int i) const;
+    bool IsItemStripColor(const int i) const { return m_showStripes && i % 2 != 0; }
+    COLORREF GetItemBackgroundColor(const int i) const { return IsItemStripColor(i) ? m_stripeColor : m_windowColor; }
     COLORREF GetItemSelectionBackgroundColor(int i) const;
     COLORREF GetItemSelectionTextColor(int i) const;
 
     CWdsListItem* GetItem(int i) const;
     int FindListItem(const CWdsListItem* item) const;
-    int GetTextXMargin() const;
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
     void LoadPersistentAttributes();
-    bool HasFocus() const;
-    void AddExtendedStyle(DWORD exStyle);
-    void RemoveExtendedStyle(DWORD exStyle);
+    bool HasFocus() const { return ::GetFocus() == m_hWnd; }
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
-    void InsertListItem(int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
+    void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
-    void ClearList();
 
     // Shadow CListCtrl methods for Owner Data management.
     // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
-    BOOL DeleteItem(int i);
-    BOOL DeleteAllItems();
+    virtual bool DeleteItem(int i);
+    bool DeleteAllItems();
 
     // Sorting functionality
-    const SSorting& GetSorting() const;
     int ColumnToSubItem(int col) const;
-    void SetSorting(const SSorting& sorting);
+    int SubItemToColumn(int subitem) const;
+    bool IsColumnVisible(int subitem) const;
+    void SetColumnVisible(int subitem, bool visible);
+    void SetSorting(const SSorting& sorting) { m_sorting = sorting; }
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
     virtual void SortItems();
-    virtual bool GetAscendingDefault(int column);
+    virtual bool GetAscendingDefault(int) { return true; }
     int GetItemCount() const noexcept { return static_cast<int>(m_items.size()); }
     void SetOwnsItems(const bool owns) { m_ownsItems = owns; }
 
     // Selection change batching
     void PostSelectionChanged();
     void DeselectAll();
-    CFont* GetFont() const;
+    HFONT GetFont() const;
 
 protected:
     void InitializeColors();
+    void ApplyColumnVisibility(int column);
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);
+    bool IsColumnRequired(int subitem) const;
+    virtual void OnItemContextMenu(CPoint /*point*/) {}
     void SavePersistentAttributes() const;
+    void ShowColumnContextMenu(CPoint point);
 
     // Owner-drawn related members
     std::vector<CWdsListItem*> m_items;
@@ -173,6 +154,7 @@ protected:
     COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
     COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
     int m_rowHeight = 20;              // Height of an item
+    int m_iconSize = 16;
     int m_columnCount = 0;
     bool m_showGrid = false;           // Whether to draw a grid
     bool m_showStripes = false;        // Whether to show stripes
@@ -181,24 +163,52 @@ protected:
     // Sorting related members (merged from CSortingListControl)
     std::vector<int>* m_columnOrder = nullptr;
     std::vector<int>* m_columnWidths = nullptr;
+    std::vector<int>* m_columnVisibility = nullptr;
+    std::vector<int> m_defaultColumnWidths;
+    std::vector<int> m_requiredColumns;
     SSorting m_sorting;
     int m_indicatedColumn = -1;
 
     // Selection change batching
     static constexpr DWORD WM_SELECTION_CHANGED = WM_APP + 1;
     bool m_selectionChangePending = false;
-    mutable HFONT m_cachedFont = NULL;
-    mutable bool m_isFontCached = false;
+    mutable HFONT m_cachedFont = nullptr;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnDestroy();
-    afx_msg virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnContextMenu(CWnd* pWnd, CPoint point);
+    bool OnEraseBkgnd(CDC* pDC) const;
+    void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnDestroy();
+    void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
+    virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
+    LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
 };
+
+inline std::span<const RouteEntry> CWdsListControl::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnSelectionChanged>(WM_SELECTION_CHANGED),
+        Route::Notify<&OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
+        Route::Notify<&OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
+        Route::Notify<&OnHdnItemClick>(HDN_ITEMCLICK, 0),
+        Route::Notify<&OnHdnItemDblClick>(HDN_ITEMDBLCLICK, 0),
+        Route::Notify<&OnCustomDraw>(NM_CUSTOMDRAW, 0),
+        Route::ReflectNotify<&OnLvnGetDispInfo>(LVN_GETDISPINFO),
+        Route::Window<&OnContextMenu>(WM_CONTEXTMENU),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+        Route::Window<&OnSettingChange>(WM_SETTINGCHANGE),
+        Route::Window<&OnShowWindow>(WM_SHOWWINDOW),
+        Route::Window<&OnSetFont>(WM_SETFONT),
+    };
+    return entries;
+}

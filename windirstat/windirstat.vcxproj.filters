@@ -13,9 +13,6 @@
     <Filter Include="Resource Files\Resources">
       <UniqueIdentifier>{FAE48057-9708-D7A8-F523-7E1B9962C744}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Languages">
-      <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Icon">
       <UniqueIdentifier>{7e4f4843-62b8-45f8-af9b-7be2708530d3}</UniqueIdentifier>
     </Filter>
@@ -82,6 +79,9 @@
     <Filter Include="Source Files\Contrib">
       <UniqueIdentifier>{a87d04f4-5518-4f28-8d78-5c42d1d673af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Icon\Languages">
+      <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\windirstat.manifest">
@@ -97,7 +97,7 @@
       <Filter>Resource Files\License</Filter>
     </None>
     <None Include="res\lang_combined.bin">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -128,10 +128,19 @@
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageShared.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\WinDirStatPane.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\GraphView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\VisualizationPane.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\StorageAnalyticsView.h">
@@ -149,7 +158,16 @@
     <ClInclude Include="Controls\TreeMap.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\TreeMapLayout.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\HilbertMooreTreeMap.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\FlameGraph.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Sunburst.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\TreeListControl.h">
@@ -185,6 +203,9 @@
     <ClInclude Include="Views\FlameGraphView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
+    <ClInclude Include="Views\SunburstView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
     <ClInclude Include="Dialogs\SearchDlg.h">
       <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
@@ -192,7 +213,7 @@
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="res\LangStrings.h">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\MessageBoxDlg.h">
       <Filter>Header Files\User Interface\Dialogs</Filter>
@@ -236,9 +257,6 @@
     <ClInclude Include="Property.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="SelectObject.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="SmartPointer.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
@@ -270,6 +288,9 @@
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="FinderBasic.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="FinderMtp.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="FinderNtfs.h">
@@ -305,6 +326,9 @@
     <ClInclude Include="..\contrib\xxhash\xxhash.h">
       <Filter>Header Files\Contrib</Filter>
     </ClInclude>
+    <ClInclude Include="UiFramework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
@@ -331,6 +355,9 @@
     <ClCompile Include="Pages\PageGeneral.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Pages\PageShared.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Pages\PageTreeMap.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
@@ -343,6 +370,12 @@
     <ClCompile Include="Views\WinDirStatPane.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="Views\GraphView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\VisualizationPane.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="Views\StorageAnalyticsView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
@@ -350,6 +383,9 @@
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\FlameGraphView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\SunburstView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\FileTabbedView.cpp">
@@ -361,7 +397,16 @@
     <ClCompile Include="Controls\TreeMap.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\TreeMapLayout.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\HilbertMooreTreeMap.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\FlameGraph.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Sunburst.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeListControl.cpp">
@@ -427,6 +472,9 @@
     <ClCompile Include="DarkMode.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
+    <ClCompile Include="UiFramework.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
     <ClCompile Include="Layout.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
@@ -464,6 +512,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="FinderBasic.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderMtp.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="FinderNtfs.cpp">
@@ -509,73 +560,73 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\langs\lang_et.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_es.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_fi.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_fr.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_hu.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_it.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_pl.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_pt.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ru.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_de.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_en.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_nl.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_zh.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ko.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sv.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ja.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_tr.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_da.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_uk.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_cs.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_zh-hk.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sl.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_nb.txt">
-      <Filter>Resource Files\Languages</Filter>
+      <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
   </ItemGroup>
 </Project>

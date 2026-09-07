@@ -18,38 +18,27 @@
 #pragma once
 
 #include "pch.h"
-
-class COptionsPropertySheet;
+#include "PageShared.h"
 
 //
 // CPageFiltering. "Settings" property page "Filtering".
 //
-class CPageFiltering final : public CMFCPropertyPage
+class CPageFiltering final : public MessageTarget<CPageFiltering, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPageFiltering)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_FILTERING };
 
     explicit CPageFiltering(bool refreshOnFilteringChange = true);
     ~CPageFiltering() override = default;
 
 protected:
-    COptionsPropertySheet* GetSheet() const;
-
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
+    void AdjustControls() override;
     void OnOK() override;
     void SetToolTips();
-
-    int m_filteringSizeMinimum = 0;
-    int m_filteringSizeUnits = 0;
-    BOOL m_filteringUseRegex = FALSE;
-    int m_filteringMaxAgeDays = 0;
-    CString m_filteringExcludeDirs;
-    CString m_filteringExcludeFiles;
-    CString m_filteringIncludeDirs;
-    CString m_filteringIncludeFiles;
     CComboBox m_ctlFilteringSizeUnits;
+    CComboBox m_ctlFilteringSizeComparison;
+    CComboBox m_ctlFilteringMaxAgeComparison;
     CEdit m_ctrlFilteringExcludeFiles;
     CEdit m_ctrlFilteringExcludeDirs;
     CEdit m_ctrlFilteringIncludeFiles;
@@ -57,8 +46,29 @@ protected:
     CToolTipCtrl m_toolTip;
     bool m_refreshOnFilteringChange = true;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSettingChanged();
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnSettingChanged();
+    bool PreprocessMessage(MSG* pMsg) override;
 };
+
+inline std::span<const RouteEntry> CPageFiltering::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_DIRS),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_EXCLUDE_FILES),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_DIRS),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_INCLUDE_FILES),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_FILTERING_USE_REGEX),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_SIZE_MIN),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MIN_UNITS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MIN_UNITS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_SIZE_COMPARISON),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FILTERING_MAX_AGE_DAYS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_FILTERING_MAX_AGE_COMPARISON),
+    };
+    return entries;
+}

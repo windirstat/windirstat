@@ -73,18 +73,13 @@ ShowUnknown=0
 ShowTimeSpent=1
 ShowStatusBar=1
 ShowToolBar=1
-LargeToolBar=1
+ToolBarSizePercent=150
 TreeMapShowExtensions=1
 TreeMapGrid=1
 TreeMapUseLogicalSize=1
 
 [FileTreeView]
-ShowColumnSizeLogical=1
-ShowColumnSizePhysical=1
-ShowColumnFiles=1
-ShowColumnFolders=1
-ShowColumnItems=1
-ShowColumnLastChange=1
+ColumnVisibility=1,1,1,1,1,1,1,1,1,0,0
 
 "@
     Set-Content -LiteralPath (Join-Path $AppDir "WinDirStat.ini") -Value $ini -Encoding UTF8

@@ -28,7 +28,7 @@ static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG Proc
     PVOID ProcessInformation, ULONG ProcessInformationLength) = reinterpret_cast<decltype(NtSetInformationProcess)>(
         reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
-static void CloseAlgProvider(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+static void CloseAlgProvider(const BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
 static void FreeXxHashState(XXH3_state_t* state) noexcept { XXH3_freeState(state); }
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
@@ -36,9 +36,9 @@ static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
     if (thread_local SmartPointer comInit([](PVOID) noexcept { CoUninitialize(); }, PVOID{});
         comInit == nullptr)
     {
-        const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-        if (FAILED(result) && result != RPC_E_CHANGED_MODE) return result;
-        comInit = reinterpret_cast<PVOID>(TRUE);
+        if (const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+            FAILED(result) && result != RPC_E_CHANGED_MODE) return result;
+        comInit = reinterpret_cast<PVOID>(1);
     }
 
     CComPtr<IWbemLocator> locObj;
@@ -184,10 +184,9 @@ std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, cons
     {
         if ((driveMask & (1 << i)) == 0) continue;
 
+        // See if drive type matches and in accessible
         const WCHAR driveStr[] = { wds::strAlpha[i], L':', L'\\', L'\0' };
         const UINT driveType = GetDriveType(driveStr);
-
-        // See if drive type matches and in accessible
         if (std::ranges::find(driveTypes, driveType) != driveTypes.end())
         {
             // Check if the drive is actually accessible
@@ -217,7 +216,7 @@ bool DriveExists(const std::wstring& path) noexcept
     const DWORD mask = 0x1 << d;
 
     return (mask & GetLogicalDrives()) != 0 &&
-        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
+        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != 0;
 }
 
 bool IsLocalDrive(const std::wstring& path) noexcept
@@ -268,15 +267,14 @@ bool DeleteFileForce(const std::wstring& path, DWORD attributes)
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     if (handle == INVALID_HANDLE_VALUE) return false;
 
-    FILE_DISPOSITION_INFO info{};
-    info.DeleteFile = TRUE;
+    FILE_DISPOSITION_INFO info{ .DeleteFile = true };
     SetFileInformationByHandle(handle, FileDispositionInfo, &info, sizeof(info));
     return GetFileAttributes(path.c_str()) == INVALID_FILE_ATTRIBUTES
         && GetLastError() == ERROR_FILE_NOT_FOUND;
 }
 
 // Path utilities
-std::wstring WdsQueryDosDevice(const std::wstring& drive)
+std::wstring QueryDosDevicePath(const std::wstring& drive)
 {
     if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
@@ -292,14 +290,14 @@ std::wstring WdsQueryDosDevice(const std::wstring& drive)
 
 bool IsSUBSTedDrive(const std::wstring& drive)
 {
-    const std::wstring info = WdsQueryDosDevice(drive);
+    const std::wstring info = QueryDosDevicePath(drive);
     return info.starts_with(L"\\??\\");
 }
 
 // Hibernation
 void DisableHibernate() noexcept
 {
-    BOOLEAN hibernateEnabled = FALSE;
+    BOOLEAN hibernateEnabled = false;
     (void)CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
         sizeof(hibernateEnabled), nullptr, 0);
 
@@ -420,7 +418,7 @@ bool EnableReadPrivileges() noexcept
         }
 
         // Adjust the process to change the privilege
-        if (AdjustTokenPrivileges(token, FALSE, &privEntry,
+        if (AdjustTokenPrivileges(token, false, &privEntry,
             sizeof(TOKEN_PRIVILEGES), nullptr, nullptr) == 0)
         {
             ret = false;
@@ -496,16 +494,15 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     static std::unordered_map<std::wstring, bool> compressionModern;
 
     // Enable 'none' button if at least standard is available
-    if (algorithm == CompressionAlgorithm::NONE)
+    if (algorithm == NONE)
     {
-        return CompressFileAllowed(resolvedVolume, CompressionAlgorithm::LZNT1) ||
-            CompressFileAllowed(resolvedVolume, CompressionAlgorithm::XPRESS4K);
+        return CompressFileAllowed(resolvedVolume, LZNT1) ||
+            CompressFileAllowed(resolvedVolume, XPRESS4K);
     }
 
-    const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
+    const auto& compressionMap = (algorithm == LZNT1) ?
         compressionStandard : compressionModern;
 
-    // Return cached value
     if (const auto it = compressionMap.find(resolvedVolume); it != compressionMap.end())
     {
         return it->second;
@@ -539,7 +536,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     }
 
     DWORD bytesReturned = 0;
-    BOOL status = FALSE;
+    bool status = false;
     if (modernAlgorithm)
     {
         struct
@@ -580,11 +577,11 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
 
         if (DeviceIoControl(
             handle, FSCTL_DELETE_EXTERNAL_BACKING, nullptr,
-            0, nullptr, 0, &bytesReturned, nullptr)) status = TRUE;
+            0, nullptr, 0, &bytesReturned, nullptr)) status = true;
     }
 
     // WOF refuses files that would not shrink - treat as success
-    return status != FALSE || GetLastError() == ERROR_COMPRESSION_NOT_BENEFICIAL;
+    return status || GetLastError() == ERROR_COMPRESSION_NOT_BENEFICIAL;
 }
 
 bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, const ULONGLONG chunkSize)
@@ -595,7 +592,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
         nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (h == INVALID_HANDLE_VALUE) return false;
     LARGE_INTEGER fileSize{};
-    if (!::GetFileSizeEx(h, &fileSize)) return false;
+    if (!GetFileSizeEx(h, &fileSize)) return false;
 
     // Determine filesystem cluster size for alignment
     DWORD sectorsPerCluster = 0, bytesPerSector = 0, dummy1, dummy2;
@@ -605,8 +602,8 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     ULONGLONG clusterSize = static_cast<ULONGLONG>(sectorsPerCluster) * bytesPerSector;
     if (clusterSize == 0) clusterSize = 4096;
 
-    auto alignDown = [clusterSize](ULONGLONG val) { return (val / clusterSize) * clusterSize; };
-    auto alignUp = [clusterSize](ULONGLONG val) { return ((val + clusterSize - 1) / clusterSize) * clusterSize; };
+    auto alignDown = [clusterSize](const ULONGLONG val) { return (val / clusterSize) * clusterSize; };
+    auto alignUp = [clusterSize](const ULONGLONG val) { return ((val + clusterSize - 1) / clusterSize) * clusterSize; };
 
     struct ZeroRange { ULONGLONG offset, length; };
     std::vector<ZeroRange> ranges;
@@ -615,7 +612,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     bool inRun = false;
 
     // Save qualifying zero runs with cluster alignment
-    auto saveRun = [&]()
+    auto saveRun = [&]
     {
         if (inRun && runLen >= minZeroRunSize) {
             const ULONGLONG alignedStart = alignUp(runStart);
@@ -630,7 +627,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)
     {
         const DWORD toRead = static_cast<DWORD>(std::min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
-        if (!::ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
+        if (!ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
 
         const BYTE* data = buffer.data();
         for (DWORD i = 0; i < bytesRead; )
@@ -665,7 +662,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
 
     // Mark file as sparse
     DWORD bytesReturned = 0;
-    if (!::DeviceIoControl(h, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &bytesReturned, nullptr))
+    if (!DeviceIoControl(h, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &bytesReturned, nullptr))
         return false;
 
     // Deallocate storage for each zero range
@@ -674,7 +671,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
         FILE_ZERO_DATA_INFORMATION zdi{};
         zdi.FileOffset.QuadPart = static_cast<LONGLONG>(offset);
         zdi.BeyondFinalZero.QuadPart = static_cast<LONGLONG>(offset + length);
-        if (!::DeviceIoControl(h, FSCTL_SET_ZERO_DATA, &zdi, sizeof(zdi),
+        if (!DeviceIoControl(h, FSCTL_SET_ZERO_DATA, &zdi, sizeof(zdi),
             nullptr, 0, &bytesReturned, nullptr))
             success = false;
     }
@@ -700,16 +697,45 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 }
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProgressDlg)
+static std::mutex mtpStreamMutex;
+
+HRESULT OpenMtpStream(const CItem* item, CComPtr<IStream>& stream)
 {
-    // Open file with smart pointer
-    const SmartPointer hFile(CloseHandle, CreateFile(filePath.c_str(),
-        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE)
+    // Serialize shell binding while resolving the MTP item to a readable content stream
+    const std::scoped_lock lock(mtpStreamMutex);
+    const SmartPointer pidl(CoTaskMemFree, CreateShellPidl(item));
+    CComPtr<IBindCtx> bindContext;
+    CComPtr<IShellItem> shellItem;
+    BIND_OPTS options{ sizeof(BIND_OPTS), 0, STGM_READ | STGM_SHARE_DENY_NONE };
+    HRESULT result = pidl ? CreateBindCtx(0, &bindContext) : E_FAIL;
+    if (FAILED(result) || FAILED(result = bindContext->SetBindOptions(&options)) ||
+        FAILED(result = SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellItem)))) return result;
+    return shellItem->BindToHandler(bindContext, BHID_Stream, IID_PPV_ARGS(&stream));
+}
+
+HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, const ULONG size, ULONG* bytesRead)
+{
+    // Use native reads for filesystem handles and serialize reads from shell-backed streams
+    if (!stream) return ReadFile(file, buffer, size, bytesRead, nullptr) ? S_OK :
+        HRESULT_FROM_WIN32(GetLastError());
+    const std::scoped_lock lock(mtpStreamMutex);
+    return stream->Read(buffer, size, bytesRead);
+}
+
+std::wstring ComputeFileHashes(const CItem* item, CProgressDlg* pProgressDlg)
+{
+    // Open MTP content through the shell and filesystem content through a native handle
+    const ComApartmentScope com;
+    SmartPointer hFile(CloseHandle, HANDLE{});
+    CComPtr<IStream> fileStream;
+    if (item->IsTypeOrFlag(ITF_MTP))
     {
-        return TranslateError();
+        if (!com) return TranslateError(CO_E_NOTINITIALIZED);
+        if (const HRESULT result = OpenMtpStream(item, fileStream); FAILED(result)) return TranslateError(result);
     }
+    else if ((hFile = CreateFile(item->GetPathLong().c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE) return TranslateError();
 
     // Initialize all hash contexts
     using HashContext = struct HashContext {
@@ -717,9 +743,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        bool isXxHash = false;
-        SmartPointer<XXH3_state_t*, decltype(&FreeXxHashState)> xxHash = { FreeXxHashState, nullptr };
-        SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
+        SmartPointer<XXH3_state_t*> xxHash = { FreeXxHashState, nullptr };
+        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
     };
 
@@ -732,13 +757,10 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
         // xxHash is not provided by BCrypt; use the bundled implementation
         if (algorithm == HASH_XXHASH)
         {
-            ctx.name = name;
-            ctx.isXxHash = true;
             ctx.xxHash = XXH3_createState();
-            if (ctx.xxHash.IsValid())
-            {
-                XXH3_64bits_reset(ctx.xxHash);
-            }
+            if (!ctx.xxHash.IsValid()) continue;
+            ctx.name = name;
+            XXH3_64bits_reset(ctx.xxHash);
             contexts.emplace_back(std::move(ctx));
             continue;
         }
@@ -774,24 +796,29 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     constexpr size_t BUFFER_SIZE = wds::Mi; // 1MB chunks
     std::vector<BYTE> buffer(BUFFER_SIZE);
     DWORD bytesRead;
+    HRESULT readResult = S_OK;
 
     // Update all valid hashes with the same buffer in parallel
-    while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
+    while (SUCCEEDED(readResult = ReadFileContent(hFile, fileStream,
+        buffer.data(), BUFFER_SIZE, &bytesRead)) && bytesRead > 0)
     {
         if (pProgressDlg->IsCancelled()) return wds::strEmpty;
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
-                if (ctx.isXxHash && ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
+                if (ctx.xxHash.IsValid()) XXH3_64bits_update(ctx.xxHash, buffer.data(), bytesRead);
                 else (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
         pProgressDlg->Increment();
+        // Some shell streams report the final successful partial read with S_FALSE
+        if (readResult == S_FALSE) break;
     }
+    if (FAILED(readResult)) return TranslateError(readResult);
 
     // Finalize all hashes and convert to hex strings
-    std::wstring result = filePath + L"\n\n";
+    std::wstring result = item->GetPath() + L"\n\n";
     for (auto& ctx : contexts)
     {
-        if (ctx.isXxHash)
+        if (ctx.xxHash.IsValid())
         {
             XXH64_canonical_t canonical;
             XXH64_canonicalFromHash(&canonical, XXH3_64bits_digest(ctx.xxHash));
@@ -809,15 +836,23 @@ std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pProg
     return result;
 }
 
-// I/O priority and VHD optimization
-void SetProcessIoPriorityHigh() noexcept
+// Process priority and VHD optimization
+void SetProcessPriority(const int level) noexcept
 {
-    // Define I/O priority constants
+    constexpr std::array cpuPriorities = {
+        IDLE_PRIORITY_CLASS,
+        NORMAL_PRIORITY_CLASS,
+        HIGH_PRIORITY_CLASS
+    };
     constexpr ULONG ProcessIoPriority = 33;
-    constexpr ULONG IoPriorityHigh = 3;
+    const auto priority = static_cast<size_t>(std::clamp<int>(level, LOW, HIGH));
 
-    // Set the I/O priority to high for the current process
-    ULONG ioPriority = IoPriorityHigh;
+    if (!SetPriorityClass(GetCurrentProcess(), cpuPriorities[priority]))
+    {
+        VTRACE(L"SetPriorityClass() Failed");
+    }
+
+    ULONG ioPriority = static_cast<ULONG>(priority + 1); // Low, Normal, High
     if (NtSetInformationProcess(GetCurrentProcess(),
         ProcessIoPriority, &ioPriority, sizeof(ioPriority)) != 0)
     {
@@ -872,7 +907,7 @@ void CopyAllDriveMappings() noexcept
             std::wstring withColon = driveLetter.data() + std::wstring(L":");
             if (DriveExists(withColon)) continue;
 
-            futures.emplace_back(std::async(std::launch::async, [withColon, remotePath]()
+            futures.emplace_back(std::async(std::launch::async, [withColon, remotePath]
             {
                 NETRESOURCEW res{ .dwType = RESOURCETYPE_DISK,
                     .lpLocalName  = const_cast<LPWSTR>(withColon.data()),
@@ -884,10 +919,10 @@ void CopyAllDriveMappings() noexcept
 
     // Wait for all mappings to complete with a progress dialog
     if (futures.empty()) return;
-    CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         constexpr auto timeout = std::chrono::seconds(5);
         for (auto& f : futures)
             (void)f.wait_for(timeout), pdlg->Increment();
-    }).DoModal();
+    }).ShowModal();
 }

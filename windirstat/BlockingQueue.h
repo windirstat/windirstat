@@ -46,7 +46,7 @@ public:
     BlockingQueue& operator=(const BlockingQueue&) = delete;
     BlockingQueue& operator=(BlockingQueue&&) = delete;
     ~BlockingQueue() = default;
-    BlockingQueue(bool exitOnAllIdle = true) : m_exitOnAllIdle(exitOnAllIdle) {};
+    BlockingQueue(const bool exitOnAllIdle = true) : m_exitOnAllIdle(exitOnAllIdle) {}
 
     void ThreadWrapper(const std::function<void()>& callback)
     {
@@ -266,7 +266,7 @@ public:
 
     ~SingleConsumerQueue()
     {
-        for (T tmp; pop(tmp);) {};
+        for (T tmp; pop(tmp);) {}
         delete m_tail;
     }
 
@@ -278,7 +278,7 @@ public:
         prev->next.store(node, std::memory_order_release);
     }
 
-    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
+    bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
     {
         Node* t = m_tail;
         Node* next = t->next.load(std::memory_order_acquire);
@@ -302,7 +302,7 @@ public:
     }
 
     // Only valid for consumer
-    [[nodiscard]] bool empty() const noexcept
+    bool empty() const noexcept
     {
         if (m_tail->next.load(std::memory_order_acquire) != nullptr) return false;
         return m_head.load(std::memory_order_acquire) == m_tail;

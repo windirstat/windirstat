@@ -17,136 +17,67 @@
 
 #include "pch.h"
 #include "PageFileTree.h"
-#include "FileTreeView.h"
+#include "FileTreeControl.h"
 
-IMPLEMENT_DYNAMIC(CPageFileTree, CMFCPropertyPage)
-
-CPageFileTree::CPageFileTree() : CMFCPropertyPage(IDD) {}
-
-void CPageFileTree::DoDataExchange(CDataExchange* pDX)
+CPageFileTree::CPageFileTree() : MessageTarget(IDD)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
-    DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
-    DDX_Check(pDX, IDC_TREECOL_FOLDERS, m_showColumnFolders);
-    DDX_Check(pDX, IDC_TREECOL_SIZE_PHYSICAL, m_showColumnSizePhysical);
-    DDX_Check(pDX, IDC_TREECOL_SIZE_LOGICAL, m_showColumnSizeLogical);
-    DDX_Check(pDX, IDC_TREECOL_ITEMS, m_showColumnItems);
-    DDX_Check(pDX, IDC_TREECOL_FILES, m_showColumnFiles);
-    DDX_Check(pDX, IDC_TREECOL_ATTRIBUTES, m_showColumnAttributes);
-    DDX_Check(pDX, IDC_TREECOL_LAST_CHANGE, m_showColumnLastChange);
-    DDX_Check(pDX, IDC_TREECOL_OWNER, m_showColumnOwner);
-    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
+}
+
+void CPageFileTree::InitializePage()
+{
+    SetChecked(IDC_PACMANANIMATION, COptions::PacmanAnimation);
+    SetChecked(IDC_SHOWTIMESPENT, COptions::ShowTimeSpent);
+
+    const auto& visibility = COptions::FileTreeColumnVisibility.Obj();
+    for (const auto i : std::views::iota(size_t{0}, c_columns.size()))
     {
-        DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_colorButton[i]);
-        if (pDX->m_bSaveAndValidate)
-        {
-            m_fileTreeColor[i] = m_colorButton[i].GetColor();
-        }
-        else
-        {
-            m_colorButton[i].SetColor(m_fileTreeColor[i]);
-        }
+        SetChecked(c_columns[i].first, COptions::IsColumnVisible(visibility, c_columns[i].second));
     }
-    DDX_Control(pDX, IDC_SLIDER, m_slider);
-}
-
-BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
- ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
-    ON_WM_VSCROLL()
-    ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_FOLDERS, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_ITEMS, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_FILES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_ATTRIBUTES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_LAST_CHANGE, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_OWNER, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_SIZE_LOGICAL, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_SIZE_PHYSICAL, OnBnClickedSetModified)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
-
-HBRUSH CPageFileTree::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPageFileTree::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
-    m_pacmanAnimation = COptions::PacmanAnimation;
-    m_showTimeSpent = COptions::ShowTimeSpent;
-    m_showColumnFolders = COptions::ShowColumnFolders;
-    m_showColumnItems = COptions::ShowColumnItems;
-    m_showColumnFiles = COptions::ShowColumnFiles;
-    m_showColumnAttributes = COptions::ShowColumnAttributes;
-    m_showColumnLastChange = COptions::ShowColumnLastChange;
-    m_showColumnOwner = COptions::ShowColumnOwner;
-    m_showColumnSizePhysical = COptions::ShowColumnSizePhysical;
-    m_showColumnSizeLogical = COptions::ShowColumnSizeLogical;
 
     m_fileTreeColorCount = COptions::FileTreeColorCount;
     for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
     {
         m_fileTreeColor[i] = COptions::FileTreeColors[i];
+        m_colorButton[i].SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
+        m_colorButton[i].SetColor(m_fileTreeColor[i]);
     }
 
+    m_slider.SubclassDlgItem(IDC_SLIDER, this);
     m_slider.SetRange(1, TREELISTCOLORCOUNT);
     m_slider.SetPos(m_fileTreeColorCount);
 
     EnableButtons();
-    UpdateData(FALSE);
-    return TRUE;
 }
 
 void CPageFileTree::OnOK()
 {
-    const bool colsChanged =
-        COptions::ShowColumnFolders != (FALSE != m_showColumnFolders) ||
-        COptions::ShowColumnItems != (FALSE != m_showColumnItems) ||
-        COptions::ShowColumnFiles != (FALSE != m_showColumnFiles) ||
-        COptions::ShowColumnAttributes != (FALSE != m_showColumnAttributes) ||
-        COptions::ShowColumnLastChange != (FALSE != m_showColumnLastChange) ||
-        COptions::ShowColumnOwner != (FALSE != m_showColumnOwner) ||
-        COptions::ShowColumnSizePhysical != (FALSE != m_showColumnSizePhysical) ||
-        COptions::ShowColumnSizeLogical != (FALSE != m_showColumnSizeLogical);
+    const bool pacmanChanged = COptions::PacmanAnimation != IsChecked(IDC_PACMANANIMATION);
+    COptions::PacmanAnimation = IsChecked(IDC_PACMANANIMATION);
+    COptions::ShowTimeSpent = IsChecked(IDC_SHOWTIMESPENT);
 
-    UpdateData();
-    COptions::PacmanAnimation = (FALSE != m_pacmanAnimation);
-    COptions::ShowTimeSpent = (FALSE != m_showTimeSpent);
-    COptions::ShowColumnFolders = (FALSE != m_showColumnFolders);
-    COptions::ShowColumnItems = (FALSE != m_showColumnItems);
-    COptions::ShowColumnFiles = (FALSE != m_showColumnFiles);
-    COptions::ShowColumnAttributes = (FALSE != m_showColumnAttributes);
-    COptions::ShowColumnLastChange = (FALSE != m_showColumnLastChange);
-    COptions::ShowColumnOwner = (FALSE != m_showColumnOwner);
-    COptions::ShowColumnSizePhysical = (FALSE != m_showColumnSizePhysical);
-    COptions::ShowColumnSizeLogical = (FALSE != m_showColumnSizeLogical);
+    const auto setColumnVisible = [](const int column, const bool visible)
+    {
+        if (auto* control = CFileTreeControl::Get())
+        {
+            control->SetColumnVisible(column, visible);
+        }
+        else
+        {
+            COptions::SetColumnVisible(COptions::FileTreeColumnVisibility.Obj(), column, visible);
+        }
+    };
+    for (const auto i : std::views::iota(size_t{0}, c_columns.size()))
+        setColumnVisible(c_columns[i].second, IsChecked(c_columns[i].first));
+
     COptions::FileTreeColorCount = m_fileTreeColorCount;
     for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
     {
+        m_fileTreeColor[i] = m_colorButton[i].GetColor();
         COptions::FileTreeColors[i] = m_fileTreeColor[i];
     }
-    if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
 
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
-    CMFCPropertyPage::OnOK();
-}
-
-void CPageFileTree::OnBnClickedSetModified()
-{
-    SetModified();
-}
-
-void CPageFileTree::OnColorChanged(UINT, NMHDR*, LRESULT*)
-{
-    SetModified();
+    if (const auto control = CFileTreeControl::Get(); pacmanChanged && control != nullptr) control->SortItems();
 }
 
 void CPageFileTree::EnableButtons()
@@ -161,17 +92,17 @@ void CPageFileTree::EnableButtons()
     }
 }
 
-void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CScrollBar* pScrollBar)
+void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CWnd* scrollBar)
 {
-    if (reinterpret_cast<CSliderCtrl*>(pScrollBar) == &m_slider)
+    if (scrollBar == &m_slider)
     {
         const int pos = m_slider.GetPos();
-        ASSERT(pos > 0);
-        ASSERT(pos <= TREELISTCOLORCOUNT);
+        assert(pos > 0);
+        assert(pos <= TREELISTCOLORCOUNT);
 
         m_fileTreeColorCount = pos;
         EnableButtons();
         SetModified();
     }
-    CMFCPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
+    CSettingsPage::OnVScroll(nSBCode, nPos, scrollBar);
 }

@@ -20,20 +20,19 @@
 //
 // CXySlider. A two-dimensional slider.
 //
-class CXySlider final : public CStatic
+class CXySlider final : public MessageTarget<CXySlider, CStatic>
 {
-    DECLARE_DYNAMIC(CXySlider)
-
+public:
     static constexpr UINT XYSLIDER_CHANGED = 0x88; // Notification code to parent
     static constexpr UINT XY_SETPOS = WM_USER + 100; // lparam = POINT *
     static constexpr UINT XY_GETPOS = WM_USER + 101; // lparam = POINT *
 
     CXySlider() = default;
 
-    void GetRange(CSize& range) const;
-    void SetRange(const CSize & range);
+    void GetRange(CSize& range) const { range = m_externalRange; }
+    void SetRange(const CSize & range) { m_externalRange = range; }
 
-    CPoint GetPos() const;
+    CPoint GetPos() const { return m_externalPos; }
     void SetPos(CPoint pt);
 
 protected:
@@ -70,17 +69,36 @@ protected:
 
     bool m_gripperHighlight = false;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg UINT OnGetDlgCode();
-    afx_msg LRESULT OnNcHitTest(CPoint point);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKillFocus(CWnd* pNewWnd);
-    afx_msg void OnPaint();
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg LRESULT OnSetPos(WPARAM, LPARAM lparam);
-    afx_msg LRESULT OnGetPos(WPARAM, LPARAM lparam);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    UINT OnGetDlgCode() { return DLGC_WANTARROWS; }
+    LRESULT OnNcHitTest(CPoint) { return HTCLIENT; }
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnKillFocus(CWnd* pNewWnd);
+    void OnPaint();
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnLButtonDown(UINT nFlags, CPoint point);
+    void OnLButtonDblClk(UINT nFlags, CPoint point);
+    LRESULT OnSetPos(WPARAM, LPARAM lparam);
+    LRESULT OnGetPos(WPARAM, LPARAM lparam) const;
 };
 
-void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value);
+inline std::span<const RouteEntry> CXySlider::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnGetDlgCode>(WM_GETDLGCODE),
+        Route::Window<&OnNcHitTest>(WM_NCHITTEST),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::Window<&OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+        Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),
+        Route::Window<&OnLButtonDblClk>(WM_LBUTTONDBLCLK),
+        Route::Window<&OnSetPos>(XY_SETPOS),
+        Route::Window<&OnGetPos>(XY_GETPOS),
+    };
+    return entries;
+}

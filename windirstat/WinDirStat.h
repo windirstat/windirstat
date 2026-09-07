@@ -28,10 +28,10 @@ class CDirStatApp;
 CIconHandler* GetIconHandler();
 
 //
-// CDirStatApp. The MFC application object.
+// CDirStatApp. The application object.
 // Knows about RAM Usage, Mount points, Help files and the CIconHandler.
 //
-class CDirStatApp final : public CWinAppEx
+class CDirStatApp final : public MessageTarget<CDirStatApp, CWinApp>
 {
     friend class CWinDirStatCommandLineInfo;
 
@@ -39,17 +39,16 @@ public:
 
     CDirStatApp();
     ~CDirStatApp() override;
-    BOOL InitInstance() override;
-    BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
-    BOOL IsIdleMessage(MSG* pMsg) override;
+    bool InitInstance() override;
+    bool IsIdleMessage(MSG* pMsg) override;
 
     static bool InPortableMode();
     bool SetPortableMode(bool enable, bool onlyOpen = false);
 
     bool IsFollowingAllowed(DWORD reparseTag = 0) const;
 
-    COLORREF AltColor() const;           // Coloring of compressed items
-    COLORREF AltEncryptionColor() const; // Coloring of encrypted items
+    COLORREF AltColor() const { return m_altColor; } // Coloring of compressed items
+    COLORREF AltEncryptionColor() const { return m_altEncryptionColor; } // Coloring of encrypted items
 
     static std::wstring GetCurrentProcessMemoryInfo();
     CIconHandler* GetIconHandler();
@@ -79,16 +78,31 @@ protected:
     std::wstring m_saveDupesToPath; // Path to save duplicates to
     std::wstring m_savePermsToPath; // Path to save permissions to
     static CDirStatApp s_singleton; // Singleton application instance
-#ifdef _DEBUG
-    CWDSTracerConsole m_vtraceConsole;
-#endif
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSelectScanRoots();
-    afx_msg void OnRunElevated();
-    afx_msg void OnFilter();
-    afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);
-    afx_msg void OnHelpManual();
-    afx_msg void OnReportBug();
-    afx_msg void OnAppAbout();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnSelectScanRoots();
+    void OnRunElevated();
+    void OnFilter();
+    void OnUpdateRunElevated(CCmdUI* pCmdUI);
+    void OnHelpManual();
+    void OnReportBug();
+    void OnAppAbout();
 };
+
+inline std::span<const RouteEntry> CDirStatApp::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Command<&OnAppAbout>(ID_APP_ABOUT),
+        Route::Command<&OnSelectScanRoots>(ID_FILE_SELECT),
+        Route::Command<&OnFilter>(ID_FILTER),
+        Route::Command<&OnRunElevated>(ID_RUN_ELEVATED),
+        Route::Update<&OnUpdateRunElevated>(ID_RUN_ELEVATED),
+        Route::Command<&OnHelpManual>(ID_HELP_MANUAL),
+        Route::Command<&OnReportBug>(ID_HELP_REPORTBUG),
+    };
+    return entries;
+}

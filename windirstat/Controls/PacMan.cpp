@@ -37,21 +37,6 @@ void CPacman::Reset()
     m_moving       = false;
 }
 
-void CPacman::SetGlobalSuspendState(const bool suspend)
-{
-    m_suspended = suspend;
-}
-
-void CPacman::Start()
-{
-    m_moving = true;
-}
-
-void CPacman::Stop()
-{
-    m_done = true;
-}
-
 void CPacman::UpdatePosition()
 {
     m_lastUpdate = GetTickCount64();
@@ -86,7 +71,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
     // Calculate rectangle to display graphic
     CRect rc(rect);
-    rc.DeflateRect(5, 1);
+    rc.Deflate(5, 1);
     rc.bottom -= rc.Height() % 2;
     rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / 2.0f));
     rc.right = rc.left + rc.Height();
@@ -110,7 +95,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
     static const Gdiplus::SolidBrush yellowBrush(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Draw filled shape if we started and recently updated
-    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
+    Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.FillPie(&yellowBrush, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
@@ -118,21 +103,28 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
     // Draw sleepy graphic
     const COLORREF zColor = DarkMode::IsDarkModeActive() ? 0x888888 : 0x000000;
-    static const Gdiplus::Font font{ wds::strFontArial, 6.0f, Gdiplus::FontStyleBold };
+    static int cachedFontSizePercent = 0;
+    static std::optional<Gdiplus::Font> font;
+    const int fontSizePercent = GetFontSizePercent();
+    if (!font || cachedFontSizePercent != fontSizePercent)
+    {
+        font.emplace(wds::strFontArial, 6.0f * fontSizePercent / 100.0f, Gdiplus::FontStyleBold);
+        cachedFontSizePercent = fontSizePercent;
+    }
     const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
     for (const auto x : { 1.0f, 2.0f, 3.0f })
     {
         const auto deltaX = x * static_cast<float>(rc.Width()) / 3.0f;
         const auto deltaY = (x + 1) * static_cast<float>(rc.Height()) / 18.0f;
-        graphics.DrawString(L"z", 1, &font, { rc.left + deltaX, rc.top - deltaY }, &zBrush);
+        graphics.DrawString(L"z", 1, &*font, { rc.left + deltaX, rc.top - deltaY }, &zBrush);
     }
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)
 {
-    ASSERT(diff >= 0.0f);
-    ASSERT(position >= 0.0f);
-    ASSERT(position <= 1.0f);
+    assert(diff >= 0.0f);
+    assert(position >= 0.0f);
+    assert(position <= 1.0f);
 
     if (!up) position = 2.0f - position;
     position += diff;

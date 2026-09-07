@@ -19,18 +19,15 @@
 #include "ItemTop.h"
 #include "FileTreeView.h"
 
-CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr(), LF_TOPLIST, false)
+CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr(), COptions::TopViewColumnVisibility.Ptr(), LF_TOPLIST, false)
 {
     m_singleton = this;
 }
 
-bool CFileTopControl::GetAscendingDefault(int column)
+bool CFileTopControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMTOP_NAME || column == COL_ITEMTOP_LAST_CHANGE;
 }
-
-BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
-END_MESSAGE_MAP()
 
 void CFileTopControl::ProcessTop(CItem * item)
 {
@@ -40,14 +37,8 @@ void CFileTopControl::ProcessTop(CItem * item)
     m_queuedSet.push(item);
 }
 
-void CFileTopControl::ClearPendingItems()
-{
-    m_queuedSet.clear();
-}
-
 void CFileTopControl::SortItems()
 {
-    ASSERT(AfxGetThread() != nullptr);
 
     // Verify at least root exists
     if (GetItemCount() == 0) return;
@@ -88,11 +79,8 @@ void CFileTopControl::SortItems()
     std::ranges::partial_sort(m_sizeMap, sortEnd, CompareBySize);
 
     // Update minimum size in top N for future comparisons
-    m_topNMinSize = 0;
-    if (topN > 0 && !m_sizeMap.empty())
-    {
-        m_topNMinSize = m_sizeMap[std::min(topN, m_sizeMap.size()) - 1]->GetSizeLogical();
-    }
+    m_topNMinSize = topN > 0 && !m_sizeMap.empty() ?
+        m_sizeMap[std::min(topN, m_sizeMap.size()) - 1]->GetSizeLogical() : 0;
 
     // Update visual item removals
     auto itemTrackerCopy = std::unordered_map(m_itemTracker);
@@ -110,7 +98,7 @@ void CFileTopControl::SortItems()
     }
 
     // Handle visual item additions
-    const CSetRedrawLock lock(this);
+    const ScopedRedrawPause lock(this);
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
         m_itemTracker.erase(itemTop->GetLinkedItem());
@@ -132,7 +120,7 @@ void CFileTopControl::RemoveItem(CItem* item)
 
     // Create list of all items to remove
     std::unordered_set<CItem*> toRemove;
-    std::vector<CItem*> queue{ item };
+    std::vector queue{ item };
     while (!queue.empty())
     {
         const auto qitem = queue.back();

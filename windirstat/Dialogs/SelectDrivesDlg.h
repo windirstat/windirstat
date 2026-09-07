@@ -21,6 +21,9 @@
 #include "WdsListControl.h"
 #include "Layout.h"
 
+inline constexpr UINT WM_WDS_SELECT_DRIVES_OK = WM_APP + 0x110;
+inline constexpr UINT WM_WDS_DRIVE_INFO_FINISHED = WM_APP + 0x111;
+
 //
 // The dialog has these three radio buttons.
 //
@@ -40,7 +43,7 @@ class CDrivesList;
 class CDriveItem final : public CWdsListItem
 {
 public:
-    CDriveItem(CDrivesList* list, const std::wstring& pszPath);
+    CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstring name = {});
     ~CDriveItem() override;
 
     void StartQuery(HWND dialog);
@@ -50,17 +53,19 @@ public:
 
     int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
-    std::wstring GetPath() const;
+    std::wstring GetPath() const { return m_path; }
     std::wstring GetDrive() const;
-    bool IsRemote() const;
-    bool IsSUBSTed() const;
+    bool IsRemote() const { return m_isRemote; }
+    bool IsMtp() const { return m_mtp; }
+    bool IsSUBSTed() const { return m_subst; }
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    HICON GetIcon() override;
+    HICON GetIcon() override { return m_icon; }
 
 private:
     CDrivesList* m_driveList; // Backpointer
     std::wstring m_path; // e.g. "C:\""
+    bool m_mtp = false;
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
@@ -82,49 +87,51 @@ private:
 //
 // CDrivesList.
 //
-class CDrivesList final : public CWdsListControl
+class CDrivesList final : public MessageTarget<CDrivesList, CWdsListControl>
 {
     friend class CSelectDrivesDlg;
-    DECLARE_DYNAMIC(CDrivesList)
-
+public:
     CDrivesList();
-    CDriveItem* GetItem(int i) const;
+    CDriveItem* GetItem(const int i) const { return reinterpret_cast<CDriveItem*>(CWdsListControl::GetItem(i)); }
     void SelectItem(const CDriveItem* item);
-    bool IsItemSelected(int i) const;
+    bool IsItemSelected(const int i) const { return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED); }
+    bool IsSorting() const { return m_sortInProgress; }
+    void SortItems() override;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
+static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
+
+private:
+    bool m_sortInProgress = false;
 };
 
 //
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg final : public CLayoutDialogEx
+class CSelectDrivesDlg final : public MessageTarget<CSelectDrivesDlg, CLayoutDialog>
 {
-    DECLARE_DYNAMIC(CSelectDrivesDlg)
-
+public:
     enum : std::uint8_t { IDD = IDD_SELECTDRIVES };
 
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;
 
     std::vector<std::wstring> GetSelectedItems() const;
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    bool OnInitDialog() override;
     void OnOK() override;
-    void UpdateButtons();
+    void UpdateButtons(const std::wstring* folderOverride = nullptr);
     void UpdateFilterButton();
     void SetActiveRadio(int radio);
 
 protected:
 
     // Dialog Data
-    BOOL m_scanDuplicates = false; // whether duplicate scanning is enabled
-    BOOL m_useFastScan = false; // whether fast scan is enabled
     int m_radio = 0;          // out.
-    CStringW m_folderName;    // out. Valid if m_radio = RADIO_TARGET_FOLDER
+    std::wstring m_folderName;    // out. Valid if m_radio = RADIO_TARGET_FOLDER
     std::vector<std::wstring> m_drives;    // out. Valid if m_radio != RADIO_TARGET_FOLDER
     CDrivesList m_driveList;
     CComboBox m_browseList;
@@ -136,21 +143,61 @@ protected:
     std::vector<std::wstring> m_selectedDrives;
     bool m_suppressItemChanged = false;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedUpdateButtons();
-    afx_msg void OnBnClickedFastScanCheckbox();
-    afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
-    afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
-    afx_msg void OnSysColorChange();
-    afx_msg void OnBnClickedRadioTargetDrivesSubset();
-    afx_msg void OnBnClickedRadioTargetFolder();
-    afx_msg void OnBnDoubleclickedRadio();
-    afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-    afx_msg void OnBnClickedBrowseButton();
-    afx_msg void OnBnClickedFilterButton();
-    afx_msg BOOL PreTranslateMessage(MSG* pMsg) override;
-    afx_msg void OnEditchangeBrowseFolder();
-    afx_msg void OnCbnSelchangeBrowseFolder();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnBnClickedUpdateButtons();
+    void OnBnClickedFastScanCheckbox();
+    void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
+    LRESULT OnWmuOk(WPARAM, LPARAM);
+    LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
+    void OnSysColorChange();
+    void OnBnClickedRadioTargetDrivesAll();
+    void OnBnClickedRadioTargetDrivesSubset();
+    void OnBnClickedRadioTargetFolder();
+    void OnBnDoubleclickedRadio();
+    void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    void OnBnClickedBrowseButton();
+    void OnBnClickedFilterButton();
+    bool PreprocessMessage(MSG* pMsg) override;
+    void OnEditchangeBrowseFolder();
+    void OnSelchangeBrowseFolder();
 };
+
+inline std::span<const RouteEntry> CDrivesList::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::ReflectNotify<&OnLvnDeleteItem>(LVN_DELETEITEM),
+        Route::ReflectNotify<&OnDoubleClick>(NM_DBLCLK),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnBnClickedBrowseButton>(STN_CLICKED, IDC_BROWSE_BUTTON),
+        Route::Control<&OnBnClickedFilterButton>(STN_CLICKED, IDC_FILTER_BUTTON),
+        Route::Control<&OnBnClickedFastScanCheckbox>(BN_CLICKED, IDC_FAST_SCAN_CHECKBOX),
+        Route::Control<&OnBnClickedRadioTargetDrivesAll>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_ALL),
+        Route::Control<&OnBnClickedRadioTargetDrivesSubset>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_SUBSET),
+        Route::Control<&OnBnClickedRadioTargetFolder>(BN_CLICKED, IDC_RADIO_TARGET_FOLDER),
+        Route::Control<&OnBnClickedUpdateButtons>(BN_CLICKED, IDC_SCAN_DUPLICATES),
+        Route::Control<&OnBnDoubleclickedRadio>(BN_DOUBLECLICKED, IDC_RADIO_TARGET_DRIVES_ALL),
+        Route::Control<&OnBnDoubleclickedRadio>(BN_DOUBLECLICKED, IDC_RADIO_TARGET_DRIVES_SUBSET),
+        Route::Control<&OnBnDoubleclickedRadio>(BN_DOUBLECLICKED, IDC_RADIO_TARGET_FOLDER),
+        Route::Control<&OnEditchangeBrowseFolder>(CBN_EDITCHANGE, IDC_BROWSE_FOLDER),
+        Route::Control<&OnSelchangeBrowseFolder>(CBN_SELCHANGE, IDC_BROWSE_FOLDER),
+        Route::Notify<&OnLvnItemChangedDrives>(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST),
+        Route::Notify<&OnNMSetfocusTargetDrivesList>(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST),
+        Route::Window<&OnWmuOk>(WM_WDS_SELECT_DRIVES_OK),
+        Route::Window<&OnWmDriveInfoThreadFinished>(WM_WDS_DRIVE_INFO_FINISHED),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnSysColorChange>(WM_SYSCOLORCHANGE),
+    };
+    return entries;
+}

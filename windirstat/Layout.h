@@ -28,7 +28,7 @@ class CLayout final
     template <typename T>
     struct SControlInfoT
     {
-        CWnd* control;
+        HWND control;
         T movex;
         T movey;
         T stretchx;
@@ -36,7 +36,7 @@ class CLayout final
 
         CRect originalRectangle;
 
-        SControlInfoT(CWnd* ctl, T& x, T& y, T& w, T& h)
+        SControlInfoT(HWND ctl, const T& x, const T& y, const T& w, const T& h)
             : control(ctl)
               , movex(x)
               , movey(y)
@@ -48,10 +48,10 @@ class CLayout final
 
     using SControlInfo = SControlInfoT<double>;
 
-    class CSizeGripper final : public CWnd
+    class CSizeGripper final : public MessageTarget<CSizeGripper, CWnd>
     {
     public:
-        const int m_width = 14;
+        const int m_width = ScaleForDpi(14);
 
         CSizeGripper() = default;
         void Create(CWnd* parent, CRect rc);
@@ -59,10 +59,12 @@ class CLayout final
     private:
         static void DrawShadowLine(CDC* pdc, CPoint start, CPoint end);
 
-        DECLARE_MESSAGE_MAP()
-        afx_msg void OnPaint();
-        afx_msg LRESULT OnNcHitTest(CPoint point);
-        afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    public:
+        static std::span<const RouteEntry> Routes();
+
+    protected:
+        void OnPaint();
+        LRESULT OnNcHitTest(CPoint point) const;
     };
 
     class CPositioner final
@@ -83,7 +85,7 @@ public:
 
     void OnInitDialog(bool centerWindow);
     void OnSize();
-    void OnGetMinMaxInfo(MINMAXINFO* mmi);
+    void OnGetMinMaxInfo(MINMAXINFO* mmi) const;
     void OnDestroy() const;
 
 protected:
@@ -95,36 +97,49 @@ protected:
 };
 
 //
-// CLayoutDialogEx. A class that provides automatic layout management
-// for dialogs. Inherit from this class instead of CDialogEx to get automatic
+// CLayoutDialog. A class that provides automatic layout management
+// for dialogs. Inherit from this class instead of CDialog to get automatic
 // m_layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
 //
-class CLayoutDialogEx : public CDialogEx
+class CLayoutDialog : public MessageTarget<CLayoutDialog, CDialog>
 {
-    DECLARE_DYNCREATE(CLayoutDialogEx)
-
 protected:
     CLayout m_layout;
 
     // Constructor that takes dialog ID and window placement
-    CLayoutDialogEx(UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
-        : CDialogEx(nIDTemplate, pParent)
+    CLayoutDialog(const UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
+        : MessageTarget(nIDTemplate, pParent)
         , m_layout(this, placement)
     {
     }
 
-    // Default constructor for DYNCREATE
-    CLayoutDialogEx()
-        : m_layout(this, nullptr)
-    {
-    }
-
-    // PreTranslateMessage to handle Ctrl+C for CStatic controls
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-
     // Message handlers
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-    afx_msg void OnDestroy();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnSize(UINT nType, int cx, int cy);
+    void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+    void OnDestroy();
 };
+
+inline std::span<const RouteEntry> CLayoutDialog::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnGetMinMaxInfo>(WM_GETMINMAXINFO),
+        Route::Window<&OnDestroy>(WM_DESTROY),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CLayout::CSizeGripper::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnNcHitTest>(WM_NCHITTEST),
+    };
+    return entries;
+}

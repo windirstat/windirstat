@@ -34,7 +34,7 @@ CItemDupe::~CItemDupe()
     }
 }
 
-static int GetMappedColumn(int subitem)
+static int GetMappedColumn(const int subitem)
 {
     switch (subitem)
     {
@@ -73,7 +73,7 @@ std::wstring CItemDupe::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
 }
 
@@ -96,18 +96,8 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     }
 
     // Individual file names
-    int mapped = GetMappedColumn(subitem);
+    const int mapped = GetMappedColumn(subitem);
     return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
-}
-
-int CItemDupe::GetTreeListChildCount() const
-{
-    return static_cast<int>(m_children.size());
-}
-
-CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
-{
-    return m_children[i];
 }
 
 HICON CItemDupe::GetIcon()
@@ -118,7 +108,6 @@ HICON CItemDupe::GetIcon()
         return GetIconHandler()->GetDupesImage();
     }
 
-    // Return previously cached value
     if (m_visualInfo->icon != nullptr)
     {
         return m_visualInfo->icon;
@@ -128,11 +117,6 @@ HICON CItemDupe::GetIcon()
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
         m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
     return m_visualInfo->icon;
-}
-
-const std::vector<CItemDupe*>& CItemDupe::GetChildren() const
-{
-    return m_children;
 }
 
 std::wstring CItemDupe::GetHashAndExtensions() const

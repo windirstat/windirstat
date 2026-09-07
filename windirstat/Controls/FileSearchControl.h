@@ -41,5 +41,4 @@ protected:
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
 
-    DECLARE_MESSAGE_MAP()
 };

@@ -18,69 +18,63 @@
 #include "pch.h"
 #include "PagePrompts.h"
 
-IMPLEMENT_DYNAMIC(CPagePrompts, CMFCPropertyPage)
+CPagePrompts::CPagePrompts() : MessageTarget(IDD) {}
 
-CPagePrompts::CPagePrompts() : CMFCPropertyPage(IDD) {}
-
-COptionsPropertySheet* CPagePrompts::GetSheet() const
+std::span<const CSettingsPage::CheckboxSettingBinding> CPagePrompts::CheckboxSettings()
 {
-    const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
-    ASSERT(sheet != nullptr);
-    return sheet;
+    static constexpr std::array bindings
+    {
+        CheckboxSettingBinding{ IDC_SHOW_MICROSOFT_PROGRESS, COptions::ShowMicrosoftProgress },
+        CheckboxSettingBinding{ IDC_ELEVATION_PROMPT, COptions::ShowElevationPrompt },
+        CheckboxSettingBinding{ IDC_CLOUD_LINKS_WARNING, COptions::ShowDupeDetectionCloudLinksWarning },
+        CheckboxSettingBinding{ IDC_DELETION_WARNING, COptions::ShowDeletePermanentlyWarning },
+        CheckboxSettingBinding{ IDC_DELETION_BIN_WARNING, COptions::ShowDeleteToRecycleBinWarning },
+        CheckboxSettingBinding{ IDC_PROMPT_EMPTY_BIN, COptions::ShowEmptyRecycleBinPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_CREATE_HARDLINK, COptions::ShowCreateHardlinkPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_MOTW, COptions::ShowRemoveMotwPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_DISABLE_HIBERNATE, COptions::ShowDisableHibernatePrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_SHADOW, COptions::ShowRemoveShadowCopiesPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_DISM_NORMAL, COptions::ShowDismCleanupPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_DISM_RESET, COptions::ShowDismResetPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_SET_DATES, COptions::ShowSetDatesPrompt },
+        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_EMPTY, COptions::ShowRemoveEmptyFoldersPrompt },
+    };
+    return bindings;
 }
 
-void CPagePrompts::DoDataExchange(CDataExchange* pDX)
+void CPagePrompts::InitializePage()
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeleteWarning);
-    DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_showElevationPrompt);
-    DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_showDupeDetectionCloudLinksWarning);
-    DDX_Check(pDX, IDC_SHOW_MICROSOFT_PROGRESS, m_showMicrosoftProgress);
-}
+    LoadCheckboxSettings(CheckboxSettings());
 
-BEGIN_MESSAGE_MAP(CPagePrompts, CMFCPropertyPage)
-    ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_ELEVATION_PROMPT, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_CLOUD_LINKS_WARNING, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOW_MICROSOFT_PROGRESS, OnBnClickedSetModified)
-    ON_WM_CTLCOLOR()
-END_MESSAGE_MAP()
+    struct PromptControl
+    {
+        int controlId;
+        std::wstring_view operationId;
+        std::wstring_view detail;
+    };
+    static constexpr PromptControl promptControls[] =
+    {
+        { IDC_DELETION_WARNING,         IDS_MENU_DELETE,            {} },
+        { IDC_DELETION_BIN_WARNING,     IDS_MENU_DELETE_BIN,        {} },
+        { IDC_PROMPT_EMPTY_BIN,         IDS_MENU_EMPTY_BIN,         {} },
+        { IDC_PROMPT_CREATE_HARDLINK,   IDS_MENU_CREATE_HARDLINK,   {} },
+        { IDC_PROMPT_REMOVE_MOTW,       IDS_MENU_REMOVE_MOTW,       {} },
+        { IDC_PROMPT_DISABLE_HIBERNATE, IDS_MENU_DISABLE_HIBERNATE, {} },
+        { IDC_PROMPT_REMOVE_SHADOW,     IDS_MENU_REMOVE_SHADOW,     {} },
+        { IDC_PROMPT_DISM_NORMAL,       IDS_MENU_DISM,               L"/StartComponentCleanup" },
+        { IDC_PROMPT_DISM_RESET,        IDS_MENU_DISM,               L"/StartComponentCleanup /ResetBase" },
+        { IDC_PROMPT_SET_DATES,         IDS_MENU_SET_DATES,         {} },
+        { IDC_PROMPT_REMOVE_EMPTY,      IDS_MENU_REMOVE_EMPTY,      {} },
+    };
 
-HBRUSH CPagePrompts::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL CPagePrompts::OnInitDialog()
-{
-    CMFCPropertyPage::OnInitDialog();
-
-    Localization::UpdateDialogs(*this);
-    DarkMode::AdjustControls(GetSafeHwnd());
-
-    m_showDeleteWarning = COptions::ShowDeleteWarning;
-    m_showElevationPrompt = COptions::ShowElevationPrompt;
-    m_showDupeDetectionCloudLinksWarning = COptions::ShowDupeDetectionCloudLinksWarning;
-    m_showMicrosoftProgress = COptions::ShowMicrosoftProgress;
-
-    UpdateData(FALSE);
-    return TRUE;
+    for (const auto& [controlId, operationId, detail] : promptControls)
+    {
+        SetText(controlId, Localization::Format(IDS_PAGE_PROMPTS_OPERATION_CONFIRMATIONs,
+            GetLocalizedMenuText(operationId, detail)));
+    }
 }
 
 void CPagePrompts::OnOK()
 {
-    UpdateData();
-
-    COptions::ShowDeleteWarning = (FALSE != m_showDeleteWarning);
-    COptions::ShowElevationPrompt = (FALSE != m_showElevationPrompt);
-    COptions::ShowDupeDetectionCloudLinksWarning = (FALSE != m_showDupeDetectionCloudLinksWarning);
-    COptions::ShowMicrosoftProgress = (FALSE != m_showMicrosoftProgress);
-
-    CMFCPropertyPage::OnOK();
-}
-
-void CPagePrompts::OnBnClickedSetModified()
-{
-    SetModified();
+    SaveCheckboxSettings(CheckboxSettings());
 }

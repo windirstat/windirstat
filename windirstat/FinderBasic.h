@@ -24,8 +24,17 @@
 class FinderBasicContext final
 {
 public:
+    FinderBasicContext() = default;
+    explicit FinderBasicContext(std::wstring rootPath) : RootPath(std::move(rootPath))
+    {
+        if (!RootPath.empty() && RootPath.back() != L'\\') RootPath += L'\\';
+    }
+
     std::atomic<bool> SupportsFileId = false;
+    std::wstring RootPath;
+    std::optional<ULONGLONG> VolumeCapacity;
     ULONG ClusterSize = 0;
+    bool IsRemoteVolume = false;
     std::once_flag InitOnce;
 };
 
@@ -74,29 +83,32 @@ class FinderBasic final : public Finder
     SmartPointer<HANDLE, decltype(&CloseHandle)> m_handle{CloseHandle, HANDLE{}};
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
-    bool m_firstRun = true;
+    std::optional<ULONGLONG> m_baseCapacity;
     bool m_statMode = false;
     bool m_isUncPath = false;
+    bool m_baseCapacityQueried = false;
 
 public:
 
     FinderBasic() = default;
-    FinderBasic(bool statMode) : m_statMode(statMode) {};
+    FinderBasic(const bool statMode) : m_statMode(statMode) {}
     FinderBasic(FinderBasicContext* context) : m_context(context) {}
-    ~FinderBasic() = default;
+    ~FinderBasic() override = default;
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
-    inline DWORD GetAttributes() const override;
-    inline std::wstring GetFileName() const override;
-    inline ULONGLONG GetFileSizePhysical() const override;
-    inline ULONGLONG GetFileSizeLogical() const override;
-    inline FILETIME GetLastWriteTime() const override;
-    std::wstring GetFilePath() const override;
-    inline ULONGLONG GetIndex() const override;
-    inline DWORD GetReparseTag() const override;
-    inline bool IsReserved() const override { return false; };
+    DWORD GetAttributes() const override { return m_currentInfo->FileAttributes; }
+    std::wstring GetFileName() const override { return m_name; }
+    ULONGLONG GetFileSizePhysical() const override { return m_currentInfo->AllocationSize.QuadPart; }
+    ULONGLONG GetFileSizeLogical() const override { return m_currentInfo->EndOfFile.QuadPart; }
+    FILETIME GetLastWriteTime() const override { return std::bit_cast<FILETIME>(m_currentInfo->LastWriteTime); }
+    // m_base is kept in clean Win32 form (the NT \??\ form lives only in
+    // m_baseNt), so the full path is a direct concatenation with the name
+    std::wstring GetFilePath() const override { return m_base + m_name; }
+    ULONGLONG GetIndex() const override;
+    DWORD GetReparseTag() const override { return m_reparseTag; }
+    bool IsReserved() const override { return false; }
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

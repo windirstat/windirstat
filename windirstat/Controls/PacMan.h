@@ -25,11 +25,11 @@
 class CPacman final
 {
 public:
-    static void SetGlobalSuspendState(bool suspend = true);
+    static void SetGlobalSuspendState(const bool suspend = true) { m_suspended = suspend; }
     CPacman() = default;
     void Reset();
-    void Start();
-    void Stop();
+    void Start() { m_moving = true; }
+    void Stop() { m_done = true; }
     void UpdatePosition();
     void Draw(CDC* pdc, const CRect& rect, COLORREF backColor = ~COLORREF());
 

@@ -18,25 +18,25 @@
 #pragma once
 
 #include "pch.h"
-class CWdsProgressCtrl final : public CProgressCtrl
+class CWdsProgressCtrl final : public MessageTarget<CWdsProgressCtrl, CProgressCtrl>
 {
 public:
     CWdsProgressCtrl() = default;
 
 protected:
-    afx_msg void OnPaint();
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    DECLARE_MESSAGE_MAP()
+    void OnPaint();
+    bool OnEraseBkgnd(CDC*) { return true; }
+public:
+    static std::span<const RouteEntry> Routes();
+
 };
 
 //
 // CProgressDlg - Modal progress dialog for long-running operations
 // Shows progress bar and allows cancellation
 //
-class CProgressDlg final : public CDialogEx
+class CProgressDlg final : public MessageTarget<CProgressDlg, CDialog>
 {
-    DECLARE_DYNAMIC(CProgressDlg)
-
 public:
     enum class Flags : std::uint8_t { None = 0, NoCancel = 1, PercentageOnly = 2 };
     friend constexpr Flags operator|(const Flags lhs, const Flags rhs) noexcept
@@ -47,8 +47,8 @@ public:
     CProgressDlg(size_t total, Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task);
     ~CProgressDlg() override = default;
 
-    INT_PTR DoModal() override;
-    bool WasCancelled() const noexcept { return m_cancelled; }
+    INT_PTR ShowModal() override;
+    bool WasCancelled() const noexcept { return m_cancelRequested.load(); }
 
     // Methods for task lambda to interact with the dialog
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
@@ -62,13 +62,15 @@ public:
 protected:
     enum : std::uint8_t { IDD = IDD_PROGRESS };
 
-    BOOL OnInitDialog() override;
-    void DoDataExchange(CDataExchange* pDX) override;
+    bool OnInitDialog() override;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnTimer(UINT_PTR nIDEvent);
-    afx_msg void OnCancel() override;
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnTimer(UINT_PTR nIDEvent);
+    void OnCancel() override;
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 private:
     void StartWorkerThread();
@@ -84,9 +86,29 @@ private:
     std::atomic<size_t> m_current = 0;
     const size_t m_total = 0;
     const Flags m_flags = Flags::None;
-    bool m_cancelled = false;
 
-    std::optional<std::jthread> m_workerThread;
+    std::jthread m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
     static constexpr UINT TIMER_INTERVAL = 50; // Update every 50ms
 };
+
+inline std::span<const RouteEntry> CProgressDlg::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnTimer>(WM_TIMER),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Control<&OnCancel>(BN_CLICKED, IDCANCEL),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CWdsProgressCtrl::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+    };
+    return entries;
+}

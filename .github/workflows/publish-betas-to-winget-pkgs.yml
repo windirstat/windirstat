@@ -23,12 +23,33 @@ jobs:
               "skip=true" >> $env:GITHUB_OUTPUT
           }
         shell: pwsh
-      - name: Call winget-releaser action
-        id: call-winget-releaser
+      - uses: actions/checkout@v4
         if: ${{ steps.get-version.outputs.skip != 'true' }}
-        uses: vedantmgoyal9/winget-releaser@main
+      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
+        if: ${{ steps.get-version.outputs.skip != 'true' }}
         with:
-          identifier: WinDirStat.WinDirStat.Beta
-          version: ${{ steps.get-version.outputs.version }}
-          installers-regex: '\.(msi|msixbundle)$' # .msi and .msixbundle files
-          token: ${{ secrets.WINGET_TOKEN }}
+          version: v1.21.1
+      - name: Install Komac 2.16.0
+        if: ${{ steps.get-version.outputs.skip != 'true' }}
+        # This version writes --output manifests before --dry-run exits, allowing the locale correction below.
+        run: |
+          cargo binstall komac@2.16.0 --no-confirm
+          if ((komac --version) -ne "komac 2.16.0") { throw "Unexpected Komac version." }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Publish corrected WinGet manifests
+        if: ${{ steps.get-version.outputs.skip != 'true' }}
+        run: |
+          $Parameters = @{
+              PackageIdentifier = "WinDirStat.WinDirStat.Beta"
+              PackageVersion = "${{ steps.get-version.outputs.version }}"
+              ReleaseRepository = "${{ github.repository }}"
+              ReleaseTag = "${{ github.ref_name }}"
+          }
+          .\.github\scripts\Publish-WinGetPackage.ps1 @Parameters
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          KOMAC_FORK_OWNER: ${{ github.repository_owner }}

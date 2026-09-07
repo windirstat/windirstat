@@ -33,6 +33,16 @@ $StoreAssets = @(
     @("Square44x44Logo.targetsize-32.png", 32, 32),
     @("Square44x44Logo.targetsize-48.png", 48, 48),
     @("Square44x44Logo.targetsize-256.png", 256, 256),
+    @("Square44x44Logo.targetsize-16_altform-unplated.png", 16, 16),
+    @("Square44x44Logo.targetsize-24_altform-unplated.png", 24, 24),
+    @("Square44x44Logo.targetsize-32_altform-unplated.png", 32, 32),
+    @("Square44x44Logo.targetsize-48_altform-unplated.png", 48, 48),
+    @("Square44x44Logo.targetsize-256_altform-unplated.png", 256, 256),
+    @("Square44x44Logo.targetsize-16_altform-lightunplated.png", 16, 16),
+    @("Square44x44Logo.targetsize-24_altform-lightunplated.png", 24, 24),
+    @("Square44x44Logo.targetsize-32_altform-lightunplated.png", 32, 32),
+    @("Square44x44Logo.targetsize-48_altform-lightunplated.png", 48, 48),
+    @("Square44x44Logo.targetsize-256_altform-lightunplated.png", 256, 256),
     @("Square71x71Logo.png", 71, 71),
     @("StoreLogo.png", 50, 50),
     @("Wide310x150Logo.png", 310, 150)
@@ -177,6 +187,14 @@ ForEach ($BuildMode in @("store", "local"))
     New-Item -ItemType Directory -Force -Path $BundleInputDir | Out-Null
     New-Item -ItemType Directory -Force -Path $GeneratedAssetsDir | Out-Null
 
+    # Keep all icon variants in the main package resource index.
+    $PriConfigPath = Join-Path $TempRoot "priconfig.xml"
+    & makepri.exe createconfig /cf $PriConfigPath /dq en-US /pv 10.0.0 /o
+    If ($LASTEXITCODE -ne 0) { Throw "makepri.exe failed while creating the resource configuration" }
+    $PriConfig = [xml](Get-Content -Raw -Path $PriConfigPath)
+    $null = $PriConfig.resources.RemoveChild($PriConfig.resources.packaging)
+    $PriConfig.Save($PriConfigPath)
+
     Add-Type -AssemblyName System.Drawing
     $SourceImage = [Image]::FromFile((Resolve-Path $SourceLogoPath).Path)
     $Attributes = [ImageAttributes]::new()
@@ -265,6 +283,9 @@ ForEach ($BuildMode in @("store", "local"))
         }
 
         Set-Content -Path (Join-Path $StageDir "AppxManifest.xml") -Value $Manifest -Encoding UTF8
+
+        & makepri.exe new /pr $StageDir /cf $PriConfigPath /of (Join-Path $StageDir "resources.pri") /o
+        If ($LASTEXITCODE -ne 0) { Throw "makepri.exe failed while indexing resources for $Arch" }
 
         $PackagePath = Join-Path $PackageDir ("WinDirStat_{0}.msix" -f $Arch)
         Write-Host "Packing $PackagePath..."

@@ -31,7 +31,6 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_NAME,
     COL_SIZE_PROPORTION,
     COL_PERCENTAGE,
-    COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
     COL_SIZE_LOGICAL,
     COL_ITEMS,
@@ -45,42 +44,43 @@ enum ITEMCOLUMNS : std::uint8_t
 // Item types - all values are bitmasks for efficient type checking
 enum ITEMTYPE : std::uint32_t
 {
-    IT_NONE        = 0,       // No type
-    IT_MYCOMPUTER  = 1 << 0,  // Pseudo Container "My Computer"
-    IT_DRIVE       = 1 << 1,  // C:\, D:\ etc.
-    IT_DIRECTORY   = 1 << 2,  // Folder
-    IT_FILE        = 1 << 3,  // Regular file
-    IT_FREESPACE   = 1 << 4,  // Pseudo File "<Free Space>"
-    IT_UNKNOWN     = 1 << 5,  // Pseudo File "<Unknown>"
-    IT_HLINKS      = 1 << 6,  // Pseudo Container "<Hardlinks>"
-    IT_HLINKS_SET  = 1 << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
-    IT_HLINKS_IDX  = 1 << 8,  // Pseudo Folder "Index N" under Index Set
-    IT_HLINKS_FILE = 1 << 9,  // Pseudo File reference under Index N
-    IT_MASK        = 0x0000FFFF,
+    IT_NONE        = 0u,       // No type
+    IT_MYCOMPUTER  = 1u << 0,  // Pseudo Container "My Computer"
+    IT_DRIVE       = 1u << 1,  // C:\, D:\ etc.
+    IT_DIRECTORY   = 1u << 2,  // Folder
+    IT_FILE        = 1u << 3,  // Regular file
+    IT_FREESPACE   = 1u << 4,  // Pseudo File "<Free Space>"
+    IT_UNKNOWN     = 1u << 5,  // Pseudo File "<Unknown>"
+    IT_HLINKS      = 1u << 6,  // Pseudo Container "<Hardlinks>"
+    IT_HLINKS_SET  = 1u << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
+    IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
+    IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
+    ITF_MULTIROOT  = 1u << 14, // Indicates one of several roots under a multi-folder scan
+    IT_MASK        = 0x00003FFF,
 
-    ITHASH_NONE    = 0,       // Indicates no hash
-    ITHASH_SKIP    = 1 << 16, // Indicates cannot be hashed (unreadable)
-    ITHASH_SMALL   = 1 << 17, // Indicates a small hash has been performed
-    ITHASH_MEDIUM  = 1 << 18, // Indicates a medium hash has been performed
-    ITHASH_LARGE   = 1 << 19, // Indicates a large hash has been performed
+    ITHASH_NONE    = 0u,       // Indicates no hash
+    ITHASH_SKIP    = 1u << 16, // Indicates cannot be hashed (unreadable)
+    ITHASH_SMALL   = 1u << 17, // Indicates a small hash has been performed
+    ITHASH_MEDIUM  = 1u << 18, // Indicates a medium hash has been performed
+    ITHASH_LARGE   = 1u << 19, // Indicates a large hash has been performed
     ITHASH_MASK    = 0x000F0000,
 
-    ITRP_NONE      = 0,       // Indicates no reparse data
-    ITRP_SYMLINK   = 1 << 20, // Indicates a reparse point that is a symlink
-    ITRP_MOUNT     = 1 << 21, // Indicates a reparse point that is a mount point
-    ITRP_JUNCTION  = 1 << 22, // Indicates a reparse point that is a junction
-    ITRP_CLOUD     = 1 << 23, // Indicates a reparse point that is a cloud link
+    ITRP_NONE      = 0u,       // Indicates no reparse data
+    ITRP_SYMLINK   = 1u << 20, // Indicates a reparse point that is a symlink
+    ITRP_MOUNT     = 1u << 21, // Indicates a reparse point that is a mount point
+    ITRP_JUNCTION  = 1u << 22, // Indicates a reparse point that is a junction
+    ITRP_CLOUD     = 1u << 23, // Indicates a reparse point that is a cloud link
     ITRP_MASK      = 0x00F00000,
 
-    ITF_NONE       = 0,       // No flags
-    ITF_RESERVED   = 1 << 24, // Indicates special reserved file
-    ITF_BASIC      = 1 << 25, // Forces basic finder
-    ITF_EXTDATA    = 1 << 26, // Notes extension data has been processed
-    ITF_HARDLINK   = 1 << 27, // Indicates file is a hardlink
-    ITF_ROOTITEM   = 1 << 28, // Indicates root item
-    ITF_DONE       = 1 << 29, // Indicates done processing
-    ITF_PREVIEW    = 1 << 30, // Indicates preview item (color stored in index)
-    ITF_MULTIROOT  = 1u << 31, // Indicates one of several roots under a multi-folder ("This PC") scan
+    ITF_NONE       = 0u,       // No flags
+    ITF_RESERVED   = 1u << 24, // Indicates special reserved file
+    ITF_BASIC      = 1u << 25, // Forces basic finder
+    ITF_EXTDATA    = 1u << 26, // Notes extension data has been processed
+    ITF_HARDLINK   = 1u << 27, // Indicates file is a hardlink
+    ITF_ROOTITEM   = 1u << 28, // Indicates root item
+    ITF_DONE       = 1u << 29, // Indicates done processing
+    ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
+    ITF_MTP        = 1u << 31, // Indicates MTP item
     ITF_MASK       = 0xFF000000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
@@ -127,6 +127,7 @@ public:
 
     // Construction / Destruction
     CItem(ITEMTYPE type, const std::wstring& name);
+    explicit CItem(CItem* linkedItem);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
@@ -141,48 +142,54 @@ public:
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
     CItem* GetLinkedItem() noexcept override;
+    const CItem* GetLinkedItem() const noexcept;
 
     // Hierarchy / Navigation
     const std::vector<CItem*>& GetChildren() const noexcept;
     bool IsLeaf() const noexcept { return m_folderInfo == nullptr; }
     bool HasChildren() const noexcept { return m_folderInfo != nullptr && !m_folderInfo->m_children.empty(); }
-    CItem* GetParent() const noexcept;
+    CItem* GetParent() const noexcept { return reinterpret_cast<CItem*>(CTreeListItem::GetParent()); }
+    CItem* GetEnumRoot() const noexcept;
     CItem* GetParentDrive() const noexcept;
     CItem* GetVolumeRoot() const noexcept;
+    bool IsMtpRoot() const noexcept;
+    bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP); }
+    bool HasShellIdentity() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
-    void RemoveChild(CItem* child);
-    void RemoveAllChildren();
+    void RemoveChild(CItem* child) const;
+    void RemoveAllChildren() const;
 
     // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
-    ULONGLONG GetSizeLogical() const noexcept;
-    ULONGLONG GetSizePhysicalRaw() const noexcept;
-    void SetSizePhysical(ULONGLONG size) noexcept;
-    void SetSizeLogical(ULONGLONG size) noexcept;
+    ULONGLONG GetSizeLogical() const noexcept { return m_sizeLogical; }
+    ULONGLONG GetSizePhysicalRaw() const noexcept { return m_sizePhysical; }
+    void SetSizePhysical(ULONGLONG size) noexcept { m_sizePhysical = size; }
+    void SetSizeLogical(ULONGLONG size) noexcept { m_sizeLogical = size; }
     void UpwardAddSizePhysical(ULONGLONG bytes) noexcept;
     void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
     void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
     void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
-    void UpwardAddFolders(ULONG dirCount) noexcept;
-    void UpwardSubtractFolders(ULONG dirCount) noexcept;
-    void UpwardAddFiles(ULONG fileCount) noexcept;
-    void UpwardSubtractFiles(ULONG fileCount) noexcept;
+    void UpwardAddFolders(ULONG dirCount) const noexcept;
+    void UpwardSubtractFolders(ULONG dirCount) const noexcept;
+    void UpwardAddFiles(ULONG fileCount) const noexcept;
+    void UpwardSubtractFiles(ULONG fileCount) const noexcept;
     double GetFraction() const noexcept;
-    ULONG GetFilesCount() const noexcept;
-    ULONG GetFoldersCount() const noexcept;
+    double GetAbsoluteFraction() const noexcept;
+    ULONG GetFilesCount() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_files; }
+    ULONG GetFoldersCount() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_subdirs; }
     ULONGLONG GetItemsCount() const noexcept;
     void ExtensionDataAdd();
     void ExtensionDataRemove();
     void ExtensionDataProcessChildren(bool remove = false);
 
     // Attributes & Properties
-    FILETIME GetLastChange() const noexcept;
-    void SetLastChange(const FILETIME& t) noexcept;
-    void SetAttributes(DWORD attr) noexcept;
+    FILETIME GetLastChange() const noexcept { return m_lastChange; }
+    void SetLastChange(const FILETIME& t) noexcept { m_lastChange = t; }
+    void SetAttributes(DWORD attr) noexcept { m_attributes = LOWORD(attr); }
     DWORD GetAttributes() const noexcept;
     USHORT GetSortAttributes() const noexcept;
-    void SetIndex(ULONGLONG index) noexcept;
-    ULONGLONG GetIndex() const noexcept;
+    void SetIndex(ULONGLONG index) noexcept { m_index = index; }
+    ULONGLONG GetIndex() const noexcept { return m_index; }
     DWORD GetReparseTag() const noexcept;
     void SetReparseTag(DWORD reparseType) noexcept;
     std::wstring GetOwner(bool force = false) const;
@@ -191,8 +198,8 @@ public:
 
     // Paths & Names
     void SetName(std::wstring_view name);
-    std::wstring GetName(const bool stripDrivePrefix = false) const noexcept;
-    std::wstring_view GetNameView(const bool stripDrivePrefix = false) const noexcept;
+    std::wstring GetName(bool stripDrivePrefix = false) const noexcept;
+    std::wstring_view GetNameView(bool stripDrivePrefix = false) const noexcept;
     bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
@@ -207,34 +214,34 @@ public:
     bool IsDone() const noexcept { return IsTypeOrFlag(ITF_DONE); }
     void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
-    ULONG GetReadJobs() const noexcept;
-    void UpwardAddReadJobs(ULONG count) noexcept;
+    ULONG GetReadJobs() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_jobs; }
+    void UpwardAddReadJobs(ULONG count) const noexcept;
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     ULONGLONG GetTicksWorked() const noexcept;
     void ResetScanStartTime() const noexcept;
+    static void SuspendScanClock() noexcept;
+    static void ResumeScanClock() noexcept;
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
     static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
     static void ScanItemsFinalize(CItem* item);
-    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,
-        const std::function<bool(CItem*)>& task = [](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); });
 
     // CTreeMap Interface
     bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const noexcept { return tmiRect; };
-    void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
     int TmiGetChildCount() const noexcept;
     CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
     ULONGLONG TmiGetSize() const noexcept;
 
     // Drive/Volume Specific
-    bool IsRootItem() const noexcept;
+    bool IsRootItem() const noexcept { return IsTypeOrFlag(ITF_ROOTITEM); }
+    bool SupportsSpaceItems() const noexcept;
     std::vector<CItem*> GetDriveItems() const;
+    std::vector<CItem*> GetSpaceItems() const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
-    static int GetSizeProportionWidth();
+    static int GetSizeProportionWidth() { return 105; }
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
@@ -244,7 +251,7 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
-    void UpwardDrivePacman();
+    void UpwardDrivePacman() const;
 
     // Hardlinks & Hashing
     void CreateHardlinksItem();
@@ -252,7 +259,6 @@ public:
     CItem* FindHardlinksIndexItem() const;
     void RemoveHardlinksItem();
     void DoHardlinkAdjustment();
-    std::vector<CItem*> FindItemsBySameIndex() const;
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     ITEMTYPE GetItemType() const noexcept { return m_type & IT_MASK; }
@@ -272,6 +278,24 @@ public:
         else m_type = bitOp ? (m_type | type) : ((m_type & ~Mask) | type);
     }
 
+    template<typename Predicate = decltype([](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); }) >
+    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems, Predicate&& predicate = {})
+    {
+        std::vector<CItem*> items;
+        for (std::vector childStack{ initialItems }; !childStack.empty();)
+        {
+            CItem* item = childStack.back();
+            childStack.pop_back();
+            if (item->HasChildren())
+            {
+                const auto& children = item->GetChildren();
+                childStack.insert(childStack.end(), children.begin(), children.end());
+            }
+            else if (std::invoke(predicate, item)) items.emplace_back(item);
+        }
+        return items;
+    }
+
     void SetReparseType(const ITEMTYPE type) noexcept { SetType<ITRP_MASK>(type); }
     void SetHashType(const ITEMTYPE type, const bool addType = true) noexcept { SetType<ITHASH_MASK>(type, addType); }
     void SetFlag(const ITEMTYPE type, const bool unsetVal = false) noexcept { SetType<ITF_MASK>(type, true, unsetVal); }
@@ -283,6 +307,13 @@ private:
     bool MustShowReadJobs() const noexcept;
     COLORREF GetPercentageColor() const noexcept;
     std::wstring GetPathWithoutSlash() const;
+
+    static constexpr ULONGLONG SCAN_CLOCK_SUSPENDED =
+        ULONGLONG{ 1 } << (std::numeric_limits<ULONGLONG>::digits - 1);
+
+    // High bit marks suspension; other bits hold paused milliseconds or frozen active milliseconds.
+    inline static std::atomic<ULONGLONG> scanClockState = 0;
+    static ULONG GetScanTickCount() noexcept;
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(const Finder& finder);
 
@@ -306,7 +337,6 @@ private:
     ULONGLONG m_index = 0;                     // Index of item for special scan types
     FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
     ITEMTYPE m_type;                           // Indicates our type.
-    CSmallRect tmiRect = {};                   // Treemap rectangle
     USHORT m_attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_nameLen = 0;                      // Length of name string
 };

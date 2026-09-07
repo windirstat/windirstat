@@ -22,7 +22,7 @@ class CExtensionView;
 //
 // CExtensionListControl.
 //
-class CExtensionListControl final : public CWdsListControl
+class CExtensionListControl final : public MessageTarget<CExtensionListControl, CWdsListControl>
 {
 protected:
     // Columns
@@ -46,7 +46,7 @@ protected:
         bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
         std::wstring GetText(int subitem) const override;
 
-        const std::wstring& GetExtension() const;
+        const std::wstring& GetExtension() const { return m_extension; }
         HICON GetIcon() override;
         int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
@@ -76,27 +76,43 @@ public:
     bool GetAscendingDefault(int subitem) override;
     void Initialize();
     void SetExtensionData(const CExtensionData* ed);
-    void SetRootSize(ULONGLONG totalBytes);
-    ULONGLONG GetRootSize() const;
+    void SetRootSize(const ULONGLONG totalBytes) { m_rootSize = totalBytes; }
+    ULONGLONG GetRootSize() const { return m_rootSize; }
     void SelectExtension(const std::wstring& ext);
     std::wstring GetSelectedExtension() const;
 
 protected:
-    CListItem* GetListItem(int i) const;
+    CListItem* GetListItem(const int i) const { return static_cast<CListItem*>(GetItem(i)); }
     bool IsSelectedAggregate() const;
+    void OnItemContextMenu(CPoint point) override;
 
     CBitmap m_searchBitmap;
     CExtensionView* m_extensionView;
     ULONGLONG m_rootSize = 0;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-    afx_msg void OnSearchExtension();
-    afx_msg void OnExcludeExtension();
-    afx_msg void OnGroupTypes();
+public:
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
+    void OnSetFocus(CWnd* pOldWnd);
+    void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult) const;
+    void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    void OnSearchExtension() const;
+    void OnExcludeExtension() const;
 };
+inline std::span<const RouteEntry> CExtensionListControl::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::ReflectNotify<&OnLvnDeleteItem>(LVN_DELETEITEM),
+        Route::ReflectNotify<&OnNMDblclk>(NM_DBLCLK),
+        Route::Window<&OnSetFocus>(WM_SETFOCUS),
+        Route::ReflectNotify<&OnLvnItemChanged>(LVN_ITEMCHANGED),
+        Route::Command<&OnSearchExtension>(ID_EXTLIST_SEARCH_EXTENSION),
+        Route::Command<&OnExcludeExtension>(ID_FILTER_EXCLUDE_ITEM),
+        Route::Window<&OnKeyDown>(WM_KEYDOWN),
+    };
+    return entries;
+}

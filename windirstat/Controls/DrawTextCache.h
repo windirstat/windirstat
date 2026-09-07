@@ -69,8 +69,8 @@ private:
             hash ^= std::hash<UINT>{}(key.format) << 3;
             hash ^= std::hash<USHORT>{}(key.width) << 4;
             hash ^= std::hash<USHORT>{}(key.height) << 5;
-            hash ^= (std::hash<USHORT>{}(key.dpi)) << 6;
-            hash ^= (std::hash<HFONT>{}(key.font)) << 7;
+            hash ^= std::hash<USHORT>{}(key.dpi) << 6;
+            hash ^= std::hash<HFONT>{}(key.font) << 7;
             return hash;
         }
     };
@@ -93,18 +93,18 @@ private:
         CacheKeyHash>;
 
     // Create cache key from current DC state
-    [[nodiscard]] CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
+    CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format) const noexcept;
 
     // Create cached bitmap for the text
-    std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
+    static std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format) noexcept;
 
     // Move key to front of LRU list
     void TouchEntry(const CacheMap::iterator& it);
 
     // Paint cached entry to DC
-    void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept;
+    static void PaintCachedEntry(CDC* pDC, const CRect& rect, const CacheEntry& entry) noexcept;
 
     CacheMap m_cache;
     LRUList m_leastRecentList;

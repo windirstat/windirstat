@@ -30,6 +30,8 @@ protected:
 
 public:
 
+    virtual ~Finder() = default;
+
     virtual bool FindNext() = 0;
     virtual bool FindFile(const CItem* item) = 0;
     virtual inline DWORD GetAttributes() const = 0;
@@ -38,6 +40,8 @@ public:
     virtual inline FILETIME GetLastWriteTime() const = 0;
     virtual std::wstring GetFilePath() const = 0;
     virtual std::wstring GetFileName() const = 0;
+    virtual std::wstring GetShellPath() const { return {}; }
+    virtual PCIDLIST_ABSOLUTE GetShellPidl() const { return nullptr; }
     virtual inline ULONGLONG GetIndex() const = 0;
     virtual DWORD GetReparseTag() const = 0;
     virtual bool IsReserved() const = 0;
@@ -92,9 +96,9 @@ public:
     {
         if (reparseBuffer.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
         {
-            const auto volumeIdentifier = LR"(\??\Volume)";
             const auto path = ByteOffset<WCHAR>(reparseBuffer.PathBuffer, reparseBuffer.SubstituteNameOffset);
-            if (reparseBuffer.SubstituteNameLength / sizeof(WCHAR) >= wcslen(volumeIdentifier) &&
+            if (constexpr auto volumeIdentifier = LR"(\??\Volume)";
+                reparseBuffer.SubstituteNameLength / sizeof(WCHAR) >= wcslen(volumeIdentifier) &&
                 _wcsnicmp(path, volumeIdentifier, wcslen(volumeIdentifier)) == 0)
             {
                 return true;

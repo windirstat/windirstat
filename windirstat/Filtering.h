@@ -37,10 +37,10 @@ public:
     static bool FilterActive;
 
     static void CompileFilters();
-    static bool IsFilterActive();
+    static bool IsFilterActive() { return FilterActive; }
     static std::wstring_view WithoutTrailingBackslashes(std::wstring_view path);
     static bool MatchesAnyPath(const std::wstring& path, const std::vector<std::wregex>& patterns);
-    static bool IsFilteredOut(const std::wstring& path);
+    static bool IsFilteredOut(const std::wstring& directoryName);
     static bool IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
         ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime);
     static bool IsFilteredOut(const CItem* item);

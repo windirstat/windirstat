@@ -18,35 +18,40 @@
 #pragma once
 
 #include "pch.h"
+#include "PageShared.h"
 #include "ColorButton.h"
 
 //
 // CPagePermissions. "Settings" property page "Permissions".
 //
-class CPagePermissions final : public CMFCPropertyPage
+class CPagePermissions final : public MessageTarget<CPagePermissions, CSettingsPage>
 {
-    DECLARE_DYNAMIC(CPagePermissions)
-
+public:
     enum : std::uint8_t { IDD = IDD_PAGE_PERMISSIONS };
 
     CPagePermissions();
     ~CPagePermissions() override = default;
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
+    void InitializePage() override;
     void OnOK() override;
 
-    CString m_account[PERMSRULECOUNT];
-    int m_level[PERMSRULECOUNT] = {};
-    COLORREF m_color[PERMSRULECOUNT] = {};
     CComboBox m_levelCombo[PERMSRULECOUNT];
     CColorButton m_colorButton[PERMSRULECOUNT];
-    CString m_excludeRegex;
 
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
-    afx_msg void OnSettingChanged(UINT id);
-    afx_msg void OnExcludeChanged();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+public:
+    static std::span<const RouteEntry> Routes();
+
 };
+
+inline std::span<const RouteEntry> CPagePermissions::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Notify<&OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON4),
+        Route::Control<&OnSettingRangeChanged>(EN_CHANGE, IDC_PERMS_ACCOUNT0, IDC_PERMS_ACCOUNT4),
+        Route::Control<&OnSettingRangeChanged>(CBN_SELCHANGE, IDC_PERMS_LEVEL0, IDC_PERMS_LEVEL4),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_PERMS_EXCLUDE),
+    };
+    return entries;
+}
