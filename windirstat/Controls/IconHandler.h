@@ -39,14 +39,23 @@ public:
 
     void Initialize();
     void DoAsyncShellInfoLookup(IconLookup&& lookupInfo);
+    void ForgetAsyncShellInfoLookup(const CWdsListItem* item);
     void DrawIcon(CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
-    BlockingQueue<IconLookup> m_fastQueue = BlockingQueue<IconLookup>(false);
-    BlockingQueue<IconLookup> m_slowQueue = BlockingQueue<IconLookup>(false);
+    using PendingIconLookup = std::pair<IconLookup, std::uint64_t>;
+    BlockingQueue<PendingIconLookup> m_fastQueue{ false };
+    BlockingQueue<PendingIconLookup> m_slowQueue{ false };
+
+private:
+    // Only the UI thread accesses request identities; completed requests retain no item state.
+    std::unordered_map<const CWdsListItem*, std::uint64_t> m_pendingLookups;
+    std::uint64_t m_nextLookupId = 0;
+
+public:
 
     HICON m_freeSpaceImage = nullptr;    // <Free Space>
     HICON m_unknownImage = nullptr;      // <Unknown>

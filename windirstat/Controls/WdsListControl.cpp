@@ -1076,6 +1076,7 @@ void CWdsListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CWdsListControl::OnDestroy()
 {
+    for (const auto* item : m_items) GetIconHandler()->ForgetAsyncShellInfoLookup(item);
     SavePersistentAttributes();
     CListCtrl::OnDestroy();
 }
@@ -1110,6 +1111,7 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     for (const int x : std::views::iota(i, i + c))
     {
         CWdsListItem* item = m_items[x];
+        GetIconHandler()->ForgetAsyncShellInfoLookup(item);
         m_itemMap.erase(item);
         if (m_ownsItems)
         {
@@ -1144,6 +1146,7 @@ bool CWdsListControl::DeleteItem(const int i)
 
 bool CWdsListControl::DeleteAllItems()
 {
+    for (const auto* item : m_items) GetIconHandler()->ForgetAsyncShellInfoLookup(item);
     if (m_ownsItems) for (const auto* item : m_items) delete item;
     m_items.clear();
     m_itemMap.clear();
