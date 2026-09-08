@@ -776,20 +776,14 @@ void CWinDirStatModel::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, cons
 {
     // (Depth first.)
 
+    std::vector<std::wstring> directories;
     FinderBasic finder;
     for (bool b = finder.FindFile(currentPath); b; b = finder.FindNext())
     {
-        if (!finder.IsDirectory())
-        {
-            continue;
-        }
-        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag()))
-        {
-            continue;
-        }
-
-        RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());
+        if (finder.IsDirectory() && CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag()))
+            directories.push_back(finder.GetFilePath());
     }
+    for (const auto& directory : directories) RecursiveUserDefinedCleanup(udc, rootPath, directory);
 
     CallUserDefinedCleanup(true, udc->CommandLine.Obj(), rootPath, currentPath, udc->ShowConsoleWindow, true);
 }
