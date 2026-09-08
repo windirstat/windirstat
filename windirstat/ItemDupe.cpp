@@ -20,7 +20,7 @@
 #include "FileDupeControl.h"
 
 CItemDupe::CItemDupe(const std::vector<BYTE>& hash) :
-    m_hashString(FormatHex(hash, false)), m_hash(hash)
+    m_hashString(FormatHex(hash, false))
 {
 }
 
@@ -121,6 +121,8 @@ HICON CItemDupe::GetIcon()
 
 std::wstring CItemDupe::GetHashAndExtensions() const
 {
+    if (!m_captionDirty) return m_caption;
+
     // Create set of unique extensions
     std::unordered_set<std::wstring> extensionsSet;
     for (const auto& child : m_children)
@@ -150,7 +152,9 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     }
 
     // Format string as Hash (.exta, .extb)
-    return m_hashString + L" (" + extensions + L")";
+    m_caption = m_hashString + L" (" + extensions + L")";
+    m_captionDirty = false;
+    return m_caption;
 }
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
@@ -166,6 +170,7 @@ void CItemDupe::AddDupeItemChild(CItemDupe* child)
 
     std::scoped_lock guard(m_protect);
     m_children.push_back(child);
+    m_captionDirty = true;
 
     if (IsVisible() && IsExpanded())
     {
@@ -192,6 +197,7 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
     if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
+        m_captionDirty = true;
     }
     delete child;
 }

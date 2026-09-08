@@ -32,7 +32,8 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
 class CItemDupe final : public CTreeListItem
 {
     std::wstring m_hashString;
-    std::vector<BYTE> m_hash;
+    mutable std::wstring m_caption;
+    mutable bool m_captionDirty = true;
     std::vector<CItemDupe*> m_children;
     ULONGLONG m_sizePhysical = 0;
     ULONGLONG m_sizeLogical = 0;
