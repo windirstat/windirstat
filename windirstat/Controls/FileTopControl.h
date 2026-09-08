@@ -47,7 +47,7 @@ protected:
     CItemTop* m_rootItem = nullptr;
     SingleConsumerQueue<CItem*> m_queuedSet;
     std::vector<CItem*> m_sizeMap;
-    ULONGLONG m_topNMinSize = 0;
+    std::vector<CItem*> m_topItems;
     bool m_needsResort = true;
     std::unordered_map<CItem*, CItemTop*> m_itemTracker;
     size_t m_previousTopN = 0;

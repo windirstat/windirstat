@@ -47,44 +47,53 @@ void CFileTopControl::SortItems()
     const auto topN = static_cast<size_t>(COptions::LargeFileCount.Obj());
     if (topN != m_previousTopN)
     {
-        std::ranges::sort(m_sizeMap, CompareBySize);
         m_previousTopN = topN;
         m_needsResort = true;
     }
 
-    // Process queued items - only mark for resort if item could affect top N
+    bool topChanged = m_needsResort;
+    const auto considerItem = [&](CItem* candidate)
+    {
+        if (topN == 0) return;
+        if (m_topItems.size() < topN)
+        {
+            m_topItems.push_back(candidate);
+            std::ranges::push_heap(m_topItems, CompareBySize);
+        }
+        else
+        {
+            if (!CompareBySize(candidate, m_topItems.front())) return;
+            std::ranges::pop_heap(m_topItems, CompareBySize);
+            m_topItems.back() = candidate;
+            std::ranges::push_heap(m_topItems, CompareBySize);
+        }
+        topChanged = true;
+    };
+
+    // Keep candidates for refilling the top list after deletions or a limit change.
     CItem* newItem = nullptr;
     while (m_queuedSet.pop(newItem))
     {
-        // Check if this item could affect the top N
-        if (m_sizeMap.size() < topN || newItem->GetSizeLogical() > m_topNMinSize)
-        {
-            m_needsResort = true;
-        }
         m_sizeMap.push_back(newItem);
+        if (!m_needsResort) considerItem(newItem);
     }
 
-    // Only sort the vector if we need to update the top N
-    if (!m_needsResort)
+    if (m_needsResort)
+    {
+        m_topItems.clear();
+        for (auto* candidate : m_sizeMap) considerItem(candidate);
+        m_needsResort = false;
+    }
+
+    if (!topChanged)
     {
         CTreeListControl::SortItems();
         return;
     }
 
-    m_needsResort = false;
-    const auto sortEnd = m_sizeMap.size() <= topN ? m_sizeMap.end()
-        : m_sizeMap.begin() + topN;
-
-    // Partial sort to get top N items at the front
-    std::ranges::partial_sort(m_sizeMap, sortEnd, CompareBySize);
-
-    // Update minimum size in top N for future comparisons
-    m_topNMinSize = topN > 0 && !m_sizeMap.empty() ?
-        m_sizeMap[std::min(topN, m_sizeMap.size()) - 1]->GetSizeLogical() : 0;
-
     // Update visual item removals
     auto itemTrackerCopy = std::unordered_map(m_itemTracker);
-    for (const auto& largeItem : m_sizeMap | std::views::take(topN))
+    for (const auto& largeItem : m_topItems)
     {
         if (m_itemTracker.contains(largeItem))
         {
@@ -156,7 +165,7 @@ void CFileTopControl::AfterDeleteAllItems()
     // Reset trackers
     m_sizeMap.clear();
     m_itemTracker.clear();
-    m_topNMinSize = 0;
+    m_topItems.clear();
     m_needsResort = true;
 
     // Delete and recreate root item
