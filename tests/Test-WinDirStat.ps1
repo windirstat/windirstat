@@ -12811,11 +12811,13 @@ function Invoke-EdgeCasesSuite {
     $csvOut   = Join-Path $workRoot 'results.csv'
 
 function Write-TestIni {
+    param([int] $WorkerCount = 4)
     $ini = @(
         '[Options]',
         'LanguageId=9', # English
         'ShowUnknown=0',
         'UseFastScanEngine=1',
+        "ScanningThreads=$WorkerCount",
         '',
         '[FileTreeView]',
         'ColumnVisibility=1,1,1,1,1,0,1,0,1,1,1'
@@ -12926,6 +12928,28 @@ $fileInfo.Attributes = $fileInfo.Attributes -bor [System.IO.FileAttributes]::Rea
 $longFileName = "L" + ("o" * 200) + "ngFileName.txt"
 New-TestFile (Join-Path $scanRoot $longFileName) 1024
 
+$aggregateRoot = Join-Path $scanRoot 'aggregate-timestamps'
+$aggregateBaseTime = [datetime]::SpecifyKind([datetime]'2020-03-01T00:00:00', [DateTimeKind]::Utc)
+$aggregateBranches = [System.Collections.Generic.List[object]]::new()
+for ($branch = 0; $branch -lt 16; $branch++) {
+    $branchPath = Join-Path $aggregateRoot "branch-$branch"
+    $branchSize = 0L
+    # Cross a 128-item publication boundary and leave a final partial batch.
+    for ($file = 1; $file -le 129; $file++) {
+        $filePath = Join-Path $branchPath "file-$file.bin"
+        $fileSize = 1 + $file % 7
+        New-TestFile $filePath $fileSize
+        $branchSize += $fileSize
+        $lastWrite = $aggregateBaseTime.AddDays(($branch * 7) % 16).AddSeconds($file)
+        [System.IO.File]::SetLastWriteTimeUtc($filePath, $lastWrite)
+    }
+    [System.IO.Directory]::SetLastWriteTimeUtc($branchPath, $aggregateBaseTime)
+    $aggregateBranches.Add([pscustomobject]@{ Path = $branchPath; Size = $branchSize; LastWrite = $lastWrite })
+}
+[System.IO.Directory]::SetLastWriteTimeUtc($aggregateRoot, $aggregateBaseTime)
+$aggregateSize = [long](($aggregateBranches | Measure-Object -Property Size -Sum).Sum)
+$aggregateLatest = ($aggregateBranches | Sort-Object LastWrite -Descending | Select-Object -First 1).LastWrite
+
 Write-TestIni
 Write-ColoredLine "Running WinDirStat..." Cyan
 $scan = Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csvOut -Root $scanRoot -WorkingDirectory $runRoot
@@ -12944,6 +12968,31 @@ Write-ColoredLine ("Scan completed in {0:N3} seconds." -f $scan.ElapsedSeconds) 
         Assert-CsvHasRow -ExpectedPath $hiddenFile -MatchAttr 'H' -ExpectedLogicalSize 1024
         Assert-CsvHasRow -ExpectedPath $systemFile -MatchAttr 'S' -ExpectedLogicalSize 1024
         Assert-CsvHasRow -ExpectedPath $readonlyFile -MatchAttr 'R' -ExpectedLogicalSize 1024
+
+        foreach ($workers in @(1, 16)) {
+            Write-TestIni -WorkerCount $workers
+            $aggregateCsv = Join-Path $workRoot "aggregate-$workers.csv"
+            [void](Invoke-WinDirStatCsv -Exe $runnerExe -Csv $aggregateCsv -Root $aggregateRoot -WorkingDirectory $runRoot)
+            $csvRows = @(Read-CsvRows -Csv $aggregateCsv)
+            Write-ColoredLine "Checking directory aggregation with $workers worker(s)..." Cyan
+            foreach ($branchInfo in $aggregateBranches) {
+                Assert-CsvHasRow -ExpectedPath $branchInfo.Path -ExpectedLogicalSize $branchInfo.Size `
+                    -ExpectedLastWriteUtc $branchInfo.LastWrite
+            }
+            Assert-CsvHasRow -ExpectedPath $aggregateRoot -ExpectedLogicalSize $aggregateSize `
+                -ExpectedLastWriteUtc $aggregateLatest
+            $rootRows = @($csvRows | Where-Object {
+                (Normalize-ComparePath $_.Name) -ieq (Normalize-ComparePath $aggregateRoot)
+            })
+            if ($rootRows.Count -eq 1) {
+                Assert-That 'EdgeCases' "Aggregate file count with $workers worker(s)" `
+                    ([long]$rootRows[0].Files -eq 2064) "Got $($rootRows[0].Files)" '2064 files'
+                Assert-That 'EdgeCases' "Aggregate folder count with $workers worker(s)" `
+                    ([long]$rootRows[0].Folders -eq 16) "Got $($rootRows[0].Folders)" '16 folders'
+            }
+            Assert-That 'EdgeCases' "Every aggregate entry exported with $workers worker(s)" `
+                ($csvRows.Count -eq 2081) "Got $($csvRows.Count)" '2081 entries'
+        }
     }
     finally {
         Remove-TestArtifacts -Path $workRoot

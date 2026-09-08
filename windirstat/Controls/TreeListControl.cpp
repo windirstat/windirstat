@@ -681,7 +681,12 @@ LRESULT CTreeListControl::OnSelectionChanged(const WPARAM wParam, const LPARAM l
 
 void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* child)
 {
-    if (!parent->IsVisible() || !parent->IsExpanded())
+    OnChildrenAdded(parent, std::span<CTreeListItem* const>(&child, 1));
+}
+
+void CTreeListControl::OnChildrenAdded(const CTreeListItem* parent, std::span<CTreeListItem* const> children)
+{
+    if (children.empty() || !parent->IsVisible() || !parent->IsExpanded())
     {
         return;
     }
@@ -700,7 +705,14 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
         ++insertPos;
     }
 
-    InsertItem(insertPos, child);
+    std::vector<CWdsListItem*> items;
+    items.reserve(children.size());
+    for (CTreeListItem* child : children)
+    {
+        child->SetVisible(this, true);
+        items.push_back(child);
+    }
+    InsertListItem(insertPos, items);
     RedrawItems(parentPos, parentPos);
 }
 

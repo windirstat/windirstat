@@ -321,8 +321,9 @@ private:
     // High bit marks suspension; other bits hold paused milliseconds or frozen active milliseconds.
     inline static std::atomic<ULONGLONG> scanClockState = 0;
     static ULONG GetScanTickCount() noexcept;
-    CItem* AddDirectory(const Finder& finder);
-    CItem* AddFile(const Finder& finder);
+    class ScanBatch;
+    CItem* AddDirectory(const Finder& finder, ScanBatch& batch);
+    CItem* AddFile(const Finder& finder, ScanBatch& batch);
 
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most

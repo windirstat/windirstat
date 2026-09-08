@@ -103,6 +103,7 @@ public:
     virtual void SetRootItem(CTreeListItem* root = nullptr);
     virtual void AfterDeleteAllItems() {}
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
+    void OnChildrenAdded(const CTreeListItem* parent, std::span<CTreeListItem* const> children);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(const int i) const { return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i)); }

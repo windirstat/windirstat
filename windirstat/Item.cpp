@@ -22,6 +22,87 @@
 #include "FinderMtp.h"
 #include "FinderNtfs.h"
 
+class CItem::ScanBatch final
+{
+    CItem* m_parent;
+    BlockingQueue<CItem*>* m_queue;
+    std::vector<CItem*> m_children;
+    std::unordered_map<std::wstring, std::pair<ULONGLONG, ULONGLONG>> m_extensions;
+    ULONGLONG m_physical = 0, m_logical = 0, m_lastFlush = GetTickCount64();
+    FILETIME m_lastChange{};
+    ULONG m_files = 0, m_folders = 0;
+
+public:
+    ScanBatch(CItem* parent, BlockingQueue<CItem*>* queue) : m_parent(parent), m_queue(queue)
+    {
+        m_children.reserve(128);
+    }
+    ~ScanBatch() { Flush(); }
+
+    void Add(CItem* child)
+    {
+        if (m_parent->IsTypeOrFlag(ITF_MTP)) child->SetFlag(ITF_MTP);
+        child->SetParent(m_parent);
+        m_children.push_back(child);
+        m_physical += child->GetSizePhysical();
+        m_logical += child->GetSizeLogical();
+        m_lastChange = std::max(m_lastChange, child->GetLastChange());
+        if (!child->IsTypeOrFlag(IT_FILE)) { ++m_folders; return; }
+
+        ++m_files;
+        auto& [files, bytes] = m_extensions[child->GetExtension()];
+        ++files;
+        bytes += child->GetSizeLogical();
+        child->SetFlag(ITF_EXTDATA);
+    }
+
+    void FlushIfNeeded(const bool force = false)
+    {
+        if (force || m_children.size() >= 128 || GetTickCount64() - m_lastFlush >= 100) Flush();
+    }
+
+    void Flush()
+    {
+        if (m_children.empty()) return;
+        m_parent->UpwardAddSizePhysical(std::exchange(m_physical, 0));
+        m_parent->UpwardAddSizeLogical(std::exchange(m_logical, 0));
+        m_parent->UpwardAddFiles(std::exchange(m_files, 0));
+        m_parent->UpwardAddFolders(std::exchange(m_folders, 0));
+        m_parent->UpwardUpdateLastChange(std::exchange(m_lastChange, FILETIME{}));
+        for (const auto& [extension, totals] : m_extensions)
+        {
+            auto* record = CWinDirStatModel::Get()->GetExtensionDataRecord(extension);
+            record->files.fetch_add(totals.first, std::memory_order_relaxed);
+            record->bytes.fetch_add(totals.second, std::memory_order_relaxed);
+        }
+        m_extensions.clear();
+
+        if (m_parent->IsVisible() && m_parent->IsExpanded())
+        {
+            CMainFrame::Get()->InvokeInMessageThread([this]
+            {
+                auto& children = m_parent->m_folderInfo->m_children;
+                children.insert(children.end(), m_children.begin(), m_children.end());
+                const std::vector<CTreeListItem*> rows(m_children.begin(), m_children.end());
+                CFileTreeControl::Get()->OnChildrenAdded(m_parent, rows);
+            });
+        }
+        else
+        {
+            auto& children = m_parent->m_folderInfo->m_children;
+            children.insert(children.end(), m_children.begin(), m_children.end());
+        }
+        for (CItem* child : m_children)
+        {
+            if (child->IsTypeOrFlag(IT_FILE)) CFileTopControl::Get()->ProcessTop(child);
+            else if (child->GetReadJobs() > 0) m_queue->Push(child);
+        }
+        m_children.clear();
+        m_lastFlush = GetTickCount64();
+        m_parent->UpwardDrivePacman();
+    }
+};
+
 // --- Construction / Destruction ---
 
 CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
@@ -236,7 +317,7 @@ void CItem::RemoveAllChildren() const
     m_folderInfo->m_children.clear();
 }
 
-CItem* CItem::AddDirectory(const Finder& finder)
+CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
 {
     // Bypass filesystem reparse restrictions when traversing MTP directories
     const bool follow = IsTypeOrFlag(ITF_MTP) || !finder.IsProtectedReparsePoint() &&
@@ -253,13 +334,13 @@ CItem* CItem::AddDirectory(const Finder& finder)
     if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
     if ((finder.RequiresBasicEnumeration() || IsTypeOrFlag(ITF_BASIC)) && follow)
         child->SetFlag(ITF_BASIC);
-    AddChild(child);
+    batch.Add(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
 
     return child;
 }
 
-CItem* CItem::AddFile(const Finder& finder)
+CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
 {
     auto* const child = new CItem(IT_FILE, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
@@ -272,8 +353,7 @@ CItem* CItem::AddFile(const Finder& finder)
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
     if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
-    child->ExtensionDataAdd();
-    AddChild(child);
+    batch.Add(child);
     child->SetDone();
     return child;
 }
@@ -1023,8 +1103,14 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
                 static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
+            ScanBatch batch(item, queue);
             for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
+                if (queue->IsPauseOrCancelRequested())
+                {
+                    batch.Flush();
+                    queue->WaitIfSuspended();
+                }
                 if (finder->IsDirectory())
                 {
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
@@ -1034,11 +1120,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
-                    item->UpwardAddFolders(1);
-                    if (CItem* newitem = item->AddDirectory(*finder); newitem->GetReadJobs() > 0)
-                    {
-                        queue->Push(newitem);
-                    }
+                    item->AddDirectory(*finder, batch);
                 }
                 else
                 {
@@ -1052,15 +1134,14 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
-                    item->UpwardAddFiles(1);
-                    CItem* newitem = item->AddFile(*finder);
+                    CItem* newitem = item->AddFile(*finder, batch);
+                    batch.FlushIfNeeded(COptions::ScanForDuplicates);
                     CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);
-                    CFileTopControl::Get()->ProcessTop(newitem);
-                    queue->WaitIfSuspended();
                 }
 
                 // Update pacman position
-                item->UpwardDrivePacman();
+                batch.FlushIfNeeded(queue->IsPauseOrCancelRequested());
+                queue->WaitIfSuspended();
             }
         }
         else if (item->IsTypeOrFlag(IT_FILE))
