@@ -392,21 +392,19 @@ void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change
     if (change == MODEL_CHANGE_NEW_ROOT || change == MODEL_CHANGE_NONE)
     {
         const auto* model = CWinDirStatModel::Get();
-        if (model->IsScanSettled())
+        if (change == MODEL_CHANGE_NEW_ROOT || !model->IsScanSettled())
         {
-            Recalculate();
-        }
-        else
-        {
+            m_binsDirty = true;
             m_hasData = false;
-            InvalidateRect(nullptr);
         }
+        InvalidateRect(nullptr);
     }
 }
 
 void CStorageAnalyticsView::Recalculate()
 {
     const auto* model = CWinDirStatModel::Get();
+    m_binsDirty = false;
     if (!model->IsScanSettled() || !ReadParameters(true))
     {
         m_hasData = false;
@@ -521,17 +519,19 @@ void CStorageAnalyticsView::OnComboUnitSelChange()
         for (auto& tier : m_tiers)
         {
             ScaleEditField(*tier.editCost);
+            tier.costGiB *= ratio;
         }
 
         m_lastUnitSel = newSel;
     }
 
     UpdateCostLabels();
-    Recalculate();
+    InvalidateRect(nullptr);
 }
 
 void CStorageAnalyticsView::OnDraw(CDC* pDC)
 {
+    if (m_binsDirty && IsWindowVisible() && CWinDirStatModel::Get()->IsScanSettled()) Recalculate();
     const CRect clientRect = ClientRect();
 
     CDC memDC(pDC);

@@ -111,6 +111,7 @@ private:
 
     int m_lastUnitSel = 1;
     bool m_hasData = false;
+    bool m_binsDirty = true;
 };
 
 inline std::span<const RouteEntry> CCenteredEdit::Routes()
