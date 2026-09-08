@@ -821,7 +821,7 @@ void CTabControl::OnPaint()
     const COLORREF stripBg = dark ? tabStrip
                                   : (labelOnlyTabs ? buttonFace : tabStrip);
     const COLORREF stripBorder = dark ? RGB(95, 95, 95) : tabBorder;
-    const COLORREF activeTabBg = dark ? RGB(245, 245, 245)
+    const COLORREF activeTabBg = dark ? RGB(190, 190, 190)
                                       : (labelOnlyTabs ? buttonFace : RGB(255, 255, 255));
     const COLORREF inactiveTabBg = dark ? RGB(31, 31, 31)
                                         : BlendColor(tabStrip, RGB(0, 0, 0), 0.05);
