@@ -96,24 +96,17 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu, const bool triggerAsync)
 
     UpdateDynamicMenuItems(menu);
 
-    // Launch a detached thread to perform the queries
-    if (triggerAsync) std::thread([this]
+    // Keep one background query alive until its results are collected by the UI.
+    if (!triggerAsync || m_shuttingDown || m_cleanupQuery.valid()) return;
+    std::packaged_task<std::array<ULONGLONG, 4>()> query([]
     {
-        // Query recycle bin and shadow copies
-        QueryRecycleBin(m_recycleBinItems, m_recycleBinBytes);
-        QueryShadowCopies(m_shadowCopyCount, m_shadowCopyBytes);
-
-        // Use InvokeInMessageThread to update the menu on the UI thread
-        InvokeInMessageThread([this]
-        {
-            // Check if the menu is still valid and visible
-            const auto [menuObj, menuPos] = LocateNamedMenu(GetMenu(), Localization::Lookup(IDS_MENU_CLEANUP), false);
-            if (menuObj == nullptr || menuObj->ItemCount() <= 0) return;
-
-            // Update menu items with the newly retrieved values
-            UpdateCleanupMenu(menuObj, false);
-        });
-    }).detach();
+        std::array<ULONGLONG, 4> result{};
+        QueryRecycleBin(result[0], result[1]);
+        QueryShadowCopies(result[2], result[3]);
+        return result;
+    });
+    m_cleanupQuery = query.get_future();
+    m_cleanupThread = std::jthread(std::move(query));
 }
 
 void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)

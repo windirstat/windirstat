@@ -579,6 +579,8 @@ void CMainFrame::OnClose()
     // Suspend the scan and wait for scan to complete
     CWinDirStatModel::Get()->StopScanningEngine(CWinDirStatModel::Abort);
 
+    if (m_cleanupThread.joinable()) CWinApp::RunTaskWithUiUpdates([this] { m_cleanupThread.join(); });
+
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();
 
@@ -847,6 +849,22 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
     // Exit early if shutting down
     if (nIDEvent != ID_WDS_CONTROL || m_shuttingDown) return;
+
+    if (m_cleanupQuery.valid() && WaitForSingleObject(m_cleanupThread.native_handle(), 0) == WAIT_OBJECT_0)
+    {
+        m_cleanupThread.join();
+        try
+        {
+            const auto result = m_cleanupQuery.get();
+            m_recycleBinItems = result[0];
+            m_recycleBinBytes = result[1];
+            m_shadowCopyCount = result[2];
+            m_shadowCopyBytes = result[3];
+            const auto [menu, position] = LocateNamedMenu(GetMenu(), Localization::Lookup(IDS_MENU_CLEANUP), false);
+            if (menu != nullptr) UpdateCleanupMenu(menu, false);
+        }
+        catch (...) { VTRACE(L"Cleanup information query failed."); }
+    }
 
     // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;

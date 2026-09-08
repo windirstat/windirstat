@@ -240,6 +240,8 @@ public:
     ULONGLONG m_recycleBinBytes = 0;
     ULONGLONG m_shadowCopyCount = 0;
     ULONGLONG m_shadowCopyBytes = 0;
+    std::future<std::array<ULONGLONG, 4>> m_cleanupQuery;
+    std::jthread m_cleanupThread;
 
 static std::span<const RouteEntry> Routes();
 
