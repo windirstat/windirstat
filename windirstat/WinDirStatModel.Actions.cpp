@@ -1202,7 +1202,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Wait for all threads to run out of work
         StopReason stopReason = Default;
         for (auto& queue : m_queues | std::views::values)
-            stopReason = static_cast<StopReason>(queue.WaitForCompletion());
+            stopReason = static_cast<StopReason>(std::max(static_cast<int>(stopReason), queue.WaitForCompletion()));
+        for (auto& queue : m_queues | std::views::values) queue.JoinThreads();
+        queueContextNtfs.clear();
 
         // If new scan or closing, complete scan UI cleanup before the old
         // tree is torn down.

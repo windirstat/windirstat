@@ -22,6 +22,7 @@
 template <typename T>
 class BlockingQueue final
 {
+    std::mutex m_threadMutex;
     std::vector<std::jthread> m_threads;
     std::deque<T> m_queue;
     std::mutex m_mutex;
@@ -66,6 +67,7 @@ public:
     void StartThreads(const unsigned int workerThreads, const std::function<void()>& callback)
     {
         ResetQueue(workerThreads, false);
+        std::scoped_lock threadLock(m_threadMutex);
 
         for ([[maybe_unused]] const auto _ : std::views::iota(0u, m_totalWorkerThreads))
         {
@@ -141,11 +143,17 @@ public:
         m_pushed.notify_one();
     }
 
+    bool IsPauseOrCancelRequested()
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_suspended || m_cancelled;
+    }
+
     void WaitIfSuspended()
     {
         // wait until not suspended or its cancelled
         std::unique_lock lock(m_mutex);
-        if (!m_suspended) return;
+        if (!m_suspended && !m_cancelled) return;
         m_workersWaiting++;
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]
@@ -175,11 +183,20 @@ public:
 
     void CancelThreadIo()
     {
-        std::scoped_lock lock(m_mutex);
+        std::scoped_lock threadLock(m_threadMutex);
         for (auto& thread : m_threads)
         {
             if (thread.joinable())
                 CancelSynchronousIo(thread.native_handle());
+        }
+    }
+
+    void JoinThreads()
+    {
+        std::scoped_lock threadLock(m_threadMutex);
+        for (auto& thread : m_threads)
+        {
+            if (thread.joinable()) thread.join();
         }
     }
 
@@ -195,13 +212,12 @@ public:
         }
 
         // Wait for threads to complete
-        for (auto& thread : m_threads)
-        {
-            thread.join();
-        }
+        JoinThreads();
 
-        // Cleanup
-        ResetQueue(m_totalWorkerThreads);
+        // Keep completion observable until StartThreads resets the queue.
+        std::scoped_lock lock(m_threadMutex, m_mutex);
+        m_threads.clear();
+        m_queue.clear();
     }
 
     void SuspendExecution(const bool clearQueue = false)
@@ -227,11 +243,12 @@ public:
 
     void ResetQueue(const int totalWorkerThreads, const bool clearQueue = true)
     {
-        std::scoped_lock lock(m_mutex);
+        std::scoped_lock lock(m_threadMutex, m_mutex);
         m_workersWaiting = 0;
         m_suspended = false;
         m_started = false;
         m_cancelled = false;
+        m_stopReason = 0;
         m_totalWorkerThreads = totalWorkerThreads;
         m_threads.clear();
         m_threads.reserve(m_totalWorkerThreads);
