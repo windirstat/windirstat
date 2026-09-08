@@ -49,105 +49,86 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         return;
     }
 
-    // Fetch the configuration information based on file size
-    const auto size = item->GetSizeLogical();
-    auto [hashTracker, hashTrackerMutex, maxHashLevel] = [&]() -> std::tuple<std::map<std::vector<BYTE>, std::vector<CItem*>>&, std::mutex&, ITEMTYPE>
-    {
-        if (size <= HashThreshold(ITHASH_SMALL)) return { m_trackerSmall, m_trackerSmallMutex, ITHASH_SMALL };
-        if (size > HashThreshold(ITHASH_MEDIUM)) return { m_trackerLarge, m_trackerLargeMutex, ITHASH_LARGE };
-        return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
-    }();
-
     // First see if there's more than one size of this file since there is no need to
     // hash if there is only a single file of this size
-    std::vector<CItem*> hashSet;
     {
-        std::scoped_lock lock(m_sizeTrackerMutex);
-        auto& sizeSetLookup = m_sizeTracker[size];
+        std::scoped_lock lock(m_trackerMutex);
+        auto& sizeSetLookup = m_sizeTracker[item->GetSizeLogical()];
         sizeSetLookup.emplace_back(item);
-        hashSet.assign(sizeSetLookup.begin(), sizeSetLookup.end());
-        if (sizeSetLookup.size() < 2) return;
+        if (sizeSetLookup.size() >= 2) m_pendingHashes.emplace_back(item, 0);
+        if (sizeSetLookup.size() == 2) m_pendingHashes.emplace_back(sizeSetLookup.front(), 0);
     }
 
     // Now we have multiple files of the same size, so we need to hash them
-    ITEMTYPE hashLevel = ITHASH_SMALL;
-    std::map<std::vector<BYTE>, std::set<CItem*>> hashItemsWithDupes;
-    for (std::unique_lock lock(hashTrackerMutex); !hashSet.empty();)
+    static constexpr std::array hashLevels{ ITHASH_SMALL, ITHASH_MEDIUM, ITHASH_LARGE };
+    while (true)
     {
-        // Work on a snapshot of the current set
-        std::set<CItem*> nextLevelSet;
-        for (auto* itemToHash : std::vector(hashSet))
+        queue->WaitIfSuspended();
+        std::unique_lock lock(m_trackerMutex);
+        if (m_pendingHashes.empty()) return;
+        const auto [itemToHash, level] = m_pendingHashes.back();
+        m_pendingHashes.pop_back();
+        const ITEMTYPE hashLevel = hashLevels[level];
+        const auto size = itemToHash->GetSizeLogical();
+        const size_t maxHashLevel = size <= HashThreshold(ITHASH_SMALL) ? 0 :
+            size <= HashThreshold(ITHASH_MEDIUM) ? 1 : 2;
+
+        // Skip if already marked as unhashable or hashed at this level
+        if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
+        itemToHash->SetFlag(hashLevel);
+
+        // Compute the hash for the file
+        lock.unlock();
+        std::vector<BYTE> hash;
+        try { hash = itemToHash->GetFileHash(HashThreshold(hashLevel), queue); }
+        catch (...)
         {
-            // Skip if already marked as unhashable or hashed at this level
-            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
-            itemToHash->SetFlag(hashLevel);
-
-            // Compute the hash for the file
-            const auto hashSize = HashThreshold(hashLevel);
-            lock.unlock();
-            auto hash = itemToHash->GetFileHash(hashSize, queue);
             lock.lock();
+            itemToHash->SetFlag(hashLevel, true);
+            m_pendingHashes.emplace_back(itemToHash, level);
+            throw;
+        }
+        lock.lock();
 
-            // Mark as bad if not hashable
-            if (hash.empty())
-            {
-                itemToHash->SetFlag(ITHASH_SKIP);
-                continue;
-            }
-
-            // Add this hash to the tracker
-            auto& entry = hashTracker[hash];
-            entry.emplace_back(itemToHash);
-            auto view = entry | std::views::filter([&](const CItem* x)
-                { return x->GetSizeLogical() == size; });
-            std::vector subset(view.begin(), view.end());
-            if (subset.size() < 2) continue;
-
-            // See if this hash has duplicates
-            if (hashLevel == maxHashLevel)
-            {
-                // Already at max level: record duplicates and stop
-                hashItemsWithDupes[hash].insert(subset.begin(), subset.end());
-            }
-            else
-            {
-                // Schedule next-level hashing
-                nextLevelSet.insert(subset.begin(), subset.end());
-            }
+        // Mark as bad if not hashable
+        if (hash.empty())
+        {
+            itemToHash->SetFlag(ITHASH_SKIP);
+            continue;
         }
 
-        hashSet.assign(nextLevelSet.begin(), nextLevelSet.end());
-        if (hashSet.empty()) break;
+        // Add this hash to the tracker
+        HashKey key{ size, std::move(hash) };
+        auto& entry = m_hashTrackers[level][key];
+        entry.emplace_back(itemToHash);
+        if (entry.size() < 2) continue;
 
-        // Determine the appropriate hash level for this item based on what's already been hashed
-        hashLevel = std::min(maxHashLevel,
-            hashLevel == ITHASH_SMALL ? ITHASH_MEDIUM : ITHASH_LARGE);
-    }
+        // Promote the first matching pair once, then only each new arrival.
+        if (level != maxHashLevel)
+        {
+            m_pendingHashes.emplace_back(itemToHash, level + 1);
+            if (entry.size() == 2) m_pendingHashes.emplace_back(entry.front(), level + 1);
+            continue;
+        }
 
-    // Lock once and lookup dupeParent before iterating
-    if (hashItemsWithDupes.empty()) return;
-    std::scoped_lock nodeLock(m_nodeTrackerMutex);
-    for (const auto& [hash, itemsWithHash] : hashItemsWithDupes)
-    {
-        const auto nodeEntry = m_nodeTracker.find(hash);
-        auto dupeParent = nodeEntry != m_nodeTracker.end() ? nodeEntry->second : nullptr;
-
+        // Already at max level: publish completed matches before another hash can be cancelled.
+        CItem* firstMatch = entry.size() == 2 ? entry.front() : nullptr;
+        lock.unlock();
+        std::scoped_lock nodeLock(m_nodeTrackerMutex);
+        auto& dupeParent = m_nodeTracker[key];
         if (dupeParent == nullptr)
         {
             // Create new root item to hold these duplicates
-            dupeParent = new CItemDupe(hash);
+            dupeParent = new CItemDupe(key.second);
             m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
-            m_nodeTracker.emplace(hash, dupeParent);
         }
 
         // Add all items under the same parent
-        for (const auto& itemToAdd : itemsWithHash)
+        auto& hashParentNode = m_childTracker[dupeParent];
+        for (auto* itemToAdd : { firstMatch, itemToHash })
         {
-            auto& hashParentNode = m_childTracker[dupeParent];
-            if (hashParentNode.contains(itemToAdd)) continue;
-            const auto dupeChild = new CItemDupe(itemToAdd);
-            m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
-            hashParentNode.emplace(itemToAdd);
+            if (itemToAdd == nullptr || !hashParentNode.emplace(itemToAdd).second) continue;
+            m_pendingListAdds.push(std::make_pair(dupeParent, new CItemDupe(itemToAdd)));
         }
     }
 }
@@ -176,7 +157,11 @@ void CFileDupeControl::RemoveItem(CItem* item)
     // Exit immediately if not doing duplicate detector
     if (!COptions::ScanForDuplicates) return;
 
+    // Publish queued nodes before pruning references to items that will be refreshed.
+    SortItems();
+
     // Enumerate child items and mark all as unhashed
+    std::unordered_set<CItem*> removedItems;
     std::vector queue({ item });
     while (!queue.empty())
     {
@@ -187,6 +172,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             // Mark as all files as not being hashed anymore
             std::erase(m_sizeTracker[qitem->GetSizeLogical()], qitem);
             qitem->SetHashType(ITHASH_NONE, false);
+            removedItems.insert(qitem);
         }
         else if (!qitem->IsLeaf())
         {
@@ -198,10 +184,12 @@ void CFileDupeControl::RemoveItem(CItem* item)
         return pair.second.empty();
     });
 
+    std::erase_if(m_pendingHashes, [&](const auto& pending) { return removedItems.contains(pending.first); });
+
     // Remove all unhashed files from hash trackers
-    for (auto* hashTracker : { &m_trackerSmall, &m_trackerMedium, &m_trackerLarge })
+    for (auto& hashTracker : m_hashTrackers)
     {
-        for (auto& hashSet : *hashTracker | std::views::values)
+        for (auto& hashSet : hashTracker | std::views::values)
         {
             // Skip if no matches of the item associated with this hash
             std::erase_if(hashSet, [](const auto& hashItem)
@@ -211,7 +199,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         }
 
         // Cleanup empty structures
-        std::erase_if(*hashTracker, [](const auto& pair)
+        std::erase_if(hashTracker, [](const auto& pair)
         {
             return pair.second.empty();
         });
@@ -286,9 +274,8 @@ void CFileDupeControl::AfterDeleteAllItems()
     // Cleanup support lists
     m_pendingListAdds.clear();
     m_nodeTracker.clear();
-    m_trackerSmall.clear();
-    m_trackerMedium.clear();
-    m_trackerLarge.clear();
+    for (auto& tracker : m_hashTrackers) tracker.clear();
+    m_pendingHashes.clear();
     m_sizeTracker.clear();
     m_childTracker.clear();
 

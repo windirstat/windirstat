@@ -33,17 +33,15 @@ public:
     void SortItems() override;
     void AfterDeleteAllItems() override;
 
-    std::mutex m_sizeTrackerMutex;
+    using HashKey = std::pair<ULONGLONG, std::vector<BYTE>>;
+    using HashTracker = std::map<HashKey, std::vector<CItem*>>;
+    std::mutex m_trackerMutex;
     std::map<ULONGLONG, std::vector<CItem*>> m_sizeTracker;
-    std::mutex m_trackerSmallMutex;
-    std::mutex m_trackerMediumMutex;
-    std::mutex m_trackerLargeMutex;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerSmall;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerMedium;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerLarge;
+    std::array<HashTracker, 3> m_hashTrackers;
+    std::vector<std::pair<CItem*, size_t>> m_pendingHashes;
 
     std::mutex m_nodeTrackerMutex;
-    std::map<std::vector<BYTE>, CItemDupe*> m_nodeTracker;
+    std::map<HashKey, CItemDupe*> m_nodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_childTracker;
 
     SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_pendingListAdds;
