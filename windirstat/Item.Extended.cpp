@@ -248,7 +248,7 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_LAST_CHANGE:
         if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
-            return FormatFileTime(m_lastChange);
+            return FormatFileTime(GetLastChange());
         }
         break;
 
@@ -357,11 +357,11 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
     case COL_LAST_CHANGE:
     {
-        if (m_lastChange < other->m_lastChange)
+        if (GetLastChange() < other->GetLastChange())
         {
             return -1;
         }
-        if (m_lastChange == other->m_lastChange)
+        if (GetLastChange() == other->GetLastChange())
         {
             return 0;
         }

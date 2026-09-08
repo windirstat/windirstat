@@ -183,8 +183,14 @@ public:
     void ExtensionDataProcessChildren(bool remove = false);
 
     // Attributes & Properties
-    FILETIME GetLastChange() const noexcept { return m_lastChange; }
-    void SetLastChange(const FILETIME& t) noexcept { m_lastChange = t; }
+    FILETIME GetLastChange() const noexcept
+    {
+        return std::bit_cast<FILETIME>(m_lastChange.load(std::memory_order_relaxed));
+    }
+    void SetLastChange(const FILETIME& t) noexcept
+    {
+        m_lastChange.store(std::bit_cast<ULONGLONG>(t), std::memory_order_relaxed);
+    }
     void SetAttributes(DWORD attr) noexcept { m_attributes = LOWORD(attr); }
     DWORD GetAttributes() const noexcept;
     USHORT GetSortAttributes() const noexcept;
@@ -336,7 +342,7 @@ private:
     std::atomic<ULONGLONG> m_sizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_sizeLogical = 0;  // Total local size of self or subtree
     ULONGLONG m_index = 0;                     // Index of item for special scan types
-    FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
+    std::atomic<ULONGLONG> m_lastChange = 0;      // Last modification time of self or subtree
     ITEMTYPE m_type;                           // Indicates our type.
     USHORT m_attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_nameLen = 0;                      // Length of name string

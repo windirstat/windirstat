@@ -60,7 +60,7 @@ CItem::CItem(CItem* linkedItem) : m_type(IT_HLINKS_FILE)
     m_sizePhysical = linkedItem->GetSizePhysicalRaw();
     m_sizeLogical = linkedItem->GetSizeLogical();
     m_index = reinterpret_cast<std::uintptr_t>(linkedItem);
-    m_lastChange = linkedItem->GetLastChange();
+    SetLastChange(linkedItem->GetLastChange());
 }
 
 CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastChange,
@@ -69,7 +69,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
 {
     SetName(name);
     m_type = type;
-    m_lastChange = lastChange;
+    SetLastChange(lastChange);
     m_sizePhysical = sizePhysical;
     m_sizeLogical = sizeLogical;
     m_index = index;
@@ -521,9 +521,12 @@ std::wstring CItem::GetOwner(const bool force) const
 
 void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 {
+    const auto value = std::bit_cast<ULONGLONG>(t);
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        p->m_lastChange = std::max(p->m_lastChange, t);
+        auto previous = p->m_lastChange.load(std::memory_order_relaxed);
+        while (previous < value && !p->m_lastChange.compare_exchange_weak(previous, value,
+            std::memory_order_relaxed)) {}
     }
 }
 
@@ -533,10 +536,10 @@ void CItem::UpwardRecalcLastChange()
     for (auto p = GetParent(); p != nullptr; p = p->GetParent())
     {
         const auto newMax = (std::ranges::max)(
-            p->GetChildren() | std::views::transform(&CItem::m_lastChange));
+            p->GetChildren() | std::views::transform(&CItem::GetLastChange));
 
-        if (p->m_lastChange == newMax) break;
-        p->m_lastChange = newMax;
+        if (p->GetLastChange() == newMax) break;
+        p->SetLastChange(newMax);
     }
 }
 
@@ -967,7 +970,8 @@ void CItem::UpdateStatsFromDisk()
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr)); handle != INVALID_HANDLE_VALUE)
         {
-            GetFileTime(handle, nullptr, nullptr, &m_lastChange);
+            FILETIME lastChange{};
+            if (GetFileTime(handle, nullptr, nullptr, &lastChange)) SetLastChange(lastChange);
         }
     }
 }
