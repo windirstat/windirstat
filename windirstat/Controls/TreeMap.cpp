@@ -164,22 +164,31 @@ bool CanDrawExtensionLabel(const CRect& rc, const CSize& textSize)
         && textSize.cy + EXTENSION_TEXT_PADDING <= rc.Height();
 }
 
-void DrawShadowedExtensionText(HDC dc, const std::wstring_view text, const CRect& rc)
+void DrawShadowedExtensionText(HDC dc, const std::wstring_view text, const CRect& rc, const COLORREF background)
 {
     ScopedDcState saveDc(dc);
     IntersectClipRect(dc, rc.left, rc.top, rc.right, rc.bottom);
 
+    const bool contrastLabels = background != CLR_INVALID;
+    COLORREF foreground = RGB(255, 255, 255);
+    if (contrastLabels)
     {
-        ScopedTextColor shadowTextColor(dc, RGB(0, 0, 0));
+        const double luminance = CColorSpace::GetRelativeLuminance(background);
+        if ((luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05)) foreground = RGB(0, 0, 0);
+    }
+
+    {
+        ScopedTextColor shadowTextColor(dc, foreground == RGB(0, 0, 0) ? RGB(255, 255, 255) : RGB(0, 0, 0));
         for (const CPoint& offset : EXTENSION_SHADOW_OFFSETS)
         {
+            if (contrastLabels && offset.y != 1) continue;
             CRect shadowRc = rc + offset;
             DrawTextW(dc, text.data(), static_cast<int>(text.size()), &shadowRc, EXTENSION_TEXT_FLAGS);
         }
     }
 
     {
-        ScopedTextColor textColor(dc, RGB(255, 255, 255));
+        ScopedTextColor textColor(dc, foreground);
         CRect textRc = rc;
         DrawTextW(dc, text.data(), static_cast<int>(text.size()), &textRc, EXTENSION_TEXT_FLAGS);
     }
@@ -192,6 +201,47 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
     palette.resize(std::size(DefaultCushionColors));
     std::ranges::transform(DefaultCushionColors, palette.begin(),
         [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, CColorSpace::GraphPaletteBrightness); });
+}
+
+CTreeMap::Options CTreeMap::GetPreset(const Preset preset)
+{
+    Options options = GetDefaults();
+    if (preset == Preset::Classic) return options;
+
+    options.grid = true;
+    options.gridColor = RGB(48, 52, 56);
+    options.brightness = 0.72;
+    options.saturation = 0.65;
+    options.height = 0.15;
+    options.scaleFactor = 0.80;
+    options.ambientLight = 0.70;
+    options.contrastLabels = true;
+
+    switch (preset)
+    {
+    case Preset::Flat:
+        options.saturation = 0.85;
+        options.height = 0.0;
+        options.ambientLight = 1.0;
+        break;
+    case Preset::Pastel:
+        options.gridColor = RGB(96, 100, 104);
+        options.brightness = 0.82;
+        options.saturation = 0.40;
+        options.height = 0.10;
+        options.ambientLight = 0.85;
+        break;
+    case Preset::HighContrast:
+        options.gridColor = RGB(0, 0, 0);
+        options.brightness = 0.62;
+        options.saturation = 1.0;
+        options.height = 0.0;
+        options.ambientLight = 1.0;
+        break;
+    default:
+        break;
+    }
+    return options;
 }
 
 std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
@@ -291,6 +341,7 @@ void CTreeMap::SetOptions(const Options* options)
 {
     assert(options != nullptr);
     m_options = *options;
+    m_options.saturation = std::clamp(m_options.saturation, 0.0, 1.0);
 
     // Derive normalized vector here for performance
     const double lx = m_options.lightSourceX; // negative = left
@@ -713,7 +764,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
 
     if (m_options.showExtensions)
     {
-        DrawTreeMapLabels(dc, rc.TopLeft());
+        DrawTreeMapLabels(dc, rc.TopLeft(), bitmap);
     }
 }
 
@@ -812,7 +863,17 @@ void CTreeMap::RenderRectangle(const BitmapView bitmap, const CRect& rc, const s
         return;
     }
 
-    const PreparedColor prepared = PrepareRenderColor(color, m_options.brightness);
+    PreparedColor prepared = PrepareRenderColor(color, m_options.brightness);
+    if (m_options.saturation < 1.0)
+    {
+        const double gray = (GetRValue(prepared.color) + GetGValue(prepared.color) + GetBValue(prepared.color)) / 3.0;
+        const auto desaturate = [&](const BYTE component)
+        {
+            return static_cast<BYTE>(gray + (component - gray) * m_options.saturation);
+        };
+        prepared.color = RGB(desaturate(GetRValue(prepared.color)),
+            desaturate(GetGValue(prepared.color)), desaturate(GetBValue(prepared.color)));
+    }
 
     if (IsCushionShading())
     {
@@ -933,10 +994,11 @@ void CTreeMap::AddRidge(const CRect& rc, std::array<double, 4>& surface, const d
     surface[1] -= hf;
 }
 
-void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset) const
+void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset, const BitmapView bitmap) const
 {
     assert(dc != nullptr);
     if (dc == nullptr) return;
+    if (m_options.contrastLabels) GdiFlush();
 
     GdiObjectSelection selectFont(dc, GetAppFont());
     ScopedBkMode backgroundMode(dc, TRANSPARENT);
@@ -965,7 +1027,14 @@ void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset) const
         }
         if (!CanDrawExtensionLabel(rc, cacheIt->second)) continue;
 
-        DrawShadowedExtensionText(dc, label, rc);
+        COLORREF background = CLR_INVALID;
+        if (m_options.contrastLabels)
+        {
+            const CPoint center = visible.rectangle.Center();
+            const COLORREF pixel = bitmap.bits[static_cast<size_t>(center.y) * bitmap.stride + center.x];
+            background = RGB(GetBValue(pixel), GetGValue(pixel), GetRValue(pixel));
+        }
+        DrawShadowedExtensionText(dc, label, rc, background);
     }
 }
 

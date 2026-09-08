@@ -52,7 +52,6 @@ bool CPageTreeMap::PreprocessMessage(MSG* pMsg)
                     pSlider->SetPos(currentPos - 1);
 
                 OnSomethingChanged();
-                ValuesAltered();
 
                 return true;
             }
@@ -65,6 +64,7 @@ void CPageTreeMap::InitializePage()
 {
     m_preview.SubclassDlgItem(IDC_PREVIEW, this);
     m_styleCombo.SubclassDlgItem(IDC_TREEMAPSTYLE, this);
+    m_presetCombo.SubclassDlgItem(IDC_TREEMAPPRESET, this);
     m_highlightColor.SubclassDlgItem(IDC_TREEMAPHIGHLIGHTCOLOR, this);
     m_gridColor.SubclassDlgItem(IDC_TREEMAPGRIDCOLOR, this);
     m_brightness.SubclassDlgItem(IDC_BRIGHTNESS, this);
@@ -72,8 +72,6 @@ void CPageTreeMap::InitializePage()
     m_height.SubclassDlgItem(IDC_HEIGHT, this);
     m_scaleFactor.SubclassDlgItem(IDC_SCALEFACTOR, this);
     m_lightSource.SubclassDlgItem(IDC_LIGHTSOURCE, this);
-    m_resetButton.SubclassDlgItem(IDC_RESET, this);
-    ValuesAltered(); // m_undo is invalid
 
     m_brightness.SetPageSize(10);
     m_cushionShading.SetPageSize(10);
@@ -90,8 +88,14 @@ void CPageTreeMap::InitializePage()
         m_styleCombo.AddString(style.c_str());
     }
     assert(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
+    for (const std::wstring& preset : SplitString(Localization::Lookup(IDS_PAGE_TREEMAP_PRESETS), L','))
+    {
+        m_presetCombo.AddString(preset.c_str());
+    }
+    assert(m_presetCombo.GetCount() == static_cast<int>(CTreeMap::Preset::HighContrast) + 2);
 
     UpdateOptions(false);
+    UpdatePresetSelection();
     UpdateStatics();
     m_preview.SetOptions(&m_options);
 }
@@ -139,23 +143,37 @@ void CPageTreeMap::UpdateStatics()
     SetText(IDC_STATICSCALEFACTOR, std::to_wstring(m_scaleFactor.GetPos()));
 }
 
+void CPageTreeMap::UpdatePresetSelection()
+{
+    const auto appearance = [](const CTreeMap::Options& options)
+    {
+        return std::tuple(options.grid, options.grid ? options.gridColor : CLR_INVALID, options.contrastLabels,
+            options.GetBrightnessPercent(), options.GetSaturationPercent(), options.GetAmbientLightPercent(),
+            options.GetHeightPercent(), options.GetScaleFactorPercent(),
+            options.GetLightSourceXPercent(), options.GetLightSourceYPercent());
+    };
+    const auto current = appearance(m_options);
+    int selection = static_cast<int>(CTreeMap::Preset::HighContrast) + 1;
+    for (int preset = 0; preset <= static_cast<int>(CTreeMap::Preset::HighContrast); ++preset)
+    {
+        if (current != appearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)))) continue;
+        selection = preset;
+        break;
+    }
+    m_presetCombo.SetCurSel(selection);
+}
+
 void CPageTreeMap::OnSomethingChanged()
 {
     if (!IsInitialized())
         return;
 
     UpdateOptions(true);
+    UpdatePresetSelection();
     UpdateStatics();
     m_preview.SetOptions(&m_options);
     m_preview.Invalidate();
     SetModified();
-}
-
-void CPageTreeMap::ValuesAltered(const bool altered)
-{
-    m_altered = altered;
-    const std::wstring s = m_altered ? Localization::Lookup(IDS_RESET_DEFAULTS) : Localization::Lookup(IDS_BACK_TO_SETTINGS);
-    m_resetButton.SetText(s.c_str());
 }
 
 void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
@@ -173,13 +191,11 @@ void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
 void CPageTreeMap::OnHScroll(UINT, UINT, CWnd*)
 {
     OnSomethingChanged();
-    ValuesAltered();
 }
 
 void CPageTreeMap::OnLightSourceChanged(NMHDR*, LRESULT*)
 {
     OnSomethingChanged();
-    ValuesAltered();
 }
 
 void CPageTreeMap::OnSetModified()
@@ -187,30 +203,27 @@ void CPageTreeMap::OnSetModified()
     OnSomethingChanged();
 }
 
-void CPageTreeMap::OnBnClickedReset()
+void CPageTreeMap::OnPresetChanged()
 {
-    CTreeMap::Options o;
-    if (m_altered)
-    {
-        o = CTreeMap::GetDefaults();
-        m_undo = m_options;
-    }
-    else
-    {
-        o = m_undo;
-    }
+    const int preset = m_presetCombo.GetCurSel();
+    if (preset < 0 || preset > static_cast<int>(CTreeMap::Preset::HighContrast)) return;
 
-    m_options.brightness = o.brightness;
-    m_options.ambientLight = o.ambientLight;
-    m_options.height = o.height;
-    m_options.scaleFactor = o.scaleFactor;
-    m_options.lightSourceX = o.lightSourceX;
-    m_options.lightSourceY = o.lightSourceY;
+    ApplyAppearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)));
+}
 
-    ValuesAltered(!m_altered);
+void CPageTreeMap::ApplyAppearance(const CTreeMap::Options& appearance)
+{
+    m_options.grid = appearance.grid;
+    m_options.gridColor = appearance.gridColor;
+    m_options.brightness = appearance.brightness;
+    m_options.saturation = appearance.saturation;
+    m_options.contrastLabels = appearance.contrastLabels;
+    m_options.ambientLight = appearance.ambientLight;
+    m_options.height = appearance.height;
+    m_options.scaleFactor = appearance.scaleFactor;
+    m_options.lightSourceX = appearance.lightSourceX;
+    m_options.lightSourceY = appearance.lightSourceY;
+
     UpdateOptions(false);
-    UpdateStatics();
-    m_preview.SetOptions(&m_options);
-    m_preview.Invalidate();
-    SetModified();
+    OnSomethingChanged();
 }

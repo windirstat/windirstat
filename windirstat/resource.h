@@ -51,7 +51,6 @@
 #define IDC_EXCLUDE_HIDDEN_DIRECTORY    1029
 #define IDC_BACKUP_RESTORE              1030
 #define IDC_DELETION_WARNING            1031
-#define IDC_RESET                       1032
 #define IDC_SKIP_CLOUD_LINKS            1033
 #define IDC_COLUMN_AUTOSIZE             1034
 #define IDC_EXCLUDE_PROTECTED_DIRECTORY 1035
@@ -168,6 +167,7 @@
 #define IDC_ADD_CLEANUP                 1148
 #define IDC_REMOVE_CLEANUP              1149
 #define IDC_ADD_FOLDER                  1152
+#define IDC_TREEMAPPRESET                1153
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -297,7 +297,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32976
-#define _APS_NEXT_CONTROL_VALUE         1153
+#define _APS_NEXT_CONTROL_VALUE         1154
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

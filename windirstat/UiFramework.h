@@ -1763,7 +1763,7 @@ public:
     HICON   SetIcon(HICON hIcon) { return reinterpret_cast<HICON>(SendNativeMessage(STM_SETICON, reinterpret_cast<WPARAM>(hIcon))); }
 };
 
-class CButton : public CWnd
+class CButton : public MessageTarget<CButton, CWnd>
 {
 public:
     bool Create(const LPCWSTR lpszCaption, const DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
@@ -1772,6 +1772,15 @@ public:
     }
     void SetCheck(const int nCheck) { SendNativeMessage(BM_SETCHECK, static_cast<WPARAM>(nCheck)); }
     HICON SetIcon(HICON hIcon) { return reinterpret_cast<HICON>(SendNativeMessage(BM_SETIMAGE, IMAGE_ICON, hIcon)); }
+    // Offset in 96-DPI units, also scaled with the application font size.
+    void SetTextOffset(CPoint offset);
+    static std::span<const RouteEntry> Routes();
+
+private:
+    bool OnCustomDraw(UINT id, NMHDR* header, LRESULT* result);
+    CPoint m_textOffset;
+    HDC m_textDrawDc = nullptr;
+    CPoint m_textDrawOrigin;
 };
 
 class CEdit : public CWnd

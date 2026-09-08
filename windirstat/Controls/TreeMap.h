@@ -181,9 +181,11 @@ public:
         bool grid;           // Whether to draw grid lines
         bool showExtensions; // Whether to show file extensions in treemap
         bool showFolderFrames; // Whether to draw folder borders and headers
+        bool contrastLabels; // Whether to use contrast-aware text with a single shadow
         int folderFramesDrawThreshold; // Minimum folder rectangle edge to draw frames
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
+        double saturation;   // 0..1.0   (default = 1.0)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
         double scaleFactor;  // 0..1.0   (default = 0.90)    Factor "F"
         double ambientLight; // 0..1.0   (default = 0.15)    Factor "Ia"
@@ -191,6 +193,7 @@ public:
         double lightSourceY; // -4.0..+4.0 (default = -1.0), negative = top
 
         constexpr int GetBrightnessPercent() const { return RoundDouble(brightness * 100); }
+        constexpr int GetSaturationPercent() const { return RoundDouble(saturation * 100); }
         constexpr int GetHeightPercent() const { return RoundDouble(height * 100); }
         constexpr int GetScaleFactorPercent() const { return RoundDouble(scaleFactor * 100); }
         constexpr int GetAmbientLightPercent() const { return RoundDouble(ambientLight * 100); }
@@ -199,6 +202,7 @@ public:
         CPoint GetLightSourcePoint() const { return { GetLightSourceXPercent(), GetLightSourceYPercent() }; }
 
         constexpr void SetBrightnessPercent(const int n) { brightness = n / 100.0; }
+        constexpr void SetSaturationPercent(const int n) { saturation = n / 100.0; }
         constexpr void SetHeightPercent(const int n) { height = n / 100.0; }
         constexpr void SetScaleFactorPercent(const int n) { scaleFactor = n / 100.0; }
         constexpr void SetAmbientLightPercent(const int n) { ambientLight = n / 100.0; }
@@ -217,6 +221,11 @@ public:
 
     // Good values
     static Options GetDefaults() { return DefaultOptions; }
+    enum class Preset : std::uint8_t
+    {
+        Classic, Calm, Flat, Pastel, HighContrast
+    };
+    static Options GetPreset(Preset preset);
 
     // Construct the treemap generator and register the callback interface.
     CTreeMap();
@@ -272,7 +281,7 @@ protected:
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
     // Draws file extension/filename labels on leaf items
-    void DrawTreeMapLabels(HDC dc, const CPoint& offset) const;
+    void DrawTreeMapLabels(HDC dc, const CPoint& offset, BitmapView bitmap) const;
 
     void AddVisibleItem(CItem* item, const CRect& rectangle, int depth);
     void BuildHitTestIndex();
@@ -283,9 +292,11 @@ protected:
         .grid = false,
         .showExtensions = false,
         .showFolderFrames = false,
+        .contrastLabels = false,
         .folderFramesDrawThreshold = 5,
         .gridColor = RGB(0, 0, 0),
         .brightness = 0.88,
+        .saturation = 1.0,
         .height = 0.38,
         .scaleFactor = 0.91,
         .ambientLight = 0.13,

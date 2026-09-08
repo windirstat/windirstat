@@ -38,20 +38,19 @@ public:
 protected:
     void UpdateOptions(bool save = true);
     void UpdateStatics();
+    void UpdatePresetSelection();
+    void ApplyAppearance(const CTreeMap::Options& appearance);
     void OnSomethingChanged();
-    void ValuesAltered(bool altered = true);
 
     void InitializePage() override;
     void OnOK() override;
 
     CTreeMap::Options m_options{}; // Current options
 
-    bool m_altered = false;   // Values have been altered. Button reads "Reset to defaults".
-    CTreeMap::Options m_undo{}; // Valid, if m_altered = false
-
     CTreeMapPreview m_preview;
 
     CComboBox m_styleCombo;
+    CComboBox m_presetCombo;
     CColorButton m_highlightColor;
     CColorButton m_gridColor;
 
@@ -60,8 +59,6 @@ protected:
     CSliderCtrl m_height;
     CSliderCtrl m_scaleFactor;
     CXySlider m_lightSource;
-
-    CButton m_resetButton;
 
 public:
     static std::span<const RouteEntry> Routes();
@@ -72,7 +69,7 @@ protected:
     void OnHScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
     void OnLightSourceChanged(NMHDR*, LRESULT*);
     void OnSetModified();
-    void OnBnClickedReset();
+    void OnPresetChanged();
 };
 
 inline std::span<const RouteEntry> CPageTreeMap::Routes()
@@ -84,7 +81,7 @@ inline std::span<const RouteEntry> CPageTreeMap::Routes()
         Route::Notify<&OnColorChangedTreeMapHighlight>(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR),
         Route::Control<&OnSetModified>(CBN_SELCHANGE, IDC_TREEMAPSTYLE),
         Route::Control<&OnSetModified>(BN_CLICKED, IDC_TREEMAPGRID),
-        Route::Control<&OnBnClickedReset>(BN_CLICKED, IDC_RESET),
+        Route::Control<&OnPresetChanged>(CBN_SELCHANGE, IDC_TREEMAPPRESET),
         Route::Notify<&OnLightSourceChanged>(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE),
     };
     return entries;

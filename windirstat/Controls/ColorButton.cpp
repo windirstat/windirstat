@@ -62,6 +62,7 @@ void CColorButton::OnPaint()
         assert(created);
 
         ModifyStyle(0, WS_CLIPCHILDREN);
+        SetTextOffset({ -4, 0 });
     }
     CButton::OnPaint();
 }

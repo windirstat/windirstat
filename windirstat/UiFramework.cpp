@@ -145,6 +145,43 @@ void InitializeDialogFontAndSize(const HWND dialog)
     ApplyAppFont(dialog);
 }
 
+void CButton::SetTextOffset(const CPoint offset)
+{
+    m_textOffset = offset;
+    if (m_hWnd != nullptr) InvalidateRect(nullptr);
+}
+
+std::span<const RouteEntry> CButton::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::ReflectNotify<&OnCustomDraw>(NM_CUSTOMDRAW),
+    };
+    return entries;
+}
+
+bool CButton::OnCustomDraw(UINT, NMHDR* header, LRESULT* result)
+{
+    const auto* customDraw = reinterpret_cast<NMCUSTOMDRAW*>(header);
+    if (customDraw->dwDrawStage == CDDS_POSTPAINT)
+    {
+        if (m_textDrawDc == nullptr || m_textDrawDc != customDraw->hdc) return false;
+        SetViewportOrgEx(std::exchange(m_textDrawDc, nullptr),
+            m_textDrawOrigin.x, m_textDrawOrigin.y, nullptr);
+        *result = CDRF_DODEFAULT;
+        return true;
+    }
+
+    // Shift the caption after the background is drawn, then restore before the native focus rectangle is drawn.
+    if (customDraw->dwDrawStage != CDDS_PREPAINT || m_textOffset == CPoint() || m_textDrawDc != nullptr ||
+        !OffsetViewportOrgEx(customDraw->hdc, ScaleForDpi(m_textOffset.x), ScaleForDpi(m_textOffset.y), &m_textDrawOrigin))
+        return false;
+
+    m_textDrawDc = customDraw->hdc;
+    *result = CDRF_NOTIFYPOSTPAINT;
+    return true;
+}
+
 void CDC::DrawTreeExpander(const CRect& nodeRect, const bool expanded)
 {
     Gdiplus::Graphics graphics(m_hDC);
