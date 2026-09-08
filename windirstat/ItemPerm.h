@@ -58,7 +58,7 @@ enum PERMSLEVEL : std::uint8_t
 class CItemPerm final : public CTreeListItem
 {
 public:
-    CItemPerm(const std::wstring& path, DWORD attributes, std::wstring account, ACCESS_MASK mask, bool deny, BYTE aceFlags, bool inheritanceDisabled);
+    CItemPerm(std::shared_ptr<CItem> item, std::wstring account, ACCESS_MASK mask, bool deny, BYTE aceFlags, bool inheritanceDisabled);
     ~CItemPerm() override = default;
 
     // CTreeListItem required overrides
@@ -94,7 +94,7 @@ public:
 private:
     static std::atomic<int> m_ruleVersion;
 
-    std::unique_ptr<CItem> m_item;
+    std::shared_ptr<CItem> m_item;
     std::wstring m_account;
     ACCESS_MASK m_mask;
     bool m_isContainer;

@@ -60,13 +60,13 @@ std::wstring StripMnemonicMarkers(std::wstring text)
 }
 }
 
-CItemPerm::CItemPerm(const std::wstring& path, const DWORD attributes,
-    std::wstring account, const ACCESS_MASK mask, const bool deny, const BYTE aceFlags, const bool inheritanceDisabled) : m_account(std::move(account)),
-    m_mask(mask), m_isContainer((attributes & FILE_ATTRIBUTE_DIRECTORY) != 0),
+CItemPerm::CItemPerm(std::shared_ptr<CItem> item, std::wstring account,
+    const ACCESS_MASK mask, const bool deny, const BYTE aceFlags, const bool inheritanceDisabled) :
+    m_item(std::move(item)), m_account(std::move(account)), m_mask(mask),
+    m_isContainer((m_item->GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) != 0),
     m_level(ComputeRightsLevel(mask)), m_applies(ComputeApplies(aceFlags, m_isContainer)), m_deny(deny),
     m_inheritanceDisabled(inheritanceDisabled)
 {
-    m_item = std::make_unique<CItem>(m_isContainer ? IT_DIRECTORY : IT_FILE, path, FILETIME{}, 0, 0, 0, attributes, 0, 0);
 }
 
 std::wstring CItemPerm::GetText(const int subitem) const

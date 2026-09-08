@@ -57,6 +57,7 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItem(const CItem* item, const boo
     const bool inheritanceDisabled = (control & SE_DACL_PROTECTED) != 0;
 
     // Build a row for each qualifying entry (root items also list inherited entries)
+    std::shared_ptr<CItem> snapshot;
     for (const auto a : std::views::iota(0u, static_cast<unsigned>(dacl->AceCount)))
     {
         ACE_HEADER* header = nullptr;
@@ -70,7 +71,10 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItem(const CItem* item, const boo
 
         ACCESS_MASK mask = ace->Mask;
         MapGenericMask(&mask, &fileMapping);
-        rows.push_back(new CItemPerm(item->GetPath(), item->GetAttributes(), std::move(account), mask,
+        if (snapshot == nullptr)
+            snapshot = std::make_shared<CItem>(item->IsTypeOrFlag(IT_FILE) ? IT_FILE : IT_DIRECTORY,
+                item->GetPath(), FILETIME{}, 0, 0, 0, item->GetAttributes(), 0, 0);
+        rows.push_back(new CItemPerm(snapshot, std::move(account), mask,
             header->AceType == ACCESS_DENIED_ACE_TYPE, header->AceFlags, inheritanceDisabled));
     }
     return rows;
