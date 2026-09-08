@@ -881,9 +881,9 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         // Update the visual progress at the bottom of the screen
         UpdateProgress();
 
-        // By sorting items, items will be redrawn which will
-        // also force pacman to update with recent position
-        CFileTreeControl::Get()->SortItems();
+        // Repaint progress independently of the less frequent row sort.
+        if (doInfrequentUpdate) CFileTreeControl::Get()->SortItems();
+        else CFileTreeControl::Get()->Invalidate(false);
 
         // Conditionally sort duplicates
         if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->IsFileDupeViewTabActive())

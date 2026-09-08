@@ -573,11 +573,16 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         SetColumnWidth(0, maxwidth + padding);
     }
 
+    const bool sortChildrenOnly = m_logicalFocus == LF_FILETREE && CWinDirStatModel::Get()->IsScanSettled();
+    if (sortChildrenOnly) std::ranges::stable_sort(children, [this](const CWdsListItem* first, const CWdsListItem* second)
+    {
+        return first->CompareSort(second, m_sorting) < 0;
+    });
     InsertListItem(i + 1, children);
     item->SetExpanded(true);
 
     // Sort at end so we do not invalidate position data
-    if (childCount > 0) SortItems();
+    if (childCount > 0 && !sortChildrenOnly) SortItems();
 
 }
 
