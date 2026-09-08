@@ -432,7 +432,7 @@ CItem* LoadResults(const std::wstring& path)
 static std::vector<const CItem*> CollectItems(CItem* rootItem)
 {
     std::vector<const CItem*> items;
-    items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
+    items.reserve(static_cast<size_t>(rootItem->GetItemsCount()) + 1);
 
     std::vector queue({ rootItem });
     while (!queue.empty()) [[msvc::forceinline_calls]]
