@@ -57,20 +57,26 @@ void CFileSearchControl::ProcessSearch(CItem* item,
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 
+    // Remove previous results
+    SetRootItem();
+    m_rootItem->SetLimitExceeded(false);
+
     // Process search request using progress dialog
     std::vector<CItem*> matchedItems;
+    bool limitExceeded = false;
     CProgressDlg(static_cast<size_t>(item->GetItemsCount()), CProgressDlg::Flags::None, GetMainWindow(),
         [&](CProgressDlg* pdlg)
     {
-        // Remove previous results
-        SetRootItem();
-        m_rootItem->SetLimitExceeded(false);
-
         // Precompile regex string
         const auto searchTermRegex = ComputeSearchRegex(searchTerm,
             searchCase, searchRegex);
 
         // Do search
+        const size_t maxResults = COptions::SearchMaxResults;
+        const auto bySize = [](const CItem* lhs, const CItem* rhs)
+        {
+            return lhs->GetSizeLogical() > rhs->GetSizeLogical();
+        };
         std::vector queue{ item };
         while (!queue.empty() && !pdlg->IsCancelled())
         {
@@ -89,7 +95,18 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
                 if (isMatch)
                 {
-                    matchedItems.push_back(qitem);
+                    if (matchedItems.size() < maxResults) matchedItems.push_back(qitem);
+                    else
+                    {
+                        if (!limitExceeded) std::ranges::make_heap(matchedItems, bySize);
+                        limitExceeded = true;
+                        if (qitem->GetSizeLogical() > matchedItems.front()->GetSizeLogical())
+                        {
+                            std::ranges::pop_heap(matchedItems, bySize);
+                            matchedItems.back() = qitem;
+                            std::ranges::push_heap(matchedItems, bySize);
+                        }
+                    }
                 }
             }
 
@@ -101,19 +118,8 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             }
         }
 
-        // Sort by physical size (largest first) and take top N results
-        const size_t maxResults = COptions::SearchMaxResults;
-        if (matchedItems.size() > maxResults)
-        {
-            // Partial sort to get the top N items by physical size
-            std::ranges::partial_sort(matchedItems, matchedItems.begin() + maxResults,
-                std::ranges::greater{}, &CItem::GetSizeLogical);
-
-            // Keep only the top N results
-            matchedItems.resize(maxResults);
-            m_rootItem->SetLimitExceeded(true);
-        }
     }).ShowModal();
+    m_rootItem->SetLimitExceeded(limitExceeded);
 
     // Add found items to the interface
     CWaitCursor wait;
