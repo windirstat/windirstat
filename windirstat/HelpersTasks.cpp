@@ -445,11 +445,10 @@ std::wstring GetNameFromSid(const PSID sid)
     // attempt to lookup sid in cache (guarded since callers may be on worker threads)
     const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, GetLengthSid(sid)));
     static std::mutex nameMapMutex;
-    std::scoped_lock lock(nameMapMutex);
     static std::map<std::vector<BYTE>, std::wstring> nameMap;
-    if (const auto iter = nameMap.find(sidVec); iter != nameMap.end())
     {
-        return iter->second;
+        std::scoped_lock lock(nameMapMutex);
+        if (const auto iter = nameMap.find(sidVec); iter != nameMap.end()) return iter->second;
     }
 
     // query required buffer sizes first so long domains (e.g. APPLICATION PACKAGE AUTHORITY) resolve
@@ -468,6 +467,7 @@ std::wstring GetNameFromSid(const PSID sid)
             domainName.resize(domainSize);
 
             // omit the domain prefix for well-known identities with none (e.g. Everyone)
+            std::scoped_lock lock(nameMapMutex);
             return nameMap.try_emplace(sidVec, domainName.empty() ? accountName :
                 std::format(L"{}\\{}", domainName, accountName)).first->second;
         }
@@ -476,6 +476,7 @@ std::wstring GetNameFromSid(const PSID sid)
     // fallback: return sid string
     SmartPointer sidBuff(LocalFree, static_cast<LPWSTR>(nullptr));
     ConvertSidToStringSid(sid, &sidBuff);
+    std::scoped_lock lock(nameMapMutex);
     return nameMap.try_emplace(sidVec, sidBuff != nullptr ?
         std::wstring(sidBuff) : std::wstring()).first->second;
 }
