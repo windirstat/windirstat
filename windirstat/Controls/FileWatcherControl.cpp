@@ -140,7 +140,13 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     const auto item = new CWatcherItem(path, verbs[action - 1], fileTime,
         ULARGE_INTEGER{ .u = { fileAttr.nFileSizeLow, fileAttr.nFileSizeHigh } }.QuadPart, fileAttr.dwFileAttributes);
     m_pendingItems.push(item);
-    PostMessage(WM_WATCHER_CHANGE, 0, 0);
+    PostWatcherChange();
+}
+
+void CFileWatcherControl::PostWatcherChange()
+{
+    if (!m_changePending.exchange(true) && !PostMessage(WM_WATCHER_CHANGE, 0, 0))
+        m_changePending = false;
 }
 
 void CFileWatcherControl::ClearResults()
@@ -161,25 +167,29 @@ void CFileWatcherControl::ClearPendingItems()
 
 LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
 {
+    constexpr std::size_t maxBatchSize = 1024;
     std::vector<CWdsListItem*> items;
+    items.reserve(maxBatchSize);
     CWatcherItem* item = nullptr;
-    while (m_pendingItems.pop(item))
+    while (items.size() < maxBatchSize && m_pendingItems.pop(item))
     {
         item->SetVisible(this, true);
         items.push_back(item);
     }
 
-    if (items.empty()) return 0;
-
-    const ScopedRedrawPause lock(this);
-    InsertListItem(GetItemCount(), items);
-    SortItems();
-
-    // Keep the most recent change in view when autoscroll is enabled
-    if (COptions::WatcherAutoScroll)
+    if (!items.empty())
     {
-        EnsureItemVisible(static_cast<CTreeListItem*>(items.back()));
+        const ScopedRedrawPause lock(this);
+        InsertSortedListItems(items);
+
+        // Keep the most recent change in view when autoscroll is enabled
+        if (COptions::WatcherAutoScroll)
+        {
+            EnsureItemVisible(static_cast<CTreeListItem*>(items.back()));
+        }
     }
+    m_changePending = false;
+    if (!m_pendingItems.empty()) PostWatcherChange();
     return 0;
 }
 

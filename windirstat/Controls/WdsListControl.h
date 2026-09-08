@@ -111,6 +111,7 @@ public:
     void LoadPersistentAttributes();
     bool HasFocus() const { return ::GetFocus() == m_hWnd; }
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
+    void InsertSortedListItems(std::span<CWdsListItem* const> items);
     void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
 
@@ -139,6 +140,7 @@ public:
 
 protected:
     void InitializeColors();
+    void UpdateSortIndicator();
     void ApplyColumnVisibility(int column);
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);

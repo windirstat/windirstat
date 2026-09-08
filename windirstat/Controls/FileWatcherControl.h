@@ -93,12 +93,14 @@ protected:
 
     std::vector<std::jthread> m_watchThreads;
     SingleConsumerQueue<CWatcherItem*> m_pendingItems;
+    std::atomic<bool> m_changePending = false;
 
     static constexpr DWORD WM_WATCHER_CHANGE = WM_APP + 2;
 
     void WatchDirectory(const std::wstring& path, const std::stop_token& stopToken);
     void AddChange(const std::wstring& path, DWORD action);
     void ClearPendingItems();
+    void PostWatcherChange();
 
 public:
     static std::span<const RouteEntry> Routes();

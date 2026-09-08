@@ -829,6 +829,27 @@ void CWdsListControl::InsertListItem(const int i, std::span<CWdsListItem* const>
     RedrawItems(i, itemCount - 1);
 }
 
+void CWdsListControl::InsertSortedListItems(std::span<CWdsListItem* const> items)
+{
+    if (items.empty()) return;
+
+    std::vector<CWdsListItem*> sorted(items.begin(), items.end());
+    const auto compare = [this](const CWdsListItem* first, const CWdsListItem* second)
+    {
+        return first->CompareSort(second, m_sorting) < 0;
+    };
+    std::ranges::stable_sort(sorted, compare);
+
+    SelectionPreserver preserve(this);
+    const auto oldSize = m_items.size();
+    m_items.insert(m_items.end(), sorted.begin(), sorted.end());
+    std::inplace_merge(m_items.begin(), m_items.begin() + oldSize, m_items.end(), compare);
+    for (const int i : std::views::iota(0, GetItemCount())) m_itemMap[m_items[i]] = i;
+    SetItemCountEx(GetItemCount(), LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+    Invalidate();
+    UpdateSortIndicator();
+}
+
 /*
  * Sorts the list control's items and updates the header to display the correct sorting indicator.
  * This method reorders the list control's items based on the current sorting column and direction.
@@ -850,7 +871,11 @@ void CWdsListControl::SortItems()
     }
 
     Invalidate();
+    UpdateSortIndicator();
+}
 
+void CWdsListControl::UpdateSortIndicator()
+{
     CHeaderCtrl& header = Header();
     HDITEM hditem{ .mask = HDI_FORMAT };
 

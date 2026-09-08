@@ -120,7 +120,7 @@ void CFileTabbedView::SetWatcherTabVisibility(const bool show)
     else
     {
         CFileWatcherControl::Get()->StopMonitoring();
-        CFileWatcherControl::Get()->DeleteAllItems();
+        CFileWatcherControl::Get()->ClearResults();
     }
 }
 
