@@ -221,22 +221,35 @@ void CWinApp::RunTaskWithUiUpdates(const std::function<void()>& task)
     }
 
     static const UINT taskCompleteMessage = RegisterWindowMessageW(L"WinDirStatTaskComplete");
-    std::jthread([mainWindow, task]
+    const DWORD uiThreadId = GetCurrentThreadId();
+    std::atomic<bool> complete = false;
+    std::exception_ptr error;
+    std::jthread worker([&]
     {
-        task();
-        mainWindow->PostMessage(taskCompleteMessage);
-    }).detach();
+        try { task(); }
+        catch (...) { error = std::current_exception(); }
+        complete.store(true, std::memory_order_release);
+        PostThreadMessageW(uiThreadId, taskCompleteMessage, 0, 0);
+    });
 
+    // Each call owns its completion state; the message only wakes the UI.
+    std::optional<int> quitCode;
     MSG message{};
-    while (GetMessageW(&message, nullptr, 0, 0))
+    while (!complete.load(std::memory_order_acquire))
     {
-        if (message.message == taskCompleteMessage) break;
+        const int result = GetMessageW(&message, nullptr, 0, 0);
+        if (result < 0) break;
+        if (result == 0) { quitCode = static_cast<int>(message.wParam); continue; }
+        if (message.message == taskCompleteMessage) continue;
         if (message.message >= WM_MOUSEFIRST && message.message <= WM_MOUSELAST) continue;
         if (message.message >= WM_KEYFIRST && message.message <= WM_KEYLAST) continue;
         if (message.message == WM_NCLBUTTONDOWN || message.message == WM_NCLBUTTONUP) continue;
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+    worker.join();
+    if (quitCode) PostQuitMessage(*quitCode);
+    if (error) std::rethrow_exception(error);
 }
 
 void CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle, const DWORD timeout) noexcept

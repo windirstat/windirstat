@@ -570,6 +570,7 @@ void CMainFrame::InvokeInMessageThread(std::function<void()> callback) const
 
 void CMainFrame::OnClose()
 {
+    if (m_shuttingDown) return;
     CWaitCursor wc;
 
     // Mark process as shutting down
