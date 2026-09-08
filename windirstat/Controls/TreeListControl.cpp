@@ -671,12 +671,13 @@ LRESULT CTreeListControl::OnSelectionChanged(const WPARAM wParam, const LPARAM l
             auto* checkItem = item->GetAncestorCheckItem();
             if (checkItem == nullptr || !selectedSet.contains(checkItem)) continue;
 
-            if (std::ranges::any_of(selectedSet, [checkItem](CTreeListItem* other)
-                { return other != checkItem && other->IsAncestorOf(checkItem); }))
+            for (auto* parent = checkItem->GetParent(); parent != nullptr; parent = parent->GetParent())
             {
+                if (!selectedSet.contains(parent)) continue;
                 const int idx = FindTreeItem(item);
                 if (idx != -1) SetItemState(idx, 0, LVIS_SELECTED);
                 selectedSet.erase(checkItem);
+                break;
             }
         }
     }

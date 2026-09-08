@@ -1036,9 +1036,11 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Prune descendants: if both an ancestor and a descendant are in the list,
     // remove any descendant since it will be rescanned as part of the ancestor scan
     std::erase_if(items, [&](const CItem* item) {
-        return std::ranges::any_of(items, [item](const CItem* other) {
-            return other != item && other->IsAncestorOf(item);
-        });
+        for (auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
+        {
+            if (uniqueItems.contains(parent)) return true;
+        }
+        return false;
     });
 
     // If scanning drive(s) just rescan the child nodes
