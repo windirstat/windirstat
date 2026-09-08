@@ -922,8 +922,6 @@ void CopyAllDriveMappings() noexcept
     if (futures.empty()) return;
     CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
-        constexpr auto timeout = std::chrono::seconds(5);
-        for (auto& f : futures)
-            (void)f.wait_for(timeout), pdlg->Increment();
+        for (auto& f : futures) f.wait(), pdlg->Increment();
     }).ShowModal();
 }
