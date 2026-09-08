@@ -1001,7 +1001,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
         // Try to load NTFS MFT
         if (item->IsTypeOrFlag(IT_DRIVE) && COptions::UseFastScanEngine)
         {
-            contextNtfs.LoadRoot(item);
+            contextNtfs.LoadRoot(item, queue);
         }
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))

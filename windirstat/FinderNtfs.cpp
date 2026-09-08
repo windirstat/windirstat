@@ -159,8 +159,10 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
     ULONG FileAttributes;
 };
 
-bool FinderNtfsContext::LoadRoot(CItem* driveitem)
+bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 {
+    queue->WaitIfSuspended();
+
     // Trim off excess characters
     std::wstring volumePath = driveitem->GetPathLong();
     while (!volumePath.empty() && volumePath.back() == L'\\') volumePath.pop_back();
@@ -190,6 +192,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     while ((pointersFetched = DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
         static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr)) == 0 && GetLastError() == ERROR_MORE_DATA)
     {
+        queue->WaitIfSuspended();
         dataRunsBuffer.resize(dataRunsBuffer.size() * 2);
     }
     if (!pointersFetched)
@@ -199,7 +202,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
-    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
     auto vcnStart = retrievalBuffer->StartingVcn.QuadPart;
     for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
     {
@@ -207,13 +210,14 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         dataRuns[i] = std::make_tuple(
             static_cast<ULONGLONG>(vcnStart),
             retrievalBuffer->Extents[i].Lcn.QuadPart,
-            static_cast<ULONGLONG>(vcnNext - vcnStart)
+            static_cast<ULONGLONG>(vcnNext - vcnStart), 0ull
         );
         vcnStart = vcnNext;
     }
 
     // Process MFT records
-    std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
+    std::atomic<bool> readFailed = false;
+    const auto readRun = [&](auto& dataRun)
     {
         // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size
         constexpr size_t bufferSize = 4ull * wds::Mi;
@@ -221,17 +225,20 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
             static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
 
-        const auto& [runVcnStart, clusterStart, clusterCount] = dataRun;
+        auto& [runVcnStart, clusterStart, clusterCount, bytesReadFromRun] = dataRun;
 
         // Enumerate over the data run in buffer-sized chunks
-        ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
-        LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
+        ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster - bytesReadFromRun;
+        LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(
+            clusterStart * volumeInfo.BytesPerCluster + bytesReadFromRun) };
         thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, false, false, nullptr));
         const ULONGLONG mftRunOffset = runVcnStart * volumeInfo.BytesPerCluster;
         ULONG bytesRead = 0;
-        for (ULONGLONG bytesReadFromRun = 0; bytesToRead > 0;
+        for (; bytesToRead > 0;
             bytesReadFromRun += bytesRead, bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
+            if (readFailed || queue->IsPauseOrCancelRequested()) return;
+
             // Animate pacman
             driveitem->UpwardDrivePacman();
 
@@ -241,13 +248,28 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0)
             {
-                if (GetLastError() != ERROR_IO_PENDING ||
-                    WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
-                    GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, false) == 0)
+                if (GetLastError() != ERROR_IO_PENDING)
                 {
-                    VTRACE(L"ERROR: Failed to read MFT data.");
-                    break;
+                    readFailed = true;
+                    return;
                 }
+
+                DWORD waitResult;
+                while ((waitResult = WaitForSingleObject(event, 50)) == WAIT_TIMEOUT)
+                {
+                    if (readFailed || queue->IsPauseOrCancelRequested()) break;
+                }
+                if (waitResult != WAIT_OBJECT_0) CancelIoEx(volumeHandle, &overlapped);
+                if (!GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, true))
+                {
+                    if (!queue->IsPauseOrCancelRequested()) readFailed = true;
+                    return;
+                }
+            }
+            if (bytesRead == 0)
+            {
+                readFailed = true;
+                return;
             }
 
             for (ULONG offset = 0; offset + volumeInfo.BytesPerFileRecordSegment <= bytesRead; offset += volumeInfo.BytesPerFileRecordSegment)
@@ -366,7 +388,22 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 }
             }
         }
-    });
+    };
+    do
+    {
+        std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), readRun);
+        // Only the registered worker reports idle after all parallel reads have drained.
+        queue->WaitIfSuspended();
+        if (readFailed)
+        {
+            VTRACE(L"ERROR: Failed to read MFT data.");
+            return false;
+        }
+    }
+    while (std::ranges::any_of(dataRuns, [&](const auto& run)
+    {
+        return std::get<3>(run) < std::get<2>(run) * volumeInfo.BytesPerCluster;
+    }));
 
     // Verify root node exists
     if (!m_parentToChildMap.contains(NtfsNodeRoot))

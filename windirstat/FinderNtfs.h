@@ -53,7 +53,7 @@ class FinderNtfsContext final
 public:
 
     FinderNtfsContext() = default;
-    bool LoadRoot(CItem* driveitem);
+    bool LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue);
     bool IsLoaded() const { return m_isLoaded; }
 
     static constexpr ULONGLONG NtfsNodeRoot = 5;
