@@ -258,6 +258,20 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
 {
     if (!FilterActive) return false;
 
+    // Exclude files beyond the size threshold based on comparison selection
+    if (SizeMinimumCalculated > 0 &&
+        CompareThreshold(fileSizeLogical, SizeMinimumCalculated, COptions::FilteringSizeComparison))
+    {
+        return true;
+    }
+
+    // Exclude files outside the max-age cutoff based on comparison selection
+    if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
+    {
+        if (CompareFileAge(lastWriteTime, MaxAgeFileTimeCutoff, COptions::FilteringMaxAgeComparison))
+            return true;
+    }
+
     // Exclude files matching name filter
     if (!ExcludeFilesRegex.empty() && std::ranges::any_of(ExcludeFilesRegex,
         [&fileName](const auto& pattern) { return std::regex_match(fileName, pattern); }))
@@ -278,27 +292,14 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
         return true;
     }
 
-    // Exclude files beyond the size threshold based on comparison selection
-    if (SizeMinimumCalculated > 0 &&
-        CompareThreshold(fileSizeLogical, SizeMinimumCalculated, COptions::FilteringSizeComparison))
-    {
-        return true;
-    }
-
-    // Exclude files outside the max-age cutoff based on comparison selection
-    if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
-    {
-        if (CompareFileAge(lastWriteTime, MaxAgeFileTimeCutoff, COptions::FilteringMaxAgeComparison))
-            return true;
-    }
-
     return false;
 }
 
 bool CFiltering::IsFilteredOut(const CItem* item)
 {
+    if (!FilterActive) return false;
     if (item->IsTypeOrFlag(IT_FILE))
-        return IsFilteredOut(item->GetName(), item->GetPath(),
+        return IsFilteredOut(item->GetName(), IncludeDirsRegex.empty() ? std::wstring() : item->GetPath(),
             item->GetSizeLogical(), item->GetLastChange());
     return IsFilteredOut(item->GetPath());
 }
