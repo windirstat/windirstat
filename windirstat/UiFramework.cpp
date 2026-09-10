@@ -145,10 +145,10 @@ void InitializeDialogFontAndSize(const HWND dialog)
     ApplyAppFont(dialog);
 }
 
-void CButton::SetTextOffset(const CPoint offset)
+void CButton::SetTextOffset(const CPoint& offset)
 {
     m_textOffset = offset;
-    if (m_hWnd != nullptr) InvalidateRect(nullptr);
+    if (m_hWnd != nullptr) Invalidate();
 }
 
 std::span<const RouteEntry> CButton::Routes()
@@ -325,22 +325,22 @@ CMenu* CMenu::FromHandle(const HMENU menu)
         });
 }
 
-int CMenu::ItemCount() const noexcept
+int CMenu::GetItemCount() const noexcept
 {
     return GetMenuItemCount(m_hMenu);
 }
 
-UINT CMenu::ItemIdAt(const int pos) const noexcept
+UINT CMenu::GetItemId(const int pos) const noexcept
 {
     return GetMenuItemID(m_hMenu, pos);
 }
 
-UINT CMenu::ItemState(const UINT id, const UINT flags) const noexcept
+UINT CMenu::GetItemState(const UINT id, const UINT flags) const noexcept
 {
     return GetMenuState(m_hMenu, id, flags);
 }
 
-std::wstring CMenu::ItemTextAt(const UINT pos) const
+std::wstring CMenu::GetItemText(const UINT pos) const
 {
     const int length = GetMenuStringW(m_hMenu, pos, nullptr, 0, MF_BYPOSITION);
     std::wstring buffer(static_cast<size_t>(length) + 1, L'\0');
@@ -349,9 +349,9 @@ std::wstring CMenu::ItemTextAt(const UINT pos) const
     return buffer;
 }
 
-CMenu* CMenu::SubmenuAt(const int pos) const
+CMenu* CMenu::GetSubMenu(const int pos) const
 {
-    return FromHandle(GetSubMenu(m_hMenu, pos));
+    return FromHandle(::GetSubMenu(m_hMenu, pos));
 }
 
 bool CMenu::Append(const UINT flags, const UINT_PTR id, const LPCWSTR psz) noexcept
@@ -374,11 +374,6 @@ UINT CMenu::EnableItem(const UINT id, const UINT flags) noexcept
     return EnableMenuItem(m_hMenu, id, flags);
 }
 
-UINT CMenu::CheckItem(const UINT id, const UINT flags) noexcept
-{
-    return CheckMenuItem(m_hMenu, id, flags);
-}
-
 bool CMenu::SetDefaultItem(const UINT item) noexcept
 {
     return SetMenuDefaultItem(m_hMenu, item, false);
@@ -394,12 +389,7 @@ bool CMenu::SetItemInfo(const UINT item, const MENUITEMINFOW* info, const ItemLo
     return SetMenuItemInfoW(m_hMenu, item, lookup == ItemLookup::Position, info);
 }
 
-UINT CMenu::ShowPopup(const UINT flags, const int x, const int y, CWnd* pWnd) const
-{
-    return TrackPopupMenu(m_hMenu, flags, x, y, 0, pWnd != nullptr ? pWnd->m_hWnd : nullptr, nullptr);
-}
-
-UINT CMenu::ShowPopupEx(const UINT flags, const int x, const int y, CWnd* pWnd,
+UINT CMenu::ShowPopup(const UINT flags, const int x, const int y, CWnd* pWnd,
     const LPTPMPARAMS lptpm) const
 {
     return TrackPopupMenuEx(m_hMenu, flags, x, y, pWnd != nullptr ? pWnd->m_hWnd : nullptr, lptpm);
@@ -415,7 +405,12 @@ void CMenu::SetItemEnabled(const int item, const bool enable, const ItemLookup l
 bool CMenu::IsItemEnabled(const UINT item, const ItemLookup lookup) const noexcept
 {
     const UINT flags = lookup == ItemLookup::Command ? MF_BYCOMMAND : MF_BYPOSITION;
-    return (ItemState(item, flags) & (MF_DISABLED | MF_GRAYED)) == 0;
+    return (GetItemState(item, flags) & (MF_DISABLED | MF_GRAYED)) == 0;
+}
+
+UINT CMenu::CheckItem(const UINT id, const UINT flags) noexcept
+{
+    return CheckMenuItem(m_hMenu, id, flags);
 }
 
 CMenu::CMenu(const HMENU menu) noexcept
@@ -468,7 +463,7 @@ void CCmdUI::SetRadio(const bool bOn)
 void CCmdUI::SetText(const LPCWSTR lpszText)
 {
     if (m_pMenu == nullptr || lpszText == nullptr) return;
-    const UINT state = m_pMenu->ItemState(m_nIndex, MF_BYPOSITION);
+    const UINT state = m_pMenu->GetItemState(m_nIndex, MF_BYPOSITION);
     m_pMenu->Modify(m_nIndex, MF_BYPOSITION | MF_STRING | (state & ~(MF_BITMAP | MF_OWNERDRAW)),
         m_nID, lpszText);
 }
@@ -498,9 +493,9 @@ void CFrameWnd::UpdateMenuCommands(CMenu* pMenu, const bool bSysMenu)
 
     CCmdUI state;
     state.m_pMenu = pMenu;
-    for (int i = 0; i < pMenu->ItemCount(); ++i)
+    for (int i = 0; i < pMenu->GetItemCount(); ++i)
     {
-        const UINT id = pMenu->ItemIdAt(i);
+        const UINT id = pMenu->GetItemId(i);
         if (id == 0 || id == static_cast<UINT>(-1)) continue;   // separator / popup
         state.m_nIndex = static_cast<UINT>(i);
         state.m_nID = id;
@@ -511,7 +506,7 @@ void CFrameWnd::UpdateMenuCommands(CMenu* pMenu, const bool bSysMenu)
 // -----------------------------------------------------------------------------
 //  Class-owned theme drawing
 // -----------------------------------------------------------------------------
-void CSplitterWnd::DrawBackground(CDC& dc, CRect rect) const
+void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
 {
     const bool dark = DarkMode::IsDarkModeActive();
     const COLORREF paneFace = DarkMode::SystemColor(dark ? COLOR_MENUBAR : COLOR_BTNFACE);
@@ -525,15 +520,15 @@ void CSplitterWnd::DrawBackground(CDC& dc, CRect rect) const
     }
 
     dc.FillSolidRect(rect, DarkMode::SystemColor(dark ? COLOR_WINDOWFRAME : COLOR_BTNFACE));
-    for (int row = 0; row < RowCount(); ++row)
+    for (int row = 0; row < GetRowCount(); ++row)
     {
-        for (int column = 0; column < ColumnCount(); ++column)
+        for (int column = 0; column < GetColumnCount(); ++column)
         {
-            const CWnd* pane = PaneAt(row, column);
+            const CWnd* pane = GetPane(row, column);
             if (pane == nullptr || !IsWindow(pane->m_hWnd) || pane->IsSplitterWindow())
                 continue;
 
-            CRect paneRect = WindowRectInClient(pane->Handle());
+            CRect paneRect = GetChildWindowRect(pane->Handle());
             paneRect.Inflate(1, 1);
             dc.Draw3dRect(paneRect, paneEdge, paneEdge);
         }
@@ -543,7 +538,7 @@ void CSplitterWnd::DrawBackground(CDC& dc, CRect rect) const
 void CSplitterWnd::OnPaint()
 {
     CPaintDC dc(this);
-    const CRect rect = ClientRect();
+    const CRect rect = GetClientRect();
     DrawBackground(dc, rect);
     if (m_bTrackerVisible) DrawTrackerRect(dc, m_rectTracker);
 }
@@ -554,7 +549,7 @@ void CToolBar::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
     {
     case CDDS_PREPAINT:
     {
-        const CRect rect = ClientRect();
+        const CRect rect = GetClientRect();
         auto dc = CDC::Borrow(customDraw->nmcd.hdc);
         const COLORREF background = DarkMode::IsDarkModeActive() ?
             DarkMode::SystemColor(COLOR_MENUBAR) : GetSysColor(COLOR_WINDOW);
@@ -572,7 +567,7 @@ void CToolBar::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
     }
 }
 
-void CStatusBar::DrawPaneBorder(CDC& dc, const CRect rect)
+void CStatusBar::DrawPaneBorder(CDC& dc, const CRect& rect)
 {
     const bool dark = DarkMode::IsDarkModeActive();
     const COLORREF border = dark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
@@ -584,7 +579,7 @@ void CStatusBar::OnPaint()
 {
     CPaintDC paintDC(this);
     CBufferedDC dc(paintDC, this);
-    const CRect rcClient = ClientRect();
+    const CRect rcClient = GetClientRect();
     const COLORREF barFace = DarkMode::SystemColor(
         DarkMode::IsDarkModeActive() ? COLOR_MENUBAR : COLOR_BTNFACE);
     dc.FillSolidRect(rcClient, barFace);
@@ -624,14 +619,14 @@ void CTabControl::SetContentBackgroundColor(const COLORREF color)
     if (IsWindow(m_hWnd)) Invalidate(false);
 }
 
-std::wstring_view CTabControl::TabLabel(const int index) const
+std::wstring_view CTabControl::GetTabLabel(const int index) const
 {
-    return index >= 0 && index < TabCount() ? m_tabs[index].label : std::wstring_view();
+    return index >= 0 && index < GetTabCount() ? m_tabs[index].label : std::wstring_view();
 }
 
 void CTabControl::SetTabLabel(const int i, const std::wstring_view label)
 {
-    if (i < 0 || i >= TabCount()) return;
+    if (i < 0 || i >= GetTabCount()) return;
 
     m_tabs[i].label = label;
     if (const int native = NativeIndexFromLogical(i); native >= 0)
@@ -686,7 +681,7 @@ bool CTabControl::PreprocessMessage(MSG* pMsg)
 
 void CTabControl::SetTabVisible(const int i, const bool show)
 {
-    if (i < 0 || i >= TabCount()) return;
+    if (i < 0 || i >= GetTabCount()) return;
     if (m_tabs[i].visible == show) return;
 
     const int previousActiveTab = m_activeTab;
@@ -696,7 +691,7 @@ void CTabControl::SetTabVisible(const int i, const bool show)
     if (!show && previousActiveTab == i)
     {
         activeTab = -1;
-        for (int k = 0; k < TabCount(); ++k)
+        for (int k = 0; k < GetTabCount(); ++k)
         {
             if (k != i && m_tabs[k].visible) { activeTab = k; break; }
         }
@@ -744,7 +739,7 @@ void CTabControl::OnLButtonDown(UINT, const CPoint point)
     UpdatePaintedTabRects(rcStrip, m_location == Location::Bottom, UsesLabelOnlyTabs());
 
     int logical = -1;
-    if (m_activeTab >= 0 && m_activeTab < TabCount() && m_tabs[m_activeTab].paintedRect.Contains(point))
+    if (m_activeTab >= 0 && m_activeTab < GetTabCount() && m_tabs[m_activeTab].paintedRect.Contains(point))
     {
         logical = m_activeTab;
     }
@@ -753,7 +748,7 @@ void CTabControl::OnLButtonDown(UINT, const CPoint point)
         for (int native = static_cast<int>(m_visibleToLogical.size()) - 1; native >= 0; --native)
         {
             const int candidate = m_visibleToLogical[static_cast<size_t>(native)];
-            if (candidate < 0 || candidate >= TabCount() || candidate == m_activeTab) continue;
+            if (candidate < 0 || candidate >= GetTabCount() || candidate == m_activeTab) continue;
             if (m_tabs[candidate].paintedRect.Contains(point)) { logical = candidate; break; }
         }
     }
@@ -798,7 +793,7 @@ void CTabControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFl
     CallDefaultHandler();
 }
 
-void CTabControl::OnNativeSelChange(NMHDR*, LRESULT* pResult)
+void CTabControl::OnTabSelectionChanged(NMHDR*, LRESULT* pResult)
 {
     const int native = static_cast<int>(SendNativeMessage(TCM_GETCURSEL));
     if (native >= 0 && std::cmp_less(native, m_visibleToLogical.size()))
@@ -813,7 +808,7 @@ void CTabControl::OnPaint()
     CPaintDC paintDC(this);
     CBufferedDC dc(paintDC, this);
 
-    const CRect rcClient = ClientRect();
+    const CRect rcClient = GetClientRect();
     const bool darkMode = DarkMode::IsDarkModeActive();
     const COLORREF tabBorder = GetSysColor(COLOR_3DSHADOW);
     const COLORREF tabPane = darkMode ? DarkMode::SystemColor(COLOR_WINDOW) : GetSysColor(COLOR_3DHILIGHT);
@@ -867,7 +862,7 @@ void CTabControl::OnPaint()
     const int textInsetY = scale(1);
     const int minSlant = scale(4);
     const int maxSlant = scale(8);
-    const bool drawFocus = m_focusTabStrip && ::GetFocus() == m_hWnd &&
+    const bool drawFocus = m_focusTabStrip && HasFocus() &&
         (SendMessage(WM_QUERYUISTATE) & UISF_HIDEFOCUS) == 0;
     CBrush activeBrush(activeTabBg);
     CBrush inactiveBrush(inactiveTabBg);
@@ -875,7 +870,7 @@ void CTabControl::OnPaint()
 
     auto drawTab = [&](const TabPaintInfo& tab, const bool active)
         {
-            if (tab.logical < 0 || tab.logical >= TabCount()) return;
+            if (tab.logical < 0 || tab.logical >= GetTabCount()) return;
             const CRect rcTab = tab.rect;
             const int slant = std::clamp(rcTab.Width() / 5, minSlant, maxSlant);
             POINT points[4] = {};
@@ -924,8 +919,8 @@ void CTabControl::OnPaint()
             rcText.Deflate(textInsetX, textInsetY, textInsetX, textInsetY);
             const std::wstring& text = m_tabs[tab.logical].label;
             const int oldBk = dc.SetBkMode(TRANSPARENT);
-            const CSize textExtent = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size()));
-            const auto textMetrics = dc.TextMetrics();
+            const CSize textExtent = dc.GetTextExtent(text);
+            const auto textMetrics = dc.GetTextMetrics();
 
             const int x = static_cast<int>(rcText.left) +
                 std::max<int>(0, (static_cast<int>(rcText.Width()) - textExtent.cx) / 2);
@@ -935,13 +930,13 @@ void CTabControl::OnPaint()
             ExtTextOutW(dc, x, y, ETO_CLIPPED, &rcText, text.c_str(),
                 static_cast<UINT>(text.size()), nullptr);
             dc.SetBkMode(oldBk);
-            if (active && drawFocus) dc.DrawFocusRect(&rcText);
+            if (active && drawFocus) dc.DrawFocusRect(rcText);
         };
 
     for (int native = 0; std::cmp_less(native, m_visibleToLogical.size()); ++native)
     {
         const int logical = m_visibleToLogical[static_cast<size_t>(native)];
-        if (logical < 0 || logical >= TabCount()) continue;
+        if (logical < 0 || logical >= GetTabCount()) continue;
 
         const CRect rcTab = m_tabs[logical].paintedRect;
         if (rcTab.IsEmpty()) continue;
@@ -976,7 +971,7 @@ std::span<const RouteEntry> CTabControl::Routes()
         Route::Window<&OnSetFocus>(WM_SETFOCUS),
         Route::Window<&OnKillFocus>(WM_KILLFOCUS),
         Route::Window<&OnPaint>(WM_PAINT),
-        Route::ReflectNotify<&OnNativeSelChange>(TCN_SELCHANGE),
+        Route::ReflectNotify<&OnTabSelectionChanged>(TCN_SELCHANGE),
     };
     return entries;
 }
@@ -1012,7 +1007,7 @@ void CTabControl::RebuildNativeTabs()
     m_visibleToLogical.reserve(m_tabs.size());
 
     int native = 0;
-    for (int logical = 0; logical < TabCount(); ++logical)
+    for (int logical = 0; logical < GetTabCount(); ++logical)
     {
         if (!m_tabs[logical].visible)
         {
@@ -1051,7 +1046,7 @@ void CTabControl::SyncNativeSelection()
 
 bool CTabControl::ActivateTab(const int i, const bool syncNative)
 {
-    if (i < 0 || i >= TabCount() || !m_tabs[i].visible) return false;
+    if (i < 0 || i >= GetTabCount() || !m_tabs[i].visible) return false;
     if (i == m_activeTab) return true;
 
     const int previousActiveTab = m_activeTab;
@@ -1080,33 +1075,33 @@ bool CTabControl::ShouldMoveFocusOnTabActivation(const int previousActiveTab) co
 {
     const HWND focus = ::GetFocus();
     if (focus == nullptr) return false;
-    if (focus == m_hWnd || ::IsChild(m_hWnd, focus)) return true;
+    if (focus == m_hWnd || IsChild(focus)) return true;
 
-    const CWnd* previous = TabWindow(previousActiveTab);
+    const CWnd* previous = GetTabWindow(previousActiveTab);
     return previous != nullptr && IsWindow(previous->m_hWnd) &&
-        (focus == previous->m_hWnd || ::IsChild(previous->m_hWnd, focus));
+        (focus == previous->m_hWnd || previous->IsChild(focus));
 }
 
 bool CTabControl::ForwardKeyboardMessageToActiveTab(const MSG& msg)
 {
-    CWnd* p = TabWindow(m_activeTab);
+    CWnd* p = GetTabWindow(m_activeTab);
     if (p == nullptr || !IsWindow(p->m_hWnd) || !::IsWindowVisible(p->m_hWnd) || !::IsWindowEnabled(p->m_hWnd)) return false;
 
     p->SetFocus();
     HWND target = ::GetFocus();
-    if (target == nullptr || (target != p->m_hWnd && !::IsChild(p->m_hWnd, target))) target = p->m_hWnd;
+    if (target == nullptr || (target != p->m_hWnd && !p->IsChild(target))) target = p->m_hWnd;
     ::SendMessageW(target, msg.message, msg.wParam, msg.lParam);
     return true;
 }
 
 bool CTabControl::FocusActiveTabWindow()
 {
-    CWnd* p = TabWindow(m_activeTab);
+    CWnd* p = GetTabWindow(m_activeTab);
     if (p == nullptr || !IsWindow(p->m_hWnd) || !::IsWindowVisible(p->m_hWnd) || !::IsWindowEnabled(p->m_hWnd)) return false;
 
     p->SetFocus();
     const HWND focus = ::GetFocus();
-    return focus == p->m_hWnd || (focus != nullptr && ::IsChild(p->m_hWnd, focus));
+    return focus == p->m_hWnd || p->IsChild(focus);
 }
 
 bool CTabControl::RedirectFocusAwayFromTabControl()
@@ -1133,7 +1128,7 @@ bool CTabControl::GetNativeItemRect(const int native, CRect& rc) const
 
 CRect CTabControl::TabStripRect() const
 {
-    const CRect rcClient = ClientRect();
+    const CRect rcClient = GetClientRect();
     const int tabH = TabStripHeight();
     return (m_location == Location::Bottom) ?
         CRect(rcClient.left, std::max(rcClient.top, rcClient.bottom - tabH), rcClient.right, rcClient.bottom) :
@@ -1155,7 +1150,7 @@ void CTabControl::UpdatePaintedTabRects(const CRect& rcStrip, const bool bottomT
     for (int native = 0; std::cmp_less(native, m_visibleToLogical.size()); ++native)
     {
         const int logical = m_visibleToLogical[static_cast<size_t>(native)];
-        if (logical < 0 || logical >= TabCount()) continue;
+        if (logical < 0 || logical >= GetTabCount()) continue;
 
         CRect rcTab;
         if (!GetNativeItemRect(native, rcTab)) continue;
@@ -1187,12 +1182,12 @@ bool CTabControl::UsesLabelOnlyTabs() const
 void CTabControl::LayoutPanes()
 {
     if (!IsWindow(m_hWnd)) return;
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     const int tabH = TabStripHeight();
     CRect rcPane = (m_location == Location::Bottom) ?
         CRect(rc.left, rc.top, rc.right, std::max(rc.top, rc.bottom - tabH)) :
         CRect(rc.left, rc.top + tabH, rc.right, rc.bottom);
-    for (int i = 0; i < TabCount(); ++i)
+    for (int i = 0; i < GetTabCount(); ++i)
     {
         CWnd* p = m_tabs[i].window;
         if (p == nullptr || !IsWindow(p->m_hWnd)) continue;
@@ -1291,7 +1286,7 @@ bool CWnd::InitializeDialogControls(const UINT resourceId)
     }
 }
 
-void CWnd::CenterWindow(CWnd* pAlternate)
+void CWnd::CenterWindow(const CWnd* pAlternate)
 {
     HWND hParent = pAlternate ? pAlternate->m_hWnd : ::GetParent(m_hWnd);
     if (hParent == nullptr) hParent = ::GetDesktopWindow();
@@ -1304,13 +1299,13 @@ void CWnd::CenterWindow(CWnd* pAlternate)
     ::SetWindowPos(m_hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter)
+std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter, const CWnd* parent)
 {
     std::ranges::replace(filter, L'|', L'\0');
     filter.push_back(L'\0');
     std::wstring file(4096, L'\0');
     OPENFILENAMEW dialog{ .lStructSize = sizeof(OPENFILENAMEW) };
-    dialog.hwndOwner = GetDialogOwner();
+    dialog.hwndOwner = GetDialogOwner(parent);
     dialog.lpstrFilter = filter.c_str();
     dialog.lpstrFile = file.data();
     dialog.nMaxFile = static_cast<DWORD>(file.size());
@@ -1322,13 +1317,13 @@ std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::ws
     return file.c_str();
 }
 
-std::optional<std::wstring> CDialog::PickFolder(CWnd* parent)
+std::optional<std::wstring> CDialog::PickFolder(const CWnd* parent)
 {
     auto folders = PickFolders(parent, false);
     return folders.empty() ? std::nullopt : std::optional(std::move(folders.front()));
 }
 
-std::vector<std::wstring> CDialog::PickFolders(CWnd* parent, const bool multiSelect)
+std::vector<std::wstring> CDialog::PickFolders(const CWnd* parent, const bool multiSelect)
 {
     CComPtr<IFileOpenDialog> dialog;
     DWORD options = 0;
@@ -1354,11 +1349,11 @@ std::vector<std::wstring> CDialog::PickFolders(CWnd* parent, const bool multiSel
     return folders;
 }
 
-std::optional<COLORREF> CDialog::PickColor(const COLORREF initial)
+std::optional<COLORREF> CDialog::PickColor(const COLORREF initial, CWnd* parent)
 {
     static COLORREF custom[16]{};
     CHOOSECOLORW dialog{ .lStructSize = sizeof(CHOOSECOLORW) };
-    dialog.hwndOwner = GetDialogOwner();
+    dialog.hwndOwner = GetDialogOwner(parent);
     dialog.rgbResult = initial;
     dialog.lpCustColors = custom;
     dialog.Flags = CC_FULLOPEN | CC_RGBINIT | CC_ANYCOLOR;
@@ -1518,7 +1513,7 @@ void CPropertyPage::SetModified(const bool bChanged)
 
 bool CPropertySheet::SelectPage(const int i)
 {
-    if (i < 0 || i >= PageCount()) return false;
+    if (i < 0 || i >= GetPageCount()) return false;
     if (m_tab.Handle() == nullptr)
     {
         m_pendingActivePage = i;
@@ -1550,8 +1545,8 @@ bool CPropertySheet::PreprocessMessage(MSG* pMsg)
         (pMsg->wParam != VK_TAB && pMsg->wParam != VK_PRIOR && pMsg->wParam != VK_NEXT))
         return CWnd::PreprocessMessage(pMsg);
 
-    const int pageCount = PageCount();
-    const int active = ActivePageIndex();
+    const int pageCount = GetPageCount();
+    const int active = GetActivePageIndex();
     if (pageCount <= 0 || active < 0 || active >= pageCount) return CWnd::PreprocessMessage(pMsg);
     if (pageCount == 1) return true;
 
@@ -1580,10 +1575,11 @@ bool CPropertySheet::PreprocessMessage(MSG* pMsg)
     return true;
 }
 
-LRESULT CPropertySheet::OnTabChanged(const WPARAM w, LPARAM)
+LRESULT CPropertySheet::OnRequestedPageChanged(const WPARAM wParam, const LPARAM)
 {
     if (m_syncingTabSelection) return 0;
-    if (const int previous = m_currentPage; !ActivatePage(static_cast<int>(w)) && previous >= 0)
+    const int requestedPage = static_cast<int>(wParam);
+    if (const int previous = m_currentPage; !ActivatePage(requestedPage) && previous >= 0)
         SyncTabSelection(previous);
     return 0;
 }
@@ -1592,7 +1588,7 @@ std::span<const RouteEntry> CPropertySheet::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Window<&OnTabChanged>(WM_WDS_TAB_CHANGED),
+        Route::Window<&OnRequestedPageChanged>(WM_WDS_TAB_CHANGED),
         Route::Window<&OnClose>(WM_CLOSE),
     };
     return entries;
@@ -1618,7 +1614,7 @@ bool CPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 
 bool CPropertySheet::EnsurePageCreated(const int i)
 {
-    if (i < 0 || i >= PageCount()) return false;
+    if (i < 0 || i >= GetPageCount()) return false;
 
     CPropertyPage* page = m_pages[i].get();
     if (page->Handle() != nullptr) return true;
@@ -1642,7 +1638,7 @@ bool CPropertySheet::ActivatePage(const int active)
     if (!EnsurePageCreated(active)) return false;
     if (m_currentPage == active) return true;
 
-    for (int i = 0; i < PageCount(); ++i)
+    for (int i = 0; i < GetPageCount(); ++i)
         if (m_pages[i]->Handle())
         {
             const bool isActive = (i == active);
@@ -1659,7 +1655,7 @@ bool CPropertySheet::ActivatePage(const int active)
 
 void CPropertySheet::SyncTabSelection(const int active)
 {
-    if (m_tab.ActiveTab() == active) return;
+    if (m_tab.GetActiveTab() == active) return;
     m_syncingTabSelection = true;
     m_tab.SelectTab(active);
     m_syncingTabSelection = false;
@@ -1678,7 +1674,7 @@ void CPropertySheet::ApplyPages()
 
 bool CPropertySheet::OnEraseBkgnd(CDC* pDC) const
 {
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     pDC->FillSolidRect(rc, DarkMode::SystemColor(COLOR_BTNFACE));
     return true;
 }
@@ -1738,11 +1734,11 @@ bool CPropertySheet::OnInitDialog()
             }());
     }
 
-    for (int i = 0; i < PageCount(); ++i)
+    for (int i = 0; i < GetPageCount(); ++i)
     {
         if (!EnsurePageCreated(i)) continue;
 
-        const CRect rcPage = m_pages[i]->WindowRect();
+        const CRect rcPage = m_pages[i]->GetWindowRect();
         maxW = std::max<int>(maxW, rcPage.Width());
         maxH = std::max<int>(maxH, rcPage.Height());
         break;
@@ -1786,7 +1782,7 @@ bool CPropertySheet::OnInitDialog()
     bx += btnW + btnGap;
     m_applyButton = createButton(bx, ID_APPLY_NOW, L"IDS_GENERIC_APPLY", BS_PUSHBUTTON);
 
-    if (PageCount() > 0) SelectPage(std::clamp(m_pendingActivePage, 0, PageCount() - 1));
+    if (GetPageCount() > 0) SelectPage(std::clamp(m_pendingActivePage, 0, GetPageCount() - 1));
     UpdateApplyButton();
     return true;
 }
@@ -1809,7 +1805,7 @@ INT_PTR CPropertySheet::ShowModal()
 
     CenterWindow(FromHandle(hOwner));
     ShowWindow(SW_SHOW);
-    if (m_tab.TabCount() > 0) m_tab.SetFocus();
+    if (m_tab.GetTabCount() > 0) m_tab.SetFocus();
     UpdateWindow();
     const bool ownerWasEnabled = hOwner != nullptr && ::IsWindowEnabled(hOwner);
     struct OwnerEnableScope final
@@ -1834,7 +1830,7 @@ INT_PTR CPropertySheet::ShowModal()
             m_modalResult = IDCANCEL;
             break;
         }
-        if (msg.hwnd != nullptr && (msg.hwnd == m_hWnd || ::IsChild(m_hWnd, msg.hwnd)) &&
+        if (msg.hwnd != nullptr && (msg.hwnd == m_hWnd || IsChild(msg.hwnd)) &&
             PreTranslateWindowTree(m_hWnd, &msg)) continue;
         if (!IsDialogMessageW(m_hWnd, &msg)) { TranslateMessage(&msg); DispatchMessageW(&msg); }
     }

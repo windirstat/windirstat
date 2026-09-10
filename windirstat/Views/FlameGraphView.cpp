@@ -81,7 +81,7 @@ bool CFlameGraphView::PrepareDrawing(CDC* pDC, CRect& rect)
         UpdateScrollBar(fullHeight, rect.Height());
         scrollInfoCurrent = true;
 
-        const CRect updatedRc = ClientRect();
+        const CRect updatedRc = GetClientRect();
         if (updatedRc == rect) break;
         const bool scrollBarAppeared = updatedRc.Width() < rect.Width();
         rect = updatedRc;
@@ -111,7 +111,7 @@ bool CFlameGraphView::PrepareDrawing(CDC* pDC, CRect& rect)
         const int maxScroll = std::max(0, fullHeight - rect.Height());
         m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);
         UpdateScrollBar(fullHeight, rect.Height());
-        assert(ClientRect() == rect);
+        assert(GetClientRect() == rect);
     }
 
     if (const CSize size = rect.Size(); m_size != size)
@@ -134,7 +134,7 @@ void CFlameGraphView::RenderVisualization(CDC* pDC, const CRect rect)
 
 void CFlameGraphView::RenderViewport(CDC* pDC, CRect clip) const
 {
-    CRect client = ClientRect();
+    CRect client = GetClientRect();
     if (!clip.Intersect(clip, client)) return;
 
     const ScopedDcState dcState(pDC);
@@ -169,7 +169,7 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
 
-    const CRect client = ClientRect();
+    const CRect client = GetClientRect();
     const ScopedDcState dcState(pdc);
     pdc->IntersectClipRect(CRect(0, m_flameGraph.GetBreadcrumbHeight(),
         client.Width(), client.Height()));
@@ -178,8 +178,8 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
     GdiObjectSelection sopen(pdc, &pen);
     StockObjectSelection sobrush(pdc, NULL_BRUSH);
 
-    const auto clipBox = pdc->ClipBox();
-    const CRect rcClip = clipBox ? *clipBox : ClientRect();
+    const auto clipBox = pdc->GetClipBox();
+    const CRect rcClip = clipBox ? *clipBox : GetClientRect();
 
     m_flameGraph.VisitItemsIntersecting(rcClip, CPoint(0, -m_scrollPos),
         [&](const CItem* item, const CRect& itemRectangle)
@@ -218,7 +218,7 @@ void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const b
 
     if (single)
     {
-        const CRect rcClient = ClientRect();
+        const CRect rcClient = GetClientRect();
 
         if (rcClient.left < rc.left) rc.left--;
         if (rcClient.top < rc.top) rc.top--;
@@ -226,7 +226,7 @@ void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const b
         if (rc.bottom < rcClient.bottom) rc.bottom++;
     }
 
-    CRect clip = ClientRect();
+    CRect clip = GetClientRect();
     if (!breadcrumb)
         clip.top = std::max<LONG>(clip.top, m_flameGraph.GetBreadcrumbHeight());
     CRect visible;
@@ -377,7 +377,7 @@ int CFlameGraphView::ComputeRowHeight(CDC* pDC) const
     int rowHeight = ScaleForDpi(CFlameGraph::ROW_HEIGHT);
 
     GdiObjectSelection soFont(pDC, GetAppFont(m_hWnd));
-    if (const auto metrics = pDC->TextMetrics())
+    if (const auto metrics = pDC->GetTextMetrics())
     {
         // Breadcrumbs have one scaled fill inset and one text inset on each edge.
         const int verticalPadding = ScaleForDpi(1) * 4;

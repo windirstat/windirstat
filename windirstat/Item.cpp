@@ -105,7 +105,7 @@ public:
 
 // --- Construction / Destruction ---
 
-CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
+CItem::CItem(const ITEMTYPE type, const std::wstring_view name) : m_type(type)
 {
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
@@ -121,7 +121,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
     if (IsTypeOrFlag(IT_DRIVE))
     {
         // Store drive paths with a backslash
-        std::wstring nameTmp = name;
+        std::wstring nameTmp(name);
         if (nameTmp.ends_with(L":")) nameTmp.append(L"\\");
 
         // The name string on the drive is two parts separated by a pipe. For example,
@@ -144,7 +144,7 @@ CItem::CItem(CItem* linkedItem) : m_type(IT_HLINKS_FILE)
     SetLastChange(linkedItem->GetLastChange());
 }
 
-CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastChange,
+CItem::CItem(const ITEMTYPE type, const std::wstring_view name, const FILETIME lastChange,
     const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONGLONG index,
     const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
@@ -158,7 +158,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
 
     if (IsTypeOrFlag(IT_DRIVE))
     {
-        SetName(std::format(L"{:.2}|{}", name, FormatVolumeNameOfRootPath(name)));
+        SetName(std::format(L"{:.2}|{}", name, FormatVolumeNameOfRootPath(std::wstring(name))));
     }
 
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))

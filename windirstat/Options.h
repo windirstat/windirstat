@@ -99,7 +99,7 @@ enum LAYOUT_TOPOLOGY : char
 struct USERDEFINEDCLEANUP
 {
     USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
-    USERDEFINEDCLEANUP(const std::wstring & sEntry) :
+    USERDEFINEDCLEANUP(const std::wstring_view sEntry) :
         Title(Setting<std::wstring>(sEntry, L"Title", L"")),
         CommandLine(Setting<std::wstring>(sEntry, L"CommandLine", L"")),
         Enabled(Setting(sEntry, L"Enable", false)),
@@ -157,17 +157,17 @@ struct USERDEFINEDCLEANUP
 //
 class COptions final
 {
-    inline static LPCWSTR OptionsGeneral = L"Options";
-    inline static LPCWSTR OptionsCleanups = L"Cleanups";
-    inline static LPCWSTR OptionsTreeMap = L"TreeMapView";
-    inline static LPCWSTR OptionsFileTree = L"FileTreeView";
-    inline static LPCWSTR OptionsDupeTree = L"DupeView";
-    inline static LPCWSTR OptionsExtView = L"ExtView";
-    inline static LPCWSTR OptionsTopView = L"TopView";
-    inline static LPCWSTR OptionsSearch = L"SearchView";
-    inline static LPCWSTR OptionsWatcher = L"Watcher";
-    inline static LPCWSTR OptionsPerms = L"PermissionsView";
-    inline static LPCWSTR OptionsDriveSelect = L"DriveSelect";
+    inline static constexpr std::wstring_view OptionsGeneral = L"Options";
+    inline static constexpr std::wstring_view OptionsCleanups = L"Cleanups";
+    inline static constexpr std::wstring_view OptionsTreeMap = L"TreeMapView";
+    inline static constexpr std::wstring_view OptionsFileTree = L"FileTreeView";
+    inline static constexpr std::wstring_view OptionsDupeTree = L"DupeView";
+    inline static constexpr std::wstring_view OptionsExtView = L"ExtView";
+    inline static constexpr std::wstring_view OptionsTopView = L"TopView";
+    inline static constexpr std::wstring_view OptionsSearch = L"SearchView";
+    inline static constexpr std::wstring_view OptionsWatcher = L"Watcher";
+    inline static constexpr std::wstring_view OptionsPerms = L"PermissionsView";
+    inline static constexpr std::wstring_view OptionsDriveSelect = L"DriveSelect";
 
 public:
     inline static Setting<bool> AutomaticallyResizeColumns{ OptionsGeneral, L"AutomaticallyResizeColumns", true };

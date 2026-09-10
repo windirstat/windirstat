@@ -89,7 +89,7 @@ void SearchDlg::OnChangeSearchTerm()
 
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
         searchTerm, searchCase, searchRegex);
-    GetDlgItem(IDOK)->EnableWindow(regexTest.flags() & std::regex_constants::optimize);
+    GetDlgItem(IDOK)->EnableWindow((regexTest.flags() & std::regex_constants::optimize) != 0);
 }
 
 HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)

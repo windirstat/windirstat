@@ -192,12 +192,11 @@ static std::string QuoteAndConvert(const std::wstring_view inc)
 // ── shared item-construction helper ─────────────────────────────────────────
 
 // Build a CItem from decoded field values, attach to tree, and register in parentMap
-static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view wdsAttr,
+static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstring_view wdsAttr,
     const std::wstring_view lastChange, const std::wstring_view sizePhysical, const std::wstring_view sizeLogical,
     const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
     const std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
 {
-    // Preserve MTP paths before parsing mutates the name buffer
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
     const bool isMtp = (type & ITF_MTP) != 0;
     const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
@@ -205,20 +204,17 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
     const auto itType = IT_MASK & type;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
 
-    const LPWSTR lookupPath = namePath.data();
-    LPWSTR displayName = lookupPath;
+    std::wstring_view displayName = namePath;
     CItem* parent = nullptr;
     if (!isRoot && itType != IT_DRIVE)
     {
-        if (LPWSTR separator = wcsrchr(lookupPath, L'\\'); separator != nullptr)
+        if (const auto separator = namePath.rfind(L'\\'); separator != std::wstring_view::npos)
         {
-            separator[0] = wds::chrNull;
-            if (const auto found = parentMap.find(lookupPath); found != parentMap.end())
+            if (const auto found = parentMap.find(std::wstring_view(namePath).substr(0, separator)); found != parentMap.end())
             {
                 parent = found->second;
-                displayName = &separator[1];
+                displayName = std::wstring_view(namePath).substr(separator + 1);
             }
-            else separator[0] = wds::chrBackslash;
         }
     }
 
@@ -236,7 +232,7 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
     // Refresh the device name and register its live shell path for later MTP operations
     std::wstring mtpName;
     if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
-    CItem* newitem = new CItem(type, mtpName.empty() ? displayName : mtpName.c_str(), FromTimeString(lastChange),
+    CItem* newitem = new CItem(type, mtpName.empty() ? displayName : std::wstring_view(mtpName), FromTimeString(lastChange),
         wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(),  nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
@@ -258,9 +254,6 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, const std::wstring_view
 
     if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
     {
-        // Restore the backslash separator we may have zeroed out
-        if (lookupPath != displayName) lookupPath[wcslen(lookupPath)] = wds::chrBackslash;
-
         parentMap[namePath] = newitem;
 
         // Also map drive letter without trailing backslash

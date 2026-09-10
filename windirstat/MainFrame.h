@@ -319,7 +319,7 @@ protected:
     bool OnEraseBkgnd(CDC*) { return true; }
 public:
     static CMainFrame* Get() { return s_Singleton; }
-    void UpdateFrameTitleForScan(LPCWSTR scanName);
+    void UpdateFrameTitleForScan(std::wstring_view scanName = {});
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item) const;
     void RebuildToolBar(bool rebuildButtons = true);
     void SetWatcherToolBarButtons(bool visible, bool updateLayout = true);

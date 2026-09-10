@@ -85,12 +85,12 @@ void CPageTreeMap::InitializePage()
     for (const std::wstring& style : SplitString(
         Localization::Lookup(IDS_PAGE_TREEMAP_STYLES), L','))
     {
-        m_styleCombo.AddString(style.c_str());
+        m_styleCombo.AddString(style);
     }
     assert(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
     for (const std::wstring& preset : SplitString(Localization::Lookup(IDS_PAGE_TREEMAP_PRESETS), L','))
     {
-        m_presetCombo.AddString(preset.c_str());
+        m_presetCombo.AddString(preset);
     }
     assert(m_presetCombo.GetCount() == static_cast<int>(CTreeMap::Preset::HighContrast) + 2);
 
@@ -118,7 +118,7 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_options.SetHeightPercent(m_height.GetPos());
         m_options.SetScaleFactorPercent(m_scaleFactor.GetPos());
         m_options.SetLightSourcePoint(m_lightSource.GetPos());
-        m_options.style = static_cast<TreeMapLayout::Style>(ComboSelection(IDC_TREEMAPSTYLE));
+        m_options.style = static_cast<TreeMapLayout::Style>(GetComboSelection(IDC_TREEMAPSTYLE));
         m_options.grid = IsChecked(IDC_TREEMAPGRID);
         m_options.gridColor = m_gridColor.GetColor();
     }
@@ -137,10 +137,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
 
 void CPageTreeMap::UpdateStatics()
 {
-    SetText(IDC_STATICBRIGHTNESS, std::to_wstring(m_brightness.GetPos()));
-    SetText(IDC_STATICCUSHIONSHADING, std::to_wstring(m_cushionShading.GetPos()));
-    SetText(IDC_STATICHEIGHT, std::to_wstring(m_height.GetPos() / (c_MaxHeight / 100)));
-    SetText(IDC_STATICSCALEFACTOR, std::to_wstring(m_scaleFactor.GetPos()));
+    SetText(IDC_STATICBRIGHTNESS, m_brightness.GetPos());
+    SetText(IDC_STATICCUSHIONSHADING, m_cushionShading.GetPos());
+    SetText(IDC_STATICHEIGHT, m_height.GetPos() / (c_MaxHeight / 100));
+    SetText(IDC_STATICSCALEFACTOR, m_scaleFactor.GetPos());
 }
 
 void CPageTreeMap::UpdatePresetSelection()

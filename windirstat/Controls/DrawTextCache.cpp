@@ -34,7 +34,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     // If caching is disabled, use normal DrawText API
     if (!COptions::UseDrawTextCache)
     {
-        pDC->DrawText(text.c_str(), static_cast<int>(text.length()), &rect, format);
+        pDC->DrawText(text, &rect, format);
         return;
     }
 
@@ -102,7 +102,7 @@ DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
     if (pDC->m_hDC != m_lastHDC)
     {
         m_lastHDC = pDC->m_hDC;
-        m_lastDpi = static_cast<USHORT>(GetDeviceCaps(pDC->m_hDC, LOGPIXELSX));
+        m_lastDpi = static_cast<USHORT>(pDC->GetDeviceCaps(LOGPIXELSX));
     }
 
     return CacheKey{
@@ -110,7 +110,7 @@ DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
         .backgroundColor = pDC->GetBkColor(), .format = format,
         .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
         .dpi = m_lastDpi,
-        .font = static_cast<HFONT>(GetCurrentObject(pDC->m_hDC, OBJ_FONT))};
+        .font = pDC->GetCurrentFont()};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
@@ -128,7 +128,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
         &calcRect, format | DT_CALCRECT);
 
     // Get font metrics for accurate text height
-    const auto metrics = memDC.TextMetrics();
+    const auto metrics = memDC.GetTextMetrics();
     const int textHeight = metrics ? metrics->tmHeight : calcRect.Height();
 
     auto entry = std::make_unique<CacheEntry>();
@@ -150,7 +150,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
 
     // Fill the bitmap with background color
     CRect drawRect(0, 0, calcRect.Width(), textHeight);
-    memDC.FillSolidRect(&drawRect, pDC->GetBkColor());
+    memDC.FillSolidRect(drawRect, pDC->GetBkColor());
 
     // Draw the text without vertical centering (bitmap is exact text height)
     memDC.DrawText(text.c_str(), static_cast<int>(text.length()),

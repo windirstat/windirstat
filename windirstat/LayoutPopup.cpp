@@ -168,10 +168,10 @@ void CLayoutPopup::DismissPopup(const bool cancel, const bool resetPositions)
 {
     ShowWindow(SW_HIDE);
 
-    if (::GetCapture() == Handle())
+    if (HasCapture())
         ReleaseCapture();
 
-    if (::GetFocus() == Handle())
+    if (HasFocus())
         if (CWnd* parent = GetParent())
             parent->SetFocus();
 
@@ -289,7 +289,7 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
         const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
 
         CRect rowR(r.left, y0, r.right, y1);
-        dc.FillSolidRect(&rowR, i % 2 ? alt : bg);
+        dc.FillSolidRect(rowR, i % 2 ? alt : bg);
 
         const int ix = r.left + 2 + rows[i].ind * indU;
         const int iy = y0 + (rowH - iSz + 1) / 2;
@@ -297,7 +297,7 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
         if (ix + iSz < pColX - 2)
         {
             CRect ico(ix, iy, ix + iSz, iy + iSz);
-            dc.FillSolidRect(&ico, folio);
+            dc.FillSolidRect(ico, folio);
         }
 
         const int tx  = ix + iSz + 2;
@@ -312,7 +312,7 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
         if (pw > 0)
         {
             CRect bar(pColX, iy, pColX + pw, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(&bar, GetFileTreeColor(i));
+            dc.FillSolidRect(bar, GetFileTreeColor(i));
         }
     }
 }
@@ -355,13 +355,13 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
         const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
 
         CRect rowR(r.left, y0, r.right, y1);
-        dc.FillSolidRect(&rowR, i % 2 ? alt : bg);
+        dc.FillSolidRect(rowR, i % 2 ? alt : bg);
 
         const int iy = y0 + (rowH - iSz + 1) / 2;
 
         CRect ico(r.left + 2, iy, r.left + 2 + iSz, iy + iSz);
         if (ico.right < numColX - 2)
-            dc.FillSolidRect(&ico, iconClr[i % 8]);
+            dc.FillSolidRect(ico, iconClr[i % 8]);
 
         const int extX = ico.right + 2;
         const int extW = r.left + extColW - extX;
@@ -405,7 +405,7 @@ void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
 
     // Card background
     const COLORREF cardBg = dark ? RGB(38, 38, 38) : RGB(248, 248, 248);
-    dc.FillSolidRect(&card, cardBg);
+    dc.FillSolidRect(card, cardBg);
 
     // Draw each pane in the card
     const LayoutDef& ld = LAYOUTS[idx];
@@ -459,9 +459,9 @@ void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
 
 bool CLayoutPopup::OnEraseBkgnd(CDC* pDC) const
 {
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     const COLORREF bg = DarkMode::IsDarkModeActive() ? RGB(28, 28, 28) : RGB(240, 240, 240);
-    pDC->FillSolidRect(&rc, bg);
+    pDC->FillSolidRect(rc, bg);
     return true;
 }
 

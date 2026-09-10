@@ -455,8 +455,8 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
     if (itemIndex == -1) return;
 
     RECT rect = {};
-    GetItemRect(itemIndex, &rect, LVIR_BOUNDS);
-    const CRect clientRect = ClientRect();
+    GetItemRect(itemIndex, rect, LVIR_BOUNDS);
+    const CRect clientRect = GetClientRect();
     IntersectRect(&rect, &rect, &clientRect);
     const LPARAM lparam = MAKELPARAM(rect.left, rect.top);
 
@@ -798,20 +798,20 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
 
     m_contextMenu = CMenu::LoadResource(IDR_POPUP_TREE);
     Localization::UpdateMenu(m_contextMenu);
-    CMenu* sub = m_contextMenu.SubmenuAt(0);
+    CMenu* sub = m_contextMenu.GetSubMenu(0);
     if (sub == nullptr) return;
 
     // Populate default menu items
     if (item != nullptr && item->GetTreeListChildCount() == 0)
     {
-        sub->Remove(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
-        sub->Remove(0, MF_BYPOSITION); // Remove separator
+        sub->Remove(0); // Remove "Expand/Collapse" item
+        sub->Remove(0); // Remove separator
         sub->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED);
     }
     else
     {
         const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        sub->Modify(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str());
+        sub->Modify(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command);
         sub->SetDefaultItem(ID_POPUP_TOGGLE);
     }
 
@@ -830,7 +830,7 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     // The menu shall not overlap the label but appear
     // horizontally at the cursor position,
     // vertically under (or above) the label.
-    // ShowPopupEx() behaves in the desired way, if
+    // ShowPopup() behaves in the desired way, if
     // we exclude the label rectangle extended to full screen width.
 
     TPMPARAMS tp{ .cbSize = sizeof(tp) };
@@ -845,7 +845,7 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     tp.rcExclude.top += overlap;
     tp.rcExclude.bottom -= overlap;
 
-    sub->ShowPopupEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, GetMainWindow(), &tp);
+    sub->ShowPopup(TPM_LEFTALIGN | TPM_LEFTBUTTON, point, GetMainWindow(), &tp);
 }
 
 void CTreeListControl::OnSetFocus(CWnd* pOldWnd)

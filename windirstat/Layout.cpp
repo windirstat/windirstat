@@ -63,16 +63,16 @@ void CLayout::OnInitDialog(const bool centerWindow)
 {
     m_dialog->SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
 
-    const CRect rcDialog(m_dialog->Handle());
+    const CRect rcDialog = m_dialog->GetWindowRect();
     m_originalDialogSize = rcDialog.Size();
 
     for (auto& info : m_control)
     {
-        info.originalRectangle = m_dialog->WindowRectInClient(info.control);
+        info.originalRectangle = m_dialog->GetChildWindowRect(info.control);
     }
 
     // Create size gripper
-    CRect sg = m_dialog->ClientRect();
+    CRect sg = m_dialog->GetClientRect();
     sg.left = sg.right - m_sizeGripper.m_width;
     sg.top = sg.bottom - m_sizeGripper.m_width;
     m_sizeGripper.Create(m_dialog, sg);
@@ -80,7 +80,7 @@ void CLayout::OnInitDialog(const bool centerWindow)
     const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
     m_control[i].originalRectangle = sg;
 
-    m_dialog->MoveWindow(m_wp);
+    if (m_wp) m_dialog->MoveWindow(*m_wp);
     if (centerWindow)
     {
         m_dialog->CenterWindow();
@@ -89,12 +89,12 @@ void CLayout::OnInitDialog(const bool centerWindow)
 
 void CLayout::OnDestroy() const
 {
-    if (m_wp != nullptr) *m_wp = CRect(m_dialog->Handle());
+    if (m_wp != nullptr) *m_wp = m_dialog->GetWindowRect();
 }
 
 void CLayout::OnSize()
 {
-    const CRect wrc(m_dialog->Handle());
+    const CRect wrc = m_dialog->GetWindowRect();
     const CSize diff = wrc.Size() - m_originalDialogSize;
 
     CPositioner pos(static_cast<int>(m_control.size()));

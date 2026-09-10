@@ -97,7 +97,7 @@ void CFileDupeView::InitializeColumns()
 
     // Columns should be in enumeration order so initial sort will work
     const std::wstring hashName = Localization::Lookup(IDS_COL_HASH) + L" / " + Localization::Lookup(IDS_COL_NAME);
-    control.InsertColumn(CHAR_MAX, hashName.c_str(), LVCFMT_LEFT, ScaleForDpi(500), COL_ITEMDUP_NAME);
+    control.InsertColumn(CHAR_MAX, hashName, LVCFMT_LEFT, ScaleForDpi(500), COL_ITEMDUP_NAME);
     InsertCol(IDS_COL_ITEMS, LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
     InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 80, COL_ITEMDUP_SIZE_PHYSICAL);
     InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 80, COL_ITEMDUP_SIZE_LOGICAL);

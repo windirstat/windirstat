@@ -40,7 +40,7 @@ bool CProgressDlg::OnInitDialog()
 
     // Set window title and message
     SetText(wds::strWinDirStat);
-    m_messageCtrl.SetText(m_message.c_str());
+    m_messageCtrl.SetText(m_message);
 
     // Configure cancel button
     if (HasFlag(Flags::NoCancel)) m_cancelButton.ShowWindow(SW_HIDE);
@@ -104,10 +104,10 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
             std::format(L"{}: {}%", m_message, FormatDouble(percent)) :
             std::format(L"{}: {}% ({} / {})",
                 m_message, FormatDouble(percent), FormatCount(current), FormatCount(m_total));
-        if (m_messageCtrl.Text() != progressText)
+        if (m_messageCtrl.GetText() != progressText)
         {
             m_messageCtrl.SetRedraw(false);
-            m_messageCtrl.SetText(progressText.c_str());
+            m_messageCtrl.SetText(progressText);
             m_messageCtrl.SetRedraw(true);
             m_messageCtrl.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
         }
@@ -160,7 +160,7 @@ HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 void CWdsProgressCtrl::OnPaint()
 {
     CPaintDC dc(this);
-    const CRect rect = ClientRect();
+    const CRect rect = GetClientRect();
 
     // Draw track background and border
     {
@@ -171,7 +171,7 @@ void CWdsProgressCtrl::OnPaint()
         const CBrush trackBrush(trackBrushColor);
         const GdiObjectSelection soPen(&dc, &trackPen);
         const GdiObjectSelection soBrush(&dc, &trackBrush);
-        dc.RoundRect(&rect, CPoint(4, 4));
+        dc.RoundRect(rect, CPoint(4, 4));
     }
 
     // Draw progress fill (square)
@@ -197,19 +197,19 @@ void CWdsProgressCtrl::OnPaint()
 
         if (progRect.left < progRect.right)
         {
-            dc.FillSolidRect(&progRect, progColor);
+            dc.FillSolidRect(progRect, progColor);
         }
     }
     else
     {
-        const auto [lower, upper] = Range();
+        const auto [lower, upper] = GetRange();
         if (const float percent = upper > lower
                 ? std::clamp(static_cast<float>(GetPos() - lower) / (upper - lower), 0.0f, 1.0f)
                 : 0.0f;
             percent > 0.0f)
         {
             progRect.right = std::max(progRect.left, progRect.left + static_cast<int>(progRect.Width() * percent));
-            dc.FillSolidRect(&progRect, progColor);
+            dc.FillSolidRect(progRect, progColor);
         }
     }
 

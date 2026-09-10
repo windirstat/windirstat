@@ -338,7 +338,7 @@ void CFlameGraph::LayoutItem(const CItem* item, const CRect& rc, const int depth
 
 void CFlameGraph::RenderLayout(CDC* pdc, const bool breadcrumbs) const
 {
-    const CRect clip = pdc->ClipBox().value_or(m_renderArea);
+    const CRect clip = pdc->GetClipBox().value_or(m_renderArea);
 
     VisitRowItems(clip, CPoint(0, 0), [this, pdc, breadcrumbs](const RowItem& entry,
         const CRect& rectangle)
@@ -378,7 +378,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     {
         // Reuse the process-wide DC brush instead of constructing a GDI brush
         // for every directory tile.
-        SetDCBrushColor(pdc->Handle(), CColorSpace::DimColor(drawColor, 0.6f));
+        pdc->SetDCBrushColor(CColorSpace::DimColor(drawColor, 0.6f));
         FrameRect(pdc->Handle(), &rc,
             static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
     }
@@ -438,7 +438,7 @@ void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
     pdc->SetTextColor(GetContrastingTextColor(color));
     CRect textRc = rc;
     textRc.Deflate(m_textInsetX, m_textInsetY);
-    pdc->DrawText(name.data(), static_cast<int>(name.size()), &textRc,
+    pdc->DrawText(name, &textRc,
         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
 }
 

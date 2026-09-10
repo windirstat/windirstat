@@ -23,13 +23,13 @@ void CXySlider::Initialize()
     if (!m_inited && IsWindow(m_hWnd))
     {
         // Make size odd, so that zero lines are central
-        CRect rc = GetParent()->WindowRectInClient(Handle());
+        CRect rc = GetParent()->GetChildWindowRect(Handle());
         if (rc.Width() % 2 == 0) rc.right--;
         if (rc.Height() % 2 == 0) rc.bottom--;
         MoveWindow(rc);
 
         // Initialize sizes
-        m_rcAll = ClientRect();
+        m_rcAll = GetClientRect();
         constexpr int s_gripperRadius = 8;
 
         m_zero.x = m_rcAll.Width() / 2;
@@ -136,7 +136,7 @@ void CXySlider::PaintBackground(CDC* pdc)
     StockObjectSelection sobrush(pdc, NULL_BRUSH);
     pdc->Ellipse(circle);
 
-    if (GetFocus() == this)
+    if (HasFocus())
     {
         pdc->DrawFocusRect(m_rcAll);
     }
@@ -211,7 +211,7 @@ void CXySlider::DoDrag(const CPoint & point)
             break;
         }
 
-        if (GetCapture() != this)
+        if (!HasCapture())
         {
             break;
         }

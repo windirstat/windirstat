@@ -281,7 +281,7 @@ void CWdsListControl::OnColumnsInserted(
     const std::initializer_list<int> defaultHiddenColumns)
 {
     // Cache the column count
-    m_columnCount = Header().GetItemCount();
+    m_columnCount = GetHeader().GetItemCount();
     m_defaultColumnWidths.resize(m_columnCount);
     for (const int column : std::views::iota(0, m_columnCount))
     {
@@ -364,7 +364,7 @@ void CWdsListControl::CalculateRowHeight()
     CClientDC dc(this);
     GdiObjectSelection sofont(&dc, GetFont());
 
-    if (const auto metrics = dc.TextMetrics())
+    if (const auto metrics = dc.GetTextMetrics())
     {
         // Row height accommodates both the text and icon, plus padding.
         m_rowHeight = (std::max<int>(metrics->tmHeight, m_iconSize) + (LABEL_Y_MARGIN * 2) + 1) | 1;
@@ -376,7 +376,7 @@ void CWdsListControl::ShowGrid(const bool show)
     m_showGrid = show;
     if (IsWindow(m_hWnd))
     {
-        InvalidateRect(nullptr);
+        Invalidate();
     }
 }
 
@@ -385,7 +385,7 @@ void CWdsListControl::ShowStripes(const bool show)
     m_showStripes = show;
     if (IsWindow(m_hWnd))
     {
-        InvalidateRect(nullptr);
+        Invalidate();
     }
 }
 
@@ -394,7 +394,7 @@ void CWdsListControl::ShowFullRowSelection(const bool show)
     m_showFullRowSelect = show;
     if (IsWindow(m_hWnd))
     {
-        InvalidateRect(nullptr);
+        Invalidate();
     }
 }
 
@@ -593,7 +593,7 @@ CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) co
         // and we have an icon list, then we would get the rectangle
         // excluding the icon.
         HDITEM hditem = { .mask = HDI_WIDTH };
-        Header().GetItem(0, &hditem);
+        GetHeader().GetItem(0, &hditem);
 
         [[maybe_unused]] const bool gotItemRect = GetItemRect(item, rc, LVIR_LABEL);
         assert(gotItemRect);
@@ -660,7 +660,7 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC*
         return 0;
     }
 
-    return TEXT_X_MARGIN + pDC->GetTextExtent(s.c_str(), static_cast<int>(s.size())).cx;
+    return TEXT_X_MARGIN + pDC->GetTextExtent(s).cx;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -876,7 +876,7 @@ void CWdsListControl::SortItems()
 
 void CWdsListControl::UpdateSortIndicator()
 {
-    CHeaderCtrl& header = Header();
+    CHeaderCtrl& header = GetHeader();
     HDITEM hditem{ .mask = HDI_FORMAT };
 
     // Remove the sort indicator from the previously sorted column if one exists.
@@ -908,7 +908,7 @@ void CWdsListControl::PostSelectionChanged()
     if (!m_selectionChangePending)
     {
         m_selectionChangePending = true;
-        PostMessage(WM_SELECTION_CHANGED, 0, 0);
+        PostMessage(WM_SELECTION_CHANGED);
     }
 }
 
@@ -924,7 +924,7 @@ void CWdsListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
     if (point != CPoint(-1, -1))
     {
-        const CRect headerRect(Header().Handle());
+        const CRect headerRect = GetHeader().GetWindowRect();
         if (headerRect.Contains(point))
         {
             ShowColumnContextMenu(point);
@@ -960,7 +960,7 @@ void CWdsListControl::ShowColumnContextMenu(const CPoint point)
 
     const UINT command = menu.ShowPopup(
         TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-        point.x, point.y, this);
+        point, this);
     if (command > 0 && command <= static_cast<UINT>(m_columnCount))
     {
         const int subitem = ColumnToSubItem(command - 1);
@@ -983,7 +983,7 @@ void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
     {
         *pResult = CDRF_NOTIFYITEMDRAW;
     }
-    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT && pNMHDR->hwndFrom == Header().Handle())
+    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT && pNMHDR->hwndFrom == GetHeader().Handle())
     {
         ::SetTextColor(pCustomDraw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
     }
@@ -992,14 +992,14 @@ void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
 bool CWdsListControl::OnEraseBkgnd(CDC* pDC) const
 {
     // Fetch coordinate of the last item
-    CRect lastRect(0, 0, 0, 0);
+    CRect lastRect;
     if (const int itemCount = GetItemCount(); itemCount > 0)
     {
-        GetItemRect(itemCount - 1, &lastRect, LVIR_BOUNDS);
+        GetItemRect(itemCount - 1, lastRect, LVIR_BOUNDS);
     }
 
     // Erase unused area to the right of all items
-    const CRect rectClient = ClientRect();
+    const CRect rectClient = GetClientRect();
     if (lastRect.right < rectClient.right)
     {
         pDC->FillSolidRect(lastRect.right, 0, rectClient.right - lastRect.right,
@@ -1048,7 +1048,7 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 void CWdsListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     CallDefaultHandler();
-    InvalidateRect(nullptr);
+    Invalidate();
 
     *pResult = false;
 }

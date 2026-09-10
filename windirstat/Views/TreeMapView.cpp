@@ -145,7 +145,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
 
     if (single)
     {
-        const CRect rcClient = ClientRect();
+        const CRect rcClient = GetClientRect();
         if (m_treeMap.GetOptions().grid)
         {
             rc.right++;

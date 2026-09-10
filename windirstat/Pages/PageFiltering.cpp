@@ -35,11 +35,11 @@ void CPageFiltering::InitializePage()
     m_ctrlFilteringIncludeFiles.SubclassDlgItem(IDC_FILTERING_INCLUDE_FILES, this);
     m_ctrlFilteringIncludeDirs.SubclassDlgItem(IDC_FILTERING_INCLUDE_DIRS, this);
 
-    m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_MiB().c_str());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_GiB().c_str());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_TiB().c_str());
+    m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes());
+    m_ctlFilteringSizeUnits.AddString(GetSpec_KiB());
+    m_ctlFilteringSizeUnits.AddString(GetSpec_MiB());
+    m_ctlFilteringSizeUnits.AddString(GetSpec_GiB());
+    m_ctlFilteringSizeUnits.AddString(GetSpec_TiB());
     m_ctlFilteringSizeComparison.AddString(L"<");
     m_ctlFilteringSizeComparison.AddString(L">");
     m_ctlFilteringMaxAgeComparison.AddString(L"<");
@@ -87,28 +87,28 @@ void CPageFiltering::SetToolTips()
     const std::wstring tip = Localization::Lookup(IDS_PAGE_FILTERING_TOOLTIP_PREFIX) + L"\n\n";
     if (IsChecked(IDC_FILTERING_USE_REGEX))
     {
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX));
+        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX));
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX));
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX));
     }
     else
     {
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS)).c_str());
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS));
+        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES));
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS));
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES));
     }
 }
 
 void CPageFiltering::OnOK()
 {
     const int filteringSizeMinimum = std::stoi(GetText(IDC_FILTERING_SIZE_MIN));
-    const int filteringSizeUnits = ComboSelection(IDC_FILTERING_MIN_UNITS);
-    const int filteringSizeComparison = std::clamp<int>(ComboSelection(IDC_FILTERING_SIZE_COMPARISON), 0, 1);
+    const int filteringSizeUnits = GetComboSelection(IDC_FILTERING_MIN_UNITS);
+    const int filteringSizeComparison = std::clamp<int>(GetComboSelection(IDC_FILTERING_SIZE_COMPARISON), 0, 1);
     const bool filteringUseRegex = IsChecked(IDC_FILTERING_USE_REGEX);
     const int filteringMaxAgeDays = std::stoi(GetText(IDC_FILTERING_MAX_AGE_DAYS));
-    const int filteringMaxAgeComparison = std::clamp<int>(ComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON), 0, 1);
+    const int filteringMaxAgeComparison = std::clamp<int>(GetComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON), 0, 1);
     const std::wstring filteringExcludeFiles = GetText(IDC_FILTERING_EXCLUDE_FILES);
     const std::wstring filteringExcludeDirs = GetText(IDC_FILTERING_EXCLUDE_DIRS);
     const std::wstring filteringIncludeFiles = GetText(IDC_FILTERING_INCLUDE_FILES);

@@ -38,7 +38,7 @@ int CWinDirStatPane::OnMouseActivate(CWnd* pDesktopWnd, const UINT nHitTest, con
     const int result = CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
     if (result != MA_NOACTIVATE && result != MA_NOACTIVATEANDEAT)
     {
-        if (const HWND focus = ::GetFocus(); m_hWnd != focus && !::IsChild(m_hWnd, focus) && IsTopParentActive())
+        if (const HWND focus = ::GetFocus(); m_hWnd != focus && !IsChild(focus) && IsTopParentActive())
         {
             SetFocus();
         }
@@ -48,7 +48,7 @@ int CWinDirStatPane::OnMouseActivate(CWnd* pDesktopWnd, const UINT nHitTest, con
 
 void CWinDirStatPane::OnUpdate(CWnd* /*sender*/, MODEL_CHANGE /*change*/, CItem* /*item*/)
 {
-    InvalidateRect(nullptr);
+    Invalidate();
 }
 
 bool CWinDirStatPane::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoint pt)
@@ -79,7 +79,7 @@ void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint poin
     if (!menu) return;
     Localization::UpdateMenu(menu);
 
-    const CMenu* subMenu = menu.SubmenuAt(0);
+    const CMenu* subMenu = menu.GetSubMenu(0);
     if (subMenu == nullptr) return;
 
     UINT command;
@@ -87,7 +87,7 @@ void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint poin
     {
         command = subMenu->ShowPopup(
             TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-            point.x, point.y, GetMainWindow());
+            point, GetMainWindow());
         if (command != 0) GetMainWindow()->SendMessage(WM_COMMAND, command);
     } while (std::ranges::find(persistentCommands, command) != persistentCommands.end());
 }

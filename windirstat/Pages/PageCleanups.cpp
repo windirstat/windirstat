@@ -27,12 +27,12 @@ void CPageCleanups::InitializePage()
     m_ctlTitle.SubclassDlgItem(IDC_TITLE, this);
 
     // Combobox data correspond to enum REFRESHPOLICY:
-    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH).c_str());
-    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_ENTRY).c_str());
-    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_PARENT).c_str());
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH));
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_ENTRY));
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_PARENT));
 
     m_udc = COptions::UserDefinedCleanups;
-    for (const USERDEFINEDCLEANUP& udc : m_udc) m_customCleanupList.AddString(udc.Title.Obj().c_str());
+    for (const USERDEFINEDCLEANUP& udc : m_udc) m_customCleanupList.AddString(udc.Title.Obj());
 
     if (!m_udc.empty()) m_customCleanupList.SetCurSel(0);
     OnLbnSelchangeList();
@@ -67,7 +67,7 @@ void CPageCleanups::CheckEmptyTitle()
     const ScopedValue updating(m_updating, true);
     SetText(IDC_TITLE, title);
     m_customCleanupList.DeleteString(m_current);
-    m_customCleanupList.InsertString(m_current, title.c_str());
+    m_customCleanupList.InsertString(m_current, title);
     m_customCleanupList.SetCurSel(selection);
 }
 
@@ -118,7 +118,7 @@ void CPageCleanups::DialogToCurrentUdc()
     udc.AskForConfirmation        = IsChecked(IDC_ASKFORCONFIRMATION);
     udc.ShowConsoleWindow         = IsChecked(IDC_SHOWCONSOLEWINDOW);
     udc.WaitForCompletion         = IsChecked(IDC_WAITFORCOMPLETION);
-    udc.RefreshPolicy             = ComboSelection(IDC_REFRESHPOLICY);
+    udc.RefreshPolicy             = GetComboSelection(IDC_REFRESHPOLICY);
 }
 
 void CPageCleanups::OnSomethingChanged()
@@ -177,7 +177,7 @@ void CPageCleanups::OnEnChangeTitle()
     OnSomethingChanged();
     m_udc[m_current].VirginTitle = false;
     m_customCleanupList.DeleteString(m_current);
-    m_customCleanupList.InsertString(m_current, m_udc[m_current].Title.Obj().c_str());
+    m_customCleanupList.InsertString(m_current, m_udc[m_current].Title.Obj());
     m_customCleanupList.SetCurSel(m_current);
 }
 
@@ -188,7 +188,7 @@ void CPageCleanups::OnBnClickedAdd()
     auto& udc = m_udc.emplace_back();
     m_current = static_cast<int>(m_udc.size()) - 1;
     udc.Title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, m_current);
-    m_customCleanupList.AddString(udc.Title.Obj().c_str());
+    m_customCleanupList.AddString(udc.Title.Obj());
     m_customCleanupList.SetCurSel(m_current);
 
     CurrentUdcToDialog();
@@ -216,7 +216,7 @@ void CPageCleanups::MoveCurrentUdc(const int offset)
     DialogToCurrentUdc();
     std::swap(m_udc[m_current], m_udc[destination]);
     m_customCleanupList.DeleteString(m_current);
-    m_customCleanupList.InsertString(destination, m_udc[destination].Title.Obj().c_str());
+    m_customCleanupList.InsertString(destination, m_udc[destination].Title.Obj());
     m_current = destination;
     m_customCleanupList.SetCurSel(m_current);
 

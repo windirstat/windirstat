@@ -23,7 +23,7 @@ CSettingsPage::CSettingsPage(const UINT templateId) : MessageTarget(templateId) 
 
 CSettingsSheet* CSettingsPage::GetSheet() const
 {
-    const auto sheet = static_cast<CSettingsSheet*>(GetParent());
+    const auto sheet = GetParent<CSettingsSheet>();
     assert(sheet != nullptr);
     return sheet;
 }
@@ -79,8 +79,8 @@ void CSettingsPage::OnSettingNotifyChanged(UINT, NMHDR*, LRESULT*)
 
 bool CSettingsPage::OnEraseBkgnd(CDC* pDC)
 {
-    const CRect rect = ClientRect();
-    pDC->FillSolidRect(&rect, DarkMode::SystemColor(
+    const CRect rect = GetClientRect();
+    pDC->FillSolidRect(rect, DarkMode::SystemColor(
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
     return true;
 }

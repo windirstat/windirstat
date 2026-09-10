@@ -32,10 +32,10 @@ void CPagePermissions::InitializePage()
         m_colorButton[i].SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
 
         // "Special" is excluded since it is not a meaningful colorization threshold
-        m_levelCombo[i].AddString(Localization::Lookup(IDS_PERMS_ANY).c_str());
+        m_levelCombo[i].AddString(Localization::Lookup(IDS_PERMS_ANY));
         for (const int level : std::views::iota(0, static_cast<int>(PERMSLEVEL_SPECIAL)))
         {
-            m_levelCombo[i].AddString(CItemPerm::GetRightsLevelName(static_cast<PERMSLEVEL>(level)).c_str());
+            m_levelCombo[i].AddString(CItemPerm::GetRightsLevelName(static_cast<PERMSLEVEL>(level)));
         }
 
         SetText(IDC_PERMS_ACCOUNT0 + i, COptions::PermsColorAccount[i].Obj());
@@ -51,7 +51,7 @@ void CPagePermissions::OnOK()
     for (const int i : std::views::iota(0, PERMSRULECOUNT))
     {
         COptions::PermsColorAccount[i].Obj() = GetText(IDC_PERMS_ACCOUNT0 + i);
-        COptions::PermsColorLevel[i] = ComboSelection(IDC_PERMS_LEVEL0 + i);
+        COptions::PermsColorLevel[i] = GetComboSelection(IDC_PERMS_LEVEL0 + i);
         COptions::PermsColor[i] = m_colorButton[i].GetColor();
     }
     COptions::PermsExcludeRegex.Obj() = GetText(IDC_PERMS_EXCLUDE);

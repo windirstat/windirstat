@@ -169,12 +169,12 @@ bool CExtensionListControl::GetAscendingDefault(const int subitem)
 void CExtensionListControl::Initialize()
 {
     // Columns should be in the order of definition in order for sort to work
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, ScaleForDpi(60), COL_EXT_EXTENSION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, ScaleForDpi(40), COL_EXT_COLOR);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, ScaleForDpi(170), COL_EXT_DESCRIPTION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, ScaleForDpi(60), COL_EXT_BYTES);
-    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_BYTESPERCENT);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_FILES);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION), LVCFMT_LEFT, ScaleForDpi(60), COL_EXT_EXTENSION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR), LVCFMT_LEFT, ScaleForDpi(40), COL_EXT_COLOR);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION), LVCFMT_LEFT, ScaleForDpi(170), COL_EXT_DESCRIPTION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES), LVCFMT_RIGHT, ScaleForDpi(60), COL_EXT_BYTES);
+    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_BYTESPERCENT);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES), LVCFMT_RIGHT, ScaleForDpi(50), COL_EXT_FILES);
 
     SetSorting(COL_EXT_BYTES, GetAscendingDefault(COL_EXT_BYTES));
 
@@ -251,7 +251,7 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
 
 std::wstring CExtensionListControl::GetSelectedExtension() const
 {
-    const int selected = FirstSelectedIndex();
+    const int selected = GetFirstSelectedIndex();
     if (selected < 0) return wds::strEmpty;
 
     const CListItem* item = GetListItem(selected);
@@ -261,7 +261,7 @@ std::wstring CExtensionListControl::GetSelectedExtension() const
 bool CExtensionListControl::IsSelectedAggregate() const
 {
     // The synthetic aggregate row has no concrete extension to act on
-    const int selected = FirstSelectedIndex();
+    const int selected = GetFirstSelectedIndex();
     return selected >= 0 && GetListItem(selected)->IsAggregate();
 }
 
@@ -353,11 +353,11 @@ void CExtensionListControl::OnItemContextMenu(CPoint point)
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
     menu.Append(MF_STRING | MF_ENABLED | (COptions::GroupUnregisteredTypes ? MF_CHECKED : 0),
         ID_VIEW_GROUP_TYPES, Localization::Lookup(IDS_MENU_GROUP_TYPES).c_str());
-    menu.Append(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
+    menu.Append(MF_STRING | aggregateFlags, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM));
     menu.SetDefaultItem(ID_EXTLIST_SEARCH_EXTENSION);
 
     // Add search bitmap to menu
-    if (m_searchBitmap.Handle() == nullptr)
+    if (!m_searchBitmap)
     {
         m_searchBitmap.Attach(Icons::MakeBitmap(16, Icons::Char(L'⌕', RGB(140, 140, 140))));
     }
@@ -365,10 +365,10 @@ void CExtensionListControl::OnItemContextMenu(CPoint point)
     const MENUITEMINFO mii{
         .cbSize = sizeof(MENUITEMINFO),
         .fMask = MIIM_BITMAP,
-        .hbmpItem = static_cast<HBITMAP>(m_searchBitmap.Handle())
+        .hbmpItem = m_searchBitmap
     };
     menu.SetItemInfo(ID_EXTLIST_SEARCH_EXTENSION, &mii, CMenu::ItemLookup::Command);
-    if (const UINT id = menu.ShowPopup(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this))
+    if (const UINT id = menu.ShowPopup(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point, this))
     {
         (id == ID_VIEW_GROUP_TYPES) ? GetMainWindow()->RouteCommand(ID_VIEW_GROUP_TYPES, CommandCode, nullptr)
             : RouteCommand(id, CommandCode, nullptr);

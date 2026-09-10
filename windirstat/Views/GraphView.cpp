@@ -77,7 +77,7 @@ void CGraphView::PaintEmptyView(CDC* pDC)
     Inactivate();
     if (DrawDimmedView(pDC)) return;
 
-    const CRect rect = ClientRect();
+    const CRect rect = GetClientRect();
     pDC->FillSolidRect(rect, BackgroundColor);
     DrawEmptyPlaceholder(pDC, rect);
 }
@@ -108,7 +108,7 @@ void CGraphView::OnDraw(CDC* pDC)
         return;
     }
 
-    CRect rect = ClientRect();
+    CRect rect = GetClientRect();
     if (!PrepareDrawing(pDC, rect)) return;
 
     CDC memoryDc(pDC);
@@ -162,7 +162,7 @@ bool CGraphView::DrawDimmedView(CDC* pDC)
 {
     if (m_dimmed.m_hObject == nullptr) return false;
 
-    const CRect clientRect = ClientRect();
+    const CRect clientRect = GetClientRect();
     CDC memoryDc(pDC);
     if (!memoryDc)
     {
@@ -250,7 +250,7 @@ CItem* CGraphView::ResolveItemAtPoint(CPoint point, const bool isScreenCoords)
     if (root == nullptr || !root->IsDone() || !HasValidLayout()) return nullptr;
 
     if (isScreenCoords) point = ToClient(point);
-    if (!ClientRect().Contains(point)) return nullptr;
+    if (!GetClientRect().Contains(point)) return nullptr;
     return FindItemAtPoint(point);
 }
 
@@ -419,8 +419,8 @@ HoverInfo CGraphView::GetHoverInfo() const
 {
     if (!IsWindowVisible()) return {};
 
-    const auto point = ClientCursorPosition();
-    if (!point || !ClientRect().Contains(*point)) return {};
+    const auto point = GetClientCursorPos();
+    if (!point || !GetClientRect().Contains(*point)) return {};
     return { m_paneTextOverride, m_paneSizeOverride };
 }
 

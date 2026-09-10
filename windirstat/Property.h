@@ -81,7 +81,7 @@ public:
     // Forces identical type assignment
     template <typename T2> T2& operator=(const T2&) = delete;
 
-    Setting(const std::wstring& section, const std::wstring& entry, T defaultValue = {}, T checkMin = {}, T checkMax = {}) :
+    Setting(const std::wstring_view section, const std::wstring_view entry, T defaultValue = {}, T checkMin = {}, T checkMax = {}) :
         m_value(std::move(defaultValue)), m_min(std::move(checkMin)), m_max(std::move(checkMax))
     {
         m_entry = entry;

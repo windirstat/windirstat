@@ -125,9 +125,9 @@ public:
     CItem& operator=(CItem&&) = delete;
 
     // Construction / Destruction
-    CItem(ITEMTYPE type, const std::wstring& name);
+    CItem(ITEMTYPE type, std::wstring_view name);
     explicit CItem(CItem* linkedItem);
-    CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
+    CItem(ITEMTYPE type, std::wstring_view name, FILETIME lastChange, ULONGLONG sizePhysical,
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 

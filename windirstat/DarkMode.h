@@ -42,7 +42,7 @@ public:
     static void AdjustControls(HWND hWnd);
     static HBRUSH OnCtlColor(CDC* pDC, UINT nCtlColor);
     static void SetAppDarkMode() noexcept;
-    static void LightenBitmap(CBitmap* pBitmap, bool invert = false);
+    static void LightenBitmap(CBitmap& bitmap, bool invert = false);
     static void DrawFocusRect(CDC* pdc, const CRect& rc);
 
 private:

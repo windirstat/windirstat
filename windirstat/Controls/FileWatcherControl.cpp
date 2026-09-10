@@ -145,7 +145,7 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
 
 void CFileWatcherControl::PostWatcherChange()
 {
-    if (!m_changePending.exchange(true) && !PostMessage(WM_WATCHER_CHANGE, 0, 0))
+    if (!m_changePending.exchange(true) && !PostMessage(WM_WATCHER_CHANGE))
         m_changePending = false;
 }
 

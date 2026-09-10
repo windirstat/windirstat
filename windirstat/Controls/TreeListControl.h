@@ -121,7 +121,7 @@ public:
     template <class T = CTreeListItem> std::vector<T*> GetAllSelected(bool visual = false)
     {
         std::vector<T*> array;
-        for (int i = FirstSelectedIndex(); i >= 0; i = NextSelectedIndex(i))
+        for (int i = GetFirstSelectedIndex(); i >= 0; i = GetNextSelectedIndex(i))
         {
             const auto item = visual ? reinterpret_cast<T*>(GetItem(i)) :
                 reinterpret_cast<T*>(GetItem(i)->GetLinkedItem());
@@ -132,8 +132,8 @@ public:
 
     template <class T = CTreeListItem> T* GetFirstSelectedItem()
     {
-        const int selected = FirstSelectedIndex();
-        if (selected < 0 || NextSelectedIndex(selected) >= 0) return nullptr;
+        const int selected = GetFirstSelectedIndex();
+        if (selected < 0 || GetNextSelectedIndex(selected) >= 0) return nullptr;
         return reinterpret_cast<T*>(GetItem(selected));
     }
 

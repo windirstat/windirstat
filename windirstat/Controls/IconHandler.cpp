@@ -102,10 +102,10 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
         *icon = (attr & FILE_ATTRIBUTE_DIRECTORY) ? m_defaultFolderImage : m_defaultFileImage;
     }
 
-    static constexpr std::array slowExts = { L".exe", L".ico", L".lnk", L".url" };
+    static constexpr std::array<std::wstring_view, 4> slowExts = { L".exe", L".ico", L".lnk", L".url" };
     const auto dot = path.rfind(L'.');
     const bool isSlow = dot != std::wstring::npos &&
-        std::ranges::any_of(slowExts, [ext = path.data() + dot](const wchar_t* e) { return _wcsicmp(ext, e) == 0; });
+        std::ranges::any_of(slowExts, [ext = path.c_str() + dot](const std::wstring_view e) { return _wcsicmp(ext, e.data()) == 0; });
 
     // FILE_ATTRIBUTE_OFFLINE indicates the file is not immediately available locally
     // (cloud placeholder, Remote Storage, etc.). SHGetFileInfo opens these file types

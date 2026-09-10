@@ -38,9 +38,9 @@ void CAboutDlg::WdsTabControl::Initialize()
     };
 
     // Create all three pages and add them as tabs, remembering the index each was assigned
-    m_tabAbout = AddTab(createText(m_textAbout), IDS_ABOUT_ABOUT.data());
-    m_tabThanks = AddTab(createText(m_textThanks), IDS_ABOUT_THANKS.data());
-    m_tabLicense = AddTab(createText(m_textLicense, ES_LEFT), IDS_ABOUT_LICENSE.data());
+    m_tabAbout = AddTab(createText(m_textAbout), IDS_ABOUT_ABOUT);
+    m_tabThanks = AddTab(createText(m_textThanks), IDS_ABOUT_THANKS);
+    m_tabLicense = AddTab(createText(m_textLicense, ES_LEFT), IDS_ABOUT_LICENSE);
     Localization::UpdateTabControl(*this);
 
     // Use monospace font for license page
@@ -52,9 +52,9 @@ void CAboutDlg::WdsTabControl::Initialize()
         Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
         Localization::LookupNeutral(IDS_URL_WEBSITE)).c_str());
 
-    m_textThanks.SetText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT).c_str());
+    m_textThanks.SetText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT));
 
-    m_textLicense.SetText(GetTextResource(IDR_LICENSE).c_str());
+    m_textLicense.SetText(GetTextResource(IDR_LICENSE));
     m_textLicense.SetFont(m_monoFont);
 
     // Set default rich edit settings
@@ -73,7 +73,7 @@ void CAboutDlg::WdsTabControl::Initialize()
 
 CRichEditCtrl& CAboutDlg::WdsTabControl::GetActiveRichEdit()
 {
-    const auto tabIndex = ActiveTab();
+    const auto tabIndex = GetActiveTab();
     return tabIndex == m_tabAbout ? m_textAbout :
            tabIndex == m_tabThanks ? m_textThanks :
            m_textLicense;
@@ -89,8 +89,8 @@ void CAboutDlg::WdsTabControl::ClearSelectionCursor()
 
 bool CAboutDlg::WdsTabControl::HandleTabKey(const bool shiftPressed)
 {
-    const int activeTab = ActiveTab();
-    const int tabCount = TabCount();
+    const int activeTab = GetActiveTab();
+    const int tabCount = GetTabCount();
 
     if (shiftPressed)
     {
@@ -127,7 +127,7 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     if (el->msg == WM_LBUTTONDOWN)
     {
         const auto& active = GetActiveRichEdit();
-        const std::wstring link = active.TextRange(el->chrg.cpMin, el->chrg.cpMax);
+        const std::wstring link = active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax);
         ::ShellExecute(*this, nullptr, link.c_str(), nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
@@ -141,7 +141,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
     {
         if (mf->wParam == VK_ESCAPE)
         {
-            GetParent()->PostMessage(WM_COMMAND, IDOK, 0);
+            GetParent()->PostMessage(WM_COMMAND, IDOK);
             *pResult = 1;
         }
         else if (mf->wParam == VK_TAB)
@@ -180,7 +180,7 @@ bool CAboutDlg::OnInitDialog()
 
     // Re-create the tab control
     CWnd* placeholderTabCtrl = GetDlgItem(IDC_TAB);
-    const CRect placeholderRect = WindowRectInClient(placeholderTabCtrl->Handle());
+    const CRect placeholderRect = GetChildWindowRect(placeholderTabCtrl->Handle());
     placeholderTabCtrl->DestroyWindow();
     m_tab.Create(placeholderRect, this, IDC_TAB);
     Localization::UpdateDialogs(*this);
@@ -192,7 +192,7 @@ bool CAboutDlg::OnInitDialog()
 
     m_tab.Initialize();
 
-    m_caption.SetText(GetAppVersion().c_str());
+    m_caption.SetText(GetAppVersion());
 
     DarkMode::AdjustControls(Handle());
 
@@ -220,7 +220,7 @@ bool CAboutDlg::PreprocessMessage(MSG* pMsg)
     {
         if (GetFocus() == GetDlgItem(IDOK))
         {
-            m_tab.SelectTab(IsKeyDown(VK_SHIFT) ? m_tab.TabCount() - 1 : 0);
+            m_tab.SelectTab(IsKeyDown(VK_SHIFT) ? m_tab.GetTabCount() - 1 : 0);
             m_tab.SetFocus();
             return true;
         }

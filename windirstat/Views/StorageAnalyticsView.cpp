@@ -47,9 +47,9 @@ void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, const UINT nFla
         return;
     }
 
-    const std::wstring text = Text();
+    const std::wstring text = GetText();
 
-    const auto [selStart, selEnd] = Selection();
+    const auto [selStart, selEnd] = GetSel();
 
     std::wstring candidate = text;
     candidate.erase(static_cast<std::size_t>(selStart), static_cast<std::size_t>(selEnd - selStart));
@@ -143,17 +143,17 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     m_btnRecalculate.Create(L"Recalculate", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, rect, this, 1001);
 
-    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_TiB).c_str());
-    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_GiB).c_str());
-    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_MiB).c_str());
-    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_KiB).c_str());
+    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_TiB));
+    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_GiB));
+    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_MiB));
+    m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_KiB));
     m_comboUnit.SetCurSel(1);
 
     // Apply localization texts
-    m_lblTitle.SetText(Localization::Lookup(IDS_ANALYTICS_CONFIG).c_str());
-    m_lblUnit.SetText(Localization::Lookup(IDS_ANALYTICS_UNIT).c_str());
+    m_lblTitle.SetText(Localization::Lookup(IDS_ANALYTICS_CONFIG));
+    m_lblUnit.SetText(Localization::Lookup(IDS_ANALYTICS_UNIT));
     UpdateCostLabels();
-    m_btnRecalculate.SetText(Localization::Lookup(IDS_RECALCULATE).c_str());
+    m_btnRecalculate.SetText(Localization::Lookup(IDS_RECALCULATE));
 
     OnFontSizeChanged(0, 0);
 
@@ -167,10 +167,10 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         if (m_tiers[i].editThreshold)
         {
             const double defDays = (i < numDefaults) ? defaultThresholds[i] : (defaultThresholds.back() + (i - (numDefaults - 1)) * 100.0);
-            m_tiers[i].editThreshold->SetText(std::to_wstring(static_cast<int>(defDays)).c_str());
+            m_tiers[i].editThreshold->SetText(std::to_wstring(static_cast<int>(defDays)));
         }
         double defCost = (i < numDefaults) ? defaultCosts[i] : (defaultCosts.back() / static_cast<double>(i - (numDefaults - 2)));
-        m_tiers[i].editCost->SetText(std::format(L"{:.2f}", defCost).c_str());
+        m_tiers[i].editCost->SetText(std::format(L"{:.2f}", defCost));
     }
 
     DarkMode::AdjustControls(m_hWnd);
@@ -195,7 +195,7 @@ void CStorageAnalyticsView::OnFontSizeChanged(int, int)
         tier.lblCost->SetFont(m_fontLeftPanel);
         tier.editCost->SetFont(m_fontLeftPanel);
     }
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     OnSize(SIZE_RESTORED, rc.Width(), rc.Height());
 }
 
@@ -246,7 +246,7 @@ void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
         m_btnRecalculate.MoveWindow(panelX, currentY + ScaleForDpi(5), panelW, ScaleForDpi(28));
     }
 
-    InvalidateRect(nullptr);
+    Invalidate();
 }
 
 HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
@@ -345,7 +345,7 @@ bool CStorageAnalyticsView::ReadParameters(const bool apply)
         double thresholdDays = 0.0;
         if (tier.editThreshold)
         {
-            text = tier.editThreshold->Text();
+            text = tier.editThreshold->GetText();
             TrimString(text);
             active = !text.empty();
             if (active && (!ParseText(thresholdDays, false)
@@ -357,7 +357,7 @@ bool CStorageAnalyticsView::ReadParameters(const bool apply)
         double costGiB = 0.0;
         if (active)
         {
-            text = tier.editCost->Text();
+            text = tier.editCost->GetText();
             TrimString(text);
             if (!ParseText(costGiB, true)) return false;
         }
@@ -397,7 +397,7 @@ void CStorageAnalyticsView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change
             m_binsDirty = true;
             m_hasData = false;
         }
-        InvalidateRect(nullptr);
+        Invalidate();
     }
 }
 
@@ -408,7 +408,7 @@ void CStorageAnalyticsView::Recalculate()
     if (!model->IsScanSettled() || !ReadParameters(true))
     {
         m_hasData = false;
-        InvalidateRect(nullptr);
+        Invalidate();
         return;
     }
 
@@ -418,7 +418,7 @@ void CStorageAnalyticsView::Recalculate()
     Traverse(model->GetRootItem(), now);
 
     m_hasData = true;
-    InvalidateRect(nullptr);
+    Invalidate();
 }
 
 void CStorageAnalyticsView::Traverse(CItem* item, const FILETIME now)
@@ -481,12 +481,12 @@ void CStorageAnalyticsView::UpdateCostLabels() const
     int sel = m_comboUnit.GetCurSel();
     if (sel == CB_ERR) sel = 1;
 
-    const std::wstring unit = m_comboUnit.ItemText(sel);
+    const std::wstring unit = m_comboUnit.GetItemText(sel);
 
     for (auto& tier : m_tiers)
     {
         std::wstring lblText = tier.name + L" Cost ($/" + unit + L"/mo):";
-        tier.lblCost->SetText(lblText.c_str());
+        tier.lblCost->SetText(lblText);
     }
 }
 
@@ -502,7 +502,7 @@ void CStorageAnalyticsView::OnComboUnitSelChange()
         const double ratio = newScale / oldScale;
 
         auto ScaleEditField = [&](CCenteredEdit& edit) {
-            std::wstring text = edit.Text();
+            std::wstring text = edit.GetText();
             TrimString(text);
             wchar_t* end = nullptr;
             double val = std::wcstod(text.c_str(), &end);
@@ -512,7 +512,7 @@ void CStorageAnalyticsView::OnComboUnitSelChange()
                 std::wstring formatted = std::format(L"{:.8f}", val);
                 TrimString(formatted, L'0', true);
                 TrimString(formatted, L'.', true);
-                edit.SetText(formatted.c_str());
+                edit.SetText(formatted);
             }
         };
 
@@ -526,13 +526,13 @@ void CStorageAnalyticsView::OnComboUnitSelChange()
     }
 
     UpdateCostLabels();
-    InvalidateRect(nullptr);
+    Invalidate();
 }
 
 void CStorageAnalyticsView::OnDraw(CDC* pDC)
 {
     if (m_binsDirty && IsWindowVisible() && CWinDirStatModel::Get()->IsScanSettled()) Recalculate();
-    const CRect clientRect = ClientRect();
+    const CRect clientRect = GetClientRect();
 
     CDC memDC(pDC);
     CBitmap memBitmap(pDC, clientRect.Width(), clientRect.Height());
@@ -545,12 +545,12 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
     const COLORREF fgMuted = DarkMode::SystemColor(COLOR_GRAYTEXT);
     const COLORREF clrBorder = DarkMode::SystemColor(COLOR_3DSHADOW);
 
-    memDC.FillSolidRect(&clientRect, bgControl);
+    memDC.FillSolidRect(clientRect, bgControl);
 
     const int leftWidth = ScaleForDpi(210);
     CRect rightRect = clientRect;
     rightRect.left = leftWidth;
-    memDC.FillSolidRect(&rightRect, isDark ? RGB(26, 26, 28) : RGB(246, 246, 249));
+    memDC.FillSolidRect(rightRect, isDark ? RGB(26, 26, 28) : RGB(246, 246, 249));
 
     CPen penBorder(PS_SOLID, 1, clrBorder);
     {
@@ -656,14 +656,14 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
             const int cardX = leftWidth + ScaleForDpi(20) + i * (cardW + cardGap);
             CRect rcCard(cardX, cardY, cardX + cardW, cardY + cardH);
 
-            memDC.FillSolidRect(&rcCard, isDark ? tier.bgDark : tier.bgLight);
+            memDC.FillSolidRect(rcCard, isDark ? tier.bgDark : tier.bgLight);
             CBrush brBorder(isDark ? tier.borderDark : tier.borderLight);
             memDC.FrameRect(&rcCard, &brBorder);
 
             constexpr int accentBarW = 4;
             CRect rcAccent = rcCard;
             rcAccent.right = rcAccent.left + ScaleForDpi(accentBarW);
-            memDC.FillSolidRect(&rcAccent, tier.accent);
+            memDC.FillSolidRect(rcAccent, tier.accent);
 
             const int textX = rcCard.left + ScaleForDpi(12);
             DrawText(fontCardLbl, fgMuted, textX, rcCard.top + ScaleForDpi(10), tier.name);
@@ -705,7 +705,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                         if (w > 0)
                         {
                             CRect rc(currentX, yPos, currentX + w, yPos + barH);
-                            memDC.FillSolidRect(&rc, tier.accent);
+                            memDC.FillSolidRect(rc, tier.accent);
                             currentX += w;
                         }
                     }
@@ -723,7 +723,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                 {
                     remainderColor = it->accent;
                 }
-                memDC.FillSolidRect(&rcRemainder, remainderColor);
+                memDC.FillSolidRect(rcRemainder, remainderColor);
             }
 
             const CRect rcFrame(barX, yPos, barX + barW, yPos + barH);
@@ -741,7 +741,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         {
             const int legendX = barX + i * legendColW;
             CRect rcColor(legendX, legendY + ScaleForDpi(2), legendX + ScaleForDpi(10), legendY + ScaleForDpi(12));
-            memDC.FillSolidRect(&rcColor, activeCards[i].tier->accent);
+            memDC.FillSolidRect(rcColor, activeCards[i].tier->accent);
             CBrush brLegend(clrBorder);
             memDC.FrameRect(&rcColor, &brLegend);
 
@@ -758,7 +758,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         const COLORREF borderSavings = isDark ? RGB(48, 80, 52) : RGB(187, 247, 208);
         const COLORREF textSavings = isDark ? RGB(74, 222, 128) : RGB(22, 163, 74);
 
-        memDC.FillSolidRect(&rcSavings, bgSavings);
+        memDC.FillSolidRect(rcSavings, bgSavings);
         CBrush brSavings(borderSavings);
         memDC.FrameRect(&rcSavings, &brSavings);
 

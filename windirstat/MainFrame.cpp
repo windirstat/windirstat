@@ -33,7 +33,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 CSettingsSheet::CSettingsSheet()
-    : MessageTarget(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS).c_str())
+    : MessageTarget(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS))
 {
 }
 
@@ -45,8 +45,8 @@ bool CSettingsSheet::OnEraseBkgnd(CDC* pDC) const
     }
 
     // Paint the background with dark mode color
-    const CRect rect = ClientRect();
-    pDC->FillSolidRect(&rect, DarkMode::SystemColor(COLOR_WINDOW));
+    const CRect rect = GetClientRect();
+    pDC->FillSolidRect(rect, DarkMode::SystemColor(COLOR_WINDOW));
 
     return true;
 }
@@ -60,14 +60,14 @@ HBRUSH CSettingsSheet::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 bool CSettingsSheet::OnInitDialog()
 {
     if (!CPropertySheet::OnInitDialog()) return false;
-    CTabCtrlHelper::SetupTabControl(TabControl());
+    CTabCtrlHelper::SetupTabControl(GetTabControl());
 
     Localization::UpdateDialogs(*this);
-    Localization::UpdateTabControl(TabControl());
+    Localization::UpdateTabControl(GetTabControl());
     DarkMode::AdjustControls(Handle());
 
     const int page = (m_initialPage >= 0) ? m_initialPage : static_cast<int>(COptions::ConfigPage);
-    SelectPage(std::min(static_cast<int>(page), PageCount() - 1));
+    SelectPage(std::min(static_cast<int>(page), GetPageCount() - 1));
     return true;
 }
 
@@ -90,7 +90,7 @@ bool CSettingsSheet::ShowSettings(const int initialPage, const bool refreshOnFil
 
 bool CSettingsSheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 {
-    COptions::ConfigPage = ActivePageIndex();
+    COptions::ConfigPage = GetActivePageIndex();
 
     if (const UINT cmd = LOWORD(wParam); IDOK == cmd || ID_APPLY_NOW == cmd)
     {
@@ -148,10 +148,10 @@ void CWdsSplitterWnd::StopTracking(const bool bAccept)
     CSplitterWnd::StopTracking(bAccept);
     if (!bAccept) return;
 
-    const bool isVertical = ColumnCount() > 1;
-    const int currentPos = isVertical ? ColumnSize(0) : RowSize(0);
+    const bool isVertical = GetColumnCount() > 1;
+    const int currentPos = isVertical ? GetColumnSize(0) : GetRowSize(0);
 
-    const CRect rcClient  = ClientRect();
+    const CRect rcClient  = GetClientRect();
     const int   totalSize = isVertical ? rcClient.Width() : rcClient.Height();
     if (totalSize <= 0) return;
 
@@ -192,8 +192,8 @@ void CWdsSplitterWnd::TrackPane(const int pane, std::function<void(bool)> onTogg
 void CWdsSplitterWnd::SetSplitterPos(const double pos)
 {
     m_splitterPos = pos;
-    const CRect rc = ClientRect();
-    if (ColumnCount() > 1)
+    const CRect rc = GetClientRect();
+    if (GetColumnCount() > 1)
     {
         if (const int cx = static_cast<int>(pos * rc.Width()); cx >= 0) { SetColumnSize(0, cx); UpdateLayout(); }
     }
@@ -210,7 +210,7 @@ void CWdsSplitterWnd::RestoreSplitterPos(const double posIfVirgin)
 
 void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
-    if (ColumnCount() > 1)
+    if (GetColumnCount() > 1)
     {
         if (const int v = static_cast<int>(cx * m_splitterPos); v > 0) SetColumnSize(0, v);
     }
@@ -266,7 +266,7 @@ void CPacmanControl::OnPaint()
     CBufferedDC dc(paintDC, this);
 
     // Draw the animation
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     m_pacman.Draw(&dc, rc, DarkMode::SystemColor(
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
 
@@ -291,7 +291,7 @@ CMainFrame::~CMainFrame()
 void CMainFrame::OnSetFocus(CWnd* pOldWnd)
 {
     CFrameWnd::OnSetFocus(pOldWnd);
-    if (::GetFocus() == m_hWnd && GetLogicalFocus() != LF_NONE)
+    if (HasFocus() && GetLogicalFocus() != LF_NONE)
     {
         MoveFocus(GetLogicalFocus());
     }
@@ -450,7 +450,7 @@ void CMainFrame::CreateStatusProgress()
     UpdatePaneText();
     if (m_progress.m_hWnd == nullptr)
     {
-        CRect rc = m_wndStatusBar.PaneRect(CStatusBar::PaneId::Idle);
+        CRect rc = m_wndStatusBar.GetPaneRect(CStatusBar::PaneId::Idle);
         rc.Deflate(m_wndStatusBar.ScaleForDpi(3), m_wndStatusBar.ScaleForDpi(4),
             m_wndStatusBar.ScaleForDpi(5), m_wndStatusBar.ScaleForDpi(4));
         rc.right = std::max(rc.left, rc.right);
@@ -477,7 +477,7 @@ void CMainFrame::CreatePacmanProgress()
     if (m_pacman.m_hWnd == nullptr)
     {
         // Get rectangle and remove top/bottom border dimension
-        const CRect rc = m_wndStatusBar.PaneRect(CStatusBar::PaneId::Idle);
+        const CRect rc = m_wndStatusBar.GetPaneRect(CStatusBar::PaneId::Idle);
         m_pacman.Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
         m_pacman.Start();
     }
@@ -485,7 +485,7 @@ void CMainFrame::CreatePacmanProgress()
 
 void CMainFrame::DestroyProgress()
 {
-    if (IsWindow(m_progress.m_hWnd))
+    if (IsWindow(m_progress))
     {
         m_progress.DestroyWindow();
         m_progress.m_hWnd = nullptr;
@@ -506,8 +506,8 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const CStatusBar::PaneId pane
     const std::wstring & text, const int minWidth)
 {
     // set status path width and then set text
-    const auto cx = cdc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-    m_wndStatusBar.SetPaneContent(pane, text, std::max(static_cast<int>(cx), ScaleForDpi(minWidth)));
+    const auto cx = cdc.GetTextExtent(text).cx;
+    m_wndStatusBar.SetPaneText(pane, text, std::max(static_cast<int>(cx), ScaleForDpi(minWidth)));
 }
 
 int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
@@ -532,7 +532,7 @@ int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_wndToolBar.Create(this);
 
     // Save the unscaled default button size before any SetMetrics call
-    m_defaultButtonSize = m_wndToolBar.ButtonSize();
+    m_defaultButtonSize = m_wndToolBar.GetButtonSize();
     RebuildToolBar();
 
     // Show or hide status bar if requested
@@ -628,9 +628,9 @@ bool CMainFrame::OnCreateClient()
         return false;
     }
 
-    m_visualizationPane = static_cast<CVisualizationPane*>(m_splitter.PaneAt(1, 0));
-    m_fileTabbedView = static_cast<CFileTabbedView*>(m_subSplitter.PaneAt(0, 0));
-    m_extensionView = static_cast<CExtensionView*>(m_subSplitter.PaneAt(0, 1));
+    m_visualizationPane = m_splitter.GetPane<CVisualizationPane>(1, 0);
+    m_fileTabbedView = m_subSplitter.GetPane<CFileTabbedView>(0, 0);
+    m_extensionView = m_subSplitter.GetPane<CExtensionView>(0, 1);
     if (m_visualizationPane == nullptr || m_fileTabbedView == nullptr || m_extensionView == nullptr)
         return false;
 
@@ -655,7 +655,7 @@ void CMainFrame::UpdateAllPanes(CWnd* sender, const MODEL_CHANGE change, CItem* 
     }
 }
 
-void CMainFrame::UpdateFrameTitleForScan(const LPCWSTR scanName)
+void CMainFrame::UpdateFrameTitleForScan(const std::wstring_view scanName)
 {
     SetDocumentTitle(scanName);
 }

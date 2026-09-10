@@ -121,9 +121,9 @@ bool Localization::LoadResource(const LANGID language)
 
 void Localization::UpdateMenu(CMenu& menu)
 {
-    for (const int i : std::views::iota(0, menu.ItemCount()))
+    for (const int i : std::views::iota(0, menu.GetItemCount()))
     {
-        const std::wstring text = menu.ItemTextAt(i);
+        const std::wstring text = menu.GetItemText(i);
         if (text.empty()) continue;
 
         if (text.starts_with(L"ID") && Contains(text))
@@ -146,15 +146,15 @@ void Localization::UpdateMenu(CMenu& menu)
             menu.SetItemInfo(i, &mi);
         }
 
-        if (CMenu* sub = menu.SubmenuAt(i); sub != nullptr) UpdateMenu(*sub);
+        if (CMenu* sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(*sub);
     }
 }
 
 void Localization::UpdateTabControl(CTabControl& tab)
 {
-    for (const int i : std::views::iota(0, tab.TabCount()))
+    for (const int i : std::views::iota(0, tab.GetTabCount()))
     {
-        const std::wstring_view label = tab.TabLabel(i);
+        const std::wstring_view label = tab.GetTabLabel(i);
         if (label.starts_with(L"ID") && Contains(label))
             tab.SetTabLabel(i, L" " + Lookup(label) + L" ");
     }
@@ -165,9 +165,9 @@ void Localization::UpdateWindowText(CWnd& wnd)
     wnd.SetFont(GetAppFont(wnd.Handle()));
 
     // Update window text if it's a localizable ID
-    const std::wstring text = wnd.Text();
+    const std::wstring text = wnd.GetText();
     if (text.starts_with(L"ID") && Contains(text))
-        wnd.SetText(m_map[text].c_str());
+        wnd.SetText(m_map[text]);
 }
 
 void Localization::UpdateDialogs(CWnd& wnd)

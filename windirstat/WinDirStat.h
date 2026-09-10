@@ -40,7 +40,7 @@ public:
     CDirStatApp();
     ~CDirStatApp() override;
     bool InitInstance() override;
-    bool IsIdleMessage(MSG* pMsg) override;
+    bool IsIdleMessage(const MSG* pMsg) const noexcept override;
 
     static bool InPortableMode();
     bool SetPortableMode(bool enable, bool onlyOpen = false);

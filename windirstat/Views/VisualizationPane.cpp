@@ -67,7 +67,7 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CVisualizationPane::OnDraw(CDC* pDC)
 {
-    pDC->FillSolidRect(ClientRect(), CGraphView::BackgroundColor);
+    pDC->FillSolidRect(GetClientRect(), CGraphView::BackgroundColor);
 }
 
 void CVisualizationPane::SelectPane(const GraphPane pane)
@@ -93,7 +93,7 @@ void CVisualizationPane::SelectPane(const GraphPane pane)
         return;
     }
 
-    active->MoveWindow(ClientRect(), false);
+    active->MoveWindow(GetClientRect(), false);
     active->ShowWindow(SW_SHOW);
     active->Invalidate(false);
 }
@@ -111,7 +111,7 @@ void CVisualizationPane::ShowVisualization(const bool show)
         return;
     }
 
-    active->MoveWindow(ClientRect(), false);
+    active->MoveWindow(GetClientRect(), false);
     active->ShowWindow(SW_SHOW);
     active->Invalidate(false);
 }

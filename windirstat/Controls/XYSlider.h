@@ -29,7 +29,7 @@ public:
 
     CXySlider() = default;
 
-    void GetRange(CSize& range) const { range = m_externalRange; }
+    CSize GetRange() const noexcept { return m_externalRange; }
     void SetRange(const CSize & range) { m_externalRange = range; }
 
     CPoint GetPos() const { return m_externalPos; }

@@ -23,7 +23,7 @@
 
 inline constexpr bool IsDebugBuild = _ITERATOR_DEBUG_LEVEL != 0;
 
-inline int GetWindowDpi(const HWND window) noexcept
+inline int GetWindowDpi(const HWND window = nullptr) noexcept
 {
     // GetDpiForWindow is available on Windows 10 1607 and later. Resolve it at
     // runtime so the Win7 build remains loadable, while avoiding a GetDC pair
@@ -145,6 +145,11 @@ inline std::wstring LoadResourceString(const HINSTANCE instance, const UINT id, 
     return {};
 }
 
+inline std::wstring LoadResourceString(const UINT id, const WORD language)
+{
+    return LoadResourceString(GetAppInstance(), id, language);
+}
+
 // -----------------------------------------------------------------------------
 //  Geometry: CSize / CPoint / CRect
 // -----------------------------------------------------------------------------
@@ -183,7 +188,6 @@ public:
     CRect(const RECT& r) noexcept { left = r.left; top = r.top; right = r.right; bottom = r.bottom; }
     explicit CRect(const HWND window) noexcept : CRect() { if (!::GetWindowRect(window, this)) Clear(); }
     CRect(const POINT topLeft, const POINT bottomRight) noexcept { left = topLeft.x; top = topLeft.y; right = bottomRight.x; bottom = bottomRight.y; }
-    CRect(const POINT p, const SIZE s) noexcept { left = p.x; top = p.y; right = p.x + s.cx; bottom = p.y + s.cy; }
 
     int Width() const noexcept { return static_cast<int>(std::clamp<int64_t>(static_cast<int64_t>(right) - left, INT_MIN, INT_MAX)); }
     int Height() const noexcept { return static_cast<int>(std::clamp<int64_t>(static_cast<int64_t>(bottom) - top, INT_MIN, INT_MAX)); }
@@ -205,8 +209,8 @@ public:
     void Deflate(const SIZE s) noexcept { InflateRect(this, -s.cx, -s.cy); }
     void Normalize() noexcept { if (left > right) std::swap(left, right); if (top > bottom) std::swap(top, bottom); }
     bool Contains(const POINT p) const noexcept { return PtInRect(this, p); }
-    bool Intersect(const LPCRECT a, const LPCRECT b) noexcept { return IntersectRect(this, a, b); }
-    bool Union(const LPCRECT a, const LPCRECT b) noexcept { return UnionRect(this, a, b); }
+    bool Intersect(const RECT& a, const RECT& b) noexcept { return IntersectRect(this, &a, &b); }
+    bool Union(const RECT& a, const RECT& b) noexcept { return UnionRect(this, &a, &b); }
 
     bool operator==(const CRect& r) const noexcept { return EqualRect(this, &r) != 0; }
     bool operator==(const RECT& r) const noexcept { return EqualRect(this, &r) != 0; }
@@ -374,13 +378,6 @@ class CPen final : public GdiObject
 public:
     CPen() = default;
     CPen(const int style, const int width, const COLORREF color) noexcept : GdiObject(CreatePen(style, width, color)) {}
-    CPen(const int nPenStyle, const int nWidth, const LOGBRUSH* pLogBrush, const int nStyleCount = 0,
-        const DWORD* lpStyle = nullptr)
-    {
-        m_hObject = ExtCreatePen(static_cast<DWORD>(nPenStyle), static_cast<DWORD>(nWidth), pLogBrush,
-            static_cast<DWORD>(nStyleCount), lpStyle);
-    }
-
 };
 
 class CBrush final : public GdiObject
@@ -400,9 +397,11 @@ public:
     CFont(const HFONT source, const LONG weight) noexcept
     {
         LOGFONTW lf{};
-        if (GetObjectW(source, static_cast<int>(sizeof(LOGFONTW)), &lf) == 0) return;
-        lf.lfWeight = weight;
-        m_hObject = CreateFontIndirectW(&lf);
+        if (GetObjectW(source, static_cast<int>(sizeof(LOGFONTW)), &lf) != 0)
+        {
+            lf.lfWeight = weight;
+            m_hObject = ::CreateFontIndirectW(&lf);
+        }
     }
     CFont(const int height, const int weight, const LPCWSTR face, const BYTE outPrecision = OUT_DEFAULT_PRECIS,
         const BYTE quality = ANTIALIASED_QUALITY, const BYTE pitchAndFamily = DEFAULT_PITCH | FF_DONTCARE) noexcept
@@ -428,8 +427,8 @@ public:
     explicit CBitmap(const HBITMAP bitmap) noexcept : GdiObject(bitmap) {}
     CBitmap(const int w, const int h, const UINT planes, const UINT bits, const void* bitmapBits) noexcept
         : GdiObject(CreateBitmap(w, h, planes, bits, bitmapBits)) {}
-    CBitmap(CDC* dc, const int width, const int height) noexcept { CreateCompatible(dc, width, height); }
-    bool CreateCompatible(CDC* pDC, int w, int h);
+    CBitmap(const CDC* dc, const int width, const int height) noexcept { CreateCompatible(dc, width, height); }
+    bool CreateCompatible(const CDC* pDC, int w, int h);
     std::optional<BITMAP> Info() const noexcept
     {
         BITMAP bitmap{};
@@ -445,6 +444,8 @@ public:
     CRgn() = default;
     CRgn(const int left, const int top, const int right, const int bottom, const int ellipseWidth, const int ellipseHeight) noexcept
         : GdiObject(CreateRoundRectRgn(left, top, right, bottom, ellipseWidth, ellipseHeight)) {}
+    CRgn(const RECT& r, const int ellipseWidth, const int ellipseHeight) noexcept
+        : GdiObject(CreateRoundRectRgn(r.left, r.top, r.right, r.bottom, ellipseWidth, ellipseHeight)) {}
     operator HRGN() const noexcept { return static_cast<HRGN>(m_hObject); }
 };
 
@@ -457,7 +458,7 @@ public:
     HDC m_hDC = nullptr;
 
     CDC() = default;
-    explicit CDC(CDC* compatibleWith) noexcept
+    explicit CDC(const CDC* compatibleWith) noexcept
         : m_hDC(CreateCompatibleDC(compatibleWith ? compatibleWith->m_hDC : nullptr)),
         m_bOwned(m_hDC != nullptr) {}
     ~CDC() { if (m_bOwned && m_hDC) DeleteDC(m_hDC); }
@@ -482,7 +483,7 @@ public:
         const HDC h = m_hDC; m_hDC = nullptr; m_bOwned = false; return h;
     }
 
-    int SelectClipRgn(CRgn* pRgn) noexcept { return ::SelectClipRgn(m_hDC, pRgn ? static_cast<HRGN>(pRgn->m_hObject) : nullptr); }
+    int SelectClipRgn(const CRgn* pRgn) noexcept { return ::SelectClipRgn(m_hDC, pRgn ? static_cast<HRGN>(pRgn->m_hObject) : nullptr); }
 
     // Attributes
     COLORREF SetTextColor(const COLORREF c) noexcept { return ::SetTextColor(m_hDC, c); }
@@ -495,13 +496,13 @@ public:
     CPoint SetViewportOrg(const int x, const int y) noexcept { POINT p{}; SetViewportOrgEx(m_hDC, x, y, &p); return p; }
 
     // Rect/region clipping
-    std::optional<CRect> ClipBox() const noexcept
+    std::optional<CRect> GetClipBox() const noexcept
     {
         CRect rect;
         if (::GetClipBox(m_hDC, &rect) == ERROR) return std::nullopt;
         return rect;
     }
-    int IntersectClipRect(const LPCRECT rc) noexcept { return ::IntersectClipRect(m_hDC, rc->left, rc->top, rc->right, rc->bottom); }
+    int IntersectClipRect(const RECT& rc) noexcept { return ::IntersectClipRect(m_hDC, rc.left, rc.top, rc.right, rc.bottom); }
 
     // Drawing primitives
     CPoint MoveTo(const int x, const int y) noexcept { POINT p{}; MoveToEx(m_hDC, x, y, &p); return p; }
@@ -509,45 +510,45 @@ public:
     bool LineTo(const int x, const int y) noexcept { return ::LineTo(m_hDC, x, y); }
     bool LineTo(const POINT p) noexcept { return ::LineTo(m_hDC, p.x, p.y); }
     bool Rectangle(const int l, const int t, const int r, const int b) noexcept { return ::Rectangle(m_hDC, l, t, r, b); }
-    bool Rectangle(const LPCRECT rc) noexcept { return ::Rectangle(m_hDC, rc->left, rc->top, rc->right, rc->bottom); }
-    bool RoundRect(const int l, const int t, const int r, const int b, const int w, const int h) noexcept { return ::RoundRect(m_hDC, l, t, r, b, w, h); }
-    bool RoundRect(const LPCRECT rc, const POINT pt) noexcept { return ::RoundRect(m_hDC, rc->left, rc->top, rc->right, rc->bottom, pt.x, pt.y); }
+    bool Rectangle(const RECT& rc) noexcept { return Rectangle(rc.left, rc.top, rc.right, rc.bottom); }
+    bool RoundRect(const RECT& rc, const POINT pt) noexcept { return ::RoundRect(m_hDC, rc.left, rc.top, rc.right, rc.bottom, pt.x, pt.y); }
     bool Ellipse(const int l, const int t, const int r, const int b) noexcept { return ::Ellipse(m_hDC, l, t, r, b); }
-    bool Ellipse(const LPCRECT rc) noexcept { return Ellipse(rc->left, rc->top, rc->right, rc->bottom); }
+    bool Ellipse(const RECT& rc) noexcept { return Ellipse(rc.left, rc.top, rc.right, rc.bottom); }
     bool Polygon(const POINT* p, const int n) noexcept { return ::Polygon(m_hDC, p, n); }
     bool Polyline(const POINT* p, const int n) noexcept { return ::Polyline(m_hDC, p, n); }
     void DrawTreeExpander(const CRect& nodeRect, bool expanded);
 
-    void FillSolidRect(const LPCRECT rc, const COLORREF clr) noexcept
+    void FillSolidRect(const RECT& rc, const COLORREF clr) noexcept
     {
         ::SetBkColor(m_hDC, clr);
-        ExtTextOutW(m_hDC, 0, 0, ETO_OPAQUE, rc, nullptr, 0, nullptr);
+        ExtTextOutW(m_hDC, 0, 0, ETO_OPAQUE, &rc, nullptr, 0, nullptr);
     }
     void FillSolidRect(const int x, const int y, const int cx, const int cy, const COLORREF clr) noexcept
     {
-        const RECT rc{ x, y, x + cx, y + cy };
-        FillSolidRect(&rc, clr);
+        FillSolidRect(RECT{ x, y, x + cx, y + cy }, clr);
     }
     void FrameRect(const LPCRECT rc, CBrush* pBrush) noexcept { ::FrameRect(m_hDC, rc, pBrush ? static_cast<HBRUSH>(pBrush->m_hObject) : nullptr); }
-    void Draw3dRect(const LPCRECT rc, const COLORREF topLeft, const COLORREF bottomRight) noexcept
+    void FrameRect(const RECT& rc, CBrush* pBrush) noexcept { FrameRect(&rc, pBrush); }
+    void Draw3dRect(const RECT& rc, const COLORREF topLeft, const COLORREF bottomRight) noexcept
     {
-        const int width = rc->right - rc->left;
-        const int height = rc->bottom - rc->top;
+        const int width = rc.right - rc.left;
+        const int height = rc.bottom - rc.top;
         if (width <= 0 || height <= 0) return;
 
-        FillSolidRect(rc->left, rc->top, width - 1, 1, topLeft);
-        FillSolidRect(rc->left, rc->top, 1, height - 1, topLeft);
-        FillSolidRect(rc->right - 1, rc->top, 1, height, bottomRight);
-        FillSolidRect(rc->left, rc->bottom - 1, width, 1, bottomRight);
+        FillSolidRect(rc.left, rc.top, width - 1, 1, topLeft);
+        FillSolidRect(rc.left, rc.top, 1, height - 1, topLeft);
+        FillSolidRect(rc.right - 1, rc.top, 1, height, bottomRight);
+        FillSolidRect(rc.left, rc.bottom - 1, width, 1, bottomRight);
     }
     bool DrawEdge(const LPRECT rc, const UINT edge, const UINT flags) noexcept { return ::DrawEdge(m_hDC, rc, edge, flags); }
-    void DrawFocusRect(const LPCRECT rc) noexcept { ::DrawFocusRect(m_hDC, rc); }
+    void DrawFocusRect(const RECT& rc) noexcept { ::DrawFocusRect(m_hDC, &rc); }
     // Text
     int DrawText(const LPCWSTR psz, const int n, const LPRECT rc, const UINT fmt) noexcept { return ::DrawTextW(m_hDC, psz, n, rc, fmt); }
     int DrawText(const std::wstring_view text, const LPRECT rc, const UINT fmt) noexcept { return ::DrawTextW(m_hDC, text.data(), static_cast<int>(text.size()), rc, fmt); }
     bool TextOut(const int x, const int y, const std::wstring_view text) noexcept { return ::TextOutW(m_hDC, x, y, text.data(), static_cast<int>(text.size())); }
     CSize GetTextExtent(const LPCWSTR psz, const int n) const noexcept { SIZE s{}; GetTextExtentPoint32W(m_hDC, psz, n, &s); return s; }
-    std::optional<TEXTMETRICW> TextMetrics() const noexcept
+    CSize GetTextExtent(const std::wstring_view text) const noexcept { return GetTextExtent(text.data(), static_cast<int>(text.size())); }
+    std::optional<TEXTMETRICW> GetTextMetrics() const noexcept
     {
         TEXTMETRICW metrics{};
         if (!::GetTextMetricsW(m_hDC, &metrics)) return std::nullopt;
@@ -555,9 +556,9 @@ public:
     }
 
     // Blit
-    bool BitBlt(const int x, const int y, const int cx, const int cy, CDC* pSrc, const int xs, const int ys, const DWORD rop) noexcept { return ::BitBlt(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, rop); }
+    bool BitBlt(const int x, const int y, const int cx, const int cy, const CDC* pSrc, const int xs, const int ys, const DWORD rop) noexcept { return ::BitBlt(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, rop); }
     bool PatBlt(const int x, const int y, const int cx, const int cy, const DWORD rop) noexcept { return ::PatBlt(m_hDC, x, y, cx, cy, rop); }
-    bool AlphaBlend(const int x, const int y, const int cx, const int cy, CDC* pSrc, const int xs, const int ys, const int cxs, const int cys, const BLENDFUNCTION bf) noexcept { return ::AlphaBlend(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, cxs, cys, bf); }
+    bool AlphaBlend(const int x, const int y, const int cx, const int cy, const CDC* pSrc, const int xs, const int ys, const int cxs, const int cys, const BLENDFUNCTION bf) noexcept { return ::AlphaBlend(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, cxs, cys, bf); }
     COLORREF SetDCPenColor(const COLORREF c) noexcept { return ::SetDCPenColor(m_hDC, c); }
     COLORREF SetDCBrushColor(const COLORREF c) noexcept { return ::SetDCBrushColor(m_hDC, c); }
     HFONT GetCurrentFont() const noexcept { return static_cast<HFONT>(GetCurrentObject(m_hDC, OBJ_FONT)); }
@@ -567,7 +568,7 @@ protected:
     bool m_bOwned = false;
 };
 
-inline bool CBitmap::CreateCompatible(CDC* pDC, const int w, const int h)
+inline bool CBitmap::CreateCompatible(const CDC* pDC, const int w, const int h)
 {
     Reset(); m_hObject = CreateCompatibleBitmap(pDC ? pDC->m_hDC : nullptr, w, h); return m_hObject != nullptr;
 }
@@ -740,7 +741,7 @@ public:
     HWND m_hWnd = nullptr;
 
     CWnd() = default;
-    explicit CWnd(const HWND h) : m_hWnd(h) {}
+    explicit CWnd(const HWND h) noexcept : m_hWnd(h) {}
     ~CWnd() override
     {
         const HWND hWnd = m_hWnd;
@@ -775,7 +776,7 @@ public:
     virtual bool IsSplitterWindow() const noexcept { return false; }
 
     // ---- handle maps ----
-    static CWnd* FindAttached(const HWND hWnd)
+    static CWnd* FindAttached(const HWND hWnd) noexcept
     {
         return hWnd != nullptr ? static_cast<CWnd*>(GetPropW(hWnd, kProp())) : nullptr;
     }
@@ -791,7 +792,7 @@ public:
         m_ownerThreadId = GetWindowThreadProcessId(hWnd, nullptr);
         return true;
     }
-    HWND Detach()
+    HWND Detach() noexcept
     {
         const HWND h = m_hWnd;
         if (h != nullptr && FindAttached(h) == this) RemovePropW(h, kProp());
@@ -878,7 +879,7 @@ public:
         return CreateEx(0, lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID);
     }
 
-    bool SubclassDlgItem(const int id, CWnd* parent)
+    bool SubclassDlgItem(const int id, const CWnd* parent)
     {
         return parent != nullptr && SubclassNativeWindow(::GetDlgItem(parent->m_hWnd, id));
     }
@@ -952,7 +953,7 @@ public:
     bool RouteReflectedCommand(int code);
     bool RouteReflectedNotification(NMHDR* pNMHDR, LRESULT* pResult);
 
-    LRESULT DefWindowProc(const UINT msg, const WPARAM wParam, const LPARAM lParam)
+    LRESULT DefWindowProc(const UINT msg, const WPARAM wParam, const LPARAM lParam) const
     {
         return m_pfnSuper ? CallWindowProcW(m_pfnSuper, m_hWnd, msg, wParam, lParam) :
             ::DefWindowProcW(m_hWnd, msg, wParam, lParam);
@@ -961,7 +962,7 @@ public:
     static const MSG& CurrentMessage() noexcept { return g_currentMsg; }
 
     // ---- common operations ----
-    bool DestroyWindow()
+    bool DestroyWindow() noexcept
     {
         return m_hWnd ? ::DestroyWindow(m_hWnd) : false;
     }
@@ -969,17 +970,17 @@ public:
     bool UpdateWindow() noexcept { return ::UpdateWindow(m_hWnd); }
     void Invalidate(const bool bErase = true) noexcept { ::InvalidateRect(m_hWnd, nullptr, bErase); }
     void InvalidateRect(const LPCRECT rc, const bool bErase = true) noexcept { ::InvalidateRect(m_hWnd, rc, bErase); }
-    bool RedrawWindow(const LPCRECT rc = nullptr, CRgn* pRgn = nullptr, const UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) noexcept
+    bool RedrawWindow(const LPCRECT rc = nullptr, const CRgn* pRgn = nullptr, const UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) noexcept
     {
         return ::RedrawWindow(m_hWnd, rc, pRgn ? static_cast<HRGN>(pRgn->m_hObject) : nullptr, flags);
     }
 
     bool MoveWindow(const int x, const int y, const int cx, const int cy, const bool bRepaint = true) noexcept { return ::MoveWindow(m_hWnd, x, y, cx, cy, bRepaint); }
-    bool MoveWindow(const LPCRECT rc, const bool bRepaint = true) noexcept { return ::MoveWindow(m_hWnd, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, bRepaint); }
+    bool MoveWindow(const RECT& rc, const bool bRepaint = true) noexcept { return ::MoveWindow(m_hWnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, bRepaint); }
     bool SetWindowPos(const CWnd* pAfter, const int x, const int y, const int cx, const int cy, const UINT flags) noexcept { return ::SetWindowPos(m_hWnd, pAfter ? pAfter->m_hWnd : nullptr, x, y, cx, cy, flags); }
 
-    CRect ClientRect() const noexcept { CRect rect; ::GetClientRect(m_hWnd, &rect); return rect; }
-    CRect WindowRect() const noexcept { return CRect(m_hWnd); }
+    CRect GetClientRect() const noexcept { CRect rect; ::GetClientRect(m_hWnd, &rect); return rect; }
+    CRect GetWindowRect() const noexcept { return CRect(m_hWnd); }
     CPoint ToScreen(const POINT point) const noexcept
     {
         CPoint result(point);
@@ -1006,24 +1007,32 @@ public:
         ::ScreenToClient(m_hWnd, reinterpret_cast<LPPOINT>(&result) + 1);
         return result;
     }
-    CRect WindowRectInClient(const HWND window) const noexcept { return ToClient(CRect(window)); }
-    std::optional<CPoint> ClientCursorPosition() const noexcept
+    CRect GetChildWindowRect(const HWND window) const noexcept { return ToClient(CRect(window)); }
+    std::optional<CPoint> GetClientCursorPos() const noexcept
     {
         CPoint point;
         if (!::GetCursorPos(&point) || !::ScreenToClient(m_hWnd, &point)) return std::nullopt;
         return point;
     }
     int ScaleForDpi(const int value) const noexcept { return ::ScaleForDpi(value, m_hWnd); }
-    int UnscaleForDpi(const int value) const noexcept { return ::UnscaleForDpi(value, m_hWnd); }
 
     CWnd* GetParent() const { return FromHandle(::GetParent(m_hWnd)); }
+    template<typename T>
+        requires std::derived_from<T, CWnd> && (!std::is_same_v<T, CWnd>)
+    T* GetParent() const
+    {
+        return static_cast<T*>(GetParent());
+    }
     bool IsChild(const CWnd* pWnd) const noexcept { return pWnd != nullptr && ::IsChild(m_hWnd, pWnd->m_hWnd); }
+    bool IsChild(const HWND hWnd) const noexcept { return hWnd != nullptr && ::IsChild(m_hWnd, hWnd); }
     CWnd* GetDlgItem(const int nID) const { return FromHandle(::GetDlgItem(m_hWnd, nID)); }
     CWnd* GetWindow(const UINT nCmd) const { return FromHandle(::GetWindow(m_hWnd, nCmd)); }
     CWnd* GetFocus() const { return FromHandle(::GetFocus()); }
+    bool HasFocus() const noexcept { return ::GetFocus() == m_hWnd; }
     CWnd* ChildWindowFromPoint(const POINT pt) const { return FromHandle(::ChildWindowFromPoint(m_hWnd, pt)); }
     CWnd* ChildWindowFromPoint(const POINT pt, const UINT flags) const { return FromHandle(ChildWindowFromPointEx(m_hWnd, pt, flags)); }
     static CWnd* GetCapture() { return FromHandle(::GetCapture()); }
+    bool HasCapture() const noexcept { return ::GetCapture() == m_hWnd; }
 
     LRESULT SendMessage(const UINT msg, const WPARAM wParam = 0, const LPARAM lParam = 0) const noexcept { return ::SendMessageW(m_hWnd, msg, wParam, lParam); }
     template <typename T>
@@ -1049,20 +1058,24 @@ public:
     }
 
     void SetText(const LPCWSTR psz) noexcept { SetWindowTextW(m_hWnd, psz); }
-    std::wstring Text() const
+    void SetText(const std::wstring& text) noexcept { SetWindowTextW(m_hWnd, text.c_str()); }
+    std::wstring GetText() const
     {
         std::wstring text(static_cast<size_t>(GetWindowTextLengthW(m_hWnd)) + 1, L'\0');
         text.resize(static_cast<size_t>(GetWindowTextW(m_hWnd, text.data(), static_cast<int>(text.size()))));
         return text;
     }
-    UINT ButtonCheckState(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id); }
+    UINT GetButtonCheckState(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id); }
     bool IsChecked(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id) == BST_CHECKED; }
     void SetChecked(const int id, const bool checked) noexcept { CheckDlgButton(m_hWnd, id, checked ? BST_CHECKED : BST_UNCHECKED); }
-    std::wstring GetText(const int id) const { if (const CWnd* control = GetDlgItem(id)) return control->Text(); return {}; }
+    std::wstring GetText(const int id) const { if (const CWnd* control = GetDlgItem(id)) return control->GetText(); return {}; }
     void SetText(const int id, const std::wstring& text) noexcept { SetDlgItemTextW(m_hWnd, id, text.c_str()); }
-    int ComboSelection(const int id) const noexcept { return static_cast<int>(SendDlgItemMessageW(m_hWnd, id, CB_GETCURSEL, 0, 0)); }
+    void SetText(const int id, const LPCWSTR psz) noexcept { SetDlgItemTextW(m_hWnd, id, psz); }
+    void SetText(const int id, const auto number) { SetText(id, std::to_wstring(number)); }
+
+    int GetComboSelection(const int id) const noexcept { return static_cast<int>(SendDlgItemMessageW(m_hWnd, id, CB_GETCURSEL, 0, 0)); }
     void SetComboSelection(const int id, const int index) noexcept { SendDlgItemMessageW(m_hWnd, id, CB_SETCURSEL, index, 0); }
-    int CheckedRadioButton(const int first, const int last) const noexcept
+    int GetCheckedRadioButton(const int first, const int last) const noexcept
     {
         for (int id = first; id <= last; ++id) if (IsDlgButtonChecked(m_hWnd, id) == BST_CHECKED) return id;
         return 0;
@@ -1073,7 +1086,6 @@ public:
     bool IsWindowEnabled() const noexcept { return ::IsWindowEnabled(m_hWnd); }
     bool IsWindowVisible() const noexcept { return ::IsWindowVisible(m_hWnd); }
     bool IsIconic() const noexcept { return ::IsIconic(m_hWnd); }
-    bool IsZoomed() const noexcept { return ::IsZoomed(m_hWnd); }
     HWND SetFocus() noexcept { return ::SetFocus(m_hWnd); }
     HWND SetCapture() noexcept { return ::SetCapture(m_hWnd); }
     bool BringWindowToTop() noexcept { return ::BringWindowToTop(m_hWnd); }
@@ -1104,14 +1116,14 @@ public:
     bool GetWindowPlacement(WINDOWPLACEMENT* p) const noexcept { return ::GetWindowPlacement(m_hWnd, p); }
     bool SetWindowPlacement(const WINDOWPLACEMENT* p) noexcept { return ::SetWindowPlacement(m_hWnd, p); }
 
-    HFONT GetFont() const { return reinterpret_cast<HFONT>(::SendMessageW(m_hWnd, WM_GETFONT, 0, 0)); }
-    void SetFont(const HFONT font) { ::SendMessageW(m_hWnd, WM_SETFONT, reinterpret_cast<WPARAM>(font), true); }
-    void SetRedraw(const bool bRedraw = true) { ::SendMessageW(m_hWnd, WM_SETREDRAW, static_cast<WPARAM>(bRedraw), 0); }
+    HFONT GetFont() const noexcept { return reinterpret_cast<HFONT>(::SendMessageW(m_hWnd, WM_GETFONT, 0, 0)); }
+    void SetFont(const HFONT font) noexcept { ::SendMessageW(m_hWnd, WM_SETFONT, reinterpret_cast<WPARAM>(font), true); }
+    void SetRedraw(const bool bRedraw = true) noexcept { ::SendMessageW(m_hWnd, WM_SETREDRAW, static_cast<WPARAM>(bRedraw), 0); }
 
     bool CopyTextToClipboard(std::wstring_view text) const;
 
     int  GetDlgCtrlID() const noexcept { return ::GetDlgCtrlID(m_hWnd); }
-    HICON SetIcon(HICON hIcon, const bool bBig = true) { return reinterpret_cast<HICON>(SendMessage(WM_SETICON, bBig ? ICON_BIG : ICON_SMALL, hIcon)); }
+    HICON SetIcon(HICON hIcon, const bool bBig = true) noexcept { return reinterpret_cast<HICON>(SendMessage(WM_SETICON, bBig ? ICON_BIG : ICON_SMALL, hIcon)); }
     static CWnd* GetDesktopWindow() { return FromHandle(::GetDesktopWindow()); }
     bool LockWindowUpdate() noexcept { return ::LockWindowUpdate(m_hWnd); }
     void UnlockWindowUpdate() noexcept { ::LockWindowUpdate(nullptr); }
@@ -1127,7 +1139,7 @@ public:
         psi->cbSize = sizeof(SCROLLINFO); return ::SetScrollInfo(m_hWnd, bar, psi, bRedraw);
     }
 
-    void CenterWindow(CWnd* pAlternate = nullptr);
+    void CenterWindow(const CWnd* pAlternate = nullptr);
 
     // ---- default message handlers (call CallDefaultHandler()) ----
     int  OnCreate(LPCREATESTRUCT) { return static_cast<int>(CallDefaultHandler()); }
@@ -1162,7 +1174,7 @@ public:
     void OnVScroll(UINT, UINT, CWnd*) { CallDefaultHandler(); }
     void OnNcCalcSize(bool, NCCALCSIZE_PARAMS*) { CallDefaultHandler(); }
     virtual int OnMouseActivate(CWnd*, UINT, UINT) { return static_cast<int>(CallDefaultHandler()); }
-    bool IsTopParentActive() const
+    bool IsTopParentActive() const noexcept
     {
         HWND hWnd = m_hWnd;
         while (hWnd != nullptr && (GetWindowLongW(hWnd, GWL_STYLE) & WS_CHILD))
@@ -1173,7 +1185,7 @@ public:
     // owner-draw reflection targets
     virtual void DrawItem(LPDRAWITEMSTRUCT) {}
     // docked-bar sizing (frame layout queries this)
-    virtual CSize PreferredSize() { return WindowRect().Size(); }
+    virtual CSize PreferredSize() const { return GetWindowRect().Size(); }
 
 protected:
     WNDPROC m_pfnSuper = nullptr;
@@ -1284,21 +1296,23 @@ public:
     static CMenu LoadResource(UINT id) noexcept;
     static CMenu* FromHandle(HMENU menu);
 
-    int ItemCount() const noexcept;
-    UINT ItemIdAt(int pos) const noexcept;
-    UINT ItemState(UINT id, UINT flags) const noexcept;
-    std::wstring ItemTextAt(UINT pos) const;
-    CMenu* SubmenuAt(int pos) const;
+    int GetItemCount() const noexcept;
+    UINT GetItemId(int pos) const noexcept;
+    UINT GetItemState(UINT id, UINT flags) const noexcept;
+    std::wstring GetItemText(UINT pos) const;
+    CMenu* GetSubMenu(int pos) const;
     bool Append(UINT flags, UINT_PTR id = 0, LPCWSTR psz = nullptr) noexcept;
+    bool Append(UINT flags, UINT_PTR id, const std::wstring& text) noexcept { return Append(flags, id, text.c_str()); }
     bool Modify(UINT pos, UINT flags, UINT_PTR id, LPCWSTR psz) noexcept;
-    bool Remove(UINT pos, UINT flags) noexcept;
+    bool Modify(UINT pos, UINT flags, UINT_PTR id, const std::wstring& text) noexcept { return Modify(pos, flags, id, text.c_str()); }
+    bool Remove(UINT pos, UINT flags = MF_BYPOSITION) noexcept;
     UINT EnableItem(UINT id, UINT flags) noexcept;
     UINT CheckItem(UINT id, UINT flags) noexcept;
     bool SetDefaultItem(UINT item) noexcept;
     bool GetItemInfo(UINT item, MENUITEMINFOW* info, ItemLookup lookup = ItemLookup::Position) const;
     bool SetItemInfo(UINT item, const MENUITEMINFOW* info, ItemLookup lookup = ItemLookup::Position);
-    UINT ShowPopup(UINT flags, int x, int y, CWnd* pWnd) const;
-    UINT ShowPopupEx(UINT flags, int x, int y, CWnd* pWnd, LPTPMPARAMS lptpm = nullptr) const;
+    UINT ShowPopup(UINT flags, int x, int y, CWnd* pWnd, LPTPMPARAMS lptpm = nullptr) const;
+    UINT ShowPopup(UINT flags, POINT pt, CWnd* pWnd, LPTPMPARAMS lptpm = nullptr) const { return ShowPopup(flags, pt.x, pt.y, pWnd, lptpm); }
     void SetItemEnabled(int item, bool enable, ItemLookup lookup = ItemLookup::Position);
     bool IsItemEnabled(UINT item, ItemLookup lookup = ItemLookup::Position) const noexcept;
 
@@ -1770,10 +1784,9 @@ public:
     {
         return CreateEx(0, WC_BUTTONW, lpszCaption, dwStyle, rect, pParentWnd, nID);
     }
-    void SetCheck(const int nCheck) { SendNativeMessage(BM_SETCHECK, static_cast<WPARAM>(nCheck)); }
     HICON SetIcon(HICON hIcon) { return reinterpret_cast<HICON>(SendNativeMessage(BM_SETIMAGE, IMAGE_ICON, hIcon)); }
     // Offset in 96-DPI units, also scaled with the application font size.
-    void SetTextOffset(CPoint offset);
+    void SetTextOffset(const CPoint& offset);
     static std::span<const RouteEntry> Routes();
 
 private:
@@ -1791,7 +1804,7 @@ public:
         return CreateEx(0, WC_EDITW, nullptr, dwStyle, rect, pParentWnd, nID);
     }
     void SetSel(const int start, const int end) { SendNativeMessage(EM_SETSEL, static_cast<WPARAM>(start), static_cast<LPARAM>(end)); }
-    std::pair<int, int> Selection() const { const DWORD selection = static_cast<DWORD>(SendNativeMessage(EM_GETSEL)); return { LOWORD(selection), HIWORD(selection) }; }
+    std::pair<int, int> GetSel() const { const DWORD selection = static_cast<DWORD>(SendNativeMessage(EM_GETSEL)); return { LOWORD(selection), HIWORD(selection) }; }
 };
 
 class CComboBox final : public CWnd
@@ -1802,6 +1815,7 @@ public:
         return CreateEx(0, WC_COMBOBOXW, nullptr, dwStyle, rect, pParentWnd, nID);
     }
     int  AddString(LPCWSTR psz) { return static_cast<int>(SendNativeMessage(CB_ADDSTRING, 0, psz)); }
+    int  AddString(const std::wstring& s) { return AddString(s.c_str()); }
     int  DeleteString(const UINT i) { return static_cast<int>(SendNativeMessage(CB_DELETESTRING, static_cast<WPARAM>(i))); }
     int  GetCount() const { return static_cast<int>(SendNativeMessage(CB_GETCOUNT)); }
     int  GetCurSel() const { return static_cast<int>(SendNativeMessage(CB_GETCURSEL)); }
@@ -1809,7 +1823,8 @@ public:
     DWORD_PTR GetItemData(const int i) const { return static_cast<DWORD_PTR>(SendNativeMessage(CB_GETITEMDATA, static_cast<WPARAM>(i))); }
     int  SetItemData(const int i, const DWORD_PTR data) { return static_cast<int>(SendNativeMessage(CB_SETITEMDATA, static_cast<WPARAM>(i), static_cast<LPARAM>(data))); }
     bool GetDroppedState() const { return static_cast<bool>(SendNativeMessage(CB_GETDROPPEDSTATE)); }
-    std::wstring ItemText(const int i) const
+    void ResetContent() { SendNativeMessage(CB_RESETCONTENT); }
+    std::wstring GetItemText(const int i) const
     {
         const int length = static_cast<int>(SendNativeMessage(CB_GETLBTEXTLEN, static_cast<WPARAM>(i)));
         if (length == CB_ERR) return {};
@@ -1824,11 +1839,12 @@ class CListBox final : public CWnd
 {
 public:
     int  AddString(LPCWSTR psz) { return static_cast<int>(SendNativeMessage(LB_ADDSTRING, 0, psz)); }
+    int  AddString(const std::wstring& s) { return AddString(s.c_str()); }
     int  InsertString(const int i, LPCWSTR psz) { return static_cast<int>(SendNativeMessage(LB_INSERTSTRING, static_cast<WPARAM>(i), psz)); }
+    int  InsertString(const int i, const std::wstring& s) { return InsertString(i, s.c_str()); }
     int  DeleteString(const UINT i) { return static_cast<int>(SendNativeMessage(LB_DELETESTRING, static_cast<WPARAM>(i))); }
     int  GetCurSel() const { return static_cast<int>(SendNativeMessage(LB_GETCURSEL)); }
     int  SetCurSel(const int i) { return static_cast<int>(SendNativeMessage(LB_SETCURSEL, static_cast<WPARAM>(i))); }
-
 };
 
 class CProgressCtrl : public CWnd
@@ -1840,7 +1856,8 @@ public:
     }
     int  SetPos(const int n) { return static_cast<int>(SendNativeMessage(PBM_SETPOS, static_cast<WPARAM>(n))); }
     int  GetPos() const { return static_cast<int>(SendNativeMessage(PBM_GETPOS)); }
-    std::pair<int, int> Range() const { PBRANGE range{}; SendNativeMessage(PBM_GETRANGE, true, &range); return { range.iLow, range.iHigh }; }
+    std::pair<int, int> GetRange() const { PBRANGE range{}; SendNativeMessage(PBM_GETRANGE, true, &range); return { range.iLow, range.iHigh }; }
+    void SetRange(const int nMin, const int nMax) { SendNativeMessage(PBM_SETRANGE32, static_cast<WPARAM>(nMin), static_cast<LPARAM>(nMax)); }
     COLORREF SetBkColor(const COLORREF c) { return static_cast<COLORREF>(SendNativeMessage(PBM_SETBKCOLOR, 0, static_cast<LPARAM>(c))); }
     void SetMarquee(const bool on, const int ms) { SendNativeMessage(PBM_SETMARQUEE, static_cast<WPARAM>(on), static_cast<LPARAM>(ms)); }
 };
@@ -1873,7 +1890,7 @@ public:
     DWORD SetOptions(const WORD op, const DWORD mask) { return static_cast<DWORD>(SendNativeMessage(EM_SETOPTIONS, op, static_cast<LPARAM>(mask))); }
     void  HideSelection() { SendNativeMessage(EM_HIDESELECTION, true, false); }
     bool  SetDefaultCharFormat(CHARFORMAT2W& cf) { return static_cast<bool>(SendNativeMessage(EM_SETCHARFORMAT, SCF_DEFAULT, &cf)); }
-    std::wstring TextRange(const long cpMin, const long cpMax) const
+    std::wstring GetTextRange(const long cpMin, const long cpMax) const
     {
         std::wstring text(static_cast<std::size_t>(std::max(0L, cpMax - cpMin)) + 1, L'\0');
         TEXTRANGEW range{ .chrg = { cpMin, cpMax }, .lpstrText = text.data() };
@@ -1891,7 +1908,7 @@ public:
         return CreateEx(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
             CRect(), pParentWnd, 0);
     }
-    bool AddTool(CWnd* pWnd, const LPCWSTR lpszText)
+    bool AddTool(const CWnd* pWnd, const LPCWSTR lpszText)
     {
         if (pWnd == nullptr) return false;
         TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
@@ -1901,7 +1918,8 @@ public:
         ti.lpszText = const_cast<LPWSTR>(lpszText);
         return static_cast<bool>(SendNativeMessage(TTM_ADDTOOLW, 0, &ti));
     }
-    bool AddTool(CWnd* pWnd, const UINT_PTR id, const RECT& rect, const LPCWSTR lpszText)
+    bool AddTool(const CWnd* pWnd, const std::wstring& text) { return AddTool(pWnd, text.c_str()); }
+    bool AddTool(const CWnd* pWnd, const UINT_PTR id, const RECT& rect, const LPCWSTR lpszText)
     {
         if (pWnd == nullptr) return false;
         TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
@@ -1914,7 +1932,7 @@ public:
     }
     void Activate() { SendNativeMessage(TTM_ACTIVATE, true); }
     void Pop() { SendNativeMessage(TTM_POP); }
-    void SetToolRect(CWnd* pWnd, const UINT_PTR id, const RECT& rect)
+    void SetToolRect(const CWnd* pWnd, const UINT_PTR id, const RECT& rect)
     {
         if (pWnd == nullptr) return;
         TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
@@ -1932,7 +1950,7 @@ class CHeaderCtrl final : public CWnd
 public:
     int  GetItemCount() const { return static_cast<int>(SendNativeMessage(HDM_GETITEMCOUNT)); }
     bool GetItem(const int i, HDITEMW* p) const { return static_cast<bool>(SendNativeMessage(HDM_GETITEMW, static_cast<WPARAM>(i), p)); }
-    bool SetItem(const int i, HDITEMW* p) { return static_cast<bool>(SendNativeMessage(HDM_SETITEMW, static_cast<WPARAM>(i), p)); }
+    bool SetItem(const int i, const HDITEMW* p) noexcept { return static_cast<bool>(SendNativeMessage(HDM_SETITEMW, static_cast<WPARAM>(i), p)); }
 };
 
 class CListCtrl : public CWnd
@@ -1961,28 +1979,27 @@ public:
     int  GetTopIndex() const { return static_cast<int>(SendNativeMessage(LVM_GETTOPINDEX)); }
     int  GetCountPerPage() const { return static_cast<int>(SendNativeMessage(LVM_GETCOUNTPERPAGE)); }
     bool EnsureVisible(const int i, const bool partial) { return static_cast<bool>(SendNativeMessage(LVM_ENSUREVISIBLE, static_cast<WPARAM>(i), (LPARAM)partial)); }
-    bool GetItemRect(const int i, LPRECT r, const UINT code) const
+    bool GetItemRect(const int i, RECT& r, const UINT code = LVIR_BOUNDS) const
     {
-        if (r == nullptr) return false;
         if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd
             && (code == LVIR_LABEL || code == LVIR_BOUNDS))
         {
             EnsureDrawColCache();
             if (g_drawItemCtx.colCount > 0 && g_drawItemCtx.colValid[0])
             {
-                r->top = g_drawItemCtx.rcItem.top;
-                r->bottom = g_drawItemCtx.rcItem.bottom;
-                r->left = (code == LVIR_LABEL) ? g_drawItemCtx.colLeft[0] : g_drawItemCtx.rcItem.left;
+                r.top = g_drawItemCtx.rcItem.top;
+                r.bottom = g_drawItemCtx.rcItem.bottom;
+                r.left = (code == LVIR_LABEL) ? g_drawItemCtx.colLeft[0] : g_drawItemCtx.rcItem.left;
                 // LVIR_LABEL = column-0 width; LVIR_BOUNDS = full row
-                r->right = (code == LVIR_LABEL)
+                r.right = (code == LVIR_LABEL)
                     ? g_drawItemCtx.colRight[0]
                     : g_drawItemCtx.rcItem.right;
                 return true;
             }
         }
-        // Fallback: set r->left = code before sending per ListView_GetItemRect convention
-        r->left = static_cast<LONG>(code);
-        return static_cast<bool>(SendNativeMessage(LVM_GETITEMRECT, static_cast<WPARAM>(i), r));
+        // Fallback: set r.left = code before sending per ListView_GetItemRect convention
+        r.left = static_cast<LONG>(code);
+        return static_cast<bool>(SendNativeMessage(LVM_GETITEMRECT, static_cast<WPARAM>(i), &r));
     }
     bool GetSubItemRect(const int i, const int sub, const int code, RECT& r) const
     {
@@ -2001,10 +2018,9 @@ public:
         // Fallback: set left = code, top = sub before sending per ListView_GetSubItemRect convention
         r.left = static_cast<LONG>(code); r.top = sub; return static_cast<bool>(SendNativeMessage(LVM_GETSUBITEMRECT, static_cast<WPARAM>(i), &r));
     }
-    int  HitTest(LVHITTESTINFO* p) const { return static_cast<int>(SendNativeMessage(LVM_HITTEST, 0, p)); }
-    int  HitTest(const CPoint pt, UINT* pFlags = nullptr) const { LVHITTESTINFO h{}; h.pt = pt; const int r = static_cast<int>(SendNativeMessage(LVM_HITTEST, 0, &h)); if (pFlags) *pFlags = h.flags; return r; }
+    int  HitTest(const CPoint& pt, UINT* pFlags = nullptr) const { LVHITTESTINFO h{}; h.pt = pt; const int r = static_cast<int>(SendNativeMessage(LVM_HITTEST, 0, &h)); if (pFlags) *pFlags = h.flags; return r; }
     void RedrawItems(const int first, const int last) { SendNativeMessage(LVM_REDRAWITEMS, static_cast<WPARAM>(first), (LPARAM)last); }
-    bool Scroll(const CSize size) { return static_cast<bool>(SendNativeMessage(LVM_SCROLL, static_cast<WPARAM>(size.cx), (LPARAM)size.cy)); }
+    bool Scroll(const CSize& size) { return static_cast<bool>(SendNativeMessage(LVM_SCROLL, static_cast<WPARAM>(size.cx), (LPARAM)size.cy)); }
     DWORD SetExtendedStyle(const DWORD ex) { return static_cast<DWORD>(SendNativeMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)ex)); }
     DWORD GetExtendedStyle() const { return static_cast<DWORD>(SendNativeMessage(LVM_GETEXTENDEDLISTVIEWSTYLE)); }
     bool SetBkColor(const COLORREF color) { return static_cast<bool>(SendNativeMessage(LVM_SETBKCOLOR, 0, static_cast<LPARAM>(color))); }
@@ -2026,6 +2042,10 @@ public:
         if (sub != -1) { c.mask |= LVCF_SUBITEM; c.iSubItem = sub; }
         return static_cast<int>(SendNativeMessage(LVM_INSERTCOLUMNW, static_cast<WPARAM>(nCol), &c));
     }
+    int  InsertColumn(const int nCol, const std::wstring& text, const int fmt = LVCFMT_LEFT, const int width = -1, const int sub = -1)
+    {
+        return InsertColumn(nCol, text.c_str(), fmt, width, sub);
+    }
     bool DeleteColumn(const int nCol) { return static_cast<bool>(SendNativeMessage(LVM_DELETECOLUMN, static_cast<WPARAM>(nCol))); }
     bool GetColumn(const int nCol, LVCOLUMNW* p) const { return static_cast<bool>(SendNativeMessage(LVM_GETCOLUMN, static_cast<WPARAM>(nCol), p)); }
     bool SetColumn(const int nCol, const LVCOLUMNW* p) { return static_cast<bool>(SendNativeMessage(LVM_SETCOLUMN, static_cast<WPARAM>(nCol), p)); }
@@ -2040,19 +2060,19 @@ public:
         return static_cast<bool>(SendNativeMessage(LVM_SETCOLUMNORDERARRAY, order.size(), order.data()));
     }
 
-    CHeaderCtrl& Header()
+    CHeaderCtrl& GetHeader()
     {
         EnsureHeaderHandle();
         return m_header;
     }
-    const CHeaderCtrl& Header() const
+    const CHeaderCtrl& GetHeader() const
     {
         EnsureHeaderHandle();
         return m_header;
     }
 
-    int FirstSelectedIndex() const { return GetNextItem(-1, LVNI_SELECTED); }
-    int NextSelectedIndex(const int index) const { return GetNextItem(index, LVNI_SELECTED); }
+    int GetFirstSelectedIndex() const { return GetNextItem(-1, LVNI_SELECTED); }
+    int GetNextSelectedIndex(const int index) const { return GetNextItem(index, LVNI_SELECTED); }
 
 protected:
     void EnsureHeaderHandle() const
@@ -2070,7 +2090,7 @@ protected:
     void EnsureDrawColCache() const
     {
         if (g_drawItemCtx.colCount != 0 || m_hWnd != g_drawItemCtx.hWnd) return;
-        const HWND hdr = Header().m_hWnd;
+        const HWND hdr = GetHeader().m_hWnd;
         if (hdr == nullptr) return;
         const int n = static_cast<int>(::SendMessageW(hdr, HDM_GETITEMCOUNT, 0, 0));
         constexpr int cap = static_cast<int>(std::size(g_drawItemCtx.colLeft));
@@ -2125,16 +2145,14 @@ private:
 class CBufferedDC final : public CDC
 {
 public:
-    CBufferedDC(CDC& target, CWnd* window) :
-        CBufferedDC(target, window != nullptr ? window->ClientRect() : CRect()) {}
-    CBufferedDC(CDC& target, const CRect& rect)
-        : CDC(&target), m_target(target), m_bitmap(&target, rect.Width(), rect.Height()), m_rect(rect)
+    CBufferedDC(CDC& target, const CWnd* window)
+        : CDC(&target), m_target(target), m_bitmap(&target, window != nullptr ? window->GetClientRect().Width() : 0, window != nullptr ? window->GetClientRect().Height() : 0), m_rect(window != nullptr ? window->GetClientRect() : CRect())
     {
         if (!*this || !m_bitmap) return;
         const HGDIOBJ previousBitmap = SelectObject(m_hDC, m_bitmap);
         if (previousBitmap == nullptr || previousBitmap == HGDI_ERROR) return;
         m_previousBitmap = static_cast<HBITMAP>(previousBitmap);
-        SetViewportOrg(-rect.left, -rect.top);
+        SetViewportOrg(-m_rect.left, -m_rect.top);
     }
     ~CBufferedDC()
     {
@@ -2157,7 +2175,7 @@ private:
 // -----------------------------------------------------------------------------
 //  Native common-dialog helpers
 // -----------------------------------------------------------------------------
-inline HWND GetDialogOwner(CWnd* pParentWnd = nullptr)
+inline HWND GetDialogOwner(const CWnd* pParentWnd = nullptr) noexcept
 {
     HWND hOwner = pParentWnd ? pParentWnd->Handle() : GetActiveWindow();
     if (hOwner == nullptr)
@@ -2192,7 +2210,7 @@ inline LRESULT CALLBACK ModalMessageHookProc(const int code, const WPARAM wParam
         if (const CWnd* pDlg = g_modalPreTranslateStack.back();
             pDlg != nullptr && pDlg->Handle() != nullptr &&
             pMsg->hwnd != nullptr &&
-            (pMsg->hwnd == pDlg->m_hWnd || IsChild(pDlg->m_hWnd, pMsg->hwnd)) &&
+            (pMsg->hwnd == pDlg->m_hWnd || pDlg->IsChild(pMsg->hwnd)) &&
             PreTranslateWindowTree(pDlg->m_hWnd, pMsg))
         {
             return true;
@@ -2209,10 +2227,10 @@ public:
 
     explicit CDialog(const UINT nIDTemplate, CWnd* pParent = nullptr) : m_nIDTemplate(nIDTemplate), m_pParentWnd(pParent) {}
 
-    static std::optional<std::wstring> PickFile(FilePickerMode mode, std::wstring filter);
-    static std::optional<std::wstring> PickFolder(CWnd* parent = nullptr);
-    static std::vector<std::wstring> PickFolders(CWnd* parent = nullptr, bool multiSelect = true);
-    static std::optional<COLORREF> PickColor(COLORREF initial);
+    static std::optional<std::wstring> PickFile(FilePickerMode mode, std::wstring filter, const CWnd* parent = nullptr);
+    static std::optional<std::wstring> PickFolder(const CWnd* parent = nullptr);
+    static std::vector<std::wstring> PickFolders(const CWnd* parent = nullptr, bool multiSelect = true);
+    static std::optional<COLORREF> PickColor(COLORREF initial, CWnd* parent = nullptr);
 
     virtual INT_PTR ShowModal()
     {
@@ -2249,7 +2267,7 @@ public:
     {
         if (pMsg != nullptr && pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && IsKeyDown(VK_CONTROL))
         {
-            if (const auto point = ClientCursorPosition())
+            if (const auto point = GetClientCursorPos())
             {
                 wchar_t className[16]{};
                 if (const CWnd* control = ChildWindowFromPoint(*point, CWP_SKIPINVISIBLE);
@@ -2257,7 +2275,7 @@ public:
                     GetClassNameW(control->m_hWnd, className, static_cast<int>(std::size(className))) != 0 &&
                     _wcsicmp(className, WC_STATIC) == 0)
                 {
-                    if (const std::wstring value = control->Text();
+                    if (const std::wstring value = control->GetText();
                         !value.empty() && CopyTextToClipboard(value)) return true;
                 }
             }
@@ -2371,7 +2389,7 @@ public:
     ~CWinApp() override { if (g_pApp == this) g_pApp = nullptr; }
 
     virtual bool InitInstance() { return true; }
-    virtual int ExitInstance() { return static_cast<int>(m_msgCur.wParam); }
+    virtual int ExitInstance() const noexcept { return static_cast<int>(m_msgCur.wParam); }
     virtual bool OnIdle(const LONG lCount)
     {
         if (lCount != 0) return false;
@@ -2379,7 +2397,7 @@ public:
         ClearTemporaryHandleCaches();
         return true;
     }
-    virtual bool IsIdleMessage(MSG* pMsg)
+    virtual bool IsIdleMessage(const MSG* pMsg) const noexcept
     {
         return !(pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE ||
             pMsg->message == WM_PAINT || pMsg->message == 0x0118 /*WM_SYSTIMER*/);
@@ -2391,7 +2409,7 @@ public:
     static void RunTaskWithUiUpdates(const std::function<void()>& task);
     static void WaitForHandleWithUiUpdates(HANDLE handle, DWORD timeout = INFINITE) noexcept;
 
-    void OnAppExit()
+    void OnAppExit() const
     {
         if (m_pMainWnd != nullptr) m_pMainWnd->SendMessage(WM_CLOSE);
     }
@@ -2495,19 +2513,18 @@ public:
 
     virtual bool CreateFromResource(UINT nIDResource);
     virtual void UpdateLayout();
-    void SetDocumentTitle(const LPCWSTR lpszDocName)
+    void SetDocumentTitle(const std::wstring_view docName = {})
     {
         const std::wstring prefix = m_strTitle.empty() ? L"WinDirStat" : m_strTitle;
-        const std::wstring t = lpszDocName && lpszDocName[0] != L'\0' ?
-            prefix + L" - " + lpszDocName : prefix;
+        const std::wstring t = !docName.empty() ? prefix + L" - " + std::wstring(docName) : prefix;
         if (m_hWnd) SetWindowTextW(m_hWnd, t.c_str());
     }
 
-    void SetTitle(const LPCWSTR title) { m_strTitle = title; SetText(title); }
+    void SetTitle(const std::wstring_view title) { m_strTitle = title; SetText(m_strTitle); }
 
     void SetTopBar(CWnd* bar) { m_topBar = bar; UpdateLayout(); }
     void SetBottomBar(CWnd* bar) { m_bottomBar = bar; UpdateLayout(); }
-    void UpdateMenuCommands(CMenu* pMenu, bool bSysMenu);
+    void UpdateMenuCommands(CMenu* pMenu, bool bSysMenu = false);
 
     static std::span<const RouteEntry> Routes();
 
@@ -2538,8 +2555,8 @@ protected:
     void OnInitMenuPopup(CMenu* pMenu, UINT /*nIndex*/, const bool bSysMenu) { UpdateMenuCommands(pMenu, bSysMenu); }
 
     // Default handling for the standard ID_VIEW_TOOLBAR / ID_VIEW_STATUS_BAR menu commands.
-    void OnBarCheck(UINT nID);
-    void OnUpdateControlBarMenu(CCmdUI* pCmdUI) const;
+    void OnToggleViewBar(UINT nID);
+    void OnUpdateViewBarMenu(CCmdUI* pCmdUI) const;
 
 private:
     HACCEL m_hAccelTable = nullptr;
@@ -2600,7 +2617,7 @@ inline bool CFrameWnd::CreateFromResource(const UINT nIDResource)
 inline void CFrameWnd::UpdateLayout()
 {
     if (!IsWindow(m_hWnd)) return;
-    const CRect rc = ClientRect();
+    const CRect rc = GetClientRect();
     int top = rc.top, bottom = rc.bottom;
     if (m_topBar != nullptr && IsWindow(m_topBar->m_hWnd) && m_topBar->IsWindowVisible())
     {
@@ -2644,7 +2661,7 @@ public:
         return CreateEx(0, cls, nullptr, (dwStyle & ~WS_BORDER) | WS_CLIPCHILDREN, rc, pParentWnd, nID);
     }
     template<typename View>
-    bool CreateView(const int row, const int col, const SIZE sizeInit)
+    bool CreateView(const int row, const int col, const SIZE& sizeInit)
     {
         static_assert(std::is_base_of_v<CWnd, View>);
         if (!IsValidPane(row, col)) return false;
@@ -2659,16 +2676,17 @@ public:
         }
         return true;
     }
-    CWnd* PaneAt(const int row, const int col) const
+    CWnd* GetPane(const int row, const int col) const
     {
         return IsValidPane(row, col) ? FromHandle(::GetDlgItem(m_hWnd, PaneId(row, col))) : nullptr;
     }
-    int PaneId(const int row, const int col) const { return WDS_PANE_ID_BASE + row * 16 + col; }
-    int RowCount() const { return static_cast<int>(m_rowSizes.size()); }
-    int ColumnCount() const { return static_cast<int>(m_columnSizes.size()); }
-    int RowSize(const int row) const { return IsValidRow(row) ? m_rowSizes[row] : 0; }
+    template<typename T> T* GetPane(const int row, const int col) const { return static_cast<T*>(GetPane(row, col)); }
+    static constexpr int PaneId(const int row, const int col) noexcept { return WDS_PANE_ID_BASE + row * 16 + col; }
+    int GetColumnCount() const { return static_cast<int>(m_columnSizes.size()); }
+    int GetRowCount() const { return static_cast<int>(m_rowSizes.size()); }
+    int GetRowSize(const int row) const { return IsValidRow(row) ? m_rowSizes[row] : 0; }
     void SetRowSize(const int row, const int size) { if (IsValidRow(row)) m_rowSizes[row] = size; }
-    int ColumnSize(const int column) const { return IsValidColumn(column) ? m_columnSizes[column] : 0; }
+    int GetColumnSize(const int column) const { return IsValidColumn(column) ? m_columnSizes[column] : 0; }
     void SetColumnSize(const int column, const int size) { if (IsValidColumn(column)) m_columnSizes[column] = size; }
     void ResetPanes() { m_rowSizes.clear(); m_columnSizes.clear(); }
 
@@ -2715,7 +2733,7 @@ private:
 
     CRect WorkRect() const;
     CRect TrackerRect(int pos) const;
-    void DrawBackground(CDC& dc, CRect rect) const;
+    void DrawBackground(CDC& dc, const CRect& rect) const;
     void DrawTrackerRect(CDC& dc, const CRect& rect) const;
     void DrawTracker();
     void FinishTracking(bool bAccept, bool releaseCapture);
@@ -2732,11 +2750,11 @@ private:
 inline void CSplitterWnd::UpdateLayout()
 {
     if (!IsWindow(m_hWnd) || m_rowSizes.empty() || m_columnSizes.empty()) return;
-    CRect rcWork = ClientRect();
+    CRect rcWork = GetClientRect();
     rcWork.Deflate(PaneBorderSize, PaneBorderSize);
     const auto movePane = [&](const int row, const int column, CRect rect)
     {
-        CWnd* pane = PaneAt(row, column);
+        CWnd* pane = GetPane(row, column);
         if (pane == nullptr || !IsWindow(pane->m_hWnd)) return;
         if (pane->IsSplitterWindow()) rect.Inflate(PaneBorderSize, PaneBorderSize);
         pane->MoveWindow(rect);
@@ -2770,7 +2788,7 @@ inline void CSplitterWnd::UpdateLayout()
 }
 inline CRect CSplitterWnd::WorkRect() const
 {
-    CRect rc = ClientRect();
+    CRect rc = GetClientRect();
     rc.Deflate(PaneBorderSize, PaneBorderSize);
     return rc;
 }
@@ -2818,7 +2836,7 @@ inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseC
     m_bTrackerVisible = false;
     m_rectTracker.Clear();
 
-    if (releaseCapture && ::GetCapture() == m_hWnd)
+    if (releaseCapture && HasCapture())
         ReleaseCapture();
 
     if (!bAccept)
@@ -2903,7 +2921,7 @@ inline bool CSplitterWnd::OnSetCursor(CWnd*, const UINT nHitTest, UINT)
 {
     if (nHitTest == HTCLIENT)
     {
-        const auto pt = ClientCursorPosition();
+        const auto pt = GetClientCursorPos();
         if (!pt) return static_cast<bool>(CallDefaultHandler());
         const CRect rcWork = WorkRect();
         if (m_columnSizes.size() > 1)
@@ -2967,7 +2985,7 @@ public:
         if (m_disabledImageList != nullptr) ImageList_Destroy(m_disabledImageList);
     }
 
-    void SetMetrics(const SIZE buttonSize, const int imageSize)
+    void SetMetrics(const SIZE& buttonSize, const int imageSize)
     {
         SetButtonSize(buttonSize);
         if (m_imageList != nullptr && !::ImageList_RemoveAll(m_imageList))
@@ -3003,10 +3021,10 @@ public:
         return true;
     }
 
-    int ButtonCount() const { return static_cast<int>(SendNativeMessage(TB_BUTTONCOUNT)); }
+    int GetButtonCount() const { return static_cast<int>(SendNativeMessage(TB_BUTTONCOUNT)); }
     void ClearButtons()
     {
-        for (int i = ButtonCount(); i-- > 0;) SendNativeMessage(TB_DELETEBUTTON, static_cast<WPARAM>(i));
+        for (int i = GetButtonCount(); i-- > 0;) SendNativeMessage(TB_DELETEBUTTON, static_cast<WPARAM>(i));
         m_tips.clear();
     }
     void AddSeparator()
@@ -3014,7 +3032,7 @@ public:
         TBBUTTON b{};
         b.fsStyle = BTNS_SEP;
         b.iBitmap = MulDiv(m_imageSize, 8, 20);
-        SendNativeMessage(TB_INSERTBUTTONW, ButtonCount(), &b);
+        SendNativeMessage(TB_INSERTBUTTONW, GetButtonCount(), &b);
     }
     void AddButton(const CToolBarButton& btn)
     {
@@ -3032,9 +3050,9 @@ public:
             b.iString = (idx != -1) ? idx : -1;
             m_tips[btn.m_id] = btn.m_text;
         }
-        SendNativeMessage(TB_INSERTBUTTONW, ButtonCount(), &b);
+        SendNativeMessage(TB_INSERTBUTTONW, GetButtonCount(), &b);
     }
-    void SetButtonSize(const SIZE buttonSize) noexcept { m_buttonSize = buttonSize; }
+    void SetButtonSize(const SIZE& buttonSize) noexcept { m_buttonSize = buttonSize; }
     void UpdateLayout()
     {
         SendNativeMessage(TB_SETIMAGELIST, 0, m_imageList);
@@ -3055,16 +3073,16 @@ public:
         OnUpdateCmdUI(frame);
         RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
-    int ButtonIndexForCommand(const UINT id) const { return static_cast<int>(SendNativeMessage(TB_COMMANDTOINDEX, id)); }
-    bool GetButtonRect(const int index, LPRECT rect) const
+    int GetButtonIndex(const UINT id) const { return static_cast<int>(SendNativeMessage(TB_COMMANDTOINDEX, id)); }
+    bool GetButtonRect(const int index, RECT& rect) const
     {
         return static_cast<bool>(SendNativeMessage(TB_GETITEMRECT, static_cast<WPARAM>(index),
-            rect));
+            &rect));
     }
     bool SetButtonVisible(const int index, const bool visible)
     {
         TBBUTTON button{};
-        if (index < 0 || index >= ButtonCount() ||
+        if (index < 0 || index >= GetButtonCount() ||
             !SendNativeMessage(TB_GETBUTTON, static_cast<WPARAM>(index), &button))
             return false;
 
@@ -3073,17 +3091,17 @@ public:
         SendNativeMessage(TB_HIDEBUTTON, button.idCommand, MAKELPARAM(!visible, 0));
         return true;
     }
-    CSize ButtonSize() const
+    CSize GetButtonSize() const
     {
-        if (ButtonCount() == 0) return m_buttonSize;
+        if (GetButtonCount() == 0) return m_buttonSize;
         const DWORD r = static_cast<DWORD>(SendNativeMessage(TB_GETBUTTONSIZE));
         const CSize sz(LOWORD(r), HIWORD(r));
         return sz.cx > 0 && sz.cy > 0 ? sz : m_buttonSize;
     }
-    CSize PreferredSize() override
+    CSize PreferredSize() const override
     {
-        const CRect rcParent = GetParent()->ClientRect();
-        return CSize(rcParent.Width(), ButtonSize().cy + ::ScaleForScreenDpi(2, m_hWnd));
+        const CRect rcParent = GetParent()->GetClientRect();
+        return CSize(rcParent.Width(), GetButtonSize().cy + ::ScaleForScreenDpi(2, m_hWnd));
     }
 
     void OnUpdateCmdUI(CFrameWnd* pTarget)
@@ -3096,7 +3114,7 @@ public:
             void SetRadio(const bool bOn) override { SetCheck(bOn); }
             void SetText(LPCWSTR) override {}
         };
-        const int n = ButtonCount();
+        const int n = GetButtonCount();
         CToolBarCmdUI state; state.pBar = this;
         for (int i = 0; i < n; ++i)
         {
@@ -3172,7 +3190,7 @@ public:
         pParentWnd->SetBottomBar(this);
         return true;
     }
-    void SetPaneContent(const PaneId pane, const std::wstring_view text, const int width)
+    void SetPaneText(const PaneId pane, const std::wstring_view text, const int width)
     {
         auto& target = m_panes[static_cast<size_t>(pane)];
         if (target.text == text && target.width == width) return;
@@ -3181,18 +3199,18 @@ public:
         Invalidate();
     }
     void SetBackgroundColor(const COLORREF color) { m_background = color; Invalidate(); }
-    CRect PaneRect(const PaneId pane) const
+    CRect GetPaneRect(const PaneId pane) const
     {
         return LayoutPanes()[static_cast<size_t>(pane)];
     }
 
-    CSize PreferredSize() override
+    CSize PreferredSize() const override
     {
-        const CRect rcParent = GetParent()->ClientRect();
+        const CRect rcParent = GetParent()->GetClientRect();
         return CSize(rcParent.Width(), ::ScaleForDpi(22, m_hWnd));
     }
 
-    static void DrawPaneBorder(CDC& dc, CRect rect);
+    static void DrawPaneBorder(CDC& dc, const CRect& rect);
 
     static std::span<const RouteEntry> Routes()
     {
@@ -3216,7 +3234,7 @@ private:
     {
         std::array<CRect, 3> rects{};
         if (!IsWindow(m_hWnd)) return rects;
-        const CRect rc = ClientRect();
+        const CRect rc = GetClientRect();
         const int fixedTotal = m_panes[1].width + m_panes[2].width;
         const int stretchWidth = std::max(0, rc.Width() - fixedTotal);
         int x = rc.left;
@@ -3248,11 +3266,11 @@ public:
 
     void SetLocation(Location loc);
     void SetContentBackgroundColor(COLORREF color);
-    int TabCount() const { return static_cast<int>(m_tabs.size()); }
-    int ActiveTab() const { return m_activeTab; }
-    CWnd* TabWindow(const int index) const { return index >= 0 && index < TabCount() ? m_tabs[index].window : nullptr; }
-    bool IsTabVisible(const int index) const { return index >= 0 && index < TabCount() && m_tabs[index].visible; }
-    std::wstring_view TabLabel(int index) const;
+    int GetTabCount() const { return static_cast<int>(m_tabs.size()); }
+    int GetActiveTab() const { return m_activeTab; }
+    CWnd* GetTabWindow(const int index) const { return index >= 0 && index < GetTabCount() ? m_tabs[index].window : nullptr; }
+    bool IsTabVisible(const int index) const { return index >= 0 && index < GetTabCount() && m_tabs[index].visible; }
+    std::wstring_view GetTabLabel(int index) const;
     void SetTabLabel(int i, std::wstring_view label);
 
     bool PreprocessMessage(MSG* pMsg) override;
@@ -3268,7 +3286,7 @@ protected:
     void OnSetFocus(CWnd*);
     void OnKillFocus(CWnd*);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    void OnNativeSelChange(NMHDR*, LRESULT* pResult);
+    void OnTabSelectionChanged(NMHDR*, LRESULT* pResult);
     void OnPaint();
 
 private:
@@ -3326,7 +3344,7 @@ private:
 class CPropertySheet : public MessageTarget<CPropertySheet, CWnd>
 {
 public:
-    explicit CPropertySheet(const LPCWSTR caption) : m_caption(caption) {}
+    explicit CPropertySheet(std::wstring caption) noexcept : m_caption(std::move(caption)) {}
 
     template<typename Page, typename... Args>
         requires std::derived_from<Page, CPropertyPage>
@@ -3334,10 +3352,10 @@ public:
     {
         m_pages.push_back(std::make_unique<Page>(std::forward<Args>(args)...));
     }
-    int PageCount() const { return static_cast<int>(m_pages.size()); }
-    int ActivePageIndex() const { return m_currentPage >= 0 ? m_currentPage : m_tab.ActiveTab(); }
+    int GetPageCount() const { return static_cast<int>(m_pages.size()); }
+    int GetActivePageIndex() const { return m_currentPage >= 0 ? m_currentPage : m_tab.GetActiveTab(); }
     bool SelectPage(int i);
-    CTabControl& TabControl() { return m_tab; }
+    CTabControl& GetTabControl() { return m_tab; }
 
     void UpdateApplyButton();
 
@@ -3350,7 +3368,7 @@ protected:
     bool PreprocessMessage(MSG* pMsg) override;
     bool OnEraseBkgnd(CDC* pDC) const;
     HBRUSH OnCtlColor(CDC*, CWnd*, UINT) { return reinterpret_cast<HBRUSH>(CallDefaultHandler()); }
-    LRESULT OnTabChanged(WPARAM w, LPARAM);
+    LRESULT OnRequestedPageChanged(WPARAM wParam, LPARAM lParam);
     void OnClose() { RequestModalExit(IDCANCEL); }
     void RequestModalExit(const int result) { m_modalResult = result; }
     bool OnCommand(WPARAM wParam, LPARAM lParam) override;
@@ -3399,13 +3417,13 @@ inline std::span<const RouteEntry> CFrameWnd::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Command<&OnBarCheck>(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR),
-        Route::Update<&OnUpdateControlBarMenu>(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR),
+        Route::Command<&OnToggleViewBar>(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR),
+        Route::Update<&OnUpdateViewBarMenu>(ID_VIEW_TOOLBAR, ID_VIEW_STATUS_BAR),
     };
     return entries;
 }
 
-inline void CFrameWnd::OnBarCheck(const UINT nID)
+inline void CFrameWnd::OnToggleViewBar(const UINT nID)
 {
     CWnd* bar = nID == ID_VIEW_TOOLBAR ? m_topBar : nID == ID_VIEW_STATUS_BAR ? m_bottomBar : nullptr;
     if (bar == nullptr) return;
@@ -3413,7 +3431,7 @@ inline void CFrameWnd::OnBarCheck(const UINT nID)
     UpdateLayout();
 }
 
-inline void CFrameWnd::OnUpdateControlBarMenu(CCmdUI* pCmdUI) const
+inline void CFrameWnd::OnUpdateViewBarMenu(CCmdUI* pCmdUI) const
 {
     const CWnd* bar = pCmdUI->m_nID == ID_VIEW_TOOLBAR ? m_topBar :
         pCmdUI->m_nID == ID_VIEW_STATUS_BAR ? m_bottomBar : nullptr;

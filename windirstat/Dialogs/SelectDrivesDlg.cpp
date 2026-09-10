@@ -317,18 +317,18 @@ bool CSelectDrivesDlg::OnInitDialog()
     m_driveList.ShowFullRowSelection(COptions::ListFullRowSelection);
     m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 
-    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, ScaleForDpi(150), COL_DRIVES_NAME);
-    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, ScaleForDpi(65), COL_DRIVES_TOTAL);
-    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, ScaleForDpi(65), COL_DRIVES_FREE);
-    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_USED_TOTAL).c_str(), LVCFMT_LEFT, ScaleForDpi(100), COL_DRIVES_GRAPH);
-    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_USED_TOTAL).c_str(), LVCFMT_RIGHT, ScaleForDpi(75), COL_DRIVES_PERCENT_USED);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, ScaleForDpi(150), COL_DRIVES_NAME);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL), LVCFMT_RIGHT, ScaleForDpi(65), COL_DRIVES_TOTAL);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE), LVCFMT_RIGHT, ScaleForDpi(65), COL_DRIVES_FREE);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_USED_TOTAL), LVCFMT_LEFT, ScaleForDpi(100), COL_DRIVES_GRAPH);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_USED_TOTAL), LVCFMT_RIGHT, ScaleForDpi(75), COL_DRIVES_PERCENT_USED);
 
     m_driveList.OnColumnsInserted();
 
     // Add previously used folders to the combo box
     for (const auto& folder : COptions::SelectDrivesFolder.Obj())
     {
-        m_browseList.AddString(folder.c_str());
+        m_browseList.AddString(folder);
     }
 
     // Select the first item and prime m_folderName from it
@@ -414,7 +414,7 @@ bool CSelectDrivesDlg::OnInitDialog()
 
 void CSelectDrivesDlg::OnOK()
 {
-    m_radio = CheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
+    m_radio = GetCheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
     m_folderName = GetText(IDC_BROWSE_FOLDER);
 
     m_drives.clear();
@@ -480,7 +480,7 @@ void CSelectDrivesDlg::OnOK()
 
 void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
 {
-    const int currentRadio = CheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
+    const int currentRadio = GetCheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
     const std::wstring currentFolder = folderOverride == nullptr ? GetText(IDC_BROWSE_FOLDER) : *folderOverride;
 
     bool enableOk = false;
@@ -520,7 +520,7 @@ void CSelectDrivesDlg::UpdateFilterButton()
 void CSelectDrivesDlg::OnBnClickedFastScanCheckbox()
 {
     // Prompt to re-launch elevated if the user just enabled Fast Scan without elevation
-    if (ButtonCheckState(IDC_FAST_SCAN_CHECKBOX) != BST_UNCHECKED && !IsElevationActive() && IsElevationAvailable())
+    if (GetButtonCheckState(IDC_FAST_SCAN_CHECKBOX) != BST_UNCHECKED && !IsElevationActive() && IsElevationAvailable())
     {
         if (ShowMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
             wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION) == IDYES)
@@ -636,7 +636,7 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
     // Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
     else if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && m_browseList.GetDroppedState())
     {
-        if (pMsg->hwnd == m_browseList.m_hWnd || ::GetParent(pMsg->hwnd) == m_browseList.m_hWnd)
+        if (pMsg->hwnd == m_browseList || ::GetParent(pMsg->hwnd) == m_browseList.m_hWnd)
         {
             const int n = m_browseList.GetCurSel();
             auto& h = COptions::SelectDrivesFolder.Obj();
@@ -650,7 +650,7 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
                 {
                     const int newSel = std::min(n, cnt - 1);
                     m_browseList.SetCurSel(newSel);
-                    m_folderName = m_browseList.ItemText(newSel);
+                    m_folderName = m_browseList.GetItemText(newSel);
                 }
                 else
                 {
@@ -721,7 +721,7 @@ void CSelectDrivesDlg::OnSelchangeBrowseFolder()
         return;
     }
 
-    const std::wstring selectedFolder = m_browseList.ItemText(selection);
+    const std::wstring selectedFolder = m_browseList.GetItemText(selection);
     UpdateButtons(&selectedFolder);
 }
 

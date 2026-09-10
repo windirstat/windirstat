@@ -26,13 +26,13 @@ class CStorageAnalyticsView;
 class CFileTabbedView final : public MessageTarget<CFileTabbedView, CWinDirStatPane>
 {
 public:
-    bool IsFileTreeViewTabActive() { return GetTabControl().ActiveTab() == m_fileTreeViewIndex; }
-    bool IsFileDupeViewTabActive() { return GetTabControl().ActiveTab() == m_fileDupeViewIndex; }
-    bool IsFileTopViewTabActive() { return GetTabControl().ActiveTab() == m_fileTopViewIndex; }
-    bool IsFileSearchViewTabActive() { return GetTabControl().ActiveTab() == m_fileSearchViewIndex; }
-    bool IsFileWatcherViewTabActive() { return GetTabControl().ActiveTab() == m_fileWatcherViewIndex; }
-    bool IsFilePermsViewTabActive() { return GetTabControl().ActiveTab() == m_filePermsViewIndex; }
-    bool IsStorageAnalyticsViewTabActive() { return GetTabControl().ActiveTab() == m_storageAnalyticsViewIndex; }
+    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTreeViewIndex; }
+    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileDupeViewIndex; }
+    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
+    bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileSearchViewIndex; }
+    bool IsFileWatcherViewTabActive() { return GetTabControl().GetActiveTab() == m_fileWatcherViewIndex; }
+    bool IsFilePermsViewTabActive() { return GetTabControl().GetActiveTab() == m_filePermsViewIndex; }
+    bool IsStorageAnalyticsViewTabActive() { return GetTabControl().GetActiveTab() == m_storageAnalyticsViewIndex; }
     CFileTopView* GetFileTopView() const { return m_fileTopView; }
     CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
     CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }

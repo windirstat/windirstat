@@ -74,15 +74,15 @@ void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int
 {
     for (auto* pCtrl : controls)
     {
-        CRect rect = WindowRectInClient(pCtrl->Handle());
+        CRect rect = GetChildWindowRect(*pCtrl);
         rect.Offset(0, shiftAmount);
-        pCtrl->MoveWindow(&rect);
+        pCtrl->MoveWindow(rect);
     }
 
     // Resize dialog
     CRect dialogRect(Handle());
     dialogRect.bottom += shiftAmount;
-    MoveWindow(&dialogRect);
+    MoveWindow(dialogRect);
 }
 
 void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, const int padding)
@@ -94,11 +94,11 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
         {
             if (pBtn->Handle() && pBtn->GetStyle() & WS_VISIBLE)
             {
-                CRect cbRect = WindowRectInClient(m_checkbox.Handle());
-                const CRect btnRect = WindowRectInClient(pBtn->Handle());
+                CRect cbRect = GetChildWindowRect(m_checkbox.Handle());
+                const CRect btnRect = GetChildWindowRect(pBtn->Handle());
 
                 cbRect.right = btnRect.left;
-                if (cbRect.right > cbRect.left) m_checkbox.MoveWindow(&cbRect);
+                if (cbRect.right > cbRect.left) m_checkbox.MoveWindow(cbRect);
                 break;
             }
         }
@@ -106,13 +106,13 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
 
     if (pTargetControl->GetStyle() & WS_VISIBLE) return;
 
-    const CRect targetRect = WindowRectInClient(pTargetControl->Handle());
+    const CRect targetRect = GetChildWindowRect(pTargetControl->Handle());
 
     // Find nearest control below target
     int minYBelow = INT_MAX;
     for (const auto* ctrl : controlsToShift)
     {
-        const CRect ctrlRect = WindowRectInClient(ctrl->Handle());
+        const CRect ctrlRect = GetChildWindowRect(ctrl->Handle());
 
         if (ctrlRect.top > targetRect.top)
             minYBelow = std::min<int>(minYBelow, ctrlRect.top);
@@ -139,8 +139,8 @@ bool CMessageBoxDlg::OnInitDialog()
     m_listView.SubclassDlgItem(IDC_MESSAGE_LISTVIEW, this);
 
     // Set window title and message
-    SetText(m_title.c_str());
-    m_messageCtrl.SetText(m_message.c_str());
+    SetText(m_title);
+    m_messageCtrl.SetText(m_message);
 
     // Configure buttons
     m_buttonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
@@ -148,9 +148,9 @@ bool CMessageBoxDlg::OnInitDialog()
     m_buttonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
 
     // Set button texts
-    m_buttonLeft.SetText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
-    m_buttonMiddle.SetText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
-    m_buttonRight.SetText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
+    m_buttonLeft.SetText(Localization::Lookup(m_buttonContext.btnLeftIDS));
+    m_buttonMiddle.SetText(Localization::Lookup(m_buttonContext.btnMidIDS));
+    m_buttonRight.SetText(Localization::Lookup(m_buttonContext.btnRightIDS));
 
     // Set display icon
     m_iconCtrl.SetIcon(m_icon);
@@ -166,7 +166,7 @@ bool CMessageBoxDlg::OnInitDialog()
     }
 
     // Hide checkbox if no text set
-    m_checkbox.SetText(m_checkboxText.c_str());
+    m_checkbox.SetText(m_checkboxText);
     SetChecked(IDC_MESSAGE_CHECKBOX, m_checkboxChecked);
     m_checkbox.ShowWindow(m_checkboxText.empty() ? SW_HIDE : SW_SHOW);
 
@@ -184,10 +184,10 @@ bool CMessageBoxDlg::OnInitDialog()
     ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, 16);
 
     // Measure message text
-    const CRect rectMessage = WindowRectInClient(m_messageCtrl.Handle());
+    const CRect rectMessage = GetChildWindowRect(m_messageCtrl.Handle());
 
     // Account for control borders/margins
-    const CRect rectMessageClient = m_messageCtrl.ClientRect();
+    const CRect rectMessageClient = m_messageCtrl.GetClientRect();
     const int messageBorders = rectMessage.Width() - rectMessageClient.Width();
 
     // Calculate scaling for initial size requirements
@@ -255,7 +255,7 @@ bool CMessageBoxDlg::OnInitDialog()
     m_layout.OnInitDialog(true);
 
     // Apply width and final height expansion
-    rectWindow = CRect(Handle());
+    rectWindow = GetWindowRect();
     const int newWidth = rectWindow.Width() + deltaWidth;
     int newHeight = rectWindow.Height();
 
@@ -292,7 +292,7 @@ void CMessageBoxDlg::UpdateListViewColumnWidth()
         return;
     }
 
-    const CRect rect = m_listView.ClientRect();
+    const CRect rect = m_listView.GetClientRect();
     m_listView.SetColumnWidth(0, rect.Width());
 }
 
@@ -395,7 +395,7 @@ HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 
 bool CMessageBoxDlg::OnEraseBkgnd(CDC* pDC) const
 {
-    const CRect rect = ClientRect();
+    const CRect rect = GetClientRect();
     const bool bDark = DarkMode::IsDarkModeActive();
 
     const COLORREF topColor = DarkMode::SystemColor(COLOR_WINDOW);
@@ -406,7 +406,7 @@ bool CMessageBoxDlg::OnEraseBkgnd(CDC* pDC) const
 
     if (m_buttonRight.Handle())
     {
-        const CRect btnRect = WindowRectInClient(m_buttonRight.Handle());
+        const CRect btnRect = GetChildWindowRect(m_buttonRight.Handle());
         lineY = btnRect.top - ScaleForDpi(12);
     }
 

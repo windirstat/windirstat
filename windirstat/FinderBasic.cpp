@@ -119,15 +119,13 @@ bool FinderBasic::FindNext()
         };
 
         // handle unexpected trailing null on some file systems
-        const LPCWSTR fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
+        const wchar_t* fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
             m_currentInfo->StandardInfo.FileName;
-        ULONG nameLength = m_currentInfo->FileNameLength / sizeof(WCHAR);
-        if (nameLength > 1 && fileNamePtr[nameLength - 1] == L'\0')
-            nameLength -= 1;
+        std::wstring_view fileName(fileNamePtr, m_currentInfo->FileNameLength / sizeof(WCHAR));
+        if (fileName.ends_with(L'\0')) fileName.remove_suffix(1);
 
         // copy name into local buffer
-        m_name.resize(nameLength);
-        std::wmemcpy(m_name.data(), fileNamePtr, nameLength);
+        m_name.assign(fileName);
 
         // special case for reparse points on the initial run since it will
         // return the attributes on the destination folder and not the reparse

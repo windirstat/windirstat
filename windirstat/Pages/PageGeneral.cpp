@@ -81,7 +81,7 @@ bool CPageGeneral::SetContextMenuRegistration(const bool enable)
 
 int CPageGeneral::GetSelectedDarkMode() const
 {
-    const int checkedRadio = CheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED);
+    const int checkedRadio = GetCheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED);
     const auto selected = std::ranges::find(DarkModeRadioIds, checkedRadio);
     assert(selected != DarkModeRadioIds.end());
     return selected == DarkModeRadioIds.end()
@@ -119,7 +119,7 @@ void CPageGeneral::InitializePage()
 
     for (const auto& language : Localization::GetLanguageList())
     {
-        const int i = m_combo.AddString(GetLocaleLanguage(language).c_str());
+        const int i = m_combo.AddString(GetLocaleLanguage(language));
         m_combo.SetItemData(i, language);
         if (language == COptions::LanguageId)
         {

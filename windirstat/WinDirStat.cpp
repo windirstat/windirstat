@@ -474,7 +474,7 @@ bool CDirStatApp::InitInstance()
     return true;
 }
 
-bool CDirStatApp::IsIdleMessage(MSG* pMsg)
+bool CDirStatApp::IsIdleMessage(const MSG* pMsg) const noexcept
 {
     // Treat WM_TIMER as an idle message to prevent excessive OnIdle calls
     // The timer is used for UI updates and should not trigger idle processing

@@ -47,9 +47,7 @@ public:
 
     static std::wstring LookupNeutral(const UINT res)
     {
-        const std::wstring name = LoadResourceString(GetAppInstance(), res,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
-        return name;
+        return LoadResourceString(res, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
     }
 
     template <typename... Args>

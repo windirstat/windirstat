@@ -58,7 +58,7 @@ bool CFileTreeControl::GetPortionToolTip(const CPoint point, CRect& rect, std::w
     bar.left += item->GetIndent() * ScaleForDpi(COptions::SizeProportionIndent);
 
     CRect visibleBar;
-    const CRect client = ClientRect();
+    const CRect client = GetClientRect();
     if (!visibleBar.Intersect(bar, client) || !visibleBar.Contains(point)) return false;
 
     rect = visibleBar;
@@ -210,7 +210,7 @@ bool CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     auto defaultReturn = [&] { return CTreeListControl::OnSetCursor(pWnd, nHitTest, message); };
     if (nHitTest != HTCLIENT) return defaultReturn();
 
-    const auto point = ClientCursorPosition();
+    const auto point = GetClientCursorPos();
     if (!point) return defaultReturn();
 
     // Hit test

@@ -26,7 +26,7 @@ void CColorButton::CPreview::SetColor(const COLORREF color)
     m_color = color;
     if (m_hWnd != nullptr)
     {
-        InvalidateRect(nullptr);
+        Invalidate();
     }
 }
 
@@ -34,7 +34,7 @@ void CColorButton::CPreview::OnPaint()
 {
     CPaintDC dc(this);
 
-    CRect rc = ClientRect();
+    CRect rc = GetClientRect();
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
     const bool disabled = (GetParent()->GetStyle() & WS_DISABLED) != 0;
@@ -51,9 +51,9 @@ void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point) cons
 
 void CColorButton::OnPaint()
 {
-    if (m_preview.m_hWnd == nullptr)
+    if (m_preview == nullptr)
     {
-        CRect rc = ClientRect();
+        CRect rc = GetClientRect();
         rc.right = rc.left + rc.Width() / 3;
         rc.Deflate(4, 4);
 
@@ -69,7 +69,7 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-    if (m_preview.m_hWnd != nullptr)
+    if (m_preview != nullptr)
     {
         m_preview.DestroyWindow();
     }
@@ -93,9 +93,9 @@ void CColorButton::OnBnClicked()
 
 void CColorButton::OnEnable(const bool bEnable)
 {
-    if (m_preview.m_hWnd != nullptr)
+    if (m_preview != nullptr)
     {
-        m_preview.InvalidateRect(nullptr);
+        m_preview.Invalidate();
     }
     CButton::OnEnable(bEnable);
 }

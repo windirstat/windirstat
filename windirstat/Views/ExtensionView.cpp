@@ -38,7 +38,7 @@ void CExtensionView::ShowTypes(const bool show)
 void CExtensionView::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
 {
     CWinDirStatModel::Get()->SetHighlightExtension(ext, unregistered);
-    if (GetFocus() == &m_extensionListControl)
+    if (m_extensionListControl.HasFocus())
     {
         NotifyOtherPanes(MODEL_CHANGE_EXTENSION_SELECTION);
     }
@@ -75,7 +75,7 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
 
             // If there is no vertical scroll bar, the header control doesn't repaint
             // correctly. Don't know why. But this helps:
-            m_extensionListControl.Header().InvalidateRect(nullptr);
+            m_extensionListControl.GetHeader().Invalidate();
         }
         else
         {
@@ -95,9 +95,9 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
 
     case MODEL_CHANGE_TREEMAP_STYLE:
         {
-            InvalidateRect(nullptr);
-            m_extensionListControl.InvalidateRect(nullptr);
-            m_extensionListControl.Header().InvalidateRect(nullptr);
+            Invalidate();
+            m_extensionListControl.Invalidate();
+            m_extensionListControl.GetHeader().Invalidate();
         }
         break;
 

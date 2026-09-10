@@ -211,7 +211,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
         return;
     }
 
-    CRect rcClient = wnd.ToScreen(wnd.ClientRect());
+    CRect rcClient = wnd.ToScreen(wnd.GetClientRect());
 
     const CRect rcWindow(wnd.Handle());
     rcClient.Offset(-rcWindow.left, -rcWindow.top);
@@ -222,7 +222,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
     lineToPaint.top--;
 
     CWindowDC dc(&wnd);
-    dc.FillSolidRect(&lineToPaint, SystemColor(COLOR_MENUBAR));
+    dc.FillSolidRect(lineToPaint, SystemColor(COLOR_MENUBAR));
 }
 
 LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, const LPARAM lParam, const HWND hWnd)
@@ -257,7 +257,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         mbi.rcBar.top -= 1;
 
         auto dc = CDC::Borrow(pUDM->hdc);
-        dc.FillSolidRect(&mbi.rcBar, SystemColor(COLOR_MENUBAR));
+        dc.FillSolidRect(mbi.rcBar, SystemColor(COLOR_MENUBAR));
     }
     else if (message == WM_UAHDRAWMENUITEM)
     {
@@ -292,7 +292,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
             (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? SystemColor(COLOR_MENU) : SystemColor(COLOR_MENUBAR);
 
         auto dc = CDC::Borrow(pUDMI->um.hdc);
-        dc.FillSolidRect(&pUDMI->dis.rcItem, bgColor);
+        dc.FillSolidRect(pUDMI->dis.rcItem, bgColor);
 
         const COLORREF textColor =
             (txtId == MBI_DISABLED || txtId == MBI_DISABLEDHOT || txtId == MBI_DISABLEDPUSHED) ?
@@ -310,10 +310,10 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
     return 1;
 }
 
-void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
+void DarkMode::LightenBitmap(CBitmap& bitmap, const bool invert)
 {
     if (!s_darkModeEnabled) return;
-    const auto bitmapInfo = pBitmap->Info();
+    const auto bitmapInfo = bitmap.Info();
     if (!bitmapInfo) return;
     const BITMAP& bm = *bitmapInfo;
     if (bm.bmWidth <= 0 || bm.bmHeight <= 0) return;
@@ -324,10 +324,10 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
 
     const std::size_t byteCount = width * height * 4;
     CDC memDC(nullptr);
-    GdiObjectSelection sobmp(&memDC, pBitmap);
+    GdiObjectSelection sobmp(&memDC, &bitmap);
     BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
     const auto pixels = std::make_unique_for_overwrite<BYTE[]>(byteCount);
-    if (!GetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
+    if (!GetDIBits(memDC, bitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
 
     if (invert)
     {
@@ -349,7 +349,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
                 pixels.get() + i, [&lut](const BYTE b) { return lut[b]; });
     }
 
-    SetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
+    SetDIBits(memDC, bitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
 }
 
 void DarkMode::DrawFocusRect(CDC* pdc, const CRect& rc)

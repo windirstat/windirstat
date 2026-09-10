@@ -109,7 +109,6 @@ public:
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
     void LoadPersistentAttributes();
-    bool HasFocus() const { return ::GetFocus() == m_hWnd; }
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
     void InsertSortedListItems(std::span<CWdsListItem* const> items);
     void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }

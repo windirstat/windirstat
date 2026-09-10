@@ -26,7 +26,7 @@ void CPageAdvanced::InitializePage()
 {
     if (m_priorityCombo.SubclassDlgItem(IDC_PROCESS_PRIORITY, this))
         for (const auto& priority : SplitString(Localization::Lookup(IDS_PRIORITY_LEVELS), L','))
-            m_priorityCombo.AddString(priority.c_str());
+            m_priorityCombo.AddString(priority);
 
     SetChecked(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, COptions::ExcludeVolumeMountPoints);
     SetChecked(IDC_EXCLUDE_JUNCTIONS, COptions::ExcludeJunctions);
@@ -59,7 +59,7 @@ void CPageAdvanced::OnOK()
     const bool skipHiddenFile = IsChecked(IDC_EXCLUDE_HIDDEN_FILE);
     const bool skipProtectedFile = IsChecked(IDC_EXCLUDE_PROTECTED_FILE);
     const bool processHardlinks = IsChecked(IDC_PROCESS_HARDLINKS);
-    const int fileHashAlgorithm = ComboSelection(IDC_HASH_ALGORITHM);
+    const int fileHashAlgorithm = GetComboSelection(IDC_HASH_ALGORITHM);
 
     const bool refreshReparsepoints =
         COptions::ExcludeJunctions != excludeJunctions ||
@@ -85,9 +85,9 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeProtectedFile = skipProtectedFile;
     COptions::ProcessHardlinks = processHardlinks;
     COptions::FileHashAlgorithm = fileHashAlgorithm;
-    COptions::ProcessPriority = ComboSelection(IDC_PROCESS_PRIORITY);
+    COptions::ProcessPriority = GetComboSelection(IDC_PROCESS_PRIORITY);
 
-    COptions::ScanningThreads = ComboSelection(IDC_COMBO_THREADS) + 1;
+    COptions::ScanningThreads = GetComboSelection(IDC_COMBO_THREADS) + 1;
     SetProcessPriority(COptions::ProcessPriority);
     COptions::LargeFileCount = std::stoi(GetText(IDC_LARGEST_FILE_COUNT));
     COptions::FolderHistoryCount = std::stoi(GetText(IDC_FOLDER_HISTORY_COUNT));

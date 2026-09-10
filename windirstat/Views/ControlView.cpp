@@ -34,7 +34,7 @@ int CControlView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 int CControlView::InsertCol(const std::wstring_view& colName, const int nFormat, const int nWidth, const int nSubItem)
 {
-    return GetControl().InsertColumn(CHAR_MAX, Localization::Lookup(colName).c_str(), nFormat, ScaleForDpi(nWidth), nSubItem);
+    return GetControl().InsertColumn(CHAR_MAX, Localization::Lookup(colName), nFormat, ScaleForDpi(nWidth), nSubItem);
 }
 
 void CControlView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)

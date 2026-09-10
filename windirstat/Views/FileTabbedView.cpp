@@ -25,7 +25,7 @@ Pane* CFileTabbedView::AddPane(int& index, const std::wstring_view& tabLabel)
 {
     static_assert(std::is_base_of_v<CWinDirStatPane, Pane>);
     auto* pane = new Pane;
-    index = GetTabControl().TabCount();
+    index = GetTabControl().GetTabCount();
     if (!pane->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, CRect(), &m_tabControl,
         static_cast<UINT>(WDS_PANE_ID_BASE + index)))
     {
@@ -64,7 +64,7 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CFileTabbedView::FocusActiveTabContent()
 {
-    if (CWnd* tabWnd = m_tabControl.TabWindow(m_tabControl.ActiveTab()))
+    if (CWnd* tabWnd = m_tabControl.GetTabWindow(m_tabControl.GetActiveTab()))
     {
         tabWnd->SetFocus();
     }
@@ -200,7 +200,7 @@ bool CFileTabbedView::CycleTab(const bool forward)
         if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
     }
 
-    const int activeTab = GetTabControl().ActiveTab();
+    const int activeTab = GetTabControl().GetActiveTab();
     const auto it = std::ranges::find(visibleTabs, activeTab);
     if (it == visibleTabs.end()) return false;
 

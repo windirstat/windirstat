@@ -229,7 +229,7 @@ void CWinDirStatModel::SetScanTitlePrefix(const std::wstring& prefix) const
     static std::wstring suffix = IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"";
     std::wstring scanName = std::format(L"{} {} {}", prefix, GetScanTitle(), suffix);
     scanName = TrimString(scanName);
-    CMainFrame::Get()->UpdateFrameTitleForScan(scanName.empty() ? nullptr : scanName.c_str());
+    CMainFrame::Get()->UpdateFrameTitleForScan(scanName);
 }
 
 COLORREF CWinDirStatModel::GetCushionColor(const std::wstring & ext)
