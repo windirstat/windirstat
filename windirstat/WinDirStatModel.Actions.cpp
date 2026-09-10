@@ -808,8 +808,8 @@ void CWinDirStatModel::OnCleanupProperties()
 {
     const auto& selected = GetAllSelected();
 
-    // Open every property sheet individually when the selection contains virtual MTP items.
-    if (std::ranges::any_of(selected, [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); }))
+    // Open every property sheet individually when the selection contains virtual This PC and MTP items.
+    if (std::ranges::any_of(selected, [](const CItem* item) { return item->IsTypeOrFlag(IT_MYCOMPUTER, ITF_MTP); }))
     {
         for (const auto& item : selected) OpenItem(item, L"properties");
         return;
