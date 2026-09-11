@@ -559,6 +559,9 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="res\langs\lang_ar.txt">
+      <Filter>Resource Files\Icon\Languages</Filter>
+    </Text>
     <Text Include="res\langs\lang_et.txt">
       <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
