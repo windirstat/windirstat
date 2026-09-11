@@ -5,12 +5,21 @@ Enhancements
 - Added selection of multiple individual folders (thanks @djdomi)
 - Added scanning support for MTP portable devices
 - Added volume / free space stats for administrative share drive paths
-- Added size proportion tooltips showing for of the total scan and parent folder
+- Added size proportion tooltips showing percentages of the total scan and parent folder
 - Added configurable font / toolbar scaling with Windows text size support
 - Added support for an arbitrary number of custom cleanups
 - Added greater-than / less-than comparisons for file size and age exclusions
+- Added style presets for treemap visualization
+- Added cancellation support while loading NTFS MFT records
+- Added Arabic translation (thanks @Alhlhli, @harryytm)
 - Improved hardlink processing performance and memory usage
+- Improved scanning, tree update, and file watcher performance through batched updates
+- Improved duplicate file and largest file tracking performance using incremental updates
+- Improved memory usage and responsiveness in Permissions and Storage Analytics views
+- Improved legacy Windows OS compatibility when using modern build tools
 - Improved Simplified Chinese translation (thanks @wcxu21)
+- Improved Traditional Chinese (Hong Kong) translation (thanks @harryytm)
+- Improved Italian translation (thanks @bovirus)
 - Migrated the UI framework from MFC to native Win32/GDI (reduced executable size)
 
 Bug Fixes
@@ -26,6 +35,12 @@ Bug Fixes
 - Corrected folder counts and zoom state after removing multi-root scan targets
 - Corrected invalid attributes being lost when loading CSV/JSON results
 - Corrected WinGet upgrades for MSI installations using non-English locales
+- Corrected opening properties for "This PC" items (thanks @harryytm)
+- Corrected directory enumeration in recursive user-defined cleanups
+- Corrected directory modification timestamps being overwritten during parallel scans
+- Corrected potential race condition when releasing MFT indexes during scan cancellation
+- Corrected root item allocation when loading or exporting CSV scan results
+- Restored support for volume path formats (thanks @harryytm)
 
 <a name="windirstat-2.8.0"></a>
 # WinDirStat 2.8.0
