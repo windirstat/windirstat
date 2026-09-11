@@ -283,7 +283,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     // derive the NT-namespace path used to open the directory
     m_isUncPath = m_base.starts_with(L"\\\\");
     if (m_isUncPath) m_baseNt = s_dosUNCPath.data() + m_base.substr(2);
-    else if (m_base.find(L":\\", 1) == 1) m_baseNt = s_dosPath.data() + m_base;
+    else if (m_base.find(L":\\", 1) == 1 || m_base.starts_with(L"Volume{")) m_baseNt = s_dosPath.data() + m_base;
     else m_baseNt = m_base;
 
     UNICODE_STRING path
