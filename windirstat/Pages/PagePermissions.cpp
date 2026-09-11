@@ -26,21 +26,23 @@ CPagePermissions::CPagePermissions() : MessageTarget(IDD)
 void CPagePermissions::InitializePage()
 {
     // Populate each level selection combo with "any" plus the summarized rights levels
-    for (const int i : std::views::iota(0, PERMSRULECOUNT))
+    for (const auto [i, levelCombo, colorButton, accountOpt, levelOpt, colorOpt] :
+        std::views::zip(std::views::iota(0, PERMSRULECOUNT), m_levelCombo, m_colorButton,
+            COptions::PermsColorAccount, COptions::PermsColorLevel, COptions::PermsColor))
     {
-        m_levelCombo[i].SubclassDlgItem(IDC_PERMS_LEVEL0 + i, this);
-        m_colorButton[i].SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
+        levelCombo.SubclassDlgItem(IDC_PERMS_LEVEL0 + i, this);
+        colorButton.SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
 
         // "Special" is excluded since it is not a meaningful colorization threshold
-        m_levelCombo[i].AddString(Localization::Lookup(IDS_PERMS_ANY));
+        levelCombo.AddString(Localization::Lookup(IDS_PERMS_ANY));
         for (const int level : std::views::iota(0, static_cast<int>(PERMSLEVEL_SPECIAL)))
         {
-            m_levelCombo[i].AddString(CItemPerm::GetRightsLevelName(static_cast<PERMSLEVEL>(level)));
+            levelCombo.AddString(CItemPerm::GetRightsLevelName(static_cast<PERMSLEVEL>(level)));
         }
 
-        SetText(IDC_PERMS_ACCOUNT0 + i, COptions::PermsColorAccount[i].Obj());
-        SetComboSelection(IDC_PERMS_LEVEL0 + i, COptions::PermsColorLevel[i]);
-        m_colorButton[i].SetColor(COptions::PermsColor[i]);
+        SetText(IDC_PERMS_ACCOUNT0 + i, accountOpt.Obj());
+        SetComboSelection(IDC_PERMS_LEVEL0 + i, levelOpt);
+        colorButton.SetColor(colorOpt);
     }
 
     SetText(IDC_PERMS_EXCLUDE, COptions::PermsExcludeRegex.Obj());
@@ -48,11 +50,13 @@ void CPagePermissions::InitializePage()
 
 void CPagePermissions::OnOK()
 {
-    for (const int i : std::views::iota(0, PERMSRULECOUNT))
+    for (const auto [i, accountOpt, levelOpt, colorOpt, colorButton] :
+        std::views::zip(std::views::iota(0, PERMSRULECOUNT),
+            COptions::PermsColorAccount, COptions::PermsColorLevel, COptions::PermsColor, m_colorButton))
     {
-        COptions::PermsColorAccount[i].Obj() = GetText(IDC_PERMS_ACCOUNT0 + i);
-        COptions::PermsColorLevel[i] = GetComboSelection(IDC_PERMS_LEVEL0 + i);
-        COptions::PermsColor[i] = m_colorButton[i].GetColor();
+        accountOpt.Obj() = GetText(IDC_PERMS_ACCOUNT0 + i);
+        levelOpt = GetComboSelection(IDC_PERMS_LEVEL0 + i);
+        colorOpt = colorButton.GetColor();
     }
     COptions::PermsExcludeRegex.Obj() = GetText(IDC_PERMS_EXCLUDE);
 

@@ -106,10 +106,10 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     constexpr size_t numPresets = std::size(presets);
 
     m_tiers.clear();
-    for (size_t i = 0; i < tierNames.size(); ++i)
+    for (const auto [i, tierName] : std::views::enumerate(tierNames))
     {
         TierInfo tier;
-        tier.name = tierNames[i];
+        tier.name = tierName;
 
         const size_t presetIdx = i % numPresets;
         tier.bgLight = presets[presetIdx].bgLight;
@@ -162,15 +162,15 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     static constexpr std::array defaultCosts = { 0.03, 0.02, 0.1, 0.005 };
     const size_t numDefaults = defaultThresholds.size();
 
-    for (size_t i = 0; i < m_tiers.size(); ++i)
+    for (const auto [i, tier] : std::views::enumerate(m_tiers))
     {
-        if (m_tiers[i].editThreshold)
+        if (tier.editThreshold)
         {
             const double defDays = (i < numDefaults) ? defaultThresholds[i] : (defaultThresholds.back() + (i - (numDefaults - 1)) * 100.0);
-            m_tiers[i].editThreshold->SetText(std::to_wstring(static_cast<int>(defDays)));
+            tier.editThreshold->SetText(std::to_wstring(static_cast<int>(defDays)));
         }
         double defCost = (i < numDefaults) ? defaultCosts[i] : (defaultCosts.back() / static_cast<double>(i - (numDefaults - 2)));
-        m_tiers[i].editCost->SetText(std::format(L"{:.2f}", defCost));
+        tier.editCost->SetText(std::format(L"{:.2f}", defCost));
     }
 
     DarkMode::AdjustControls(m_hWnd);
@@ -338,9 +338,8 @@ bool CStorageAnalyticsView::ReadParameters(const bool apply)
             (allowZero ? value >= 0.0 : value > 0.0);
     };
 
-    for (size_t i = 0; i < m_tiers.size(); ++i)
+    for (auto&& [i, tier] : std::views::enumerate(m_tiers))
     {
-        auto& tier = m_tiers[i];
         bool active = (i == 0);
         double thresholdDays = 0.0;
         if (tier.editThreshold)
@@ -365,12 +364,11 @@ bool CStorageAnalyticsView::ReadParameters(const bool apply)
     }
 
     if (!apply) return true;
-    for (size_t i = 0; i < m_tiers.size(); ++i)
+    for (auto&& [tier, param] : std::views::zip(m_tiers, parameters))
     {
-        auto& tier = m_tiers[i];
-        tier.active = parameters[i].active;
-        tier.thresholdDays = parameters[i].thresholdDays;
-        tier.costGiB = parameters[i].costGiB;
+        tier.active = param.active;
+        tier.thresholdDays = param.thresholdDays;
+        tier.costGiB = param.costGiB;
         tier.filesCount = 0;
         tier.totalSize = 0;
     }
@@ -586,12 +584,12 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
     else
     {
         const double scale = GetActiveUnitScale();
-        const ULONGLONG totalSize = std::accumulate(m_tiers.begin(), m_tiers.end(), static_cast<ULONGLONG>(0),
+        const ULONGLONG totalSize = std::ranges::fold_left(m_tiers, static_cast<ULONGLONG>(0),
             [](const ULONGLONG total, const TierInfo& tier) { return total + tier.totalSize; });
         const double totalUnit = static_cast<double>(totalSize) / scale;
 
         const double currentCost = totalUnit * m_tiers[0].costGiB;
-        const double optimizedCost = std::accumulate(m_tiers.begin(), m_tiers.end(), 0.0,
+        const double optimizedCost = std::ranges::fold_left(m_tiers, 0.0,
             [scale](const double total, const TierInfo& tier) {
                 return tier.active ? total + static_cast<double>(tier.totalSize) / scale * tier.costGiB : total;
             });
@@ -616,9 +614,8 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                 [](const TierInfo& tier) { return tier.active; });
         };
 
-        for (size_t i = 0; i < m_tiers.size(); ++i)
+        for (const auto [i, tier] : std::views::enumerate(m_tiers))
         {
-            const auto& tier = m_tiers[i];
             if (tier.active)
             {
                 CardDrawData card{ &tier, tier.name };
@@ -633,7 +630,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                 }
                 else
                 {
-                    const auto nextActiveTier = findActiveTierFrom(i + 1);
+                    const auto nextActiveTier = findActiveTierFrom(static_cast<size_t>(i + 1));
                     if (nextActiveTier != m_tiers.end())
                     {
                         card.legendDesc += std::format(L" ({:.0f}-{:.0f} {})", tier.thresholdDays,
@@ -649,11 +646,10 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         const int activeCount = static_cast<int>(activeCards.size());
         const int cardW = (barW - (activeCount - 1) * cardGap) / (activeCount > 0 ? activeCount : 1);
 
-        for (int i = 0; i < activeCount; ++i)
+        for (const auto [i, card] : std::views::enumerate(activeCards))
         {
-            const auto& card = activeCards[i];
             const auto& tier = *card.tier;
-            const int cardX = leftWidth + ScaleForDpi(20) + i * (cardW + cardGap);
+            const int cardX = leftWidth + ScaleForDpi(20) + static_cast<int>(i) * (cardW + cardGap);
             CRect rcCard(cardX, cardY, cardX + cardW, cardY + cardH);
 
             memDC.FillSolidRect(rcCard, isDark ? tier.bgDark : tier.bgLight);
@@ -685,7 +681,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
                 memDC.TextOut(barX, yPos - ScaleForDpi(18), barLabel);
             }
 
-            const double totalVal = std::accumulate(m_tiers.begin(), m_tiers.end(), 0.0,
+            const double totalVal = std::ranges::fold_left(m_tiers, 0.0,
                 [&](const double total, const TierInfo& tier) {
                     return tier.active
                         ? total + (sizeBar ? static_cast<double>(tier.totalSize) : static_cast<double>(tier.filesCount))
@@ -737,11 +733,11 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         // Draw Legends
         const int legendY = ScaleForDpi(270);
         const int legendColW = barW / (activeCount > 0 ? activeCount : 1);
-        for (int i = 0; i < activeCount; ++i)
+        for (const auto [i, card] : std::views::enumerate(activeCards))
         {
-            const int legendX = barX + i * legendColW;
+            const int legendX = barX + static_cast<int>(i) * legendColW;
             CRect rcColor(legendX, legendY + ScaleForDpi(2), legendX + ScaleForDpi(10), legendY + ScaleForDpi(12));
-            memDC.FillSolidRect(rcColor, activeCards[i].tier->accent);
+            memDC.FillSolidRect(rcColor, card.tier->accent);
             CBrush brLegend(clrBorder);
             memDC.FrameRect(&rcColor, &brLegend);
 

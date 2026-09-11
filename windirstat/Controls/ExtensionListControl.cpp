@@ -232,9 +232,8 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
-    auto view = std::views::iota(0, GetItemCount());
-    const auto it = std::ranges::find_if(view, [&](const int i) {
-        const CListItem* item = GetListItem(i);
+    const auto it = std::ranges::find_if(m_items, [&](const CWdsListItem* listItem) {
+        const auto* item = static_cast<const CListItem*>(listItem);
         if (item->IsAggregate())
         {
             return !ext.empty() && !CWinDirStatModel::Get()->IsExtensionRegistered(ext);
@@ -242,10 +241,11 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
         return _wcsicmp(item->GetExtension().c_str(), ext.c_str()) == 0;
     });
 
-    if (it != view.end())
+    if (it != m_items.end())
     {
-        SetItemState(*it, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-        EnsureVisible(*it, false);
+        const int index = static_cast<int>(std::ranges::distance(m_items.begin(), it));
+        SetItemState(index, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        EnsureVisible(index, false);
     }
 }
 

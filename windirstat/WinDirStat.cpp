@@ -220,12 +220,13 @@ public:
             CommandLineToArgvW(GetCommandLineW(), &argc), LocalFree);
         if (argv == nullptr) return;
 
-        for (int i = 1; i < argc; ++i)
+        const std::span args(argv.get(), argc);
+        for (const auto [i, rawParam] : std::views::enumerate(args.subspan(1)))
         {
-            const wchar_t* param = argv.get()[i];
+            const wchar_t* param = rawParam;
             const bool flag = param[0] == L'-' || param[0] == L'/';
             if (flag) ++param;
-            ParseParam(param, flag, i == argc - 1);
+            ParseParam(param, flag, std::cmp_equal(i + 1, args.size() - 1));
         }
     }
 
@@ -326,7 +327,8 @@ private:
             return;
         }
         param = MakeLower(param);
-        if (param == saveToFlag || param == saveDupesToFlag || param == savePermsToFlag || param == loadFromFlag)
+        static constexpr std::array operationFlags{ saveToFlag, saveDupesToFlag, savePermsToFlag, loadFromFlag };
+        if (std::ranges::contains(operationFlags, param))
         {
             if (!m_operationFlag.empty()) m_malformedFlag = true;
             else m_operationFlag = param;

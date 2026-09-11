@@ -251,7 +251,7 @@ namespace Icons
         }
         else
         {
-            for (int i = 0; i < 3; ++i)
+            for (const int i : std::views::iota(0, 3))
                 g.FillRectangle(&barBrush, 23 + i * 8, 26, 3, 24);
         }
     }
@@ -323,7 +323,7 @@ namespace Icons
         const SolidBrush whiteBrush(C(255, 255, 255));
         g.FillRectangle(&whiteBrush, 28, 24, 32, 36);
         g.DrawRectangle(&outlinePen, 28, 24, 32, 36);
-        for (int i = 0; i < 3; ++i)
+        for (const int i : std::views::iota(0, 3))
             g.FillRectangle(&grayBrush, 33, 32 + i * 7, 22, 3);
     }
 
@@ -398,7 +398,7 @@ namespace Icons
         const GraphicsState state = g.Save();
         g.TranslateTransform(32, 32);
 
-        for (int i = 0; i < 8; ++i)
+        for ([[maybe_unused]] const int i : std::views::iota(0, 8))
         {
             g.FillPolygon(&gearBrush, primaryTooth, static_cast<INT>(std::size(primaryTooth)));
             g.RotateTransform(45);

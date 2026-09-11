@@ -261,9 +261,9 @@ constexpr bool HasSameRouteKey(const RouteEntry& left, const RouteEntry& right) 
 inline void ValidateRoutes(const std::span<const RouteEntry> entries)
 {
 #ifndef NDEBUG
-    for (size_t i = 0; i < entries.size(); ++i)
-        for (size_t j = i + 1; j < entries.size(); ++j)
-            assert(!HasSameRouteKey(entries[i], entries[j]));
+    for (const auto [i, entry] : std::views::enumerate(entries))
+        for (const auto& other : entries.subspan(i + 1))
+            assert(!HasSameRouteKey(entry, other));
 #else
     (void)entries;
 #endif
@@ -1061,8 +1061,11 @@ public:
     void SetText(const std::wstring& text) noexcept { SetWindowTextW(m_hWnd, text.c_str()); }
     std::wstring GetText() const
     {
-        std::wstring text(static_cast<size_t>(GetWindowTextLengthW(m_hWnd)) + 1, L'\0');
-        text.resize(static_cast<size_t>(GetWindowTextW(m_hWnd, text.data(), static_cast<int>(text.size()))));
+        std::wstring text;
+        text.resize_and_overwrite(static_cast<size_t>(GetWindowTextLengthW(m_hWnd)) + 1,
+            [this](wchar_t* data, const size_t size) noexcept {
+                return static_cast<size_t>(GetWindowTextW(m_hWnd, data, static_cast<int>(size)));
+            });
         return text;
     }
     UINT GetButtonCheckState(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id); }
@@ -2097,7 +2100,7 @@ protected:
         const int cols = std::clamp(n, 0, cap);
         POINT headerOrigin{};
         MapWindowPoints(hdr, m_hWnd, &headerOrigin, 1);
-        for (int c = 0; c < cols; ++c)
+        for (const int c : std::views::iota(0, cols))
         {
             RECT columnRect{};
             if (::SendMessageW(hdr, HDM_GETITEMRECT, static_cast<WPARAM>(c), reinterpret_cast<LPARAM>(&columnRect)) != 0)
@@ -3116,7 +3119,7 @@ public:
         };
         const int n = GetButtonCount();
         CToolBarCmdUI state; state.pBar = this;
-        for (int i = 0; i < n; ++i)
+        for (const int i : std::views::iota(0, n))
         {
             TBBUTTON b{}; SendNativeMessage(TB_GETBUTTON, static_cast<WPARAM>(i), &b);
             if (b.idCommand == 0 || (b.fsStyle & BTNS_SEP)) continue;
@@ -3192,7 +3195,7 @@ public:
     }
     void SetPaneText(const PaneId pane, const std::wstring_view text, const int width)
     {
-        auto& target = m_panes[static_cast<size_t>(pane)];
+        auto& target = m_panes[std::to_underlying(pane)];
         if (target.text == text && target.width == width) return;
         target.text.assign(text);
         target.width = width;
@@ -3201,7 +3204,7 @@ public:
     void SetBackgroundColor(const COLORREF color) { m_background = color; Invalidate(); }
     CRect GetPaneRect(const PaneId pane) const
     {
-        return LayoutPanes()[static_cast<size_t>(pane)];
+        return LayoutPanes()[std::to_underlying(pane)];
     }
 
     CSize PreferredSize() const override
@@ -3238,9 +3241,9 @@ private:
         const int fixedTotal = m_panes[1].width + m_panes[2].width;
         const int stretchWidth = std::max(0, rc.Width() - fixedTotal);
         int x = rc.left;
-        for (size_t i = 0; i < m_panes.size(); ++i)
+        for (const auto [i, pane] : std::views::enumerate(m_panes))
         {
-            const int w = i == 0 ? stretchWidth : m_panes[i].width;
+            const int w = i == 0 ? stretchWidth : pane.width;
             rects[i] = CRect(x, rc.top, x + w, rc.bottom);
             x += w;
         }

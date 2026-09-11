@@ -92,7 +92,7 @@ void CFileTreeControl::SelectFirstItemByType(const ITEMTYPE itemType)
     if (it != m_items.end())
     {
         DeselectAll();
-        const int i = static_cast<int>(std::distance(m_items.begin(), it));
+        const int i = static_cast<int>(std::ranges::distance(m_items.begin(), it));
         SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
         EnsureVisible(i, false);
     }

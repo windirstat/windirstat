@@ -366,7 +366,7 @@ bool CSelectDrivesDlg::OnInitDialog()
             m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
             item->StartQuery(m_hWnd);
 
-            if (std::ranges::find(m_selectedDrives, drive) != m_selectedDrives.end())
+            if (std::ranges::contains(m_selectedDrives, drive))
             {
                 m_driveList.SelectItem(item);
             }
@@ -379,7 +379,7 @@ bool CSelectDrivesDlg::OnInitDialog()
             m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
             item->StartQuery(m_hWnd);
 
-            if (std::ranges::find(m_selectedDrives, device.path) != m_selectedDrives.end())
+            if (std::ranges::contains(m_selectedDrives, device.path))
             {
                 m_driveList.SelectItem(item);
             }

@@ -155,13 +155,13 @@ void CWdsSplitterWnd::StopTracking(const bool bAccept)
     const int   totalSize = isVertical ? rcClient.Width() : rcClient.Height();
     if (totalSize <= 0) return;
 
-    const int paneSize[2] = { currentPos, totalSize - currentPos };
-    for (int pane = 0; pane < 2; ++pane)
+    const std::array paneSize = { currentPos, totalSize - currentPos };
+    for (const auto& [size, tracking] : std::views::zip(paneSize, m_paneTracking))
     {
-        const auto& [onToggle, onMinimize] = m_paneTracking[pane];
+        const auto& [onToggle, onMinimize] = tracking;
         if (!onToggle) continue;
 
-        const bool isVisible = paneSize[pane] > ScaleForDpi(COptions::MinimizeViewThreshold);
+        const bool isVisible = size > ScaleForDpi(COptions::MinimizeViewThreshold);
         onToggle(isVisible);
 
         if (!isVisible)

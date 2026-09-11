@@ -202,14 +202,15 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
-    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    const std::span extents(retrievalBuffer->Extents, retrievalBuffer->ExtentCount);
+    std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG, ULONGLONG>> dataRuns(extents.size(), {});
     auto vcnStart = retrievalBuffer->StartingVcn.QuadPart;
-    for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
+    for (const auto [i, extent] : std::views::enumerate(extents))
     {
-        const auto vcnNext = retrievalBuffer->Extents[i].NextVcn.QuadPart;
+        const auto vcnNext = extent.NextVcn.QuadPart;
         dataRuns[i] = std::make_tuple(
             static_cast<ULONGLONG>(vcnStart),
-            retrievalBuffer->Extents[i].Lcn.QuadPart,
+            extent.Lcn.QuadPart,
             static_cast<ULONGLONG>(vcnNext - vcnStart), 0ull
         );
         vcnStart = vcnNext;
@@ -284,15 +285,18 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 // Apply fixup (NTFS MFTs always have a 512 byte sector size)
                 constexpr auto MFT_RECORD_SECTOR_SIZE = 512u;
                 constexpr auto wordsPerSector = MFT_RECORD_SECTOR_SIZE / sizeof(USHORT);
-                const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
-                const auto usn = fixupArray[0];
                 const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
                 bool skipRecord = false;
-                if (fileRecord->UsaCount > 0) for (const auto i : std::views::iota(1u, fileRecord->UsaCount))
+                if (fileRecord->UsaCount > 0)
                 {
-                    const auto sectorEnd = recordWords + i * wordsPerSector - 1;
-                    if (*sectorEnd == usn) *sectorEnd = fixupArray[i];
-                    else { skipRecord = true; break; }
+                    const std::span fixupSpan(ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset), fileRecord->UsaCount);
+                    const auto usn = fixupSpan[0];
+                    for (const auto [idx, fixup] : std::views::enumerate(fixupSpan.subspan(1)))
+                    {
+                        const auto sectorEnd = recordWords + (idx + 1) * wordsPerSector - 1;
+                        if (*sectorEnd == usn) *sectorEnd = fixup;
+                        else { skipRecord = true; break; }
+                    }
                 }
 
                 // Skip if corrupt record detected

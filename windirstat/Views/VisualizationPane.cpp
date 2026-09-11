@@ -21,9 +21,9 @@
 #include "FlameGraphView.h"
 #include "SunburstView.h"
 
-static_assert(static_cast<std::size_t>(GraphPane::TreeMap) == 0
-    && static_cast<std::size_t>(GraphPane::FlameGraph) == 1
-    && static_cast<std::size_t>(GraphPane::Sunburst) == 2);
+static_assert(std::to_underlying(GraphPane::TreeMap) == 0
+    && std::to_underlying(GraphPane::FlameGraph) == 1
+    && std::to_underlying(GraphPane::Sunburst) == 2);
 
 bool CVisualizationPane::PreCreateWindow(CREATESTRUCT& cs)
 {
@@ -46,11 +46,11 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         ViewDefinition{ []() -> CGraphView* { return new CSunburstView; }, WS_CHILD },
     };
 
-    for (std::size_t index = 0; index < definitions.size(); ++index)
+    for (const auto [index, def] : std::views::enumerate(definitions))
     {
-        CGraphView* view = definitions[index].create();
+        CGraphView* view = def.create();
         m_views[index] = view;
-        if (!view->Create(nullptr, nullptr, definitions[index].style, CRect{}, this,
+        if (!view->Create(nullptr, nullptr, def.style, CRect{}, this,
             static_cast<UINT>(WDS_PANE_ID_BASE + index)))
         {
             // Create invokes PostNcDestroy on failure, which deletes the view.

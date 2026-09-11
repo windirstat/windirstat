@@ -89,5 +89,5 @@ void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint poin
             TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
             point, GetMainWindow());
         if (command != 0) GetMainWindow()->SendMessage(WM_COMMAND, command);
-    } while (std::ranges::find(persistentCommands, command) != persistentCommands.end());
+    } while (std::ranges::contains(persistentCommands, command));
 }

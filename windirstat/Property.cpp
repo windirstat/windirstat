@@ -173,12 +173,12 @@ bool PersistedSettingStorage::ReadBinary(const std::wstring& section, const std:
             if (value >= L'A' && value <= L'F') return value - L'A' + 10;
             return -1;
         };
-    for (size_t i = 0; i < destination.size(); ++i)
+    for (const auto [i, byte] : std::views::enumerate(destination))
     {
         const int high = hexValue(hex[i * 2]);
         const int low = hexValue(hex[i * 2 + 1]);
         if (high < 0 || low < 0) return false;
-        destination[i] = static_cast<std::byte>((high << 4) | low);
+        byte = static_cast<std::byte>((high << 4) | low);
     }
     return true;
 }
@@ -196,15 +196,19 @@ bool PersistedSettingStorage::WriteBinary(const std::wstring& section, const std
             static_cast<DWORD>(data.size())) == ERROR_SUCCESS;
     }
 
-    static constexpr wchar_t hexDigits[] = L"0123456789ABCDEF";
+    static constexpr std::wstring_view hexDigits = L"0123456789ABCDEF";
     std::wstring hex;
-    hex.reserve(data.size() * 2);
-    for (const std::byte value : data)
-    {
-        const unsigned byte = std::to_integer<unsigned>(value);
-        hex.push_back(hexDigits[byte >> 4]);
-        hex.push_back(hexDigits[byte & 0x0f]);
-    }
+    if (data.size() > hex.max_size() / 2) return false;
+    if (!data.empty()) hex.resize_and_overwrite(data.size() * 2,
+    [&](wchar_t* buffer, const size_t size) noexcept {
+        for (const auto [i, value] : std::views::enumerate(data))
+        {
+            const unsigned byte = std::to_integer<unsigned>(value);
+            buffer[2 * i] = hexDigits[byte >> 4];
+            buffer[2 * i + 1] = hexDigits[byte & 0x0f];
+        }
+        return size;
+    });
     return WritePrivateProfileStringW(section.c_str(), entry.c_str(), hex.c_str(), m_iniPath->c_str());
 }
 

@@ -19,10 +19,10 @@ namespace
     {
         const double width = static_cast<double>(request.bounds.Width()) / request.weights.size();
         double left = request.bounds.left;
-        for (const std::size_t i : std::views::iota(std::size_t{ 0 }, request.weights.size()))
+        for (const auto [i, weight] : std::views::enumerate(request.weights))
         {
             const double next = left + width;
-            const int right = i + 1 == request.weights.size()
+            const int right = static_cast<std::size_t>(i) + 1 == request.weights.size()
                 ? request.bounds.right : static_cast<int>(next);
             regions[i] = { CRect(static_cast<int>(left), request.bounds.top,
                 right, request.bounds.bottom), request.state };
@@ -79,7 +79,7 @@ namespace
                 ? (horizontalRows ? request.bounds.bottom : request.bounds.right)
                 : static_cast<int>(nextTop);
             double left = horizontalRows ? request.bounds.left : request.bounds.top;
-            for (std::size_t i = rowBegin; i < rowEnd; ++i)
+            for (const std::size_t i : std::views::iota(rowBegin, rowEnd))
             {
                 const double nextLeft = left + static_cast<double>(request.weights[i])
                     / rowWeight * columnExtent;
@@ -159,7 +159,7 @@ namespace
             else rowBounds.bottom = rowBounds.top + rowWidth;
 
             double begin = horizontal ? rowBounds.top : rowBounds.left;
-            for (std::size_t i = rowBegin; i < rowEnd; ++i)
+            for (const std::size_t i : std::views::iota(rowBegin, rowEnd))
             {
                 const double next = begin + static_cast<double>(request.weights[i])
                     / rowWeight * (horizontal ? rowBounds.Height() : rowBounds.Width());
@@ -185,7 +185,7 @@ namespace
 void TreeMapLayout::ArrangeChildren(const Request& request, std::vector<ChildRegion>& regions)
 {
     assert(std::ranges::is_sorted(request.weights, std::greater()));
-    assert(std::accumulate(request.weights.begin(), request.weights.end(), ULONGLONG{ 0 })
+    assert(std::ranges::fold_left(request.weights, ULONGLONG{ 0 }, std::plus<>{})
         == request.parentWeight);
     regions.assign(request.weights.size(), ChildRegion{ .state = request.state });
     if (request.weights.empty() || request.bounds.IsEmpty()) return;

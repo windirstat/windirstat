@@ -38,7 +38,7 @@ bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstrin
     std::wistringstream stream(sFileData);
 
     // Look for the language prefix and return false if not found
-    if (hasPrefix && sFileData.find(prefix) == wds::szNpos) return false;
+    if (hasPrefix && !sFileData.contains(prefix)) return false;
 
     while (std::getline(stream, line))
     {

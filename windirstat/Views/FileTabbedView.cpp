@@ -194,8 +194,10 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
 
 bool CFileTabbedView::CycleTab(const bool forward)
 {
+    const auto allTabs = { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex,
+        m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex };
     std::vector<int> visibleTabs;
-    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex })
+    for (const int tabIndex : allTabs)
     {
         if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
     }
@@ -204,7 +206,7 @@ bool CFileTabbedView::CycleTab(const bool forward)
     const auto it = std::ranges::find(visibleTabs, activeTab);
     if (it == visibleTabs.end()) return false;
 
-    const size_t currentPos = std::distance(visibleTabs.begin(), it);
+    const size_t currentPos = static_cast<size_t>(std::ranges::distance(visibleTabs.begin(), it));
     const size_t nextPos = currentPos + (forward ? 1 : -1);
 
     if (nextPos >= visibleTabs.size()) return false;

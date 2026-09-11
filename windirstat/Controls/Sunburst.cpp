@@ -324,9 +324,8 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
     m_itemEntries.reserve(m_entries.size());
     m_remainderEntries.reserve(m_entries.size() / 4);
 
-    for (std::size_t index = 0; index < m_entries.size(); ++index)
+    for (auto [index, entry] : std::views::enumerate(m_entries))
     {
-        LayoutEntry& entry = m_entries[index];
         if (entry.depth == 0)
         {
             entry.innerRadius = 0.0;
@@ -346,9 +345,9 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         for (const int depth : std::views::iota(entry.depth, outerDepth + 1))
         {
             m_rings[static_cast<std::size_t>(depth)].push_back({
-                index, entry.startAngle, entry.startAngle + entry.sweepAngle });
+                static_cast<std::size_t>(index), entry.startAngle, entry.startAngle + entry.sweepAngle });
         }
-        (entry.remainderSize != 0 ? m_remainderEntries : m_itemEntries).emplace(entry.item, index);
+        (entry.remainderSize != 0 ? m_remainderEntries : m_itemEntries).emplace(entry.item, static_cast<std::size_t>(index));
     }
 
     if constexpr (IsDebugBuild)

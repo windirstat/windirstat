@@ -85,8 +85,8 @@ int CPageGeneral::GetSelectedDarkMode() const
     const auto selected = std::ranges::find(DarkModeRadioIds, checkedRadio);
     assert(selected != DarkModeRadioIds.end());
     return selected == DarkModeRadioIds.end()
-        ? std::clamp<int>(COptions::DarkMode, DM_DISABLED, DM_USE_WINDOWS)
-        : static_cast<int>(selected - DarkModeRadioIds.begin());
+        ? std::clamp<int>(COptions::DarkMode, std::to_underlying(DM_DISABLED), std::to_underlying(DM_USE_WINDOWS))
+        : static_cast<int>(std::ranges::distance(DarkModeRadioIds.begin(), selected));
 }
 
 void CPageGeneral::InitializePage()
@@ -100,7 +100,7 @@ void CPageGeneral::InitializePage()
     SetChecked(IDC_SHOW_STRIPES, COptions::ListStripes);
     SetChecked(IDC_SIZE_SUFFIXES, COptions::UseSizeSuffixes);
     SetChecked(IDC_USE_WINDOWS_LOCALE, COptions::UseWindowsLocaleSetting);
-    const int darkMode = std::clamp<int>(COptions::DarkMode, DM_DISABLED, DM_USE_WINDOWS);
+    const int darkMode = std::clamp<int>(COptions::DarkMode, std::to_underlying(DM_DISABLED), std::to_underlying(DM_USE_WINDOWS));
     SetCheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED, DarkModeRadioIds[darkMode]);
 
     SetChecked(IDC_PORTABLE_MODE, CDirStatApp::InPortableMode());

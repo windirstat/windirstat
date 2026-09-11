@@ -25,7 +25,7 @@ void CFlameGraphView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
     const int cellW = rect.Width() / cols;
     const int cellH = rect.Height() / rows;
 
-    for (int r = 0; r < rows; r++)
+    for (const int r : std::views::iota(0, rows))
     {
         const int y = rect.top + r * cellH;
         const int height = (r == rows - 1) ? rect.bottom - y : cellH;
@@ -35,7 +35,7 @@ void CFlameGraphView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
 
         int x = rect.left + 30;
         const int colsThisRow = cols - r;
-        for (int c = 0; c < colsThisRow; c++)
+        for (const int c : std::views::iota(0, colsThisRow))
         {
             const int shade = 40 + r * 30 + c * 10;
             const int w = (c == colsThisRow - 1) ? rect.right - x : cellW;
@@ -74,7 +74,7 @@ bool CFlameGraphView::PrepareDrawing(CDC* pDC, CRect& rect)
     // bitmap or computing horizontal layout. Keep fullHeight local because
     // OnSize invalidates the member cache during that synchronous callback.
     bool scrollInfoCurrent = false;
-    for (int pass = 0; pass < 2; pass++)
+    for ([[maybe_unused]] const int pass : std::views::iota(0, 2))
     {
         const int maxScroll = std::max(0, fullHeight - rect.Height());
         m_scrollPos = std::clamp(m_scrollPos, 0, maxScroll);

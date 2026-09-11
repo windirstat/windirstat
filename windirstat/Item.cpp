@@ -82,7 +82,7 @@ public:
             CMainFrame::Get()->InvokeInMessageThread([this]
             {
                 auto& children = m_parent->m_folderInfo->m_children;
-                children.insert(children.end(), m_children.begin(), m_children.end());
+                children.append_range(m_children);
                 const std::vector<CTreeListItem*> rows(m_children.begin(), m_children.end());
                 CFileTreeControl::Get()->OnChildrenAdded(m_parent, rows);
             });
@@ -90,7 +90,7 @@ public:
         else
         {
             auto& children = m_parent->m_folderInfo->m_children;
-            children.insert(children.end(), m_children.begin(), m_children.end());
+            children.append_range(m_children);
         }
         for (CItem* child : m_children)
         {
@@ -183,7 +183,7 @@ CItem::~CItem()
             {
                 if (auto& children = current->m_folderInfo->m_children; !children.empty())
                 {
-                    queue.insert(queue.end(), children.begin(), children.end());
+                    queue.append_range(children);
                     children.clear();
                 }
             }
@@ -819,13 +819,13 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
 
     // Start from the drive and process remaining components
     CItem* current = pathDrive;
-    for (const auto i : std::views::iota(1u, components.size()))
+    for (const auto& component : components | std::views::drop(1))
     {
         if (current->IsLeaf()) return nullptr;
 
         // Find the matching child using GetNameView for comparison
         auto it = std::ranges::find_if(current->GetChildren(),
-            [&](const CItem* child) { return child->GetNameView() == components[i]; });
+            [&](const CItem* child) { return child->GetNameView() == component; });
         if (it == current->GetChildren().end()) return nullptr;
         current = *it;
     }

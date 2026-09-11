@@ -87,17 +87,17 @@ enum ITEMTYPE : std::uint32_t
 
 constexpr ITEMTYPE operator~(const ITEMTYPE& a)
 {
-    return static_cast<ITEMTYPE>(~static_cast<std::uint32_t>(a));
+    return static_cast<ITEMTYPE>(~std::to_underlying(a));
 }
 
 constexpr ITEMTYPE operator|(const ITEMTYPE& a, const ITEMTYPE& b)
 {
-    return static_cast<ITEMTYPE>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
+    return static_cast<ITEMTYPE>(std::to_underlying(a) | std::to_underlying(b));
 }
 
 constexpr ITEMTYPE operator&(const ITEMTYPE& a, const ITEMTYPE& b)
 {
-    return static_cast<ITEMTYPE>(static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b));
+    return static_cast<ITEMTYPE>(std::to_underlying(a) & std::to_underlying(b));
 }
 
 constexpr auto operator<=>(const FILETIME& t1, const FILETIME& t2)

@@ -132,15 +132,14 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
     // locate submenu
     CMenu* subMenu = nullptr;
     int subMenuPos = -1;
-    for (const int i : std::views::iota(0, menu->GetItemCount()))
-    {
+    const auto range = std::views::iota(0, menu->GetItemCount());
+    if (const auto it = std::ranges::find_if(range, [&](const int i) {
         const std::wstring menuString = menu->GetItemText(i);
-        if (!menuString.empty() && _wcsicmp(menuString.c_str(), subMenuText.c_str()) == 0)
-        {
-            subMenu = menu->GetSubMenu(i);
-            subMenuPos = i;
-            break;
-        }
+        return !menuString.empty() && _wcsicmp(menuString.c_str(), subMenuText.c_str()) == 0;
+    }); it != range.end())
+    {
+        subMenuPos = *it;
+        subMenu = menu->GetSubMenu(subMenuPos);
     }
 
     // cleanup old items
@@ -190,9 +189,8 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
         .dwMenuData = reinterpret_cast<ULONG_PTR>(&UdcMenuTag) };
     ::SetMenuInfo(customMenu->Handle(), &customMenuInfo);
 
-    for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); ++iCurrent)
+    for (auto&& [iCurrent, udc] : std::views::enumerate(COptions::UserDefinedCleanups))
     {
-        auto& udc = COptions::UserDefinedCleanups[iCurrent];
         if (!udc.Enabled) continue;
 
         const std::wstring string = iCurrent < USERDEFINEDCLEANUPACCELERATORCOUNT ?
@@ -204,7 +202,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
 
         const int position = customMenu->GetItemCount();
         customMenu->Append(MF_STRING, 0, string);
-        MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo), .fMask = MIIM_DATA, .dwItemData = iCurrent };
+        MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo), .fMask = MIIM_DATA, .dwItemData = static_cast<ULONG_PTR>(iCurrent) };
         customMenu->SetItemInfo(position, &itemInfo);
         customMenu->SetItemEnabled(position, udcValid);
     }

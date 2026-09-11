@@ -114,9 +114,9 @@ namespace
             auto [first, second] = SplitY(1.0 - fraction);
             return { second, first };
         }
+        default:
+            std::unreachable();
         }
-        assert(false);
-        return SplitX(fraction);
     }
 
     std::pair<Region, Region> Region::SplitVertical(const double fraction) const
@@ -137,9 +137,9 @@ namespace
         }
         case Rotation::Counterclockwise90:
             return SplitX(fraction);
+        default:
+            std::unreachable();
         }
-        assert(false);
-        return SplitY(fraction);
     }
 
     enum class Pattern : std::uint8_t
@@ -264,7 +264,7 @@ namespace
         {
             Region remaining;
             Region opposite;
-            const double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+            const double total = std::ranges::fold_left(weights, 0.0, std::plus<>{});
             std::tie(result[0], remaining) = rectangle.SplitHorizontal(Fraction(weights[0], total));
             std::tie(opposite, result[1]) = remaining.SplitVertical(
                 Fraction(weights[2] + weights[3], weights[1] + weights[2] + weights[3]));
@@ -281,7 +281,7 @@ namespace
         {
             Region remaining;
             Region opposite;
-            const double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+            const double total = std::ranges::fold_left(weights, 0.0, std::plus<>{});
             std::tie(remaining, result[1]) = rectangle.SplitVertical(
                 Fraction(weights[0] + weights[2] + weights[3], total));
             std::tie(result[0], opposite) = remaining.SplitHorizontal(
@@ -301,7 +301,7 @@ namespace
         {
             Region remaining;
             Region opposite;
-            const double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+            const double total = std::ranges::fold_left(weights, 0.0, std::plus<>{});
             std::tie(remaining, result[2]) = rectangle.SplitVertical(
                 Fraction(weights[0] + weights[1] + weights[3], total));
             std::tie(opposite, result[3]) = remaining.SplitHorizontal(
@@ -321,7 +321,7 @@ namespace
         {
             Region remaining;
             Region opposite;
-            const double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+            const double total = std::ranges::fold_left(weights, 0.0, std::plus<>{});
             std::tie(remaining, result[3]) = rectangle.SplitHorizontal(
                 Fraction(weights[0] + weights[1] + weights[2], total));
             std::tie(opposite, result[2]) = remaining.SplitVertical(
@@ -379,7 +379,7 @@ namespace
     double AverageAspectRatio(const Layout& layout)
     {
         const auto regions = std::span(layout.regions).first(layout.count);
-        return std::accumulate(regions.begin(), regions.end(), 0.0,
+        return std::ranges::fold_left(regions, 0.0,
             [](const double sum, const Region& region) { return sum + region.AspectRatio(); })
             / layout.count;
     }
@@ -414,9 +414,7 @@ namespace
                 ? std::span<const Pattern>(hilbert4) : std::span<const Pattern>(moore4);
             break;
         default:
-            assert(false);
-            patterns = identity;
-            break;
+            std::unreachable();
         }
 
         Layout best = Dissect(patterns.front(), weights, rectangle);
@@ -478,7 +476,7 @@ namespace
                 Range{ range.begin, left }, Range{ left, middle },
                 Range{ middle, right }, Range{ right, range.end },
             };
-            const double variance = std::accumulate(candidate.begin(), candidate.end(), 0.0,
+            const double variance = std::ranges::fold_left(candidate, 0.0,
                 [prefix, mean](const double sum, const Range part)
                 {
                     const double difference = RangeWeight(prefix, part) - mean;
@@ -559,10 +557,10 @@ void HilbertMooreTreeMap::ArrangeChildren(const std::span<const ULONGLONG> weigh
     std::vector<std::size_t> positiveIndices;
     positiveWeights.reserve(weights.size());
     positiveIndices.reserve(weights.size());
-    for (std::size_t i = 0; i < weights.size(); ++i)
+    for (const auto [i, weight] : std::views::enumerate(weights))
     {
-        if (weights[i] == 0) continue;
-        positiveWeights.push_back(static_cast<double>(weights[i]));
+        if (weight == 0) continue;
+        positiveWeights.push_back(static_cast<double>(weight));
         positiveIndices.push_back(i);
     }
 
@@ -570,7 +568,7 @@ void HilbertMooreTreeMap::ArrangeChildren(const std::span<const ULONGLONG> weigh
     {
         positiveWeights.assign(weights.size(), 1.0);
         positiveIndices.resize(weights.size());
-        std::iota(positiveIndices.begin(), positiveIndices.end(), 0u);
+        std::iota(positiveIndices.begin(), positiveIndices.end(), 0uz);
     }
 
     std::vector prefix(positiveWeights.size() + 1, 0.0);
@@ -583,8 +581,8 @@ void HilbertMooreTreeMap::ArrangeChildren(const std::span<const ULONGLONG> weigh
     };
     LayoutRange(root, prefix, { 0, positiveWeights.size() }, curve, layout);
 
-    for (std::size_t i = 0; i < layout.size(); ++i)
+    for (const auto [index, item] : std::views::zip(positiveIndices, layout))
     {
-        regions[positiveIndices[i]] = { ToPixelRectangle(layout[i], rectangle), layout[i].orientation };
+        regions[index] = { ToPixelRectangle(item, rectangle), item.orientation };
     }
 }

@@ -153,11 +153,11 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
-    for (const auto c : std::views::iota(0u, header.size()))
+    for (const auto [c, name] : std::views::enumerate(header))
     {
-        if (const auto it = resMap.find(header[c]); it != resMap.end())
+        if (const auto it = resMap.find(name); it != resMap.end())
             orderMap[it->second] = static_cast<BYTE>(c);
-}
+    }
 }
 
 static std::string ToTimePoint(const FILETIME& fileTime)
@@ -314,15 +314,15 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             headerProcessed = true;
 
             // Validate all necessary fields are present
-            for (const auto i : std::views::iota(0u, orderMap.size()))
+            for (const auto [i, order] : std::views::enumerate(orderMap))
             {
                 if (i == FIELD_OWNER) continue;
-                if (orderMap[i] == UCHAR_MAX)
+                if (order == UCHAR_MAX)
                 {
                     delete newroot;
                     return nullptr;
                 }
-                maxRequiredField = std::max<size_t>(maxRequiredField, orderMap[i]);
+                maxRequiredField = std::max<size_t>(maxRequiredField, order);
             }
             continue;
         }
@@ -444,7 +444,7 @@ static std::vector<const CItem*> CollectItems(CItem* rootItem)
             return _wcsicmp(a->GetNameView().data(), b->GetNameView().data()) > 0;
         });
 
-        queue.insert(queue.end(), children.begin(), children.end());
+        queue.append_range(children);
     }
     return items;
 }
@@ -478,8 +478,8 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
     const bool includeOwner)
 {
     // Header
-    for (size_t i = 0; i < cols.size(); ++i)
-        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
+    for (const auto [i, col] : std::views::enumerate(cols))
+        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
 
     // Rows
     for (const auto* item : items)
@@ -498,7 +498,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             item->GetSizePhysicalRaw() + adjustedSize,
             QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
-            static_cast<std::uint32_t>(itemType),
+            std::to_underlying(itemType),
             index);
         if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
     }
@@ -516,7 +516,7 @@ static bool SaveResultsJson(std::ofstream& outf,
 {
     // Pre-quote all column key strings once (cols are in FIELD_* index order)
     std::array<std::string, FIELD_COUNT> jk;
-    for (size_t i = 0; i < cols.size(); ++i) jk[i] = JsonQuoteW(cols[i]);
+    for (const auto [i, col] : std::views::enumerate(cols)) jk[i] = JsonQuoteW(col);
     const std::string jkOwner = includeOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
 
     outf << "[\r\n";
@@ -543,7 +543,7 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << jk[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
         outf << "  " << jk[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
         std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
-            jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType),
+            jk[FIELD_ATTRIBUTES_WDS], std::to_underlying(itemType),
             jk[FIELD_INDEX], index);
         if (includeOwner)
             outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
@@ -607,8 +607,8 @@ static std::vector<std::tuple<std::wstring, const CItem*>>
 static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
     const std::vector<std::tuple<std::wstring, const CItem*>>& dupeItems)
 {
-    for (size_t i = 0; i < cols.size(); ++i)
-        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
+    for (const auto [i, col] : std::views::enumerate(cols))
+        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
     outf << "\r\n";
 
     for (const auto& [hash, linkedItem] : dupeItems)
@@ -687,8 +687,8 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
 static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
     const std::vector<const CItemPerm*>& items)
 {
-    for (size_t i = 0; i < cols.size(); ++i)
-        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
+    for (const auto [i, col] : std::views::enumerate(cols))
+        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
     outf << "\r\n";
 
     for (const auto* item : items)

@@ -25,12 +25,12 @@ void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
     options.showFolderFrames = false;
 
     struct Tile { int x, y, w, h, shade; };
-    static constexpr Tile tiles[] = {
-        {  0,  0, 25, 58, 58 }, { 25,  0, 13, 34, 72 }, { 25, 34, 13, 24, 48 },
-        {  0, 58, 18, 42, 76 }, { 18, 58, 20, 25, 54 }, { 18, 83, 20, 17, 88 },
-        { 38,  0, 28, 44, 66 }, { 38, 44, 14, 31, 82 }, { 52, 44, 14, 31, 52 },
-        { 38, 75, 28, 25, 92 }, { 66,  0, 19, 62, 60 }, { 85,  0, 15, 38, 78 },
-        { 66, 62, 16, 38, 50 }, { 82, 38, 18, 36, 86 }, { 82, 74, 18, 26, 68 },
+    static constexpr std::array tiles = {
+        Tile{  0,  0, 25, 58, 58 }, Tile{ 25,  0, 13, 34, 72 }, Tile{ 25, 34, 13, 24, 48 },
+        Tile{  0, 58, 18, 42, 76 }, Tile{ 18, 58, 20, 25, 54 }, Tile{ 18, 83, 20, 17, 88 },
+        Tile{ 38,  0, 28, 44, 66 }, Tile{ 38, 44, 14, 31, 82 }, Tile{ 52, 44, 14, 31, 52 },
+        Tile{ 38, 75, 28, 25, 92 }, Tile{ 66,  0, 19, 62, 60 }, Tile{ 85,  0, 15, 38, 78 },
+        Tile{ 66, 62, 16, 38, 50 }, Tile{ 82, 38, 18, 36, 86 }, Tile{ 82, 74, 18, 26, 68 },
     };
 
     for (const auto& [x, y, w, h, shade] : tiles)

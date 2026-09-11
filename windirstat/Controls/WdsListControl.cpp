@@ -282,17 +282,14 @@ void CWdsListControl::OnColumnsInserted(
 {
     // Cache the column count
     m_columnCount = GetHeader().GetItemCount();
-    m_defaultColumnWidths.resize(m_columnCount);
-    for (const int column : std::views::iota(0, m_columnCount))
-    {
-        m_defaultColumnWidths[column] = GetColumnWidth(column);
-    }
+    m_defaultColumnWidths.assign_range(std::views::iota(0, m_columnCount)
+        | std::views::transform([this](const int column) { return GetColumnWidth(column); }));
 
     m_requiredColumns.assign(requiredColumns);
     if (m_columnCount > 0)
     {
         const int first = ColumnToSubItem(0);
-        if (std::ranges::find(m_requiredColumns, first) == m_requiredColumns.end())
+        if (!std::ranges::contains(m_requiredColumns, first))
         {
             m_requiredColumns.push_back(first);
         }
@@ -309,7 +306,7 @@ void CWdsListControl::OnColumnsInserted(
         }
         if (subitem >= static_cast<int>(previousSize))
         {
-            visibility[subitem] = std::ranges::find(defaultHiddenColumns, subitem) == defaultHiddenColumns.end();
+            visibility[subitem] = !std::ranges::contains(defaultHiddenColumns, subitem);
         }
         if (IsColumnRequired(subitem))
         {
@@ -682,28 +679,29 @@ void CWdsListControl::LoadPersistentAttributes()
     if (m_columnWidths->size() != columnCount)
     {
         m_columnWidths->resize(columnCount, 0);
-        for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+        for (const auto [i, width] : std::views::enumerate(*m_columnWidths))
         {
-            (*m_columnWidths)[i] = GetColumnWidth(i);
+            width = GetColumnWidth(static_cast<int>(i));
         }
     }
 
     // Set based on persisted values
     SetColumnOrder(*m_columnOrder);
-    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+    for (const auto [i, width] : std::views::enumerate(*m_columnWidths))
     {
-        SetColumnWidth(i, std::min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
+        SetColumnWidth(static_cast<int>(i), std::min(width, width * 2));
     }
 }
 
 void CWdsListControl::SavePersistentAttributes() const
 {
     GetColumnOrder(*m_columnOrder);
-    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+    for (const auto [i, width] : std::views::enumerate(*m_columnWidths))
     {
-        if (IsColumnVisible(ColumnToSubItem(i)))
+        const int col = static_cast<int>(i);
+        if (IsColumnVisible(ColumnToSubItem(col)))
         {
-            (*m_columnWidths)[i] = GetColumnWidth(i);
+            width = GetColumnWidth(col);
         }
     }
 }
@@ -731,7 +729,7 @@ bool CWdsListControl::IsColumnVisible(const int subitem) const
 
 bool CWdsListControl::IsColumnRequired(const int subitem) const
 {
-    return std::ranges::find(m_requiredColumns, subitem) != m_requiredColumns.end();
+    return std::ranges::contains(m_requiredColumns, subitem);
 }
 
 void CWdsListControl::ApplyColumnVisibility(const int column)
@@ -820,9 +818,9 @@ void CWdsListControl::InsertListItem(const int i, std::span<CWdsListItem* const>
     m_items.insert(m_items.begin() + i, items.begin(), items.end());
     const int itemCount = static_cast<int>(m_items.size());
 
-    for (const int x : std::views::iota(i, itemCount))
+    for (const auto [offset, item] : std::views::enumerate(std::span(m_items).subspan(i)))
     {
-        m_itemMap[m_items[x]] = x;
+        m_itemMap[item] = static_cast<int>(i + offset);
     }
 
     SetItemCountEx(itemCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
@@ -833,7 +831,7 @@ void CWdsListControl::InsertSortedListItems(std::span<CWdsListItem* const> items
 {
     if (items.empty()) return;
 
-    std::vector<CWdsListItem*> sorted(items.begin(), items.end());
+    auto sorted = items | std::ranges::to<std::vector>();
     const auto compare = [this](const CWdsListItem* first, const CWdsListItem* second)
     {
         return first->CompareSort(second, m_sorting) < 0;
@@ -844,7 +842,7 @@ void CWdsListControl::InsertSortedListItems(std::span<CWdsListItem* const> items
     const auto oldSize = m_items.size();
     m_items.insert(m_items.end(), sorted.begin(), sorted.end());
     std::inplace_merge(m_items.begin(), m_items.begin() + oldSize, m_items.end(), compare);
-    for (const int i : std::views::iota(0, GetItemCount())) m_itemMap[m_items[i]] = i;
+    for (const auto [i, item] : std::views::enumerate(m_items)) m_itemMap[item] = static_cast<int>(i);
     SetItemCountEx(GetItemCount(), LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
     Invalidate();
     UpdateSortIndicator();
@@ -865,9 +863,9 @@ void CWdsListControl::SortItems()
         return item1->CompareSort(item2, m_sorting) < 0;
     });
 
-    for (const int i : std::views::iota(0, GetItemCount()))
+    for (const auto [i, item] : std::views::enumerate(m_items))
     {
-        m_itemMap[m_items[i]] = i;
+        m_itemMap[item] = static_cast<int>(i);
     }
 
     Invalidate();
@@ -1034,9 +1032,9 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     GdiObjectSelection sofont(&dc, GetFont());
 
     // fetch size of sub-elements
-    for (const int i : std::views::iota(0, GetItemCount()))
+    for (const auto item : m_items)
     {
-        width = std::max(width, GetSubItemWidth(GetItem(i), subitem, &dc));
+        width = std::max(width, GetSubItemWidth(item, subitem, &dc));
     }
 
     // update final column width
@@ -1133,9 +1131,8 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
 
     SelectionPreserver preserve(this);
 
-    for (const int x : std::views::iota(i, i + c))
+    for (CWdsListItem* item : std::span(m_items).subspan(i, c))
     {
-        CWdsListItem* item = m_items[x];
         GetIconHandler()->ForgetAsyncShellInfoLookup(item);
         m_itemMap.erase(item);
         if (m_ownsItems)
@@ -1147,9 +1144,9 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     m_items.erase(m_items.begin() + i, m_items.begin() + i + c);
 
     itemCount -= c;
-    for (const int x : std::views::iota(i, itemCount))
+    for (const auto [offset, item] : std::views::enumerate(std::span(m_items).subspan(i)))
     {
-        m_itemMap[m_items[x]] = x;
+        m_itemMap[item] = static_cast<int>(i + offset);
     }
 
     SetItemCountEx(itemCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);

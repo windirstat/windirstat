@@ -44,9 +44,9 @@ static std::array<COLORREF, 50> DarkModeColors;
 void DarkMode::SetAppDarkMode() noexcept
 {
     // Determine if dark mode should be set based on settings
-    s_darkModeEnabled = COptions::DarkMode == 1;
+    s_darkModeEnabled = COptions::DarkMode == DM_ENABLED;
 
-    if (COptions::DarkMode == 2)
+    if (COptions::DarkMode == DM_USE_WINDOWS)
     {
         // Check Windows dark mode setting
         if (CRegKey key; key.Open(HKEY_CURRENT_USER, wds::strThemesKey, KEY_READ) == ERROR_SUCCESS)
@@ -70,9 +70,9 @@ void DarkMode::SetAppDarkMode() noexcept
     if (s_darkModeEnabled) SetPreferredAppMode(ForceDark);
 
     // Record initial system colors
-    for (const auto i : std::views::iota(0u, OriginalColors.size()))
+    for (auto [i, color] : std::views::enumerate(OriginalColors))
     {
-        OriginalColors[i] = GetSysColor(i);
+        color = GetSysColor(static_cast<int>(i));
     }
 
     // Setup dark mode colors
@@ -340,8 +340,10 @@ void DarkMode::LightenBitmap(CBitmap& bitmap, const bool invert)
     {
         // Gamma lookup table
         std::array<BYTE, 256> lut;
-        std::ranges::transform(std::views::iota(0, static_cast<int>(lut.size())), lut.begin(),
-            [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
+        for (const auto [i, val] : std::views::enumerate(lut))
+        {
+            val = static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f);
+        }
 
         // Apply to all color channels (BGR)
         for (std::size_t i = 0; i < byteCount; i += 4)

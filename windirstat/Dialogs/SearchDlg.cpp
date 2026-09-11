@@ -82,7 +82,7 @@ void SearchDlg::OnChangeSearchTerm()
     const bool searchCase = IsChecked(IDC_SEARCH_CASE);
 
     // Auto-enable whole phrase search if * is present and not in regex mode
-    if (!searchRegex && searchTerm.find(L'*') != std::wstring::npos)
+    if (!searchRegex && searchTerm.contains(L'*'))
     {
         SetChecked(IDC_SEARCH_WHOLE_PHRASE, true);
     }

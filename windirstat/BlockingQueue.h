@@ -130,7 +130,7 @@ public:
     void PushIfNotQueued(T const& value)
     {
         std::scoped_lock lock(m_mutex);
-        if (std::ranges::find(m_queue, value) != m_queue.end()) return;
+        if (std::ranges::contains(m_queue, value)) return;
         m_queue.push_back(value);
         m_pushed.notify_one();
     }
@@ -138,7 +138,7 @@ public:
     void PushIfNotQueued(T&& value)
     {
         std::scoped_lock lock(m_mutex);
-        if (std::ranges::find(m_queue, value) != m_queue.end()) return;
+        if (std::ranges::contains(m_queue, value)) return;
         m_queue.push_back(std::move(value));
         m_pushed.notify_one();
     }

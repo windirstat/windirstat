@@ -52,19 +52,19 @@ void CPagePrompts::InitializePage()
         std::wstring_view operationId;
         std::wstring_view detail;
     };
-    static constexpr PromptControl promptControls[] =
+    static constexpr std::array promptControls =
     {
-        { IDC_DELETION_WARNING,         IDS_MENU_DELETE,            {} },
-        { IDC_DELETION_BIN_WARNING,     IDS_MENU_DELETE_BIN,        {} },
-        { IDC_PROMPT_EMPTY_BIN,         IDS_MENU_EMPTY_BIN,         {} },
-        { IDC_PROMPT_CREATE_HARDLINK,   IDS_MENU_CREATE_HARDLINK,   {} },
-        { IDC_PROMPT_REMOVE_MOTW,       IDS_MENU_REMOVE_MOTW,       {} },
-        { IDC_PROMPT_DISABLE_HIBERNATE, IDS_MENU_DISABLE_HIBERNATE, {} },
-        { IDC_PROMPT_REMOVE_SHADOW,     IDS_MENU_REMOVE_SHADOW,     {} },
-        { IDC_PROMPT_DISM_NORMAL,       IDS_MENU_DISM,               L"/StartComponentCleanup" },
-        { IDC_PROMPT_DISM_RESET,        IDS_MENU_DISM,               L"/StartComponentCleanup /ResetBase" },
-        { IDC_PROMPT_SET_DATES,         IDS_MENU_SET_DATES,         {} },
-        { IDC_PROMPT_REMOVE_EMPTY,      IDS_MENU_REMOVE_EMPTY,      {} },
+        PromptControl{ IDC_DELETION_WARNING,         IDS_MENU_DELETE,            {} },
+        PromptControl{ IDC_DELETION_BIN_WARNING,     IDS_MENU_DELETE_BIN,        {} },
+        PromptControl{ IDC_PROMPT_EMPTY_BIN,         IDS_MENU_EMPTY_BIN,         {} },
+        PromptControl{ IDC_PROMPT_CREATE_HARDLINK,   IDS_MENU_CREATE_HARDLINK,   {} },
+        PromptControl{ IDC_PROMPT_REMOVE_MOTW,       IDS_MENU_REMOVE_MOTW,       {} },
+        PromptControl{ IDC_PROMPT_DISABLE_HIBERNATE, IDS_MENU_DISABLE_HIBERNATE, {} },
+        PromptControl{ IDC_PROMPT_REMOVE_SHADOW,     IDS_MENU_REMOVE_SHADOW,     {} },
+        PromptControl{ IDC_PROMPT_DISM_NORMAL,       IDS_MENU_DISM,               L"/StartComponentCleanup" },
+        PromptControl{ IDC_PROMPT_DISM_RESET,        IDS_MENU_DISM,               L"/StartComponentCleanup /ResetBase" },
+        PromptControl{ IDC_PROMPT_SET_DATES,         IDS_MENU_SET_DATES,         {} },
+        PromptControl{ IDC_PROMPT_REMOVE_EMPTY,      IDS_MENU_REMOVE_EMPTY,      {} },
     };
 
     for (const auto& [controlId, operationId, detail] : promptControls)

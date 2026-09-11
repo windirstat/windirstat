@@ -515,7 +515,7 @@ bool CGraphView::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoin
             ? CWinDirStatModel::Get()->GetZoomItem()
             : CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     };
-    for (int i = 0; i < std::abs(clicks); i++)
+    for ([[maybe_unused]] const int i : std::views::iota(0, std::abs(clicks)))
     {
         const CItem* before = currentItem();
         frame->SendMessage(WM_COMMAND, command);

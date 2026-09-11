@@ -223,15 +223,14 @@ void CFileDupeControl::RemoveItem(CItem* item)
             }
 
             // Remove from child tracker and visual tree
-            bool foundVisualChild = false;
-            for (auto& visualChild : dupeParent->GetChildren())
+            const auto& children = dupeParent->GetChildren();
+            const auto visualIter = std::ranges::find_if(children, [&](CItemDupe* visualChild) {
+                return visualChild->GetLinkedItem() == *childItem;
+            });
+            const bool foundVisualChild = visualIter != children.end();
+            if (foundVisualChild)
             {
-                if (visualChild->GetLinkedItem() == *childItem)
-                {
-                    dupeParent->RemoveDupeItemChild(visualChild);
-                    foundVisualChild = true;
-                    break;
-                }
+                dupeParent->RemoveDupeItemChild(*visualIter);
             }
 
             // Only erase from tracker when the visual child was actually removed;

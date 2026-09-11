@@ -140,18 +140,16 @@ void CFlameGraph::LayoutBreadcrumbs(const int width)
         static_cast<std::size_t>(width));
     const std::size_t firstVisible = m_breadcrumbs.size() - visibleCount;
 
-    std::size_t totalWeight = 0;
-    for (std::size_t i = firstVisible; i < m_breadcrumbs.size(); i++)
-    {
-        const std::size_t nameLength = m_breadcrumbs[i]->GetNameView(true).size();
-        totalWeight += std::clamp<std::size_t>(nameLength + 2, 4, 32);
-    }
+    const auto visibleBreadcrumbs = std::span(m_breadcrumbs).subspan(firstVisible);
+    const std::size_t totalWeight = std::ranges::fold_left(visibleBreadcrumbs, std::size_t{0},
+        [](const std::size_t sum, const CItem* item) {
+            return sum + std::clamp<std::size_t>(item->GetNameView(true).size() + 2, 4, 32);
+        });
 
     LONG left = 0;
     std::size_t cumulativeWeight = 0;
-    for (std::size_t i = 0; i < visibleCount; i++)
+    for (const auto [i, ancestor] : std::views::enumerate(visibleBreadcrumbs))
     {
-        const CItem* ancestor = m_breadcrumbs[firstVisible + i];
         cumulativeWeight += std::clamp<std::size_t>(
             ancestor->GetNameView(true).size() + 2, 4, 32);
 
@@ -245,8 +243,9 @@ void CFlameGraph::ComputeChildSpans(const CItem* item, const LONG left, const LO
 
     LONG x = left;
     ULONGLONG cumulativeSize = 0;
-    for (int i = 0; i < childCount && x < right; i++)
+    for (const int i : std::views::iota(0, childCount))
     {
+        if (x >= right) break;
         CItem* child = item->TmiGetChild(i);
         const ULONGLONG childSize = child->TmiGetSize();
 

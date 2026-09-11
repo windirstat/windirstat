@@ -517,18 +517,14 @@ void CTreeListControl::CollapseItem(const int i)
 bool CTreeListControl::SelectedItemCanToggle()
 {
     const auto& items = GetAllSelected(true);
-    bool allow = !items.empty();
-    for (const auto& item : items)
-    {
-        allow &= item->HasChildren();
-    }
-    return allow;
+    return !items.empty() && std::ranges::all_of(items, [](const auto& item) {
+        return item->HasChildren();
+    });
 }
 
 void CTreeListControl::ToggleSelectedItem()
 {
-    const auto& items = GetAllSelected(true);
-    for (const auto& item : items)
+    for (const auto& item : GetAllSelected(true))
     {
         ToggleExpansion(FindTreeItem(item));
     }

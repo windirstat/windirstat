@@ -153,13 +153,12 @@ void CPageTreeMap::UpdatePresetSelection()
             options.GetLightSourceXPercent(), options.GetLightSourceYPercent());
     };
     const auto current = appearance(m_options);
-    int selection = static_cast<int>(CTreeMap::Preset::HighContrast) + 1;
-    for (int preset = 0; preset <= static_cast<int>(CTreeMap::Preset::HighContrast); ++preset)
-    {
-        if (current != appearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)))) continue;
-        selection = preset;
-        break;
-    }
+    const int maxPreset = std::to_underlying(CTreeMap::Preset::HighContrast);
+    const auto presets = std::views::iota(0, maxPreset + 1);
+    const auto it = std::ranges::find_if(presets, [&](const int preset) {
+        return current == appearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)));
+    });
+    const int selection = it != presets.end() ? *it : maxPreset + 1;
     m_presetCombo.SetCurSel(selection);
 }
 

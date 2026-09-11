@@ -44,16 +44,16 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     m_buttonContext = buttonTypeContexts.at(buttonType);
 
     // Set icon based on message box type
-    const std::unordered_map<UINT, LPCWSTR> iconMap
-    {
+    static const std::array<std::pair<UINT, LPCWSTR>, 4> iconMap
+    {{
         { MB_ICONERROR,       IDI_ERROR },
         { MB_ICONQUESTION,    IDI_QUESTION },
         { MB_ICONWARNING,     IDI_WARNING },
         { MB_ICONINFORMATION, IDI_INFORMATION },
-    };
+    }};
 
     const auto iconType = type & MB_ICONMASK;
-    const auto iconIter = iconMap.find(iconType);
+    const auto iconIter = std::ranges::find(iconMap, iconType, &std::pair<UINT, LPCWSTR>::first);
     m_icon = LoadIcon(nullptr, iconIter != iconMap.end() ?
         iconIter->second : IDI_INFORMATION);
 }
@@ -109,14 +109,11 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
     const CRect targetRect = GetChildWindowRect(pTargetControl->Handle());
 
     // Find nearest control below target
-    int minYBelow = INT_MAX;
-    for (const auto* ctrl : controlsToShift)
-    {
-        const CRect ctrlRect = GetChildWindowRect(ctrl->Handle());
-
-        if (ctrlRect.top > targetRect.top)
-            minYBelow = std::min<int>(minYBelow, ctrlRect.top);
-    }
+    const int minYBelow = std::ranges::fold_left(controlsToShift, INT_MAX,
+        [&](const int currentMin, const CWnd* ctrl) {
+            const CRect ctrlRect = GetChildWindowRect(ctrl->Handle());
+            return ctrlRect.top > targetRect.top ? std::min(currentMin, static_cast<int>(ctrlRect.top)) : currentMin;
+        });
 
     // Calculate shift: control height + spacing to next control, and optional padding
     const int shiftAmount = std::max<int>(0, (minYBelow != INT_MAX ?

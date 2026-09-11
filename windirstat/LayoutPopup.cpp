@@ -89,9 +89,9 @@ const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
 
 int CLayoutPopup::LayoutIndex(const int topology, const int permutation)
 {
-    for (int i = 0; i < LAYOUT_COUNT; ++i)
-        if (LAYOUTS[i].topology == topology && LAYOUTS[i].permutation == permutation)
-            return i;
+    for (const auto [i, layout] : std::views::enumerate(LAYOUTS))
+        if (layout.topology == topology && layout.permutation == permutation)
+            return static_cast<int>(i);
     return 0;
 }
 
@@ -196,10 +196,10 @@ CRect CLayoutPopup::CardRect(const int idx) const
 
 int CLayoutPopup::CardAtPoint(const CPoint pt) const
 {
-    for (int i = 0; i < LAYOUT_COUNT; ++i)
-        if (CardRect(i).Contains(pt))
-            return i;
-    return -1;
+    const auto range = std::views::iota(0, LAYOUT_COUNT);
+    const auto it = std::ranges::find_if(range,
+        [&](const int i) { return CardRect(i).Contains(pt); });
+    return it != range.end() ? *it : -1;
 }
 
 static void DrawPaneHeader(CDC& dc, const CRect& r, const int rowH, const COLORREF hdr, const COLORREF sep)
@@ -277,21 +277,21 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
     DrawHeaderText(dc, CRect(pColX, r.top, r.right, r.top + rowH), 1);
 
     struct Row { int ind; float pf; };
-    static constexpr Row rows[] = {
-        {0, 0.95f}, {1, 0.37f}, {1, 0.29f}, {1, 0.16f},
-        {2, 0.10f}, {2, 0.07f}, {1, 0.04f}, {1, 0.02f},
+    static constexpr std::array rows = {
+        Row{0, 0.95f}, Row{1, 0.37f}, Row{1, 0.29f}, Row{1, 0.16f},
+        Row{2, 0.10f}, Row{2, 0.07f}, Row{1, 0.04f}, Row{1, 0.02f},
     };
 
-    for (int i = 0; i < 8; ++i)
+    for (const auto [i, row] : std::views::enumerate(rows))
     {
-        const int y0 = r.top + 2 + rowH + i * rowH;
+        const int y0 = r.top + 2 + rowH + static_cast<int>(i) * rowH;
         if (y0 >= r.bottom) break;
         const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
 
         CRect rowR(r.left, y0, r.right, y1);
         dc.FillSolidRect(rowR, i % 2 ? alt : bg);
 
-        const int ix = r.left + 2 + rows[i].ind * indU;
+        const int ix = r.left + 2 + row.ind * indU;
         const int iy = y0 + (rowH - iSz + 1) / 2;
 
         if (ix + iSz < pColX - 2)
@@ -305,14 +305,14 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
         if (tx < pColX - 4 && txW > 2)
         {
             const CRect txt(tx, iy, std::min(tx + txW, pColX - 2), iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, txt, i);
+            DrawMiniText(dc, txt, static_cast<int>(i));
         }
 
-        const int pw = static_cast<int>((r.right - pColX - 2) * rows[i].pf);
+        const int pw = static_cast<int>((r.right - pColX - 2) * row.pf);
         if (pw > 0)
         {
             CRect bar(pColX, iy, pColX + pw, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(bar, GetFileTreeColor(i));
+            dc.FillSolidRect(bar, GetFileTreeColor(static_cast<int>(i)));
         }
     }
 }
@@ -325,7 +325,7 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
     const COLORREF hdrBg = GetPaneHeaderBackground();
     const COLORREF sep   = GetPaneHeaderSeparator();
 
-    static constexpr COLORREF iconClr[] = {
+    static constexpr std::array iconClr = {
         RGB( 65, 115, 220),
         RGB(185, 130,  40),
         RGB( 45, 165,  80),
@@ -348,9 +348,9 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
     DrawHeaderDivider(dc, r, rowH, numColX, sep);
     DrawHeaderText(dc, CRect(numColX, r.top, r.right, r.top + rowH), 2);
 
-    for (int i = 0; i < 8; ++i)
+    for (const auto [i, clr] : std::views::enumerate(iconClr))
     {
-        const int y0 = r.top + 2 + rowH + i * rowH;
+        const int y0 = r.top + 2 + rowH + static_cast<int>(i) * rowH;
         if (y0 >= r.bottom) break;
         const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
 
@@ -361,14 +361,14 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
 
         CRect ico(r.left + 2, iy, r.left + 2 + iSz, iy + iSz);
         if (ico.right < numColX - 2)
-            dc.FillSolidRect(ico, iconClr[i % 8]);
+            dc.FillSolidRect(ico, clr);
 
         const int extX = ico.right + 2;
         const int extW = r.left + extColW - extX;
         if (extX < numColX - 4 && extW > 2)
         {
             const CRect extR(extX, iy, extX + extW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, extR, i);
+            DrawMiniText(dc, extR, static_cast<int>(i));
         }
 
         const int descX = r.left + extColW + 2;
@@ -376,14 +376,14 @@ void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
         if (descX < numColX - 4 && descW > 2)
         {
             const CRect descR(descX, iy, descX + descW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, descR, i + 1);
+            DrawMiniText(dc, descR, static_cast<int>(i + 1));
         }
 
         const int numW = (r.right - numColX - 2) * 2 / 3;
         if (numW > 2)
         {
             const CRect numR(numColX + 2, iy, numColX + 2 + numW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, numR, i + 2);
+            DrawMiniText(dc, numR, static_cast<int>(i + 2));
         }
     }
 }
@@ -468,7 +468,7 @@ bool CLayoutPopup::OnEraseBkgnd(CDC* pDC) const
 void CLayoutPopup::OnPaint()
 {
     CPaintDC dc(this);
-    for (int i = 0; i < LAYOUT_COUNT; ++i)
+    for (const int i : std::views::iota(0, LAYOUT_COUNT))
         PaintCard(dc, i);
 }
 

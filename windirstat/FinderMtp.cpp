@@ -152,10 +152,10 @@ static std::vector<FinderMtpWpdDevice> FinderMtpGetWpdDevices(IPortableDeviceMan
     // Exclude mass-storage devices and associate each remaining identifier with its friendly name.
     std::vector<FinderMtpWpdDevice> devices;
     devices.reserve(count);
-    for (DWORD i = 0; i < count; ++i)
+    for (const auto* devId : std::span(ids.values).first(count))
     {
-        if (!ids.values[i]) continue;
-        std::wstring id(ids.values[i]);
+        if (!devId) continue;
+        std::wstring id(devId);
         if (FinderMtpIsMassStorage(manager, id)) continue;
         devices.push_back({ id, FinderMtpManagerName(manager, id) });
     }
@@ -251,8 +251,8 @@ static bool FinderMtpIdsMatch(std::wstring_view left, std::wstring_view right)
     const std::wstring normalizedLeft = FinderMtpNormalizeId(left);
     const std::wstring normalizedRight = FinderMtpNormalizeId(right);
     if (normalizedLeft.empty() || normalizedRight.empty()) return false;
-    return normalizedLeft.find(normalizedRight) != std::wstring::npos ||
-        normalizedRight.find(normalizedLeft) != std::wstring::npos;
+    return normalizedLeft.contains(normalizedRight) ||
+        normalizedRight.contains(normalizedLeft);
 }
 
 static bool FinderMtpNamesMatch(const std::wstring& left, const std::wstring& right)

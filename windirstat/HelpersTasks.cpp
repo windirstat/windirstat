@@ -180,21 +180,21 @@ std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, cons
     std::vector<std::wstring> drives;
     const DWORD driveMask = GetLogicalDrives();
 
-    for (const auto i : std::views::iota(0, wds::alphaSize))
+    for (const auto [i, letter] : std::views::enumerate(wds::strAlpha))
     {
         if ((driveMask & (1 << i)) == 0) continue;
 
         // See if drive type matches and in accessible
-        const WCHAR driveStr[] = { wds::strAlpha[i], L':', L'\\', L'\0' };
-        const UINT driveType = GetDriveType(driveStr);
-        if (std::ranges::find(driveTypes, driveType) != driveTypes.end())
+        const std::array<WCHAR, 4> driveStr = { letter, L':', L'\\', L'\0' };
+        const UINT driveType = GetDriveType(driveStr.data());
+        if (std::ranges::contains(driveTypes, driveType))
         {
             // Check if the drive is actually accessible
             if ((checkLocal && driveType != DRIVE_REMOTE ||
-                checkRemote && driveType == DRIVE_REMOTE) && !DriveExists(driveStr)) continue;
+                checkRemote && driveType == DRIVE_REMOTE) && !DriveExists(driveStr.data())) continue;
 
             // Passed checks - add to drive list
-            drives.push_back(std::wstring{ wds::strAlpha[i], L':' });
+            drives.push_back(std::wstring{ letter, L':' });
         }
     }
 
@@ -408,10 +408,10 @@ bool EnableReadPrivileges() noexcept
         }
 
         // Check if privilege is in the list of ones we have
-        if (std::count_if(privsAvailable[0].Privileges, &privsAvailable->Privileges[privsAvailable->PrivilegeCount],
-            [&](const LUID_AND_ATTRIBUTES& element) {
-                return element.Luid.HighPart == privEntry.Privileges[0].Luid.HighPart &&
-                    element.Luid.LowPart == privEntry.Privileges[0].Luid.LowPart; }) == 0)
+        const std::span availablePrivileges(privsAvailable->Privileges, privsAvailable->PrivilegeCount);
+        if (std::ranges::none_of(availablePrivileges, [&](const LUID_AND_ATTRIBUTES& element) {
+            return element.Luid.HighPart == privEntry.Privileges[0].Luid.HighPart &&
+                element.Luid.LowPart == privEntry.Privileges[0].Luid.LowPart; }))
         {
             ret = false;
             continue;

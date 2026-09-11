@@ -129,9 +129,9 @@ COLORREF CItemPerm::GetItemTextColor() const
 
 PERMSLEVEL CItemPerm::ComputeRightsLevel(const ACCESS_MASK mask)
 {
-    for (const int level : std::views::iota(0, static_cast<int>(PERMSLEVEL_SPECIAL)))
+    for (const auto [level, levelMask] : std::views::enumerate(std::span(levelMasks).first(PERMSLEVEL_SPECIAL)))
     {
-        if ((mask & levelMasks[level]) == levelMasks[level]) return static_cast<PERMSLEVEL>(level);
+        if ((mask & levelMask) == levelMask) return static_cast<PERMSLEVEL>(level);
     }
     return PERMSLEVEL_SPECIAL;
 }
@@ -145,7 +145,8 @@ bool CItemPerm::LevelSatisfied(const ACCESS_MASK mask, const PERMSLEVEL level)
 std::wstring CItemPerm::GetRightsLevelName(const PERMSLEVEL level)
 {
     static auto names = SplitString(Localization::Lookup(IDS_PERMS_LEVELS), L',');
-    return level < names.size() ? names[level] : std::wstring{};
+    const auto index = std::to_underlying(level);
+    return index < names.size() ? names[index] : std::wstring{};
 }
 
 std::wstring CItemPerm::GetAccessTypeName(const bool deny)
@@ -175,7 +176,8 @@ std::wstring CItemPerm::GetAppliesName(const PERMSAPPLIES applies, const bool is
     // Files have no inheritance scope so they use a dedicated single label
     if (!isContainer) return Localization::Lookup(IDS_PERMS_APPLIES_FILE);
     static auto names = SplitString(Localization::Lookup(IDS_PERMS_APPLIES), L'|');
-    return applies < names.size() ? names[applies] : std::wstring{};
+    const auto index = std::to_underlying(applies);
+    return index < names.size() ? names[index] : std::wstring{};
 }
 
 std::wstring CItemPerm::GetInheritedName(const bool disabled)
@@ -196,12 +198,13 @@ COLORREF CItemPerm::GetRuleColor(const std::wstring& account, const ACCESS_MASK 
     {
         cachedVersion = m_ruleVersion.load();
         rules.clear();
-        for (const auto r : std::views::iota(0, PERMSRULECOUNT))
+        for (const auto [accountOpt, levelOpt, colorOpt] :
+            std::views::zip(COptions::PermsColorAccount, COptions::PermsColorLevel, COptions::PermsColor))
         {
-            const std::wstring& pattern = COptions::PermsColorAccount[r].Obj();
+            const std::wstring& pattern = accountOpt.Obj();
             if (pattern.empty()) continue;
             try { rules.emplace_back(std::wregex(pattern, std::regex::icase | std::regex::optimize),
-                COptions::PermsColorLevel[r], COptions::PermsColor[r]); }
+                levelOpt, colorOpt); }
             catch (const std::regex_error&) {}
         }
     }

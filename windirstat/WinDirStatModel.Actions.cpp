@@ -605,7 +605,7 @@ void CWinDirStatModel::OnCleanupMoveTo()
     for (const auto& item : items)
     {
         if (item->GetParent() != nullptr &&
-            std::ranges::find(refresh, item->GetParent()) == refresh.end())
+            !std::ranges::contains(refresh, item->GetParent()))
         {
             refresh.push_back(item->GetParent());
         }
@@ -1079,7 +1079,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Record current visual arrangement to reapply afterward
         if (item->IsVisible())
         {
-            visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
+            visualInfo[item].isSelected = std::ranges::contains(selectedItems, item);
             visualInfo[item].wasExpanded = item->IsExpanded();
         }
 
@@ -1438,7 +1438,7 @@ void CWinDirStatModel::OnToolsSetDates()
         }
         if (item->HasChildren())
         {
-            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+            stack.append_range(item->GetChildren());
         }
     }
 
@@ -1502,7 +1502,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
         }
         if (item->HasChildren())
         {
-            stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+            stack.append_range(item->GetChildren());
         }
     }
 

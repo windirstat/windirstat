@@ -457,14 +457,14 @@ void CWinDirStatModel::RebuildExtensionData()
     // Rank color units by descending bytes; the unregistered group is a single unit
     // (marked with index 'groupUnit') sized by the sum of its members
     constexpr size_t groupUnit = SIZE_MAX;
-    ULONGLONG unregisteredBytes = 0;
-    for (const auto& it : unregistered) unregisteredBytes += it->second.GetBytes();
+    const ULONGLONG unregisteredBytes = std::ranges::fold_left(unregistered, ULONGLONG{ 0 },
+        [](const ULONGLONG total, const auto& it) { return total + it->second.GetBytes(); });
 
     std::vector<std::pair<ULONGLONG, size_t>> units;
     units.reserve(individual.size() + 1);
-    for (size_t i = 0; i < individual.size(); ++i)
+    for (const auto [i, it] : std::views::enumerate(individual))
     {
-        units.emplace_back(individual[i]->second.GetBytes(), i);
+        units.emplace_back(it->second.GetBytes(), static_cast<size_t>(i));
     }
     if (!unregistered.empty()) units.emplace_back(unregisteredBytes, groupUnit);
 
@@ -479,16 +479,16 @@ void CWinDirStatModel::RebuildExtensionData()
     }
 
     // Assign palette colors by rank: distinct primary colors first, then the shared fallback
-    for (size_t rank = 0; rank < units.size(); ++rank)
+    for (const auto [rank, unit] : std::views::enumerate(units))
     {
-        const COLORREF color = colors[std::min(rank, colors.size() - 1)];
-        if (units[rank].second == groupUnit)
+        const COLORREF color = colors[std::min(static_cast<size_t>(rank), colors.size() - 1)];
+        if (unit.second == groupUnit)
         {
             for (const auto& it : unregistered) it->second.color = color;
         }
         else
         {
-            individual[units[rank].second]->second.color = color;
+            individual[unit.second]->second.color = color;
         }
     }
 }
@@ -536,11 +536,8 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
 
     // Calculate total item count for progress tracking
-    size_t totalItems = 0;
-    for (const auto& item : itemsToDelete)
-    {
-        totalItems += static_cast<size_t>(1 + item->GetItemsCount());
-    }
+    const size_t totalItems = std::ranges::fold_left(itemsToDelete, size_t{ 0 },
+        [](const size_t total, const CItem* item) { return total + static_cast<size_t>(1 + item->GetItemsCount()); });
 
     // Use direct parallel deletion only for filesystem items without shell progress UI
     bool cancelled = false;
@@ -561,7 +558,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                 if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
                 {
                     const auto& children = item->GetChildren();
-                    stack.insert(stack.end(), children.begin(), children.end());
+                    stack.append_range(children);
                 }
             }
 
@@ -651,10 +648,10 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
     for (auto* item : items)
     {
         CItem* refresh = item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
-        if (refresh != nullptr && std::ranges::find(itemsToRefresh, refresh) == itemsToRefresh.end())
+        if (refresh != nullptr && !std::ranges::contains(itemsToRefresh, refresh))
             itemsToRefresh.push_back(refresh);
     }
-    itemsToRefresh.insert(itemsToRefresh.end(), recyclers.begin(), recyclers.end());
+    itemsToRefresh.append_range(recyclers);
     RefreshItem(itemsToRefresh);
 }
 

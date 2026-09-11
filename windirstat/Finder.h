@@ -75,7 +75,7 @@ public:
 
     static std::wstring MakeLongPathCompatible(const std::wstring& path)
     {
-        if (path.find(L":\\", 1) == 1) return s_longPath.data() + path;
+        if (path.size() >= 3 && path[1] == L':' && path[2] == L'\\') return s_longPath.data() + path;
         if (path.starts_with(L"\\\\?")) return path;
         if (path.starts_with(L"\\\\")) return s_longUNCPath.data() + path.substr(2);
         return path;

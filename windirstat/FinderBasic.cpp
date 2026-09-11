@@ -48,7 +48,7 @@ bool FinderBasic::FindNext()
         std::call_once(m_context->InitOnce, [&]
         {
             // Larger buffers fail on older network redirectors (issue #631).
-            m_context->IsRemoteVolume = m_isUncPath || (m_base.find(L":\\", 1) == 1 &&
+            m_context->IsRemoteVolume = m_isUncPath || (m_base.size() >= 3 && m_base[1] == L':' && m_base[2] == L'\\' &&
                 GetDriveType(m_base.substr(0, 3).c_str()) == DRIVE_REMOTE);
             const ULONG bufferSize = m_context->IsRemoteVolume ? REMOTE_BUFFER_SIZE : LOCAL_BUFFER_SIZE;
 
@@ -283,7 +283,8 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     // derive the NT-namespace path used to open the directory
     m_isUncPath = m_base.starts_with(L"\\\\");
     if (m_isUncPath) m_baseNt = s_dosUNCPath.data() + m_base.substr(2);
-    else if (m_base.find(L":\\", 1) == 1 || m_base.starts_with(L"Volume{")) m_baseNt = s_dosPath.data() + m_base;
+    else if ((m_base.size() >= 3 && m_base[1] == L':' && m_base[2] == L'\\') ||
+        m_base.starts_with(L"Volume{")) m_baseNt = s_dosPath.data() + m_base;
     else m_baseNt = m_base;
 
     UNICODE_STRING path

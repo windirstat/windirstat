@@ -37,7 +37,7 @@ void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
     const int ringWidth = (radius + static_cast<int>(shades.size()) - 1)
         / static_cast<int>(shades.size());
     const int separatorWidth = std::max(1, ScaleForDpi(1));
-    for (std::size_t ring = 0; ring < shades.size(); ++ring)
+    for (const auto [ring, shade] : std::views::enumerate(shades))
     {
         const int outer = radius - static_cast<int>(ring) * ringWidth;
         if (outer <= 0) break;
@@ -46,12 +46,12 @@ void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
         path.AddEllipse(center.x - outer, center.y - outer, outer * 2, outer * 2);
         if (inner > 0)
             path.AddEllipse(center.x - inner, center.y - inner, inner * 2, inner * 2);
-        Gdiplus::SolidBrush brush(shades[ring]);
+        Gdiplus::SolidBrush brush(shade);
         graphics.FillPath(&brush, &path);
     }
     const Gdiplus::Pen separator(Gdiplus::Color(255, 24, 24, 24),
         static_cast<Gdiplus::REAL>(separatorWidth));
-    for (int i = 0; i < 12; i++)
+    for (const int i : std::views::iota(0, 12))
     {
         const double angle = i * std::numbers::pi_v<double> / 6.0;
         const Gdiplus::Point end(

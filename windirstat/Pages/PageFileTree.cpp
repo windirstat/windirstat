@@ -29,17 +29,17 @@ void CPageFileTree::InitializePage()
     SetChecked(IDC_SHOWTIMESPENT, COptions::ShowTimeSpent);
 
     const auto& visibility = COptions::FileTreeColumnVisibility.Obj();
-    for (const auto i : std::views::iota(size_t{0}, c_columns.size()))
+    for (const auto [controlId, subItem] : c_columns)
     {
-        SetChecked(c_columns[i].first, COptions::IsColumnVisible(visibility, c_columns[i].second));
+        SetChecked(controlId, COptions::IsColumnVisible(visibility, subItem));
     }
 
     m_fileTreeColorCount = COptions::FileTreeColorCount;
-    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
+    for (const auto [i, button] : std::views::enumerate(m_colorButton))
     {
         m_fileTreeColor[i] = COptions::FileTreeColors[i];
-        m_colorButton[i].SubclassDlgItem(IDC_COLORBUTTON0 + i, this);
-        m_colorButton[i].SetColor(m_fileTreeColor[i]);
+        button.SubclassDlgItem(static_cast<int>(IDC_COLORBUTTON0 + i), this);
+        button.SetColor(m_fileTreeColor[i]);
     }
 
     m_slider.SubclassDlgItem(IDC_SLIDER, this);
@@ -66,14 +66,14 @@ void CPageFileTree::OnOK()
             COptions::SetColumnVisible(COptions::FileTreeColumnVisibility.Obj(), column, visible);
         }
     };
-    for (const auto i : std::views::iota(size_t{0}, c_columns.size()))
-        setColumnVisible(c_columns[i].second, IsChecked(c_columns[i].first));
+    for (const auto [controlId, subItem] : c_columns)
+        setColumnVisible(subItem, IsChecked(controlId));
 
     COptions::FileTreeColorCount = m_fileTreeColorCount;
-    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
+    for (auto&& [button, color, optionColor] : std::views::zip(m_colorButton, m_fileTreeColor, COptions::FileTreeColors))
     {
-        m_fileTreeColor[i] = m_colorButton[i].GetColor();
-        COptions::FileTreeColors[i] = m_fileTreeColor[i];
+        color = button.GetColor();
+        optionColor = color;
     }
 
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
@@ -82,13 +82,9 @@ void CPageFileTree::OnOK()
 
 void CPageFileTree::EnableButtons()
 {
-    for (const int i : std::views::iota(0, m_fileTreeColorCount))
+    for (const auto [i, button] : std::views::enumerate(m_colorButton))
     {
-        m_colorButton[i].EnableWindow(true);
-    }
-    for (const int i : std::views::iota(m_fileTreeColorCount, TREELISTCOLORCOUNT))
-    {
-        m_colorButton[i].EnableWindow(false);
+        button.EnableWindow(i < m_fileTreeColorCount);
     }
 }
 

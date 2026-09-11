@@ -82,19 +82,19 @@ std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, c
         {
             if (i == 0 && c == L'^') continue;
             if (c == L'\\' && i + 1 < pattern.size() &&
-                literalEscapes.find(pattern[i + 1]) != std::wstring_view::npos)
+                literalEscapes.contains(pattern[i + 1]))
             {
                 literal.push_back(pattern[++i]);
                 continue;
             }
             if (c == L'$' && i + 1 == pattern.size()) break;
-            if (c == L'\\' || regexSpecials.find(c) != std::wstring_view::npos)
+            if (c == L'\\' || regexSpecials.contains(c))
             {
                 truncated = true;
                 break;
             }
         }
-        else if (globWildcards.find(c) != std::wstring_view::npos)
+        else if (globWildcards.contains(c))
         {
             truncated = true;
             break;
@@ -123,7 +123,7 @@ std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
     for (size_t i = 0; i < pattern.size(); ++i)
     {
         if (pattern[i] == L'\\' &&
-            (i + 1 >= pattern.size() || preservedEscapes.find(pattern[i + 1]) == std::wstring_view::npos))
+            (i + 1 >= pattern.size() || !preservedEscapes.contains(pattern[i + 1])))
         {
             result += L"\\\\";
         }

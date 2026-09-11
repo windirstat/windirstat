@@ -198,9 +198,9 @@ void DrawShadowedExtensionText(HDC dc, const std::wstring_view text, const CRect
 
 void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
-    palette.resize(std::size(DefaultCushionColors));
-    std::ranges::transform(DefaultCushionColors, palette.begin(),
-        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, CColorSpace::GraphPaletteBrightness); });
+    palette.assign_range(DefaultCushionColors | std::views::transform([](const COLORREF color) {
+        return CColorSpace::MakeBrightColor(color, CColorSpace::GraphPaletteBrightness);
+    }));
 }
 
 CTreeMap::Options CTreeMap::GetPreset(const Preset preset)
@@ -468,9 +468,9 @@ void CTreeMap::BuildHitTestIndex()
             indexedRegions.push_back({ index, rectangle });
     };
 
-    for (const std::size_t index : std::views::iota(std::size_t{ 0 }, m_visibleItems.size()))
+    for (const auto [index, visibleItem] : std::views::enumerate(m_visibleItems))
     {
-        const CRect outer = m_visibleItems[index].rectangle;
+        const CRect outer = visibleItem.rectangle;
         if (!hasVisibleChildren[index])
         {
             addRegion(index, outer);
@@ -546,9 +546,8 @@ void CTreeMap::RecurseCheckTree(const CItem* item)
     {
         ULONGLONG sum = 0;
         ULONGLONG last = static_cast<ULONGLONG>(-1);
-        for (const int i : std::views::iota(0, item->TmiGetChildCount()))
+        for (const CItem* child : item->GetChildren())
         {
-            const CItem* child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
             assert(size <= last);
             sum += size;
@@ -656,10 +655,10 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     auto pushChildren = [this, &layoutScratch, &pushChildState](
         CItem* item, const DrawStateInfo& state)
     {
-        const int childCount = item->TmiGetChildCount();
-        layoutScratch.childWeights.resize(childCount);
-        for (const int i : std::views::iota(0, childCount))
-            layoutScratch.childWeights[i] = item->TmiGetChild(i)->TmiGetSize();
+        const auto& children = item->GetChildren();
+        layoutScratch.childWeights.resize(children.size());
+        for (const auto [i, child] : std::views::enumerate(children))
+            layoutScratch.childWeights[i] = child->TmiGetSize();
 
         TreeMapLayout::ArrangeChildren({
             .style = m_options.style,
@@ -669,11 +668,10 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
             .state = state.layoutState,
         }, layoutScratch.childRegions);
 
-        for (const int i : std::views::iota(0, childCount))
+        for (const auto [child, childRegion] : std::views::zip(children, layoutScratch.childRegions))
         {
-            const auto& childRegion = layoutScratch.childRegions[i];
             if (childRegion.bounds.IsEmpty()) continue;
-            pushChildState(item->TmiGetChild(i), childRegion.bounds, state, childRegion.state);
+            pushChildState(child, childRegion.bounds, state, childRegion.state);
         }
     };
 
@@ -787,9 +785,9 @@ CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point) const
     const std::size_t cell = static_cast<std::size_t>(row) * m_hitTestColumns + column;
     const std::size_t begin = m_hitTestCellOffsets[cell];
     const std::size_t end = m_hitTestCellOffsets[cell + 1];
-    for (const std::size_t entry : std::views::iota(begin, end))
+    const std::span entries = std::span(m_hitTestEntries).subspan(begin, end - begin);
+    for (const std::size_t candidateIndex : entries)
     {
-        const std::size_t candidateIndex = m_hitTestEntries[entry];
         const VisibleItem& candidate = m_visibleItems[candidateIndex];
         if (candidate.depth > bestDepth && candidate.rectangle.Contains(point))
         {

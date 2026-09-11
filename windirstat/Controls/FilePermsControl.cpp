@@ -174,7 +174,7 @@ bool CFilePermsControl::StartScan()
     if (!rows.empty())
     {
         for (auto* r : rows) r->SetVisible(this, true);
-        const std::vector<CWdsListItem*> listItems(rows.begin(), rows.end());
+        const auto listItems = std::ranges::to<std::vector<CWdsListItem*>>(rows);
         const ScopedRedrawPause lock(this);
         InsertListItem(GetItemCount(), listItems);
         SortItems();
@@ -184,10 +184,7 @@ bool CFilePermsControl::StartScan()
 
 std::vector<const CItemPerm*> CFilePermsControl::GetPermItems() const
 {
-    std::vector<const CItemPerm*> items;
-    for (const int i : std::views::iota(0, GetItemCount()))
-    {
-        items.push_back(static_cast<const CItemPerm*>(GetItem(i)));
-    }
-    return items;
+    return std::views::iota(0, GetItemCount())
+        | std::views::transform([this](const int i) { return static_cast<const CItemPerm*>(GetItem(i)); })
+        | std::ranges::to<std::vector>();
 }

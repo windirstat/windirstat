@@ -343,9 +343,10 @@ UINT CMenu::GetItemState(const UINT id, const UINT flags) const noexcept
 std::wstring CMenu::GetItemText(const UINT pos) const
 {
     const int length = GetMenuStringW(m_hMenu, pos, nullptr, 0, MF_BYPOSITION);
-    std::wstring buffer(static_cast<size_t>(length) + 1, L'\0');
-    const int copied = GetMenuStringW(m_hMenu, pos, buffer.data(), length + 1, MF_BYPOSITION);
-    buffer.resize(static_cast<size_t>(copied));
+    std::wstring buffer;
+    buffer.resize_and_overwrite(static_cast<size_t>(length) + 1, [this, pos](wchar_t* data, const size_t size) noexcept {
+        return static_cast<size_t>(GetMenuStringW(m_hMenu, pos, data, static_cast<int>(size), MF_BYPOSITION));
+    });
     return buffer;
 }
 
@@ -520,18 +521,17 @@ void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
     }
 
     dc.FillSolidRect(rect, DarkMode::SystemColor(dark ? COLOR_WINDOWFRAME : COLOR_BTNFACE));
-    for (int row = 0; row < GetRowCount(); ++row)
+    for (const auto [row, column] : std::views::cartesian_product(
+        std::views::iota(0, GetRowCount()),
+        std::views::iota(0, GetColumnCount())))
     {
-        for (int column = 0; column < GetColumnCount(); ++column)
-        {
-            const CWnd* pane = GetPane(row, column);
-            if (pane == nullptr || !IsWindow(pane->m_hWnd) || pane->IsSplitterWindow())
-                continue;
+        const CWnd* pane = GetPane(row, column);
+        if (pane == nullptr || !IsWindow(pane->m_hWnd) || pane->IsSplitterWindow())
+            continue;
 
-            CRect paneRect = GetChildWindowRect(pane->Handle());
-            paneRect.Inflate(1, 1);
-            dc.Draw3dRect(paneRect, paneEdge, paneEdge);
-        }
+        CRect paneRect = GetChildWindowRect(pane->Handle());
+        paneRect.Inflate(1, 1);
+        dc.Draw3dRect(paneRect, paneEdge, paneEdge);
     }
 }
 
@@ -587,10 +587,9 @@ void CStatusBar::OnPaint()
     dc.SetBkMode(TRANSPARENT);
 
     const auto rects = LayoutPanes();
-    for (size_t i = 0; i < m_panes.size(); ++i)
+    for (const auto& [pane, rectLayout] : std::views::zip(m_panes, rects))
     {
-        const Pane& pane = m_panes[i];
-        CRect rect = rects[i];
+        CRect rect = rectLayout;
         const COLORREF background = m_background != CLR_NONE ? m_background : barFace;
         dc.FillSolidRect(rect, background);
         DrawPaneBorder(dc, rect);
@@ -691,9 +690,9 @@ void CTabControl::SetTabVisible(const int i, const bool show)
     if (!show && previousActiveTab == i)
     {
         activeTab = -1;
-        for (int k = 0; k < GetTabCount(); ++k)
+        for (const auto [k, tab] : std::views::enumerate(m_tabs))
         {
-            if (k != i && m_tabs[k].visible) { activeTab = k; break; }
+            if (static_cast<int>(k) != i && tab.visible) { activeTab = static_cast<int>(k); break; }
         }
     }
     else if (show && previousActiveTab < 0) activeTab = i;
@@ -933,9 +932,8 @@ void CTabControl::OnPaint()
             if (active && drawFocus) dc.DrawFocusRect(rcText);
         };
 
-    for (int native = 0; std::cmp_less(native, m_visibleToLogical.size()); ++native)
+    for (const int logical : m_visibleToLogical)
     {
-        const int logical = m_visibleToLogical[static_cast<size_t>(native)];
         if (logical < 0 || logical >= GetTabCount()) continue;
 
         const CRect rcTab = m_tabs[logical].paintedRect;
@@ -990,11 +988,9 @@ bool CTabControl::IsDarkColor(const COLORREF color)
 
 int CTabControl::NativeIndexFromLogical(const int logical) const
 {
-    for (int i = 0; std::cmp_less(i, m_visibleToLogical.size()); ++i)
-    {
-        if (m_visibleToLogical[static_cast<size_t>(i)] == logical) return i;
-    }
-    return -1;
+    const auto it = std::ranges::find(m_visibleToLogical, logical);
+    return it != m_visibleToLogical.end() ?
+        static_cast<int>(std::ranges::distance(m_visibleToLogical.begin(), it)) : -1;
 }
 
 void CTabControl::RebuildNativeTabs()
@@ -1007,20 +1003,20 @@ void CTabControl::RebuildNativeTabs()
     m_visibleToLogical.reserve(m_tabs.size());
 
     int native = 0;
-    for (int logical = 0; logical < GetTabCount(); ++logical)
+    for (const auto [logical, tab] : std::views::enumerate(m_tabs))
     {
-        if (!m_tabs[logical].visible)
+        if (!tab.visible)
         {
-            m_tabs[logical].paintedRect.Clear();
+            tab.paintedRect.Clear();
             continue;
         }
 
         TCITEMW item{};
         item.mask = TCIF_TEXT | TCIF_PARAM;
-        item.pszText = const_cast<LPWSTR>(m_tabs[logical].label.c_str());
+        item.pszText = const_cast<LPWSTR>(tab.label.c_str());
         item.lParam = static_cast<LPARAM>(logical);
         SendNativeMessage(TCM_INSERTITEMW, static_cast<WPARAM>(native), &item);
-        m_visibleToLogical.push_back(logical);
+        m_visibleToLogical.push_back(static_cast<int>(logical));
         ++native;
     }
 
@@ -1147,13 +1143,12 @@ void CTabControl::UpdatePaintedTabRects(const CRect& rcStrip, const bool bottomT
     const int overlap = scale(labelOnlyTabs ? 1 : 2);
     const int rightExpansion = scale(labelOnlyTabs ? 2 : 4);
 
-    for (int native = 0; std::cmp_less(native, m_visibleToLogical.size()); ++native)
+    for (const auto [native, logical] : std::views::enumerate(m_visibleToLogical))
     {
-        const int logical = m_visibleToLogical[static_cast<size_t>(native)];
         if (logical < 0 || logical >= GetTabCount()) continue;
 
         CRect rcTab;
-        if (!GetNativeItemRect(native, rcTab)) continue;
+        if (!GetNativeItemRect(static_cast<int>(native), rcTab)) continue;
 
         if (bottomTabs)
         {
@@ -1187,11 +1182,11 @@ void CTabControl::LayoutPanes()
     CRect rcPane = (m_location == Location::Bottom) ?
         CRect(rc.left, rc.top, rc.right, std::max(rc.top, rc.bottom - tabH)) :
         CRect(rc.left, rc.top + tabH, rc.right, rc.bottom);
-    for (int i = 0; i < GetTabCount(); ++i)
+    for (const auto [i, tab] : std::views::enumerate(m_tabs))
     {
-        CWnd* p = m_tabs[i].window;
+        CWnd* p = tab.window;
         if (p == nullptr || !IsWindow(p->m_hWnd)) continue;
-        if (i == m_activeTab) { p->MoveWindow(rcPane); p->ShowWindow(SW_SHOW); }
+        if (static_cast<int>(i) == m_activeTab) { p->MoveWindow(rcPane); p->ShowWindow(SW_SHOW); }
         else p->ShowWindow(SW_HIDE);
     }
 }
@@ -1466,13 +1461,13 @@ int CToolBar::AddImage(const CBitmap& bmp)
             const BYTE disabledG = GetGValue(disabledText);
             const BYTE disabledB = GetBValue(disabledText);
             auto* pixels = static_cast<RGBQUAD*>(newBits);
+            const std::span pixelSpan(pixels, static_cast<size_t>(pixelCount));
             const bool sourceHasAlpha = bitmap.bmPlanes == 1 && bitmap.bmBitsPixel == 32 &&
-                std::any_of(pixels, pixels + pixelCount,
+                std::ranges::any_of(pixelSpan,
                     [](const RGBQUAD& pixel) { return pixel.rgbReserved != 0; });
 
-            for (size_t i = 0; i < static_cast<size_t>(pixelCount); ++i)
+            for (RGBQUAD& pixel : pixelSpan)
             {
-                RGBQUAD& pixel = pixels[i];
                 const BYTE alpha = sourceHasAlpha ? pixel.rgbReserved : 0xff;
 
                 // Grayscale using NTSC weights
@@ -1638,12 +1633,12 @@ bool CPropertySheet::ActivatePage(const int active)
     if (!EnsurePageCreated(active)) return false;
     if (m_currentPage == active) return true;
 
-    for (int i = 0; i < GetPageCount(); ++i)
-        if (m_pages[i]->Handle())
+    for (const auto [i, page] : std::views::enumerate(m_pages))
+        if (page->Handle())
         {
-            const bool isActive = (i == active);
-            m_pages[i]->EnableWindow(isActive);
-            m_pages[i]->ShowWindow(isActive ? SW_SHOW : SW_HIDE);
+            const bool isActive = (static_cast<int>(i) == active);
+            page->EnableWindow(isActive);
+            page->ShowWindow(isActive ? SW_SHOW : SW_HIDE);
         }
 
     // Dialog traversal follows sibling Z-order, so the active page belongs immediately after the tab strip.
@@ -1734,11 +1729,11 @@ bool CPropertySheet::OnInitDialog()
             }());
     }
 
-    for (int i = 0; i < GetPageCount(); ++i)
+    for (const auto [i, page] : std::views::enumerate(m_pages))
     {
-        if (!EnsurePageCreated(i)) continue;
+        if (!EnsurePageCreated(static_cast<int>(i))) continue;
 
-        const CRect rcPage = m_pages[i]->GetWindowRect();
+        const CRect rcPage = page->GetWindowRect();
         maxW = std::max<int>(maxW, rcPage.Width());
         maxH = std::max<int>(maxH, rcPage.Height());
         break;

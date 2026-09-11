@@ -41,7 +41,7 @@ public:
     enum class Flags : std::uint8_t { None = 0, NoCancel = 1, PercentageOnly = 2 };
     friend constexpr Flags operator|(const Flags lhs, const Flags rhs) noexcept
     {
-        return static_cast<Flags>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+        return static_cast<Flags>(std::to_underlying(lhs) | std::to_underlying(rhs));
     }
 
     CProgressDlg(size_t total, Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task);
@@ -56,7 +56,7 @@ public:
     size_t GetTotal() const noexcept { return m_total; }
     bool HasFlag(const Flags flag) const noexcept
     {
-        return (static_cast<std::uint8_t>(m_flags) & static_cast<std::uint8_t>(flag)) != 0;
+        return (std::to_underlying(m_flags) & std::to_underlying(flag)) != 0;
     }
 
 protected:

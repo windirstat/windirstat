@@ -193,17 +193,21 @@ std::wstring FormatAttributes(const DWORD attr) noexcept
 
 std::wstring FormatHex(const std::vector<BYTE> & bytes, const bool upper) noexcept
 {
+    if (bytes.empty()) return {};
+
     const wchar_t* h = upper
         ? L"0123456789ABCDEF"
         : L"0123456789abcdef";
 
-    std::wstring out(bytes.size() * 2, L'\0');
-    for (const size_t i : std::views::iota(0u, bytes.size()))
-    {
-        const BYTE b = bytes[i];
-        out[2 * i] = h[b >> 4];
-        out[2 * i + 1] = h[b & 0x0F];
-    }
+    std::wstring out;
+    out.resize_and_overwrite(bytes.size() * 2, [&](wchar_t* buffer, const size_t size) noexcept {
+        for (const auto [i, b] : std::views::enumerate(bytes))
+        {
+            buffer[2 * i] = h[b >> 4];
+            buffer[2 * i + 1] = h[b & 0x0F];
+        }
+        return size;
+    });
     return out;
 }
 
@@ -297,12 +301,11 @@ std::wstring JoinString(const std::vector<std::wstring>& items, const WCHAR deli
 std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR delim)
 {
     std::vector<std::wstring> selections;
-    for (const auto part : std::views::split(string, delim)) {
-        std::wstring partString(part.begin(), part.end());
-        TrimString(partString);
-        selections.emplace_back(std::move(partString));
+    for (const auto part : std::views::split(string, delim))
+    {
+        selections.emplace_back(std::from_range, part);
+        TrimString(selections.back());
     }
-
     return selections;
 }
 
@@ -683,7 +686,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
         // Compute strings for all the commands in the table
         for (const auto& [virtKey, key, cmd] : accels)
         {
-            auto cacheEntry = std::ranges::find_if(cache, [cmd](const auto& pair) { return pair.first == cmd; });
+            auto cacheEntry = std::ranges::find(cache, cmd, &std::pair<UINT, std::wstring>::first);
             if (cacheEntry == cache.end())
             {
                 cache.emplace_back(cmd, wds::strEmpty);

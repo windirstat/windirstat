@@ -26,9 +26,9 @@ static constexpr wchar_t AsciiLower(const wchar_t value) noexcept
 static constexpr bool StartsWithNoCase(const std::wstring_view value, const std::wstring_view prefix) noexcept
 {
     if (value.size() < prefix.size()) return false;
-    for (size_t i = 0; i < prefix.size(); ++i)
+    for (const auto [v, p] : std::views::zip(value, prefix))
     {
-        if (AsciiLower(value[i]) != AsciiLower(prefix[i])) return false;
+        if (AsciiLower(v) != AsciiLower(p)) return false;
     }
     return true;
 }
