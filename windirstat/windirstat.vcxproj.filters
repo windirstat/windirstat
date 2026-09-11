@@ -544,6 +544,9 @@
     <ClCompile Include="..\contrib\xxhash\xxhash.c">
       <Filter>Source Files\Contrib</Filter>
     </ClCompile>
+    <ClCompile Include="LegacyOsCompat.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
