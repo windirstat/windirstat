@@ -167,6 +167,7 @@ ColumnVisibility=1,1,1,1,1,1,1,1,1,0,0
 $languages = @(
     [pscustomobject]@{ Code = "en";    LangId = 9 },
     [pscustomobject]@{ Code = "en-us"; LangId = 9 },
+    [pscustomobject]@{ Code = "ar";    LangId = 1 },
     [pscustomobject]@{ Code = "cs";    LangId = 5 },
     [pscustomobject]@{ Code = "da";    LangId = 6 },
     [pscustomobject]@{ Code = "de";    LangId = 7 },

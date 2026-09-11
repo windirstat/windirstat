@@ -672,6 +672,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <Image Include="res\WinDirStat.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="res\langs\lang_ar.txt" />
     <Text Include="res\langs\lang_cs.txt" />
     <Text Include="res\langs\lang_da.txt" />
     <Text Include="res\langs\lang_de.txt" />
