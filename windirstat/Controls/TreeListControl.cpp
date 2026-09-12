@@ -450,7 +450,7 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
     ExpandPathToItem(item);
     EnsureItemVisible(item);
 
-    // get the item relative offset
+    // get the item's relative offset
     const int itemIndex = FindTreeItem(item);
     if (itemIndex == -1) return;
 
@@ -502,7 +502,7 @@ void CTreeListControl::CollapseItem(const int i)
         todelete++;
     }
 
-    // Correct focus to point to parent if was in the tree
+    // Correct focus to point to parent if it was in the tree
     if (const int hasFocus = GetNextItem(-1, LVNI_FOCUSED);
         hasFocus > -1 && todelete > 0 && std::clamp(hasFocus, i + 1, i + todelete) == hasFocus)
     {
@@ -556,7 +556,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
         // The calculation of item width is very expensive for
         // very large lists so limit calculation based on the
-        // first few bunch of visible items
+        // first few visible items
         if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
         {
             maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0, &dc));
@@ -826,7 +826,7 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     // The menu shall not overlap the label but appear
     // horizontally at the cursor position,
     // vertically under (or above) the label.
-    // ShowPopup() behaves in the desired way, if
+    // ShowPopup() behaves in the desired way if
     // we exclude the label rectangle extended to full screen width.
 
     TPMPARAMS tp{ .cbSize = sizeof(tp) };

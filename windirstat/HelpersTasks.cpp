@@ -184,7 +184,7 @@ std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, cons
     {
         if ((driveMask & (1 << i)) == 0) continue;
 
-        // See if drive type matches and in accessible
+        // See if the drive type matches and the drive is accessible
         const std::array<WCHAR, 4> driveStr = { letter, L':', L'\\', L'\0' };
         const UINT driveType = GetDriveType(driveStr.data());
         if (std::ranges::contains(driveTypes, driveType))
@@ -442,7 +442,7 @@ std::wstring GetNameFromSid(const PSID sid)
     // return immediately if sid is null or invalid
     if (sid == nullptr || !IsValidSid(sid)) return {};
 
-    // attempt to lookup sid in cache (guarded since callers may be on worker threads)
+    // attempt to look up sid in cache (guarded since callers may be on worker threads)
     const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, GetLengthSid(sid)));
     static std::mutex nameMapMutex;
     static std::map<std::vector<BYTE>, std::wstring> nameMap;
@@ -757,7 +757,7 @@ std::wstring ComputeFileHashes(const CItem* item, CProgressDlg* pProgressDlg)
         SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
     };
 
-    // Setup all algorithms
+    // Set up all algorithms
     std::vector<HashContext> contexts;
     for (const auto& [algorithm, id, name] : HashAlgorithms)
     {
@@ -900,7 +900,7 @@ void CopyAllDriveMappings() noexcept
     CRegKey keyNetwork;
     if (keyNetwork.Open(HKEY_CURRENT_USER, L"Network", KEY_READ) != ERROR_SUCCESS) return;
 
-    // Enumerate all drive mapping and attempt to connect in parrallel
+    // Enumerate all drive mappings and attempt to connect in parallel
     std::vector<std::future<void>> futures;
     std::array<WCHAR, MAX_PATH> driveLetter;
     ULONG driveLetterSize = static_cast<ULONG>(driveLetter.size());

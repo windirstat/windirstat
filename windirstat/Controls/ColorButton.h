@@ -22,13 +22,13 @@
 constexpr auto COLBN_CHANGED = 0x87;
 
 //
-// CColorButton. A Pushbutton which allows to choose a color and
+// CColorButton. A Pushbutton which allows the user to choose a color and
 // shows this color on its surface.
 //
 // In the resource editor, the button should be set to "right align text",
 // as the color will be shown in the left third.
 //
-// When the user chose a color, the parent is notified via WM_NOTIFY
+// When the user chooses a color, the parent is notified via WM_NOTIFY
 // and the notification code COLBN_CHANGED.
 //
 class CColorButton final : public MessageTarget<CColorButton, CButton>
@@ -38,7 +38,7 @@ public:
     void SetColor(const COLORREF color) { m_preview.SetColor(color); }
 
 private:
-    // The color preview is an own little child window of the button.
+    // The color preview is the button's own little child window.
     class CPreview final : public MessageTarget<CPreview, CWnd>
     {
     public:

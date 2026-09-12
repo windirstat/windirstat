@@ -179,7 +179,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     }
     else if (flags & SHGFI_PIDL)
     {
-        // Assume folder id numeric encoded as string
+        // Assume folder id is numeric and encoded as a string
         CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidl;
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {

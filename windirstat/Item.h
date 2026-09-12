@@ -112,7 +112,7 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 
 //
 // CItem. This is the object, from which the whole tree is built.
-// For every directory, file etc., we find on the hard disks, there is one CItem.
+// For every directory, file etc. we find on the hard disks, there is one CItem.
 // It is derived from CTreeListItem because it _may_ become "visible" and therefore
 // may be inserted in the TreeList view (we don't clone any data).
 //

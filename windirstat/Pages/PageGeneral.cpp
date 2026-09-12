@@ -197,7 +197,7 @@ void CPageGeneral::OnBnClickedSetModified()
     if (!IsInitialized())
         return;
 
-    // Assess for restart required
+    // Assess whether a restart is required
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     const bool languageChanged = id != static_cast<LANGID>(COptions::LanguageId);
     const bool darkModeChanged = GetSelectedDarkMode() != COptions::DarkMode;

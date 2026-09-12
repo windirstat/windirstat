@@ -20,7 +20,7 @@
 #include "pch.h"
 
 //
-// CLayout. A poor men's dialog layout mechanism.
+// CLayout. A poor man's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.
 //
 class CLayout final

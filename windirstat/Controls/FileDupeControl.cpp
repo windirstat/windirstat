@@ -49,7 +49,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         return;
     }
 
-    // First see if there's more than one size of this file since there is no need to
+    // First see if there's more than one file of this size since there is no need to
     // hash if there is only a single file of this size
     {
         std::scoped_lock lock(m_trackerMutex);
@@ -155,7 +155,7 @@ void CFileDupeControl::SortItems()
 
 void CFileDupeControl::RemoveItem(CItem* item)
 {
-    // Exit immediately if not doing duplicate detector
+    // Exit immediately if duplicate detection is disabled
     if (!COptions::ScanForDuplicates) return;
 
     // Publish queued nodes before pruning references to items that will be refreshed.
@@ -170,7 +170,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         queue.pop_back();
         if (qitem->IsTypeOrFlag(IT_FILE))
         {
-            // Mark as all files as not being hashed anymore
+            // Mark all files as not being hashed anymore
             std::erase(m_sizeTracker[qitem->GetSizeLogical()], qitem);
             qitem->SetHashType(ITHASH_NONE, false);
             removedItems.insert(qitem);
@@ -199,14 +199,14 @@ void CFileDupeControl::RemoveItem(CItem* item)
             });
         }
 
-        // Cleanup empty structures
+        // Clean up empty structures
         std::erase_if(hashTracker, [](const auto& pair)
         {
             return pair.second.empty();
         });
     }
 
-    // Cleanup any empty visual nodes in the list
+    // Clean up any empty visual nodes in the list
     const ScopedRedrawPause lock(this);
     for (auto nodeIter = m_nodeTracker.begin(); nodeIter != m_nodeTracker.end(); )
     {
@@ -274,7 +274,7 @@ void CFileDupeControl::AfterDeleteAllItems()
     // Reset duplicate warning
     m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 
-    // Cleanup support lists
+    // Clean up support lists
     m_pendingListAdds.clear();
     m_nodeTracker.clear();
     for (auto& tracker : m_hashTrackers) tracker.clear();

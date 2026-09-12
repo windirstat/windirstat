@@ -158,7 +158,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
         CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(m_fileWatcherViewIndex));
     }
 
-    // Route keyboard focus to the newly-active tab's content when focus is
+    // Route keyboard focus to the newly active tab's content when focus is
     // already inside this container (tab clicked while app is focused, or
     // programmatic switch from within this pane).
     if (const CWnd* focused = GetFocus(); focused != nullptr &&

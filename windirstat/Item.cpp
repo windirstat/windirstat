@@ -264,7 +264,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     {
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
-            // Add child in UI thread since UI thread immediately use it
+            // Add child in UI thread since UI thread immediately uses it
             m_folderInfo->m_children.push_back(child);
             CFileTreeControl::Get()->OnChildAdded(this, child);
         });
@@ -1037,7 +1037,7 @@ void CItem::UpdateStatsFromDisk()
         }
         else if (IsScanRoot() && GetAttributes() == INVALID_FILE_ATTRIBUTES)
         {
-            // Correct potential invalid attributes on root items
+            // Correct potentially invalid attributes on root items
             if (const DWORD attr = GetFileAttributes(GetPathLong().c_str()); attr != INVALID_FILE_ATTRIBUTES)
             {
                 SetAttributes(attr);

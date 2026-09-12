@@ -6,7 +6,7 @@ WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows.
 
 Alongside the visual overview, WinDirStat helps you investigate and act on disk usage. You can find large files, search and filter results, detect duplicates by hash, inspect logical versus physical size, watch file-system changes, save or reload scans, and launch cleanup or Windows maintenance actions directly from the interface.
 
-For more information on the background of WinDirStat and alternative versions on other operating systems, please visit the [WinDirStat website](https://windirstat.net/)
+For more information on the background of WinDirStat and alternative versions on other operating systems, please visit the [WinDirStat website](https://windirstat.net/).
 
 ### Major features
 
@@ -56,7 +56,7 @@ Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 ## Compatibility
 
-WinDirStat 2.x has been developed for and tested on the following operating systems. They may work on older or newer operating systems but are not supported.
+WinDirStat 2.x has been developed for and tested on the following operating systems. It may work on older or newer operating systems, but those systems are not supported.
 
 * Windows 7
 * Windows 8
@@ -88,7 +88,7 @@ For your safety, install WinDirStat only through the Microsoft Store link and pa
 
 ## Building
 
-WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat\WinDirStat.sln`.
+WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat.sln`.
 
 ## Contributors
 

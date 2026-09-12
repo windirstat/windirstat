@@ -75,7 +75,7 @@ void DarkMode::SetAppDarkMode() noexcept
         color = GetSysColor(static_cast<int>(i));
     }
 
-    // Setup dark mode colors
+    // Set up dark mode colors
     DarkModeColors = OriginalColors;
     DarkModeColors[CTLCOLOR_DLG] = RGB(40, 40, 40);
     DarkModeColors[CTLCOLOR_STATIC] = RGB(40, 40, 40);

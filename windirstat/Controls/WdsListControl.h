@@ -22,7 +22,7 @@ class CWdsListControl;
 
 //
 // SSorting. A sorting specification. We sort by column1, and if two items
-// equal in column1, we sort them by column2.
+// are equal in column1, we sort them by column2.
 //
 struct SSorting
 {
@@ -38,9 +38,9 @@ struct SSorting
 
 //
 // CWdsListItem. An item in a CWdsListControl.
-// Some columns (subitems) may be owner drawn (DrawSubItem() returns true),
+// Some columns (subitems) may be owner drawn (DrawSubItem() returns true);
 // CWdsListControl draws the texts (GetText()) of all others.
-// DrawLabel() draws a standard label (width icon, text, selection and focus rect)
+// DrawLabel() draws a standard label (with icon, text, selection and focus rect)
 //
 
 class CWdsListItem
@@ -49,7 +49,7 @@ public:
     CWdsListItem() = default;
     virtual ~CWdsListItem() = default;
 
-    // This text is drawn, if DrawSubItem returns false
+    // This text is drawn if DrawSubItem returns false
     virtual std::wstring GetText(int subitem) const = 0;
     // This color is used for the current item
     virtual COLORREF GetItemTextColor() const
@@ -61,7 +61,7 @@ public:
     virtual int Compare(const CWdsListItem* other, int subitem) const = 0;
     int CompareSort(const CWdsListItem* other, const SSorting& sorting) const;
 
-    // Return value is true, if the item draws itself.
+    // Return value is true if the item draws itself.
     // width != nullptr -> only determine width, do not draw.
     // If focus rectangle shall not begin leftmost, set *focusLeft
     // to the left edge of the desired focus rectangle.

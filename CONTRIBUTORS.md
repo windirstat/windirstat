@@ -7,7 +7,7 @@
 # Development Contributors
 
 * Tim Ming "harrytm" Yeung
-    * Variety of useability enhancements
+    * Variety of usability enhancements
 * Robin "tuqueque" Marín
     * Created logo used on website and within WinDirStat
 * Falco Peijnenburg

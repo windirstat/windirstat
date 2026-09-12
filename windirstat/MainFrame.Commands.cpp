@@ -44,7 +44,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const boo
         pPopupMenu->SetItemEnabled(explorerMenuPos, true);
     }
 
-    // If the menu being opened is populate it
+    // If the menu being opened is a placeholder, populate it
     if (pPopupMenu->GetItemCount() == 1 && (pPopupMenu->GetItemState(0, MF_BYPOSITION) & MF_SEPARATOR) != 0)
     {
         while (pPopupMenu->GetItemCount() > 0)
@@ -142,7 +142,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
         subMenu = menu->GetSubMenu(subMenuPos);
     }
 
-    // cleanup old items
+    // clean up old items
     if (removeItems && subMenu != nullptr) while (subMenu->GetItemCount() > 0)
         subMenu->Remove(0);
     return { subMenu, subMenuPos };
@@ -381,7 +381,7 @@ void CMainFrame::UpdatePaneText()
         }
     }
 
-    // Update select physical size
+    // Update selected size
     CClientDC dc(this);
     const GdiObjectSelection selectFont(&dc, GetAppFont(m_hWnd));
     SetStatusPaneText(dc, CStatusBar::PaneId::Idle, fileSelectionText);

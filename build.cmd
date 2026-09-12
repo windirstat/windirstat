@@ -12,7 +12,7 @@ IF ERRORLEVEL 2 SET RELTYPE=PRODUCTION
 IF ERRORLEVEL 1 SET RELTYPE=BETA
 IF "%RELTYPE%" EQU "" EXIT /B 1
 
-:: setup environment variables based on location of this script
+:: set up environment variables based on location of this script
 SET THISDIR=%~dp0
 SET THISDIR=%THISDIR:~0,-1%
 SET BASEDIR=%THISDIR%\.
@@ -66,7 +66,7 @@ FOR %%A IN (arm64 x86 x64) DO (
 %POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -OutDir "%PUBDIR%"
 IF ERRORLEVEL 1 EXIT /B 1
 
-:: sign the msi, msix, and msibundle
+:: sign the msi, msix, and msixbundle
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%PUBDIR%\*.msi*"
 IF ERRORLEVEL 1 ECHO MSI/MSIX signing failed; continuing without a signed MSI.
 

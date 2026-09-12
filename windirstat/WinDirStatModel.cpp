@@ -48,7 +48,7 @@ void CWinDirStatModel::ClearScanState()
 {
     CWaitCursor wc;
 
-    // Wait for system to fully shutdown
+    // Wait for system to fully shut down
     StopScanningEngine(Abort);
 
     // Stop watchers
@@ -64,7 +64,7 @@ void CWinDirStatModel::ClearScanState()
     GetExtensionData()->clear();
     m_registeredExtensions.clear();
 
-    // Cleanup visual artifacts - controllers manage their own root items
+    // Clean up visual artifacts - controllers manage their own root items
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->DeleteAllItems();
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
@@ -72,7 +72,7 @@ void CWinDirStatModel::ClearScanState()
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->DeleteAllItems();
     if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->DeleteAllItems();
 
-    // Cleanup structures
+    // Clean up structures
     delete m_rootItem;
     m_rootItem = nullptr;
     m_zoomItem = nullptr;
@@ -634,7 +634,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                 { doDelete(*pdlg, flags | FOF_NO_UI); }).ShowModal();
     }
 
-    // Create a recycler directories to refresh
+    // Create a set of recycler directories to refresh
     std::unordered_set<CItem*> recyclers;
     if (toTrashBin) for (const auto& item : items)
     {

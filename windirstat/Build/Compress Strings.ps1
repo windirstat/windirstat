@@ -27,7 +27,7 @@ Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object {
     [System.IO.File]::WriteAllLines($_.FullName, ($_ | Get-Content -Encoding UTF8 | Sort-Object -Unique), $Encoding)
 }
 
-# Write out languages header file
+# Write out language header file
 $TempHeader = (New-TemporaryFile).FullName
 @(
     '#pragma once'

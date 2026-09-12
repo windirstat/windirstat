@@ -151,7 +151,7 @@ public:
 
     void WaitIfSuspended()
     {
-        // wait until not suspended or its cancelled
+        // wait until not suspended or it's cancelled
         std::unique_lock lock(m_mutex);
         if (!m_suspended && !m_cancelled) return;
         m_workersWaiting++;
@@ -171,7 +171,7 @@ public:
 
     int WaitForCompletion()
     {
-        // Wait for all workers threads to be idled or cancelled
+        // Wait for all worker threads to be idled or cancelled
         std::unique_lock lock(m_mutex);
         m_waiting.wait(lock, [&]
         {

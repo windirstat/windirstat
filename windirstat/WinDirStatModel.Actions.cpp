@@ -906,7 +906,7 @@ void CWinDirStatModel::OnCleanupOptimizeVhd()
 
 void CWinDirStatModel::OnScanSuspend()
 {
-    // Wait for system to fully shutdown
+    // Wait for system to fully shut down
     for (auto& queue : m_queues | std::views::values)
         CWinApp::RunTaskWithUiUpdates([&queue] { queue.SuspendExecution(); });
 
@@ -1071,7 +1071,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     std::unordered_map<CItem*, VisualInfo> visualInfo;
     for (auto item : std::vector(items))
     {
-        // Clear items from duplicates and top list;
+        // Clear items from duplicates and top list
         CFileDupeControl::Get()->RemoveItem(item);
         CFileTopControl::Get()->RemoveItem(item);
         CFileSearchControl::Get()->RemoveItem(item);

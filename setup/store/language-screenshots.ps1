@@ -163,7 +163,7 @@ ColumnVisibility=1,1,1,1,1,1,1,1,1,0,0
     }
 }
 
-# Language codes and their Windows LANGID values (computed via LocaleNameToLCID with LOCALE_ALLOW_NEUTRAL_NAMES)
+# Store language codes mapped to the LANGID values of available application resources
 $languages = @(
     [pscustomobject]@{ Code = "en";    LangId = 9 },
     [pscustomobject]@{ Code = "en-us"; LangId = 9 },
@@ -189,7 +189,8 @@ $languages = @(
     [pscustomobject]@{ Code = "tr";    LangId = 31 },
     [pscustomobject]@{ Code = "uk";    LangId = 34 },
     [pscustomobject]@{ Code = "zh-hk"; LangId = 3076 },
-    [pscustomobject]@{ Code = "zh";    LangId = 30724 }
+    [pscustomobject]@{ Code = "zh";    LangId = 30724 },
+    [pscustomobject]@{ Code = "zh-cn"; LangId = 30724 }
 )
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null

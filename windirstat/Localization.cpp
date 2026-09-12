@@ -111,7 +111,7 @@ bool Localization::LoadResource(const LANGID language)
 
     if (GetLocaleInfo(lcid, LOCALE_SLANGUAGE, nullptr, 0) == 0) return true;
 
-    // Short-circuit language resource loading sequence, first successful load will return true and exit the function
+    // Short-circuit language resource loading sequence; first successful load will return true and exit the function
     return
         LoadExternalLanguage(LOCALE_SNAME, language) ||                                 // External BCP 47 language file
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||                       // External ISO 639-1 language file

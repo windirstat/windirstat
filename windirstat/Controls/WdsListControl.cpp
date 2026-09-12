@@ -122,7 +122,7 @@ int CWdsListItem::CompareSort(const CWdsListItem* other, const SSorting& sorting
     return r;
 }
 
-// Draws an item label (icon, text) in all parts of the WinDirStat view
+// Draws an item label (icon, text) in all parts of the WinDirStat view;
 // the rest is drawn by DrawItem()
 void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent)
 {
@@ -203,7 +203,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
 
     if (width != nullptr)
     {
-        *width = rcLabel.Width() + 5; // Don't know, why +5
+        *width = rcLabel.Width() + 5; // Don't know why +5
     }
 }
 
@@ -510,7 +510,7 @@ void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
     int focusLeft = 0;
     for (const int i : std::views::iota(0, m_columnCount))
     {
-        // The subitem tracks the identifier that maps the column enum
+        // The subitem tracks the identifier that maps to the column enum
         LVCOLUMN colInfo{ .mask = LVCF_SUBITEM | LVCF_FMT };
         GetColumn(i, &colInfo);
         const int subitem = colInfo.iSubItem;
@@ -665,7 +665,7 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC*
 
 void CWdsListControl::LoadPersistentAttributes()
 {
-    // Fetch casted column count to avoid signed comparison warnings
+    // Fetch cast column count to avoid signed comparison warnings
     const auto columnCount = static_cast<size_t>(m_columnCount);
 
     // Load default column order values from resource
@@ -1020,7 +1020,7 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     const int subitem = ColumnToSubItem(column);
 
     // fetch size of rendered column header text
-    // temporarily insert a false column to the finalize column does
+    // temporarily insert a false column so the final column does
     // not autosize to fit the whole control width
     const ScopedRedrawPause lock(this);
     const int falseColumn = InsertColumn(m_columnCount + 1, L"");

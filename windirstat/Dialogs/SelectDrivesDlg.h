@@ -64,7 +64,7 @@ public:
 
 private:
     CDrivesList* m_driveList; // Backpointer
-    std::wstring m_path; // e.g. "C:\""
+    std::wstring m_path; // e.g. "C:\"
     bool m_mtp = false;
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)

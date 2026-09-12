@@ -130,7 +130,7 @@ void CTreeMapView::DrawSelection(CDC* pdc)
 
 // A pen and the null brush must be selected.
 // Draws the highlight rectangle of item. If single, the rectangle is slightly
-// bigger than the item rect, else it fits inside.
+// bigger than the item rect; otherwise, it fits inside.
 //
 void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
 {

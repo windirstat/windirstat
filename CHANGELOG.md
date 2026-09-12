@@ -144,7 +144,7 @@ Bug Fixes
 
 Enhancements
 - Improved gear, pause, filter, and refresh icon rendering
-- Improved icons lookups on latent networks
+- Improved icon lookups on latent networks
 - Improved treemap rendering performance
 
 Bug Fixes
@@ -262,8 +262,8 @@ Miscellaneous
 
 ## Enhancements
 - Traditional Chinese language support (thanks @harryytm)
-- Korean languages updates (thanks @VenusGirl)
-- Gray-out user defined submenu if none are present
+- Korean language updates (thanks @VenusGirl)
+- Gray out user defined submenu if none are present
 - Basic support for scanning \\\\?\\Volume{GUID} formatted paths
 - Fallback deletion for hiberfil.sys 
 - Various performance enhancements
@@ -312,11 +312,11 @@ Miscellaneous
 * Cleanup option to empty folder
 * Improved file deletion progress indicator
 * Display free space percentage next to volume label
-* Other translations improvements (thanks @EricPossato, @tferrerm)
+* Other translation improvements (thanks @EricPossato, @tferrerm)
   
 ## Bug Fixes
 * Addressed not being able to scan CSC directory
-* Addressed not being to scan SUBST'd drives
+* Addressed not being able to scan SUBST'd drives
 * Addressed save/load files on Windows Server 2016 not working
 * Addressed hover over treemap not showing filename properly
 * Addressed not being able to scan in some Acronis folders
@@ -364,7 +364,7 @@ Miscellaneous
 * Per-drive scanning multithreading
 * Column to display file owner
 * Column to distinguish logical versus physical allocation
-* Built-in alternate languages translations
+* Built-in alternate language translations
 * Shell menu entry (legacy menu only)
 * Numerous bug fixes
     

@@ -60,7 +60,7 @@ void CDirStatApp::RestartApplication(const bool resetPreferences)
     // Clear preferences if requested
     if (resetPreferences)
     {
-        // Cleanup registry preferences
+        // Clean up registry preferences
         RegDeleteTree(HKEY_CURRENT_USER, L"Software\\WinDirStat");
 
         // Enable portable mode by creating the file
@@ -175,12 +175,12 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
             nullptr, onlyOpen ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
         if (iniHandle != INVALID_HANDLE_VALUE)
         {
-            // Open successful, setup settings to store to file
+            // Open successful, set up settings to store to file
             PersistedSetting::UseIniStorage(ini);
             return true;
         }
 
-        // Fallback to registry mode for any failures
+        // Fall back to registry mode for any failures
         PersistedSetting::UseRegistryStorage();
         return false;
     }

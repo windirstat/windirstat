@@ -33,8 +33,9 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
         { MB_OKCANCEL,         { 0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL, &m_buttonMiddle } },
         { MB_YESNO,            { 0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO,     &m_buttonMiddle } },
         { MB_YESNOCANCEL,      { IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL, &m_buttonLeft   } },
-        // these MB types are not used by WinDirStat, but included for completeness and using IDS_GENERIC_BLANK as placeholder for button labels,
-        // please add required IDS to localization engine upon use
+        // These MB types are not used by WinDirStat, but are included for completeness and use
+        // IDS_GENERIC_BLANK as a placeholder for button labels. Please add the required IDS to
+        // the localization engine upon use.
         { MB_RETRYCANCEL,      { 0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL, &m_buttonMiddle } },
         { MB_ABORTRETRYIGNORE, { IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK,  &m_buttonLeft   } },
     };
@@ -204,7 +205,7 @@ bool CMessageBoxDlg::OnInitDialog()
 
     if (m_autoWidth)
     {
-        // Don't wrap words, calculate full width
+        // Don't wrap words; calculate full width
         rectTextCalc.right = LONG_MAX;
         dc.DrawText(m_message, &rectTextCalc, baseFlags);
     }

@@ -944,7 +944,7 @@ public static class WdsNativeFs
         return flags;
     }
 
-    // Returns -1 not WOF, otherwise the WOF algorithm id (XPRESS4K=0, LZX=1, XPRESS8K=2, XPRESS16K=3).
+    // Returns -1 if not WOF, otherwise the WOF algorithm id (XPRESS4K=0, LZX=1, XPRESS8K=2, XPRESS16K=3).
     public static int GetWofAlgorithm(string path)
     {
         uint len = (uint)Marshal.SizeOf(typeof(WOF_FILE_COMPRESSION_INFO_V1));
@@ -1172,7 +1172,7 @@ function Get-ScratchDriveProtectionReasons {
     @($reasons | Select-Object -Unique)
 }
 
-# Serialize destructive suites across concurrently-sharded test processes.
+# Serialize destructive suites across concurrently sharded test processes.
 function Enter-ScratchDriveLock {
     param([Parameter(Mandatory)] [string[]] $Letters)
 
@@ -2225,7 +2225,7 @@ function Invoke-Button {
         $p.Invoke()
     }
     catch {
-        # Fallback to coordinate-based click if UIA InvokePattern throws
+        # Fall back to coordinate-based click if UIA InvokePattern throws
         $cp = Get-ElementClickPoint $Btn
         if ($cp) {
             [MouseHelper]::LeftClick($cp.X, $cp.Y)
@@ -5981,7 +5981,7 @@ function Test-ContextMenu {
     else {
         # [UIA-OwnerDraw] The tree/list row may be off-screen or the control may
         # swallow WM_RBUTTONDOWN without producing a standard popup menu.
-        # Shift+F10 is the keyboard fallback; if it also fails the control is not
+        # Shift+F10 is the keyboard fallback; if it also fails, the control is not
         # exposing a context menu through any standard mechanism.
         Assert-Skip $g 'Context menu appears' 'No menu via right-click or Shift+F10 (custom owner-drawn control)'
         Send-Keys '{ESC}' 200
@@ -6612,7 +6612,7 @@ function New-OpsTestRoot {
     New-TestFile (Join-Path $Root 'stable\document_b.docx')      16384  -Seed 212
     New-TestFile (Join-Path $Root 'stable\report.xlsx')           8192  -Seed 213
 
-    # -- duplicates: two identical pairs (exercices Duplicate Files tab) -------
+    # -- duplicates: two identical pairs (exercises Duplicate Files tab) -------
     New-TestFile (Join-Path $Root 'duplicates\original\dup_pair1_src.bin')    8192  -Seed 221
     New-TestFile (Join-Path $Root 'duplicates\copies\dup_pair1_copy.bin')     8192  -Seed 221
     New-TestFile (Join-Path $Root 'duplicates\original\dup_pair2_src.dat')   16384  -Seed 222
@@ -7197,7 +7197,7 @@ function Test-RefreshAll {
 
     # -- CSV export validation: verify WinDirStat's scan data reflects expected state after refresh ---
     # Export the current scan results and confirm stable files are present while verifying
-    # the scan is coherent (WinDirStat actually rescanned, not just displaying stale data).
+    # the scan is coherent (WinDirStat actually rescanned and is not just displaying stale data).
     $refreshAllCsvPath = Join-Path $opsWorkRoot 'refresh-all-verify.csv'
     $exportedCsv = Invoke-CsvExportFromMenu -Window $script:win -OutPath $refreshAllCsvPath
     if ($exportedCsv -and (Test-Path -LiteralPath $exportedCsv)) {
@@ -7622,7 +7622,7 @@ function Test-RefreshSelected {
 
     # Export the refreshed model and compare the exact normalized path.  Merely
     # clicking a toolbar button proves no behavior; this is the end-to-end
-    # assertion that the newly-created sibling entered WinDirStat's model.
+    # assertion that the newly created sibling entered WinDirStat's model.
     $verifyCsv = Join-Path $WorkRoot 'refresh-selected.csv'
     $exportedCsv = Invoke-CsvExportFromMenu -Window $Window -OutPath $verifyCsv
     if (!$exportedCsv) {
@@ -9035,7 +9035,7 @@ function Test-StorageAnalytics {
             Start-Sleep -Milliseconds 400
         }
         catch {
-            # Fallback to BM_CLICK if UIA InvokePattern fails (known Win32 UIA hotkey issue)
+            # Fall back to BM_CLICK if UIA InvokePattern fails (known Win32 UIA hotkey issue)
             try {
                 $btnHwnd = [IntPtr]$recalcBtn.Current.NativeWindowHandle
                 if ($btnHwnd -ne [IntPtr]::Zero) {
@@ -9229,7 +9229,7 @@ function Test-LoadResults {
     Write-GroupHeader 'Load Results (CSV / JSON / BOM / incompatible duplicate export)'
     $g = 'LoadResults'
 
-    # Setup paths
+    # Set up paths
     $jsonPath = Join-Path $script:workRoot 'load-test.json'
     $jsonBomPath = Join-Path $script:workRoot 'load-test-bom.json'
     $csvPath = Join-Path $script:workRoot 'load-test.csv'
@@ -11462,7 +11462,7 @@ try {
     New-Item -ItemType Directory -Force -Path $workRoot, $runRoot | Out-Null
 
     # Auto-build the instrumented (/DWDS_SETTINGS_TEST) binary when possible.
-    # If a prebuilt one was supplied use it; if MSBuild is unavailable, skip the
+    # If a prebuilt one was supplied, use it; if MSBuild is unavailable, skip the
     # whole suite rather than fail (no opt-in switch required).
     if ($SettingsExePath) {
         $sourceExe = [System.IO.Path]::GetFullPath($SettingsExePath)
@@ -12452,7 +12452,7 @@ function Prepare-ScanFixtures {
         }
     }
 
-    # Symbolic links (requires SeCreateSymbolicLinkPrivilege).
+    # Symbolic links (require SeCreateSymbolicLinkPrivilege).
     try {
         New-Item -ItemType SymbolicLink `
             -Path   $info.Symlinks.FileLink `
@@ -12988,13 +12988,14 @@ function Write-TestIni {
     }
 
     try {
-# --- Setup Edge Cases Data ---
+# --- Set Up Edge Cases Data ---
 if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $workRoot, $runRoot | Out-Null
 Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
 
 $deepPath = $scanRoot
-# 15 deeper levels, Windows supports ~32k chars internally, but we can just make it around 300 chars to test typical MAX_PATH overflow.
+# 15 deeper levels. Windows supports ~32k chars internally, but we can just make it around
+# 300 chars to test typical MAX_PATH overflow.
 for ($i = 1; $i -le 15; $i++) {
     $deepPath = Join-Path $deepPath "DeepLevel_${i}_Folder"
 }
@@ -13393,7 +13394,7 @@ function Invoke-EnumerationSuite {
         if ($Info.Wof -and $map.Contains('wof.bin')) { $r = $map['wof.bin']
             Assert-That $g 'WOF: physical < logical' ([long] $r.'Physical Size' -lt [long] $r.'Logical Size') `
                 "physical $($r.'Physical Size'), logical $($r.'Logical Size')" "$($r.'Physical Size') < $($r.'Logical Size')"
-            # FinderBasic best-effort flags WOF files Compressed, but the WOF filter
+            # FinderBasic flags WOF files Compressed on a best-effort basis, but the WOF filter
             # usually masks IO_REPARSE_TAG_WOF from enumeration (the code even notes
             # this), so a missing 'C' is expected rather than a failure.
             if ($r.Attributes -match 'C') { Assert-Pass $g 'WOF file flagged Compressed (reparse tag surfaced)' }
@@ -13811,7 +13812,7 @@ function Invoke-UncSuite {
 #   - JSON output shape
 #
 # No elevation is required: the scan only READS DACLs (which owners can read) and
-# the ACEs are stamped on freshly-created, user-owned temp folders.
+# the ACEs are stamped on freshly created, user-owned temp folders.
 function Invoke-PermissionsSuite {
     $workRoot = Join-Path $BuildRoot 'permissions-test'
     $runRoot  = Join-Path $workRoot 'runner'
@@ -14456,7 +14457,7 @@ foreach ($suiteName in $toRun) {
     }
 }
 
-# -- Cleanup any leftover app instance ----------------------------------------
+# -- Clean up any leftover app instance ----------------------------------------
 try { Stop-App } catch {}
 
 # Remove the temp parent if every suite cleaned its own subdir (i.e. it's now empty).

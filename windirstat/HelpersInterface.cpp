@@ -579,7 +579,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     const LPVOID binaryData = LockResource(resourceData);
     if (!binaryData) return {};
 
-    // Setup global structure for cabinet callbacks
+    // Set up global structure for cabinet callbacks
     struct ExtractContext {
         std::span<BYTE> cabData;
         std::vector<BYTE> output;
@@ -666,7 +666,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
             { VK_OEM_PERIOD, L"."     }, { VK_TAB,      L"Tab"   }, { VK_RETURN,   L"Enter" }, { VK_SPACE,     L"Space" }
         };
 
-        // Load all accelerator object and get count
+        // Load all accelerator objects and get count
         const HACCEL hAccel = LoadAccelerators(GetAppInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
         const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
         if (count == 0) return wds::strEmpty;
@@ -675,8 +675,8 @@ std::wstring GetAcceleratorString(const UINT commandID)
         std::vector<ACCEL> accels(count);
         CopyAcceleratorTable(hAccel, accels.data(), count);
 
-        // Sort the accelerators to ensure numpad keys always at the end of the shortcut key hint to improve
-        // its readability and visual consistency, disregarding lines order in the accelerator table
+        // Sort the accelerators to ensure numpad keys are always at the end of the shortcut key hint to improve
+        // its readability and visual consistency, disregarding line order in the accelerator table
         std::ranges::sort(accels, [](const ACCEL& firstAccel, const ACCEL& secondAccel) {
             if (firstAccel.cmd != secondAccel.cmd) return firstAccel.cmd < secondAccel.cmd;
             auto isNumpadKey = [](const ACCEL& entry) { return (entry.key >= VK_MULTIPLY && entry.key <= VK_DIVIDE); };
@@ -730,7 +730,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
         }
     }
 
-    // Lookup the requested command ID in the cache
+    // Look up the requested command ID in the cache
     const auto cacheEntry = std::ranges::lower_bound(cache, commandID, {}, &std::pair<UINT, std::wstring>::first);
     return (cacheEntry != cache.end() && cacheEntry->first == commandID) ? cacheEntry->second : wds::strEmpty;
 }

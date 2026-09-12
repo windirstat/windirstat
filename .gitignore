@@ -8,7 +8,7 @@
 /enc_temp_folder/
 intermediate/
 
-# Files Masks
+# File Masks
 *.aps
 *.bin
 *.vcxproj.user

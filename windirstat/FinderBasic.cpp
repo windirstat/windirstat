@@ -129,7 +129,7 @@ bool FinderBasic::FindNext()
 
         // special case for reparse points on the initial run since it will
         // return the attributes on the destination folder and not the reparse
-        // point attributes itself that we want
+        // point's own attributes that we want
         if (firstRun)
         {
             // Use cached value passed in from previous capture
@@ -152,7 +152,7 @@ bool FinderBasic::FindNext()
             m_currentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ?
             m_currentInfo->ReparsePointTag : 0;
 
-        // Mark file as compressed WOF compressed - this does not always
+        // Mark WOF compressed file as compressed - this does not always
         // seem to be set with WOF compressed files
         if (m_reparseTag == IO_REPARSE_TAG_WOF)
         {

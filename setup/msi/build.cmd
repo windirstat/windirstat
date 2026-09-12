@@ -2,11 +2,11 @@
 TITLE Building WinDirStat Installer
 SETLOCAL ENABLEDELAYEDEXPANSION
 
-:: setup release type
+:: set up release type
 SET RELTYPE=BETA
 IF "%~1" EQU "PRODUCTION" SET RELTYPE=PRODUCTION
 
-:: setup environment variables based on location of this script
+:: set up environment variables based on location of this script
 CD /D "%~dp0"
 SET BLDDIR=..\..\build
 
@@ -66,7 +66,7 @@ FOR %%A IN (arm64 x86 x64) DO (
    )
 )
 
-:: cleanup temporary files
+:: clean up temporary files
 IF EXIST "%LICENSERTF%" DEL "%LICENSERTF%"
 IF EXIST "temp_wxl" RD /S /Q "temp_wxl"
 

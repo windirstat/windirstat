@@ -240,7 +240,7 @@ public:
     void DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
-    // Return value can be nullptr, iff point is outside root rect.
+    // Returns nullptr if the item or hit-test geometry is unavailable, or the point lies outside the item.
     CItem* FindItemByPoint(CItem* item, CPoint point) const;
 
     // Access and clear only geometry from the most recent treemap render.
@@ -261,7 +261,7 @@ protected:
         std::size_t stride;
     };
 
-    // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
+    // Returns true if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
@@ -349,7 +349,7 @@ protected:
 
 //
 // CTreeMapPreview. A child window, which demonstrates the options
-// with an own little demo tree.
+// with its own little demo tree.
 //
 class CTreeMapPreview final : public MessageTarget<CTreeMapPreview, CStatic>
 {

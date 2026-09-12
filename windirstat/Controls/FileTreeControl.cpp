@@ -81,7 +81,7 @@ void CFileTreeControl::SelectFirstItemByType(const ITEMTYPE itemType)
     const CItem* const itemSelected = GetFirstSelectedItem<CItem>();
     if (!itemSelected) return;
 
-    const ScopedRedrawPause lock(this); // Supress redraw until the end of the function
+    const ScopedRedrawPause lock(this); // Suppress redraw until the end of the function
     const CItem* const itemTarget = itemSelected->GetParent();
 
     const auto it = std::ranges::find_if(m_items, [&](const CWdsListItem* item) {

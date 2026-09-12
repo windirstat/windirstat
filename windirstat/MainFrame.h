@@ -215,7 +215,7 @@ public:
     bool m_scanSuspend = false;     // True if the scan has been suspended
     bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
-    ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count when m_progressRange == 0)
     CItem* m_workingItem = nullptr;
 
     CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Contains the two upper views

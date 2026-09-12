@@ -149,8 +149,8 @@ protected:
     //
     /////////////////////////////////////////////////////
 
-    int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
-    bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
+    int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if no item is hit.
+    bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True if plus-minus-rect is hit.
     LOGICAL_FOCUS m_logicalFocus = static_cast<LOGICAL_FOCUS>(0);
     bool m_blockFirstColumnReorder = false;
     CMenu m_contextMenu; // Keep the menu alive until its queued WM_MENUCOMMAND is dispatched.
