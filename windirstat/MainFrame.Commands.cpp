@@ -395,6 +395,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 {
     CFrameWnd::OnSize(nType, cx, cy);
     LayoutProgress();
+    LayoutWatcherFilter();
 }
 
 void CMainFrame::LayoutProgress()
@@ -648,7 +649,14 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
 
     if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
     m_wndToolBar.SetFont(GetAppFont(m_wndToolBar));
-    if (!rebuildButtons) { m_wndToolBar.SetButtonSize(buttonSize); m_wndToolBar.UpdateLayout(); return; }
+    m_watcherFilter.SetFont(GetAppFont(m_wndToolBar));
+    if (!rebuildButtons)
+    {
+        m_wndToolBar.SetButtonSize(buttonSize);
+        m_wndToolBar.UpdateLayout();
+        LayoutWatcherFilter();
+        return;
+    }
 
     // Remove all existing buttons
     m_wndToolBar.ClearButtons();
@@ -734,6 +742,7 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
         m_fileTabbedView->IsFileWatcherViewTabActive(), false);
 
     m_wndToolBar.UpdateLayout();
+    LayoutWatcherFilter();
 }
 
 void CMainFrame::SetWatcherToolBarButtons(const bool visible, const bool updateLayout)
@@ -751,6 +760,71 @@ void CMainFrame::SetWatcherToolBarButtons(const bool visible, const bool updateL
     // Recompute button locations and repaint; a size-only adjustment does
     // not refresh the layout when the docked toolbar extents are unchanged
     if (changed && updateLayout) m_wndToolBar.UpdateLayout();
+    LayoutWatcherFilter();
+}
+
+void CMainFrame::LayoutWatcherFilter()
+{
+    if (m_watcherFilter.Handle() == nullptr) return;
+
+    CRect button;
+    const bool active = m_wndToolBar.SendNativeMessage(TB_ISBUTTONHIDDEN, ID_WATCHER_CLEAR) == 0;
+    const bool hasButton = m_wndToolBar.GetButtonRect(m_wndToolBar.GetButtonIndex(ID_WATCHER_CLEAR), button);
+    CRect rect = m_wndToolBar.GetClientRect();
+    rect.Deflate(ScaleForToolBarDpi(4, m_wndToolBar), ScaleForToolBarDpi(2, m_wndToolBar));
+    rect.left = button.right + ScaleForToolBarDpi(6, m_wndToolBar);
+    rect.right = std::min<LONG>(rect.right, rect.left + ScaleForToolBarDpi(220, m_wndToolBar));
+    const bool visible = active && hasButton && rect.Height() > 0 &&
+        rect.Width() >= ScaleForToolBarDpi(80, m_wndToolBar);
+    if (!visible && m_watcherFilter.HasFocus()) m_fileTabbedView->FocusActiveTabContent();
+    m_watcherFilter.ShowWindow(visible ? SW_SHOWNA : SW_HIDE);
+    if (!visible) return;
+
+    CClientDC dc(&m_watcherFilter);
+    const GdiObjectSelection font(&dc, GetAppFont(m_wndToolBar));
+    const int height = std::min<int>(rect.Height(), dc.GetTextExtent(L"Ag").cy + ScaleForToolBarDpi(6, m_wndToolBar));
+    rect.top += (rect.Height() - height) / 2;
+    rect.bottom = rect.top + height;
+    m_watcherFilter.MoveWindow(rect);
+}
+
+void CWatcherFilterEdit::OnChange()
+{
+    auto* watcher = CFileWatcherControl::Get();
+    if (watcher == nullptr) return;
+
+    m_valid = watcher->SetQuickFilter(GetText());
+    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
+}
+
+void CWatcherFilterEdit::OnPaint()
+{
+    CallDefaultHandler();
+    const auto& message = CurrentMessage();
+    if (m_valid || (message.message == WM_PRINT && (message.lParam & PRF_NONCLIENT) == 0)) return;
+
+    CWindowDC windowDC(this);
+    auto dc = CDC::Borrow(message.message == WM_PRINT ? reinterpret_cast<HDC>(message.wParam) : windowDC.Handle());
+    CBrush border(RGB(220, 60, 60));
+    const auto size = GetWindowRect().Size();
+    dc.FrameRect(CRect(0, 0, size.cx, size.cy), &border);
+}
+
+bool CWatcherFilterEdit::PreprocessMessage(MSG* message)
+{
+    if (message == nullptr || message->message != WM_KEYDOWN) return false;
+    if (message->wParam == VK_ESCAPE) { SetText(L""); return true; }
+    if (message->wParam == VK_RETURN || message->wParam == VK_TAB)
+    {
+        CMainFrame::Get()->MoveFocus(LF_WATCHERLIST);
+        return true;
+    }
+    if (message->wParam == 'A' && IsKeyDown(VK_CONTROL)) { SetSel(0, -1); return true; }
+    if (IsKeyDown(VK_MENU)) return false;
+
+    TranslateMessage(message);
+    DispatchMessage(message);
+    return true;
 }
 
 void CMainFrame::OnWatcherStart()
@@ -802,7 +876,7 @@ void CMainFrame::OnWatcherClear()
 void CMainFrame::OnUpdateWatcherClear(CCmdUI* pCmdUI)
 {
     const auto* watcher = CFileWatcherControl::Get();
-    pCmdUI->Enable(watcher != nullptr && watcher->GetItemCount() > 0);
+    pCmdUI->Enable(watcher != nullptr && watcher->HasResults());
 }
 
 static constexpr auto sizePercents = std::to_array<int>({ 100, 125, 150, 175, 200, 0 });

@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Ismeretlen>
 IDS_USER_DEFINED_CLEANUP=Felhasználó által megadott takarítás
 IDS_USER_DEFINED_CLEANUPd=Felhasználói takarítás #{}
 IDS_VOLUME_MOUNT_POINTS=Felcsatolt meghajtó pontok
+IDS_WATCHER_FILTER=Útvonalszűrő
 IDS_WATCHER_VERBS=Létrehozva,Törölve,Módosítva,Átnevezve (Régi),Átnevezve (Új)
 IDS_WATCHER=Fájlfelügyelő
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Beállítások

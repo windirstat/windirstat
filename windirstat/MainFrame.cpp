@@ -530,6 +530,11 @@ int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     }
 
     m_wndToolBar.Create(this);
+    m_wndToolBar.ModifyStyle(0, WS_CLIPCHILDREN);
+    if (!m_watcherFilter.Create(WS_CHILD | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL,
+        CRect(), &m_wndToolBar, ID_WATCHER_FILTER)) return -1;
+    const auto filterHint = Localization::Lookup(IDS_WATCHER_FILTER);
+    m_watcherFilter.SendNativeMessage(EM_SETCUEBANNER, true, filterHint.c_str());
 
     // Save the unscaled default button size before any SetMetrics call
     m_defaultButtonSize = m_wndToolBar.GetButtonSize();

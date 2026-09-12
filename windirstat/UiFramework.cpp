@@ -543,6 +543,12 @@ void CSplitterWnd::OnPaint()
     if (m_bTrackerVisible) DrawTrackerRect(dc, m_rectTracker);
 }
 
+HBRUSH CToolBar::OnCtlColor(CDC* dc, CWnd* control, const UINT type)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(dc, type);
+    return brush != nullptr ? brush : CWnd::OnCtlColor(dc, control, type);
+}
+
 void CToolBar::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
 {
     switch (auto* customDraw = reinterpret_cast<LPNMTBCUSTOMDRAW>(pNMHDR); customDraw->nmcd.dwDrawStage)

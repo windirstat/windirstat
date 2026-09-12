@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Ukjent>
 IDS_USER_DEFINED_CLEANUP=Egendefinert opprydding
 IDS_USER_DEFINED_CLEANUPd=Egendefinert opprydding #{}
 IDS_VOLUME_MOUNT_POINTS=Monterte volum
+IDS_WATCHER_FILTER=Banefilter
 IDS_WATCHER_VERBS=Opprettet,Slettet,Endret,Omdøpt (Gammel),Omdøpt (Ny)
 IDS_WATCHER=Filovervåking
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Innstillinger

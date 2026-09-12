@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Bilinmeyen>
 IDS_USER_DEFINED_CLEANUP=Özel Temizlik
 IDS_USER_DEFINED_CLEANUPd=Özel Temizlik #{}
 IDS_VOLUME_MOUNT_POINTS=Birim Bağlantı Noktaları
+IDS_WATCHER_FILTER=Yol filtresi
 IDS_WATCHER_VERBS=Oluşturuldu,Silindi,Değiştirildi,Yeniden adlandırıldı (Eski),Yeniden adlandırıldı (Yeni)
 IDS_WATCHER=Dosya izleyici
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Ayarlar

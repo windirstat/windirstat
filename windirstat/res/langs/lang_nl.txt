@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Onbekend>
 IDS_USER_DEFINED_CLEANUP=Aangepaste opschoonbewerking
 IDS_USER_DEFINED_CLEANUPd=Aangepaste opschoonbewerking #{}
 IDS_VOLUME_MOUNT_POINTS=Volume mount-punten
+IDS_WATCHER_FILTER=Padfilter
 IDS_WATCHER_VERBS=Aangemaakt,Verwijderd,Gewijzigd,Hernoemd (Oud),Hernoemd (Nieuw)
 IDS_WATCHER=Bestandsbewaking
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Instellingen

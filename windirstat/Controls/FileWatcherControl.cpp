@@ -22,7 +22,6 @@
 CFileWatcherControl::CFileWatcherControl()
     : MessageTarget(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), COptions::WatcherColumnVisibility.Ptr(), LF_WATCHERLIST, false)
 {
-    SetOwnsItems(true);
     m_singleton = this;
 }
 
@@ -36,8 +35,7 @@ CFileWatcherControl::~CFileWatcherControl()
 void CFileWatcherControl::OnDestroy()
 {
     StopMonitoring();
-    ClearPendingItems();
-    DeleteAllItems();
+    ClearResults();
 
     CWdsListControl::OnDestroy();
 }
@@ -153,7 +151,47 @@ void CFileWatcherControl::ClearResults()
 {
     ClearPendingItems();
     DeleteAllItems();
+    m_history.clear();
     Invalidate();
+}
+
+bool CFileWatcherControl::SetQuickFilter(const std::wstring& pattern)
+{
+    std::optional<std::wregex> filter;
+    std::vector<CWdsListItem*> items;
+    items.reserve(m_history.size());
+    try
+    {
+        if (!pattern.empty()) filter.emplace(pattern, std::regex::icase | std::regex::optimize);
+        for (const auto& item : m_history)
+        {
+            if (!filter || std::regex_search(item->GetLinkedItem()->GetPath(), *filter)) items.push_back(item.get());
+        }
+    }
+    catch (const std::regex_error&)
+    {
+        return false;
+    }
+
+    const ScopedRedrawPause lock(this);
+    const auto* selected = GetFirstSelectedItem();
+    m_quickFilter = std::move(filter);
+    DeleteAllItems();
+    for (const auto& item : m_history) if (item->IsVisible()) item->SetVisible(this, false);
+    for (auto* item : items) static_cast<CWatcherItem*>(item)->SetVisible(this, true);
+    InsertSortedListItems(items);
+
+    if (selected != nullptr && FindTreeItem(selected) != -1)
+    {
+        SelectItem(selected, false, true, true);
+    }
+    else if (COptions::WatcherAutoScroll && !items.empty())
+    {
+        EnsureItemVisible(static_cast<CTreeListItem*>(items.back()));
+    }
+    PostSelectionChanged();
+    Invalidate();
+    return true;
 }
 
 void CFileWatcherControl::ClearPendingItems()
@@ -171,8 +209,17 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
     std::vector<CWdsListItem*> items;
     items.reserve(maxBatchSize);
     CWatcherItem* item = nullptr;
-    while (items.size() < maxBatchSize && m_pendingItems.pop(item))
+    for (std::size_t count = 0; count < maxBatchSize && m_pendingItems.pop(item); ++count)
     {
+        m_history.emplace_back(item);
+        try
+        {
+            if (m_quickFilter && !std::regex_search(item->GetLinkedItem()->GetPath(), *m_quickFilter)) continue;
+        }
+        catch (const std::regex_error&)
+        {
+            continue;
+        }
         item->SetVisible(this, true);
         items.push_back(item);
     }

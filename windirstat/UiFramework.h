@@ -3136,11 +3136,13 @@ public:
         {
             Route::ReflectNotify<&OnCustomDraw>(NM_CUSTOMDRAW),
             Route::ReflectNotify<&OnGetInfoTip>(TBN_GETINFOTIPW),
+            Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         };
         return entries;
     }
 
 private:
+    HBRUSH OnCtlColor(CDC* dc, CWnd* control, UINT type);
     void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const;
     void OnGetInfoTip(NMHDR* pNMHDR, LRESULT* pResult)
     {

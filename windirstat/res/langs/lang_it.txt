@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Sconosciuto>
 IDS_USER_DEFINED_CLEANUP=Pulizia definita dall'utente
 IDS_USER_DEFINED_CLEANUPd=Pulizia n.{} definita dall'utente
 IDS_VOLUME_MOUNT_POINTS=Punti montaggio volume
+IDS_WATCHER_FILTER=Filtro percorso
 IDS_WATCHER_VERBS=Creato,Eliminato,Modificato,Rinominato (vecchio),Rinominato (nuovo)
 IDS_WATCHER=Monitor file
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Impostazioni

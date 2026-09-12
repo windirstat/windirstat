@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Unknown>
 IDS_USER_DEFINED_CLEANUP=Custom Cleanup
 IDS_USER_DEFINED_CLEANUPd=Custom Cleanup #{}
 IDS_VOLUME_MOUNT_POINTS=Volume Mount Points
+IDS_WATCHER_FILTER=Path filter
 IDS_WATCHER_VERBS=Created,Deleted,Modified,Renamed (Old),Renamed (New)
 IDS_WATCHER=File Watcher
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Settings

@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Невідомий>
 IDS_USER_DEFINED_CLEANUP=Користувацьке очищення 
 IDS_USER_DEFINED_CLEANUPd=Вибіркове очищення #{}
 IDS_VOLUME_MOUNT_POINTS=Точки монтування тома
+IDS_WATCHER_FILTER=Фільтр шляху
 IDS_WATCHER_VERBS=Створено,Видалено,Змінено,Перейменовано (Старе),Перейменовано (Нове)
 IDS_WATCHER=Спостереження за файлами
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Налаштування

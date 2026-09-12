@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<غير معروف>
 IDS_USER_DEFINED_CLEANUP=تنظيف مخصص من المستخدم
 IDS_USER_DEFINED_CLEANUPd=تنظيف مخصص #{}
 IDS_VOLUME_MOUNT_POINTS=نقاط تحميل وحدة التخزين
+IDS_WATCHER_FILTER=عامل تصفية المسار
 IDS_WATCHER_VERBS=تم إنشاؤه,تم حذفه,تم تعديله,أعيدت تسميته (القديم),أعيدت تسميته (الجديد)
 IDS_WATCHER=مراقبة الملفات
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - الإعدادات

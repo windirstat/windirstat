@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<알 수 없음>
 IDS_USER_DEFINED_CLEANUP=사용자 지정 정리
 IDS_USER_DEFINED_CLEANUPd=사용자 지정 정리 #{}
 IDS_VOLUME_MOUNT_POINTS=볼륨 마운트 지점
+IDS_WATCHER_FILTER=경로 필터
 IDS_WATCHER_VERBS=생성됨,삭제됨,수정됨,이름 변경됨 (이전),이름 변경됨 (새)
 IDS_WATCHER=파일 감시
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - 설정

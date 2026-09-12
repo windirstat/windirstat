@@ -69,7 +69,7 @@ void CWinDirStatModel::ClearScanState()
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
-    if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->DeleteAllItems();
+    if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->ClearResults();
     if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->DeleteAllItems();
 
     // Clean up structures

@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Neznámé>
 IDS_USER_DEFINED_CLEANUP=Uživatelský čisticí nástroj
 IDS_USER_DEFINED_CLEANUPd=Uživatelský čisticí nástroj #{}
 IDS_VOLUME_MOUNT_POINTS=Přípojné body svazků
+IDS_WATCHER_FILTER=Filtr cesty
 IDS_WATCHER_VERBS=Vytvořeno,Smazáno,Změněno,Přejmenováno (Původní),Přejmenováno (Nové)
 IDS_WATCHER=Sledování souborů
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - nastavení

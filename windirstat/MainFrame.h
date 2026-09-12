@@ -139,6 +139,18 @@ protected:
     bool OnEraseBkgnd(CDC* pDC);
 };
 
+class CWatcherFilterEdit final : public MessageTarget<CWatcherFilterEdit, CEdit>
+{
+public:
+    bool PreprocessMessage(MSG* message) override;
+    static std::span<const RouteEntry> Routes();
+
+private:
+    void OnChange();
+    void OnPaint();
+    bool m_valid = true;
+};
+
 //
 // CMainFrame. The main application window.
 //
@@ -224,6 +236,7 @@ public:
 
     CStatusBar m_wndStatusBar; // Status bar
     CToolBar m_wndToolBar;     // Toolbar
+    CWatcherFilterEdit m_watcherFilter;
     CSize m_defaultButtonSize;  // Toolbar button size at creation, before DPI and size scaling
     int m_watcherAutoScrollOnImage = -1;
     int m_watcherAutoScrollOffImage = -1;
@@ -327,6 +340,7 @@ public:
     bool CreateFromResource(UINT nIDResource) override;
 
 private:
+    void LayoutWatcherFilter();
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
     void BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hVisualization);
     void ConfigureSplitterCallbacks(int topo, int perm);
@@ -358,6 +372,18 @@ inline std::span<const RouteEntry> CPacmanControl::Routes()
         Route::Window<&OnPaint>(WM_PAINT),
         Route::Window<&OnCreate>(WM_CREATE),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CWatcherFilterEdit::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::ReflectControl<&OnChange>(EN_CHANGE),
+        Route::Window<&OnPaint>(WM_NCPAINT),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnPaint>(WM_PRINT),
     };
     return entries;
 }

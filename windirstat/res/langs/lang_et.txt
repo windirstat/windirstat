@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Tundmatu>
 IDS_USER_DEFINED_CLEANUP=Kasutaja määratud puhastus
 IDS_USER_DEFINED_CLEANUPd=Kasutaja määratud puhastus #{}
 IDS_VOLUME_MOUNT_POINTS=Mahu monteerimispunktid
+IDS_WATCHER_FILTER=Teefilter
 IDS_WATCHER_VERBS=Loodud,Kustutatud,Muudetud,Ümber nimetatud (Vana),Ümber nimetatud (Uus)
 IDS_WATCHER=Failijälgija
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Seaded

@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Neznano>
 IDS_USER_DEFINED_CLEANUP=Počiščenje po meri
 IDS_USER_DEFINED_CLEANUPd=Počiščenje po meri #{}
 IDS_VOLUME_MOUNT_POINTS=Priklopne točke nosilcev
+IDS_WATCHER_FILTER=Filter poti
 IDS_WATCHER_VERBS=Ustvarjeno,Izbrisano,Spremenjeno,Preimenovano (Staro),Preimenovano (Novo)
 IDS_WATCHER=Nadzor datotek
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Nastavitve

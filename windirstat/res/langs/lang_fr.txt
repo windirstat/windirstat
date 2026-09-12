@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<inconnu>
 IDS_USER_DEFINED_CLEANUP=Nettoyage utilisateur
 IDS_USER_DEFINED_CLEANUPd=Nettoyage personnalisé #{}
 IDS_VOLUME_MOUNT_POINTS=Points de montage de volume
+IDS_WATCHER_FILTER=Filtre de chemin
 IDS_WATCHER_VERBS=Créé,Supprimé,Modifié,Renommé (Ancien),Renommé (Nouveau)
 IDS_WATCHER=Surveillance des fichiers
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Paramètres

@@ -320,6 +320,7 @@ IDS_UNKNOWN_ITEM=<Tuntematon>
 IDS_USER_DEFINED_CLEANUP=Käyttäjän oma toiminto
 IDS_USER_DEFINED_CLEANUPd=Käyttäjän oma toiminto #{}
 IDS_VOLUME_MOUNT_POINTS=Volyymien liitoskohdat
+IDS_WATCHER_FILTER=Polkusuodatin
 IDS_WATCHER_VERBS=Luotu,Poistettu,Muokattu,Uudelleennimetty (Vanha),Uudelleennimetty (Uusi)
 IDS_WATCHER=Tiedostovalvonta
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - Asetukset
