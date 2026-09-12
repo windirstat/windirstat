@@ -32,6 +32,7 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
 class CItemDupe final : public CTreeListItem
 {
     std::wstring m_hashString;
+    bool m_sampled = false;
     mutable std::wstring m_caption;
     mutable bool m_captionDirty = true;
     std::vector<CItemDupe*> m_children;
@@ -46,7 +47,7 @@ public:
     CItemDupe& operator=(const CItemDupe&) = delete;
     CItemDupe& operator=(CItemDupe&&) = delete;
     CItemDupe() = default;
-    CItemDupe(const std::vector<BYTE> & hash);
+    CItemDupe(const std::vector<BYTE> & hash, bool sampled = false);
     CItemDupe(CItem* item);
     ~CItemDupe() override;
 
@@ -60,6 +61,7 @@ public:
     CItem* GetLinkedItem() noexcept override { return m_item; }
 
     std::wstring GetHash() const { return m_hashString; }
+    bool IsSampled() const { return m_sampled; }
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const { return m_children; }
     void AddDupeItemChild(CItemDupe* child);

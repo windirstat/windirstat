@@ -275,6 +275,7 @@ public:
     inline static Setting<int> LanguageId{ OptionsGeneral, L"LanguageId", 0 };
     inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority", NORMAL, LOW, HIGH };
     inline static Setting<int> FileHashAlgorithm{ OptionsGeneral, L"FileHashAlgorithm", HASH_XXHASH, HASH_MD5, HASH_XXHASH };
+    inline static Setting<bool> SampleLargeFiles{ OptionsGeneral, L"SampleLargeFiles", false };
     inline static Setting<int> LargeFileCount{ OptionsGeneral, L"LargeFileCount", 50, 0, 10000 };
     inline static Setting<int> MinimizeViewThreshold{ OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000 };
     inline static Setting<int> ScanningThreads{ OptionsGeneral, L"ScanningThreads", 4, 1, 16 };

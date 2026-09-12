@@ -266,7 +266,7 @@ public:
     CItem* FindHardlinksIndexItem() const;
     void RemoveHardlinksItem();
     void DoHardlinkAdjustment();
-    std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
+    std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue, bool sampled);
 
     ITEMTYPE GetItemType() const noexcept { return m_type & IT_MASK; }
     ITEMTYPE GetRawType() const noexcept { return m_type; }

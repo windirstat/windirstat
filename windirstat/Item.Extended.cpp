@@ -951,7 +951,7 @@ void CItem::DoHardlinkAdjustment()
     hardlinksItem->UpwardSetUndone();
 }
 
-std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
+std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue, const bool sampled)
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
@@ -1013,17 +1013,32 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
     }
     else if ((hFile = CreateFile(GetPathLong().c_str(), GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE) return {};
+        FILE_FLAG_BACKUP_SEMANTICS | (sampled ? FILE_FLAG_RANDOM_ACCESS : FILE_FLAG_SEQUENTIAL_SCAN),
+        nullptr)) == INVALID_HANDLE_VALUE) return {};
 
     // Hash data one read at a time
     HRESULT iReadResult = E_FAIL;
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
     ULONGLONG totalBytesHashed = 0;
+    const ULONGLONG bytesToHash = sampled ? 4ull * wds::Mi : hashSizeLimit;
 
-    while (SUCCEEDED(iReadResult = ReadFileContent(hFile, fileStream, fileBuffer.data(), static_cast<DWORD>(
-        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())), &iReadBytes)) && iReadBytes > 0)
+    while (totalBytesHashed < bytesToHash)
     {
+        std::optional<ULONGLONG> offset;
+        auto bytesToRead = std::min<ULONGLONG>(bytesToHash - totalBytesHashed, fileBuffer.size());
+        if (sampled)
+        {
+            // Include the entire prefix and three evenly spaced blocks, ending at EOF.
+            const auto span = GetSizeLogical() - wds::Mi;
+            const auto block = totalBytesHashed / wds::Mi;
+            const auto withinBlock = totalBytesHashed % wds::Mi;
+            offset = span / 3 * block + span % 3 * block / 3 + withinBlock;
+            bytesToRead = std::min<ULONGLONG>(bytesToRead, wds::Mi - withinBlock);
+        }
+        if (FAILED(iReadResult = ReadFileContent(hFile, fileStream, fileBuffer.data(),
+            static_cast<DWORD>(bytesToRead), &iReadBytes, offset)) || iReadBytes == 0) break;
+
         UpwardDrivePacman();
 
         // Hash the data
@@ -1036,10 +1051,12 @@ std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueu
 
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
-        if (totalBytesHashed >= hashSizeLimit || iReadResult == S_FALSE) break;
+        if (totalBytesHashed >= bytesToHash || iReadResult == S_FALSE) break;
 
         queue->WaitIfSuspended();
     }
+
+    if (sampled && totalBytesHashed != bytesToHash) iReadResult = HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
 
     // Complete the hashing process and check on errors.
     if (useXxHash)

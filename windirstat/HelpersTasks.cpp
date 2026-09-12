@@ -714,12 +714,20 @@ HRESULT OpenMtpStream(const CItem* item, CComPtr<IStream>& stream)
     return shellItem->BindToHandler(bindContext, BHID_Stream, IID_PPV_ARGS(&stream));
 }
 
-HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, const ULONG size, ULONG* bytesRead)
+HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, const ULONG size, ULONG* bytesRead,
+    const std::optional<ULONGLONG> offset)
 {
     // Use native reads for filesystem handles and serialize reads from shell-backed streams
-    if (!stream) return ReadFile(file, buffer, size, bytesRead, nullptr) ? S_OK :
-        HRESULT_FROM_WIN32(GetLastError());
+    const LARGE_INTEGER position{ .QuadPart = static_cast<LONGLONG>(offset.value_or(0)) };
+    if (!stream)
+    {
+        if (offset && !SetFilePointerEx(file, position, nullptr, FILE_BEGIN))
+            return HRESULT_FROM_WIN32(GetLastError());
+        return ReadFile(file, buffer, size, bytesRead, nullptr) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+    }
     const std::scoped_lock lock(mtpStreamMutex);
+    if (offset)
+        if (const HRESULT result = stream->Seek(position, STREAM_SEEK_SET, nullptr); FAILED(result)) return result;
     return stream->Read(buffer, size, bytesRead);
 }
 

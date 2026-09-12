@@ -117,7 +117,8 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 // File hashing
 class CItem;
 HRESULT OpenMtpStream(const CItem* item, CComPtr<IStream>& stream);
-HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, ULONG size, ULONG* bytesRead);
+HRESULT ReadFileContent(HANDLE file, IStream* stream, void* buffer, ULONG size, ULONG* bytesRead,
+    std::optional<ULONGLONG> offset = std::nullopt);
 std::wstring ComputeFileHashes(const CItem* item, CProgressDlg* pProgressDlg);
 
 // Process priority and VHD optimization

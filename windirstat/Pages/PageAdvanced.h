@@ -55,6 +55,7 @@ inline std::span<const RouteEntry> CPageAdvanced::Routes()
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_PROTECTED_DIRECTORY),
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_COMBO_THREADS),
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_HASH_ALGORITHM),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SAMPLE_LARGE_FILES),
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_PROCESS_PRIORITY),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_VOLUME_MOUNT_POINTS),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_EXCLUDE_JUNCTIONS),

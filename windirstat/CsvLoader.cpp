@@ -582,19 +582,19 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner);
 }
 
-static std::vector<std::tuple<std::wstring, const CItem*>>
+static std::vector<std::tuple<std::wstring, const CItem*, bool>>
     CollectAndSortDupes(const CItemDupe* rootDupe)
 {
-    std::vector<std::tuple<std::wstring, const CItem*>> dupeItems;
+    std::vector<std::tuple<std::wstring, const CItem*, bool>> dupeItems;
     for (const auto& dupeGroup : rootDupe->GetChildren())
         for (const auto& dupeFile : dupeGroup->GetChildren())
             if (const auto* dupeItem = dupeFile->GetLinkedItem(); dupeItem != nullptr)
-                dupeItems.emplace_back(dupeGroup->GetHash(), dupeItem);
+                dupeItems.emplace_back(dupeGroup->GetHash(), dupeItem, dupeGroup->IsSampled());
 
     std::ranges::sort(dupeItems, [](const auto& a, const auto& b)
     {
-        const auto& [hashA, itemA] = a;
-        const auto& [hashB, itemB] = b;
+        const auto& [hashA, itemA, sampledA] = a;
+        const auto& [hashB, itemB, sampledB] = b;
         const auto sizeA = itemA->GetSizeLogical();
         const auto sizeB = itemB->GetSizeLogical();
         if (sizeA != sizeB) return sizeA > sizeB;
@@ -605,21 +605,22 @@ static std::vector<std::tuple<std::wstring, const CItem*>>
 }
 
 static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
-    const std::vector<std::tuple<std::wstring, const CItem*>>& dupeItems)
+    const std::vector<std::tuple<std::wstring, const CItem*, bool>>& dupeItems)
 {
     for (const auto [i, col] : std::views::enumerate(cols))
         outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
     outf << "\r\n";
 
-    for (const auto& [hash, linkedItem] : dupeItems)
+    for (const auto& [hash, linkedItem, sampled] : dupeItems)
     {
-        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},{}\r\n",
+        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},{},{}\r\n",
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),
             linkedItem->GetSizePhysicalRaw(),
             ToTimePoint(linkedItem->GetLastChange()),
-            QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())));
+            QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())),
+            sampled);
     }
     return outf.good();
 }
@@ -628,19 +629,20 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
 
 static bool SaveDuplicatesJson(std::ofstream& outf,
     const std::vector<std::wstring>& cols,
-    const std::vector<std::tuple<std::wstring, const CItem*>>& dupeItems)
+    const std::vector<std::tuple<std::wstring, const CItem*, bool>>& dupeItems)
 {
-    // cols order: HASH, NAME, SIZE_LOGICAL, SIZE_PHYSICAL, LAST_CHANGE, ATTRIBUTES
+    // cols order: HASH, NAME, SIZE_LOGICAL, SIZE_PHYSICAL, LAST_CHANGE, ATTRIBUTES, SAMPLED_HASH
     const auto jHash      = JsonQuoteW(cols[0]);
     const auto jName      = JsonQuoteW(cols[1]);
     const auto jSizeLog   = JsonQuoteW(cols[2]);
     const auto jSizePhys  = JsonQuoteW(cols[3]);
     const auto jLastChg   = JsonQuoteW(cols[4]);
     const auto jAttr      = JsonQuoteW(cols[5]);
+    const auto jSampled   = JsonQuoteW(cols[6]);
 
     outf << "[\r\n";
     bool first = true;
-    for (const auto& [hash, item] : dupeItems)
+    for (const auto& [hash, item, sampled] : dupeItems)
     {
         if (!first) outf << ",\r\n";
         first = false;
@@ -650,7 +652,8 @@ static bool SaveDuplicatesJson(std::ofstream& outf,
         outf << "  " << jSizeLog  << ": " << item->GetSizeLogical() << ",\r\n";
         outf << "  " << jSizePhys << ": " << item->GetSizePhysicalRaw() << ",\r\n";
         outf << "  " << jLastChg  << ": " << JsonQuote(ToTimePoint(item->GetLastChange())) << ",\r\n";
-        outf << "  " << jAttr     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << "\r\n";
+        outf << "  " << jAttr     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << ",\r\n";
+        outf << "  " << jSampled  << ": " << (sampled ? "true" : "false") << "\r\n";
         outf << "}";
     }
     outf << "\r\n]\r\n";
@@ -672,7 +675,8 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
         Localization::Lookup(IDS_COL_SIZE_LOGICAL),
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_LAST_CHANGE),
-        Localization::Lookup(IDS_COL_ATTRIBUTES)
+        Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::Lookup(IDS_COL_SAMPLED_HASH)
     };
 
     const auto dupeItems = CollectAndSortDupes(rootDupe);

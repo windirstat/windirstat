@@ -39,6 +39,7 @@ void CPageAdvanced::InitializePage()
     SetChecked(IDC_EXCLUDE_HIDDEN_FILE, COptions::ExcludeHiddenFile);
     SetChecked(IDC_EXCLUDE_PROTECTED_FILE, COptions::ExcludeProtectedFile);
     SetChecked(IDC_PROCESS_HARDLINKS, COptions::ProcessHardlinks);
+    SetChecked(IDC_SAMPLE_LARGE_FILES, COptions::SampleLargeFiles);
 
     SetComboSelection(IDC_HASH_ALGORITHM, COptions::FileHashAlgorithm);
     SetComboSelection(IDC_PROCESS_PRIORITY, COptions::ProcessPriority);
@@ -60,6 +61,7 @@ void CPageAdvanced::OnOK()
     const bool skipProtectedFile = IsChecked(IDC_EXCLUDE_PROTECTED_FILE);
     const bool processHardlinks = IsChecked(IDC_PROCESS_HARDLINKS);
     const int fileHashAlgorithm = GetComboSelection(IDC_HASH_ALGORITHM);
+    const bool sampleLargeFiles = IsChecked(IDC_SAMPLE_LARGE_FILES);
 
     const bool refreshReparsepoints =
         COptions::ExcludeJunctions != excludeJunctions ||
@@ -71,7 +73,8 @@ void CPageAdvanced::OnOK()
         COptions::ExcludeHiddenFile != skipHiddenFile ||
         COptions::ExcludeProtectedFile != skipProtectedFile ||
         COptions::ProcessHardlinks != processHardlinks ||
-        (COptions::ScanForDuplicates && COptions::FileHashAlgorithm != fileHashAlgorithm);
+        (COptions::ScanForDuplicates && (COptions::FileHashAlgorithm != fileHashAlgorithm ||
+            COptions::SampleLargeFiles != sampleLargeFiles));
 
     COptions::ExcludeVolumeMountPoints = excludeVolumeMountPoints;
     COptions::ExcludeJunctions = excludeJunctions;
@@ -85,6 +88,7 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeProtectedFile = skipProtectedFile;
     COptions::ProcessHardlinks = processHardlinks;
     COptions::FileHashAlgorithm = fileHashAlgorithm;
+    COptions::SampleLargeFiles = sampleLargeFiles;
     COptions::ProcessPriority = GetComboSelection(IDC_PROCESS_PRIORITY);
 
     COptions::ScanningThreads = GetComboSelection(IDC_COMBO_THREADS) + 1;

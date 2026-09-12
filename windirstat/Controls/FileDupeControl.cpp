@@ -70,6 +70,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         m_pendingHashes.pop_back();
         const ITEMTYPE hashLevel = hashLevels[level];
         const auto size = itemToHash->GetSizeLogical();
+        const bool sampled = m_sampleLargeFiles && hashLevel == ITHASH_LARGE && size > 64ull * wds::Mi;
         const size_t maxHashLevel = size <= HashThreshold(ITHASH_SMALL) ? 0 :
             size <= HashThreshold(ITHASH_MEDIUM) ? 1 : 2;
 
@@ -80,7 +81,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         // Compute the hash for the file
         lock.unlock();
         std::vector<BYTE> hash;
-        try { hash = itemToHash->GetFileHash(HashThreshold(hashLevel), queue); }
+        try { hash = itemToHash->GetFileHash(HashThreshold(hashLevel), queue, sampled); }
         catch (...)
         {
             lock.lock();
@@ -119,7 +120,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         if (dupeParent == nullptr)
         {
             // Create new root item to hold these duplicates
-            dupeParent = new CItemDupe(key.second);
+            dupeParent = new CItemDupe(key.second, sampled);
             m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
         }
 
@@ -267,6 +268,9 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
 void CFileDupeControl::AfterDeleteAllItems()
 {
+    // Snapshot the mode before new scan workers start.
+    m_sampleLargeFiles = COptions::SampleLargeFiles;
+
     // Reset duplicate warning
     m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 

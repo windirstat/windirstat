@@ -19,8 +19,8 @@
 #include "ItemDupe.h"
 #include "FileDupeControl.h"
 
-CItemDupe::CItemDupe(const std::vector<BYTE>& hash) :
-    m_hashString(FormatHex(hash, false))
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash, const bool sampled) :
+    m_hashString(FormatHex(hash, false)), m_sampled(sampled)
 {
 }
 
@@ -153,6 +153,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
 
     // Format string as Hash (.exta, .extb)
     m_caption = m_hashString + L" (" + extensions + L")";
+    if (m_sampled) m_caption = Localization::Lookup(IDS_PROBABLE_DUPLICATES) + L": " + m_caption;
     m_captionDirty = false;
     return m_caption;
 }

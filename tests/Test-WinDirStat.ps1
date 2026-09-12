@@ -10653,7 +10653,7 @@ function Add-SettingsTestHarness {
     $dumpFields = @(
         'AutomaticallyResizeColumns', 'AutoMapDrivesWhenElevated', 'ExcludeJunctions', 'ExcludeSymbolicLinksDirectory', 'ExcludeVolumeMountPoints', 'ExcludeHiddenDirectory', 'ExcludeProtectedDirectory', 'ExcludeSymbolicLinksFile'
         'ExcludeHiddenFile', 'ExcludeProtectedFile', 'FilteringUseRegex', 'FollowVolumeMountPoints', 'UseSizeSuffixes', 'ListFullRowSelection', 'ListGrid', 'ListStripes', 'PacmanAnimation', 'ScanForDuplicates'
-        'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults',
+        'SampleLargeFiles', 'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults',
         'ShowDeletePermanentlyWarning', 'ShowDeleteToRecycleBinWarning', 'ShowElevationPrompt',
         'ShowEmptyRecycleBinPrompt', 'ShowCreateHardlinkPrompt', 'ShowRemoveMotwPrompt',
         'ShowDisableHibernatePrompt', 'ShowRemoveShadowCopiesPrompt', 'ShowDismCleanupPrompt',
@@ -11349,6 +11349,7 @@ $settingCases = @(
     New-SettingCase @('ExcludeHiddenFile', 'ExcludeProtectedFile', 'FollowVolumeMountPoints') -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase UseSizeSuffixes -ExplicitInput 0
     New-SettingCase ScanForDuplicates -Section DupeView -Default $false -ExplicitInput 1 -ExplicitExpected $true
+    New-SettingCase SampleLargeFiles -Default $false -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase SearchMaxResults -Section SearchView -Default $script:SettingsDefaultSearchMaxResults -ExplicitInput 321 -ExplicitExpected 321 -Minimum $script:SettingsMinSearchMaxResults -Maximum $script:SettingsMaxSearchResults -HighInput $script:SettingsSearchHighOutOfRangeValue -BoundsOrder 9
     New-SettingCase @(
         'ShowDeletePermanentlyWarning', 'ShowDeleteToRecycleBinWarning', 'ShowElevationPrompt'
@@ -12090,6 +12091,110 @@ try {
         }
     }))
 
+    [void] $results.Add((Invoke-Scenario -Name 'Duplicates_SampledLargeFiles' `
+        -Behavior 'Sampling accepts changes between samples and fully hashes files up to 64 MiB.' -Body {
+        param($ctx)
+
+        $sampleRoot = Join-Path $workRoot 'sampled-dupes'
+        New-Item -ItemType Directory -Force -Path $sampleRoot | Out-Null
+        $largeSize = 65MB + 7
+        $sampleSpan = $largeSize - 1MB
+        $sampleHashes = @{}
+        $fixtures = @(
+            @{ Name = 'large-a.bin'; Size = $largeSize; Change = -1 }
+            @{ Name = 'large-b.bin'; Size = $largeSize; Change = -1 }
+            @{ Name = 'large-gap.bin'; Size = $largeSize; Change = 2MB }
+            @{ Name = 'large-prefix-a.bin'; Size = $largeSize; Change = 4KB }
+            @{ Name = 'large-prefix-b.bin'; Size = $largeSize; Change = 4KB }
+            @{ Name = 'large-second.bin'; Size = $largeSize; Change = [math]::Floor($sampleSpan / 3) }
+            @{ Name = 'large-third.bin'; Size = $largeSize; Change = [math]::Floor(2 * $sampleSpan / 3) }
+            @{ Name = 'large-last.bin'; Size = $largeSize; Change = $largeSize - 1 }
+            @{ Name = 'boundary-a.bin'; Size = 64MB; Change = -1 }
+            @{ Name = 'boundary-b.bin'; Size = 64MB; Change = 2MB }
+            @{ Name = 'boundary-c.bin'; Size = 64MB; Change = -1 }
+        )
+        foreach ($fixture in $fixtures) {
+            $stream = [System.IO.File]::Create((Join-Path $sampleRoot $fixture.Name))
+            try {
+                $stream.SetLength($fixture.Size)
+                if ($fixture.Change -ge 0) {
+                    $stream.Position = $fixture.Change
+                    $stream.WriteByte(1)
+                }
+                if ($fixture.Size -gt 64MB) {
+                    $samples = [byte[]]::new(4MB)
+                    for ($block = 0; $block -lt 4; $block++) {
+                        $stream.Position = [math]::Floor(($fixture.Size - 1MB) * $block / 3)
+                        $stream.ReadExactly($samples, $block * 1MB, 1MB)
+                    }
+                    $digest = [System.Security.Cryptography.SHA256]::HashData($samples)
+                    $sampleHashes[$fixture.Name] = [Convert]::ToHexString($digest).ToLowerInvariant().Substring(
+                        0, $script:DuplicateHashPrefixHexChars)
+                }
+            }
+            finally { $stream.Dispose() }
+        }
+
+        $elapsed = 0.0
+        $lastCommand = ''
+        foreach ($algorithm in @('SHA256', 'XXHASH')) {
+            foreach ($mode in @('default', 'sampled')) {
+                $sampled = $mode -eq 'sampled'
+                $sections = New-BaseIniSections
+                Set-IniValues $sections @(
+                    'Options', 'FileHashAlgorithm', $script:HashAlgorithm[$algorithm]
+                    'DupeView', 'ScanForDuplicates', 1
+                )
+                if ($sampled) { Set-IniValue $sections 'Options' 'SampleLargeFiles' 1 }
+                $expected = @(
+                    'large-a.bin', 'large-b.bin', 'large-prefix-a.bin', 'large-prefix-b.bin'
+                    'boundary-a.bin', 'boundary-c.bin'
+                )
+                if ($sampled) { $expected += 'large-gap.bin' }
+                foreach ($format in @('csv', 'json')) {
+                    $outputPath = Join-Path $workRoot "sampled-$algorithm-$mode.$format"
+                    Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+                    $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $outputPath -Root $sampleRoot -Duplicates
+                    $elapsed += $run.ElapsedSeconds
+                    $lastCommand = $run.CommandLine
+                    $rows = if ($format -eq 'csv') { @(Read-CsvRows -Csv $outputPath) } else {
+                        @(ConvertFrom-JsonItems -Json (Get-Content -LiteralPath $outputPath -Raw -Encoding UTF8))
+                    }
+                    $label = "$algorithm $mode $format"
+                    $names = @($rows | ForEach-Object { [System.IO.Path]::GetFileName($_.Name) })
+                    Assert-SetEqual $ctx "$label exact duplicate files" -Actual $names -Expected $expected
+                    Assert-Equal $ctx "$label duplicate row count" $rows.Count $expected.Count
+                    foreach ($row in $rows) {
+                        $flag = $row.'Sampled hash'
+                        $fileName = [System.IO.Path]::GetFileName($row.Name)
+                        $expectedFlag = $sampled -and $fileName.StartsWith('large-')
+                        if ($algorithm -eq 'SHA256' -and $expectedFlag) {
+                            Assert-Equal $ctx "$label four-block hash for $fileName" `
+                                $row.'Hash Prefix' $sampleHashes[$fileName]
+                        }
+                        if ($format -eq 'json') {
+                            Assert-True $ctx "$label sampled flag is Boolean" ($flag -is [bool])
+                            Assert-Equal $ctx "$label sampled flag" $flag $expectedFlag
+                        }
+                        else { Assert-Equal $ctx "$label sampled flag" $flag $expectedFlag.ToString().ToLowerInvariant() }
+                    }
+                    $hashes = @($rows.'Hash Prefix' | Select-Object -Unique)
+                    Assert-Equal $ctx "$label size and prefix variants have separate fingerprints" $hashes.Count 3
+                }
+            }
+        }
+
+        $sections = New-BaseIniSections
+        Set-IniValue $sections 'Options' 'SampleLargeFiles' 1
+        $first = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SampleLargeFiles_Save' -Save
+        $reload = Invoke-SettingsReload $ctx $testExe $first
+        Assert-True $ctx 'SampleLargeFiles persists after reload' $reload.Dump.SampleLargeFiles
+        [pscustomobject] @{
+            CommandLine = $lastCommand
+            ElapsedSeconds = [math]::Round($elapsed + $reload.ElapsedSeconds, 3)
+        }
+    }))
+
     [void] $results.Add((Invoke-Scenario -Name 'Json_Results_ValidJsonAndStructure' -Behavior 'Saving scan results to a .json path should produce valid JSON: an array of objects with a required set of properties, hex-formatted WinDirStat Attributes and Index fields, and ISO-8601 Last Change timestamps.' -Body {
         param($ctx)
 
@@ -12173,7 +12278,7 @@ try {
         Assert-Equal $ctx 'Duplicate JSON entry count' $items.Count 2
 
         Assert-SettingsJsonShape $ctx $items `
-            @('Hash Prefix', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes') `
+            @('Hash Prefix', 'Sampled hash', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes') `
             'Every dupe entry has every required property'
 
         $dupeNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
