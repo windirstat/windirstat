@@ -3044,6 +3044,7 @@ public:
         b.idCommand = static_cast<int>(btn.m_id);
         b.fsState = 0;
         b.fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+        b.iString = -1;
         if (!btn.m_image) b.fsStyle |= BTNS_SHOWTEXT;
         if (!btn.m_text.empty())
         {
@@ -3144,6 +3145,7 @@ private:
     void OnGetInfoTip(NMHDR* pNMHDR, LRESULT* pResult)
     {
         const auto* tip = reinterpret_cast<LPNMTBGETINFOTIPW>(pNMHDR);
+        tip->pszText[0] = L'\0';
         if (const auto it = m_tips.find(static_cast<UINT>(tip->iItem)); it != m_tips.end())
             wcsncpy_s(tip->pszText, tip->cchTextMax, it->second.c_str(), _TRUNCATE);
         *pResult = 0;
