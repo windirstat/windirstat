@@ -34,7 +34,7 @@ public:
     CWatcherItem(const std::wstring& path, const std::wstring& action, const FILETIME& timestamp, const ULONGLONG fileSize, const DWORD attributes)
         : m_action(action)
     {
-        m_item = std::make_unique<CItem>(IT_FILE, path, timestamp, fileSize, fileSize, 0, attributes, 0, 0);
+        m_item.reset(CItem::Create(IT_FILE, path, timestamp, fileSize, fileSize, 0, attributes, 0, 0));
     }
 
     ~CWatcherItem() override = default;

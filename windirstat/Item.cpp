@@ -105,6 +105,32 @@ public:
 
 // --- Construction / Destruction ---
 
+void* CItem::operator new(const size_t size, const std::wstring_view name)
+{
+    if (name.size() > std::numeric_limits<USHORT>::max() ||
+        size > std::numeric_limits<size_t>::max() - (name.size() + 1) * sizeof(wchar_t))
+        throw std::bad_array_new_length();
+    return ::operator new(size + (name.size() + 1) * sizeof(wchar_t));
+}
+
+CItem* CItem::Create(const ITEMTYPE type, const std::wstring_view name)
+{
+    return new (type & IT_DRIVE ? std::wstring_view{} : name) CItem(type, name);
+}
+
+CItem* CItem::Create(CItem* linkedItem)
+{
+    return new (std::wstring_view{}) CItem(linkedItem);
+}
+
+CItem* CItem::Create(const ITEMTYPE type, const std::wstring_view name, const FILETIME lastChange,
+    const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONGLONG index,
+    const DWORD attributes, const ULONG files, const ULONG subdirs)
+{
+    return new (type & IT_DRIVE ? std::wstring_view{} : name)
+        CItem(type, name, lastChange, sizePhysical, sizeLogical, index, attributes, files, subdirs);
+}
+
 CItem::CItem(const ITEMTYPE type, const std::wstring_view name) : m_type(type)
 {
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
@@ -138,6 +164,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring_view name) : m_type(type)
 CItem::CItem(CItem* linkedItem) : m_type(IT_HLINKS_FILE)
 {
     assert(linkedItem != nullptr);
+    SetName({});
     m_sizePhysical = linkedItem->GetSizePhysicalRaw();
     m_sizeLogical = linkedItem->GetSizeLogical();
     m_index = reinterpret_cast<std::uintptr_t>(linkedItem);
@@ -148,25 +175,27 @@ CItem::CItem(const ITEMTYPE type, const std::wstring_view name, const FILETIME l
     const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONGLONG index,
     const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
-    SetName(name);
     m_type = type;
-    SetLastChange(lastChange);
-    m_sizePhysical = sizePhysical;
-    m_sizeLogical = sizeLogical;
-    m_index = index;
-    m_attributes = LOWORD(attributes);
-
-    if (IsTypeOrFlag(IT_DRIVE))
-    {
-        SetName(std::format(L"{:.2}|{}", name, FormatVolumeNameOfRootPath(std::wstring(name))));
-    }
-
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         m_folderInfo = std::make_unique<CHILDINFO>();
         m_folderInfo->m_subdirs = subdirs;
         m_folderInfo->m_files = files;
     }
+
+    if (IsTypeOrFlag(IT_DRIVE))
+    {
+        SetName(std::format(L"{:.2}|{}", name, FormatVolumeNameOfRootPath(std::wstring(name))));
+    }
+    else
+    {
+        SetName(name);
+    }
+    SetLastChange(lastChange);
+    m_sizePhysical = sizePhysical;
+    m_sizeLogical = sizeLogical;
+    m_index = index;
+    m_attributes = LOWORD(attributes);
 }
 
 CItem::~CItem()
@@ -323,7 +352,7 @@ CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
     const bool follow = IsTypeOrFlag(ITF_MTP) || !finder.IsProtectedReparsePoint() &&
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
-    auto* const child = new CItem(IT_DIRECTORY, finder.GetFileName());
+    auto* const child = CItem::Create(IT_DIRECTORY, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
@@ -342,7 +371,7 @@ CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
 
 CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
 {
-    auto* const child = new CItem(IT_FILE, finder.GetFileName());
+    auto* const child = CItem::Create(IT_FILE, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
@@ -580,14 +609,12 @@ std::wstring CItem::GetOwner(const bool force) const
 {
     // Skip filesystem security queries for MTP items
     if (IsTypeOrFlag(ITF_MTP)) return {};
-    if (!IsVisible() && !force)
-    {
-        return {};
-    }
+    auto* viewState = force ? nullptr : GetViewState();
+    if (!force && viewState == nullptr) return {};
 
     // If visible, use cached variable
     std::wstring tmp;
-    std::wstring & ret = (force) ? tmp : m_visualInfo->owner;
+    std::wstring & ret = viewState != nullptr ? viewState->owner : tmp;
     if (!ret.empty()) return ret;
 
     // Fetch owner information from drive
@@ -627,11 +654,16 @@ void CItem::UpwardRecalcLastChange()
 
 void CItem::SetName(const std::wstring_view name)
 {
-    m_nameLen = static_cast<std::uint16_t>(name.size());
-    m_name = std::make_unique_for_overwrite<wchar_t[]>(m_nameLen + 1);
-    while (m_nameLen > 0 && name[m_nameLen - 1] == L'\\') m_nameLen--;
-    if (m_nameLen) std::wmemcpy(m_name.get(), name.data(), m_nameLen);
-    m_name[m_nameLen] = L'\0';
+    if (name.size() > std::numeric_limits<USHORT>::max()) throw std::bad_array_new_length();
+    auto nameLen = static_cast<USHORT>(name.size());
+    while (nameLen > 0 && name[nameLen - 1] == L'\\') nameLen--;
+
+    auto driveName = IsTypeOrFlag(IT_DRIVE) ? std::make_unique_for_overwrite<wchar_t[]>(nameLen + 1) : nullptr;
+    wchar_t* buffer = driveName != nullptr ? driveName.get() : GetNameBuffer();
+    if (nameLen) std::wmemcpy(buffer, name.data(), nameLen);
+    buffer[nameLen] = L'\0';
+    if (driveName != nullptr) m_folderInfo->m_driveName = std::move(driveName);
+    m_nameLen = nameLen;
 }
 
 std::wstring CItem::GetName(const bool stripDrivePrefix) const noexcept
@@ -644,9 +676,9 @@ std::wstring_view CItem::GetNameView(const bool stripDrivePrefix) const noexcept
     if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetNameView(stripDrivePrefix);
     if (stripDrivePrefix && IsTypeOrFlag(IT_DRIVE))
     {
-        return std::wstring_view(m_name.get(), m_nameLen).substr(std::size(L"?:"));
+        return std::wstring_view(GetNameBuffer(), m_nameLen).substr(std::size(L"?:"));
     }
-    return { m_name.get(), m_nameLen };
+    return { GetNameBuffer(), m_nameLen };
 }
 
 bool CItem::HasExtension(const std::wstring_view extension) const noexcept
@@ -854,15 +886,15 @@ std::wstring CItem::GetPathWithoutSlash() const
     {
         if (const auto & pathPart = *it; pathPart->IsTypeOrFlag(IT_DIRECTORY))
         {
-            path.append(pathPart->m_name.get(), pathPart->m_nameLen).append(L"\\");
+            path.append(pathPart->GetNameBuffer(), pathPart->m_nameLen).append(L"\\");
         }
         else if (pathPart->IsTypeOrFlag(IT_DRIVE))
         {
-            path.append(pathPart->m_name.get(), 2).append(L"\\");
+            path.append(pathPart->GetNameBuffer(), 2).append(L"\\");
         }
         else if (!pathPart->IsTypeOrFlag(IT_MYCOMPUTER))
         {
-            path.append(pathPart->m_name.get(), pathPart->m_nameLen);
+            path.append(pathPart->GetNameBuffer(), pathPart->m_nameLen);
         }
     }
 

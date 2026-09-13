@@ -72,8 +72,8 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItem(const CItem* item, const boo
         ACCESS_MASK mask = ace->Mask;
         MapGenericMask(&mask, &fileMapping);
         if (snapshot == nullptr)
-            snapshot = std::make_shared<CItem>(item->IsTypeOrFlag(IT_FILE) ? IT_FILE : IT_DIRECTORY,
-                item->GetPath(), FILETIME{}, 0, 0, 0, item->GetAttributes(), 0, 0);
+            snapshot.reset(CItem::Create(item->IsTypeOrFlag(IT_FILE) ? IT_FILE : IT_DIRECTORY,
+                item->GetPath(), FILETIME{}, 0, 0, 0, item->GetAttributes(), 0, 0));
         rows.push_back(new CItemPerm(snapshot, std::move(account), mask,
             header->AceType == ACCESS_DENIED_ACE_TYPE, header->AceFlags, inheritanceDisabled));
     }

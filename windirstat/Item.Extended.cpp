@@ -309,7 +309,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             const std::wstring otherPath = other->GetLinkedItem()->GetPath();
             return signum(_wcsicmp(path.c_str(), otherPath.c_str()));
         }
-        return signum(_wcsicmp(m_name.get(), other->m_name.get()));
+        return signum(_wcsicmp(GetNameBuffer(), other->GetNameBuffer()));
     }
 
     case COL_SIZE_PROPORTION:
@@ -388,45 +388,44 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
 HICON CItem::GetIcon()
 {
-    assert(IsVisible());
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    if (viewState == nullptr) return nullptr;
 
     // Return cached icon if available
-    if (m_visualInfo->icon != nullptr)
-    {
-        return m_visualInfo->icon;
-    }
+    if (viewState->icon != nullptr) return viewState->icon;
 
     if (IsTypeOrFlag(IT_MYCOMPUTER))
     {
-        m_visualInfo->icon = GetIconHandler()->GetMyComputerImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetMyComputerImage();
+        return viewState->icon;
     }
     if (IsTypeOrFlag(IT_FREESPACE))    {
-        m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetFreeSpaceImage();
+        return viewState->icon;
     }
     if (IsTypeOrFlag(IT_UNKNOWN))    {
-        m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetUnknownImage();
+        return viewState->icon;
     }
     // Hardlink snapshot rows must not enqueue callbacks that can outlive the snapshot.
     if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))    {
-        m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetHardlinksImage();
+        return viewState->icon;
     }
     if (IsTypeOrFlag(ITRP_MOUNT))    {
-        m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetMountPointImage();
+        return viewState->icon;
     }
     if (IsTypeOrFlag(ITRP_SYMLINK))    {
-        m_visualInfo->icon = GetIconHandler()->GetSymbolicLinkImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetSymbolicLinkImage();
+        return viewState->icon;
     }
     if (IsTypeOrFlag(ITRP_JUNCTION))    {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
-        m_visualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
-        return m_visualInfo->icon;
+        viewState->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
+        return viewState->icon;
     }
 
     // Supply shell-compatible paths and attributes for MTP icon lookup
@@ -438,9 +437,9 @@ HICON CItem::GetIcon()
         (refItem->IsTypeOrFlag(IT_DIRECTORY) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL) :
         refItem->GetAttributes();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_visualInfo->control, iconPath, attributes, &m_visualInfo->icon, nullptr));
+        viewState->control, iconPath, attributes, &viewState->icon, nullptr));
 
-    return m_visualInfo->icon;
+    return viewState->icon;
 }
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
@@ -611,7 +610,7 @@ void CItem::CreateFreeSpaceItem()
 
     auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
-    const auto freespace = new CItem(IT_FREESPACE, Localization::Lookup(IDS_FREESPACE_ITEM));
+    const auto freespace = CItem::Create(IT_FREESPACE, Localization::Lookup(IDS_FREESPACE_ITEM));
     freespace->SetSizePhysical(free);
     freespace->SetDone();
 
@@ -677,7 +676,7 @@ void CItem::CreateUnknownItem()
 
     UpwardSetUndone();
 
-    const auto unknown = new CItem(IT_UNKNOWN, Localization::Lookup(IDS_UNKNOWN_ITEM));
+    const auto unknown = CItem::Create(IT_UNKNOWN, Localization::Lookup(IDS_UNKNOWN_ITEM));
     unknown->SetDone();
 
     AddChild(unknown);
@@ -745,7 +744,7 @@ void CItem::CreateHardlinksItem()
 {
     assert(IsTypeOrFlag(IT_DRIVE));
 
-    const auto hardlinks = new CItem(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
+    const auto hardlinks = CItem::Create(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
 
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
     // On file systems with many hardlinks, this helps reduce the items
@@ -753,7 +752,8 @@ void CItem::CreateHardlinksItem()
     constexpr char INDEX_SET_COUNT = 20;
     for (const int i : std::views::iota(1, INDEX_SET_COUNT + 1))
     {
-        const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"{} ≡ 0x{:02X}", Localization::Lookup(IDS_COL_INDEX), i));
+        const auto indexSet = CItem::Create(IT_HLINKS_SET,
+            std::format(L"{} ≡ 0x{:02X}", Localization::Lookup(IDS_COL_INDEX), i));
         indexSet->SetDone();
         hardlinks->AddChild(indexSet);
     }
@@ -895,7 +895,7 @@ void CItem::DoHardlinkAdjustment()
         if (indexSetItem == nullptr) continue;
 
         // Create "Index N" folder under the appropriate Index Set
-        const auto indexFolder = new CItem(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", indexLabel, index));
+        const auto indexFolder = CItem::Create(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", indexLabel, index));
         indexFolder->SetIndex(index);
         indexFolder->m_folderInfo->m_children.reserve(list.size());
 
@@ -911,7 +911,7 @@ void CItem::DoHardlinkAdjustment()
             item->SetFlag(ITF_HARDLINK);
 
             // Store only a direct reference; the snapshot is discarded before tree mutations.
-            const auto fileRef = new CItem(item);
+            const auto fileRef = CItem::Create(item);
 
             // Add to index folder without propagating size upward (addOnly=true)
             indexFolder->AddChild(fileRef, true);

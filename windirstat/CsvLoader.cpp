@@ -232,7 +232,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     // Refresh the device name and register its live shell path for later MTP operations
     std::wstring mtpName;
     if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
-    CItem* newitem = new CItem(type, mtpName.empty() ? displayName : std::wstring_view(mtpName), FromTimeString(lastChange),
+    CItem* newitem = CItem::Create(type, mtpName.empty() ? displayName : std::wstring_view(mtpName),
+        FromTimeString(lastChange),
         wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(),  nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
