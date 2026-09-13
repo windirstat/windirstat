@@ -125,10 +125,12 @@ public:
     CItem& operator=(CItem&&) = delete;
 
     // Construction / Destruction
-    CItem(ITEMTYPE type, std::wstring_view name);
-    explicit CItem(CItem* linkedItem);
-    CItem(ITEMTYPE type, std::wstring_view name, FILETIME lastChange, ULONGLONG sizePhysical,
+    static CItem* Create(ITEMTYPE type, std::wstring_view name);
+    static CItem* Create(CItem* linkedItem);
+    static CItem* Create(ITEMTYPE type, std::wstring_view name, FILETIME lastChange, ULONGLONG sizePhysical,
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
+
+    static void operator delete(void* mem) noexcept { ::operator delete(mem); }
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -203,7 +205,6 @@ public:
     void UpwardRecalcLastChange();
 
     // Paths & Names
-    void SetName(std::wstring_view name);
     std::wstring GetName(bool stripDrivePrefix = false) const noexcept;
     std::wstring_view GetNameView(bool stripDrivePrefix = false) const noexcept;
     bool HasExtension(std::wstring_view extension) const noexcept;
@@ -308,6 +309,26 @@ public:
     void SetFlag(const ITEMTYPE type, const bool unsetVal = false) noexcept { SetType<ITF_MASK>(type, true, unsetVal); }
 
 private:
+    CItem(ITEMTYPE type, std::wstring_view name);
+    explicit CItem(CItem* linkedItem);
+    CItem(ITEMTYPE type, std::wstring_view name, FILETIME lastChange, ULONGLONG sizePhysical,
+        ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
+
+    // Dynamic memory management for flexible buffer layout
+    static void* operator new(size_t size, std::wstring_view name);
+    static void operator delete(void* mem, std::wstring_view) noexcept { ::operator delete(mem); }
+
+    void SetName(std::wstring_view name);
+    const wchar_t* GetNameBuffer() const noexcept
+    {
+        return IsTypeOrFlag(IT_DRIVE) ? m_folderInfo->m_driveName.get() :
+            reinterpret_cast<const wchar_t*>(this + 1);
+    }
+    wchar_t* GetNameBuffer() noexcept
+    {
+        return const_cast<wchar_t*>(std::as_const(*this).GetNameBuffer());
+    }
+
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;
     COLORREF GetGraphColor() const;
@@ -331,6 +352,7 @@ private:
     using CHILDINFO = struct CHILDINFO
     {
         std::vector<CItem*> m_children;
+        std::unique_ptr<wchar_t[]> m_driveName;
         std::atomic<ULONG> m_tstart = 0;  // time this node started enumerating
         std::atomic<ULONG> m_tfinish = 0; // time this node finished enumerating
         std::atomic<ULONG> m_files = 0;   // # Files in subtree
@@ -338,7 +360,6 @@ private:
         std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
     };
 
-    std::unique_ptr<wchar_t[]> m_name;         // Display name
     std::unique_ptr<CHILDINFO> m_folderInfo;   // Child information for non-files
     std::atomic<ULONGLONG> m_sizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_sizeLogical = 0;  // Total local size of self or subtree

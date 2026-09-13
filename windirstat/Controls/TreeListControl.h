@@ -30,28 +30,29 @@ class CItem;
 enum LOGICAL_FOCUS : uint8_t;
 
 //
+// VIEWSTATE. Data needed to display the item.
+// Stored in CTreeListControl for currently visible items only to save memory.
+//
+struct VIEWSTATE final
+{
+    CPacman pacman;
+    std::wstring owner; // Owner of file or folder
+    CSmallRect rcPlusMinus{}; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
+    CSmallRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
+    CTreeListControl* control = nullptr;
+    HICON icon = nullptr;  // -1 as long as not needed, >= 0: valid index in IconHandler.
+    unsigned char indent = 0; // 0 for the root item, 1 for its children, and so on.
+    bool isExpanded = false; // Whether item is expanded.
+
+    VIEWSTATE(const unsigned char iIndent, CTreeListControl* ctrl)
+        : control(ctrl), indent(iIndent) {}
+};
+
+//
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
-// In order to save memory, once the item is actually inserted in the List,
-// we allocate the VISIBLEINFO structure (m_visualInfo).
-// m_visualInfo is freed as soon as the item is removed from the List.
 //
 class CTreeListItem : public CWdsListItem
 {
-    // Data needed to display the item.
-    struct VISIBLEINFO final
-    {
-        CPacman pacman;
-        std::wstring owner; // Owner of file or folder
-        CSmallRect rcPlusMinus{}; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
-        CSmallRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
-        CTreeListControl* control = nullptr;
-        HICON icon = nullptr;  // -1 as long as not needed, >= 0: valid index in IconHandler.
-        unsigned char indent; // 0 for the root item, 1 for its children, and so on.
-        bool isExpanded = false; // Whether item is expanded.
-
-        VISIBLEINFO(const unsigned char iIndent) : indent(iIndent) {}
-    };
-
 public:
     CTreeListItem() = default;
 
@@ -59,7 +60,7 @@ public:
 
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    HICON GetIcon() override { return m_visualInfo->icon; }
+    HICON GetIcon() override;
     int Compare(const CWdsListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
@@ -73,7 +74,7 @@ public:
     bool HasChildren() const { return GetTreeListChildCount() > 0; }
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
-    bool IsVisible() const override { return m_visualInfo.get() != nullptr; }
+    bool IsVisible() const override;
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
     CRect GetPlusMinusRect() const;
@@ -85,7 +86,8 @@ public:
     void DrivePacman() const;
 
 protected:
-    std::unique_ptr<VISIBLEINFO> m_visualInfo;
+    // Call only from the UI thread; this does not keep the item visible.
+    VIEWSTATE* GetViewState() const;
 
 private:
     CTreeListItem* m_parent = nullptr;
@@ -98,10 +100,11 @@ class CTreeListControl : public MessageTarget<CTreeListControl, CWdsListControl>
 {
 public:
     CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder);
-    ~CTreeListControl() override = default;
+    ~CTreeListControl() override;
     virtual bool CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     virtual void SetRootItem(CTreeListItem* root = nullptr);
     virtual void AfterDeleteAllItems() {}
+    bool DeleteAllItems();
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildrenAdded(const CTreeListItem* parent, std::span<CTreeListItem* const> children);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
@@ -154,6 +157,12 @@ protected:
     LOGICAL_FOCUS m_logicalFocus = static_cast<LOGICAL_FOCUS>(0);
     bool m_blockFirstColumnReorder = false;
     CMenu m_contextMenu; // Keep the menu alive until its queued WM_MENUCOMMAND is dispatched.
+
+private:
+    friend class CTreeListItem;
+    void ClearViewStates();
+    inline static std::shared_mutex s_viewStateMutex;
+    inline static std::unordered_map<const CTreeListItem*, VIEWSTATE> s_viewStates;
 
 public:
     static std::span<const RouteEntry> Routes();

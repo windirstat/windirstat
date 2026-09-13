@@ -10782,6 +10782,20 @@ namespace WdsSettingsTest
 
     std::string ItemProbeJson()
     {
+        const HRESULT comResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        const SmartPointer comCleanup([](const HRESULT* result)
+        {
+            if (SUCCEEDED(*result)) CoUninitialize();
+        }, &comResult);
+        ULONG_PTR gdiplusToken = 0;
+        const Gdiplus::GdiplusStartupInput gdiplusInput;
+        if (Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusInput, nullptr) != Gdiplus::Ok)
+            throw std::runtime_error("GDI+ initialization failed.");
+        const SmartPointer gdiplusCleanup([](const ULONG_PTR* token)
+        {
+            Gdiplus::GdiplusShutdown(*token);
+        }, &gdiplusToken);
+
         struct PercentageValues
         {
             int relativeBasisPoints = 0;
@@ -10791,19 +10805,19 @@ namespace WdsSettingsTest
             bool absoluteTextMatches = false;
         };
 
-        CItem root(IT_DIRECTORY | ITF_ROOTITEM | ITF_DONE, L"root");
-        root.SetSizePhysical(1000);
-        root.SetSizeLogical(2000);
+        const std::unique_ptr<CItem> root(CItem::Create(IT_DIRECTORY | ITF_ROOTITEM | ITF_DONE, L"root"));
+        root->SetSizePhysical(1000);
+        root->SetSizeLogical(2000);
 
-        auto* parent = new CItem(IT_DIRECTORY | ITF_DONE, L"parent");
+        auto* parent = CItem::Create(IT_DIRECTORY | ITF_DONE, L"parent");
         parent->SetSizePhysical(400);
         parent->SetSizeLogical(1000);
 
-        auto* child = new CItem(IT_FILE | ITF_DONE, L"child");
+        auto* child = CItem::Create(IT_FILE | ITF_DONE, L"child");
         child->SetSizePhysical(100);
         child->SetSizeLogical(500);
 
-        root.AddChild(parent, true);
+        root->AddChild(parent, true);
         parent->AddChild(child, true);
 
         const bool originalLogical = COptions::TreeMapUseLogical.Obj();
@@ -10836,18 +10850,18 @@ namespace WdsSettingsTest
         const PercentageValues physical = measure(false);
         const PercentageValues logical = measure(true);
 
-        CItem sortParent(IT_DIRECTORY, L"sort-parent");
-        sortParent.SetSizePhysical(1000);
-        sortParent.SetSizeLogical(1000);
+        const std::unique_ptr<CItem> sortParent(CItem::Create(IT_DIRECTORY, L"sort-parent"));
+        sortParent->SetSizePhysical(1000);
+        sortParent->SetSizeLogical(1000);
 
-        auto* sortFirst = new CItem(IT_DIRECTORY, L"sort-first");
+        auto* sortFirst = CItem::Create(IT_DIRECTORY, L"sort-first");
         sortFirst->SetSizePhysical(900);
         sortFirst->SetSizeLogical(100);
-        auto* sortSecond = new CItem(IT_DIRECTORY, L"sort-second");
+        auto* sortSecond = CItem::Create(IT_DIRECTORY, L"sort-second");
         sortSecond->SetSizePhysical(100);
         sortSecond->SetSizeLogical(900);
-        sortParent.AddChild(sortFirst, true);
-        sortParent.AddChild(sortSecond, true);
+        sortParent->AddChild(sortFirst, true);
+        sortParent->AddChild(sortSecond, true);
 
         sortFirst->UpwardAddReadJobs(1);
         sortSecond->UpwardAddReadJobs(2);
@@ -10867,25 +10881,92 @@ namespace WdsSettingsTest
         COptions::UseAbsolutePercentages = originalAbsolute;
         COptions::PacmanAnimation = originalPacman;
 
-        CItem clock(IT_DIRECTORY, L"clock");
+        const std::unique_ptr<CItem> clock(CItem::Create(IT_DIRECTORY, L"clock"));
         CItem::ResumeScanClock();
-        clock.ResetScanStartTime();
+        clock->ResetScanStartTime();
         CItem::SuspendScanClock();
 
-        const ULONGLONG pausedBefore = clock.GetTicksWorked();
+        const ULONGLONG pausedBefore = clock->GetTicksWorked();
         ::Sleep(1200);
-        const ULONGLONG pausedAfter = clock.GetTicksWorked();
+        const ULONGLONG pausedAfter = clock->GetTicksWorked();
 
         CItem::ResumeScanClock();
         CItem::SuspendScanClock();
-        const ULONGLONG resumedTicks = clock.GetTicksWorked();
-        clock.SetDone();
-        const ULONGLONG completedTicks = clock.GetTicksWorked();
+        const ULONGLONG resumedTicks = clock->GetTicksWorked();
+        clock->SetDone();
+        const ULONGLONG completedTicks = clock->GetTicksWorked();
         CItem::ResumeScanClock();
+
+        static_assert(!std::is_constructible_v<CItem, ITEMTYPE, std::wstring_view>);
+        const std::wstring drivePath = std::filesystem::current_path().root_path().wstring();
+        const std::unique_ptr<CItem> driveItem(CItem::Create(IT_DRIVE, drivePath));
+        const std::unique_ptr<CItem> loadedDrive(CItem::Create(IT_DRIVE, drivePath, FILETIME{}, 0, 0, 0, 0, 0, 0));
+        for (int i = 0; i < 3; ++i)
+        {
+            driveItem->UpdateFreeSpaceItem();
+            loadedDrive->UpdateFreeSpaceItem();
+        }
+        const std::wstring longName(std::numeric_limits<USHORT>::max(), L'x');
+        const std::unique_ptr<CItem> longItem(CItem::Create(IT_FILE, longName));
+        const std::unique_ptr<CItem> emptyItem(CItem::Create(IT_FILE, L""));
+        const std::unique_ptr<CItem> linkedItem(CItem::Create(longItem.get()));
+        const std::unique_ptr<CItem> pathItem(CItem::Create(IT_DIRECTORY, L"root\\"));
+        bool oversizedNameRejected = false;
+        try
+        {
+            const std::unique_ptr<CItem> oversizedItem(CItem::Create(IT_FILE, longName + L'x'));
+        }
+        catch (const std::bad_array_new_length&)
+        {
+            oversizedNameRejected = true;
+        }
 
         std::ostringstream out;
         out << '{';
         bool first = true;
+        Field(out, first, "DriveNameUpdates", driveItem->GetPath() == drivePath &&
+            loadedDrive->GetPath() == drivePath && driveItem->GetNameView().starts_with(drivePath.substr(0, 2) + L"|") &&
+            loadedDrive->GetNameView().starts_with(drivePath.substr(0, 2) + L"|"));
+        std::vector<int> columns;
+        bool viewStatesCleared = false;
+        bool otherControlPreserved = false;
+        std::atomic_size_t visualUpdates = 0;
+        {
+            CTreeListControl other(&columns, &columns, &columns, static_cast<LOGICAL_FOCUS>(0), false);
+            emptyItem->SetVisible(&other);
+            {
+                CTreeListControl control(&columns, &columns, &columns, static_cast<LOGICAL_FOCUS>(0), false);
+                root->SetVisible(&control);
+                parent->SetVisible(&control);
+                child->SetVisible(&control);
+                std::jthread worker([&](const std::stop_token stop)
+                {
+                    while (!stop.stop_requested())
+                    {
+                        child->DrivePacman();
+                        (void)child->IsExpanded();
+                        visualUpdates.fetch_add(1, std::memory_order_relaxed);
+                    }
+                });
+                while (visualUpdates.load(std::memory_order_relaxed) == 0) std::this_thread::yield();
+                for (int i = 0; i < 2000; ++i)
+                {
+                    child->SetExpanded(true);
+                    child->SetVisible(&control, false);
+                    child->SetVisible(&control);
+                }
+            }
+            viewStatesCleared = !root->IsVisible() && !parent->IsVisible() && !child->IsVisible();
+            otherControlPreserved = emptyItem->IsVisible();
+        }
+        Field(out, first, "ViewStatesCleared", viewStatesCleared && !emptyItem->IsVisible());
+        Field(out, first, "OtherControlPreserved", otherControlPreserved);
+        Field(out, first, "ConcurrentVisualUpdates", visualUpdates.load() > 0);
+        Field(out, first, "LongItemNameMatches", longItem->GetNameView() == longName);
+        Field(out, first, "EmptyItemNameMatches", emptyItem->GetNameView().empty());
+        Field(out, first, "LinkedItemNameMatches", linkedItem->GetNameView() == longName);
+        Field(out, first, "TrailingSlashTrimmed", pathItem->GetNameView() == L"root");
+        Field(out, first, "OversizedNameRejected", oversizedNameRejected);
         Field(out, first, "PhysicalRelativeBasisPoints", physical.relativeBasisPoints);
         Field(out, first, "PhysicalAbsoluteBasisPoints", physical.absoluteBasisPoints);
         Field(out, first, "PhysicalTreeMapSize", physical.treeMapSize);
@@ -11170,10 +11251,11 @@ $visualSettings = @(
     'ListGrid', 'ListStripes', 'MainSplitterPos', 'MainWindowPlacement', 'MinimizeViewThreshold', 'PacmanAnimation',
     'PermsColor', 'PermsColorAccount', 'PermsColorLevel', 'SearchWindowRect', 'ShowFileTypes', 'ShowStatusBar',
     'ShowTimeSpent', 'ShowToolBar', 'SizeProportionIndent', 'SubSplitterPos',
-    'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapFolderFramesDrawThreshold', 'TreeMapGrid',
-    'TreeMapGridColor', 'TreeMapHeightFactor', 'TreeMapHighlightColor', 'GraphPaneStyle', 'TreeMapLightSourceX',
-    'TreeMapLightSourceY', 'TreeMapMaxDepth', 'TreeMapScaleFactor', 'TreeMapShowExtensions',
-    'TreeMapShowFolderFrames', 'TreeMapStyle', 'TreeMapUseLogical', 'UseAbsolutePercentages', 'WatcherAutoScroll'
+    'TreeMapAmbientLightPercent', 'TreeMapBrightness', 'TreeMapContrastLabels', 'TreeMapFolderFramesDrawThreshold',
+    'TreeMapGrid', 'TreeMapGridColor', 'TreeMapHeightFactor', 'TreeMapHighlightColor', 'GraphPaneStyle',
+    'TreeMapLightSourceX', 'TreeMapLightSourceY', 'TreeMapMaxDepth', 'TreeMapSaturation', 'TreeMapScaleFactor',
+    'TreeMapShowExtensions', 'TreeMapShowFolderFrames', 'TreeMapStyle', 'TreeMapUseLogical',
+    'UseAbsolutePercentages', 'WatcherAutoScroll'
     foreach ($view in @('DriveList', 'DupeView', 'ExtView', 'PermsView', 'SearchView', 'TopView', 'Watcher')) {
         foreach ($property in @('Order', 'Widths', 'Visibility')) { "${view}Column$property" }
     }
@@ -11773,6 +11855,15 @@ try {
             'Logical read-job order without Pacman', $probe.LogicalReadJobOrder, 1
         )
         Assert-BooleanCases $ctx @(
+            'Drive names remain valid after updates', $probe.DriveNameUpdates, $true
+            'Destroyed controls release visible state', $probe.ViewStatesCleared, $true
+            'Destroying one control preserves another', $probe.OtherControlPreserved, $true
+            'Visibility survives concurrent animation updates', $probe.ConcurrentVisualUpdates, $true
+            'Maximum-length item name preserved', $probe.LongItemNameMatches, $true
+            'Empty item name preserved', $probe.EmptyItemNameMatches, $true
+            'Hardlink snapshot name preserved', $probe.LinkedItemNameMatches, $true
+            'Directory trailing slash trimmed', $probe.TrailingSlashTrimmed, $true
+            'Oversized item name rejected', $probe.OversizedNameRejected, $true
             'Physical relative percentage text', $probe.PhysicalRelativeTextMatches, $true
             'Physical absolute percentage text', $probe.PhysicalAbsoluteTextMatches, $true
             'Logical relative percentage text', $probe.LogicalRelativeTextMatches, $true

@@ -112,7 +112,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     {
         std::wstring name = FinderMtp::GetDisplayName(path);
         if (name.empty()) name = path;
-        const auto item = new CItem(IT_DIRECTORY | ITF_MTP | flags, name);
+        const auto item = CItem::Create(IT_DIRECTORY | ITF_MTP | flags, name);
         item->SetIndex(FinderMtp::RegisterPath(path, path));
         return item;
     };
@@ -132,7 +132,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
 
         const std::wstring name = ppszName != nullptr ?
             static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
-        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
+        m_rootItem = CItem::Create(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         // Add filesystem drives, arbitrary folders and registered MTP roots under This PC
         for (const auto& rootFolder : selections)
         {
@@ -143,7 +143,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
             }
 
             const bool isDrive = isDrivePath(rootFolder);
-            const auto child = new CItem(isDrive ? IT_DRIVE : IT_DIRECTORY, rootFolder);
+            const auto child = CItem::Create(isDrive ? IT_DRIVE : IT_DIRECTORY, rootFolder);
             m_rootItem->AddChild(child);
 
             // Folder roots are never visited by the drive metadata pass, so read their stats here
@@ -155,7 +155,7 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         // Create a storage-specific root for a single selection
         const ITEMTYPE type = isDrivePath(selections.front()) ? IT_DRIVE : IT_DIRECTORY;
         m_rootItem = FinderMtp::IsPath(selections.front()) ? createMtpItem(selections.front(), ITF_ROOTITEM) :
-            new CItem(type | ITF_ROOTITEM, selections.front());
+            CItem::Create(type | ITF_ROOTITEM, selections.front());
         m_rootItem->UpdateStatsFromDisk();
     }
 

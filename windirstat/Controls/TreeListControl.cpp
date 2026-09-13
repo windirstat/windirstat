@@ -18,6 +18,12 @@
 #include "pch.h"
 #include "TreeListControl.h"
 
+HICON CTreeListItem::GetIcon()
+{
+    auto* viewState = GetViewState();
+    return viewState ? viewState->icon : nullptr;
+}
+
 bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem != 0)
@@ -25,13 +31,16 @@ bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, con
         return false;
     }
 
+    auto* viewState = GetViewState();
+    if (viewState == nullptr || viewState->control == nullptr) return false;
+
     CRect rcNode = rc;
     CRect rcPlusMinus;
-    m_visualInfo->control->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
+    viewState->control->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
 
     CRect rcLabel = rc;
     rcLabel.left = rcNode.right;
-    DrawLabel(m_visualInfo->control, pdc, rcLabel, state, width, focusLeft, false);
+    DrawLabel(viewState->control, pdc, rcLabel, state, width, focusLeft, false);
 
     if (width)
     {
@@ -53,32 +62,31 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
 
 void CTreeListItem::DrawPacman(CDC* pdc, const CRect& rc) const
 {
-    assert(IsVisible());
-    m_visualInfo->pacman.Draw(pdc, rc);
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    assert(it != CTreeListControl::s_viewStates.end());
+    if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.Draw(pdc, rc);
 }
 
 void CTreeListItem::StartPacman() const
 {
-    if (IsVisible())
-    {
-        m_visualInfo->pacman.Start();
-    }
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.Start();
 }
 
 void CTreeListItem::StopPacman() const
 {
-    if (IsVisible())
-    {
-        m_visualInfo->pacman.Stop();
-    }
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.Stop();
 }
 
 void CTreeListItem::DrivePacman() const
 {
-    if (IsVisible())
-    {
-        m_visualInfo->pacman.UpdatePosition();
-    }
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.UpdatePosition();
 }
 
 int CTreeListItem::Compare(const CWdsListItem* baseOther, const int subitem) const
@@ -130,62 +138,84 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
     return false;
 }
 
+VIEWSTATE* CTreeListItem::GetViewState() const
+{
+    std::shared_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    return it != CTreeListControl::s_viewStates.end() ? &it->second : nullptr;
+}
+
+bool CTreeListItem::IsVisible() const
+{
+    std::shared_lock lock(CTreeListControl::s_viewStateMutex);
+    return CTreeListControl::s_viewStates.contains(this);
+}
+
 bool CTreeListItem::IsExpanded() const
 {
-    assert(IsVisible());
-    return m_visualInfo->isExpanded;
+    std::shared_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    return it != CTreeListControl::s_viewStates.end() && it->second.isExpanded;
 }
 
 void CTreeListItem::SetExpanded(const bool expanded) const
 {
-    assert(IsVisible());
-    m_visualInfo->isExpanded = expanded;
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    const auto it = CTreeListControl::s_viewStates.find(this);
+    if (it != CTreeListControl::s_viewStates.end()) it->second.isExpanded = expanded;
 }
 
 void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
 {
     if (visible)
     {
-        assert(!IsVisible());
+        assert(control != nullptr);
         const unsigned char indent = GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1;
-        m_visualInfo = std::make_unique<VISIBLEINFO>(indent);
-        m_visualInfo->control = control;
+        std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+        assert(!CTreeListControl::s_viewStates.contains(this));
+        CTreeListControl::s_viewStates.try_emplace(this, indent, control);
+        return;
     }
-    else
-    {
-        assert(IsVisible());
-        m_visualInfo.reset();
-    }
+
+    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
+    CTreeListControl::s_viewStates.erase(this);
+    lock.unlock();
+    GetIconHandler()->ForgetAsyncShellInfoLookup(this);
 }
 
 unsigned char CTreeListItem::GetIndent() const
 {
-    assert(IsVisible());
-    return m_visualInfo->indent;
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    return viewState ? viewState->indent : 0;
 }
 
 CRect CTreeListItem::GetPlusMinusRect() const
 {
-    assert(IsVisible());
-    return m_visualInfo->rcPlusMinus;
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    return viewState ? viewState->rcPlusMinus : CRect{};
 }
 
 void CTreeListItem::SetPlusMinusRect(const CRect& rc) const
 {
-    assert(IsVisible());
-    m_visualInfo->rcPlusMinus = rc;
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    if (viewState != nullptr) viewState->rcPlusMinus = rc;
 }
 
 CRect CTreeListItem::GetTitleRect() const
 {
-    assert(IsVisible());
-    return m_visualInfo->rcTitle;
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    return viewState ? viewState->rcTitle : CRect{};
 }
 
 void CTreeListItem::SetTitleRect(const CRect& rc) const
 {
-    assert(IsVisible());
-    m_visualInfo->rcTitle = rc;
+    auto* viewState = GetViewState();
+    assert(viewState != nullptr);
+    if (viewState != nullptr) viewState->rcTitle = rc;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -196,6 +226,23 @@ CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<in
     , m_logicalFocus(logicalFocus)
     , m_blockFirstColumnReorder(blockFirstColumnReorder)
 {
+}
+
+CTreeListControl::~CTreeListControl()
+{
+    ClearViewStates();
+}
+
+bool CTreeListControl::DeleteAllItems()
+{
+    ClearViewStates();
+    return CWdsListControl::DeleteAllItems();
+}
+
+void CTreeListControl::ClearViewStates()
+{
+    std::unique_lock lock(s_viewStateMutex);
+    std::erase_if(s_viewStates, [this](const auto& entry) { return entry.second.control == this; });
 }
 
 bool CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)

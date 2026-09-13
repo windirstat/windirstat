@@ -261,7 +261,7 @@ std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
 
         auto createLeaf = [](const int size, const COLORREF color) -> CItem*
         {
-            const auto item = new CItem(IT_FILE | ITF_PREVIEW, L"");
+            const auto item = CItem::Create(IT_FILE | ITF_PREVIEW, L"");
             item->SetSizePhysical(size);
             item->SetSizeLogical(size);
             item->SetIndex(color);
@@ -271,7 +271,7 @@ std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
         auto createContainer = [](std::vector<CItem*>& children) -> CItem*
         {
             std::ranges::sort(children, [](CItem* a, CItem* b) { return a->GetSizePhysical() > b->GetSizePhysical(); });
-            const auto item = new CItem(IT_DIRECTORY, L"");
+            const auto item = CItem::Create(IT_DIRECTORY, L"");
             for (auto* child : children)
             {
                 item->AddChild(child);

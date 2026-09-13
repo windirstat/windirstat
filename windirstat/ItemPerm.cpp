@@ -99,20 +99,16 @@ int CItemPerm::CompareSibling(const CTreeListItem* other, const int subitem) con
 
 HICON CItemPerm::GetIcon()
 {
-    // No icon to return if not visible yet
-    if (m_visualInfo == nullptr)
-    {
-        return nullptr;
-    }
+    auto* viewState = GetViewState();
 
-    if (m_visualInfo->icon != nullptr)
-    {
-        return m_visualInfo->icon;
-    }
+    // No icon to return if not visible yet
+    if (viewState == nullptr) return nullptr;
+
+    if (viewState->icon != nullptr) return viewState->icon;
 
     // Fetch all icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
+        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
     return nullptr;
 }
 

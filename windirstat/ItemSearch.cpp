@@ -87,28 +87,24 @@ int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) co
 
 HICON CItemSearch::GetIcon()
 {
-    // No icon to return if not visible yet
-    if (m_visualInfo == nullptr)
-    {
-        return nullptr;
-    }
+    auto* viewState = GetViewState();
 
-    if (m_visualInfo->icon != nullptr)
-    {
-        return m_visualInfo->icon;
-    }
+    // No icon to return if not visible yet
+    if (viewState == nullptr) return nullptr;
+
+    if (viewState->icon != nullptr) return viewState->icon;
 
     // Cache icon for parent nodes
     if (m_item == nullptr)
     {
-        m_visualInfo->icon = GetIconHandler()->GetSearchImage();
-        return m_visualInfo->icon;
+        viewState->icon = GetIconHandler()->GetSearchImage();
+        return viewState->icon;
     }
 
     // Fetch all other icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
-    return m_visualInfo->icon;
+        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+    return viewState->icon;
 }
 
 void CItemSearch::AddSearchItemChild(CItemSearch* child)
