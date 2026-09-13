@@ -164,9 +164,10 @@ void CWdsProgressCtrl::OnPaint()
 
     // Draw track background and border
     {
-        const bool isDark = DarkMode::IsDarkModeActive();
-        const COLORREF trackPenColor = isDark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
-        const COLORREF trackBrushColor = isDark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
+        const COLORREF trackPenColor = DarkMode::IsDarkModeActive()
+            ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
+        const COLORREF trackBrushColor = DarkMode::IsDarkModeActive()
+            ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
         const CPen trackPen(PS_SOLID, 1, trackPenColor);
         const CBrush trackBrush(trackBrushColor);
         const GdiObjectSelection soPen(&dc, &trackPen);

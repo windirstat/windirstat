@@ -101,7 +101,6 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rc.left += GetIndent() * ScaleForDpi(COptions::SizeProportionIndent);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
-        const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
         const auto blendColor = [](const COLORREF from, const COLORREF to, double amount) {
             const auto ch = [amount](const BYTE a, const BYTE b) {
@@ -111,21 +110,25 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         };
         // Blend toward white in dark mode, toward black in light mode
         const auto blendDark = [&](const COLORREF c, const double d, const double l) {
-            return dark ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
+            return DarkMode::IsDarkModeActive() ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
         };
 
         // Derive palette for track, subtree bar, and absolute bar
-        const COLORREF neutralBack  = dark ? RGB(40, 40, 40) : RGB(225, 225, 225);
+        const COLORREF neutralBack  = DarkMode::IsDarkModeActive() ? RGB(40, 40, 40) : RGB(225, 225, 225);
         const double subtreeFraction = GetFraction();
         const double absoluteFraction = GetAbsoluteFraction();
         const COLORREF color         = GetPercentageColor();
         const COLORREF trackFill     = blendDark(neutralBack,  0.10, 0.06);
         const COLORREF trackBorder   = blendDark(trackFill,   0.18, 0.18);
-        const COLORREF subtreeFill   = dark ? blendColor(trackFill, color, 0.68) : blendColor(trackFill, color, 0.48);
-        const COLORREF subtreeGlow   = blendColor(subtreeFill,  RGB(255, 255, 255), dark ? 0.18 : 0.30);
+        const COLORREF subtreeFill   = DarkMode::IsDarkModeActive()
+            ? blendColor(trackFill, color, 0.68) : blendColor(trackFill, color, 0.48);
+        const COLORREF subtreeGlow   = blendColor(subtreeFill,  RGB(255, 255, 255),
+            DarkMode::IsDarkModeActive() ? 0.18 : 0.30);
         const COLORREF absoluteFill  = blendDark(color,        0.12, 0.10);
-        const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
-        const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
+        const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255),
+            DarkMode::IsDarkModeActive() ? 0.16 : 0.26);
+        const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),
+            DarkMode::IsDarkModeActive() ? 0.18 : 0.12);
 
         const auto drawRoundRect = [&](CRect r, const COLORREF fill, const COLORREF border) {
             pdc->SetDCBrushColor(fill);

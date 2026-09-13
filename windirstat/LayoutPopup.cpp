@@ -259,9 +259,8 @@ static COLORREF GetFileTreeColor(const int index)
 
 void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
 {
-    const bool dk   = DarkMode::IsDarkModeActive();
-    const COLORREF bg    = dk ? RGB(26, 24, 22)    : RGB(255, 254, 249);
-    const COLORREF alt   = dk ? RGB(34, 32, 28)    : RGB(247, 245, 240);
+    const COLORREF bg    = DarkMode::IsDarkModeActive() ? RGB(26, 24, 22)    : RGB(255, 254, 249);
+    const COLORREF alt   = DarkMode::IsDarkModeActive() ? RGB(34, 32, 28)    : RGB(247, 245, 240);
     const COLORREF hdrBg = GetPaneHeaderBackground();
     const COLORREF sep   = GetPaneHeaderSeparator();
     constexpr COLORREF folio = RGB(228, 178, 36);
@@ -319,9 +318,8 @@ void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
 
 void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
 {
-    const bool dk   = DarkMode::IsDarkModeActive();
-    const COLORREF bg    = dk ? RGB(22, 24, 26)    : RGB(249, 252, 255);
-    const COLORREF alt   = dk ? RGB(28, 30, 36)    : RGB(241, 245, 252);
+    const COLORREF bg    = DarkMode::IsDarkModeActive() ? RGB(22, 24, 26)    : RGB(249, 252, 255);
+    const COLORREF alt   = DarkMode::IsDarkModeActive() ? RGB(28, 30, 36)    : RGB(241, 245, 252);
     const COLORREF hdrBg = GetPaneHeaderBackground();
     const COLORREF sep   = GetPaneHeaderSeparator();
 
@@ -397,14 +395,13 @@ void CLayoutPopup::DrawVisualizationPane(CDC& dc, const CRect r, int /*cardIdx*/
 
 void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
 {
-    const bool  dark     = DarkMode::IsDarkModeActive();
     const bool  selected = (idx == m_selectedLayout);
     const bool  hovered  = (idx == m_hoveredLayout);
 
     const CRect card = CardRect(idx);
 
     // Card background
-    const COLORREF cardBg = dark ? RGB(38, 38, 38) : RGB(248, 248, 248);
+    const COLORREF cardBg = DarkMode::IsDarkModeActive() ? RGB(38, 38, 38) : RGB(248, 248, 248);
     dc.FillSolidRect(card, cardBg);
 
     // Draw each pane in the card
@@ -435,9 +432,9 @@ void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
     }
 
     const int borderWidth = (selected || hovered) ? 2 : 1;
-    const COLORREF borderColor = selected ? (dark ? RGB(100, 170, 255) : RGB(0, 102, 204))
-                               : hovered  ? (dark ? RGB(80,  145, 220) : RGB(60, 140, 220))
-                                          : (dark ? RGB(72,   72,  72) : RGB(195, 195, 195));
+    const COLORREF borderColor = selected ? (DarkMode::IsDarkModeActive() ? RGB(100, 170, 255) : RGB(0, 102, 204))
+                               : hovered  ? (DarkMode::IsDarkModeActive() ? RGB(80,  145, 220) : RGB(60, 140, 220))
+                                          : (DarkMode::IsDarkModeActive() ? RGB(72,   72,  72) : RGB(195, 195, 195));
 
     const CPen pen(PS_SOLID, borderWidth, borderColor);
     GdiObjectSelection selectPen(&dc, &pen);

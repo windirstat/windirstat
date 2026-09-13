@@ -393,9 +393,9 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     if (separator > 0 && rc.Width() > separator && rc.Height() > separator)
     {
         pdc->FillSolidRect(CRect(rc.right - separator, rc.top,
-            rc.right, rc.bottom), BACKGROUND_COLOR);
+            rc.right, rc.bottom), DarkMode::SystemColor(COLOR_WINDOW));
         pdc->FillSolidRect(CRect(rc.left, rc.bottom - separator,
-            rc.right, rc.bottom), BACKGROUND_COLOR);
+            rc.right, rc.bottom), DarkMode::SystemColor(COLOR_WINDOW));
     }
 }
 

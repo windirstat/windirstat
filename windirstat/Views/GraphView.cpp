@@ -78,7 +78,7 @@ void CGraphView::PaintEmptyView(CDC* pDC)
     if (DrawDimmedView(pDC)) return;
 
     const CRect rect = GetClientRect();
-    pDC->FillSolidRect(rect, BackgroundColor);
+    pDC->FillSolidRect(rect, GetBackgroundColor());
     DrawEmptyPlaceholder(pDC, rect);
 }
 
@@ -115,7 +115,7 @@ void CGraphView::OnDraw(CDC* pDC)
     if (!memoryDc)
     {
         DiscardRenderCache();
-        pDC->FillSolidRect(rect, BackgroundColor);
+        pDC->FillSolidRect(rect, GetBackgroundColor());
         return;
     }
 
@@ -138,7 +138,7 @@ void CGraphView::OnDraw(CDC* pDC)
             if (!CreateRenderBitmap(pDC, rect.Size()))
             {
                 DiscardRenderCache();
-                pDC->FillSolidRect(rect, BackgroundColor);
+                pDC->FillSolidRect(rect, GetBackgroundColor());
                 return;
             }
         }
@@ -166,7 +166,7 @@ bool CGraphView::DrawDimmedView(CDC* pDC)
     CDC memoryDc(pDC);
     if (!memoryDc)
     {
-        pDC->FillSolidRect(clientRect, BackgroundColor);
+        pDC->FillSolidRect(clientRect, GetBackgroundColor());
         return true;
     }
 
@@ -178,13 +178,13 @@ bool CGraphView::DrawDimmedView(CDC* pDC)
     {
         CRect fill = clientRect;
         fill.left += m_dimmedSize.cx;
-        pDC->FillSolidRect(fill, BackgroundColor);
+        pDC->FillSolidRect(fill, GetBackgroundColor());
     }
     if (clientRect.Height() > m_dimmedSize.cy)
     {
         CRect fill = clientRect;
         fill.top += m_dimmedSize.cy;
-        pDC->FillSolidRect(fill, BackgroundColor);
+        pDC->FillSolidRect(fill, GetBackgroundColor());
     }
     return true;
 }
@@ -322,7 +322,7 @@ void CGraphView::Inactivate(const bool clearLayout)
         .SourceConstantAlpha = 175,
         .AlphaFormat = 0,
     };
-    memoryDc.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));
+    memoryDc.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), GetBackgroundColor());
     memoryDc.AlphaBlend(0, 0, m_dimmedSize.cx, m_dimmedSize.cy, &dc,
         0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunction);
 }

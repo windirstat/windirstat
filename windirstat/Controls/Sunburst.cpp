@@ -185,7 +185,7 @@ void CSunburst::DrawSunburst(CDC* pdc, const CRect rc, CItem* root,
         return;
     }
 
-    pdc->FillSolidRect(rc, BACKGROUND_COLOR);
+    pdc->FillSolidRect(rc, DarkMode::SystemColor(COLOR_WINDOW));
     if (root == nullptr || rc.Width() <= 0 || rc.Height() <= 0)
     {
         ClearLayout();

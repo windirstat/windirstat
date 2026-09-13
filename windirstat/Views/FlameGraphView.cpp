@@ -139,7 +139,7 @@ void CFlameGraphView::RenderViewport(CDC* pDC, CRect clip) const
 
     const ScopedDcState dcState(pDC);
     pDC->IntersectClipRect(clip);
-    pDC->FillSolidRect(clip, BackgroundColor);
+    pDC->FillSolidRect(clip, GetBackgroundColor());
 
     const int breadcrumbHeight = std::min(m_flameGraph.GetBreadcrumbHeight(),
         client.Height());

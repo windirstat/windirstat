@@ -30,7 +30,6 @@ class CFlameGraph final
 public:
     // Logical row height at 96 DPI. The view scales this before drawing.
     static constexpr int ROW_HEIGHT = 18;
-    static constexpr COLORREF BACKGROUND_COLOR = RGB(15, 15, 15);
 
     // Prepare width-dependent geometry and return its full logical height.
     // Rendering and hit testing reuse this layout until the root, width, or

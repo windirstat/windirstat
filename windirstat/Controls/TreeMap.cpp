@@ -576,6 +576,11 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         SetOptions(options);
     }
 
+    if (root->TmiGetSize() == 0)
+    {
+        FillSolidRect(dc, rc, DarkMode::SystemColor(COLOR_WINDOW));
+    }
+
     if (!PrepareRenderArea(dc, rc, !m_options.grid))
     {
         return;
@@ -594,7 +599,6 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
 
     if (root->TmiGetSize() == 0)
     {
-        FillSolidRect(dc, rc, RGB(0, 0, 0));
         AddVisibleItem(root, m_layoutArea, 0);
         BuildHitTestIndex();
         return;
@@ -623,7 +627,8 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         bitmap = { m_bitmapBits.data(), static_cast<size_t>(renderWidth) };
     }
     DrawSolidRect(bitmap, CRect(0, 0, renderWidth, renderHeight),
-        m_options.gridColor, CColorSpace::GraphPaletteBrightness);
+        m_options.grid ? m_options.gridColor : DarkMode::SystemColor(COLOR_WINDOW),
+        CColorSpace::GraphPaletteBrightness);
 
     const int gridWidth = m_options.grid ? 1 : 0;
     const bool cushionShading = IsCushionShading();

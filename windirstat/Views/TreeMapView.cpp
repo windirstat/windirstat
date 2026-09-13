@@ -23,6 +23,11 @@ void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
     CTreeMap::Options options = COptions::TreeMapOptions;
     options.showExtensions = false;
     options.showFolderFrames = false;
+    if (!DarkMode::IsDarkModeActive())
+    {
+        options.brightness = CColorSpace::GraphPaletteBrightness;
+        options.ambientLight = 1.0;
+    }
 
     struct Tile { int x, y, w, h, shade; };
     static constexpr std::array tiles = {
@@ -41,8 +46,9 @@ void CTreeMapView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
             rect.left + rect.Width()  * (x + w) / 100,
             rect.top  + rect.Height() * (y + h) / 100);
 
+        const int tileShade = DarkMode::IsDarkModeActive() ? shade : 255 - shade / 2;
         if (tile.Width() > 0 && tile.Height() > 0)
-            m_treeMap.DrawColorPreview(pDC->Handle(), tile, RGB(shade, shade, shade), &options);
+            m_treeMap.DrawColorPreview(pDC->Handle(), tile, RGB(tileShade, tileShade, tileShade), &options);
     }
 }
 

@@ -537,7 +537,6 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
 
     GdiObjectSelection selectBitmap(&memDC, &memBitmap);
 
-    const bool isDark = DarkMode::IsDarkModeActive();
     const COLORREF bgControl = DarkMode::SystemColor(COLOR_3DFACE);
     const COLORREF fgText = DarkMode::SystemColor(COLOR_WINDOWTEXT);
     const COLORREF fgMuted = DarkMode::SystemColor(COLOR_GRAYTEXT);
@@ -548,7 +547,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
     const int leftWidth = ScaleForDpi(210);
     CRect rightRect = clientRect;
     rightRect.left = leftWidth;
-    memDC.FillSolidRect(rightRect, isDark ? RGB(26, 26, 28) : RGB(246, 246, 249));
+    memDC.FillSolidRect(rightRect, DarkMode::IsDarkModeActive() ? RGB(26, 26, 28) : RGB(246, 246, 249));
 
     CPen penBorder(PS_SOLID, 1, clrBorder);
     {
@@ -652,8 +651,8 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
             const int cardX = leftWidth + ScaleForDpi(20) + static_cast<int>(i) * (cardW + cardGap);
             CRect rcCard(cardX, cardY, cardX + cardW, cardY + cardH);
 
-            memDC.FillSolidRect(rcCard, isDark ? tier.bgDark : tier.bgLight);
-            CBrush brBorder(isDark ? tier.borderDark : tier.borderLight);
+            memDC.FillSolidRect(rcCard, DarkMode::IsDarkModeActive() ? tier.bgDark : tier.bgLight);
+            CBrush brBorder(DarkMode::IsDarkModeActive() ? tier.borderDark : tier.borderLight);
             memDC.FrameRect(&rcCard, &brBorder);
 
             constexpr int accentBarW = 4;
@@ -750,9 +749,9 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
 
         // Draw Storage Cost Savings Banner
         CRect rcSavings(barX, ScaleForDpi(300), barX + barW, ScaleForDpi(385));
-        const COLORREF bgSavings = isDark ? RGB(32, 50, 36) : RGB(240, 253, 244);
-        const COLORREF borderSavings = isDark ? RGB(48, 80, 52) : RGB(187, 247, 208);
-        const COLORREF textSavings = isDark ? RGB(74, 222, 128) : RGB(22, 163, 74);
+        const COLORREF bgSavings = DarkMode::IsDarkModeActive() ? RGB(32, 50, 36) : RGB(240, 253, 244);
+        const COLORREF borderSavings = DarkMode::IsDarkModeActive() ? RGB(48, 80, 52) : RGB(187, 247, 208);
+        const COLORREF textSavings = DarkMode::IsDarkModeActive() ? RGB(74, 222, 128) : RGB(22, 163, 74);
 
         memDC.FillSolidRect(rcSavings, bgSavings);
         CBrush brSavings(borderSavings);

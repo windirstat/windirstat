@@ -23,8 +23,6 @@
 class CSunburst final
 {
 public:
-    static constexpr COLORREF BACKGROUND_COLOR = RGB(15, 15, 15);
-
     void DrawSunburst(CDC* pdc, CRect rc, CItem* root, int maxDepth);
     void DrawOutlineItems(CDC* pdc, std::span<const CItem* const> items,
         COLORREF color, float width = 2.0f) const;

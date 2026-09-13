@@ -509,10 +509,9 @@ void CFrameWnd::UpdateMenuCommands(CMenu* pMenu, const bool bSysMenu)
 // -----------------------------------------------------------------------------
 void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
 {
-    const bool dark = DarkMode::IsDarkModeActive();
-    const COLORREF paneFace = DarkMode::SystemColor(dark ? COLOR_MENUBAR : COLOR_BTNFACE);
+    const COLORREF paneFace = DarkMode::SystemColor(DarkMode::IsDarkModeActive() ? COLOR_MENUBAR : COLOR_BTNFACE);
     COLORREF paneEdge = paneFace;
-    if (!dark)
+    if (!DarkMode::IsDarkModeActive())
     {
         paneEdge = GetSysColor(COLOR_3DSHADOW);
         const SmartPointer toolbarTheme(CloseThemeData, OpenThemeData(m_hWnd, VSCLASS_TOOLBAR));
@@ -520,7 +519,7 @@ void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
             GetThemeColor(toolbarTheme, TP_BUTTON, 0, TMT_EDGESHADOWCOLOR, &paneEdge);
     }
 
-    dc.FillSolidRect(rect, DarkMode::SystemColor(dark ? COLOR_WINDOWFRAME : COLOR_BTNFACE));
+    dc.FillSolidRect(rect, DarkMode::SystemColor(DarkMode::IsDarkModeActive() ? COLOR_WINDOWFRAME : COLOR_BTNFACE));
     for (const auto [row, column] : std::views::cartesian_product(
         std::views::iota(0, GetRowCount()),
         std::views::iota(0, GetColumnCount())))
@@ -575,9 +574,9 @@ void CToolBar::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const
 
 void CStatusBar::DrawPaneBorder(CDC& dc, const CRect& rect)
 {
-    const bool dark = DarkMode::IsDarkModeActive();
-    const COLORREF border = dark ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
-    if (dark) dc.FillSolidRect(rect.left, rect.top, rect.Width(), 1, border);
+    const COLORREF border = DarkMode::IsDarkModeActive()
+        ? DarkMode::SystemColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
+    if (DarkMode::IsDarkModeActive()) dc.FillSolidRect(rect.left, rect.top, rect.Width(), 1, border);
     dc.FillSolidRect(rect.right - 1, rect.top, 1, rect.Height(), border);
 }
 
@@ -814,10 +813,11 @@ void CTabControl::OnPaint()
     CBufferedDC dc(paintDC, this);
 
     const CRect rcClient = GetClientRect();
-    const bool darkMode = DarkMode::IsDarkModeActive();
     const COLORREF tabBorder = GetSysColor(COLOR_3DSHADOW);
-    const COLORREF tabPane = darkMode ? DarkMode::SystemColor(COLOR_WINDOW) : GetSysColor(COLOR_3DHILIGHT);
-    const COLORREF tabStrip = darkMode ? DarkMode::SystemColor(COLOR_WINDOW) : GetSysColor(COLOR_3DFACE);
+    const COLORREF tabPane = DarkMode::IsDarkModeActive()
+        ? DarkMode::SystemColor(COLOR_WINDOW) : GetSysColor(COLOR_3DHILIGHT);
+    const COLORREF tabStrip = DarkMode::IsDarkModeActive()
+        ? DarkMode::SystemColor(COLOR_WINDOW) : GetSysColor(COLOR_3DFACE);
     const COLORREF buttonFace = DarkMode::SystemColor(COLOR_BTNFACE);
 
     const int tabH = TabStripHeight();

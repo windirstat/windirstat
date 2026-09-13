@@ -394,11 +394,11 @@ HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 bool CMessageBoxDlg::OnEraseBkgnd(CDC* pDC) const
 {
     const CRect rect = GetClientRect();
-    const bool bDark = DarkMode::IsDarkModeActive();
 
     const COLORREF topColor = DarkMode::SystemColor(COLOR_WINDOW);
     const COLORREF footerColor = DarkMode::SystemColor(COLOR_BTNFACE);
-    const COLORREF lineColor = bDark ? DarkMode::SystemColor(COLOR_BTNHIGHLIGHT) : GetSysColor(COLOR_3DSHADOW);
+    const COLORREF lineColor = DarkMode::IsDarkModeActive()
+        ? DarkMode::SystemColor(COLOR_BTNHIGHLIGHT) : GetSysColor(COLOR_3DSHADOW);
 
     int lineY = rect.bottom - ScaleForDpi(46);
 

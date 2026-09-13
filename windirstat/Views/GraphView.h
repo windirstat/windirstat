@@ -29,7 +29,10 @@ public:
     CGraphView() = default;
     ~CGraphView() override = default;
 
-    static constexpr COLORREF BackgroundColor = RGB(15, 15, 15);
+    static COLORREF GetBackgroundColor()
+    {
+        return DarkMode::SystemColor(COLOR_WINDOW);
+    }
 
     void SuspendRecalculationDrawing(bool suspend) final;
     void TrimRenderCache();

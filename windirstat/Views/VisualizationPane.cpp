@@ -67,7 +67,7 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CVisualizationPane::OnDraw(CDC* pDC)
 {
-    pDC->FillSolidRect(GetClientRect(), CGraphView::BackgroundColor);
+    pDC->FillSolidRect(GetClientRect(), CGraphView::GetBackgroundColor());
 }
 
 void CVisualizationPane::SelectPane(const GraphPane pane)
