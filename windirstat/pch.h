@@ -78,6 +78,7 @@
 #include <cstring>
 #include <cwchar>
 #include <cwctype>
+#include <exception>
 #include <execution>
 #include <filesystem>
 #include <format>
