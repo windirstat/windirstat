@@ -11,15 +11,21 @@ Enhancements
 - Added greater-than / less-than comparisons for file size and age exclusions
 - Added style presets for treemap visualization
 - Added cancellation support while loading NTFS MFT records
+- Added optional sparse hashing for duplicate detection in files over 64 MiB
+- Added live path filtering with regular expressions in File Watcher
 - Added Arabic translation (thanks @Alhlhli, @harryytm)
+- Added Hindi translation for the application and installer
 - Improved hardlink processing performance and memory usage
 - Improved scanning, tree update, and file watcher performance through batched updates
 - Improved duplicate file and largest file tracking performance using incremental updates
 - Improved memory usage and responsiveness in Permissions and Storage Analytics views
+- Reduced memory usage for large scans and tree views
+- Improved visualization backgrounds and placeholders to match light and dark modes
 - Improved legacy Windows OS compatibility when using modern build tools
 - Improved Simplified Chinese translation (thanks @wcxu21)
 - Improved Traditional Chinese (Hong Kong) translation (thanks @harryytm)
 - Improved Italian translation (thanks @bovirus)
+- Improved translation grammar and keyboard mnemonics across supported languages
 - Migrated the UI framework from MFC to native Win32/GDI (reduced executable size)
 
 Bug Fixes
@@ -29,12 +35,14 @@ Bug Fixes
 - Corrected inflated sizes for WSL pseudo-files accessed through network shares
 - Corrected clipped comparison controls in filtering settings (thanks @harryytm)
 - Corrected progress dialog flickering during text updates
+- Corrected toolbar buttons displaying unrelated tooltip text
 - Corrected a crash when requesting administrator elevation
 - Corrected scan completion stalls during memory cleanup
 - Corrected Remove Empty Folders potentially removing reparse point targets
 - Corrected folder counts and zoom state after removing multi-root scan targets
 - Corrected invalid attributes being lost when loading CSV/JSON results
 - Corrected WinGet upgrades for MSI installations using non-English locales
+- Corrected language IDs and text encoding in localized MSI installers
 - Corrected opening properties for "This PC" items (thanks @harryytm)
 - Corrected directory enumeration in recursive user-defined cleanups
 - Corrected directory modification timestamps being overwritten during parallel scans
