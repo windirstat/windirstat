@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)][string]$DemoPath,
     [string]$LocalizedDemoRoot,
     [string]$OutputDir = (Join-Path $PSScriptRoot "screenshots"),
