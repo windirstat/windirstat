@@ -149,6 +149,7 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
+    bool SaveSelection();
     void OnBnClickedUpdateButtons();
     void OnBnClickedFastScanCheckbox();
     void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);

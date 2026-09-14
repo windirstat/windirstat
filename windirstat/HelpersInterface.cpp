@@ -438,13 +438,13 @@ std::wstring TranslateError(const HRESULT hr)
 }
 
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring& lpVerb,
-    const HWND hwnd, const std::wstring& lpDirectory, const INT nShowCmd)
+    const HWND hwnd, const std::wstring& lpDirectory, const INT nShowCmd, const ULONG fMask, HANDLE* process)
 {
     CWaitCursor wc;
 
     SHELLEXECUTEINFO sei = {
         .cbSize = sizeof(SHELLEXECUTEINFO),
-        .fMask = 0,
+        .fMask = fMask | (process != nullptr ? SEE_MASK_NOCLOSEPROCESS : 0),
         .hwnd = hwnd,
         .lpVerb = lpVerb.empty() ? nullptr : lpVerb.c_str(),
         .lpFile = lpFile.empty() ? nullptr : lpFile.c_str(),
@@ -454,6 +454,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     };
 
     const bool bResult = ::ShellExecuteEx(&sei);
+    if (process != nullptr) *process = sei.hProcess;
     if (!bResult && GetLastError() != ERROR_CANCELLED)
     {
         DisplayError(L"ShellExecute failed: " + TranslateError(GetLastError()));

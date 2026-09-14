@@ -274,7 +274,7 @@ bool CMessageBoxDlg::OnInitDialog()
     // Set focus to default button
     if (m_buttonContext.btnFocus)
     {
-        m_buttonContext.btnFocus->ModifyStyle(BS_PUSHBUTTON, BS_DEFPUSHBUTTON);
+        SendMessage(DM_SETDEFID, m_buttonContext.btnFocus->GetDlgCtrlID());
         m_buttonContext.btnFocus->SetFocus();
         return false;
     }

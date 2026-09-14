@@ -368,8 +368,12 @@ bool IsElevationAvailable() noexcept
 void RunElevated(const std::wstring& cmdLine)
 {
     PersistedSetting::WritePersistedProperties();
-    if (ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas"))
-        ExitProcess(0);
+    SmartPointer process(CloseHandle, HANDLE{});
+    if (!ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas",
+        GetDialogOwner(), L"", SW_NORMAL, SEE_MASK_NOASYNC, &process)) return;
+
+    AllowSetForegroundWindow(GetProcessId(process));
+    ExitProcess(0);
 }
 
 bool EnableReadPrivileges() noexcept

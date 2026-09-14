@@ -226,8 +226,7 @@ void CWinDirStatModel::SetScanPathSpec(const std::wstring& pathSpec)
 //
 void CWinDirStatModel::SetScanTitlePrefix(const std::wstring& prefix) const
 {
-    static std::wstring suffix = IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"";
-    std::wstring scanName = std::format(L"{} {} {}", prefix, GetScanTitle(), suffix);
+    std::wstring scanName = std::format(L"{} {}", prefix, GetScanTitle());
     scanName = TrimString(scanName);
     CMainFrame::Get()->UpdateFrameTitleForScan(scanName);
 }

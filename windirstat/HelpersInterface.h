@@ -98,7 +98,7 @@ void DisplayError(const std::wstring& error);
 std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"",
         const std::wstring& lpVerb = L"", HWND hwnd = GetMainWindowHandle(),
-        const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
+        const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL, ULONG fMask = 0, HANDLE* process = nullptr);
 bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
 
 std::wstring GetLocalizedMenuText(std::wstring_view textId, std::wstring_view detail = {});

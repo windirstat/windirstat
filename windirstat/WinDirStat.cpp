@@ -82,6 +82,8 @@ void CDirStatApp::RestartApplication(const bool resetPreferences)
         return;
     }
 
+    AllowSetForegroundWindow(pi.dwProcessId);
+
     // If resetting preference, hard exit to prevent saving settings
     if (resetPreferences)
     {
@@ -260,12 +262,10 @@ private:
             else if (m_pendingFlag == saveToFlag)
             {
                 CDirStatApp::Get()->m_saveToPath = param;
-                COptions::ScanForDuplicates = false;
             }
             else if (m_pendingFlag == saveDupesToFlag)
             {
                 CDirStatApp::Get()->m_saveDupesToPath = param;
-                COptions::ScanForDuplicates = true;
             }
             else if (m_pendingFlag == savePermsToFlag)
             {
@@ -366,12 +366,6 @@ bool CDirStatApp::InitInstance()
     COptions::LoadAppSettings();
     SetProcessPriority(COptions::ProcessPriority);
 
-    // Silently restart elevated conditionally before any expensive initialization
-    if (IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt) // only if user doesn't want to be prompted
-    {
-        RunElevated(m_lpCmdLine);
-    }
-
     // Set app to prefer dark mode
     DarkMode::SetAppDarkMode();
 
@@ -388,6 +382,12 @@ bool CDirStatApp::InitInstance()
     const CWinDirStatCommandLineInfo cmdInfo;
     if (cmdInfo.HasMalformedCommandLine()) ExitProcess(1);
 
+    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
+    const bool autoElevate = IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt;
+
+    // Elevate non-interactive operations before rejecting protected paths or applying changes.
+    if (autoElevate && (hideApp || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
+
     if (cmdInfo.IsLegacyUninstallRequested())
     {
         LegacyUninstall();
@@ -396,9 +396,11 @@ bool CDirStatApp::InitInstance()
     }
 
     // Check if we should hide the app window
-    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
     if (hideApp && (cmdInfo.GetPath().empty() || cmdInfo.HasInvalidPath())) ExitProcess(1);
     if (hideApp) m_nCmdShow = SW_HIDE;
+
+    if (!m_saveToPath.empty()) COptions::ScanForDuplicates = false;
+    else if (!m_saveDupesToPath.empty()) COptions::ScanForDuplicates = true;
 
     m_model = std::make_unique<CWinDirStatModel>();
 
@@ -410,6 +412,22 @@ bool CDirStatApp::InitInstance()
     }
 
     CWinDirStatModel::Get()->ResetScan();
+
+    // Keep the main window hidden while a zero-size foreground owner hosts UAC.
+    SmartPointer elevationOwner(DestroyWindow, HWND{});
+    if (autoElevate && !hideApp)
+    {
+        const CRect rect = m_pMainWnd->GetWindowRect();
+        elevationOwner = CreateWindowEx(WS_EX_TOOLWINDOW, WC_STATIC, nullptr, WS_POPUP | WS_VISIBLE,
+            (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2,
+            0, 0, nullptr, nullptr, GetAppInstance(), nullptr);
+        if (elevationOwner != nullptr)
+        {
+            ::SetForegroundWindow(elevationOwner);
+            RunElevated(m_lpCmdLine);
+        }
+    }
+
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->ShowWindow(m_nCmdShow);
     m_pMainWnd->Invalidate();
@@ -417,8 +435,14 @@ bool CDirStatApp::InitInstance()
 
     // When called by setup.exe, WinDirStat remained in the
     // background, so force it to the foreground
-    m_pMainWnd->BringWindowToTop();
-    m_pMainWnd->SetForegroundWindow();
+    if (!hideApp)
+    {
+        m_pMainWnd->BringWindowToTop();
+        m_pMainWnd->SetForegroundWindow();
+
+        // Fall back to the main window if the temporary UAC owner could not be created.
+        if (autoElevate && elevationOwner == nullptr) RunElevated(m_lpCmdLine);
+    }
 
     // Attempt to enable backup / restore privileges if running as admin
     if (COptions::UseBackupRestore && !EnableReadPrivileges())
@@ -448,7 +472,6 @@ bool CDirStatApp::InitInstance()
         if (nID == IDYES)
         {
             RunElevated(m_lpCmdLine);
-            return false;
         }
     }
 
@@ -509,12 +532,16 @@ void CDirStatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 
 void CDirStatApp::OnRunElevated()
 {
-    RunElevated(CWinDirStatModel::Get()->GetScanPathSpec());
+    const std::wstring& pathSpec = CWinDirStatModel::Get()->GetScanPathSpec();
+    const size_t last = pathSpec.find_last_not_of(L'\\');
+    const size_t trailing = last == std::wstring::npos ? pathSpec.size() : pathSpec.size() - last - 1;
+    RunElevated(pathSpec.empty() ? std::wstring{} : std::format(L"\"{}{}\"", pathSpec, std::wstring(trailing, L'\\')));
 }
 
 void CDirStatApp::OnFilter()
 {
-    CSettingsSheet::ShowSettings(1); // 1 = Filtering tab
+    const bool restart = CSettingsSheet::ShowSettings(1); // 1 = Filtering tab
+    if (restart) RestartApplication();
 }
 
 void CDirStatApp::LaunchHelp()

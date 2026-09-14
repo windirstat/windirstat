@@ -414,6 +414,17 @@ bool CSelectDrivesDlg::OnInitDialog()
 
 void CSelectDrivesDlg::OnOK()
 {
+    if (!SaveSelection()) return;
+
+    // Switch focus to file tree view
+    const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
+    tabbedView->SetActiveFileTreeView();
+
+    CLayoutDialog::OnOK();
+}
+
+bool CSelectDrivesDlg::SaveSelection()
+{
     m_radio = GetCheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
     m_folderName = GetText(IDC_BROWSE_FOLDER);
 
@@ -423,7 +434,7 @@ void CSelectDrivesDlg::OnOK()
     {
         // Normalize every pipe-separated path on its own and rebuild the spec from the results
         const auto folders = NormalizeScanPaths(m_folderName);
-        if (folders.empty()) return;
+        if (folders.empty()) return false;
         m_folderName = JoinString(folders);
 
         // Record each folder on its own rather than the joined spec: the history is persisted
@@ -470,12 +481,7 @@ void CSelectDrivesDlg::OnOK()
     COptions::SelectDrivesDrives = m_selectedDrives;
     COptions::ScanForDuplicates = IsChecked(IDC_SCAN_DUPLICATES);
     COptions::UseFastScanEngine = IsChecked(IDC_FAST_SCAN_CHECKBOX);
-
-    // Switch focus to file tree view
-    const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
-    tabbedView->SetActiveFileTreeView();
-
-    CLayoutDialog::OnOK();
+    return true;
 }
 
 void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
@@ -520,13 +526,19 @@ void CSelectDrivesDlg::UpdateFilterButton()
 void CSelectDrivesDlg::OnBnClickedFastScanCheckbox()
 {
     // Prompt to re-launch elevated if the user just enabled Fast Scan without elevation
-    if (GetButtonCheckState(IDC_FAST_SCAN_CHECKBOX) != BST_UNCHECKED && !IsElevationActive() && IsElevationAvailable())
+    if (IsChecked(IDC_FAST_SCAN_CHECKBOX) && IsElevationAvailable())
     {
         if (ShowMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
             wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
+            const auto previousSettings = std::tuple{ COptions::UseFastScanEngine.Obj(), COptions::SelectDrivesRadio.Obj(),
+                COptions::SelectDrivesDrives.Obj(), COptions::SelectDrivesFolder.Obj(), COptions::ScanForDuplicates.Obj() };
             COptions::UseFastScanEngine = true;
-            RunElevated(CWinDirStatModel::Get()->GetScanPathSpec());
+            (void)SaveSelection();
+            RunElevated({});
+            std::tie(COptions::UseFastScanEngine.Obj(), COptions::SelectDrivesRadio.Obj(), COptions::SelectDrivesDrives.Obj(),
+                COptions::SelectDrivesFolder.Obj(), COptions::ScanForDuplicates.Obj()) = previousSettings;
+            PersistedSetting::WritePersistedProperties();
             return;
         }
     }
@@ -699,7 +711,12 @@ void CSelectDrivesDlg::BrowseFolders(const bool append)
 
 void CSelectDrivesDlg::OnBnClickedFilterButton()
 {
-    CSettingsSheet::ShowSettings(1, false); // 1 = Filtering tab
+    const bool restart = CSettingsSheet::ShowSettings(1, false); // 1 = Filtering tab
+    if (restart)
+    {
+        CDirStatApp::Get()->RestartApplication();
+        return;
+    }
     UpdateFilterButton();
 }
 
