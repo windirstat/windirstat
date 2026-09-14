@@ -577,6 +577,9 @@
     <Text Include="res\langs\lang_fr.txt">
       <Filter>Resource Files\Icon\Languages</Filter>
     </Text>
+    <Text Include="res\langs\lang_hi.txt">
+      <Filter>Resource Files\Icon\Languages</Filter>
+    </Text>
     <Text Include="res\langs\lang_hu.txt">
       <Filter>Resource Files\Icon\Languages</Filter>
     </Text>

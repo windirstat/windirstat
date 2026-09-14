@@ -1,10 +1,12 @@
-﻿param(
+param(
     [Parameter(Mandatory = $true)][string]$DemoPath,
+    [string]$LocalizedDemoRoot,
     [string]$OutputDir = (Join-Path $PSScriptRoot "screenshots"),
     [string]$ExeSource = (Join-Path $PSScriptRoot "..\..\publish\x64\WinDirStat.exe"),
+    [string]$Python = "python",
     [string]$AppDir = (Join-Path ([IO.Path]::GetTempPath()) ("WinDirStatCapture-" + [guid]::NewGuid())),
-    [ValidateRange(1280, 7680)][int]$Width = 1920,
-    [ValidateRange(720, 4320)][int]$Height = 1080,
+    [ValidateRange(1280, 7680)][int]$Width = 2560,
+    [ValidateRange(720, 4320)][int]$Height = 1440,
     [string[]]$Language = @(),
     [ValidateSet("treemap", "largest", "duplicates", "sunburst", "flame")]
     [string[]]$View = @("treemap", "largest", "duplicates", "sunburst", "flame"),
@@ -15,6 +17,45 @@ $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
+
+$pngOptimizer = @'
+import io, struct, sys, zlib
+from pathlib import Path
+from PIL import Image
+
+path = Path(sys.argv[1])
+original = path.read_bytes()
+with Image.open(io.BytesIO(original)) as source:
+    pixels = source.convert("RGBA").tobytes()
+    if source.mode == "RGBA" and source.getchannel("A").getextrema() == (255, 255):
+        source = source.convert("RGB")
+    optimized = io.BytesIO()
+    source.save(optimized, format="PNG", optimize=True, compress_level=9)
+
+# Recompress the original scanlines as another lossless candidate for gradients.
+chunks = []
+offset = 8
+while offset < len(original):
+    length = struct.unpack_from(">I", original, offset)[0]
+    chunks.append((original[offset + 4:offset + 8], original[offset:offset + length + 12]))
+    offset += length + 12
+scanlines = b"".join(chunk[8:-4] for kind, chunk in chunks if kind == b"IDAT")
+compressed = zlib.compress(zlib.decompress(scanlines), level=9)
+payload = b"IDAT" + compressed
+replacement = struct.pack(">I", len(compressed)) + payload + struct.pack(">I", zlib.crc32(payload))
+repacked = bytearray(original[:8])
+for kind, chunk in chunks:
+    repacked.extend(replacement if kind == b"IDAT" else chunk)
+    if kind == b"IDAT":
+        replacement = b""
+
+result = min((original, optimized.getvalue(), bytes(repacked)), key=len)
+with Image.open(io.BytesIO(result)) as image:
+    if image.convert("RGBA").tobytes() != pixels:
+        raise RuntimeError("PNG optimization changed screenshot pixels.")
+if result != original:
+    path.write_bytes(result)
+'@
 
 $signature = @'
 using System;
@@ -76,6 +117,9 @@ public static class NativeWindowTools
     [DllImport("user32.dll")]
     private static extern IntPtr GetMenu(IntPtr hWnd);
 
+    [DllImport("user32.dll")]
+    private static extern bool IsMenu(IntPtr menu);
+
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr parameter);
 
     public static IntPtr FindMainWindow(int processId)
@@ -85,7 +129,7 @@ public static class NativeWindowTools
         {
             uint owner;
             GetWindowThreadProcessId(window, out owner);
-            if (owner != processId || GetWindow(window, 4) != IntPtr.Zero || GetMenu(window) == IntPtr.Zero)
+            if (owner != processId || GetWindow(window, 4) != IntPtr.Zero || !IsMenu(GetMenu(window)))
                 return true;
             match = window;
             return false;
@@ -159,8 +203,47 @@ if (-not ("NativeWindowTools" -as [type])) {
     Add-Type -TypeDefinition $signature
 }
 
+function New-LocalizedDemoTree {
+    param([string]$Code, [hashtable]$Names)
+
+    $localeRoot = [IO.Path]::GetFullPath((Join-Path $LocalizedDemoRoot $Code))
+    $rootPrefix = $LocalizedDemoRoot.TrimEnd('\') + '\'
+    if (-not $localeRoot.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Localized demo directory is outside the configured root."
+    }
+    $marker = Join-Path $localeRoot ".windirstat-demo-source"
+    if (Test-Path -LiteralPath $localeRoot) {
+        if (-not (Test-Path -LiteralPath $marker -PathType Leaf) -or
+            [IO.File]::ReadAllText($marker) -ne $DemoPath -or
+            ((Get-Item -LiteralPath $localeRoot).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw "Refusing to replace a directory not created for this demo: $localeRoot"
+        }
+        Remove-Item -LiteralPath $localeRoot -Recurse -Force
+    }
+    [IO.Directory]::CreateDirectory($localeRoot) | Out-Null
+    [IO.File]::WriteAllText($marker, $DemoPath)
+    $scanPath = Join-Path $localeRoot $Names.StoreDemoData
+    [IO.Directory]::CreateDirectory($scanPath) | Out-Null
+    foreach ($item in $demoItems) {
+        $parts = [IO.Path]::GetRelativePath($DemoPath, $item.FullName).Split('\')
+        $directoryCount = $parts.Count - [int](-not $item.PSIsContainer)
+        for ($index = 0; $index -lt $directoryCount; $index++) {
+            $parts[$index] = $Names[$parts[$index]]
+        }
+        $destination = Join-Path $scanPath ($parts -join '\')
+        if ($item.PSIsContainer) {
+            [IO.Directory]::CreateDirectory($destination) | Out-Null
+        } else {
+            # Hardlinks preserve sample contents and duplicate groups without copying the data for every locale.
+            New-Item -ItemType HardLink -Path $destination -Target $item.FullName | Out-Null
+        }
+    }
+    return $scanPath
+}
+
 function Invoke-StoreScreenshotCapture {
     param(
+        [Parameter(Mandatory = $true)][string]$ScanPath,
         [Parameter(Mandatory = $true)][int]$LanguageId,
         [Parameter(Mandatory = $true)][int]$DarkMode,
         [Parameter(Mandatory = $true)][string]$Code,
@@ -205,7 +288,7 @@ function Invoke-StoreScreenshotCapture {
 
         $start = @{
             FilePath = (Join-Path $AppDir "WinDirStat.exe")
-            ArgumentList = ('"{0}"' -f $DemoPath)
+            ArgumentList = ('"{0}"' -f $ScanPath)
             WorkingDirectory = $AppDir
             WindowStyle = "Hidden"
             PassThru = $true
@@ -311,6 +394,8 @@ function Invoke-StoreScreenshotCapture {
                 $gfx.Dispose()
                 $bmp.Dispose()
             }
+            & $Python -c $pngOptimizer $outPath
+            if ($LASTEXITCODE -ne 0) { throw "Could not losslessly compress the screenshot: $outPath" }
             $script:done++
             Write-Host "[$script:done/$total] Captured $Code ($viewName, $modeName) -> $outPath"
         }
@@ -342,6 +427,7 @@ $languages = @(
     [pscustomobject]@{ Code = "et";    LangId = 37 },
     [pscustomobject]@{ Code = "fi";    LangId = 11 },
     [pscustomobject]@{ Code = "fr";    LangId = 12 },
+    [pscustomobject]@{ Code = "hi";    LangId = 57 },
     [pscustomobject]@{ Code = "hu";    LangId = 14 },
     [pscustomobject]@{ Code = "it";    LangId = 16 },
     [pscustomobject]@{ Code = "ja";    LangId = 17 },
@@ -371,7 +457,35 @@ if (-not (Test-Path -LiteralPath $DemoPath -PathType Container) -or
     -not (Test-Path -LiteralPath $ExeSource -PathType Leaf)) {
     throw "Provide an existing demo directory and WinDirStat executable."
 }
+# Requires Python with Pillow: python -m pip install Pillow
+& $Python -c "from PIL import Image"
+if ($LASTEXITCODE -ne 0) { throw "Screenshot compression requires Python with Pillow. Use -Python to select it." }
 $DemoPath = (Resolve-Path -LiteralPath $DemoPath).Path
+$folderNames = Get-Content -LiteralPath (Join-Path $PSScriptRoot "demo-folder-names.json") -Raw -Encoding UTF8 |
+    ConvertFrom-Json -AsHashtable
+if (-not $LocalizedDemoRoot) { $LocalizedDemoRoot = Join-Path (Split-Path -Parent $DemoPath) "Localized" }
+$LocalizedDemoRoot = [IO.Path]::GetFullPath($LocalizedDemoRoot).TrimEnd('\')
+if ($LocalizedDemoRoot -eq $DemoPath -or
+    $LocalizedDemoRoot.StartsWith($DemoPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Localized demo trees must be outside the original demo directory."
+}
+$demoItems = @(Get-ChildItem -LiteralPath $DemoPath -Recurse -Force | Sort-Object { $_.FullName.Length })
+if ($demoItems | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }) {
+    throw "Demo data must contain regular directories and files."
+}
+$requiredNames = @("StoreDemoData") + @($demoItems | Where-Object PSIsContainer |
+    Select-Object -ExpandProperty Name -Unique)
+foreach ($lang in $languages) {
+    $folderLanguage = switch ($lang.Code) { "en-us" { "en" } "zh-cn" { "zh" } default { $lang.Code } }
+    $names = $folderNames[$folderLanguage]
+    foreach ($name in $requiredNames) {
+        $translated = $names[$name]
+        if (-not $translated -or $translated.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0 -or
+            $translated.TrimEnd(' ', '.') -ne $translated -or $translated -in @(".", "..")) {
+            throw "Missing or invalid $($lang.Code) demo folder name: $name"
+        }
+    }
+}
 $resource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "..\..\windirstat\resource.h") -Raw
 $commands = @{}
 foreach ($name in @("ID_REFRESH_ALL", "ID_VIEW_ALL_FILES", "ID_VIEW_LARGEST_FILES", "ID_VIEW_DUPLICATE_FILES",
@@ -398,15 +512,18 @@ try {
     $script:done = 0
     Write-Host "Capturing $total screenshots at $Width x $Height physical pixels."
     foreach ($lang in $languages) {
+        $folderLanguage = switch ($lang.Code) { "en-us" { "en" } "zh-cn" { "zh" } default { $lang.Code } }
+        $scanPath = New-LocalizedDemoTree -Code $lang.Code -Names $folderNames[$folderLanguage]
+        Write-Host "Localized demo for $($lang.Code): $scanPath"
         foreach ($darkMode in $Theme) {
             $standardViews = @($View | Where-Object { $_ -ne "sunburst" })
             if ($standardViews.Count) {
                 Invoke-StoreScreenshotCapture -LanguageId $lang.LangId -DarkMode $darkMode `
-                    -Code $lang.Code -Views $standardViews
+                    -Code $lang.Code -Views $standardViews -ScanPath $scanPath
             }
             if ($View -contains "sunburst") {
                 Invoke-StoreScreenshotCapture -LanguageId $lang.LangId -DarkMode $darkMode `
-                    -Code $lang.Code -Views @("sunburst")
+                    -Code $lang.Code -Views @("sunburst") -ScanPath $scanPath
             }
         }
     }

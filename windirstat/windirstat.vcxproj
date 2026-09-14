@@ -685,6 +685,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <Text Include="res\langs\lang_et.txt" />
     <Text Include="res\langs\lang_fi.txt" />
     <Text Include="res\langs\lang_fr.txt" />
+    <Text Include="res\langs\lang_hi.txt" />
     <Text Include="res\langs\lang_hu.txt" />
     <Text Include="res\langs\lang_it.txt" />
     <Text Include="res\langs\lang_ja.txt" />
