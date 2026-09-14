@@ -531,9 +531,6 @@ void CSunburst::RenderLayout(CDC* pdc) const
 
 double CSunburst::GetLabelPriority(const LayoutEntry& entry) const
 {
-    if (entry.item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
-        return 0.0;
-
     const double dpiScale = m_dpiScale;
     if (entry.depth == 0)
     {
