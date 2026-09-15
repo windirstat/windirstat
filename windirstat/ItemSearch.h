@@ -33,6 +33,8 @@ class CItemSearch final : public CTreeListItem
     std::shared_mutex m_protect;
     std::vector<CItemSearch*> m_children;
     CItem* m_item = nullptr;
+    ULONGLONG m_totalSizeLogical = 0;   // sum over children, meaningful on the root row
+    ULONGLONG m_totalSizePhysical = 0;
     bool m_limitExceeded = false;
 
 public:

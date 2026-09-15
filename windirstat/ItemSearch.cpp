@@ -52,6 +52,10 @@ std::wstring CItemSearch::GetText(const int subitem) const
     // Root node
     if (GetParent() == nullptr)
     {
+        // Show the combined size of all matches, so an owner or type search doubles
+        // as "how much space does this add up to" without any extra step
+        if (subitem == COL_ITEMSEARCH_SIZE_LOGICAL) return FormatBytes(m_totalSizeLogical);
+        if (subitem == COL_ITEMSEARCH_SIZE_PHYSICAL) return FormatBytes(m_totalSizePhysical);
         if (subitem != COL_ITEMSEARCH_NAME) return {};
 
         // Format as "Search Results (1234+)"
@@ -113,6 +117,11 @@ void CItemSearch::AddSearchItemChild(CItemSearch* child)
 
     std::scoped_lock guard(m_protect);
     m_children.push_back(child);
+    if (child->m_item != nullptr)
+    {
+        m_totalSizeLogical += child->m_item->GetSizeLogical();
+        m_totalSizePhysical += child->m_item->GetSizePhysical();
+    }
 
     if (IsVisible() && IsExpanded())
     {
@@ -132,6 +141,11 @@ void CItemSearch::RemoveSearchItemChild(CItemSearch* child)
     if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
+        if (child->m_item != nullptr)
+        {
+            m_totalSizeLogical -= child->m_item->GetSizeLogical();
+            m_totalSizePhysical -= child->m_item->GetSizePhysical();
+        }
     }
 
     delete child;
