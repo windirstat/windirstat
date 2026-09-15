@@ -38,95 +38,149 @@ bool SearchDlg::OnInitDialog()
 
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    m_layout.AddControl(IDOK, 1, 0, 0, 0);
-    m_layout.AddControl(IDCANCEL, 1, 0, 0, 0);
+    CClientDC dc(this);
+    const GdiObjectSelection font(&dc, GetDlgItem(IDC_SEARCH_SIZE_LABEL)->GetFont());
+    const CRect labelRect = GetChildWindowRect(GetDlgItem(IDC_SEARCH_SIZE_LABEL)->Handle());
+    LONG labelWidth = 0;
+    for (CWnd* child = GetWindow(GW_CHILD); child != nullptr; child = child->GetWindow(GW_HWNDNEXT))
+    {
+        if (GetChildWindowRect(child->Handle()).right > labelRect.right) continue;
+        std::wstring text = child->GetText();
+        if (!text.ends_with(L':')) child->SetText(text += L":");
+        labelWidth = std::max(labelWidth, dc.GetTextExtent(text).cx);
+    }
+    const int shift = labelRect.Width() - labelWidth - ScaleForDpi(2);
+    for (CWnd* child = GetWindow(GW_CHILD); child != nullptr; child = child->GetWindow(GW_HWNDNEXT))
+    {
+        CRect rect = GetChildWindowRect(child->Handle());
+        if (rect.right <= labelRect.right) rect.right -= shift;
+        else rect.Offset(-shift, 0);
+        child->MoveWindow(rect);
+    }
+    const CRect windowRect = GetWindowRect();
+    SetWindowPos(nullptr, 0, 0, windowRect.Width() - shift, windowRect.Height(), SWP_NOMOVE | SWP_NOZORDER);
+
+    m_layout.AddControl(IDOK, 1, 1, 0, 0);
+    m_layout.AddControl(IDCANCEL, 1, 1, 0, 0);
     m_layout.AddControl(IDC_SEARCH_TERM, 0, 0, 1, 0);
     m_layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_CASE, 0, 0, 0, 0);
-    m_layout.AddControl(IDC_SEARCH_SIZE_MIN, 0, 0, 0, 0);
-    m_layout.AddControl(IDC_SEARCH_SIZE_MAX, 0, 0, 0, 0);
-    m_layout.AddControl(IDC_SEARCH_SIZE_UNITS, 0, 0, 0, 0);
+    for (const auto& [minimum, maximum, separator, units] : {
+        std::array{ IDC_SEARCH_SIZE_MIN, IDC_SEARCH_SIZE_MAX, IDC_SEARCH_SIZE_SEPARATOR, IDC_SEARCH_SIZE_UNITS },
+        std::array{ IDC_SEARCH_PHYSICAL_MIN, IDC_SEARCH_PHYSICAL_MAX,
+            IDC_SEARCH_PHYSICAL_SEPARATOR, IDC_SEARCH_PHYSICAL_UNITS } })
+    {
+        m_layout.AddControl(minimum, 0, 0, 0, 0);
+        m_layout.AddControl(separator, 0, 0, 0, 0);
+        m_layout.AddControl(maximum, 0, 0, 0, 0);
+        m_layout.AddControl(units, 0, 0, 0, 0);
+        GetDlgItem(minimum)->SendNativeMessage(EM_SETCUEBANNER, true, L"0");
+        GetDlgItem(maximum)->SendNativeMessage(EM_SETCUEBANNER, true, L"\u221e");
+        for (const auto& unit : { GetSpec_Bytes(), GetSpec_KiB(), GetSpec_MiB(), GetSpec_GiB(), GetSpec_TiB() })
+            GetDlgItem(units)->SendNativeMessage(CB_ADDSTRING, 0, unit.c_str());
+    }
     m_layout.AddControl(IDC_SEARCH_FILES, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_FOLDERS, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_OWNER, 0, 0, 1, 0);
 
+    const CSize minimumSize = GetWindowRect().Size();
     m_layout.OnInitDialog(true);
 
-    m_ctlSearchSizeUnits.SubclassDlgItem(IDC_SEARCH_SIZE_UNITS, this);
-    m_ctlSearchSizeUnits.AddString(GetSpec_Bytes());
-    m_ctlSearchSizeUnits.AddString(GetSpec_KiB());
-    m_ctlSearchSizeUnits.AddString(GetSpec_MiB());
-    m_ctlSearchSizeUnits.AddString(GetSpec_GiB());
-    m_ctlSearchSizeUnits.AddString(GetSpec_TiB());
-    if (DarkMode::IsDarkModeActive()) DarkMode::AdjustControls(m_ctlSearchSizeUnits.Handle());
+    CRect rect = GetWindowRect();
+    rect.bottom = rect.top + minimumSize.cy;
+    MONITORINFO monitor{ .cbSize = sizeof(monitor) };
+    if (GetMonitorInfoW(MonitorFromWindow(Handle(), MONITOR_DEFAULTTONEAREST), &monitor))
+    {
+        const CRect work(monitor.rcWork);
+        const int width = work.Width() >= minimumSize.cx ? std::min(rect.Width(), work.Width()) : rect.Width();
+        rect.right = rect.left + width;
+        rect.Offset(std::clamp(rect.left, work.left, std::max(work.left, work.right - width)) - rect.left,
+            std::clamp(rect.top, work.top, std::max(work.top, work.bottom - rect.Height())) - rect.top);
+    }
+    MoveWindow(rect);
 
     SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
     SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
     SetChecked(IDC_SEARCH_REGEX, COptions::SearchRegex);
-    SetText(IDC_SEARCH_SIZE_MIN, std::to_wstring(COptions::SearchSizeMinimum));
-    SetText(IDC_SEARCH_SIZE_MAX, std::to_wstring(COptions::SearchSizeMaximum));
+    SetText(IDC_SEARCH_SIZE_MIN, COptions::SearchSizeMinimum.Obj());
+    SetText(IDC_SEARCH_SIZE_MAX, COptions::SearchSizeMaximum.Obj());
     SetComboSelection(IDC_SEARCH_SIZE_UNITS, COptions::SearchSizeUnits);
+    SetText(IDC_SEARCH_PHYSICAL_MIN, COptions::SearchPhysicalMinimum.Obj());
+    SetText(IDC_SEARCH_PHYSICAL_MAX, COptions::SearchPhysicalMaximum.Obj());
+    SetComboSelection(IDC_SEARCH_PHYSICAL_UNITS, COptions::SearchPhysicalUnits);
     SetChecked(IDC_SEARCH_FILES, COptions::SearchIncludeFiles);
     SetChecked(IDC_SEARCH_FOLDERS, COptions::SearchIncludeFolders);
     SetText(IDC_SEARCH_OWNER, COptions::SearchOwner.Obj());
 
-    OnChangeSearchTerm();
+    UpdateControlStatus();
     return true;
+}
+
+bool SearchDlg::ReadCriteria(SearchCriteria& criteria) const
+{
+    criteria = {
+        .term = GetText(IDC_SEARCH_TERM),
+        .caseSensitive = IsChecked(IDC_SEARCH_CASE),
+        .wholePhrase = IsChecked(IDC_SEARCH_WHOLE_PHRASE),
+        .regex = IsChecked(IDC_SEARCH_REGEX),
+        .includeFiles = IsChecked(IDC_SEARCH_FILES),
+        .includeFolders = IsChecked(IDC_SEARCH_FOLDERS),
+        .owner = GetText(IDC_SEARCH_OWNER)
+    };
+
+    const auto readBound = [this](const int controlId, const int unitsId, std::optional<ULONGLONG>& bound)
+    {
+        const int shift = 10 * std::clamp<int>(GetComboSelection(unitsId), 0, 4);
+        const ULONGLONG maximum = std::numeric_limits<ULONGLONG>::max() >> shift;
+        const std::wstring text = GetText(controlId);
+        if (text.empty()) return true;
+
+        ULONGLONG value = 0;
+        for (const wchar_t character : text)
+        {
+            const auto digit = static_cast<ULONGLONG>(character - L'0');
+            if (digit > 9 || value > (maximum - digit) / 10) return false;
+            value = value * 10 + digit;
+        }
+        bound = value << shift;
+        return true;
+    };
+
+    return readBound(IDC_SEARCH_SIZE_MIN, IDC_SEARCH_SIZE_UNITS, criteria.sizeMinimum) &&
+        readBound(IDC_SEARCH_SIZE_MAX, IDC_SEARCH_SIZE_UNITS, criteria.sizeMaximum) &&
+        readBound(IDC_SEARCH_PHYSICAL_MIN, IDC_SEARCH_PHYSICAL_UNITS, criteria.physicalMinimum) &&
+        readBound(IDC_SEARCH_PHYSICAL_MAX, IDC_SEARCH_PHYSICAL_UNITS, criteria.physicalMaximum) &&
+        (!criteria.sizeMinimum || !criteria.sizeMaximum || *criteria.sizeMinimum <= *criteria.sizeMaximum) &&
+        (!criteria.physicalMinimum || !criteria.physicalMaximum || *criteria.physicalMinimum <= *criteria.physicalMaximum);
 }
 
 void SearchDlg::OnBnClickedOk()
 {
-    COptions::SearchTerm.Obj() = GetText(IDC_SEARCH_TERM);
-    COptions::SearchWholePhrase = IsChecked(IDC_SEARCH_WHOLE_PHRASE);
-    COptions::SearchCase = IsChecked(IDC_SEARCH_CASE);
-    COptions::SearchRegex = IsChecked(IDC_SEARCH_REGEX);
+    SearchCriteria criteria;
+    if (!ReadCriteria(criteria) || (!criteria.includeFiles && !criteria.includeFolders) ||
+        (CFileSearchControl::ComputeSearchRegex(criteria.term, criteria.caseSensitive,
+            criteria.regex).flags() & std::regex_constants::optimize) == 0) return;
 
-    // An empty or unparsable field leaves that end of the range open
-    const auto readBound = [this](const int controlId)
-    {
-        const std::wstring text = GetText(controlId);
-        if (text.empty()) return 0;
-
-        // An entry too large for the field is capped rather than dropped: treating it as
-        // unset would widen the search instead of narrowing it, which is the opposite of
-        // what was asked for
-        try { return std::max(0, std::stoi(text)); }
-        catch (const std::out_of_range&) { return std::numeric_limits<int>::max(); }
-        catch (const std::invalid_argument&) { return 0; }
-    };
-
-    COptions::SearchSizeMinimum = readBound(IDC_SEARCH_SIZE_MIN);
-    COptions::SearchSizeMaximum = readBound(IDC_SEARCH_SIZE_MAX);
+    COptions::SearchTerm = criteria.term;
+    COptions::SearchWholePhrase = criteria.wholePhrase;
+    COptions::SearchCase = criteria.caseSensitive;
+    COptions::SearchRegex = criteria.regex;
+    COptions::SearchSizeMinimum = GetText(IDC_SEARCH_SIZE_MIN);
+    COptions::SearchSizeMaximum = GetText(IDC_SEARCH_SIZE_MAX);
     COptions::SearchSizeUnits = std::clamp<int>(GetComboSelection(IDC_SEARCH_SIZE_UNITS), 0, 4);
-    COptions::SearchIncludeFiles = IsChecked(IDC_SEARCH_FILES);
-    COptions::SearchIncludeFolders = IsChecked(IDC_SEARCH_FOLDERS);
-    COptions::SearchOwner.Obj() = GetText(IDC_SEARCH_OWNER);
-
-    // Scale both bounds with the selected unit; zero leaves that end of the range open.
-    // Saturate rather than wrap, so an implausibly large entry cannot silently turn into
-    // a small bound and hide every result.
-    const auto scale = [](const int value) -> ULONGLONG
-    {
-        const int shift = 10 * COptions::SearchSizeUnits;
-        const auto scaled = static_cast<ULONGLONG>(value);
-        return scaled > (std::numeric_limits<ULONGLONG>::max() >> shift) ?
-            std::numeric_limits<ULONGLONG>::max() : scaled << shift;
-    };
-
-    // Both boxes ticked means no restriction at all, which is what the search already did
-    const bool onlyFiles = COptions::SearchIncludeFiles && !COptions::SearchIncludeFolders;
-    const bool onlyFolders = COptions::SearchIncludeFolders && !COptions::SearchIncludeFiles;
+    COptions::SearchPhysicalMinimum = GetText(IDC_SEARCH_PHYSICAL_MIN);
+    COptions::SearchPhysicalMaximum = GetText(IDC_SEARCH_PHYSICAL_MAX);
+    COptions::SearchPhysicalUnits = std::clamp<int>(GetComboSelection(IDC_SEARCH_PHYSICAL_UNITS), 0, 4);
+    COptions::SearchIncludeFiles = criteria.includeFiles;
+    COptions::SearchIncludeFolders = criteria.includeFolders;
+    COptions::SearchOwner = criteria.owner;
 
     CLayoutDialog::OnOK();
 
     // Process search request
-    CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
-        COptions::SearchTerm, COptions::SearchCase,
-        COptions::SearchWholePhrase, COptions::SearchRegex, onlyFiles,
-        scale(COptions::SearchSizeMinimum), scale(COptions::SearchSizeMaximum),
-        onlyFolders, COptions::SearchOwner);
+    CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(), criteria);
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
@@ -137,7 +191,6 @@ void SearchDlg::OnChangeSearchTerm()
 {
     const std::wstring searchTerm = GetText(IDC_SEARCH_TERM);
     const bool searchRegex = IsChecked(IDC_SEARCH_REGEX);
-    const bool searchCase = IsChecked(IDC_SEARCH_CASE);
 
     // Auto-enable whole phrase search if * is present and not in regex mode
     if (!searchRegex && searchTerm.contains(L'*'))
@@ -145,13 +198,19 @@ void SearchDlg::OnChangeSearchTerm()
         SetChecked(IDC_SEARCH_WHOLE_PHRASE, true);
     }
 
+    UpdateControlStatus();
+}
+
+void SearchDlg::UpdateControlStatus()
+{
+    SearchCriteria criteria;
+    const bool sizesValid = ReadCriteria(criteria);
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
-        searchTerm, searchCase, searchRegex);
+        criteria.term, criteria.caseSensitive, criteria.regex);
 
     // Excluding both files and folders would ask for nothing at all, so refuse that
     // combination rather than running a search that cannot return anything
-    const bool anyTypeWanted = IsChecked(IDC_SEARCH_FILES) || IsChecked(IDC_SEARCH_FOLDERS);
-    GetDlgItem(IDOK)->EnableWindow(anyTypeWanted &&
+    GetDlgItem(IDOK)->EnableWindow(sizesValid && (criteria.includeFiles || criteria.includeFolders) &&
         (regexTest.flags() & std::regex_constants::optimize) != 0);
 }
 

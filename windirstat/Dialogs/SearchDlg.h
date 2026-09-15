@@ -20,6 +20,8 @@
 #include "pch.h"
 #include "Layout.h"
 
+struct SearchCriteria;
+
 // SearchDlg dialog
 
 class SearchDlg final : public MessageTarget<SearchDlg, CLayoutDialog>
@@ -34,14 +36,14 @@ public:
 protected:
     bool OnInitDialog() override;
 
-    CComboBox m_ctlSearchSizeUnits;
-
 public:
     static std::span<const RouteEntry> Routes();
 
 protected:
+    bool ReadCriteria(SearchCriteria& criteria) const;
     void OnBnClickedOk();
     void OnChangeSearchTerm();
+    void UpdateControlStatus();
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };
 
@@ -52,8 +54,15 @@ inline std::span<const RouteEntry> SearchDlg::Routes()
         Route::Control<&OnBnClickedOk>(BN_CLICKED, IDOK),
         Route::Control<&OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
         Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
-        Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_FILES),
-        Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_FOLDERS),
+        Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_CASE),
+        Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_SIZE_MIN),
+        Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_SIZE_MAX),
+        Route::Control<&UpdateControlStatus>(CBN_SELCHANGE, IDC_SEARCH_SIZE_UNITS),
+        Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_PHYSICAL_MIN),
+        Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_PHYSICAL_MAX),
+        Route::Control<&UpdateControlStatus>(CBN_SELCHANGE, IDC_SEARCH_PHYSICAL_UNITS),
+        Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_FILES),
+        Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_FOLDERS),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
     };
     return entries;

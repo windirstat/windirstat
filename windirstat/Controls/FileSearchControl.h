@@ -21,6 +21,23 @@
 #include "ItemSearch.h"
 #include "TreeListControl.h"
 
+struct SearchCriteria
+{
+    std::wstring term;
+    bool caseSensitive = false;
+    bool wholePhrase = false;
+    bool regex = false;
+    bool includeFiles = true;
+    bool includeFolders = true;
+    std::optional<ULONGLONG> sizeMinimum;
+    std::optional<ULONGLONG> sizeMaximum;
+    std::optional<ULONGLONG> physicalMinimum;
+    std::optional<ULONGLONG> physicalMaximum;
+    std::wstring owner;
+
+    bool MatchesSize(const CItem* item) const;
+};
+
 class CFileSearchControl final : public CTreeListControl
 {
 public:
@@ -30,10 +47,7 @@ public:
     static CFileSearchControl* Get() { return m_singleton; }
     CItemSearch* GetRootItem() const { return m_rootItem; }
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
-    void ProcessSearch(CItem* item, const std::wstring& searchTerm, bool searchCase,
-        bool searchWholePhrase, bool searchRegex, bool onlyFiles = false,
-        ULONGLONG sizeMinimum = 0, ULONGLONG sizeMaximum = 0,
-        bool onlyFolders = false, const std::wstring& owner = {});
+    void ProcessSearch(CItem* item, const SearchCriteria& criteria);
     void RemoveItem(CItem* item);
     void AfterDeleteAllItems() override;
 
@@ -42,5 +56,6 @@ protected:
     inline static CFileSearchControl* m_singleton = nullptr;
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
+    bool m_sizeFilterActive = false;
 
 };

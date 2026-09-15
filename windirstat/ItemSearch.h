@@ -33,9 +33,10 @@ class CItemSearch final : public CTreeListItem
     std::shared_mutex m_protect;
     std::vector<CItemSearch*> m_children;
     CItem* m_item = nullptr;
-    ULONGLONG m_totalSizeLogical = 0;   // sum over children, meaningful on the root row
+    ULONGLONG m_totalSizeLogical = 0;
     ULONGLONG m_totalSizePhysical = 0;
     bool m_limitExceeded = false;
+    bool m_totalsPending = false;
 
 public:
     CItemSearch(const CItemSearch&) = delete;
@@ -58,6 +59,13 @@ public:
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);
+    using SizeTotals = std::pair<ULONGLONG, ULONGLONG>;
+    static std::optional<SizeTotals> CalculateTotals(std::span<CItem* const> items,
+        const std::function<bool()>& isCancelled = {});
+    SizeTotals CalculateTotals() const;
+    void SetTotals(const SizeTotals& totals);
+    void RecalculateTotals() { SetTotals(CalculateTotals()); }
+    void SetTotalsPending(const bool pending) { m_totalsPending = pending; }
     void SetLimitExceeded(const bool exceeded) { m_limitExceeded = exceeded; }
     bool GetLimitExceeded() const { return m_limitExceeded; }
 };
