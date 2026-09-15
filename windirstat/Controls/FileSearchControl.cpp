@@ -52,7 +52,8 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 
 void CFileSearchControl::ProcessSearch(CItem* item,
     const std::wstring & searchTerm, const bool searchCase,
-    const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles)
+    const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles,
+    const ULONGLONG sizeMinimum, const ULONGLONG sizeMaximum)
 {
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
@@ -85,8 +86,14 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             CItem* qitem = queue.back();
             queue.pop_back();
 
+            // Apply the size range before the name match, since it is the cheaper test.
+            // A bound of zero leaves that end of the range open.
+            const ULONGLONG qsize = qitem->GetSizeLogical();
+            const bool inSizeRange = (sizeMinimum == 0 || qsize >= sizeMinimum) &&
+                (sizeMaximum == 0 || qsize <= sizeMaximum);
+
             // Check for match
-            if (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE))
+            if (inSizeRange && (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)))
             {
                 const auto nameView = qitem->GetNameView();
                 const bool isMatch = searchWholePhrase ?

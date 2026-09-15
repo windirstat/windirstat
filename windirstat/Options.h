@@ -191,6 +191,9 @@ public:
     inline static Setting<bool> SearchRegex{ OptionsSearch, L"SearchRegex", false };
     inline static Setting<bool> SearchCase{ OptionsSearch, L"SearchCase", false };
     inline static Setting<int> SearchMaxResults{ OptionsSearch, L"SearchMaxResults", 10000, 1, 1000000 };
+    inline static Setting<int> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum", 0 };
+    inline static Setting<int> SearchSizeMaximum{ OptionsSearch, L"SearchSizeMaximum", 0 };
+    inline static Setting<int> SearchSizeUnits{ OptionsSearch, L"SearchSizeUnits", 0 };
     inline static Setting<bool> ShowDeletePermanentlyWarning{ OptionsGeneral, L"ShowDeletePermanentlyWarning", true };
     inline static Setting<bool> ShowDeleteToRecycleBinWarning{ OptionsGeneral, L"ShowDeleteToRecycleBinWarning", true };
     inline static Setting<bool> ShowElevationPrompt{ OptionsGeneral, L"ShowElevationPrompt", true };

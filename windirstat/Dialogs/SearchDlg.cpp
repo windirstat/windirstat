@@ -44,13 +44,27 @@ bool SearchDlg::OnInitDialog()
     m_layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_CASE, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_SIZE_MIN, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_SIZE_MAX, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_SIZE_UNITS, 0, 0, 0, 0);
 
     m_layout.OnInitDialog(true);
+
+    m_ctlSearchSizeUnits.SubclassDlgItem(IDC_SEARCH_SIZE_UNITS, this);
+    m_ctlSearchSizeUnits.AddString(GetSpec_Bytes());
+    m_ctlSearchSizeUnits.AddString(GetSpec_KiB());
+    m_ctlSearchSizeUnits.AddString(GetSpec_MiB());
+    m_ctlSearchSizeUnits.AddString(GetSpec_GiB());
+    m_ctlSearchSizeUnits.AddString(GetSpec_TiB());
+    if (DarkMode::IsDarkModeActive()) DarkMode::AdjustControls(m_ctlSearchSizeUnits.Handle());
 
     SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
     SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
     SetChecked(IDC_SEARCH_REGEX, COptions::SearchRegex);
+    SetText(IDC_SEARCH_SIZE_MIN, std::to_wstring(COptions::SearchSizeMinimum));
+    SetText(IDC_SEARCH_SIZE_MAX, std::to_wstring(COptions::SearchSizeMaximum));
+    SetComboSelection(IDC_SEARCH_SIZE_UNITS, COptions::SearchSizeUnits);
 
     OnChangeSearchTerm();
     return true;
@@ -63,12 +77,37 @@ void SearchDlg::OnBnClickedOk()
     COptions::SearchCase = IsChecked(IDC_SEARCH_CASE);
     COptions::SearchRegex = IsChecked(IDC_SEARCH_REGEX);
 
+    // An empty or unparsable field leaves that end of the range open
+    const auto readBound = [this](const int controlId)
+    {
+        const std::wstring text = GetText(controlId);
+        if (text.empty()) return 0;
+        try { return std::max(0, std::stoi(text)); }
+        catch (const std::exception&) { return 0; }
+    };
+
+    COptions::SearchSizeMinimum = readBound(IDC_SEARCH_SIZE_MIN);
+    COptions::SearchSizeMaximum = readBound(IDC_SEARCH_SIZE_MAX);
+    COptions::SearchSizeUnits = std::clamp<int>(GetComboSelection(IDC_SEARCH_SIZE_UNITS), 0, 4);
+
+    // Scale both bounds with the selected unit; zero leaves that end of the range open.
+    // Saturate rather than wrap, so an implausibly large entry cannot silently turn into
+    // a small bound and hide every result.
+    const auto scale = [](const int value) -> ULONGLONG
+    {
+        const int shift = 10 * COptions::SearchSizeUnits;
+        const auto scaled = static_cast<ULONGLONG>(value);
+        return scaled > (std::numeric_limits<ULONGLONG>::max() >> shift) ?
+            std::numeric_limits<ULONGLONG>::max() : scaled << shift;
+    };
+
     CLayoutDialog::OnOK();
 
     // Process search request
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         COptions::SearchTerm, COptions::SearchCase,
-        COptions::SearchWholePhrase, COptions::SearchRegex);
+        COptions::SearchWholePhrase, COptions::SearchRegex, false,
+        scale(COptions::SearchSizeMinimum), scale(COptions::SearchSizeMaximum));
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();

@@ -169,6 +169,9 @@
 #define IDC_TREEMAPPRESET                1146
 #define IDC_SAMPLE_LARGE_FILES           1147
 #define IDC_FOLDER_HISTORY_COUNT        1148
+#define IDC_SEARCH_SIZE_MIN             1149
+#define IDC_SEARCH_SIZE_MAX             1150
+#define IDC_SEARCH_SIZE_UNITS           1151
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -299,7 +302,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32977
-#define _APS_NEXT_CONTROL_VALUE         1149
+#define _APS_NEXT_CONTROL_VALUE         1152
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

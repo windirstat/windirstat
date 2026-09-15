@@ -34,6 +34,8 @@ public:
 protected:
     bool OnInitDialog() override;
 
+    CComboBox m_ctlSearchSizeUnits;
+
 public:
     static std::span<const RouteEntry> Routes();
 
