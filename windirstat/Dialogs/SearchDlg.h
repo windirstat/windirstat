@@ -52,6 +52,8 @@ inline std::span<const RouteEntry> SearchDlg::Routes()
         Route::Control<&OnBnClickedOk>(BN_CLICKED, IDOK),
         Route::Control<&OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
         Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
+        Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_FILES),
+        Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_FOLDERS),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
     };
     return entries;

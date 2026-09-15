@@ -47,6 +47,9 @@ bool SearchDlg::OnInitDialog()
     m_layout.AddControl(IDC_SEARCH_SIZE_MIN, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_SIZE_MAX, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_SIZE_UNITS, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_FILES, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_FOLDERS, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_OWNER, 0, 0, 1, 0);
 
     m_layout.OnInitDialog(true);
 
@@ -65,6 +68,9 @@ bool SearchDlg::OnInitDialog()
     SetText(IDC_SEARCH_SIZE_MIN, std::to_wstring(COptions::SearchSizeMinimum));
     SetText(IDC_SEARCH_SIZE_MAX, std::to_wstring(COptions::SearchSizeMaximum));
     SetComboSelection(IDC_SEARCH_SIZE_UNITS, COptions::SearchSizeUnits);
+    SetChecked(IDC_SEARCH_FILES, COptions::SearchIncludeFiles);
+    SetChecked(IDC_SEARCH_FOLDERS, COptions::SearchIncludeFolders);
+    SetText(IDC_SEARCH_OWNER, COptions::SearchOwner.Obj());
 
     OnChangeSearchTerm();
     return true;
@@ -82,13 +88,21 @@ void SearchDlg::OnBnClickedOk()
     {
         const std::wstring text = GetText(controlId);
         if (text.empty()) return 0;
+
+        // An entry too large for the field is capped rather than dropped: treating it as
+        // unset would widen the search instead of narrowing it, which is the opposite of
+        // what was asked for
         try { return std::max(0, std::stoi(text)); }
-        catch (const std::exception&) { return 0; }
+        catch (const std::out_of_range&) { return std::numeric_limits<int>::max(); }
+        catch (const std::invalid_argument&) { return 0; }
     };
 
     COptions::SearchSizeMinimum = readBound(IDC_SEARCH_SIZE_MIN);
     COptions::SearchSizeMaximum = readBound(IDC_SEARCH_SIZE_MAX);
     COptions::SearchSizeUnits = std::clamp<int>(GetComboSelection(IDC_SEARCH_SIZE_UNITS), 0, 4);
+    COptions::SearchIncludeFiles = IsChecked(IDC_SEARCH_FILES);
+    COptions::SearchIncludeFolders = IsChecked(IDC_SEARCH_FOLDERS);
+    COptions::SearchOwner.Obj() = GetText(IDC_SEARCH_OWNER);
 
     // Scale both bounds with the selected unit; zero leaves that end of the range open.
     // Saturate rather than wrap, so an implausibly large entry cannot silently turn into
@@ -101,13 +115,18 @@ void SearchDlg::OnBnClickedOk()
             std::numeric_limits<ULONGLONG>::max() : scaled << shift;
     };
 
+    // Both boxes ticked means no restriction at all, which is what the search already did
+    const bool onlyFiles = COptions::SearchIncludeFiles && !COptions::SearchIncludeFolders;
+    const bool onlyFolders = COptions::SearchIncludeFolders && !COptions::SearchIncludeFiles;
+
     CLayoutDialog::OnOK();
 
     // Process search request
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         COptions::SearchTerm, COptions::SearchCase,
-        COptions::SearchWholePhrase, COptions::SearchRegex, false,
-        scale(COptions::SearchSizeMinimum), scale(COptions::SearchSizeMaximum));
+        COptions::SearchWholePhrase, COptions::SearchRegex, onlyFiles,
+        scale(COptions::SearchSizeMinimum), scale(COptions::SearchSizeMaximum),
+        onlyFolders, COptions::SearchOwner);
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
@@ -128,7 +147,12 @@ void SearchDlg::OnChangeSearchTerm()
 
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
         searchTerm, searchCase, searchRegex);
-    GetDlgItem(IDOK)->EnableWindow((regexTest.flags() & std::regex_constants::optimize) != 0);
+
+    // Excluding both files and folders would ask for nothing at all, so refuse that
+    // combination rather than running a search that cannot return anything
+    const bool anyTypeWanted = IsChecked(IDC_SEARCH_FILES) || IsChecked(IDC_SEARCH_FOLDERS);
+    GetDlgItem(IDOK)->EnableWindow(anyTypeWanted &&
+        (regexTest.flags() & std::regex_constants::optimize) != 0);
 }
 
 HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)

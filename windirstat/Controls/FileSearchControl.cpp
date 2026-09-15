@@ -53,7 +53,8 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 void CFileSearchControl::ProcessSearch(CItem* item,
     const std::wstring & searchTerm, const bool searchCase,
     const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles,
-    const ULONGLONG sizeMinimum, const ULONGLONG sizeMaximum)
+    const ULONGLONG sizeMinimum, const ULONGLONG sizeMaximum,
+    const bool onlyFolders, const std::wstring& owner)
 {
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
@@ -71,6 +72,9 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         // Precompile regex string
         const auto searchTermRegex = ComputeSearchRegex(searchTerm,
             searchCase, searchRegex);
+
+        // Owners are compared case-insensitively on a lowered copy, so fold the needle once
+        const std::wstring ownerLower = MakeLower(owner);
 
         // Do search
         const size_t maxResults = COptions::SearchMaxResults;
@@ -92,15 +96,24 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             const bool inSizeRange = (sizeMinimum == 0 || qsize >= sizeMinimum) &&
                 (sizeMaximum == 0 || qsize <= sizeMaximum);
 
+            const bool typeWanted = (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
+                (!onlyFolders || qitem->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
+
             // Check for match
-            if (inSizeRange && (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)))
+            if (inSizeRange && typeWanted)
             {
                 const auto nameView = qitem->GetNameView();
                 const bool isMatch = searchWholePhrase ?
                     std::regex_match(nameView.begin(), nameView.end(), searchTermRegex) :
                     std::regex_search(nameView.begin(), nameView.end(), searchTermRegex);
 
-                if (isMatch)
+                // Resolving an owner queries the security descriptor of a single item, which is
+                // far more expensive than anything above, so it is only asked for once the item
+                // has survived every other condition
+                const bool isWanted = isMatch && (ownerLower.empty() ||
+                    MakeLower(qitem->GetOwner(true)).contains(ownerLower));
+
+                if (isWanted)
                 {
                     if (matchedItems.size() < maxResults) matchedItems.push_back(qitem);
                     else

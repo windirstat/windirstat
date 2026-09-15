@@ -193,7 +193,9 @@ public:
     inline static Setting<int> SearchMaxResults{ OptionsSearch, L"SearchMaxResults", 10000, 1, 1000000 };
     inline static Setting<int> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum", 0 };
     inline static Setting<int> SearchSizeMaximum{ OptionsSearch, L"SearchSizeMaximum", 0 };
-    inline static Setting<int> SearchSizeUnits{ OptionsSearch, L"SearchSizeUnits", 0 };
+    inline static Setting<int> SearchSizeUnits{ OptionsSearch, L"SearchSizeUnits", 0, 0, 4 };
+    inline static Setting<bool> SearchIncludeFiles{ OptionsSearch, L"SearchIncludeFiles", true };
+    inline static Setting<bool> SearchIncludeFolders{ OptionsSearch, L"SearchIncludeFolders", true };
     inline static Setting<bool> ShowDeletePermanentlyWarning{ OptionsGeneral, L"ShowDeletePermanentlyWarning", true };
     inline static Setting<bool> ShowDeleteToRecycleBinWarning{ OptionsGeneral, L"ShowDeleteToRecycleBinWarning", true };
     inline static Setting<bool> ShowElevationPrompt{ OptionsGeneral, L"ShowElevationPrompt", true };
@@ -336,6 +338,7 @@ public:
     inline static Setting<std::vector<std::wstring>> SelectDrivesDrives{ OptionsDriveSelect, L"SelectDrivesDrives" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
     inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
+    inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };
     inline static Setting<std::wstring> FilteringExcludeDirs{ OptionsDriveSelect, L"FilteringExcludeDirs" };
     inline static Setting<std::wstring> FilteringExcludeFiles{ OptionsDriveSelect, L"FilteringExcludeFiles" };
     inline static Setting<std::wstring> FilteringIncludeDirs{ OptionsDriveSelect, L"FilteringIncludeDirs" };
