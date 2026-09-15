@@ -10654,6 +10654,8 @@ function Add-SettingsTestHarness {
         'AutomaticallyResizeColumns', 'AutoMapDrivesWhenElevated', 'ExcludeJunctions', 'ExcludeSymbolicLinksDirectory', 'ExcludeVolumeMountPoints', 'ExcludeHiddenDirectory', 'ExcludeProtectedDirectory', 'ExcludeSymbolicLinksFile'
         'ExcludeHiddenFile', 'ExcludeProtectedFile', 'FilteringUseRegex', 'FollowVolumeMountPoints', 'UseSizeSuffixes', 'ListFullRowSelection', 'ListGrid', 'ListStripes', 'PacmanAnimation', 'ScanForDuplicates'
         'SampleLargeFiles', 'SearchWholePhrase', 'SearchCase', 'SearchRegex', 'SearchMaxResults',
+        'SearchSizeMinimum', 'SearchSizeMaximum', 'SearchSizeUnits', 'SearchIncludeFiles', 'SearchIncludeFolders',
+        'SearchPhysicalMinimum', 'SearchPhysicalMaximum', 'SearchPhysicalUnits', 'SearchOwner',
         'ShowDeletePermanentlyWarning', 'ShowDeleteToRecycleBinWarning', 'ShowElevationPrompt',
         'ShowEmptyRecycleBinPrompt', 'ShowCreateHardlinkPrompt', 'ShowRemoveMotwPrompt',
         'ShowDisableHibernatePrompt', 'ShowRemoveShadowCopiesPrompt', 'ShowDismCleanupPrompt',
@@ -10687,6 +10689,7 @@ function Add-SettingsTestHarness {
 #include "CsvLoader.h"
 #ifdef WDS_SETTINGS_TEST
 #include "FileSearchControl.h"
+#include "SearchDlg.h"
 #include <iomanip>
 #include <sstream>
 #include <type_traits>
@@ -10695,8 +10698,75 @@ function Add-SettingsTestHarness {
     if (!$text.Contains($includeMarker)) { throw "Could not locate include marker in $appPath" }
     $text = $text.Replace($includeMarker, $includeReplacement)
 
+    $dialogPath = Join-Path $Source 'windirstat\Dialogs\SearchDlg.h'
+    $dialogText = [System.IO.File]::ReadAllText($dialogPath)
+    $dialogMarker = "class SearchDlg final : public MessageTarget<SearchDlg, CLayoutDialog>`r`n{"
+    if (!$dialogText.Contains($dialogMarker)) { throw "Could not locate SearchDlg class in $dialogPath" }
+    $dialogText = $dialogText.Replace($dialogMarker, "$dialogMarker`r`n    friend struct SearchDialogTest;")
+    [System.IO.File]::WriteAllText($dialogPath, $dialogText, [System.Text.UTF8Encoding]::new($true))
+
+    foreach ($friend in @(
+        @{ Path = 'windirstat\Controls\FileSearchControl.h'; Class = 'class CFileSearchControl final : public CTreeListControl'; Name = 'FileSearchControlTest' }
+    )) {
+        $friendPath = Join-Path $Source $friend.Path
+        $friendText = [System.IO.File]::ReadAllText($friendPath)
+        $friendMarker = $friend.Class + [Environment]::NewLine + '{'
+        if (!$friendText.Contains($friendMarker)) { throw "Could not locate $($friend.Class) in $friendPath" }
+        $friendText = $friendText.Replace($friendMarker,
+            $friendMarker + [Environment]::NewLine + "    friend struct $($friend.Name);")
+        [System.IO.File]::WriteAllText($friendPath, $friendText, [System.Text.UTF8Encoding]::new($true))
+    }
+
     $helper = @'
 #ifdef WDS_SETTINGS_TEST
+struct SearchDialogTest
+{
+    static bool Read(const SearchDlg& dialog, SearchCriteria& criteria) { return dialog.ReadCriteria(criteria); }
+};
+
+struct FileSearchControlTest
+{
+    static bool Prunes(const bool sizeFilter)
+    {
+        const SmartPointer window(DestroyWindow, CreateWindowExW(0, L"STATIC", L"", 0,
+            0, 0, 0, 0, HWND_MESSAGE, nullptr, GetAppInstance(), nullptr));
+        if (!window) return false;
+        CFileSearchControl* const previous = CFileSearchControl::Get();
+        const auto destroyControl = [previous](CFileSearchControl* control)
+        {
+            control->Detach();
+            delete control;
+            CFileSearchControl::m_singleton = previous;
+        };
+        const std::unique_ptr<CFileSearchControl, decltype(destroyControl)>
+            control(new CFileSearchControl(), destroyControl);
+        if (!control->Attach(window)) return false;
+        const std::unique_ptr<CItem> tree(CItem::Create(IT_DIRECTORY | ITF_ROOTITEM, L"search-fixture"));
+        auto* ancestor = CItem::Create(IT_DIRECTORY, L"ancestor");
+        auto* refreshed = CItem::Create(IT_DIRECTORY, L"refreshed");
+        auto* descendant = CItem::Create(IT_FILE, L"descendant.bin");
+        auto* unrelated = CItem::Create(IT_FILE, L"unrelated.bin");
+        tree->AddChild(ancestor, true);
+        ancestor->AddChild(refreshed, true);
+        refreshed->AddChild(descendant, true);
+        tree->AddChild(unrelated, true);
+        CItemSearch results;
+        control->m_rootItem = &results;
+        control->m_sizeFilterActive = sizeFilter;
+        for (auto* item : { ancestor, refreshed, descendant, unrelated })
+        {
+            auto* row = new CItemSearch(item);
+            results.AddSearchItemChild(row);
+            control->m_itemTracker.emplace(item, row);
+        }
+        control->RemoveItem(refreshed);
+        return control->m_itemTracker.contains(ancestor) == !sizeFilter &&
+            !control->m_itemTracker.contains(refreshed) && !control->m_itemTracker.contains(descendant) &&
+            control->m_itemTracker.contains(unrelated) && results.GetTreeListChildCount() == (sizeFilter ? 1 : 2) &&
+            results.GetLimitExceeded();
+    }
+};
+
 namespace WdsSettingsTest
 {
     std::string ToUtf8(const std::wstring& value)
@@ -11030,6 +11100,236 @@ namespace WdsSettingsTest
         Field(out, first, "NotesTxt", matches(L"notes.txt"));
         Field(out, first, "LiteralPattern", matches(L"literal.*"));
         Field(out, first, "TargetSubstring", matches(L"prefix-target-suffix"));
+        Field(out, first, "RegexValid", (searchRegex.flags() & std::regex_constants::optimize) != 0);
+
+        const std::unique_ptr<CItem> root(CItem::Create(IT_DIRECTORY | ITF_ROOTITEM, L"search-fixture"));
+        const auto addFile = [](CItem* parent, const std::wstring_view name,
+            const ULONGLONG physical, const ULONGLONG logical, const ULONGLONG index)
+        {
+            auto* child = CItem::Create(IT_FILE | ITF_DONE, name, FILETIME{}, physical, logical, index, 0, 0, 0);
+            parent->AddChild(child, true);
+            return child;
+        };
+        auto* folder = CItem::Create(IT_DIRECTORY | ITF_DONE, L"folder", FILETIME{}, 192, 300, 0, 0, 2, 0);
+        root->AddChild(folder, true);
+        auto* firstFile = addFile(folder, L"first.bin", 64, 100, 11);
+        addFile(folder, L"second.bin", 128, 200, 12);
+        CItemSearch overlapping;
+        overlapping.AddSearchItemChild(new CItemSearch(folder));
+        auto* descendantResult = new CItemSearch(firstFile);
+        overlapping.AddSearchItemChild(descendantResult);
+        overlapping.RecalculateTotals();
+        Field(out, first, "AncestorLogical", overlapping.GetText(COL_ITEMSEARCH_SIZE_LOGICAL) == FormatBytes(300));
+        Field(out, first, "AncestorPhysical", overlapping.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(192));
+
+        auto* firstLink = addFile(root.get(), L"first-link.bin", 200, 300, 42);
+        auto* secondLink = addFile(root.get(), L"second-link.bin", 200, 300, 42);
+        CItemSearch sameVolume;
+        sameVolume.AddSearchItemChild(new CItemSearch(firstLink));
+        auto* secondLinkResult = new CItemSearch(secondLink);
+        sameVolume.AddSearchItemChild(secondLinkResult);
+        sameVolume.RecalculateTotals();
+        Field(out, first, "SameVolumeLogical", sameVolume.GetText(COL_ITEMSEARCH_SIZE_LOGICAL) == FormatBytes(600));
+        Field(out, first, "UnadjustedPathsPhysical", sameVolume.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(400));
+
+        const std::array totalItems{ firstLink, secondLink };
+        Field(out, first, "CancelledTotalsDiscarded",
+            !CItemSearch::CalculateTotals(totalItems, [] { return true; }).has_value());
+
+        secondLink->SetFlag(ITF_HARDLINK);
+        CItemSearch adjustedLink;
+        adjustedLink.AddSearchItemChild(new CItemSearch(secondLink));
+        adjustedLink.RecalculateTotals();
+        Field(out, first, "AdjustedLinkPhysical",
+            adjustedLink.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(COptions::ProcessHardlinks ? 0 : 200));
+        sameVolume.RecalculateTotals();
+        Field(out, first, "ScanHardlinkAccounting", sameVolume.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) ==
+            FormatBytes(COptions::ProcessHardlinks ? 200 : 400));
+        secondLink->SetFlag(ITF_HARDLINK, true);
+        sameVolume.RemoveSearchItemChild(secondLinkResult);
+        Field(out, first, "HardlinkRemovalPending", sameVolume.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL).empty());
+        sameVolume.RecalculateTotals();
+        Field(out, first, "HardlinkRemovalLogical",
+            sameVolume.GetText(COL_ITEMSEARCH_SIZE_LOGICAL) == FormatBytes(300));
+        Field(out, first, "HardlinkRemovalPhysical",
+            sameVolume.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(200));
+        Field(out, first, "RemovedResultsPartial", sameVolume.GetLimitExceeded());
+
+        overlapping.SetTotalsPending(true);
+        Field(out, first, "RetainedFolderPending", overlapping.GetText(COL_ITEMSEARCH_SIZE_LOGICAL).empty() &&
+            overlapping.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL).empty());
+        firstFile->SetSizeLogical(350);
+        firstFile->SetSizePhysical(96);
+        folder->SetSizeLogical(550);
+        folder->SetSizePhysical(224);
+        overlapping.RecalculateTotals();
+        Field(out, first, "RetainedFolderLogical",
+            overlapping.GetText(COL_ITEMSEARCH_SIZE_LOGICAL) == FormatBytes(550));
+        Field(out, first, "RetainedFolderPhysical",
+            overlapping.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(224));
+        overlapping.RemoveSearchItemChild(descendantResult);
+        overlapping.RecalculateTotals();
+        Field(out, first, "RetainedFolderAfterRowRemoval",
+            overlapping.GetText(COL_ITEMSEARCH_SIZE_LOGICAL) == FormatBytes(550) &&
+            overlapping.GetText(COL_ITEMSEARCH_SIZE_PHYSICAL) == FormatBytes(224));
+        out << "\n  }";
+        return out.str();
+    }
+
+    std::string SearchDialogProbeJson()
+    {
+        std::ostringstream out;
+        out << '{';
+        bool first = true;
+        SearchDlg dialog;
+        const HWND window = CreateDialogParamW(GetAppInstance(), MAKEINTRESOURCEW(IDD_SEARCH), nullptr,
+            FrameworkDialogProc, reinterpret_cast<LPARAM>(static_cast<CWnd*>(&dialog)));
+        const SmartPointer destroyDialog(DestroyWindow, window);
+        Field(out, first, "Created", window != nullptr);
+        if (window == nullptr) return out.str() + "\n  }";
+        Field(out, first, "Hidden", !IsWindowVisible(window));
+        Field(out, first, "PersistedWholePhrasePreserved",
+            dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE) == COptions::SearchWholePhrase.Obj());
+        Field(out, first, "SizeRefreshPrunesAncestors", FileSearchControlTest::Prunes(true));
+        Field(out, first, "NameRefreshRetainsAncestors", FileSearchControlTest::Prunes(false));
+        dialog.SetText(IDC_SEARCH_TERM, L"");
+        dialog.SetChecked(IDC_SEARCH_CASE, false);
+        dialog.SetChecked(IDC_SEARCH_REGEX, false);
+        dialog.SetChecked(IDC_SEARCH_WHOLE_PHRASE, false);
+        dialog.SetChecked(IDC_SEARCH_FILES, true);
+        dialog.SetChecked(IDC_SEARCH_FOLDERS, true);
+        dialog.SetText(IDC_SEARCH_OWNER, L"DOMAIN\\Élodie");
+        const auto notify = [&](const int control, const int code)
+        {
+            SendMessageW(window, WM_COMMAND, MAKEWPARAM(control, code),
+                reinterpret_cast<LPARAM>(GetDlgItem(window, control)));
+        };
+        const auto check = [&](const char* name, const std::wstring& minimum, const std::wstring& maximum,
+            const int units, const bool valid, const std::optional<ULONGLONG> expectedMinimum,
+            const std::optional<ULONGLONG> expectedMaximum)
+        {
+            dialog.SetComboSelection(IDC_SEARCH_SIZE_UNITS, units);
+            dialog.SetText(IDC_SEARCH_SIZE_MIN, minimum);
+            dialog.SetText(IDC_SEARCH_SIZE_MAX, maximum);
+            notify(IDC_SEARCH_SIZE_UNITS, CBN_SELCHANGE);
+            SearchCriteria criteria;
+            const bool parsed = SearchDialogTest::Read(dialog, criteria);
+            Field(out, first, name, parsed == valid &&
+                (!valid || (criteria.sizeMinimum == expectedMinimum && criteria.sizeMaximum == expectedMaximum)) &&
+                (IsWindowEnabled(GetDlgItem(window, IDOK)) != 0) == valid);
+        };
+        check("BlankBounds", L"", L"", 0, true, std::nullopt, std::nullopt);
+        check("ZeroMaximum", L"", L"0", 0, true, std::nullopt, 0);
+        check("ZeroRange", L"0", L"0", 0, true, 0, 0);
+        check("ThreeBillion", L"3000000000", L"3000000001", 0, true, 3000000000ULL, 3000000001ULL);
+        check("MaximumBytes", L"", L"18446744073709551615", 0, true, std::nullopt, 18446744073709551615ULL);
+        check("ByteOverflow", L"", L"18446744073709551616", 0, false, std::nullopt, std::nullopt);
+        check("TibBoundary", L"", L"16777215", 4, true, std::nullopt, 18446742974197923840ULL);
+        check("TibOverflow", L"", L"16777216", 4, false, std::nullopt, std::nullopt);
+        check("NegativeRejected", L"-1", L"", 0, false, std::nullopt, std::nullopt);
+        check("MalformedRejected", L"", L"1x", 0, false, std::nullopt, std::nullopt);
+        check("FractionRejected", L"", L"1.5", 0, false, std::nullopt, std::nullopt);
+        check("ReversedRejected", L"10", L"1", 0, false, std::nullopt, std::nullopt);
+        check("MibMinimum", L"1", L"", 2, true, 1048576, std::nullopt);
+        check("ResetBounds", L"", L"", 0, true, std::nullopt, std::nullopt);
+        const auto checkPhysical = [&](const char* name, const std::wstring& minimum, const std::wstring& maximum,
+            const int units, const bool valid, const std::optional<ULONGLONG> expectedMinimum,
+            const std::optional<ULONGLONG> expectedMaximum)
+        {
+            dialog.SetComboSelection(IDC_SEARCH_PHYSICAL_UNITS, units);
+            dialog.SetText(IDC_SEARCH_PHYSICAL_MIN, minimum);
+            dialog.SetText(IDC_SEARCH_PHYSICAL_MAX, maximum);
+            notify(IDC_SEARCH_PHYSICAL_UNITS, CBN_SELCHANGE);
+            SearchCriteria criteria;
+            const bool parsed = SearchDialogTest::Read(dialog, criteria);
+            Field(out, first, name, parsed == valid &&
+                (!valid || (criteria.physicalMinimum == expectedMinimum && criteria.physicalMaximum == expectedMaximum)) &&
+                (IsWindowEnabled(GetDlgItem(window, IDOK)) != 0) == valid);
+        };
+        checkPhysical("PhysicalBlankBounds", L"", L"", 0, true, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalZeroMaximum", L"", L"0", 0, true, std::nullopt, 0);
+        checkPhysical("PhysicalMaximumBytes", L"", L"18446744073709551615", 0, true, std::nullopt, MAXULONGLONG);
+        checkPhysical("PhysicalByteOverflow", L"", L"18446744073709551616", 0, false, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalTibBoundary", L"", L"16777215", 4, true, std::nullopt, 18446742974197923840ULL);
+        checkPhysical("PhysicalUnitOverflow", L"", L"16777216", 4, false, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalReversedRejected", L"10", L"1", 0, false, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalNegativeRejected", L"-1", L"", 0, false, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalMalformedRejected", L"", L"1x", 0, false, std::nullopt, std::nullopt);
+        checkPhysical("PhysicalFractionRejected", L"", L"1.5", 0, false, std::nullopt, std::nullopt);
+        check("IndependentLogicalUnits", L"1", L"", 2, false, std::nullopt, std::nullopt);
+        checkPhysical("IndependentPhysicalUnits", L"1", L"2", 1, true, 1024, 2048);
+        SearchCriteria combined;
+        Field(out, first, "BothRangesRetained", SearchDialogTest::Read(dialog, combined) &&
+            combined.sizeMinimum == 1048576 && !combined.sizeMaximum &&
+            combined.physicalMinimum == 1024 && combined.physicalMaximum == 2048);
+        const std::unique_ptr<CItem> sparse(CItem::Create(IT_FILE | ITF_DONE, L"sparse.bin",
+            FILETIME{}, 1024, 1048576, 1, 0, 0, 0));
+        Field(out, first, "SparseFileMatchesBothRanges", combined.MatchesSize(sparse.get()));
+        sparse->SetSizeLogical(1048575);
+        Field(out, first, "LogicalBoundStillApplies", !combined.MatchesSize(sparse.get()));
+        sparse->SetSizeLogical(1048576);
+        sparse->SetSizePhysical(2049);
+        Field(out, first, "PhysicalBoundStillApplies", !combined.MatchesSize(sparse.get()));
+        sparse->SetSizePhysical(2048);
+        Field(out, first, "PhysicalBoundsInclusive", combined.MatchesSize(sparse.get()));
+        checkPhysical("PhysicalResetBounds", L"", L"", 0, true, std::nullopt, std::nullopt);
+        check("LogicalResetBounds", L"", L"", 0, true, std::nullopt, std::nullopt);
+        for (const auto& [id, name] : {
+            std::pair{ IDC_SEARCH_SIZE_MAX, "LogicalInfinityPlaceholder" },
+            std::pair{ IDC_SEARCH_PHYSICAL_MAX, "PhysicalInfinityPlaceholder" } })
+        {
+            std::array<wchar_t, 8> cue{};
+            SendMessageW(GetDlgItem(window, id), EM_GETCUEBANNER,
+                reinterpret_cast<WPARAM>(cue.data()), cue.size());
+            Field(out, first, name, std::wstring_view(cue.data()) == L"\u221e" && dialog.GetText(id).empty());
+        }
+
+        dialog.SetText(IDC_SEARCH_TERM, L"*target*");
+        dialog.SetChecked(IDC_SEARCH_WHOLE_PHRASE, false);
+        dialog.SetText(IDC_SEARCH_SIZE_MIN, L"1");
+        Field(out, first, "MinimumPreservesWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetText(IDC_SEARCH_SIZE_MAX, L"100");
+        Field(out, first, "MaximumPreservesWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetComboSelection(IDC_SEARCH_SIZE_UNITS, 1);
+        notify(IDC_SEARCH_SIZE_UNITS, CBN_SELCHANGE);
+        Field(out, first, "UnitsPreserveWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetText(IDC_SEARCH_PHYSICAL_MIN, L"1");
+        Field(out, first, "PhysicalMinimumPreservesWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetText(IDC_SEARCH_PHYSICAL_MAX, L"100");
+        Field(out, first, "PhysicalMaximumPreservesWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetComboSelection(IDC_SEARCH_PHYSICAL_UNITS, 1);
+        notify(IDC_SEARCH_PHYSICAL_UNITS, CBN_SELCHANGE);
+        Field(out, first, "PhysicalUnitsPreserveWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetChecked(IDC_SEARCH_CASE, true);
+        notify(IDC_SEARCH_CASE, BN_CLICKED);
+        Field(out, first, "CasePreservesWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetChecked(IDC_SEARCH_FILES, false);
+        notify(IDC_SEARCH_FILES, BN_CLICKED);
+        Field(out, first, "FilesPreserveWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetChecked(IDC_SEARCH_FOLDERS, false);
+        notify(IDC_SEARCH_FOLDERS, BN_CLICKED);
+        Field(out, first, "FoldersPreserveWholePhrase", !dialog.IsChecked(IDC_SEARCH_WHOLE_PHRASE));
+        dialog.SetChecked(IDC_SEARCH_FILES, true);
+        check("ResetBoundsAfterNotifications", L"", L"", 0, true, std::nullopt, std::nullopt);
+
+        dialog.SetChecked(IDC_SEARCH_FILES, false);
+        dialog.SetChecked(IDC_SEARCH_FOLDERS, false);
+        notify(IDC_SEARCH_FOLDERS, BN_CLICKED);
+        Field(out, first, "NoTypesDisabled", !IsWindowEnabled(GetDlgItem(window, IDOK)));
+        dialog.SetChecked(IDC_SEARCH_FOLDERS, true);
+        dialog.SetChecked(IDC_SEARCH_CASE, true);
+        dialog.SetChecked(IDC_SEARCH_WHOLE_PHRASE, true);
+        dialog.SetChecked(IDC_SEARCH_REGEX, true);
+        dialog.SetText(IDC_SEARCH_TERM, L"needle");
+        SearchCriteria criteria;
+        Field(out, first, "CriteriaValues", SearchDialogTest::Read(dialog, criteria) &&
+            criteria.term == L"needle" && criteria.caseSensitive && criteria.wholePhrase && criteria.regex &&
+            !criteria.includeFiles && criteria.includeFolders && criteria.owner == L"DOMAIN\\Élodie");
+        dialog.SetText(IDC_SEARCH_TERM, L"[");
+        const bool invalidRegexDisabled = !IsWindowEnabled(GetDlgItem(window, IDOK));
+        dialog.SetChecked(IDC_SEARCH_REGEX, false);
+        notify(IDC_SEARCH_REGEX, BN_CLICKED);
+        Field(out, first, "RegexModeRevalidates", invalidRegexDisabled && IsWindowEnabled(GetDlgItem(window, IDOK)));
         out << "\n  }";
         return out.str();
     }
@@ -11051,7 +11351,7 @@ namespace WdsSettingsTest
         return out.str();
     }
 
-    std::string BuildDumpJson(const bool includeItemProbe)
+    std::string BuildDumpJson(const bool includeItemProbe, const bool includeSearchDialogProbe)
     {
         std::ostringstream out;
         out << '{';
@@ -11066,6 +11366,7 @@ namespace WdsSettingsTest
         RawField(out, first, "SearchProbeMatches", SearchProbeJson());
         RawField(out, first, "UserDefinedCleanups", UserDefinedCleanupsJson());
         if (includeItemProbe) RawField(out, first, "ItemProbe", ItemProbeJson());
+        if (includeSearchDialogProbe) RawField(out, first, "SearchDialogProbe", SearchDialogProbeJson());
 
         out << "\n}\n";
         return out.str();
@@ -11078,6 +11379,7 @@ namespace WdsSettingsTest
         if (!argv) return;
 
         bool includeItemProbe = false;
+        bool includeSearchDialogProbe = false;
         bool saveSettings = false;
         bool mutateCleanups = false;
         std::wstring outputPath;
@@ -11087,6 +11389,10 @@ namespace WdsSettingsTest
             if (arg == L"/wds-settings-item-probe" || arg == L"--wds-settings-item-probe")
             {
                 includeItemProbe = true;
+            }
+            else if (arg == L"/wds-settings-search-dialog-probe" || arg == L"--wds-settings-search-dialog-probe")
+            {
+                includeSearchDialogProbe = true;
             }
             else if (arg == L"/wds-settings-save" || arg == L"--wds-settings-save")
             {
@@ -11115,7 +11421,7 @@ namespace WdsSettingsTest
 
         std::ofstream out(outputPath, std::ios::binary);
         if (!out.is_open()) ExitProcess(1);
-        out << BuildDumpJson(includeItemProbe);
+        out << BuildDumpJson(includeItemProbe, includeSearchDialogProbe);
         out.flush();
         ExitProcess(out.good() ? 0 : 1);
     }
@@ -11173,6 +11479,7 @@ function Invoke-SettingsDump {
         [Parameter(Mandatory)] [System.Collections.Specialized.OrderedDictionary] $Sections,
         [Parameter(Mandatory)] [string] $Name,
         [switch] $ItemProbe,
+        [switch] $SearchDialogProbe,
         [switch] $Save,
         [switch] $MutateCleanups
     )
@@ -11190,6 +11497,7 @@ function Invoke-SettingsDump {
 
     $arguments = @('/wds-settings-dump', $jsonPath)
     if ($ItemProbe) { $arguments += '/wds-settings-item-probe' }
+    if ($SearchDialogProbe) { $arguments += '/wds-settings-search-dialog-probe' }
     if ($Save) { $arguments += '/wds-settings-save' }
     if ($MutateCleanups) { $arguments += '/wds-settings-mutate-cleanups' }
     $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments $arguments -WorkingDirectory $runRoot
@@ -11473,6 +11781,16 @@ $settingCases = @(
     New-SettingCase FolderHistoryCount -Section DriveSelect -Default 10 -ExplicitInput 3 -ExplicitExpected 3 -Minimum $script:SettingsMinFolderHistoryCount -Maximum $script:SettingsMaxFolderHistoryCount -BoundsOrder 8
     New-SettingCase SelectDrivesDrives -Section DriveSelect -ExplicitInput 'C:\|D:\' -ExplicitExpected @('C:\', 'D:\') -Array
     New-SettingCase SelectDrivesFolder -Section DriveSelect -ExplicitInput 'C:\Alpha|\\server\share\Beta' -ExplicitExpected @('C:\Alpha', '\\server\share\Beta') -Array
+    New-SettingCase @('SearchIncludeFiles', 'SearchIncludeFolders') -Section SearchView `
+        -Default $true -ExplicitInput 0 -ExplicitExpected $false
+    New-SettingCase @('SearchSizeMinimum', 'SearchPhysicalMinimum') -Section SearchView -Default '' `
+        -ExplicitInput '2147483648' -ExplicitExpected '2147483648'
+    New-SettingCase @('SearchSizeMaximum', 'SearchPhysicalMaximum') -Section SearchView -Default '' `
+        -ExplicitInput '18446744073709551615' -ExplicitExpected '18446744073709551615'
+    New-SettingCase @('SearchSizeUnits', 'SearchPhysicalUnits') -Section SearchView -Default 2 -ExplicitInput 3 -ExplicitExpected 3 `
+        -Minimum 0 -Maximum 4 -BoundsOrder 16
+    New-SettingCase SearchOwner -Section SearchView -Default '' `
+        -ExplicitInput 'DOMAIN\Élodie' -ExplicitExpected 'DOMAIN\Élodie'
     New-SettingCase @('SearchWholePhrase', 'SearchRegex', 'SearchCase') -Section SearchView -ExplicitInput 1 -ExplicitExpected $true
     New-SettingCase SearchTerm -Section SearchView -ExplicitInput "alpha${recordSeparator}beta" -ExplicitExpected "alpha`r`nbeta" -ExplicitName 'SearchTerm record separator decoding'
 )
@@ -12040,10 +12358,99 @@ try {
         param($ctx)
 
         Invoke-SettingsProbeCases $ctx @(
+            @{
+                Name = 'SearchSettings_BlankName'
+                Values = @('SearchView', 'SearchTerm', '', 'SearchView', 'SearchWholePhrase', 1)
+                Expected = @('Blank name is valid', 'SearchProbeMatches.RegexValid', $true,
+                    'Blank name matches files', 'SearchProbeMatches.LowerLog', $true,
+                    'Blank name matches other names', 'SearchProbeMatches.NotesTxt', $true)
+            }
+            @{
+                Name = 'SearchSettings_BlankRegex'
+                Values = @('SearchView', 'SearchTerm', '', 'SearchView', 'SearchRegex', 1,
+                    'SearchView', 'SearchWholePhrase', 1)
+                Expected = @('Blank regex is valid', 'SearchProbeMatches.RegexValid', $true,
+                    'Blank regex matches names', 'SearchProbeMatches.TargetSubstring', $true)
+            }
             @{ Name = 'SearchSettings_GlobWholeCaseInsensitive'; Values = @('SearchView', 'SearchTerm', '*.LOG', 'SearchView', 'SearchRegex', 0, 'SearchView', 'SearchCase', 0, 'SearchView', 'SearchWholePhrase', 1); Expected = @('Glob lower match', 'SearchProbeMatches.LowerLog', $true, 'Glob upper match', 'SearchProbeMatches.UpperLog', $true, 'Glob notes no match', 'SearchProbeMatches.NotesTxt', $false) }
             @{ Name = 'SearchSettings_RegexWholeCaseSensitive'; Values = @('SearchView', 'SearchTerm', '^Alpha\.LOG$', 'SearchView', 'SearchRegex', 1, 'SearchView', 'SearchCase', 1, 'SearchView', 'SearchWholePhrase', 1); Expected = @('Regex lower no match', 'SearchProbeMatches.LowerLog', $false, 'Regex upper match', 'SearchProbeMatches.UpperLog', $true) }
             @{ Name = 'SearchSettings_Partial'; Values = @('SearchView', 'SearchTerm', 'target', 'SearchView', 'SearchRegex', 0, 'SearchView', 'SearchCase', 0, 'SearchView', 'SearchWholePhrase', 0); Expected = @('Partial search match', 'SearchProbeMatches.TargetSubstring', $true) }
         )
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'SearchResults_SubtreeTotalsAndRefresh' `
+        -Behavior 'Search totals count outermost matches using scanned sizes and update after refresh.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValue $sections 'Options' 'ProcessHardlinks' 1
+        $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SearchResults_SubtreeTotalsAndRefresh'
+        $probe = $dump.Dump.SearchProbeMatches
+        Assert-BooleanCases $ctx @(
+            'Ancestor and descendant logical sizes do not overlap', $probe.AncestorLogical, $true
+            'Ancestor and descendant physical sizes do not overlap', $probe.AncestorPhysical, $true
+            'Hardlink paths each contribute logical size', $probe.SameVolumeLogical, $true
+            'Separate paths retain their scanned physical sizes', $probe.UnadjustedPathsPhysical, $true
+            'A lone adjusted hardlink uses its displayed physical size', $probe.AdjustedLinkPhysical, $true
+            'Totals respect the scan hardlink setting', $probe.ScanHardlinkAccounting, $true
+            'Cancellation discards incomplete totals', $probe.CancelledTotalsDiscarded, $true
+            'Removing a result hides pending totals', $probe.HardlinkRemovalPending, $true
+            'Hardlink removal keeps the remaining logical size', $probe.HardlinkRemovalLogical, $true
+            'Clearing hardlink flags before removal preserves allocation size', $probe.HardlinkRemovalPhysical, $true
+            'Removing results marks the search partial', $probe.RemovedResultsPartial, $true
+            'Refresh hides both totals while pending', $probe.RetainedFolderPending, $true
+            'Retained folder logical size reflects refreshed children', $probe.RetainedFolderLogical, $true
+            'Retained folder physical size reflects refreshed children', $probe.RetainedFolderPhysical, $true
+            'Removing an overlapping row retains folder contents', $probe.RetainedFolderAfterRowRemoval, $true
+        )
+        $dump
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'SearchDialog_CriteriaValidation' `
+        -Behavior 'The real search dialog validates size bounds and keeps its OK button in sync with the criteria.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValues $sections @(
+            'SearchView', 'SearchTerm', '*target*'; 'SearchView', 'SearchWholePhrase', 0
+            'SearchView', 'SearchSizeMinimum', '1'; 'SearchView', 'SearchSizeMaximum', '100'
+        )
+        $dump = Invoke-SettingsDump -Exe $testExe -Sections $sections `
+            -Name 'SearchDialog_CriteriaValidation' -SearchDialogProbe
+        $probe = $dump.Dump.SearchDialogProbe
+        Assert-True $ctx 'The real search dialog was created' $probe.Created
+        if (!$probe.Created) { return $dump }
+        foreach ($property in $probe.PSObject.Properties | Where-Object Name -ne 'Created') {
+            Assert-True $ctx $property.Name $property.Value
+        }
+        $dump
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'SearchSettings_ZeroBoundRoundTrip' `
+        -Behavior 'Blank and zero bounds remain distinct and the owner filter survives saving and reloading.' `
+        -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValues $sections @(
+            'SearchView', 'SearchSizeMinimum', ''; 'SearchView', 'SearchSizeMaximum', '0'
+            'SearchView', 'SearchPhysicalMinimum', ''; 'SearchView', 'SearchPhysicalMaximum', '0'
+            'SearchView', 'SearchPhysicalUnits', 2
+            'SearchView', 'SearchOwner', 'DOMAIN\Élodie'
+        )
+        $first = Invoke-SettingsDump -Exe $testExe -Sections $sections -Name 'SearchSettings_ZeroBoundRoundTrip' -Save
+        $reloaded = Invoke-SettingsReload $ctx $testExe $first
+        Assert-EqualCases $ctx @(
+            'Blank minimum remains unset', $reloaded.Dump.SearchSizeMinimum, ''
+            'Zero maximum remains explicit', $reloaded.Dump.SearchSizeMaximum, '0'
+            'Blank physical minimum remains unset', $reloaded.Dump.SearchPhysicalMinimum, ''
+            'Zero physical maximum remains explicit', $reloaded.Dump.SearchPhysicalMaximum, '0'
+            'Physical units survive round trip', $reloaded.Dump.SearchPhysicalUnits, 2
+            'Unicode owner survives round trip', $reloaded.Dump.SearchOwner, 'DOMAIN\Élodie'
+        )
+        $reloaded
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Csv_AttributeExclusionSettings' -Behavior 'Hidden and protected file/directory exclusion settings should remove the correct paths from a real non-interactive scan.' -Body {

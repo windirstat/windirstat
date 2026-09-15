@@ -1055,6 +1055,10 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     for (auto* item : items)
         if (item->IsDone()) doneItems.insert(item);
 
+    auto* searchRoot = CFileSearchControl::Get()->GetRootItem();
+    searchRoot->SetTotalsPending(true);
+    if (!items.empty()) searchRoot->SetLimitExceeded(true);
+
     // Hardlink results are a derived snapshot and cannot outlive mutations to their target drive.
     std::unordered_set<CItem*> affectedDrives;
     for (auto* item : items)
@@ -1306,10 +1310,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             ExitProcess(SavePermissions(permsSavePath, ptrs) ? 0 : 1);
         }
 
+        const auto searchTotals = CFileSearchControl::Get()->GetRootItem()->CalculateTotals();
+
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
             CMainFrame::Get()->LockWindowUpdate();
+            CFileSearchControl::Get()->GetRootItem()->SetTotals(searchTotals);
             Get()->NotifyPanes();
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->ApplyPaneVisibility(true);

@@ -33,14 +33,12 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 {
     try
     {
-        // Validate input is valid
-        if (searchTerm.empty()) return {};
-
         // Decode regex flags based on settings
         auto searchFlags = std::regex_constants::optimize;
         if (!searchCase) searchFlags |= std::regex_constants::icase;
 
         // Precompile regex string
+        if (searchTerm.empty()) return std::wregex(L".*", searchFlags);
         return std::wregex(useRegex ?
             searchTerm : GlobToRegex(searchTerm, false), searchFlags);
     }
@@ -50,26 +48,38 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
     }
 }
 
-void CFileSearchControl::ProcessSearch(CItem* item,
-    const std::wstring & searchTerm, const bool searchCase,
-    const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles)
+bool SearchCriteria::MatchesSize(const CItem* item) const
 {
+    return (!sizeMinimum || item->GetSizeLogical() >= *sizeMinimum) &&
+        (!sizeMaximum || item->GetSizeLogical() <= *sizeMaximum) &&
+        (!physicalMinimum || item->GetSizePhysical() >= *physicalMinimum) &&
+        (!physicalMaximum || item->GetSizePhysical() <= *physicalMaximum);
+}
+
+void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criteria)
+{
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
+
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 
     // Remove previous results
     SetRootItem();
+    m_sizeFilterActive = criteria.sizeMinimum.has_value() || criteria.sizeMaximum.has_value() ||
+        criteria.physicalMinimum.has_value() || criteria.physicalMaximum.has_value();
     m_rootItem->SetLimitExceeded(false);
 
     // Process search request using progress dialog
     std::vector<CItem*> matchedItems;
     bool limitExceeded = false;
-    CProgressDlg(static_cast<size_t>(item->GetItemsCount()), CProgressDlg::Flags::None, GetMainWindow(),
+    std::optional<CItemSearch::SizeTotals> totals;
+    const auto result = CProgressDlg(static_cast<size_t>(item->GetItemsCount()),
+        CProgressDlg::Flags::None, GetMainWindow(),
         [&](CProgressDlg* pdlg)
     {
         // Precompile regex string
-        const auto searchTermRegex = ComputeSearchRegex(searchTerm,
-            searchCase, searchRegex);
+        const auto searchTermRegex = ComputeSearchRegex(criteria.term,
+            criteria.caseSensitive, criteria.regex);
 
         // Do search
         const size_t maxResults = COptions::SearchMaxResults;
@@ -85,15 +95,28 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             CItem* qitem = queue.back();
             queue.pop_back();
 
+            // Apply the size range before the name match, since it is the cheaper test.
+            const bool inSizeRange = criteria.MatchesSize(qitem);
+
+            const bool typeWanted = (criteria.includeFiles && qitem->IsTypeOrFlag(IT_FILE)) ||
+                (criteria.includeFolders && qitem->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
+
             // Check for match
-            if (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE))
+            if (inSizeRange && typeWanted)
             {
                 const auto nameView = qitem->GetNameView();
-                const bool isMatch = searchWholePhrase ?
+                const bool isMatch = criteria.term.empty() || (criteria.wholePhrase ?
                     std::regex_match(nameView.begin(), nameView.end(), searchTermRegex) :
-                    std::regex_search(nameView.begin(), nameView.end(), searchTermRegex);
+                    std::regex_search(nameView.begin(), nameView.end(), searchTermRegex));
 
-                if (isMatch)
+                // Resolving an owner queries the security descriptor of a single item, which is
+                // far more expensive than anything above, so it is only asked for once the item
+                // has survived every other condition
+                const bool isWanted = isMatch && (criteria.owner.empty() ||
+                    FindStringOrdinal(FIND_FROMSTART, qitem->GetOwner(true).c_str(), -1,
+                        criteria.owner.c_str(), -1, TRUE) >= 0);
+
+                if (isWanted)
                 {
                     if (matchedItems.size() < maxResults) matchedItems.push_back(qitem);
                     else
@@ -117,9 +140,10 @@ void CFileSearchControl::ProcessSearch(CItem* item,
                 queue.push_back(child);
             }
         }
+        totals = CItemSearch::CalculateTotals(matchedItems, [pdlg] { return pdlg->IsCancelled(); });
 
     }).ShowModal();
-    m_rootItem->SetLimitExceeded(limitExceeded);
+    m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface
     CWaitCursor wait;
@@ -135,6 +159,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         m_rootItem->AddSearchItemChild(searchItem);
     }
 
+    if (totals) m_rootItem->SetTotals(*totals);
     SortItems();
     ExpandItem(0);
 }
@@ -144,7 +169,8 @@ void CFileSearchControl::RemoveItem(CItem* item)
     const ScopedRedrawPause lock(this);
     std::erase_if(m_itemTracker, [&](const auto& pair)
     {
-        if (pair.first != item && !item->IsAncestorOf(pair.first)) return false;
+        if (pair.first != item && !item->IsAncestorOf(pair.first) &&
+            !(m_sizeFilterActive && pair.first->IsAncestorOf(item))) return false;
         m_rootItem->RemoveSearchItemChild(pair.second);
         return true;
     });
@@ -154,6 +180,7 @@ void CFileSearchControl::AfterDeleteAllItems()
 {
     // Delete previous search results
     m_itemTracker.clear();
+    m_sizeFilterActive = false;
 
     // Delete and recreate root item
     delete m_rootItem;

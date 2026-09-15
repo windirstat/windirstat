@@ -191,6 +191,10 @@ public:
     inline static Setting<bool> SearchRegex{ OptionsSearch, L"SearchRegex", false };
     inline static Setting<bool> SearchCase{ OptionsSearch, L"SearchCase", false };
     inline static Setting<int> SearchMaxResults{ OptionsSearch, L"SearchMaxResults", 10000, 1, 1000000 };
+    inline static Setting<int> SearchSizeUnits{ OptionsSearch, L"SearchSizeUnits", 2, 0, 4 };
+    inline static Setting<int> SearchPhysicalUnits{ OptionsSearch, L"SearchPhysicalUnits", 2, 0, 4 };
+    inline static Setting<bool> SearchIncludeFiles{ OptionsSearch, L"SearchIncludeFiles", true };
+    inline static Setting<bool> SearchIncludeFolders{ OptionsSearch, L"SearchIncludeFolders", true };
     inline static Setting<bool> ShowDeletePermanentlyWarning{ OptionsGeneral, L"ShowDeletePermanentlyWarning", true };
     inline static Setting<bool> ShowDeleteToRecycleBinWarning{ OptionsGeneral, L"ShowDeleteToRecycleBinWarning", true };
     inline static Setting<bool> ShowElevationPrompt{ OptionsGeneral, L"ShowElevationPrompt", true };
@@ -333,6 +337,11 @@ public:
     inline static Setting<std::vector<std::wstring>> SelectDrivesDrives{ OptionsDriveSelect, L"SelectDrivesDrives" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
     inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
+    inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };
+    inline static Setting<std::wstring> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum" };
+    inline static Setting<std::wstring> SearchSizeMaximum{ OptionsSearch, L"SearchSizeMaximum" };
+    inline static Setting<std::wstring> SearchPhysicalMinimum{ OptionsSearch, L"SearchPhysicalMinimum" };
+    inline static Setting<std::wstring> SearchPhysicalMaximum{ OptionsSearch, L"SearchPhysicalMaximum" };
     inline static Setting<std::wstring> FilteringExcludeDirs{ OptionsDriveSelect, L"FilteringExcludeDirs" };
     inline static Setting<std::wstring> FilteringExcludeFiles{ OptionsDriveSelect, L"FilteringExcludeFiles" };
     inline static Setting<std::wstring> FilteringIncludeDirs{ OptionsDriveSelect, L"FilteringIncludeDirs" };

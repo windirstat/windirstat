@@ -52,11 +52,15 @@ std::wstring CItemSearch::GetText(const int subitem) const
     // Root node
     if (GetParent() == nullptr)
     {
+        // Totals cover the displayed results and their folder contents, without overlapping subtrees.
+        if (subitem == COL_ITEMSEARCH_SIZE_LOGICAL)
+            return m_totalsPending ? std::wstring{} : FormatBytes(m_totalSizeLogical);
+        if (subitem == COL_ITEMSEARCH_SIZE_PHYSICAL)
+            return m_totalsPending ? std::wstring{} : FormatBytes(m_totalSizePhysical);
         if (subitem != COL_ITEMSEARCH_NAME) return {};
 
-        // Format as "Search Results (1234+)"
-        static const std::wstring tops = Localization::Lookup(IDS_SEARCH_RESULTS);
-        return std::format(L"{} ({}{})", tops,
+        // Mark results that were limited, cancelled, or pruned after a refresh.
+        return std::format(L"{} ({}{})", Localization::Lookup(IDS_SEARCH_RESULTS),
             FormatCount(m_children.size()), m_limitExceeded ? L"+" : L"");
     }
 
@@ -113,6 +117,7 @@ void CItemSearch::AddSearchItemChild(CItemSearch* child)
 
     std::scoped_lock guard(m_protect);
     m_children.push_back(child);
+    m_totalsPending = true;
 
     if (IsVisible() && IsExpanded())
     {
@@ -132,7 +137,43 @@ void CItemSearch::RemoveSearchItemChild(CItemSearch* child)
     if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
+        m_totalsPending = true;
+        m_limitExceeded = true;
     }
 
     delete child;
+}
+
+CItemSearch::SizeTotals CItemSearch::CalculateTotals() const
+{
+    std::vector<CItem*> items;
+    for (const auto* child : m_children)
+        if (child->m_item != nullptr) items.push_back(child->m_item);
+    return *CalculateTotals(items);
+}
+
+void CItemSearch::SetTotals(const SizeTotals& totals)
+{
+    std::tie(m_totalSizeLogical, m_totalSizePhysical) = totals;
+    m_totalsPending = false;
+}
+
+std::optional<CItemSearch::SizeTotals> CItemSearch::CalculateTotals(const std::span<CItem* const> items,
+    const std::function<bool()>& isCancelled)
+{
+    ULONGLONG totalLogical = 0;
+    ULONGLONG totalPhysical = 0;
+    const std::unordered_set<const CItem*> matches(items.begin(), items.end());
+
+    // Count only the outermost matching items, so nested results contribute once.
+    for (const auto* item : matches)
+    {
+        if (isCancelled && isCancelled()) return std::nullopt;
+        auto* parent = item->GetParent();
+        while (parent != nullptr && !matches.contains(parent)) parent = parent->GetParent();
+        if (parent != nullptr) continue;
+        totalLogical += item->GetSizeLogical();
+        totalPhysical += item->GetSizePhysical();
+    }
+    return SizeTotals{ totalLogical, totalPhysical };
 }

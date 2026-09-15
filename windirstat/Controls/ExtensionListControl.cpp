@@ -382,7 +382,7 @@ void CExtensionListControl::OnSearchExtension() const
     const auto searchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
         (GlobToRegex(GetSelectedExtension(), false) + L"$");
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
-        searchTerm, false, false, true, true);
+        SearchCriteria{ .term = searchTerm, .regex = true, .includeFolders = false });
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }
