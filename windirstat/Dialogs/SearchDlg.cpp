@@ -63,9 +63,9 @@ bool SearchDlg::OnInitDialog()
     m_layout.AddControl(IDOK, 1, 1, 0, 0);
     m_layout.AddControl(IDCANCEL, 1, 1, 0, 0);
     m_layout.AddControl(IDC_SEARCH_TERM, 0, 0, 1, 0);
-    m_layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 1, 0);
-    m_layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 1, 0);
-    m_layout.AddControl(IDC_SEARCH_CASE, 0, 0, 1, 0);
+    m_layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_CASE, 0, 0, 0, 0);
     for (const auto& [minimum, maximum, separator, units] : {
         std::array{ IDC_SEARCH_SIZE_MIN, IDC_SEARCH_SIZE_MAX, IDC_SEARCH_SIZE_SEPARATOR, IDC_SEARCH_SIZE_UNITS },
         std::array{ IDC_SEARCH_PHYSICAL_MIN, IDC_SEARCH_PHYSICAL_MAX,
@@ -80,8 +80,8 @@ bool SearchDlg::OnInitDialog()
         for (const auto& unit : { GetSpec_Bytes(), GetSpec_KiB(), GetSpec_MiB(), GetSpec_GiB(), GetSpec_TiB() })
             GetDlgItem(units)->SendNativeMessage(CB_ADDSTRING, 0, unit.c_str());
     }
-    m_layout.AddControl(IDC_SEARCH_FILES, 0, 0, 0.5, 0);
-    m_layout.AddControl(IDC_SEARCH_FOLDERS, 0.5, 0, 0.5, 0);
+    m_layout.AddControl(IDC_SEARCH_FILES, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_FOLDERS, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_OWNER, 0, 0, 1, 0);
 
     const CSize minimumSize = GetWindowRect().Size();
