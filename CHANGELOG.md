@@ -13,6 +13,9 @@ Enhancements
 - Added cancellation support while loading NTFS MFT records
 - Added optional sparse hashing for duplicate detection in files over 64 MiB
 - Added live path filtering with regular expressions in File Watcher
+- Added search filters for size ranges, item type, and owner (thanks @djdomi)
+- Added size totals for search results
+- Added free / unknown space labels to sunburst and flame graphs
 - Added Arabic translation (thanks @Alhlhli, @harryytm)
 - Added Hindi translation for the application and installer
 - Improved hardlink processing performance and memory usage
@@ -37,6 +40,8 @@ Bug Fixes
 - Corrected progress dialog flickering during text updates
 - Corrected toolbar buttons displaying unrelated tooltip text
 - Corrected a crash when requesting administrator elevation
+- Corrected lost scan settings after administrator restart
+- Corrected crashes on custom cleanup errors
 - Corrected scan completion stalls during memory cleanup
 - Corrected Remove Empty Folders potentially removing reparse point targets
 - Corrected folder counts and zoom state after removing multi-root scan targets
