@@ -1147,7 +1147,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 {
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
                         COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem() ||
-                        COptions::ExcludeAdsIgnored && finder->HasIgnoredStream() ||
+                        COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFilePath()))
                     {
                         continue;
@@ -1160,7 +1160,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                     if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
                         COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
                         COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
-                        COptions::ExcludeAdsIgnored && finder->HasIgnoredStream() ||
+                        COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFileName(),
                             CFiltering::IncludeDirsRegex.empty() ? std::wstring() : finder->GetFilePath(),
                             finder->GetFileSizeLogical(), finder->GetLastWriteTime()))

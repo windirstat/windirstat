@@ -323,17 +323,9 @@ ULONGLONG FinderBasic::GetIndex() const
 
 bool FinderBasic::HasIgnoredStream() const
 {
-    WIN32_FIND_STREAM_DATA streamData;
-    const SmartPointer handle(FindClose, FindFirstStreamW(GetFilePathLong().c_str(), FindStreamInfoStandard, &streamData, 0));
-    if (handle == INVALID_HANDLE_VALUE) return false;
-
-    do
-    {
-        if (_wcsicmp(streamData.cStreamName, L":com.dropbox.ignored:$DATA") == 0) return true;
-    }
-    while (FindNextStreamW(handle, &streamData));
-
-    return false;
+    WIN32_FILE_ATTRIBUTE_DATA data{};
+    return GetFileAttributesExW((GetFilePathLong() + L":com.dropbox.ignored").c_str(),
+        GetFileExInfoStandard, &data) && (data.nFileSizeHigh != 0 || data.nFileSizeLow != 0);
 }
 
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)

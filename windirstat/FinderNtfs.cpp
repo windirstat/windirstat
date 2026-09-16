@@ -355,9 +355,11 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                             }
 
                             // Dropbox (and compatible tools) set this stream to mark items as ignored
-                            if (name == L"com.dropbox.ignored")
+                            if (COptions::ExcludeDropboxIgnored && name == L"com.dropbox.ignored" &&
+                                (!curAttribute->IsNonResident() || curAttribute->Form.Nonresident.LowestVcn == 0))
                             {
-                                baseRecord.HasIgnoredStream = true;
+                                baseRecord.HasIgnoredStream = (curAttribute->IsNonResident() ?
+                                    curAttribute->Form.Nonresident.FileSize : curAttribute->Form.Resident.ValueLength) != 0;
                             }
 
                             continue;

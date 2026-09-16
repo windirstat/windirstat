@@ -34,7 +34,7 @@ void CPageAdvanced::InitializePage()
     SetChecked(IDC_SKIP_CLOUD_LINKS, COptions::SkipDupeDetectionCloudLinks);
     SetChecked(IDC_EXCLUDE_HIDDEN_DIRECTORY, COptions::ExcludeHiddenDirectory);
     SetChecked(IDC_EXCLUDE_PROTECTED_DIRECTORY, COptions::ExcludeProtectedDirectory);
-    SetChecked(IDC_EXCLUDE_ADS_IGNORED, COptions::ExcludeAdsIgnored);
+    SetChecked(IDC_EXCLUDE_DROPBOX_IGNORED, COptions::ExcludeDropboxIgnored);
     SetChecked(IDC_BACKUP_RESTORE, COptions::UseBackupRestore);
     SetChecked(IDC_EXCLUDE_SYMLINKS_FILE, COptions::ExcludeSymbolicLinksFile);
     SetChecked(IDC_EXCLUDE_HIDDEN_FILE, COptions::ExcludeHiddenFile);
@@ -58,7 +58,7 @@ void CPageAdvanced::OnOK()
     const bool excludeSymbolicLinksFile = IsChecked(IDC_EXCLUDE_SYMLINKS_FILE);
     const bool skipHiddenDirectory = IsChecked(IDC_EXCLUDE_HIDDEN_DIRECTORY);
     const bool skipProtectedDirectory = IsChecked(IDC_EXCLUDE_PROTECTED_DIRECTORY);
-    const bool excludeAdsIgnored = IsChecked(IDC_EXCLUDE_ADS_IGNORED);
+    const bool excludeDropboxIgnored = IsChecked(IDC_EXCLUDE_DROPBOX_IGNORED);
     const bool skipHiddenFile = IsChecked(IDC_EXCLUDE_HIDDEN_FILE);
     const bool skipProtectedFile = IsChecked(IDC_EXCLUDE_PROTECTED_FILE);
     const bool processHardlinks = IsChecked(IDC_PROCESS_HARDLINKS);
@@ -72,7 +72,7 @@ void CPageAdvanced::OnOK()
         COptions::ExcludeSymbolicLinksFile != excludeSymbolicLinksFile;
     const bool refreshAll = COptions::ExcludeHiddenDirectory != skipHiddenDirectory ||
         COptions::ExcludeProtectedDirectory != skipProtectedDirectory ||
-        COptions::ExcludeAdsIgnored != excludeAdsIgnored ||
+        COptions::ExcludeDropboxIgnored != excludeDropboxIgnored ||
         COptions::ExcludeHiddenFile != skipHiddenFile ||
         COptions::ExcludeProtectedFile != skipProtectedFile ||
         COptions::ProcessHardlinks != processHardlinks ||
@@ -85,7 +85,7 @@ void CPageAdvanced::OnOK()
     COptions::SkipDupeDetectionCloudLinks = IsChecked(IDC_SKIP_CLOUD_LINKS);
     COptions::ExcludeHiddenDirectory = skipHiddenDirectory;
     COptions::ExcludeProtectedDirectory = skipProtectedDirectory;
-    COptions::ExcludeAdsIgnored = excludeAdsIgnored;
+    COptions::ExcludeDropboxIgnored = excludeDropboxIgnored;
     COptions::UseBackupRestore = IsChecked(IDC_BACKUP_RESTORE);
     COptions::ExcludeSymbolicLinksFile = excludeSymbolicLinksFile;
     COptions::ExcludeHiddenFile = skipHiddenFile;
