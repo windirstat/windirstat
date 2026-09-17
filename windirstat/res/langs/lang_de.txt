@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Möchten Sie WinDirStat mit Administratorrechten ausführ
 IDS_ELEVATION_REQUIRED=inaktiv - Administratorrechte erforderlich
 IDS_EMPTY_FOLDER_WARNING=Sind Sie sicher, dass Sie alle Dateien in den folgenden Ordnern löschen möchten?
 IDS_EMPTY_RECYCLEBIN=&Papierkorb leeren
+IDS_EXCLUDE_DROPBOX_IGNORED=Von Dropbox ignoriert
 IDS_EXPAND=E&rweitern
 IDS_EXTENSION_GROUPED=Gruppierte Dateiendungen
 IDS_EXTENSION_MISSING=Ohne Dateityp

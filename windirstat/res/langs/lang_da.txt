@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Vil du køre WinDirStat med forhøjede rettigheder for at
 IDS_ELEVATION_REQUIRED=inaktiv - elevation kræves
 IDS_EMPTY_FOLDER_WARNING=Er du sikker på, at du vil slette alle filer i følgende mapper?
 IDS_EMPTY_RECYCLEBIN=Tøm &papirkurven
+IDS_EXCLUDE_DROPBOX_IGNORED=Ignoreret af Dropbox
 IDS_EXPAND=Udvid
 IDS_EXTENSION_GROUPED=Grupperede filendelser
 IDS_EXTENSION_MISSING=Ingen forlængelse

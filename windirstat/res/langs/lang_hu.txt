@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Szeretné a WinDirStat‑ot emelt jogosultságokkal futta
 IDS_ELEVATION_REQUIRED=inaktív - jogosultságemelés szükséges
 IDS_EMPTY_FOLDER_WARNING=Biztosan törölni szeretné az összes fájlt a következő mappákból?
 IDS_EMPTY_RECYCLEBIN=Lomtár ürítés&e
+IDS_EXCLUDE_DROPBOX_IGNORED=A Dropbox által mellőzött
 IDS_EXPAND=&Kibont
 IDS_EXTENSION_GROUPED=Csoportosított kiterjesztések
 IDS_EXTENSION_MISSING=Nincs kiterjesztés

@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Souhaitez‑vous exécuter WinDirStat avec des privilège
 IDS_ELEVATION_REQUIRED=inactif - élévation requise
 IDS_EMPTY_FOLDER_WARNING=Êtes-vous sûr de vouloir supprimer tous les fichiers dans les dossiers suivants ?
 IDS_EMPTY_RECYCLEBIN=&Vider la corbeille
+IDS_EXCLUDE_DROPBOX_IGNORED=Ignoré par Dropbox
 IDS_EXPAND=Dé&velopper
 IDS_EXTENSION_GROUPED=Extensions groupées
 IDS_EXTENSION_MISSING=Sans Extension

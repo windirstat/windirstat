@@ -340,15 +340,26 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
-                        // Special case for WofCompressedData files
+                        // Named data streams
                         if (const WCHAR* streamName = ByteOffset<WCHAR>(curAttribute, curAttribute->NameOffset); curAttribute->NameLength > 0)
                         {
-                            if (std::wstring_view(streamName, curAttribute->NameLength) == L"WofCompressedData" &&
+                            const std::wstring_view name(streamName, curAttribute->NameLength);
+
+                            // WofCompressedData: correct physical size for WOF-compressed files
+                            if (name == L"WofCompressedData" &&
                                 (!curAttribute->IsNonResident() || curAttribute->Form.Nonresident.LowestVcn == 0))
                             {
                                 baseRecord.PhysicalSize = curAttribute->IsNonResident() ?
                                     curAttribute->Form.Nonresident.AllocatedLength :
                                     (curAttribute->Form.Resident.ValueLength + 7) & ~7;
+                            }
+
+                            // Dropbox (and compatible tools) set this stream to mark items as ignored
+                            if (COptions::ExcludeDropboxIgnored && name == L"com.dropbox.ignored" &&
+                                (!curAttribute->IsNonResident() || curAttribute->Form.Nonresident.LowestVcn == 0))
+                            {
+                                baseRecord.HasIgnoredStream = (curAttribute->IsNonResident() ?
+                                    curAttribute->Form.Nonresident.FileSize : curAttribute->Form.Resident.ValueLength) != 0;
                             }
 
                             continue;

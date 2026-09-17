@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=क्या आप स्कैन की गति औ�
 IDS_ELEVATION_REQUIRED=निष्क्रिय - व्यवस्थापक अधिकार आवश्यक हैं
 IDS_EMPTY_FOLDER_WARNING=क्या आप वाकई इन फ़ोल्डरों की सभी फ़ाइलें हटाना चाहते हैं?
 IDS_EMPTY_RECYCLEBIN=रीसायकल बिन खाली करें (&B)
+IDS_EXCLUDE_DROPBOX_IGNORED=Dropbox द्वारा अनदेखा किया गया
 IDS_EXPAND=फैलाएँ (&X)
 IDS_EXTENSION_GROUPED=समूहबद्ध एक्सटेंशन
 IDS_EXTENSION_MISSING=कोई एक्सटेंशन नहीं

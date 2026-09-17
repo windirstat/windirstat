@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Vuoi eseguire WinDirStat con privilegi elevati per miglio
 IDS_ELEVATION_REQUIRED=non attiva - richiesta elevazione
 IDS_EMPTY_FOLDER_WARNING=Vuoi eliminare tutti i file nelle seguenti cartelle?
 IDS_EMPTY_RECYCLEBIN=&Svuota cestino
+IDS_EXCLUDE_DROPBOX_IGNORED=Ignorato da Dropbox
 IDS_EXPAND=Espan&di
 IDS_EXTENSION_GROUPED=Estensioni raggruppate
 IDS_EXTENSION_MISSING=Senza estensione

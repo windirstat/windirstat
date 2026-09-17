@@ -31,6 +31,7 @@ class FinderNtfsContext final
         FILETIME LastModifiedTime = {};
         ULONG Attributes = 0;
         DWORD ReparsePointTag = 0;
+        bool HasIgnoredStream = false;
     };
 
     using FileRecordName = struct FileRecordName
@@ -87,4 +88,5 @@ public:
     FILETIME GetLastWriteTime() const override { return m_currentRecord->LastModifiedTime; }
     std::wstring GetFilePath() const override;
     bool IsReserved() const override { return m_index < FinderNtfsContext::NtfsReservedMax; }
+    bool HasIgnoredStream() const override { return m_currentRecord->HasIgnoredStream; }
 };

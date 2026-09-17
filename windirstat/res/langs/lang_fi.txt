@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Haluatko suorittaa WinDirStat‑ohjelman korotetuilla oik
 IDS_ELEVATION_REQUIRED=ei käytössä - korotetut oikeudet vaaditaan
 IDS_EMPTY_FOLDER_WARNING=Haluatko varmasti poistaa kaikki tiedostot seuraavista kansioista?
 IDS_EMPTY_RECYCLEBIN=&Tyhjennä roskakori
+IDS_EXCLUDE_DROPBOX_IGNORED=Dropboxin ohittama
 IDS_EXPAND=Laa&jenna
 IDS_EXTENSION_GROUPED=Ryhmitetyt tiedostopäätteet
 IDS_EXTENSION_MISSING=Ei päätettä

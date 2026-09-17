@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Wilt u WinDirStat uitvoeren met verhoogde bevoegdheden om
 IDS_ELEVATION_REQUIRED=inactief - verhoogde rechten vereist
 IDS_EMPTY_FOLDER_WARNING=Weet u zeker dat u alle bestanden in de volgende mappen wilt verwijderen?
 IDS_EMPTY_RECYCLEBIN=&Prullenbak leegmaken
+IDS_EXCLUDE_DROPBOX_IGNORED=Genegeerd door Dropbox
 IDS_EXPAND=&Uitvouwen
 IDS_EXTENSION_GROUPED=Gegroepeerde extensies
 IDS_EXTENSION_MISSING=Zonder Extensie

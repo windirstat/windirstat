@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=WinDirStat を特権昇格で実行して、スキャン�
 IDS_ELEVATION_REQUIRED=非アクティブ - 管理者権限が必要
 IDS_EMPTY_FOLDER_WARNING=次のフォルダー内のすべてのファイルを削除してもよろしいですか？
 IDS_EMPTY_RECYCLEBIN=ごみ箱を空にする(&B)
+IDS_EXCLUDE_DROPBOX_IGNORED=Dropbox の無視対象
 IDS_EXPAND=展開(&A)
 IDS_EXTENSION_GROUPED=グループ化された拡張子
 IDS_EXTENSION_MISSING=拡張子なし

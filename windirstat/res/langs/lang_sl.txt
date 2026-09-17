@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Ali želite zagnati WinDirStat z dvignjenimi privilegiji 
 IDS_ELEVATION_REQUIRED=neaktivno - potrebno povišanje pravic
 IDS_EMPTY_FOLDER_WARNING=Ste prepričani, da želite izbrisati vse datoteke v naslednjih mapah?
 IDS_EMPTY_RECYCLEBIN=Izprazni &koš
+IDS_EXCLUDE_DROPBOX_IGNORED=Prezrto s strani Dropboxa
 IDS_EXPAND=Raz&širi
 IDS_EXTENSION_GROUPED=Združene končnice
 IDS_EXTENSION_MISSING=Brez končnice

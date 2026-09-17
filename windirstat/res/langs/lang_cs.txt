@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Chcete spustit WinDirStat s oprávněními správce pro z
 IDS_ELEVATION_REQUIRED=neaktivní - vyžadováno zvýšení oprávnění
 IDS_EMPTY_FOLDER_WARNING=Opravdu chcete smazat všechny soubory v následujících složkách?
 IDS_EMPTY_RECYCLEBIN=V&ysypat koš
+IDS_EXCLUDE_DROPBOX_IGNORED=Ignorováno Dropboxem
 IDS_EXPAND=&Rozbalit
 IDS_EXTENSION_GROUPED=Seskupené přípony
 IDS_EXTENSION_MISSING=Bez přípony

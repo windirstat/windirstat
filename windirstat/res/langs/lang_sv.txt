@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Vill du köra WinDirStat med förhöjda behörigheter fö
 IDS_ELEVATION_REQUIRED=inaktiv - förhöjda rättigheter krävs
 IDS_EMPTY_FOLDER_WARNING=Är du säker på att du vill ta bort alla filer i följande mappar?
 IDS_EMPTY_RECYCLEBIN=Tö&m papperskorgen
+IDS_EXCLUDE_DROPBOX_IGNORED=Ignorerad av Dropbox
 IDS_EXPAND=E&xpandera
 IDS_EXTENSION_GROUPED=Grupperade filnamnstillägg
 IDS_EXTENSION_MISSING=Inget filnamnstillägg

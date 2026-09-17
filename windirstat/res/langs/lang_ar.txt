@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=هل تود تشغيل WinDirStat بصلاحيات مسؤ
 IDS_ELEVATION_REQUIRED=غير نشط - يتطلب رفع الصلاحيات (تشغيل كمسؤول)
 IDS_EMPTY_FOLDER_WARNING=هل أنت متأكد من رغبتك في حذف كافة الملفات داخل المجلدات التالية؟
 IDS_EMPTY_RECYCLEBIN=إفراغ &سلة المحذوفات
+IDS_EXCLUDE_DROPBOX_IGNORED=تم تجاهله بواسطة Dropbox
 IDS_EXPAND=&توسيع
 IDS_EXTENSION_GROUPED=امتدادات مجمعة
 IDS_EXTENSION_MISSING=بدون امتداد

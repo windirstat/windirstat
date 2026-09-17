@@ -63,6 +63,7 @@ IDS_ELEVATION_QUESTION=Tarama hızını ve doğruluğunu artırmak için WinDirS
 IDS_ELEVATION_REQUIRED=etkin değil - yetki yükseltme gerekli
 IDS_EMPTY_FOLDER_WARNING=Aşağıdaki klasörlerdeki tüm dosyaları silmek istediğinizden emin misiniz?
 IDS_EMPTY_RECYCLEBIN=&Geri Dönüşüm Kutusunu Boşalt
+IDS_EXCLUDE_DROPBOX_IGNORED=Dropbox tarafından yok sayıldı
 IDS_EXPAND=&Genişlet
 IDS_EXTENSION_GROUPED=Gruplanmış Uzantılar
 IDS_EXTENSION_MISSING=Uzantı Yok

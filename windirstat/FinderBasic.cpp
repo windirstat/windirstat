@@ -321,6 +321,13 @@ ULONGLONG FinderBasic::GetIndex() const
     return m_context->SupportsFileId ? m_currentInfo->IdInfo.FileId.QuadPart : 0;
 }
 
+bool FinderBasic::HasIgnoredStream() const
+{
+    WIN32_FILE_ATTRIBUTE_DATA data{};
+    return GetFileAttributesExW((GetFilePathLong() + L":com.dropbox.ignored").c_str(),
+        GetFileExInfoStandard, &data) && (data.nFileSizeHigh != 0 || data.nFileSizeLow != 0);
+}
+
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     const std::filesystem::path p = file.empty()
