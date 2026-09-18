@@ -1289,14 +1289,28 @@ bool CWnd::InitializeDialogControls(const UINT resourceId)
 
 void CWnd::CenterWindow(const CWnd* pAlternate)
 {
-    HWND hParent = pAlternate ? pAlternate->m_hWnd : ::GetParent(m_hWnd);
-    if (hParent == nullptr) hParent = ::GetDesktopWindow();
-    RECT rcParent{}, rcWnd{};
+    HWND hParent = pAlternate ? pAlternate->m_hWnd : ::GetParent(m_hWnd); // Use the alternate window if provided, otherwise use the parent window for centering
+    if (hParent != nullptr && ::IsIconic(hParent)) hParent = nullptr; // If the parent is minimized, center relative to the desktop instead
+
+    const HWND hTargetWnd = hParent ? hParent : m_hWnd; // Use the parent window if available, otherwise use the dialog itself for centering
+    if (hParent == nullptr) hParent = ::GetDesktopWindow(); // If no parent is available, use the desktop window as the parent for centering
+
+    CRect rcParent{}, rcWnd{};
+    // Get the dimensions of the parent window and the dialog window
     if (!::GetWindowRect(hParent, &rcParent) || !::GetWindowRect(m_hWnd, &rcWnd)) return;
-    const CSize parent = CRect(rcParent).Size(), window = CRect(rcWnd).Size();
-    const int64_t dx = static_cast<int64_t>(parent.cx) - window.cx, dy = static_cast<int64_t>(parent.cy) - window.cy;
-    const int x = static_cast<int>(std::clamp<int64_t>(static_cast<int64_t>(rcParent.left) + dx / 2, INT_MIN, INT_MAX));
-    const int y = static_cast<int>(std::clamp<int64_t>(static_cast<int64_t>(rcParent.top) + dy / 2, INT_MIN, INT_MAX));
+
+    // Calculate the x and y coordinates for centering the dialog within the parent window
+    LONG x = rcParent.left + (rcParent.Width() - rcWnd.Width()) / 2;
+    LONG y = rcParent.top + (rcParent.Height() - rcWnd.Height()) / 2;
+
+    // If the dialog is larger than the parent window, adjust the position to ensure it is fully visible
+    if (MONITORINFO mi{ sizeof(MONITORINFO) }; ::GetMonitorInfoW(::MonitorFromWindow(hTargetWnd, MONITOR_DEFAULTTONEAREST), &mi))
+    {
+        const CRect viewport(mi.rcWork);
+        x = std::clamp<LONG>(x, viewport.left, std::max<LONG>(viewport.left, viewport.right - rcWnd.Width()));
+        y = std::clamp<LONG>(y, viewport.top, std::max<LONG>(viewport.top, viewport.bottom - rcWnd.Height()));
+    }
+
     ::SetWindowPos(m_hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
