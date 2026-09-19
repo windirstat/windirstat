@@ -85,20 +85,11 @@ bool SearchDlg::OnInitDialog()
     m_layout.AddControl(IDC_SEARCH_OWNER, 0, 0, 1, 0);
 
     const CSize minimumSize = GetWindowRect().Size();
-    m_layout.OnInitDialog(true);
+    m_layout.OnInitDialog(false);
 
     CRect rect = GetWindowRect();
-    rect.bottom = rect.top + minimumSize.cy;
-    MONITORINFO monitor{ .cbSize = sizeof(monitor) };
-    if (GetMonitorInfoW(MonitorFromWindow(Handle(), MONITOR_DEFAULTTONEAREST), &monitor))
-    {
-        const CRect work(monitor.rcWork);
-        const int width = work.Width() >= minimumSize.cx ? std::min(rect.Width(), work.Width()) : rect.Width();
-        rect.right = rect.left + width;
-        rect.Offset(std::clamp(rect.left, work.left, std::max(work.left, work.right - width)) - rect.left,
-            std::clamp(rect.top, work.top, std::max(work.top, work.bottom - rect.Height())) - rect.top);
-    }
-    MoveWindow(rect);
+    SetWindowPos(nullptr, 0, 0, windowRect.Width(), minimumSize.cy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    CenterWindow();
 
     SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
