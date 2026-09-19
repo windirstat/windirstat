@@ -133,6 +133,14 @@ void CXySlider::PaintBackground(CDC* pdc)
     CRect circle = m_rcAll;
     circle.Deflate(m_gripperRadius);
 
+    // Make circle square to avoid ellipse distortion
+    const int diameter = std::min(circle.Width(), circle.Height());
+    const CPoint center{ (circle.left + circle.right) / 2, (circle.top + circle.bottom) / 2 };
+    circle.left = center.x - diameter / 2;
+    circle.top = center.y - diameter / 2;
+    circle.right = circle.left + diameter;
+    circle.bottom = circle.top + diameter;
+
     StockObjectSelection sobrush(pdc, NULL_BRUSH);
     pdc->Ellipse(circle);
 
