@@ -16,6 +16,7 @@ Enhancements
 - Added search filters for size ranges, item type, and owner (thanks @djdomi)
 - Added size totals for search results
 - Added free / unknown space labels to sunburst and flame graphs
+- Added option to exclude Dropbox "ignored" files and folders (thanks @djdomi)
 - Added Arabic translation (thanks @Alhlhli, @harryytm)
 - Added Hindi translation for the application and installer
 - Improved hardlink processing performance and memory usage
@@ -24,6 +25,7 @@ Enhancements
 - Improved memory usage and responsiveness in Permissions and Storage Analytics views
 - Reduced memory usage for large scans and tree views
 - Improved visualization backgrounds and placeholders to match light and dark modes
+- Improved Advanced settings page layout (thanks @harryytm)
 - Improved legacy Windows OS compatibility when using modern build tools
 - Improved Simplified Chinese translation (thanks @wcxu21)
 - Improved Traditional Chinese (Hong Kong) translation (thanks @harryytm)
@@ -53,6 +55,7 @@ Bug Fixes
 - Corrected directory modification timestamps being overwritten during parallel scans
 - Corrected potential race condition when releasing MFT indexes during scan cancellation
 - Corrected root item allocation when loading or exporting CSV scan results
+- Corrected light incidence control distortion in Treemap settings (thanks @harryytm)
 - Restored support for volume path formats (thanks @harryytm)
 
 <a name="windirstat-2.8.0"></a>
