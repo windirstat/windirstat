@@ -45,8 +45,9 @@ public:
     void DrawZoomFrame(CDC* pdc, CRect& rc) const;
     void DrawHighlightExtension(CDC* pdc) override;
     void DrawSelection(CDC* pdc) override;
+    void DrawHover(CDC* pdc) override;
 
-    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
+    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single, bool hover = false) const;
     CItem* FindItemAtPoint(CPoint point) override;
     bool HasValidLayout() const override;
     void ClearVisualizationLayout() override;

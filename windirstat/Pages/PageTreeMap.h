@@ -23,7 +23,7 @@
 #include "XYSlider.h"
 
 //
-// CPageTreeMap. "Settings" property page "TreeMap".
+// CPageTreeMap. "Settings" property page "Graphs".
 //
 class CPageTreeMap final : public MessageTarget<CPageTreeMap, CSettingsPage>
 {

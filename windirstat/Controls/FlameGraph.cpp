@@ -27,28 +27,6 @@ static int ScaleMetric(const int value, const int rowHeight) noexcept
     return std::max(1, MulDiv(value, rowHeight, CFlameGraph::ROW_HEIGHT));
 }
 
-static COLORREF GetFlameDepthColor(const int depth) noexcept
-{
-    static constexpr std::array palette = {
-        RGB(240, 128, 128),
-        RGB(244, 200, 120),
-        RGB(250, 250, 160),
-        RGB(160, 240, 160),
-        RGB(160, 240, 240),
-        RGB(160, 160, 240),
-        RGB(240, 160, 240)
-    };
-    return (depth <= 0) ? RGB(200, 200, 200) : palette[static_cast<std::size_t>(depth - 1) % palette.size()];
-}
-
-static COLORREF GetContrastingTextColor(const COLORREF color) noexcept
-{
-    const double luminance = CColorSpace::GetRelativeLuminance(color);
-    const double blackContrast = (luminance + 0.05) / 0.05;
-    const double whiteContrast = 1.05 / (luminance + 0.05);
-    return blackContrast >= whiteContrast ? RGB(0, 0, 0) : RGB(255, 255, 255);
-}
-
 int CFlameGraph::GetDrawableChildCount(const CItem* item)
 {
     const auto& children = item->GetChildren();
@@ -101,9 +79,8 @@ void CFlameGraph::BuildLayout(const CItem* root, const int width, const int rowH
     m_minLabelWidth = ScaleMetric(MIN_LABEL_WIDTH, m_rowHeight);
     m_minLabelHeight = ScaleMetric(MIN_LABEL_HEIGHT, m_rowHeight);
     m_separatorThickness = ScaleMetric(1, m_rowHeight);
-    m_textInsetX = ScaleMetric(3, m_rowHeight);
+    m_textInsetX = ScaleMetric(5, m_rowHeight);
     m_textInsetY = ScaleMetric(1, m_rowHeight);
-    m_borderThreshold = ScaleMetric(4, m_rowHeight);
 
     // Collect breadcrumb ancestors when zoomed (root is not the model root)
     const CItem* modelRoot = CWinDirStatModel::Get()->GetRootItem();
@@ -170,6 +147,7 @@ void CFlameGraph::LayoutBreadcrumbs(const int width)
 
 void CFlameGraph::ClearLayout()
 {
+    m_folderColors.Clear();
     m_layoutRoot = nullptr;
     m_renderArea.Clear();
     m_layout.clear();
@@ -180,6 +158,7 @@ void CFlameGraph::ClearLayout()
 void CFlameGraph::TrimMemory()
 {
     ClearLayout();
+    m_folderColors = {};
     decltype(m_layout){}.swap(m_layout);
     decltype(m_rows){}.swap(m_rows);
     decltype(m_breadcrumbs){}.swap(m_breadcrumbs);
@@ -345,17 +324,16 @@ void CFlameGraph::RenderLayout(CDC* pdc, const bool breadcrumbs) const
         if (entry.breadcrumb != breadcrumbs) return;
         if (entry.breadcrumb)
         {
-            RenderBreadcrumb(pdc, entry.item, rectangle, entry.depth);
+            RenderBreadcrumb(pdc, entry.item, rectangle);
         }
         else
         {
-            RenderItem(pdc, entry.item, rectangle, entry.depth);
+            RenderItem(pdc, entry.item, rectangle);
         }
     });
 }
 
-void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle,
-    const int depth) const
+void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle) const
 {
     CRect rc = rectangle;
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
@@ -363,24 +341,14 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     const DWORD rawColor = item->TmiGetGraphColor();
     COLORREF drawColor = rawColor & 0x00FFFFFF;
 
-    if (drawColor == RGB(0, 0, 0) && item->IsTypeOrFlag(IT_DIRECTORY)
+    if (drawColor == RGB(0, 0, 0) && !item->TmiIsLeaf()
         && !item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
     {
-        drawColor = GetFlameDepthColor(depth);
+        drawColor = m_folderColors.GetColor(item);
     }
-    else drawColor = CColorSpace::ApplyGraphColorFlags(rawColor);
+    else drawColor = CTreeMap::GetFlatColor(rawColor, COptions::TreeMapOptions);
 
     pdc->FillSolidRect(rc, drawColor);
-
-    if (item->IsTypeOrFlag(IT_DIRECTORY)
-        && rc.Width() > m_borderThreshold && rc.Height() > m_borderThreshold)
-    {
-        // Reuse the process-wide DC brush instead of constructing a GDI brush
-        // for every directory tile.
-        pdc->SetDCBrushColor(CColorSpace::DimColor(drawColor, 0.6f));
-        FrameRect(pdc->Handle(), &rc,
-            static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
-    }
 
     RenderLabel(pdc, item, rc, drawColor);
 
@@ -396,8 +364,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     }
 }
 
-void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
-    const int depth) const
+void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle) const
 {
     const CRect rc = rectangle;
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
@@ -406,7 +373,8 @@ void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rec
     CRect fillRc = rc;
     fillRc.right -= separator;
     fillRc.bottom -= separator;
-    const COLORREF color = CColorSpace::DimColor(GetFlameDepthColor(depth), 0.35f);
+    const COLORREF color = CColorSpace::BlendColor(DarkMode::SystemColor(COLOR_WINDOW),
+        DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.08);
     if (!fillRc.IsEmpty())
     {
         pdc->FillSolidRect(fillRc, color);
@@ -415,7 +383,7 @@ void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rec
 
     if (separator > 0)
     {
-        static constexpr COLORREF separatorColor = RGB(80, 80, 90);
+        const COLORREF separatorColor = DarkMode::SystemColor(COLOR_WINDOW);
         pdc->FillSolidRect(CRect(rc.right - separator, rc.top,
             rc.right, rc.bottom), separatorColor);
         pdc->FillSolidRect(CRect(rc.left, rc.bottom - separator,
@@ -431,7 +399,7 @@ void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
     const auto name = item->GetNameView(true);
     if (name.empty()) return;
 
-    pdc->SetTextColor(GetContrastingTextColor(color));
+    pdc->SetTextColor(CColorSpace::GetContrastingColor(color));
     CRect textRc = rc;
     textRc.Deflate(m_textInsetX, m_textInsetY);
     pdc->DrawText(name, &textRc,

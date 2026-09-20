@@ -174,10 +174,6 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
     pdc->IntersectClipRect(CRect(0, m_flameGraph.GetBreadcrumbHeight(),
         client.Width(), client.Height()));
 
-    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    GdiObjectSelection sopen(pdc, &pen);
-    StockObjectSelection sobrush(pdc, NULL_BRUSH);
-
     const auto clipBox = pdc->GetClipBox();
     const CRect rcClip = clipBox ? *clipBox : GetClientRect();
 
@@ -192,13 +188,13 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
     });
 }
 
+void CFlameGraphView::DrawHover(CDC* pdc)
+{
+    HighlightSelectedItem(pdc, GetDisplayItem(m_hoverItem), false, true);
+}
+
 void CFlameGraphView::DrawSelection(CDC* pdc)
 {
-    StockObjectSelection sobrush(pdc, NULL_BRUSH);
-
-    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    GdiObjectSelection sopen(pdc, &pen);
-
     const auto& items = CWinDirStatModel::Get()->GetAllSelected();
     for (const CItem* item : items)
     {
@@ -206,7 +202,8 @@ void CFlameGraphView::DrawSelection(CDC* pdc)
     }
 }
 
-void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
+void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single,
+    const bool hover) const
 {
     CRect rc;
     if (!m_flameGraph.TryGetItemRectangle(item, rc))
@@ -237,7 +234,7 @@ void CFlameGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const b
 
     const ScopedDcState dcState(pdc);
     pdc->IntersectClipRect(visible);
-    RenderHighlightRectangle(pdc, rc);
+    RenderHighlightRectangle(pdc, rc, hover);
 }
 
 CItem* CFlameGraphView::FindItemAtPoint(CPoint point)

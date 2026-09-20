@@ -34,45 +34,6 @@ namespace
     constexpr double MIN_HIT_ARC = 2.0;
     constexpr double MAX_LABEL_SEAM_OVERFLOW = 12.0;
     constexpr int MAX_DEPTH = 64;
-    COLORREF ScaleColor(const COLORREF rgb, const double factor) noexcept
-    {
-        return RGB(
-            std::clamp(static_cast<int>(std::lround(GetRValue(rgb) * factor)), 0, 255),
-            std::clamp(static_cast<int>(std::lround(GetGValue(rgb) * factor)), 0, 255),
-            std::clamp(static_cast<int>(std::lround(GetBValue(rgb) * factor)), 0, 255));
-    }
-
-    COLORREF GetBranchBaseColor(const std::size_t branch) noexcept
-    {
-        // A color-vision-safe palette whose hue is inherited by a whole branch.
-        static constexpr std::array palette{
-            RGB(79, 157, 232),  // blue
-            RGB(71, 173, 128),  // bluish green
-            RGB(230, 159, 0),   // orange
-            RGB(213, 94, 0),    // vermilion
-            RGB(168, 135, 224), // purple
-            RGB(86, 180, 233),  // sky blue
-            RGB(204, 121, 167), // reddish purple
-            RGB(230, 205, 70),  // yellow
-        };
-        return palette[branch % palette.size()];
-    }
-
-    COLORREF GetBranchColor(const COLORREF branchColor, const int depth) noexcept
-    {
-        if (depth <= 0) return RGB(78, 86, 99);
-        const double factor = 0.90 + static_cast<double>((depth - 1) % 4) * 0.06;
-        return ScaleColor(branchColor, factor);
-    }
-
-    COLORREF GetContrastingMonochrome(const COLORREF color) noexcept
-    {
-        const double luminance = CColorSpace::GetRelativeLuminance(color);
-        const double blackContrast = (luminance + 0.05) / 0.05;
-        const double whiteContrast = 1.05 / (luminance + 0.05);
-        return blackContrast >= whiteContrast ? RGB(0, 0, 0) : RGB(255, 255, 255);
-    }
-
     Gdiplus::Color ToGdiColor(const COLORREF color) noexcept
     {
         return Gdiplus::Color(255, GetRValue(color), GetGValue(color), GetBValue(color));
@@ -238,27 +199,25 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         double startAngle;
         double sweepAngle;
         int depth;
-        COLORREF branchColor;
         ULONGLONG remainderSize;
     };
 
     std::vector<PendingItem> pending;
     pending.reserve(256);
-    pending.push_back({ root, 0.0, FULL_CIRCLE, 0, RGB(78, 86, 99), 0 });
+    pending.push_back({ root, 0.0, FULL_CIRCLE, 0, 0 });
     std::vector<PendingItem> children;
     children.reserve(256);
     int actualMaxDepth = 0;
 
     while (!pending.empty())
     {
-        const auto [item, startAngle, sweepAngle, depth, branchColor, remainderSize] = pending.back();
+        const auto [item, startAngle, sweepAngle, depth, remainderSize] = pending.back();
         pending.pop_back();
         if (item == nullptr || sweepAngle <= 0.0) continue;
 
         const std::size_t entryIndex = m_entries.size();
         m_entries.push_back({ item, startAngle,
-            sweepAngle, 0.0, 0.0, remainderSize, depth,
-            branchColor, true });
+            sweepAngle, 0.0, 0.0, remainderSize, depth, true });
         actualMaxDepth = std::max(actualMaxDepth, depth);
 
         if (remainderSize != 0 || depth >= depthLimit || item->TmiIsLeaf()
@@ -271,7 +230,6 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         ULONGLONG placedSize = 0;
         children.clear();
         const auto& itemChildren = item->GetChildren();
-        std::size_t branchOrdinal = 0;
         double nextStart = startAngle;
         const double parentEnd = startAngle + sweepAngle;
 
@@ -296,18 +254,15 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
             const double childEnd = startAngle + sweepAngle
                 * static_cast<double>(placedSize) / static_cast<double>(totalSize);
             children.push_back({ child, nextStart,
-                std::max(0.0, childEnd - nextStart), depth + 1,
-                depth == 0 ? GetBranchBaseColor(branchOrdinal) : branchColor, 0 });
+                std::max(0.0, childEnd - nextStart), depth + 1, 0 });
             nextStart = childEnd;
-            ++branchOrdinal;
         }
 
         // Show omitted children as a muted residual sector that preserves the parent's proportions.
         const double remainderSweep = std::max(0.0, parentEnd - nextStart);
         if (placedSize < totalSize && remainderSweep > 0.0)
         {
-            children.push_back({ item, nextStart, remainderSweep, depth + 1,
-                branchColor, totalSize - placedSize });
+            children.push_back({ item, nextStart, remainderSweep, depth + 1, totalSize - placedSize });
         }
 
         for (const PendingItem& child : children | std::views::reverse)
@@ -363,6 +318,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
 
 void CSunburst::ClearLayout()
 {
+    m_folderColors.Clear();
     m_layoutRoot = nullptr;
     m_renderArea.Clear();
     m_center = {};
@@ -383,6 +339,7 @@ void CSunburst::ClearLayout()
 void CSunburst::TrimMemory()
 {
     ClearLayout();
+    m_folderColors = {};
     decltype(m_entries){}.swap(m_entries);
     decltype(m_itemEntries){}.swap(m_itemEntries);
     decltype(m_remainderEntries){}.swap(m_remainderEntries);
@@ -427,17 +384,19 @@ void CSunburst::CreatePath(const LayoutEntry& entry, Gdiplus::GraphicsPath& path
 
 COLORREF CSunburst::GetItemColor(const LayoutEntry& entry) const
 {
-    if (entry.remainderSize != 0) return RGB(92, 96, 104);
+    if (entry.remainderSize != 0)
+        return CColorSpace::BlendColor(DarkMode::SystemColor(COLOR_WINDOW),
+            DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.20);
 
     const DWORD rawColor = entry.item->TmiGetGraphColor();
     COLORREF color = rawColor & 0x00FFFFFF;
 
-    if (color == RGB(0, 0, 0) && entry.item->IsTypeOrFlag(IT_DIRECTORY)
+    if (color == RGB(0, 0, 0) && !entry.item->TmiIsLeaf()
         && !entry.item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
     {
-        color = GetBranchColor(entry.branchColor, entry.depth);
+        color = m_folderColors.GetColor(entry.item);
     }
-    else color = CColorSpace::ApplyGraphColorFlags(rawColor);
+    else color = CTreeMap::GetFlatColor(rawColor, COptions::TreeMapOptions);
 
     return color;
 }
@@ -451,7 +410,10 @@ void CSunburst::RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entr
     brush.SetColor(ToGdiColor(color));
     graphics.FillPath(&brush, &path);
 
-    separator.SetColor(ToGdiColor(CColorSpace::DimColor(color, 0.42f)));
+    const double arcLength = entry.sweepAngle * DEGREES_TO_RADIANS
+        * std::midpoint(entry.innerRadius, entry.outerRadius);
+    separator.SetWidth(static_cast<float>(std::min<double>(m_separatorWidth, arcLength * 0.12)));
+    separator.SetColor(ToGdiColor(CColorSpace::BlendColor(color, DarkMode::SystemColor(COLOR_WINDOW), 0.50)));
     graphics.DrawPath(&separator, &path);
 }
 
@@ -544,7 +506,7 @@ double CSunburst::GetLabelPriority(const LayoutEntry& entry) const
     const double middleRadius = std::midpoint(entry.innerRadius, entry.outerRadius);
     const double arcLength = entry.sweepAngle * DEGREES_TO_RADIANS * middleRadius;
     const double fontSize = std::clamp(thickness * 0.44,
-        8.0 * dpiScale, 14.0 * dpiScale);
+        11.0 * dpiScale, 13.0 * dpiScale);
     if (thickness < fontSize * 1.35) return 0.0;
 
     // Exact glyph bounds and upright placement are checked only for candidates
@@ -569,37 +531,45 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
 
     const auto dpiScale = static_cast<Gdiplus::REAL>(m_dpiScale);
     const COLORREF itemColor = GetItemColor(entry);
-    const Gdiplus::SolidBrush textBrush(ToGdiColor(GetContrastingMonochrome(itemColor)));
+    const Gdiplus::SolidBrush textBrush(ToGdiColor(CColorSpace::GetContrastingColor(itemColor)));
     if (entry.depth == 0)
     {
         const auto half = static_cast<Gdiplus::REAL>(entry.outerRadius * 0.70);
-        const Gdiplus::REAL fontSize = std::min(14.0f * dpiScale, half * 0.45f);
-        const Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular,
-            Gdiplus::UnitPixel);
+        const Gdiplus::REAL fontSize = std::clamp(half * 0.45f, 11.0f * dpiScale, 13.0f * dpiScale);
+        const Gdiplus::Font font(fontFamily, fontSize, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+        const Gdiplus::REAL lineHeight = font.GetHeight(&graphics);
+        const auto radius = static_cast<Gdiplus::REAL>(entry.outerRadius);
+        const Gdiplus::REAL textWidth = 2.0f * std::sqrt(std::max(0.0f,
+            radius * radius - lineHeight * lineHeight)) - 4.0f * dpiScale;
+        if (textWidth <= 0.0f) return false;
         Gdiplus::StringFormat format;
         format.SetAlignment(Gdiplus::StringAlignmentCenter);
         format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
-        format.SetTrimming(Gdiplus::StringTrimmingNone);
+        format.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
         format.SetFormatFlags(Gdiplus::StringFormatFlagsNoWrap);
-        Gdiplus::RectF measured;
-        graphics.MeasureString(name.data(), static_cast<int>(name.size()), &font,
-            Gdiplus::PointF{}, &format, &measured);
-        if (measured.Width > half * 2.0f || measured.Height > half * 2.0f)
-            return false;
-
-        const Gdiplus::RectF textRect(
-            static_cast<Gdiplus::REAL>(m_center.x) - half,
-            static_cast<Gdiplus::REAL>(m_center.y) - half,
-            half * 2.0f, half * 2.0f);
-        return graphics.DrawString(name.data(), static_cast<int>(name.size()), &font,
+        const std::wstring size = FormatSizeSuffixes(entry.item->TmiGetSize());
+        Gdiplus::RectF sizeBounds;
+        const bool showSize = half * 2.0f >= lineHeight * 2.0f
+            && graphics.MeasureString(size.c_str(), static_cast<int>(size.size()), &font,
+                Gdiplus::PointF{}, &format, &sizeBounds) == Gdiplus::Ok && sizeBounds.Width <= textWidth;
+        Gdiplus::RectF textRect(static_cast<Gdiplus::REAL>(m_center.x) - textWidth / 2.0f,
+            static_cast<Gdiplus::REAL>(m_center.y) - (showSize ? lineHeight : lineHeight / 2.0f),
+            textWidth, lineHeight);
+        const bool drawn = graphics.DrawString(name.data(), static_cast<int>(name.size()), &font,
             textRect, &format, &textBrush) == Gdiplus::Ok;
+        if (showSize)
+        {
+            textRect.Y += lineHeight;
+            graphics.DrawString(size.c_str(), static_cast<int>(size.size()), &font, textRect, &format, &textBrush);
+        }
+        return drawn;
     }
 
     const double thickness = entry.outerRadius - entry.innerRadius;
     const double middleRadius = std::midpoint(entry.innerRadius, entry.outerRadius);
     const double arcLength = entry.sweepAngle * DEGREES_TO_RADIANS * middleRadius;
-    const Gdiplus::REAL minFontSize = 8.0f * dpiScale;
-    const Gdiplus::REAL maxFontSize = 14.0f * dpiScale;
+    const Gdiplus::REAL minFontSize = 11.0f * dpiScale;
+    const Gdiplus::REAL maxFontSize = 13.0f * dpiScale;
     const Gdiplus::REAL fontSize = static_cast<Gdiplus::REAL>(std::clamp(
         thickness * 0.44, static_cast<double>(minFontSize),
         static_cast<double>(maxFontSize)));
@@ -728,6 +698,33 @@ const CSunburst::LayoutEntry* CSunburst::FindLayoutEntry(const CItem* item) cons
     return nullptr;
 }
 
+void CSunburst::DrawOutlineEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry,
+    const COLORREF color, const float width) const
+{
+    Gdiplus::GraphicsPath path(Gdiplus::FillModeAlternate);
+    CreatePath(entry, path);
+    const auto scale = static_cast<float>(m_dpiScale);
+    Gdiplus::Pen underlay(ToGdiColor(CColorSpace::GetContrastingColor(color)), (width + 1.0f) * scale);
+    Gdiplus::Pen pen(ToGdiColor(color), width * scale);
+    underlay.SetAlignment(Gdiplus::PenAlignmentCenter);
+    pen.SetAlignment(Gdiplus::PenAlignmentCenter);
+    graphics.DrawPath(&underlay, &path);
+    graphics.DrawPath(&pen, &path);
+}
+
+void CSunburst::DrawHoverItem(CDC* pdc, const CItem* item, const bool remainder) const
+{
+    const auto found = m_remainderEntries.find(item);
+    const LayoutEntry* entry = remainder
+        ? (found == m_remainderEntries.end() ? nullptr : &m_entries[found->second]) : FindLayoutEntry(item);
+    if (pdc == nullptr || entry == nullptr) return;
+
+    Gdiplus::Graphics graphics(pdc->Handle());
+    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+    DrawOutlineEntry(graphics, *entry, DarkMode::SystemColor(COLOR_WINDOWTEXT), 1.0f);
+}
+
 void CSunburst::DrawOutlineItems(CDC* pdc, const std::span<const CItem* const> items,
     const COLORREF color, const float width) const
 {
@@ -736,19 +733,12 @@ void CSunburst::DrawOutlineItems(CDC* pdc, const std::span<const CItem* const> i
     Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
-    const float outlineWidth = std::max(
-        m_separatorWidth, width * static_cast<float>(m_dpiScale));
-    Gdiplus::Pen pen(ToGdiColor(color), outlineWidth);
-    pen.SetAlignment(Gdiplus::PenAlignmentInset);
-
     std::unordered_set<const LayoutEntry*> drawnEntries;
     drawnEntries.reserve(items.size() * 2);
     const auto drawEntry = [&](const LayoutEntry* entry)
     {
         if (entry == nullptr || !drawnEntries.emplace(entry).second) return;
-        Gdiplus::GraphicsPath path(Gdiplus::FillModeAlternate);
-        CreatePath(*entry, path);
-        graphics.DrawPath(&pen, &path);
+        DrawOutlineEntry(graphics, *entry, color, width);
     };
 
     for (const CItem* item : items)

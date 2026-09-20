@@ -37,6 +37,7 @@ protected:
     void RenderVisualization(CDC* pDC, CRect rect) override;
     void DrawHighlightExtension(CDC* pDC) override;
     void DrawSelection(CDC* pDC) override;
+    void DrawHover(CDC* pDC) override;
     CItem* FindItemAtPoint(CPoint point) override;
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;

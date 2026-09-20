@@ -27,6 +27,18 @@
 class CColorSpace final
 {
 public:
+    static constexpr COLORREF BlendColor(const COLORREF color, const COLORREF background, const double amount)
+    {
+        return RGB(static_cast<BYTE>(GetRValue(color) * (1.0 - amount) + GetRValue(background) * amount),
+            static_cast<BYTE>(GetGValue(color) * (1.0 - amount) + GetGValue(background) * amount),
+            static_cast<BYTE>(GetBValue(color) * (1.0 - amount) + GetBValue(background) * amount));
+    }
+
+    static COLORREF GetContrastingColor(const COLORREF color)
+    {
+        return GetRelativeLuminance(color) > 0.179 ? RGB(0, 0, 0) : RGB(255, 255, 255);
+    }
+
     static constexpr double GraphPaletteBrightness = 0.6;
     static constexpr DWORD GraphColorDarker = 0x01000000;
     static constexpr DWORD GraphColorLighter = 0x02000000;
@@ -146,6 +158,25 @@ protected:
     }
 };
 
+// Branch assignments are shared by the graph renderers and retained until their layout changes.
+class CFolderColors final
+{
+public:
+    COLORREF GetColor(const CItem* item) const;
+    void Clear() { m_branches.clear(); m_colors.clear(); }
+
+private:
+    struct ColorInfo
+    {
+        const CItem* item = nullptr;
+        std::uint8_t index = 0;
+        std::uint8_t depth = 0;
+    };
+    static constexpr std::size_t ColorCacheSize = 4096;
+    mutable std::vector<ColorInfo> m_colors;
+    mutable std::unordered_map<const CItem*, std::size_t> m_branches;
+};
+
 //
 // CTreeMap. Can create a treemap using rows, squarified, Hilbert, or Moore layouts.
 //
@@ -210,6 +241,8 @@ public:
         constexpr void SetLightSourceYPercent(const int n) { lightSourceY = n / 100.0; }
         void SetLightSourcePoint(const CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
+        void SetAppearance(const Options& appearance);
+
         static constexpr int RoundDouble(const double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
     };
 
@@ -220,12 +253,15 @@ public:
     static std::unique_ptr<CItem> BuildDemoTree();
 
     // Good values
-    static Options GetDefaults() { return DefaultOptions; }
+    static Options GetDefaults() { return GetPreset(Preset::Classic); }
     enum class Preset : std::uint8_t
     {
         Classic, Calm, Flat, Pastel, HighContrast
     };
     static Options GetPreset(Preset preset);
+    static std::optional<Preset> GetMatchingPreset(const Options& options);
+    static COLORREF GetFlatColor(DWORD color, const Options& options);
+    static COLORREF GetGridColor(const Options& options);
 
     // Construct the treemap generator and register the callback interface.
     CTreeMap();
@@ -286,7 +322,7 @@ protected:
     void AddVisibleItem(CItem* item, const CRect& rectangle, int depth);
     void BuildHitTestIndex();
 
-    // Default tree map options
+    // Classic tree map options
     static constexpr Options DefaultOptions = {
         .style = TreeMapLayout::Style::Rows,
         .grid = false,
@@ -327,6 +363,7 @@ protected:
     };
 
     static constexpr int HitTestCellSize = 16;
+    CFolderColors m_folderColors;
     const CItem* m_layoutRoot = nullptr;
     CRect m_layoutArea;
     int m_hitTestColumns = 0;

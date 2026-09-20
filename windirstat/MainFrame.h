@@ -281,6 +281,8 @@ protected:
     void OnViewShowVisualization();
     void OnViewTreeMapStyle(UINT commandId);
     void OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI) const;
+    void OnViewGraphPreset(UINT commandId);
+    void OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const;
     void OnViewFlameGraph();
     void OnUpdateViewFlameGraph(CCmdUI* pCmdUI) const;
     void OnViewSunburst();
@@ -397,6 +399,7 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Command<&OnViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
         Route::Command<&OnViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
         Route::Command<&OnViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
+        Route::Command<&OnViewGraphPreset>(ID_VIEW_GRAPH_PRESET_CLASSIC, ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST),
         Route::Command<&OnViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
         Route::Command<&OnViewSunburst>(ID_VIEW_SUNBURST),
         Route::Command<&OnViewTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
@@ -410,6 +413,7 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Registered<&OnTaskButtonCreated>(s_TaskBarMessage),
         Route::Update<&OnUpdateViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
         Route::Update<&OnUpdateViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
+        Route::Update<&OnUpdateViewGraphPreset>(ID_VIEW_GRAPH_PRESET_CLASSIC, ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST),
         Route::Update<&OnUpdateViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
         Route::Update<&OnUpdateViewSunburst>(ID_VIEW_SUNBURST),
         Route::Update<&OnUpdateViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),

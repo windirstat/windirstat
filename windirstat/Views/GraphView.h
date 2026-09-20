@@ -50,6 +50,7 @@ protected:
     virtual bool PrepareDrawing(CDC* pDC, CRect& rect);
     virtual void RenderVisualization(CDC* pDC, CRect rect) = 0;
     virtual void DrawSelection(CDC* pDC) = 0;
+    virtual void DrawHover(CDC* pDC) = 0;
     virtual void DrawHighlightExtension(CDC* pDC) = 0;
     virtual CItem* FindItemAtPoint(CPoint point) = 0;
     virtual bool HasValidLayout() const { return IsDrawn(); }
@@ -80,7 +81,7 @@ protected:
     void ClearHover();
     static bool IsExtensionHighlighted(const CItem* item);
     static const CItem* GetDisplayItem(const CItem* item);
-    static void RenderHighlightRectangle(CDC* pDC, CRect& rect);
+    static void RenderHighlightRectangle(CDC* pDC, CRect rect, bool hover = false);
 
 private:
     void PaintEmptyView(CDC* pDC);

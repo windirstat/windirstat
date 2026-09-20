@@ -149,13 +149,15 @@ void CGraphView::OnDraw(CDC* pDC)
         m_dimmedSize = { 0, 0 };
     }
 
+    // Present the cached graph and its overlays together to avoid highlight flicker.
+    CBufferedDC frameDc(*pDC, this);
     {
         GdiObjectSelection selectBitmap(&memoryDc, &m_bitmap);
-        pDC->BitBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+        frameDc.BitBlt(rect.left, rect.top, rect.Width(), rect.Height(),
             &memoryDc, 0, 0, SRCCOPY);
     }
 
-    DrawHighlights(pDC);
+    DrawHighlights(&frameDc);
 }
 
 bool CGraphView::DrawDimmedView(CDC* pDC)
@@ -191,6 +193,8 @@ bool CGraphView::DrawDimmedView(CDC* pDC)
 
 void CGraphView::DrawHighlights(CDC* pDC)
 {
+    const ScopedDcState dcState(pDC);
+    if (m_hoverItem != nullptr) DrawHover(pDC);
     switch (CMainFrame::Get()->GetLogicalFocus())
     {
     case LF_DUPELIST:
@@ -225,22 +229,24 @@ const CItem* CGraphView::GetDisplayItem(const CItem* item)
     return item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
 }
 
-void CGraphView::RenderHighlightRectangle(CDC* pDC, CRect& rect)
+void CGraphView::RenderHighlightRectangle(CDC* pDC, CRect rect, const bool hover)
 {
-    assert(rect.Width() >= 0);
-    assert(rect.Height() >= 0);
+    if (rect.IsEmpty()) return;
 
-    if (rect.Width() >= 7 && rect.Height() >= 7)
+    const COLORREF color = hover ? DarkMode::SystemColor(COLOR_WINDOWTEXT) : COptions::TreeMapHighlightColor;
+    const int scale = std::max(1, MulDiv(pDC->GetDeviceCaps(LOGPIXELSX), GetFontSizePercent(),
+        USER_DEFAULT_SCREEN_DPI * 100));
+    if (!hover && std::min(rect.Width(), rect.Height()) <= 2 * scale)
     {
-        pDC->Rectangle(rect);
-        rect.Deflate(1, 1);
-        pDC->Rectangle(rect);
-        rect.Deflate(1, 1);
-        pDC->Rectangle(rect);
+        pDC->FillSolidRect(rect, color);
+        return;
     }
-    else
+    const int thickness = (hover ? 1 : 2) * scale;
+    for (int inset = 0; inset < thickness && !rect.IsEmpty(); ++inset)
     {
-        pDC->FillSolidRect(rect, COptions::TreeMapHighlightColor);
+        pDC->SetDCBrushColor(!hover && inset < scale ? CColorSpace::GetContrastingColor(color) : color);
+        FrameRect(pDC->Handle(), &rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+        rect.Deflate(1, 1);
     }
 }
 
@@ -426,14 +432,16 @@ HoverInfo CGraphView::GetHoverInfo() const
 
 void CGraphView::ClearHover()
 {
+    const bool hadHover = m_hoverItem != nullptr;
     m_hoverItem = nullptr;
+    if (hadHover && Handle() != nullptr) Invalidate(false);
     if (UpdateHoverDetails(nullptr, true) && CMainFrame::Get() != nullptr)
         CMainFrame::Get()->UpdatePaneText();
 }
 
 std::span<const UINT> CGraphView::GetPersistentContextCommands() const
 {
-    static constexpr std::array<UINT, 8> commands{
+    static constexpr std::array<UINT, 13> commands{
         ID_TREEMAP_ZOOMIN,
         ID_TREEMAP_ZOOMOUT,
         ID_TREEMAP_SELECT_PARENT,
@@ -442,6 +450,11 @@ std::span<const UINT> CGraphView::GetPersistentContextCommands() const
         ID_TREEMAP_SHOW_EXTENSIONS,
         ID_TREEMAP_LOGICAL_SIZE,
         ID_TREEMAP_PHYSICAL_SIZE,
+        ID_VIEW_GRAPH_PRESET_CLASSIC,
+        ID_VIEW_GRAPH_PRESET_CALM,
+        ID_VIEW_GRAPH_PRESET_FLAT,
+        ID_VIEW_GRAPH_PRESET_PASTEL,
+        ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST,
     };
     return commands;
 }
@@ -467,10 +480,9 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
     const CItem* item = ResolveItemAtPoint(point);
     const bool itemChanged = item != m_hoverItem;
     if (itemChanged) m_hoverItem = item;
-    if (UpdateHoverDetails(item, itemChanged))
-    {
-        CMainFrame::Get()->UpdatePaneText();
-    }
+    const bool detailsChanged = UpdateHoverDetails(item, itemChanged);
+    if (itemChanged || detailsChanged) Invalidate(false);
+    if (detailsChanged) CMainFrame::Get()->UpdatePaneText();
 }
 
 bool CGraphView::UpdateHoverDetails(const CItem* item, const bool itemChanged)

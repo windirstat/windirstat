@@ -71,8 +71,6 @@ inline std::span<const RouteEntry> CControlView::Routes()
 template<typename Control, DWORD AdditionalStyle = 0>
 class CControlViewT : public CControlView
 {
-    static_assert(std::derived_from<Control, CTreeListControl>);
-
 public:
     Control& GetControl() final { return m_control; }
     const Control& GetControl() const final { return m_control; }

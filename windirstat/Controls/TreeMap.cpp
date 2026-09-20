@@ -65,28 +65,22 @@ const std::array EXTENSION_SHADOW_OFFSETS = {
     CPoint(0, 1)
 };
 
-PreparedColor PrepareRenderColor(const DWORD color, const double brightness)
+PreparedColor PrepareRenderColor(const DWORD color, const double brightness, const double saturation)
 {
     const COLORREF baseColor = static_cast<COLORREF>(color);
     PreparedColor prepared{ .color = baseColor, .brightness = brightness };
 
-    if ((color & CTreeMap::COLORFLAG_MASK) == 0)
+    if (const DWORD flags = color & CTreeMap::COLORFLAG_MASK; flags != 0)
     {
-        return prepared;
+        prepared.color = CColorSpace::MakeBrightColor(baseColor, CColorSpace::GraphPaletteBrightness);
+        prepared.brightness = (flags & CTreeMap::COLORFLAG_DARKER) != 0
+            ? prepared.brightness * 0.66 : std::min(prepared.brightness * 1.2, 1.0);
     }
 
-    const DWORD flags = color & CTreeMap::COLORFLAG_MASK;
-    prepared.color = CColorSpace::MakeBrightColor(baseColor, CColorSpace::GraphPaletteBrightness);
-
-    if ((flags & CTreeMap::COLORFLAG_DARKER) != 0)
-    {
-        prepared.brightness *= 0.66;
-    }
-    else
-    {
-        prepared.brightness = std::min<double>(prepared.brightness * 1.2, 1.0);
-    }
-
+    const auto gray = static_cast<BYTE>((GetRValue(prepared.color)
+        + GetGValue(prepared.color) + GetBValue(prepared.color)) / 3);
+    prepared.color = CColorSpace::BlendColor(prepared.color, RGB(gray, gray, gray),
+        1.0 - std::clamp(saturation, 0.0, 1.0));
     return prepared;
 }
 
@@ -102,18 +96,73 @@ COLORREF MakeBitmapColor(const COLORREF color, const double brightness)
     return BGR(blue, green, red);
 }
 
-static COLORREF GetDepthColor(const int depth) noexcept
+COLORREF CFolderColors::GetColor(const CItem* item) const
 {
-    static constexpr std::array palette = {
-        RGB(240, 128, 128), // Light Coral (Red)
-        RGB(244, 200, 120), // Tan / Light Orange
-        RGB(250, 250, 160), // Light Yellow
-        RGB(160, 240, 160), // Light Green
-        RGB(160, 240, 240), // Light Cyan
-        RGB(160, 160, 240), // Light Blue
-        RGB(240, 160, 240)  // Light Magenta
+    const COLORREF background = DarkMode::SystemColor(COLOR_WINDOW);
+    if (item == nullptr || item->IsScanRoot())
+        return CColorSpace::BlendColor(background, DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.12);
+
+    static constexpr std::array palette{
+        RGB(79, 157, 232), RGB(71, 173, 128), RGB(230, 159, 0), RGB(213, 94, 0),
+        RGB(168, 135, 224), RGB(86, 180, 233), RGB(204, 121, 167), RGB(230, 205, 70)
     };
-    return (depth <= 0) ? RGB(200, 200, 200) : palette[static_cast<std::size_t>(depth - 1) % palette.size()];
+    if (m_colors.empty()) m_colors.resize(ColorCacheSize);
+    const auto cachedColor = [this](const CItem* folder) -> ColorInfo&
+    {
+        return m_colors[std::hash<const CItem*>{}(folder) % ColorCacheSize];
+    };
+    ColorInfo color = cachedColor(item);
+    if (color.item != item)
+    {
+        int depth = 0;
+        const CItem* ancestor = item;
+        while (ancestor->GetParent() != nullptr && !ancestor->GetParent()->IsScanRoot())
+        {
+            ancestor = ancestor->GetParent();
+            ++depth;
+            color = cachedColor(ancestor);
+            if (color.item == ancestor) break;
+        }
+
+        if (color.item != ancestor)
+        {
+            auto branch = m_branches.find(ancestor);
+            if (branch == m_branches.end())
+            {
+                std::vector<const CItem*> siblings;
+                for (const CItem* sibling : ancestor->GetParent()->GetChildren())
+                    if (!sibling->TmiIsLeaf()) siblings.push_back(sibling);
+                std::ranges::sort(siblings, [](const CItem* left, const CItem* right)
+                {
+                    if (left->GetSizePhysical() != right->GetSizePhysical())
+                        return left->GetSizePhysical() > right->GetSizePhysical();
+                    return left->GetNameView() < right->GetNameView();
+                });
+                unsigned int used = 0;
+                for (const CItem* sibling : siblings)
+                {
+                    if (used == (1u << palette.size()) - 1) used = 0;
+                    std::uint32_t hash = 2166136261u;
+                    for (const wchar_t character : sibling->GetNameView()) hash = (hash ^ character) * 16777619u;
+                    std::size_t index = hash % palette.size();
+                    while ((used & (1u << index)) != 0) index = (index + 1) % palette.size();
+                    used |= 1u << index;
+                    m_branches.emplace(sibling, index);
+                }
+                branch = m_branches.find(ancestor);
+            }
+            color = { ancestor, static_cast<std::uint8_t>(branch->second), 0 };
+            cachedColor(ancestor) = color;
+        }
+
+        const ColorInfo inherited = color;
+        color = { item, inherited.index, static_cast<std::uint8_t>(std::min(inherited.depth + depth, 6)) };
+        for (const CItem* descendant = item; descendant != ancestor; descendant = descendant->GetParent(), --depth)
+            cachedColor(descendant) = { descendant, inherited.index,
+                static_cast<std::uint8_t>(std::min(inherited.depth + depth, 6)) };
+        cachedColor(item) = color;
+    }
+    return CColorSpace::BlendColor(palette[color.index], background, 0.22 + std::min<int>(color.depth, 6) * 0.06);
 }
 
 void FillSolidRect(HDC dc, const RECT& rc, const COLORREF color)
@@ -173,15 +222,14 @@ void DrawShadowedExtensionText(HDC dc, const std::wstring_view text, const CRect
     COLORREF foreground = RGB(255, 255, 255);
     if (contrastLabels)
     {
-        const double luminance = CColorSpace::GetRelativeLuminance(background);
-        if ((luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05)) foreground = RGB(0, 0, 0);
+        foreground = CColorSpace::GetContrastingColor(background);
     }
 
+    if (!contrastLabels)
     {
-        ScopedTextColor shadowTextColor(dc, foreground == RGB(0, 0, 0) ? RGB(255, 255, 255) : RGB(0, 0, 0));
+        ScopedTextColor shadowTextColor(dc, RGB(0, 0, 0));
         for (const CPoint& offset : EXTENSION_SHADOW_OFFSETS)
         {
-            if (contrastLabels && offset.y != 1) continue;
             CRect shadowRc = rc + offset;
             DrawTextW(dc, text.data(), static_cast<int>(text.size()), &shadowRc, EXTENSION_TEXT_FLAGS);
         }
@@ -203,13 +251,27 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
     }));
 }
 
+void CTreeMap::Options::SetAppearance(const Options& appearance)
+{
+    grid = appearance.grid;
+    gridColor = appearance.gridColor;
+    brightness = appearance.brightness;
+    saturation = appearance.saturation;
+    contrastLabels = appearance.contrastLabels;
+    ambientLight = appearance.ambientLight;
+    height = appearance.height;
+    scaleFactor = appearance.scaleFactor;
+    lightSourceX = appearance.lightSourceX;
+    lightSourceY = appearance.lightSourceY;
+}
+
 CTreeMap::Options CTreeMap::GetPreset(const Preset preset)
 {
-    Options options = GetDefaults();
+    Options options = DefaultOptions;
     if (preset == Preset::Classic) return options;
 
     options.grid = true;
-    options.gridColor = RGB(48, 52, 56);
+    options.gridColor = CLR_DEFAULT;
     options.brightness = 0.72;
     options.saturation = 0.65;
     options.height = 0.15;
@@ -225,7 +287,7 @@ CTreeMap::Options CTreeMap::GetPreset(const Preset preset)
         options.ambientLight = 1.0;
         break;
     case Preset::Pastel:
-        options.gridColor = RGB(96, 100, 104);
+        options.gridColor = CLR_DEFAULT;
         options.brightness = 0.82;
         options.saturation = 0.40;
         options.height = 0.10;
@@ -242,6 +304,24 @@ CTreeMap::Options CTreeMap::GetPreset(const Preset preset)
         break;
     }
     return options;
+}
+
+std::optional<CTreeMap::Preset> CTreeMap::GetMatchingPreset(const Options& options)
+{
+    const auto appearance = [](const Options& candidate)
+    {
+        return std::tuple(candidate.grid, candidate.grid ? candidate.gridColor : CLR_INVALID, candidate.contrastLabels,
+            candidate.GetBrightnessPercent(), candidate.GetSaturationPercent(), candidate.GetAmbientLightPercent(),
+            candidate.GetHeightPercent(), candidate.GetScaleFactorPercent(),
+            candidate.GetLightSourceXPercent(), candidate.GetLightSourceYPercent());
+    };
+    const auto current = appearance(options);
+    const int maxPreset = std::to_underlying(Preset::HighContrast);
+    const auto presets = std::views::iota(0, maxPreset + 1);
+    const auto it = std::ranges::find_if(presets, [&](const int preset) {
+        return current == appearance(GetPreset(static_cast<Preset>(preset)));
+    });
+    return it != presets.end() ? std::optional(static_cast<Preset>(*it)) : std::nullopt;
 }
 
 std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
@@ -332,9 +412,25 @@ std::unique_ptr<CItem> CTreeMap::BuildDemoTree()
     }
 }
 
+COLORREF CTreeMap::GetFlatColor(const DWORD color, const Options& options)
+{
+    const PreparedColor prepared = PrepareRenderColor(color, options.brightness, options.saturation);
+    const COLORREF pixel = MakeBitmapColor(prepared.color, prepared.brightness);
+    return RGB(GetBValue(pixel), GetGValue(pixel), GetRValue(pixel));
+}
+
+COLORREF CTreeMap::GetGridColor(const Options& options)
+{
+    return options.gridColor == CLR_DEFAULT
+        ? CColorSpace::BlendColor(DarkMode::SystemColor(COLOR_WINDOW),
+            DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.12)
+        : options.gridColor;
+}
+
 CTreeMap::CTreeMap()
 {
-    SetOptions(&DefaultOptions);
+    const Options options = GetDefaults();
+    SetOptions(&options);
 }
 
 void CTreeMap::SetOptions(const Options* options)
@@ -356,6 +452,7 @@ void CTreeMap::SetOptions(const Options* options)
 
 void CTreeMap::ClearLayout()
 {
+    m_folderColors.Clear();
     m_layoutRoot = nullptr;
     m_layoutArea.Clear();
     m_hitTestColumns = 0;
@@ -369,6 +466,7 @@ void CTreeMap::ClearLayout()
 void CTreeMap::TrimMemory()
 {
     ClearLayout();
+    m_folderColors = {};
     decltype(m_visibleItems){}.swap(m_visibleItems);
     decltype(m_itemToVisibleIndex){}.swap(m_itemToVisibleIndex);
     decltype(m_hitTestCellOffsets){}.swap(m_hitTestCellOffsets);
@@ -591,6 +689,8 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     TEXTMETRIC tm{};
     GetTextMetricsW(dc, &tm);
     const int headerHeight = tm.tmHeight + 2;
+    const int accentWidth = std::max(2, MulDiv(GetDeviceCaps(dc, LOGPIXELSX), GetFontSizePercent(),
+        USER_DEFAULT_SCREEN_DPI * 50));
 
     const int renderWidth = rc.Width();
     const int renderHeight = rc.Height();
@@ -627,7 +727,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         bitmap = { m_bitmapBits.data(), static_cast<size_t>(renderWidth) };
     }
     DrawSolidRect(bitmap, CRect(0, 0, renderWidth, renderHeight),
-        m_options.grid ? m_options.gridColor : DarkMode::SystemColor(COLOR_WINDOW),
+        m_options.grid ? GetGridColor(m_options) : DarkMode::SystemColor(COLOR_WINDOW),
         CColorSpace::GraphPaletteBrightness);
 
     const int gridWidth = m_options.grid ? 1 : 0;
@@ -642,7 +742,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     {
         const CItem* item;
         CRect rc;
-        int depth;
+        std::wstring label;
         bool showHeader;
     };
     std::vector<FolderDrawInfo> foldersToDraw;
@@ -686,7 +786,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         DrawStateInfo state = stack.back();
         stack.pop_back();
 
-        CItem* const item = state.item;
+        CItem* item = state.item;
         AddVisibleItem(item, state.rc, state.depth);
 
         if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
@@ -709,13 +809,30 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         if (m_options.showFolderFrames && !state.asRoot &&
             std::min(state.rc.Width(), state.rc.Height()) >= m_options.folderFramesDrawThreshold)
         {
-            std::wstring_view name = item->GetNameView(true);
-            const int textWidth = state.rc.Width() - 8;
+            std::wstring label;
+            while (item->IsTypeOrFlag(IT_DIRECTORY))
+            {
+                const auto& children = item->GetChildren();
+                if (children.empty() || !children.front()->IsTypeOrFlag(IT_DIRECTORY)
+                    || children.front()->TmiIsLeaf() || children.front()->TmiGetSize() != item->TmiGetSize()
+                    || std::ranges::any_of(children | std::views::drop(1),
+                        [](const CItem* child) { return child->TmiGetSize() != 0; })) break;
+                if (label.empty()) label = item->GetNameView(true);
+                item = children.front();
+                label += L'\\';
+                label += item->GetNameView(true);
+                ++state.depth;
+                state.ridgeHeight *= m_options.scaleFactor;
+                if (cushionShading) AddRidge(state.rc, state.surface, state.ridgeHeight);
+                AddVisibleItem(item, state.rc, state.depth);
+            }
+            const std::wstring_view name = item->GetNameView(true);
+            const int textWidth = state.rc.Width() - accentWidth - 8;
             CSize nameSize;
             GetTextExtentPoint32W(dc, name.data(), static_cast<int>(name.size()), &nameSize);
             const bool showHeader = state.rc.Height() > headerHeight && nameSize.cx <= textWidth;
 
-            foldersToDraw.push_back({ item, state.rc, state.depth, showHeader });
+            foldersToDraw.push_back({ item, state.rc, std::move(label), showHeader });
             state.rc.left += 1;
             state.rc.right -= 1;
             state.rc.bottom -= 1;
@@ -739,6 +856,10 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     {
         ScopedBkMode backgroundMode(dc, TRANSPARENT);
         const CPoint rcOffset = rc.TopLeft();
+        const COLORREF background = DarkMode::SystemColor(COLOR_WINDOW);
+        const COLORREF headerColor = CColorSpace::BlendColor(background, DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.07);
+        const ScopedTextColor textColor(dc, CColorSpace::GetContrastingColor(headerColor));
+        const auto borderBrush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
 
         for (const auto& folder : foldersToDraw)
         {
@@ -746,20 +867,22 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
 
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
-                const CBrush borderBrush(CColorSpace::DimColor(GetDepthColor(folder.depth)));
+                const COLORREF branchColor = m_folderColors.GetColor(folder.item);
+                SetDCBrushColor(dc, CColorSpace::BlendColor(branchColor, background, 0.65));
                 FrameRect(dc, &rcFolder, borderBrush);
 
                 if (folder.showHeader)
                 {
                     CRect rcHeader(rcFolder.left + 1, rcFolder.top + 1, rcFolder.right - 1, rcFolder.top + headerHeight);
-                    const COLORREF headerColor = GetDepthColor(folder.depth);
                     FillSolidRect(dc, rcHeader, headerColor);
+                    FillSolidRect(dc, CRect(rcHeader.left, rcHeader.top,
+                        std::min(rcHeader.right, rcHeader.left + accentWidth), rcHeader.bottom), branchColor);
 
-                    CRect rcText(rcHeader.left + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
-                    std::wstring_view name = folder.item->GetNameView(true);
-                    SetTextColor(dc, RGB(0, 0, 0));
-                    DrawTextW(dc, name.data(), static_cast<int>(name.size()), &rcText,
-                        DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+                    CRect rcText(rcHeader.left + accentWidth + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
+                    const std::wstring_view label = folder.label.empty()
+                        ? folder.item->GetNameView(true) : folder.label;
+                    DrawTextW(dc, label.data(), static_cast<int>(label.size()), &rcText,
+                        DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_PATH_ELLIPSIS);
                 }
             }
         }
@@ -834,7 +957,7 @@ void CTreeMap::DrawColorPreview(HDC dc, const CRect& rc, const COLORREF color, c
 
     if (m_options.grid)
     {
-        SetDCPenColor(dc, m_options.gridColor);
+        SetDCPenColor(dc, GetGridColor(m_options));
         StockObjectSelection selectPen(dc, DC_PEN);
         StockObjectSelection selectBrush(dc, NULL_BRUSH);
         RoundRect(dc, rc.left, rc.top, rc.right, rc.bottom, 3, 3);
@@ -866,17 +989,7 @@ void CTreeMap::RenderRectangle(const BitmapView bitmap, const CRect& rc, const s
         return;
     }
 
-    PreparedColor prepared = PrepareRenderColor(color, m_options.brightness);
-    if (m_options.saturation < 1.0)
-    {
-        const double gray = (GetRValue(prepared.color) + GetGValue(prepared.color) + GetBValue(prepared.color)) / 3.0;
-        const auto desaturate = [&](const BYTE component)
-        {
-            return static_cast<BYTE>(gray + (component - gray) * m_options.saturation);
-        };
-        prepared.color = RGB(desaturate(GetRValue(prepared.color)),
-            desaturate(GetGValue(prepared.color)), desaturate(GetBValue(prepared.color)));
-    }
+    const PreparedColor prepared = PrepareRenderColor(color, m_options.brightness, m_options.saturation);
 
     if (IsCushionShading())
     {

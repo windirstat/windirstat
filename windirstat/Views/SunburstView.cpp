@@ -92,6 +92,11 @@ void CSunburstView::DrawHighlightExtension(CDC* pDC)
         COptions::TreeMapHighlightColor, 2.0f);
 }
 
+void CSunburstView::DrawHover(CDC* pDC)
+{
+    m_sunburst.DrawHoverItem(pDC, m_hoverItem, m_hoveringRemainder);
+}
+
 void CSunburstView::DrawSelection(CDC* pDC)
 {
     const auto& items = CWinDirStatModel::Get()->GetAllSelected();
@@ -100,7 +105,7 @@ void CSunburstView::DrawSelection(CDC* pDC)
     for (const CItem* item : items)
         m_selectionOutlineItems.push_back(GetDisplayItem(item));
     m_sunburst.DrawOutlineItems(pDC, m_selectionOutlineItems,
-        COptions::TreeMapHighlightColor, items.size() == 1 ? 3.0f : 2.0f);
+        COptions::TreeMapHighlightColor, items.size() == 1 ? 2.0f : 1.0f);
 }
 
 CItem* CSunburstView::FindItemAtPoint(const CPoint point)

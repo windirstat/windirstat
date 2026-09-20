@@ -510,6 +510,29 @@ void CMainFrame::OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI) const
         && COptions::TreeMapOptions.style == style);
 }
 
+static_assert(ID_VIEW_GRAPH_PRESET_CLASSIC + std::to_underlying(CTreeMap::Preset::Calm) == ID_VIEW_GRAPH_PRESET_CALM
+    && ID_VIEW_GRAPH_PRESET_CLASSIC + std::to_underlying(CTreeMap::Preset::Flat) == ID_VIEW_GRAPH_PRESET_FLAT
+    && ID_VIEW_GRAPH_PRESET_CLASSIC + std::to_underlying(CTreeMap::Preset::Pastel) == ID_VIEW_GRAPH_PRESET_PASTEL
+    && ID_VIEW_GRAPH_PRESET_CLASSIC + std::to_underlying(CTreeMap::Preset::HighContrast)
+        == ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST);
+
+void CMainFrame::OnViewGraphPreset(const UINT commandId)
+{
+    if (CWinDirStatModel::Get()->IsScanRunning()) return;
+
+    const auto preset = static_cast<CTreeMap::Preset>(commandId - ID_VIEW_GRAPH_PRESET_CLASSIC);
+    CTreeMap::Options options = COptions::TreeMapOptions;
+    options.SetAppearance(CTreeMap::GetPreset(preset));
+    COptions::SetTreeMapOptions(options);
+}
+
+void CMainFrame::OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    const auto preset = static_cast<CTreeMap::Preset>(pCmdUI->m_nID - ID_VIEW_GRAPH_PRESET_CLASSIC);
+    pCmdUI->SetRadio(CTreeMap::GetMatchingPreset(COptions::TreeMapOptions) == preset);
+}
+
 void CMainFrame::OnViewFlameGraph()
 {
     SelectGraphPane(GraphPane::FlameGraph);

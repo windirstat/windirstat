@@ -18,6 +18,7 @@
 #pragma once
 
 #include "pch.h"
+#include "TreeMap.h"
 
 //
 // CFlameGraph. Creates a flame graph (icicle plot) visualization.
@@ -29,7 +30,7 @@ class CFlameGraph final
 {
 public:
     // Logical row height at 96 DPI. The view scales this before drawing.
-    static constexpr int ROW_HEIGHT = 18;
+    static constexpr int ROW_HEIGHT = 24;
 
     // Prepare width-dependent geometry and return its full logical height.
     // Rendering and hit testing reuse this layout until the root, width, or
@@ -101,10 +102,8 @@ private:
         std::vector<ChildSpan>& spans);
 
     void RenderLayout(CDC* pdc, bool breadcrumbs) const;
-    void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle,
-        int depth) const;
-    void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle,
-        int depth) const;
+    void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle) const;
+    void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle) const;
     void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc,
         COLORREF color) const;
 
@@ -136,15 +135,15 @@ private:
         }
     }
 
+    CFolderColors m_folderColors;
     const CItem* m_layoutRoot = nullptr;
     CRect m_renderArea;
     int m_rowHeight = ROW_HEIGHT;
     int m_minLabelWidth = 40;
     int m_minLabelHeight = 14;
     int m_separatorThickness = 1;
-    int m_textInsetX = 3;
+    int m_textInsetX = 5;
     int m_textInsetY = 1;
-    int m_borderThreshold = 4;
     std::unordered_map<const CItem*, LayoutEntry> m_layout;
     std::vector<std::vector<RowItem>> m_rows;
     std::vector<CItem*> m_breadcrumbs;

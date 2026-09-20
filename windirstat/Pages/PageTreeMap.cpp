@@ -83,12 +83,12 @@ void CPageTreeMap::InitializePage()
     m_options = COptions::TreeMapOptions;
     m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
     for (const std::wstring& style : SplitString(
-        Localization::Lookup(IDS_PAGE_TREEMAP_STYLES), L','))
+        Localization::Lookup(IDS_PAGE_GRAPHS_STYLES), L','))
     {
         m_styleCombo.AddString(style);
     }
     assert(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
-    for (const std::wstring& preset : SplitString(Localization::Lookup(IDS_PAGE_TREEMAP_PRESETS), L','))
+    for (const std::wstring& preset : SplitString(Localization::Lookup(IDS_PAGE_GRAPHS_PRESETS), L','))
     {
         m_presetCombo.AddString(preset);
     }
@@ -120,7 +120,6 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_options.SetLightSourcePoint(m_lightSource.GetPos());
         m_options.style = static_cast<TreeMapLayout::Style>(GetComboSelection(IDC_TREEMAPSTYLE));
         m_options.grid = IsChecked(IDC_TREEMAPGRID);
-        m_options.gridColor = m_gridColor.GetColor();
     }
     else
     {
@@ -131,12 +130,14 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_lightSource.SetPos(m_options.GetLightSourcePoint());
         SetComboSelection(IDC_TREEMAPSTYLE, static_cast<int>(m_options.style));
         SetChecked(IDC_TREEMAPGRID, m_options.grid);
-        m_gridColor.SetColor(m_options.gridColor);
+        m_gridColor.SetColor(CTreeMap::GetGridColor(m_options));
     }
 }
 
 void CPageTreeMap::UpdateStatics()
 {
+    m_gridColor.SetText(Localization::Lookup(m_options.gridColor == CLR_DEFAULT
+        ? IDS_PAGE_GRAPHS_GRID_AUTO : IDS_PAGE_GRAPHS_GRID_COLOR));
     SetText(IDC_STATICBRIGHTNESS, m_brightness.GetPos());
     SetText(IDC_STATICCUSHIONSHADING, m_cushionShading.GetPos());
     SetText(IDC_STATICHEIGHT, m_height.GetPos() / (c_MaxHeight / 100));
@@ -145,21 +146,9 @@ void CPageTreeMap::UpdateStatics()
 
 void CPageTreeMap::UpdatePresetSelection()
 {
-    const auto appearance = [](const CTreeMap::Options& options)
-    {
-        return std::tuple(options.grid, options.grid ? options.gridColor : CLR_INVALID, options.contrastLabels,
-            options.GetBrightnessPercent(), options.GetSaturationPercent(), options.GetAmbientLightPercent(),
-            options.GetHeightPercent(), options.GetScaleFactorPercent(),
-            options.GetLightSourceXPercent(), options.GetLightSourceYPercent());
-    };
-    const auto current = appearance(m_options);
-    const int maxPreset = std::to_underlying(CTreeMap::Preset::HighContrast);
-    const auto presets = std::views::iota(0, maxPreset + 1);
-    const auto it = std::ranges::find_if(presets, [&](const int preset) {
-        return current == appearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)));
-    });
-    const int selection = it != presets.end() ? *it : maxPreset + 1;
-    m_presetCombo.SetCurSel(selection);
+    const auto preset = CTreeMap::GetMatchingPreset(m_options);
+    m_presetCombo.SetCurSel(preset ? std::to_underlying(*preset)
+        : std::to_underlying(CTreeMap::Preset::HighContrast) + 1);
 }
 
 void CPageTreeMap::OnSomethingChanged()
@@ -178,6 +167,7 @@ void CPageTreeMap::OnSomethingChanged()
 void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
 {
     *result = 0;
+    m_options.gridColor = m_gridColor.GetColor();
     OnSomethingChanged();
 }
 
@@ -212,16 +202,7 @@ void CPageTreeMap::OnPresetChanged()
 
 void CPageTreeMap::ApplyAppearance(const CTreeMap::Options& appearance)
 {
-    m_options.grid = appearance.grid;
-    m_options.gridColor = appearance.gridColor;
-    m_options.brightness = appearance.brightness;
-    m_options.saturation = appearance.saturation;
-    m_options.contrastLabels = appearance.contrastLabels;
-    m_options.ambientLight = appearance.ambientLight;
-    m_options.height = appearance.height;
-    m_options.scaleFactor = appearance.scaleFactor;
-    m_options.lightSourceX = appearance.lightSourceX;
-    m_options.lightSourceY = appearance.lightSourceY;
+    m_options.SetAppearance(appearance);
 
     UpdateOptions(false);
     OnSomethingChanged();

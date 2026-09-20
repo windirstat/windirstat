@@ -18,12 +18,14 @@
 #pragma once
 
 #include "pch.h"
+#include "TreeMap.h"
 
 // Multi-layer radial chart with size-proportional sectors and indexed hit testing.
 class CSunburst final
 {
 public:
     void DrawSunburst(CDC* pdc, CRect rc, CItem* root, int maxDepth);
+    void DrawHoverItem(CDC* pdc, const CItem* item, bool remainder) const;
     void DrawOutlineItems(CDC* pdc, std::span<const CItem* const> items,
         COLORREF color, float width = 2.0f) const;
 
@@ -52,7 +54,6 @@ private:
         double outerRadius = 0.0;
         ULONGLONG remainderSize = 0;
         int depth = 0;
-        COLORREF branchColor = RGB(78, 86, 99);
         bool visualLeaf = true;
     };
 
@@ -71,11 +72,14 @@ private:
         const Gdiplus::FontFamily* fontFamily, const LayoutEntry& entry,
         std::vector<Gdiplus::PointF>& points, std::vector<BYTE>& types) const;
     void CreatePath(const LayoutEntry& entry, Gdiplus::GraphicsPath& path) const;
+    void DrawOutlineEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry,
+        COLORREF color, float width) const;
     COLORREF GetItemColor(const LayoutEntry& entry) const;
     double GetLabelPriority(const LayoutEntry& entry) const;
 
     const LayoutEntry* FindLayoutEntry(const CItem* item) const;
 
+    CFolderColors m_folderColors;
     CItem* m_layoutRoot = nullptr;
     CRect m_renderArea;
     CPoint m_center;

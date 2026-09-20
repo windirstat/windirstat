@@ -99,10 +99,6 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
 
-    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    GdiObjectSelection sopen(pdc, &pen);
-    StockObjectSelection sobrush(pdc, NULL_BRUSH);
-
     const CWinDirStatModel* model = CWinDirStatModel::Get();
     const bool isZoomed = model->IsZoomed();
 
@@ -118,13 +114,13 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
     }
 }
 
+void CTreeMapView::DrawHover(CDC* pdc)
+{
+    HighlightSelectedItem(pdc, GetDisplayItem(m_hoverItem), false, true);
+}
+
 void CTreeMapView::DrawSelection(CDC* pdc)
 {
-    StockObjectSelection sobrush(pdc, NULL_BRUSH);
-
-    const CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
-    GdiObjectSelection sopen(pdc, &pen);
-
     for (const auto& selectedItems = CWinDirStatModel::Get()->GetAllSelected(); const CItem* item : selectedItems)
     {
         // Ignore if not a child of the current zoomed item
@@ -134,11 +130,11 @@ void CTreeMapView::DrawSelection(CDC* pdc)
     }
 }
 
-// A pen and the null brush must be selected.
 // Draws the highlight rectangle of item. If single, the rectangle is slightly
 // bigger than the item rect; otherwise, it fits inside.
 //
-void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
+void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single,
+    const bool hover) const
 {
     CRect rc;
     if (!m_treeMap.TryGetItemRectangle(item, rc)) return;
@@ -169,7 +165,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
         return;
     }
 
-    RenderHighlightRectangle(pdc, rc);
+    RenderHighlightRectangle(pdc, rc, hover);
 }
 
 CItem* CTreeMapView::FindItemAtPoint(const CPoint point)
@@ -212,7 +208,7 @@ void CTreeMapView::DrillDown(CItem* item)
 
 std::span<const UINT> CTreeMapView::GetPersistentContextCommands() const
 {
-    static constexpr std::array<UINT, 9> persistentCommands{
+    static constexpr std::array<UINT, 14> persistentCommands{
         ID_TREEMAP_ZOOMIN,
         ID_TREEMAP_ZOOMOUT,
         ID_TREEMAP_SELECT_PARENT,
@@ -222,6 +218,11 @@ std::span<const UINT> CTreeMapView::GetPersistentContextCommands() const
         ID_TREEMAP_SHOW_EXTENSIONS,
         ID_TREEMAP_LOGICAL_SIZE,
         ID_TREEMAP_PHYSICAL_SIZE,
+        ID_VIEW_GRAPH_PRESET_CLASSIC,
+        ID_VIEW_GRAPH_PRESET_CALM,
+        ID_VIEW_GRAPH_PRESET_FLAT,
+        ID_VIEW_GRAPH_PRESET_PASTEL,
+        ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST,
     };
     return persistentCommands;
 }
