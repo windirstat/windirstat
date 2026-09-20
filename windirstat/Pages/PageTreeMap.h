@@ -46,6 +46,7 @@ protected:
     void OnOK() override;
 
     CTreeMap::Options m_options{}; // Current options
+    std::optional<CTreeMap::Options> m_customOptions;
 
     CTreeMapPreview m_preview;
 

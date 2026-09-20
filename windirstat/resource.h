@@ -303,6 +303,7 @@
 #define ID_VIEW_GRAPH_PRESET_FLAT          32979
 #define ID_VIEW_GRAPH_PRESET_PASTEL        32980
 #define ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST 32981
+#define ID_VIEW_GRAPH_PRESET_CUSTOM        32982
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -317,7 +318,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32982
+#define _APS_NEXT_COMMAND_VALUE         32983
 #define _APS_NEXT_CONTROL_VALUE         1163
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

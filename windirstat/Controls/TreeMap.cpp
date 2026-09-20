@@ -689,8 +689,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     TEXTMETRIC tm{};
     GetTextMetricsW(dc, &tm);
     const int headerHeight = tm.tmHeight + 2;
-    const int accentWidth = std::max(2, MulDiv(GetDeviceCaps(dc, LOGPIXELSX), GetFontSizePercent(),
-        USER_DEFAULT_SCREEN_DPI * 50));
+    constexpr int frameWidth = 1;
 
     const int renderWidth = rc.Width();
     const int renderHeight = rc.Height();
@@ -742,7 +741,6 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     {
         const CItem* item;
         CRect rc;
-        std::wstring label;
         bool showHeader;
     };
     std::vector<FolderDrawInfo> foldersToDraw;
@@ -809,34 +807,15 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
         if (m_options.showFolderFrames && !state.asRoot &&
             std::min(state.rc.Width(), state.rc.Height()) >= m_options.folderFramesDrawThreshold)
         {
-            std::wstring label;
-            while (item->IsTypeOrFlag(IT_DIRECTORY))
-            {
-                const auto& children = item->GetChildren();
-                if (children.empty() || !children.front()->IsTypeOrFlag(IT_DIRECTORY)
-                    || children.front()->TmiIsLeaf() || children.front()->TmiGetSize() != item->TmiGetSize()
-                    || std::ranges::any_of(children | std::views::drop(1),
-                        [](const CItem* child) { return child->TmiGetSize() != 0; })) break;
-                if (label.empty()) label = item->GetNameView(true);
-                item = children.front();
-                label += L'\\';
-                label += item->GetNameView(true);
-                ++state.depth;
-                state.ridgeHeight *= m_options.scaleFactor;
-                if (cushionShading) AddRidge(state.rc, state.surface, state.ridgeHeight);
-                AddVisibleItem(item, state.rc, state.depth);
-            }
             const std::wstring_view name = item->GetNameView(true);
-            const int textWidth = state.rc.Width() - accentWidth - 8;
+            const int textWidth = state.rc.Width() - 2 * frameWidth - 6;
             CSize nameSize;
             GetTextExtentPoint32W(dc, name.data(), static_cast<int>(name.size()), &nameSize);
-            const bool showHeader = state.rc.Height() > headerHeight && nameSize.cx <= textWidth;
+            const bool showHeader = state.rc.Height() > headerHeight + 2 * frameWidth && nameSize.cx <= textWidth;
 
-            foldersToDraw.push_back({ item, state.rc, std::move(label), showHeader });
-            state.rc.left += 1;
-            state.rc.right -= 1;
-            state.rc.bottom -= 1;
-            state.rc.top += showHeader ? headerHeight : 1;
+            foldersToDraw.push_back({ item, state.rc, showHeader });
+            state.rc.Deflate(frameWidth, frameWidth);
+            if (showHeader) state.rc.top += headerHeight;
 
             if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
             {
@@ -855,10 +834,8 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
     if (m_options.showFolderFrames)
     {
         ScopedBkMode backgroundMode(dc, TRANSPARENT);
+        const ScopedTextColor textColor(dc, DarkMode::SystemColor(COLOR_WINDOWTEXT));
         const CPoint rcOffset = rc.TopLeft();
-        const COLORREF background = DarkMode::SystemColor(COLOR_WINDOW);
-        const COLORREF headerColor = CColorSpace::BlendColor(background, DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.07);
-        const ScopedTextColor textColor(dc, CColorSpace::GetContrastingColor(headerColor));
         const auto borderBrush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
 
         for (const auto& folder : foldersToDraw)
@@ -868,19 +845,17 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
                 const COLORREF branchColor = m_folderColors.GetColor(folder.item);
-                SetDCBrushColor(dc, CColorSpace::BlendColor(branchColor, background, 0.65));
+                SetDCBrushColor(dc, branchColor);
                 FrameRect(dc, &rcFolder, borderBrush);
+                rcFolder.Deflate(frameWidth, frameWidth);
 
                 if (folder.showHeader)
                 {
-                    CRect rcHeader(rcFolder.left + 1, rcFolder.top + 1, rcFolder.right - 1, rcFolder.top + headerHeight);
-                    FillSolidRect(dc, rcHeader, headerColor);
-                    FillSolidRect(dc, CRect(rcHeader.left, rcHeader.top,
-                        std::min(rcHeader.right, rcHeader.left + accentWidth), rcHeader.bottom), branchColor);
+                    const CRect rcHeader(rcFolder.left, rcFolder.top, rcFolder.right, rcFolder.top + headerHeight);
+                    FillSolidRect(dc, rcHeader, branchColor);
 
-                    CRect rcText(rcHeader.left + accentWidth + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
-                    const std::wstring_view label = folder.label.empty()
-                        ? folder.item->GetNameView(true) : folder.label;
+                    CRect rcText(rcHeader.left + 3, rcHeader.top, rcHeader.right - 3, rcHeader.bottom);
+                    const std::wstring_view label = folder.item->GetNameView(true);
                     DrawTextW(dc, label.data(), static_cast<int>(label.size()), &rcText,
                         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_PATH_ELLIPSIS);
                 }

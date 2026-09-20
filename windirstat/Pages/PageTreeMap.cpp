@@ -81,6 +81,7 @@ void CPageTreeMap::InitializePage()
     m_lightSource.SetRange(CSize(400, 400));
 
     m_options = COptions::TreeMapOptions;
+    m_customOptions = COptions::GetCustomTreeMapPreset();
     m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
     for (const std::wstring& style : SplitString(
         Localization::Lookup(IDS_PAGE_GRAPHS_STYLES), L','))
@@ -88,9 +89,11 @@ void CPageTreeMap::InitializePage()
         m_styleCombo.AddString(style);
     }
     assert(m_styleCombo.GetCount() == static_cast<int>(TreeMapLayout::Style::Moore) + 1);
-    for (const std::wstring& preset : SplitString(Localization::Lookup(IDS_PAGE_GRAPHS_PRESETS), L','))
+    for (const auto preset : { IDS_MENU_GRAPH_PRESET_CLASSIC, IDS_MENU_GRAPH_PRESET_CALM,
+        IDS_MENU_GRAPH_PRESET_FLAT, IDS_MENU_GRAPH_PRESET_PASTEL,
+        IDS_MENU_GRAPH_PRESET_HIGH_CONTRAST, IDS_MENU_GRAPH_PRESET_CUSTOM })
     {
-        m_presetCombo.AddString(preset);
+        m_presetCombo.AddString(GetLocalizedMenuText(preset));
     }
     assert(m_presetCombo.GetCount() == static_cast<int>(CTreeMap::Preset::HighContrast) + 2);
 
@@ -104,6 +107,7 @@ void CPageTreeMap::OnOK()
 {
     UpdateOptions(true);
 
+    if (m_customOptions) COptions::SaveCustomTreeMapPreset(*m_customOptions);
     COptions::SetTreeMapOptions(m_options);
     COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
@@ -157,6 +161,7 @@ void CPageTreeMap::OnSomethingChanged()
         return;
 
     UpdateOptions(true);
+    if (!CTreeMap::GetMatchingPreset(m_options)) m_customOptions = m_options;
     UpdatePresetSelection();
     UpdateStatics();
     m_preview.SetOptions(&m_options);
@@ -195,7 +200,13 @@ void CPageTreeMap::OnSetModified()
 void CPageTreeMap::OnPresetChanged()
 {
     const int preset = m_presetCombo.GetCurSel();
-    if (preset < 0 || preset > static_cast<int>(CTreeMap::Preset::HighContrast)) return;
+    if (preset < 0) return;
+    if (preset > static_cast<int>(CTreeMap::Preset::HighContrast))
+    {
+        if (m_customOptions) ApplyAppearance(*m_customOptions);
+        else UpdatePresetSelection();
+        return;
+    }
 
     ApplyAppearance(CTreeMap::GetPreset(static_cast<CTreeMap::Preset>(preset)));
 }

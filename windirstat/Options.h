@@ -347,6 +347,7 @@ public:
     inline static Setting<std::wstring> FilteringExcludeFiles{ OptionsDriveSelect, L"FilteringExcludeFiles" };
     inline static Setting<std::wstring> FilteringIncludeDirs{ OptionsDriveSelect, L"FilteringIncludeDirs" };
     inline static Setting<std::wstring> FilteringIncludeFiles{ OptionsDriveSelect, L"FilteringIncludeFiles" };
+    inline static Setting<std::vector<int>> TreeMapCustomPreset{ OptionsTreeMap, L"TreeMapCustomPreset" };
     inline static Setting<WINDOWPLACEMENT> MainWindowPlacement{ OptionsGeneral, L"MainWindowPlacement" };
 
     inline static CTreeMap::Options TreeMapOptions;
@@ -361,6 +362,8 @@ public:
     static void PostProcessPersistedSettings();
     static void SetUserDefinedCleanups(const std::vector<USERDEFINEDCLEANUP>& cleanups);
     static void SetTreeMapOptions(const CTreeMap::Options& options);
+    static void SaveCustomTreeMapPreset(const CTreeMap::Options& options);
+    static std::optional<CTreeMap::Options> GetCustomTreeMapPreset();
 
     static LCID GetLocaleForFormatting();
 };

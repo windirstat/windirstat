@@ -525,8 +525,11 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
 {
     if (fontFamily == nullptr || GetLabelPriority(entry) <= 0.0) return false;
 
-    const std::wstring_view name = entry.remainderSize != 0
+    std::wstring_view name = entry.remainderSize != 0
         ? std::wstring_view{ L"\u2026" } : entry.item->GetNameView(true);
+    // Drive list names include free-space statistics that needlessly crowd out the ring title.
+    if (entry.item->IsTypeOrFlag(IT_DRIVE) && name.ends_with(L"%)"))
+        name = name.substr(0, name.rfind(L" - "));
     if (name.empty()) return false;
 
     const auto dpiScale = static_cast<Gdiplus::REAL>(m_dpiScale);

@@ -441,7 +441,7 @@ void CGraphView::ClearHover()
 
 std::span<const UINT> CGraphView::GetPersistentContextCommands() const
 {
-    static constexpr std::array<UINT, 13> commands{
+    static constexpr std::array<UINT, 14> commands{
         ID_TREEMAP_ZOOMIN,
         ID_TREEMAP_ZOOMOUT,
         ID_TREEMAP_SELECT_PARENT,
@@ -455,6 +455,7 @@ std::span<const UINT> CGraphView::GetPersistentContextCommands() const
         ID_VIEW_GRAPH_PRESET_FLAT,
         ID_VIEW_GRAPH_PRESET_PASTEL,
         ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST,
+        ID_VIEW_GRAPH_PRESET_CUSTOM,
     };
     return commands;
 }

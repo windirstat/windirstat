@@ -61,6 +61,7 @@ void COptions::SanitizeRect(RECT& rect)
 void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 {
     TreeMapOptions = options;
+    SaveCustomTreeMapPreset(options);
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
@@ -78,6 +79,35 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapLightSourceY = TreeMapOptions.GetLightSourceYPercent();
 
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
+}
+
+void COptions::SaveCustomTreeMapPreset(const CTreeMap::Options& options)
+{
+    if (CTreeMap::GetMatchingPreset(options)) return;
+
+    TreeMapCustomPreset = std::vector<int>{ options.grid, static_cast<int>(options.gridColor),
+        options.contrastLabels, options.GetBrightnessPercent(), options.GetSaturationPercent(),
+        options.GetAmbientLightPercent(), options.GetHeightPercent(), options.GetScaleFactorPercent(),
+        options.GetLightSourceXPercent(), options.GetLightSourceYPercent() };
+}
+
+std::optional<CTreeMap::Options> COptions::GetCustomTreeMapPreset()
+{
+    const auto& values = TreeMapCustomPreset.Obj();
+    if (values.size() != 10) return std::nullopt;
+
+    auto options = CTreeMap::GetDefaults();
+    options.grid = values[0] != 0;
+    options.gridColor = static_cast<COLORREF>(values[1]);
+    options.contrastLabels = values[2] != 0;
+    options.SetBrightnessPercent(std::clamp(values[3], 0, 100));
+    options.SetSaturationPercent(std::clamp(values[4], 0, 100));
+    options.SetAmbientLightPercent(std::clamp(values[5], 0, 100));
+    options.SetHeightPercent(std::clamp(values[6], 0, 200));
+    options.SetScaleFactorPercent(std::clamp(values[7], 0, 100));
+    options.SetLightSourceXPercent(std::clamp(values[8], -200, 200));
+    options.SetLightSourceYPercent(std::clamp(values[9], -200, 200));
+    return options;
 }
 
 void COptions::PreProcessPersistedSettings()
@@ -168,6 +198,7 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.SetAmbientLightPercent(TreeMapAmbientLightPercent);
     TreeMapOptions.SetLightSourceXPercent(TreeMapLightSourceX);
     TreeMapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
+    SaveCustomTreeMapPreset(TreeMapOptions);
 
     // Adjust Title to language default Title
     for (auto&& [i, cleanup] : std::views::enumerate(UserDefinedCleanups))

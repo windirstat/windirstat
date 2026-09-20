@@ -522,15 +522,24 @@ void CMainFrame::OnViewGraphPreset(const UINT commandId)
 
     const auto preset = static_cast<CTreeMap::Preset>(commandId - ID_VIEW_GRAPH_PRESET_CLASSIC);
     CTreeMap::Options options = COptions::TreeMapOptions;
-    options.SetAppearance(CTreeMap::GetPreset(preset));
+    if (commandId == ID_VIEW_GRAPH_PRESET_CUSTOM)
+    {
+        const auto custom = COptions::GetCustomTreeMapPreset();
+        if (!custom) return;
+        options.SetAppearance(*custom);
+    }
+    else options.SetAppearance(CTreeMap::GetPreset(preset));
     COptions::SetTreeMapOptions(options);
 }
 
 void CMainFrame::OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const
 {
-    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    const bool custom = pCmdUI->m_nID == ID_VIEW_GRAPH_PRESET_CUSTOM;
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning()
+        && (!custom || COptions::GetCustomTreeMapPreset().has_value()));
     const auto preset = static_cast<CTreeMap::Preset>(pCmdUI->m_nID - ID_VIEW_GRAPH_PRESET_CLASSIC);
-    pCmdUI->SetRadio(CTreeMap::GetMatchingPreset(COptions::TreeMapOptions) == preset);
+    const auto current = CTreeMap::GetMatchingPreset(COptions::TreeMapOptions);
+    pCmdUI->SetRadio(custom ? !current : current == preset);
 }
 
 void CMainFrame::OnViewFlameGraph()
