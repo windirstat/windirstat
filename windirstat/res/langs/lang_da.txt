@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&Sprog
 IDS_PAGE_GENERAL_LIST_STYLE=&Listestil
 IDS_PAGE_GENERAL_PORTABLE=Kør i bærbar tilstand (brug WinDirStat.ini-filen til indstillinger)
 IDS_PAGE_GENERAL_SHOW_GRID=Vis &gitter
+IDS_PAGE_GENERAL_SHOW_SECONDS=Vis &sekunder i tidsstempler
 IDS_PAGE_GENERAL_SHOW_SIZES=&Vis størrelser i GiB/MiB/KiB/bytes-format
 IDS_PAGE_GENERAL_SHOW_STRIPES=Vis S&triber
 IDS_PAGE_GENERAL_TITLE=Generel

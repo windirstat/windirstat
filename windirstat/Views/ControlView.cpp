@@ -69,6 +69,7 @@ void CControlView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
     case MODEL_CHANGE_NONE:
     {
         CWinDirStatPane::OnUpdate(sender, change, item);
+        control.Invalidate();
     }
     break;
 

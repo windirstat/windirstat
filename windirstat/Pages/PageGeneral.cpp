@@ -100,6 +100,7 @@ void CPageGeneral::InitializePage()
     SetChecked(IDC_SHOW_STRIPES, COptions::ListStripes);
     SetChecked(IDC_SIZE_SUFFIXES, COptions::UseSizeSuffixes);
     SetChecked(IDC_USE_WINDOWS_LOCALE, COptions::UseWindowsLocaleSetting);
+    SetChecked(IDC_SHOW_TIME_SECONDS, COptions::ShowTimeSeconds);
     const int darkMode = std::clamp<int>(COptions::DarkMode, std::to_underlying(DM_DISABLED), std::to_underlying(DM_USE_WINDOWS));
     SetCheckedRadioButton(IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_ENABLED, DarkModeRadioIds[darkMode]);
 
@@ -132,6 +133,7 @@ void CPageGeneral::InitializePage()
 void CPageGeneral::OnOK()
 {
     const bool useWindowsLocale = IsChecked(IDC_USE_WINDOWS_LOCALE);
+    const bool showTimeSeconds = IsChecked(IDC_SHOW_TIME_SECONDS);
     const bool listGrid = IsChecked(IDC_SHOW_GRID);
     const bool listStripes = IsChecked(IDC_SHOW_STRIPES);
     const bool listFullRowSelection = IsChecked(IDC_FULL_ROW_SELECTION);
@@ -139,7 +141,8 @@ void CPageGeneral::OnOK()
     const bool portableMode = IsChecked(IDC_PORTABLE_MODE);
     const bool contextMenuIntegration = IsChecked(IDC_CONTEXT_MENU);
 
-    const bool windowsLocaleChanged = useWindowsLocale != COptions::UseWindowsLocaleSetting;
+    const bool formattingChanged = useWindowsLocale != COptions::UseWindowsLocaleSetting ||
+        showTimeSeconds != COptions::ShowTimeSeconds;
     const bool listChanged = listGrid != COptions::ListGrid ||
         listStripes != COptions::ListStripes ||
         listFullRowSelection != COptions::ListFullRowSelection ||
@@ -152,6 +155,7 @@ void CPageGeneral::OnOK()
     COptions::ListStripes = listStripes;
     COptions::UseSizeSuffixes = sizeSuffixesFormat;
     COptions::UseWindowsLocaleSetting = useWindowsLocale;
+    COptions::ShowTimeSeconds = showTimeSeconds;
     COptions::DarkMode = GetSelectedDarkMode();
 
     if (!CDirStatApp::Get()->SetPortableMode(portableMode))
@@ -183,7 +187,7 @@ void CPageGeneral::OnOK()
 
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     }
-    if (windowsLocaleChanged)
+    if (formattingChanged)
     {
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_NONE);
     }

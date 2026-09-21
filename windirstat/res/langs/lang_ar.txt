@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&اللغة
 IDS_PAGE_GENERAL_LIST_STYLE=نمط القا&ئمة
 IDS_PAGE_GENERAL_PORTABLE=التشغيل في الوضع المحمول (استخدام ملف WinDirStat.ini للإعدادات)
 IDS_PAGE_GENERAL_SHOW_GRID=إظهار خطوط ال&شبكة
+IDS_PAGE_GENERAL_SHOW_SECONDS=إظهار ال&ثواني في الطوابع الزمنية
 IDS_PAGE_GENERAL_SHOW_SIZES=إ&ظهار حجم الملفات بوحدات GiB/MiB/KiB/بايت
 IDS_PAGE_GENERAL_SHOW_STRIPES=إظهار &خطوط متبادلة للصفوف
 IDS_PAGE_GENERAL_TITLE=عام

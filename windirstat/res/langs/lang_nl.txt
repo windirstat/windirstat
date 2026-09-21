@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=Taa&l
 IDS_PAGE_GENERAL_LIST_STYLE=L&ijststijl
 IDS_PAGE_GENERAL_PORTABLE=Uitvoeren in draagbare modus (gebruik het bestand WinDirStat.ini voor instellingen)
 IDS_PAGE_GENERAL_SHOW_GRID=&Raster weergeven
+IDS_PAGE_GENERAL_SHOW_SECONDS=S&econden in tijdstempels weergeven
 IDS_PAGE_GENERAL_SHOW_SIZES=&Bestandsgrootte in GiB/MiB/KiB/bytes formaat weergeven
 IDS_PAGE_GENERAL_SHOW_STRIPES=&Strepen weergeven
 IDS_PAGE_GENERAL_TITLE=Algemeen

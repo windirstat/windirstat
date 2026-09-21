@@ -231,6 +231,7 @@ public:
     inline static Setting<bool> UseDrawTextCache{ OptionsGeneral, L"UseDrawTextCache", true };
     inline static Setting<bool> UseFastScanEngine{ OptionsGeneral, L"UseFastScanEngine", true };
     inline static Setting<bool> UseWindowsLocaleSetting{ OptionsGeneral, L"UseWindowsLocaleSetting", true };
+    inline static Setting<bool> ShowTimeSeconds{ OptionsGeneral, L"ShowTimeSeconds", false };
     inline static Setting<bool> ProcessHardlinks{ OptionsGeneral, L"ProcessHardlinks", true };
     inline static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT] =
     {

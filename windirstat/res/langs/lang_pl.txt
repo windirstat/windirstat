@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&Język
 IDS_PAGE_GENERAL_LIST_STYLE=Styl &listy
 IDS_PAGE_GENERAL_PORTABLE=Uruchom w trybie przenośnym (użyj pliku WinDirStat.ini do ustawień)
 IDS_PAGE_GENERAL_SHOW_GRID=&Pokaż siatkę
+IDS_PAGE_GENERAL_SHOW_SECONDS=Pokazuj &sekundy w znacznikach czasu
 IDS_PAGE_GENERAL_SHOW_SIZES=Pokaż rozmiar w &formacie GiB/MiB/KiB/bajty
 IDS_PAGE_GENERAL_SHOW_STRIPES=Pokaż Pas&ki
 IDS_PAGE_GENERAL_TITLE=Ogólne

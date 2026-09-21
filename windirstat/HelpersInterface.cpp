@@ -168,10 +168,45 @@ std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
     std::array<WCHAR, 64> date;
     GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), std::ssize(date));
 
-    std::array<WCHAR, 64> time;
-    GetTimeFormat(lcid, seconds ? 0 : TIME_NOSECONDS, &st, nullptr, time.data(), std::ssize(time));
+    const bool showSeconds = seconds || COptions::ShowTimeSeconds;
+    const DWORD timeFlags = showSeconds ? 0 : TIME_NOSECONDS;
+    std::wstring timeFormat;
+    if (showSeconds)
+    {
+        timeFormat = GetLocaleString(LOCALE_STIMEFORMAT, lcid);
+        bool quoted = false, hasSeconds = false;
+        size_t minuteEnd = std::wstring::npos;
+        for (const auto [i, c] : std::views::enumerate(timeFormat))
+        {
+            if (c == L'\'') quoted = !quoted;
+            if (quoted) continue;
+            if (c == L'm') minuteEnd = i + 1;
+            if (c == L's') hasSeconds = true;
+        }
 
-    return std::wstring(date.data()) + L"  " + time.data();
+        // Custom Windows time formats can omit seconds even without TIME_NOSECONDS.
+        if (!hasSeconds)
+        {
+            if (minuteEnd == std::wstring::npos)
+                timeFormat = GetLocaleString(LOCALE_STIMEFORMAT | LOCALE_NOUSEROVERRIDE, lcid);
+            else
+            {
+                std::wstring separator = GetLocaleString(LOCALE_STIME, lcid);
+                for (size_t i = 0; (i = separator.find(L'\'', i)) != std::wstring::npos; i += 2)
+                    separator.insert(i, 1, L'\'');
+                timeFormat.insert(minuteEnd, L"'" + separator + L"'ss");
+            }
+        }
+    }
+    const wchar_t* format = timeFormat.empty() ? nullptr : timeFormat.c_str();
+    std::wstring time(GetTimeFormat(lcid, timeFlags, &st, format, nullptr, 0), L'\0');
+    if (time.empty() || GetTimeFormat(lcid, timeFlags, &st, format, time.data(), static_cast<int>(time.size())) == 0)
+    {
+        return {};
+    }
+    time.pop_back();
+
+    return std::wstring(date.data()) + L"  " + time;
 }
 
 std::wstring FormatAttributes(const DWORD attr) noexcept

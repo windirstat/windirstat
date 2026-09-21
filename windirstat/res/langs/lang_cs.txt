@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&Jazyk
 IDS_PAGE_GENERAL_LIST_STYLE=&Vzhled seznamu
 IDS_PAGE_GENERAL_PORTABLE=Spouštět v přenosném režimu (pro nastavení používat soubor WinDirStat.ini)
 IDS_PAGE_GENERAL_SHOW_GRID=Zobrazovat &mřížku
+IDS_PAGE_GENERAL_SHOW_SECONDS=Zobrazovat &sekundy v časových údajích
 IDS_PAGE_GENERAL_SHOW_SIZES=Zobrazovat velikosti ve &formátu GiB/MiB/KiB/bajty
 IDS_PAGE_GENERAL_SHOW_STRIPES=Zo&brazovat pruhy
 IDS_PAGE_GENERAL_TITLE=Obecné

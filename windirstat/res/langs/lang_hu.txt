@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=N&yelv
 IDS_PAGE_GENERAL_LIST_STYLE=&Listastílus
 IDS_PAGE_GENERAL_PORTABLE=Futtassa hordozható módban (a beállításokhoz használja a WinDirStat.ini fájlt)
 IDS_PAGE_GENERAL_SHOW_GRID=&Rácsozás mutatása
+IDS_PAGE_GENERAL_SHOW_SECONDS=&Másodpercek megjelenítése az időbélyegekben
 IDS_PAGE_GENERAL_SHOW_SIZES=Méretek GiB/MiB/KiB/bájt formát&umban
 IDS_PAGE_GENERAL_SHOW_STRIPES=&Sávok mutatása
 IDS_PAGE_GENERAL_TITLE=Általános

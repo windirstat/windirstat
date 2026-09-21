@@ -63,6 +63,7 @@ inline std::span<const RouteEntry> CPageGeneral::Routes()
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_STRIPES),
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SIZE_SUFFIXES),
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_USE_WINDOWS_LOCALE),
+        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_TIME_SECONDS),
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_DISABLED),
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_ENABLED),
         Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_USE_WINDOWS),

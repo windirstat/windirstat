@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=K&ieli
 IDS_PAGE_GENERAL_LIST_STYLE=&Listan tyyli
 IDS_PAGE_GENERAL_PORTABLE=Suorita kannettavassa tilassa (käytä WinDirStat.ini-tiedostoa asetuksiin)
 IDS_PAGE_GENERAL_SHOW_GRID=Näytä &ruudukko
+IDS_PAGE_GENERAL_SHOW_SECONDS=Näytä &sekunnit aikaleimoissa
 IDS_PAGE_GENERAL_SHOW_SIZES=&Näytä koot Gt/Mt/kt/tavua -muodossa
 IDS_PAGE_GENERAL_SHOW_STRIPES=Näytä r&aidat
 IDS_PAGE_GENERAL_TITLE=Yleiset

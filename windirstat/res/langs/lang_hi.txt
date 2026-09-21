@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=भाषा (&L)
 IDS_PAGE_GENERAL_LIST_STYLE=सूची की शैली (&I)
 IDS_PAGE_GENERAL_PORTABLE=पोर्टेबल मोड में चलाएँ (सेटिंग के लिए WinDirStat.ini फ़ाइल का उपयोग करें)
 IDS_PAGE_GENERAL_SHOW_GRID=ग्रिड दिखाएँ (&G)
+IDS_PAGE_GENERAL_SHOW_SECONDS=टाइमस्टैम्प में सेकंड दिखाएँ (&E)
 IDS_PAGE_GENERAL_SHOW_SIZES=आकार GiB/MiB/KiB/बाइट प्रारूप में दिखाएँ (&S)
 IDS_PAGE_GENERAL_SHOW_STRIPES=धारियाँ दिखाएँ (&T)
 IDS_PAGE_GENERAL_TITLE=सामान्य

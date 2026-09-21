@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&Jezik
 IDS_PAGE_GENERAL_LIST_STYLE=&Slog seznama
 IDS_PAGE_GENERAL_PORTABLE=Zaganjaj v prenosnem načinu (uporabi datoteko WinDirStat.ini za nastavitve)
 IDS_PAGE_GENERAL_SHOW_GRID=Pokaži &mrežo
+IDS_PAGE_GENERAL_SHOW_SECONDS=Prikaži &sekunde v časovnih žigih
 IDS_PAGE_GENERAL_SHOW_SIZES=Prikaži velikosti v &formatu GiB/MiB/KiB/bajti
 IDS_PAGE_GENERAL_SHOW_STRIPES=Pokaži &črte
 IDS_PAGE_GENERAL_TITLE=Splošno

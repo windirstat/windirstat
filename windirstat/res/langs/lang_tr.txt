@@ -235,6 +235,7 @@ IDS_PAGE_GENERAL_LANGUAGE=&Dil
 IDS_PAGE_GENERAL_LIST_STYLE=&Liste Stili
 IDS_PAGE_GENERAL_PORTABLE=Taşınabilir modda çalıştırın (ayarlar için WinDirStat.ini dosyasını kullanın)
 IDS_PAGE_GENERAL_SHOW_GRID=Izgarayı Göster
+IDS_PAGE_GENERAL_SHOW_SECONDS=Zaman damgalarında &saniyeleri göster
 IDS_PAGE_GENERAL_SHOW_SIZES=&Boyutları GiB/MiB/KiB/bayt biçiminde göster
 IDS_PAGE_GENERAL_SHOW_STRIPES=Çizgileri Göster
 IDS_PAGE_GENERAL_TITLE=Genel
