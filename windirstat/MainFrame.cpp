@@ -155,7 +155,7 @@ void CWdsSplitterWnd::StopTracking(const bool bAccept)
     const int   totalSize = isVertical ? rcClient.Width() : rcClient.Height();
     if (totalSize <= 0) return;
 
-    const std::array paneSize = { currentPos, totalSize - currentPos };
+    const std::array paneSize = { currentPos, isVertical ? GetColumnSize(1) : GetRowSize(1) };
     for (const auto& [size, tracking] : std::views::zip(paneSize, m_paneTracking))
     {
         const auto& [onToggle, onMinimize] = tracking;
@@ -206,6 +206,12 @@ void CWdsSplitterWnd::SetSplitterPos(const double pos)
 void CWdsSplitterWnd::RestoreSplitterPos(const double posIfVirgin)
 {
     SetSplitterPos(m_wasTrackedByUser ? *m_userSplitterPos : posIfVirgin);
+    const CRect rc = GetClientRect();
+    const int minimum = ScaleForDpi(COptions::MinimizeViewThreshold);
+    const bool collapsed = GetColumnCount() > 1 ?
+        std::min(static_cast<int>(m_splitterPos * rc.Width()), GetColumnSize(1)) <= minimum :
+        std::min(static_cast<int>(m_splitterPos * rc.Height()), GetRowSize(1)) <= minimum;
+    if (m_wasTrackedByUser && collapsed) SetSplitterPos(posIfVirgin);
 }
 
 void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)

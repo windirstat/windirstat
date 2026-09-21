@@ -9530,6 +9530,99 @@ function Test-TimestampDisplayOptions {
     }
 }
 
+function Test-FileTypesPaneRecovery {
+    param([string] $Exe)
+    Write-GroupHeader 'Issue 704: File Types Pane Recovery'
+    $g = 'FileTypesRecovery'
+    $testRoot = Join-Path $BuildRoot 'file-types-recovery-test'
+    $scanRoot = Join-Path $testRoot 'scan-root'
+    $command = Get-ResourceId 'ID_VIEW_SHOWFILETYPES'
+    $cases = @(
+        @(0, 0, 0.999, 0, 0, 'vertical show command'),
+        @(0, 0, 0.999, 1, 0, 'vertical startup'),
+        @(4, 3, 0.999, 0, 1, 'horizontal show command'),
+        @(4, 3, 0.999, 1, 1, 'horizontal startup'),
+        @(0, 0, 0.600, 1, 0, 'vertical saved proportion'),
+        @(4, 3, 0.600, 1, 1, 'horizontal saved proportion'),
+        @(4, 2, 0.001, 1, 1, 'near-zero first pane after resize')
+    )
+
+    try {
+        New-Item -ItemType Directory -Force -Path $scanRoot | Out-Null
+        New-TestFile -Path (Join-Path $scanRoot 'visible.wds704') -Size 4096 -Seed 704
+        foreach ($case in $cases) {
+            $topology, $permutation, $position, $initiallyVisible, $axis, $label = $case
+            $splitterPos = [Convert]::ToHexString([BitConverter]::GetBytes([double] $position))
+            $win = Start-UiScanSession -Exe $Exe -ScanPath $scanRoot -Group $g -Label $label `
+                -OptionLines @("LayoutTopology=$topology", "LayoutPermutation=$permutation",
+                    "SubSplitterPos=$splitterPos", "ShowFileTypes=$initiallyVisible", 'GroupUnregisteredTypes=0')
+            if (!$win) { continue }
+            $mainHwnd = [IntPtr] $win.Current.NativeWindowHandle
+            $mainSplitter = [Win32MenuHelper]::GetDlgItem($mainHwnd, 0xE900)
+            $splitter = [Win32MenuHelper]::GetDlgItem($mainSplitter, 0xE900)
+            $paneId = if ($position -lt 0.01) { 0xE900 } elseif ($axis) { 0xE910 } else { 0xE901 }
+            $pane = [Win32MenuHelper]::GetDlgItem($splitter, $paneId)
+            $toggle = {
+                [void] [Win32MenuHelper]::SendMessage($mainHwnd, $script:WM_COMMAND, [IntPtr] $command, [IntPtr]::Zero)
+            }
+            $getExtent = {
+                $rect = [NativeListViewHelper]::GetWindowRectangle($pane)
+                if ($rect.Count -ne 4) { throw 'File Types pane rectangle is unavailable' }
+                $rect[$axis + 2] - $rect[$axis]
+            }
+            $isChecked = {
+                $item = @(Get-Win32MenuItems -hwnd $mainHwnd) |
+                    Where-Object CommandId -eq $command | Select-Object -First 1
+                $item -and $item.IsChecked
+            }
+            if (!$initiallyVisible) { & $toggle }
+            if ($position -lt 0.01) {
+                [NativeListViewHelper]::RestoreWindow($mainHwnd)
+                [void] [NativeListViewHelper]::ResizeWindow($mainHwnd, 1000, 640)
+                & $toggle
+                & $toggle
+                [void] [NativeListViewHelper]::ResizeWindow($mainHwnd, 1000, 1600)
+            }
+            $extent = & $getExtent
+            $list = [Win32MenuHelper]::GetDlgItem($pane, (Get-ResourceId 'ID_WDS_CONTROL'))
+            Assert-That $g "$label leaves File Types visible and populated" `
+                ($extent -gt 50 -and '.wds704' -in [NativeListViewHelper]::GetItemTexts($list)) `
+                "File Types extent: $extent pixels"
+            Assert-That $g "$label keeps the File Types menu state consistent" `
+                (& $isChecked) 'Show File Types is not checked'
+            if ($position -ne 0.6) { continue }
+
+            $splitRect = [NativeListViewHelper]::GetWindowRectangle($splitter)
+            $paneRect = [NativeListViewHelper]::GetWindowRectangle($pane)
+            $total = $splitRect[$axis + 2] - $splitRect[$axis]
+            $expected = $total - [Math]::Truncate($position * $total) - 11
+            Assert-That $g "$label retains the configured split" ([Math]::Abs($extent - $expected) -le 2) `
+                "Expected $expected pixels, got $extent"
+            $start = @(20, 20)
+            $finish = @(20, 20)
+            $start[$axis] = $paneRect[$axis] - $splitRect[$axis] - 4
+            $finish[$axis] = $total - 2
+            $startPoint = [IntPtr] (($start[1] -shl 16) -bor $start[0])
+            $endPoint = [IntPtr] (($finish[1] -shl 16) -bor $finish[0])
+            [void] [Win32MenuHelper]::SendMessage($splitter, 0x0201, [IntPtr] 1, $startPoint)
+            [void] [Win32MenuHelper]::SendMessage($splitter, 0x0200, [IntPtr] 1, $endPoint)
+            [void] [Win32MenuHelper]::SendMessage($splitter, 0x0202, [IntPtr]::Zero, $endPoint)
+            Assert-That $g "$label unchecks File Types when dragged closed" `
+                (!(& $isChecked)) 'Show File Types stayed checked'
+            & $toggle
+            $restored = & $getExtent
+            Assert-That $g "$label restores the prior split after dragging closed" `
+                ((& $isChecked) -and [Math]::Abs($restored - $extent) -le 2) `
+                "Before: $extent pixels; restored: $restored pixels"
+        }
+    }
+    catch { Assert-Fail $g 'File Types recovery regression executes' $_.Exception.Message }
+    finally {
+        try { Stop-App } catch {}
+        Remove-TestArtifacts -Path $testRoot
+    }
+}
+
 function Invoke-UiSuite {
     # UIA element lookup is process-scoped, but coordinate clicks and SendKeys
     # share the interactive desktop. Concurrent UI shards can steal focus from
@@ -9567,6 +9660,7 @@ function Invoke-UiSuite {
     try {
         if ($Issue704Only) {
             Test-TimestampDisplayOptions -Exe $ExePath
+            Test-FileTypesPaneRecovery -Exe $ExePath
             return
         }
         if ($DedupOnly) {
@@ -9620,6 +9714,7 @@ function Invoke-UiSuite {
         }
 
         & $runPhase 'Timestamp display options' { Test-TimestampDisplayOptions -Exe $ExePath }
+        & $runPhase 'File Types pane recovery' { Test-FileTypesPaneRecovery -Exe $ExePath }
 
         # -- Phase 2.5: load saved results --------------------------------------
         & $runPhase 'Load saved results' { Test-LoadResults -Exe $ExePath }
