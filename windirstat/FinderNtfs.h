@@ -37,10 +37,10 @@ class FinderNtfsContext final
     using FileRecordName = struct FileRecordName
     {
         std::wstring FileName;
-        ULONGLONG BaseRecord;
+        ULONGLONG FileReference;
 
-        FileRecordName(std::wstring fileName, const ULONGLONG baseRecord) :
-            FileName(std::move(fileName)), BaseRecord(baseRecord) {}
+        FileRecordName(std::wstring fileName, const ULONGLONG fileReference) :
+            FileName(std::move(fileName)), FileReference(fileReference) {}
     };
 
     std::unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
@@ -57,6 +57,7 @@ public:
     bool LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue);
     bool IsLoaded() const { return m_isLoaded; }
 
+    static constexpr ULONGLONG NtfsRecordMask = (1ull << 48) - 1;
     static constexpr ULONGLONG NtfsNodeRoot = 5;
     static constexpr ULONGLONG NtfsReservedMax = 16;
 };
@@ -80,7 +81,7 @@ public:
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     DWORD GetAttributes() const override { return m_currentRecord->Attributes; }
-    ULONGLONG GetIndex() const override { return m_currentRecordName->BaseRecord; }
+    ULONGLONG GetIndex() const override { return m_currentRecordName->FileReference; }
     DWORD GetReparseTag() const override { return m_currentRecord->ReparsePointTag; }
     std::wstring GetFileName() const override { return m_currentRecordName->FileName; }
     ULONGLONG GetFileSizePhysical() const override { return m_currentRecord->PhysicalSize; }

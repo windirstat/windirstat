@@ -306,6 +306,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = (mftRunOffset + bytesReadFromRun + offset) / volumeInfo.BytesPerFileRecordSegment;
                 const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
+                const ULONGLONG baseRecordSequence = fileRecord->BaseFileRecordNumber > 0 ?
+                    fileRecord->BaseFileRecordSequence : fileRecord->SequenceNumber;
+                const auto baseFileReference = baseRecordIndex | (baseRecordSequence << 48);
                 FileRecordBase* baseRecordPtr = nullptr;
                 if (std::scoped_lock lock(m_baseFileRecordMutex); true)
                 {
@@ -336,7 +339,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 
                         std::scoped_lock lock(m_parentToChildMutex);
                         auto& children = m_parentToChildMap.try_emplace(fn->ParentDirectory).first->second;
-                        children.emplace_back(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);
+                        children.emplace_back(std::wstring{ fn->FileName, fn->FileNameLength }, baseFileReference);
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
@@ -434,7 +437,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 bool FinderNtfs::FindNext()
 {
     if (m_recordIterator == m_recordIteratorEnd) return false;
-    m_index = m_recordIterator->BaseRecord;
+    m_index = m_recordIterator->FileReference & FinderNtfsContext::NtfsRecordMask;
     const auto it = m_master->m_baseFileRecordMap.find(m_index);
     if (it == m_master->m_baseFileRecordMap.end()) return false;
     m_currentRecord = &it->second;
@@ -447,7 +450,7 @@ bool FinderNtfs::FindNext()
 bool FinderNtfs::FindFile(const CItem* item)
 {
     m_base = item->GetPath();
-    const auto result = m_master->m_parentToChildMap.find(item->GetIndex());
+    const auto result = m_master->m_parentToChildMap.find(item->GetIndex() & FinderNtfsContext::NtfsRecordMask);
     if (result == m_master->m_parentToChildMap.end()) return false;
     m_recordIteratorEnd = result->second.end();
     m_recordIterator = result->second.begin();
