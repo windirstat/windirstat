@@ -125,6 +125,9 @@ void CPageFiltering::OnOK()
         COptions::FilteringIncludeFiles.Obj() != filteringIncludeFiles ||
         COptions::FilteringIncludeDirs.Obj() != filteringIncludeDirs;
 
+    if (!refreshAll) return;
+    CWinDirStatModel::Get()->StopScanningEngine();
+
     COptions::FilteringSizeMinimum = filteringSizeMinimum;
     COptions::FilteringSizeUnits = filteringSizeUnits;
     COptions::FilteringSizeComparison = filteringSizeComparison;
@@ -137,7 +140,7 @@ void CPageFiltering::OnOK()
     COptions::FilteringIncludeDirs.Obj() = filteringIncludeDirs;
     CFiltering::CompileFilters();
 
-    if (m_refreshOnFilteringChange && refreshAll)
+    if (m_refreshOnFilteringChange)
     {
         CWinDirStatModel::Get()->StartScan(
             CWinDirStatModel::Get()->GetScanPathSpec());

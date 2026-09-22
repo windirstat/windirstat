@@ -196,6 +196,7 @@ void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 
 void CWinDirStatModel::OnFilterExcludeItem()
 {
+    StopScanningEngine();
     const auto& selected = GetAllSelected();
     for (const auto* item : selected)
     {
