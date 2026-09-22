@@ -79,13 +79,13 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
 
     const SmartPointer hEvent(CloseHandle, CreateEvent(nullptr, true, false, nullptr));
     const SmartPointer hStopEvent(CloseHandle, CreateEvent(nullptr, true, false, nullptr));
+    if (hEvent == nullptr || hStopEvent == nullptr) return;
     OVERLAPPED overlapped{ .hEvent = hEvent };
     std::vector<BYTE> buffer(64ul * 1024ul);
 
-    std::stop_callback stopCallback(stopToken, [handle = hDir.Get(), stop = hStopEvent.Get()]
+    std::stop_callback stopCallback(stopToken, [stop = hStopEvent.Get()]
     {
         SetEvent(stop);
-        CancelIoEx(handle, nullptr);
     });
 
     const std::array<HANDLE, 2> waitHandles = { hEvent, hStopEvent };
@@ -99,10 +99,17 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
             if (GetLastError() != ERROR_IO_PENDING) break;
         }
 
-        if (WaitForMultipleObjects(static_cast<DWORD>(waitHandles.size()), waitHandles.data(), false, INFINITE) != WAIT_OBJECT_0) break;
-        if (stopToken.stop_requested()) break;
-
+        const DWORD waitResult = WaitForMultipleObjects(
+            static_cast<DWORD>(waitHandles.size()), waitHandles.data(), false, INFINITE);
         DWORD bytesReturned = 0;
+        if (waitResult != WAIT_OBJECT_0 || stopToken.stop_requested())
+        {
+            // Complete cancellation before releasing the request storage.
+            CancelIoEx(hDir, &overlapped);
+            GetOverlappedResult(hDir, &overlapped, &bytesReturned, true);
+            break;
+        }
+
         if (GetOverlappedResult(hDir, &overlapped, &bytesReturned, false) == 0)
         {
             if (GetLastError() == ERROR_OPERATION_ABORTED) break;
