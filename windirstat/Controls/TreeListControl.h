@@ -41,10 +41,10 @@ struct VIEWSTATE final
     CSmallRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
     CTreeListControl* control = nullptr;
     HICON icon = nullptr;  // -1 as long as not needed, >= 0: valid index in IconHandler.
-    unsigned char indent = 0; // 0 for the root item, 1 for its children, and so on.
+    int indent = 0; // 0 for the root item, 1 for its children, and so on.
     bool isExpanded = false; // Whether item is expanded.
 
-    VIEWSTATE(const unsigned char iIndent, CTreeListControl* ctrl)
+    VIEWSTATE(const int iIndent, CTreeListControl* ctrl)
         : control(ctrl), indent(iIndent) {}
 };
 
@@ -76,7 +76,7 @@ public:
     void SetExpanded(bool expanded = true) const;
     bool IsVisible() const override;
     void SetVisible(CTreeListControl * control, bool visible = true);
-    unsigned char GetIndent() const;
+    int GetIndent() const;
     CRect GetPlusMinusRect() const;
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;

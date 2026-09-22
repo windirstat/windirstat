@@ -170,7 +170,7 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
     if (visible)
     {
         assert(control != nullptr);
-        const unsigned char indent = GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1;
+        const int indent = GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1;
         std::unique_lock lock(CTreeListControl::s_viewStateMutex);
         assert(!CTreeListControl::s_viewStates.contains(this));
         CTreeListControl::s_viewStates.try_emplace(this, indent, control);
@@ -183,7 +183,7 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
     GetIconHandler()->ForgetAsyncShellInfoLookup(this);
 }
 
-unsigned char CTreeListItem::GetIndent() const
+int CTreeListItem::GetIndent() const
 {
     auto* viewState = GetViewState();
     assert(viewState != nullptr);
