@@ -45,6 +45,9 @@ protected:
     void OnChangeSearchTerm();
     void UpdateControlStatus();
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
+    CComboBox m_searchTerm;
+    std::vector<std::wstring> m_searchHistory;
 };
 
 inline std::span<const RouteEntry> SearchDlg::Routes()
@@ -52,7 +55,8 @@ inline std::span<const RouteEntry> SearchDlg::Routes()
     static constexpr std::array entries
     {
         Route::Control<&OnBnClickedOk>(BN_CLICKED, IDOK),
-        Route::Control<&OnChangeSearchTerm>(EN_CHANGE, IDC_SEARCH_TERM),
+        Route::Control<&OnChangeSearchTerm>(CBN_EDITCHANGE, IDC_SEARCH_TERM),
+        Route::Control<&OnChangeSearchTerm>(CBN_SELENDOK, IDC_SEARCH_TERM),
         Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
         Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_CASE),
         Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_SIZE_MIN),

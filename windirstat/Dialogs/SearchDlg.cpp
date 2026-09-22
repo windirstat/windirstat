@@ -32,6 +32,7 @@ SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
 bool SearchDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
+    m_searchTerm.SubclassDlgItem(IDC_SEARCH_TERM, this);
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(Handle());
@@ -91,6 +92,17 @@ bool SearchDlg::OnInitDialog()
     SetWindowPos(nullptr, 0, 0, windowRect.Width(), minimumSize.cy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
     CenterWindow();
 
+    const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
+    for (const auto line : std::views::split(COptions::SearchHistory.Obj(), L'\n'))
+    {
+        if (m_searchHistory.size() >= historyLimit) break;
+        std::wstring term(std::from_range, line);
+        if (term.ends_with(L'\r')) term.pop_back();
+        if (term.empty() || std::ranges::find(m_searchHistory, term) != m_searchHistory.end()) continue;
+        m_searchHistory.push_back(std::move(term));
+    }
+    COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
+    for (const auto& term : m_searchHistory) m_searchTerm.AddString(term);
     SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
     SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
@@ -155,6 +167,14 @@ void SearchDlg::OnBnClickedOk()
             criteria.regex).flags() & std::regex_constants::optimize) == 0) return;
 
     COptions::SearchTerm = criteria.term;
+    const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
+    if (!criteria.term.empty() && historyLimit > 0)
+    {
+        std::erase(m_searchHistory, criteria.term);
+        m_searchHistory.insert(m_searchHistory.begin(), criteria.term);
+    }
+    if (m_searchHistory.size() > historyLimit) m_searchHistory.resize(historyLimit);
+    COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
     COptions::SearchWholePhrase = criteria.wholePhrase;
     COptions::SearchCase = criteria.caseSensitive;
     COptions::SearchRegex = criteria.regex;
