@@ -36,7 +36,7 @@ void CSunburstView::DrawEmptyPlaceholder(CDC* pDC, const CRect& rect)
     };
     const int ringWidth = (radius + static_cast<int>(shades.size()) - 1)
         / static_cast<int>(shades.size());
-    const int separatorWidth = std::max(1, ScaleForDpi(1));
+    constexpr int separatorWidth = 1;
     for (const auto [ring, shade] : std::views::enumerate(shades))
     {
         const int outer = radius - static_cast<int>(ring) * ringWidth;

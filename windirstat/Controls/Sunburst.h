@@ -87,7 +87,7 @@ private:
     double m_centerRadius = 0.0;
     double m_ringWidth = 0.0;
     double m_dpiScale = 1.0;
-    float m_separatorWidth = 1.0f;
+    static constexpr float SEPARATOR_WIDTH = 1.0f;
     int m_dpiX = USER_DEFAULT_SCREEN_DPI;
     int m_dpiY = USER_DEFAULT_SCREEN_DPI;
     int m_maxDepth = 0;

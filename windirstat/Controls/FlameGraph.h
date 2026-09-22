@@ -140,7 +140,7 @@ private:
     int m_rowHeight = ROW_HEIGHT;
     int m_minLabelWidth = 40;
     int m_minLabelHeight = 14;
-    int m_separatorThickness = 1;
+    static constexpr int SEPARATOR_THICKNESS = 1;
     int m_textInsetX = 5;
     int m_textInsetY = 1;
     std::unordered_map<const CItem*, LayoutEntry> m_layout;

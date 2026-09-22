@@ -376,7 +376,7 @@ int CFlameGraphView::ComputeRowHeight(CDC* pDC) const
     GdiObjectSelection soFont(pDC, GetAppFont(m_hWnd));
     if (const auto metrics = pDC->GetTextMetrics())
     {
-        // Breadcrumbs have one scaled fill inset and one text inset on each edge.
+        // Keep enough vertical padding for breadcrumb labels at the current text scale.
         const int verticalPadding = ScaleForDpi(1) * 4;
         rowHeight = std::max(rowHeight, static_cast<int>(metrics->tmHeight) + verticalPadding);
     }

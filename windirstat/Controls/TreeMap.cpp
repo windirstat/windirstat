@@ -845,7 +845,7 @@ void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options
             if (rcFolder.Width() > 2 && rcFolder.Height() > 2)
             {
                 const COLORREF branchColor = m_folderColors.GetColor(folder.item);
-                SetDCBrushColor(dc, branchColor);
+                SetDCBrushColor(dc, CColorSpace::DimColor(branchColor));
                 FrameRect(dc, &rcFolder, borderBrush);
                 rcFolder.Deflate(frameWidth, frameWidth);
 

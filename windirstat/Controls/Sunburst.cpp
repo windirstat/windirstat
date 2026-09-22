@@ -175,7 +175,6 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
     m_dpiY = dpiY;
     m_dpiScale = (static_cast<double>(dpiX) + dpiY) * GetFontSizePercent()
         / (2.0 * USER_DEFAULT_SCREEN_DPI * 100.0);
-    m_separatorWidth = static_cast<float>(std::max(1.0, m_dpiScale));
     m_center = rc.Center();
     m_outerRadius = std::max(0.0,
         static_cast<double>(std::min(rc.Width(), rc.Height())) / 2.0
@@ -191,7 +190,7 @@ void CSunburst::BuildLayout(CItem* root, const CRect& rc, const int maxDepth,
         ? availableRadius / static_cast<double>(depthLimit)
         : 0.0;
     const double minArcPixels = std::max(
-        MIN_HIT_ARC * m_dpiScale, static_cast<double>(m_separatorWidth) * 2.0);
+        MIN_HIT_ARC * m_dpiScale, static_cast<double>(SEPARATOR_WIDTH) * 2.0);
 
     struct PendingItem
     {
@@ -326,7 +325,6 @@ void CSunburst::ClearLayout()
     m_centerRadius = 0.0;
     m_ringWidth = 0.0;
     m_dpiScale = 1.0;
-    m_separatorWidth = 1.0f;
     m_dpiX = USER_DEFAULT_SCREEN_DPI;
     m_dpiY = USER_DEFAULT_SCREEN_DPI;
     m_maxDepth = 0;
@@ -412,7 +410,7 @@ void CSunburst::RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entr
 
     const double arcLength = entry.sweepAngle * DEGREES_TO_RADIANS
         * std::midpoint(entry.innerRadius, entry.outerRadius);
-    separator.SetWidth(static_cast<float>(std::min<double>(m_separatorWidth, arcLength * 0.12)));
+    separator.SetWidth(static_cast<float>(std::min<double>(SEPARATOR_WIDTH, arcLength * 0.12)));
     separator.SetColor(ToGdiColor(CColorSpace::BlendColor(color, DarkMode::SystemColor(COLOR_WINDOW), 0.50)));
     graphics.DrawPath(&separator, &path);
 }
@@ -424,7 +422,7 @@ void CSunburst::RenderLayout(CDC* pdc) const
     graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
     graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAliasGridFit);
     Gdiplus::SolidBrush brush(Gdiplus::Color{});
-    Gdiplus::Pen separator(Gdiplus::Color{}, m_separatorWidth);
+    Gdiplus::Pen separator(Gdiplus::Color{}, SEPARATOR_WIDTH);
     separator.SetAlignment(Gdiplus::PenAlignmentInset);
     for (const LayoutEntry& entry : m_entries)
     {
