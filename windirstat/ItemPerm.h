@@ -66,7 +66,7 @@ public:
     int CompareSibling(const CTreeListItem* other, int subitem) const override;
     CTreeListItem* GetTreeListChild(int) const override { return nullptr; }
     int GetTreeListChildCount() const override { return 0; }
-    CItem* GetLinkedItem() noexcept override { return m_item.get(); }
+    CItem* GetLinkedItem() noexcept override;
     HICON GetIcon() override;
     COLORREF GetItemTextColor() const override;
 

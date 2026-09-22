@@ -97,6 +97,40 @@ int CItemPerm::CompareSibling(const CTreeListItem* other, const int subitem) con
     }
 }
 
+CItem* CItemPerm::GetLinkedItem() noexcept
+{
+    const auto* model = CWinDirStatModel::Get();
+    if (model == nullptr || !model->IsScanSettled()) return nullptr;
+
+    // Keep permission rows as snapshots, but resolve actions to the current scan tree.
+    const std::wstring_view path = m_item->GetNameView();
+    CItem* const root = model->GetRootItem();
+    const std::span<CItem* const> roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
+        std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
+    for (CItem* item : roots)
+    {
+        std::wstring rootPath = item->GetPath();
+        if (rootPath.ends_with(L'\\')) rootPath.pop_back();
+        if (!path.starts_with(rootPath) || path.size() > rootPath.size() && path[rootPath.size()] != L'\\') continue;
+
+        std::wstring_view remaining = path.substr(rootPath.size());
+        if (!remaining.empty()) remaining.remove_prefix(1);
+        while (item != nullptr && !remaining.empty())
+        {
+            if (item->IsLeaf()) { item = nullptr; break; }
+            const size_t separator = remaining.find(L'\\');
+            const std::wstring_view name = remaining.substr(0, separator);
+            const auto& children = item->GetChildren();
+            const auto child = std::ranges::find_if(children,
+                [name](const CItem* candidate) { return candidate->GetNameView() == name; });
+            item = child == children.end() ? nullptr : *child;
+            remaining = separator == std::wstring_view::npos ? std::wstring_view{} : remaining.substr(separator + 1);
+        }
+        if (item != nullptr) return item;
+    }
+    return nullptr;
+}
+
 HICON CItemPerm::GetIcon()
 {
     auto* viewState = GetViewState();
