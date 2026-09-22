@@ -509,24 +509,34 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
 
 // ── JSON save ─────────────────────────────────────────────────────────────────
 
+static bool SaveJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
+    const auto& items, const auto& writeItem)
+{
+    // Pre-quote all column key strings once.
+    std::vector<std::string> keys;
+    for (const auto& col : cols) keys.push_back(JsonQuoteW(col));
+
+    outf << "[\r\n";
+    bool first = true;
+    for (const auto& item : items)
+    {
+        if (!first) outf << ",\r\n";
+        first = false;
+        writeItem(item, keys);
+    }
+    outf << "\r\n]\r\n";
+    outf.flush();
+    return outf.good();
+}
+
 static bool SaveResultsJson(std::ofstream& outf,
     const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols,
     const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
     const bool includeOwner)
 {
-    // Pre-quote all column key strings once (cols are in FIELD_* index order)
-    std::array<std::string, FIELD_COUNT> jk;
-    for (const auto [i, col] : std::views::enumerate(cols)) jk[i] = JsonQuoteW(col);
-    const std::string jkOwner = includeOwner ? JsonQuoteW(cols[FIELD_OWNER]) : std::string{};
-
-    outf << "[\r\n";
-    bool firstItem = true;
-    for (const auto* item : items)
+    return SaveJson(outf, cols, items, [&](const CItem* item, const auto& keys)
     {
-        if (!firstItem) outf << ",\r\n";
-        firstItem = false;
-
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
@@ -536,23 +546,20 @@ static bool SaveResultsJson(std::ofstream& outf,
 
         // Write one JSON object per item
         outf << "{\r\n";
-        outf << "  " << jk[FIELD_NAME]           << ": " << JsonQuoteW(nonPathItem ? item->GetName() : item->GetPath()) << ",\r\n";
-        outf << "  " << jk[FIELD_FILES]          << ": " << item->GetFilesCount()                                       << ",\r\n";
-        outf << "  " << jk[FIELD_FOLDERS]        << ": " << item->GetFoldersCount()                                     << ",\r\n";
-        outf << "  " << jk[FIELD_SIZE_LOGICAL]   << ": " << item->GetSizeLogical()                                      << ",\r\n";
-        outf << "  " << jk[FIELD_SIZE_PHYSICAL]  << ": " << (item->GetSizePhysicalRaw() + adjustedSize)                << ",\r\n";
-        outf << "  " << jk[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
-        outf << "  " << jk[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
+        outf << "  " << keys[FIELD_NAME]           << ": " << JsonQuoteW(nonPathItem ? item->GetName() : item->GetPath()) << ",\r\n";
+        outf << "  " << keys[FIELD_FILES]          << ": " << item->GetFilesCount()                                       << ",\r\n";
+        outf << "  " << keys[FIELD_FOLDERS]        << ": " << item->GetFoldersCount()                                     << ",\r\n";
+        outf << "  " << keys[FIELD_SIZE_LOGICAL]   << ": " << item->GetSizeLogical()                                      << ",\r\n";
+        outf << "  " << keys[FIELD_SIZE_PHYSICAL]  << ": " << (item->GetSizePhysicalRaw() + adjustedSize)                << ",\r\n";
+        outf << "  " << keys[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
+        outf << "  " << keys[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
         std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
-            jk[FIELD_ATTRIBUTES_WDS], std::to_underlying(itemType),
-            jk[FIELD_INDEX], index);
+            keys[FIELD_ATTRIBUTES_WDS], std::to_underlying(itemType),
+            keys[FIELD_INDEX], index);
         if (includeOwner)
-            outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
+            outf << ",\r\n  " << keys[FIELD_OWNER] << ": " << JsonQuoteW(item->GetOwner(true));
         outf << "\r\n}";
-    }
-    outf << "\r\n]\r\n";
-    outf.flush();
-    return outf.good();
+    });
 }
 
 bool SaveResults(const std::wstring& path, CItem* rootItem)
@@ -633,33 +640,19 @@ static bool SaveDuplicatesJson(std::ofstream& outf,
     const std::vector<std::tuple<std::wstring, const CItem*, bool>>& dupeItems)
 {
     // cols order: HASH, NAME, SIZE_LOGICAL, SIZE_PHYSICAL, LAST_CHANGE, ATTRIBUTES, SAMPLED_HASH
-    const auto jHash      = JsonQuoteW(cols[0]);
-    const auto jName      = JsonQuoteW(cols[1]);
-    const auto jSizeLog   = JsonQuoteW(cols[2]);
-    const auto jSizePhys  = JsonQuoteW(cols[3]);
-    const auto jLastChg   = JsonQuoteW(cols[4]);
-    const auto jAttr      = JsonQuoteW(cols[5]);
-    const auto jSampled   = JsonQuoteW(cols[6]);
-
-    outf << "[\r\n";
-    bool first = true;
-    for (const auto& [hash, item, sampled] : dupeItems)
+    return SaveJson(outf, cols, dupeItems, [&](const auto& dupe, const auto& keys)
     {
-        if (!first) outf << ",\r\n";
-        first = false;
+        const auto& [hash, item, sampled] = dupe;
         outf << "{\r\n";
-        outf << "  " << jHash     << ": " << JsonQuoteW(hash) << ",\r\n";
-        outf << "  " << jName     << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
-        outf << "  " << jSizeLog  << ": " << item->GetSizeLogical() << ",\r\n";
-        outf << "  " << jSizePhys << ": " << item->GetSizePhysicalRaw() << ",\r\n";
-        outf << "  " << jLastChg  << ": " << JsonQuote(ToTimePoint(item->GetLastChange())) << ",\r\n";
-        outf << "  " << jAttr     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << ",\r\n";
-        outf << "  " << jSampled  << ": " << (sampled ? "true" : "false") << "\r\n";
+        outf << "  " << keys[0] << ": " << JsonQuoteW(hash) << ",\r\n";
+        outf << "  " << keys[1] << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
+        outf << "  " << keys[2] << ": " << item->GetSizeLogical() << ",\r\n";
+        outf << "  " << keys[3] << ": " << item->GetSizePhysicalRaw() << ",\r\n";
+        outf << "  " << keys[4] << ": " << JsonQuote(ToTimePoint(item->GetLastChange())) << ",\r\n";
+        outf << "  " << keys[5] << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << ",\r\n";
+        outf << "  " << keys[6] << ": " << (sampled ? "true" : "false") << "\r\n";
         outf << "}";
-    }
-    outf << "\r\n]\r\n";
-    outf.flush();
-    return outf.good();
+    });
 }
 
 // ── public dispatcher ─────────────────────────────────────────────────────────
@@ -715,33 +708,18 @@ static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstr
     const std::vector<const CItemPerm*>& items)
 {
     // cols order: NAME, ACCOUNT, ACCESS, RIGHTS, APPLIES_TO, MASK, INHERITED
-    const auto jName    = JsonQuoteW(cols[0]);
-    const auto jAccount = JsonQuoteW(cols[1]);
-    const auto jAccess  = JsonQuoteW(cols[2]);
-    const auto jRights  = JsonQuoteW(cols[3]);
-    const auto jApplies = JsonQuoteW(cols[4]);
-    const auto jMask    = JsonQuoteW(cols[5]);
-    const auto jInherited = JsonQuoteW(cols[6]);
-
-    outf << "[\r\n";
-    bool first = true;
-    for (const auto* item : items)
+    return SaveJson(outf, cols, items, [&](const CItemPerm* item, const auto& keys)
     {
-        if (!first) outf << ",\r\n";
-        first = false;
         outf << "{\r\n";
-        outf << "  " << jName    << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
-        outf << "  " << jAccount << ": " << JsonQuoteW(item->GetAccount()) << ",\r\n";
-        outf << "  " << jAccess  << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
-        outf << "  " << jRights  << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
-        outf << "  " << jApplies << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
-        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n", jMask, item->GetAccessMask());
-        outf << "  " << jInherited << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
+        outf << "  " << keys[0] << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
+        outf << "  " << keys[1] << ": " << JsonQuoteW(item->GetAccount()) << ",\r\n";
+        outf << "  " << keys[2] << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
+        outf << "  " << keys[3] << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
+        outf << "  " << keys[4] << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
+        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n", keys[5], item->GetAccessMask());
+        outf << "  " << keys[6] << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
         outf << "}";
-    }
-    outf << "\r\n]\r\n";
-    outf.flush();
-    return outf.good();
+    });
 }
 
 bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm*>& items)
