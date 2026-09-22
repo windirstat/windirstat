@@ -77,21 +77,14 @@ public:
         }
         m_extensions.clear();
 
-        if (m_parent->IsVisible() && m_parent->IsExpanded())
+        const auto append = [this] { m_parent->m_folderInfo->m_children.append_range(m_children); };
+        if (!m_parent->MutateHiddenChildren(append)) CMainFrame::Get()->InvokeInMessageThread([&]
         {
-            CMainFrame::Get()->InvokeInMessageThread([this]
-            {
-                auto& children = m_parent->m_folderInfo->m_children;
-                children.append_range(m_children);
-                const std::vector<CTreeListItem*> rows(m_children.begin(), m_children.end());
-                CFileTreeControl::Get()->OnChildrenAdded(m_parent, rows);
-            });
-        }
-        else
-        {
-            auto& children = m_parent->m_folderInfo->m_children;
-            children.append_range(m_children);
-        }
+            append();
+            if (!m_parent->IsExpanded()) return;
+            const std::vector<CTreeListItem*> rows(m_children.begin(), m_children.end());
+            CFileTreeControl::Get()->OnChildrenAdded(m_parent, rows);
+        });
         for (CItem* child : m_children)
         {
             if (child->IsTypeOrFlag(IT_FILE)) CFileTopControl::Get()->ProcessTop(child);
@@ -273,6 +266,16 @@ bool CItem::HasShellIdentity() const noexcept
     return !IsTypeOrFlag(ITF_MTP) || FinderMtp::HasShellIdentity(m_index);
 }
 
+bool CItem::MutateHiddenChildren(const std::function<void()>& mutation) const
+{
+    // Progress reads drive children even when their rows are hidden.
+    if (IsTypeOrFlag(IT_DRIVE, IT_MYCOMPUTER) && CMainFrame::Get() != nullptr) return false;
+    std::shared_lock lock(CTreeListControl::s_viewStateMutex);
+    if (CTreeListControl::s_viewStates.contains(this)) return false;
+    mutation();
+    return true;
+}
+
 void CItem::AddChild(CItem* child, const bool addOnly)
 {
     assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
@@ -289,16 +292,13 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
-    if (IsVisible() && IsExpanded())
+    const auto append = [this, child] { m_folderInfo->m_children.push_back(child); };
+    if (!MutateHiddenChildren(append)) CMainFrame::Get()->InvokeInMessageThread([&]
     {
-        CMainFrame::Get()->InvokeInMessageThread([this, child]
-        {
-            // Add child in UI thread since UI thread immediately uses it
-            m_folderInfo->m_children.push_back(child);
-            CFileTreeControl::Get()->OnChildAdded(this, child);
-        });
-    }
-    else m_folderInfo->m_children.push_back(child);
+        // Add child in UI thread since UI thread immediately uses it
+        append();
+        if (IsExpanded()) CFileTreeControl::Get()->OnChildAdded(this, child);
+    });
 }
 
 void CItem::RemoveChild(CItem* child) const
@@ -306,21 +306,15 @@ void CItem::RemoveChild(CItem* child) const
     assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || child->GetParentDrive() == nullptr ||
         child->FindHardlinksItem() == nullptr);
 
-    if (IsVisible())
+    const auto remove = [this, child]
     {
-        CMainFrame::Get()->InvokeInMessageThread([this, child]
-        {
-            CFileTreeControl::Get()->OnChildRemoved(this, child);
-        });
-    }
-
-    auto& children = m_folderInfo->m_children;
-    if (const auto it = std::ranges::find(children, child); it != children.end())
-    {
-        children.erase(it);
-    }
-
-    delete child;
+        if (IsVisible()) CFileTreeControl::Get()->OnChildRemoved(this, child);
+        auto& children = m_folderInfo->m_children;
+        if (const auto it = std::ranges::find(children, child); it != children.end()) children.erase(it);
+        delete child;
+    };
+    if (CMainFrame::Get() != nullptr) CMainFrame::Get()->InvokeInMessageThread(remove);
+    else remove();
 }
 
 void CItem::RemoveAllChildren() const
@@ -1026,8 +1020,12 @@ void CItem::SortItemsBySizePhysical() const
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    m_folderInfo->m_children.shrink_to_fit();
-    std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
+    const auto sort = [this]
+    {
+        m_folderInfo->m_children.shrink_to_fit();
+        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
+    };
+    if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }
 
 void CItem::SortItemsBySizeLogical() const
@@ -1035,8 +1033,12 @@ void CItem::SortItemsBySizeLogical() const
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    m_folderInfo->m_children.shrink_to_fit();
-    std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
+    const auto sort = [this]
+    {
+        m_folderInfo->m_children.shrink_to_fit();
+        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
+    };
+    if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }
 
 void CItem::UpdateStatsFromDisk()

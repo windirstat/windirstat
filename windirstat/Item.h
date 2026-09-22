@@ -343,6 +343,7 @@ private:
     inline static std::atomic<ULONGLONG> scanClockState = 0;
     static ULONG GetScanTickCount() noexcept;
     class ScanBatch;
+    bool MutateHiddenChildren(const std::function<void()>& mutation) const;
     CItem* AddDirectory(const Finder& finder, ScanBatch& batch);
     CItem* AddFile(const Finder& finder, ScanBatch& batch);
 

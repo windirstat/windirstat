@@ -160,6 +160,7 @@ protected:
 
 private:
     friend class CTreeListItem;
+    friend class CItem;
     void ClearViewStates();
     inline static std::shared_mutex s_viewStateMutex;
     inline static std::unordered_map<const CTreeListItem*, VIEWSTATE> s_viewStates;

@@ -132,7 +132,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 
     // Hit test
     const int i = HitTest(point);
-    if (i == -1) return;
+    if (i == -1 || !CWinDirStatModel::Get()->IsScanSettled()) return;
 
     // Check if item is a hardlink or hardlinks file reference
     const auto* item = static_cast<const CItem*>(GetItem(i));
