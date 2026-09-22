@@ -53,6 +53,8 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
 {
     count = 0;
     bytesUsed = 0;
+    if (!IsElevationActive()) return;
+
     CComPtr<IWbemServices> svcObj;
     CComPtr<IEnumWbemClassObject> enumObj;
     if (FAILED(WmiConnect(svcObj)) ||
