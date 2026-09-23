@@ -35,6 +35,7 @@ public:
 
 protected:
     bool OnInitDialog() override;
+    bool PreprocessMessage(MSG* pMsg) override;
 
 public:
     static std::span<const RouteEntry> Routes();

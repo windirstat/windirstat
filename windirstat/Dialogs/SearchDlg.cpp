@@ -101,7 +101,7 @@ bool SearchDlg::OnInitDialog()
     }
     COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
     for (const auto& term : m_searchHistory) m_searchTerm.AddString(term);
-    SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
+    if (!m_searchHistory.empty()) SetText(IDC_SEARCH_TERM, m_searchHistory.front());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
     SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
     SetChecked(IDC_SEARCH_REGEX, COptions::SearchRegex);
@@ -117,6 +117,20 @@ bool SearchDlg::OnInitDialog()
 
     UpdateControlStatus();
     return true;
+}
+
+bool SearchDlg::PreprocessMessage(MSG* pMsg)
+{
+    // Handle MRU delete key for search term combo box
+    if (auto result = RemoveSelectedHistoryEntry(pMsg, m_searchTerm, m_searchHistory))
+    {
+        SetText(IDC_SEARCH_TERM, *result);
+        COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
+        UpdateControlStatus();
+        return true;
+    }
+
+    return CDialog::PreprocessMessage(pMsg);
 }
 
 bool SearchDlg::ReadCriteria(SearchCriteria& criteria) const
@@ -164,7 +178,6 @@ void SearchDlg::OnBnClickedOk()
         (CFileSearchControl::ComputeSearchRegex(criteria.term, criteria.caseSensitive,
             criteria.regex).flags() & std::regex_constants::optimize) == 0) return;
 
-    COptions::SearchTerm = criteria.term;
     const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
     if (!criteria.term.empty() && historyLimit > 0)
     {

@@ -100,6 +100,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
         const std::wstring& lpVerb = L"", HWND hwnd = GetMainWindowHandle(),
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL, ULONG fMask = 0, HANDLE* process = nullptr);
 bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
+std::optional<std::wstring> RemoveSelectedHistoryEntry(MSG* pMsg, CComboBox& comboBox, std::vector<std::wstring>& history);
 
 std::wstring GetLocalizedMenuText(std::wstring_view textId, std::wstring_view detail = {});
 
