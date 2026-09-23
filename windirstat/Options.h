@@ -339,7 +339,6 @@ public:
     inline static Setting<std::vector<int>> PermsViewColumnVisibility{ OptionsPerms, L"ColumnVisibility" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesDrives{ OptionsDriveSelect, L"SelectDrivesDrives" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
-    inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
     inline static Setting<std::wstring> SearchHistory{ OptionsSearch, L"SearchHistory" };
     inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };
     inline static Setting<std::wstring> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum" };

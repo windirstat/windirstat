@@ -770,3 +770,31 @@ std::wstring GetAcceleratorString(const UINT commandID)
     const auto cacheEntry = std::ranges::lower_bound(cache, commandID, {}, &std::pair<UINT, std::wstring>::first);
     return (cacheEntry != cache.end() && cacheEntry->first == commandID) ? cacheEntry->second : wds::strEmpty;
 }
+
+// Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
+std::optional<std::wstring> RemoveSelectedHistoryEntry(MSG* pMsg, CComboBox& comboBox, std::vector<std::wstring>& history)
+{
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && comboBox.GetDroppedState())
+    {
+        if (pMsg->hwnd == comboBox.m_hWnd || ::GetParent(pMsg->hwnd) == comboBox.m_hWnd)
+        {
+            const int n = comboBox.GetCurSel();
+            if (n != CB_ERR && n < static_cast<int>(history.size()))
+            {
+                history.erase(history.begin() + n);
+                comboBox.DeleteString(n);
+                const int count = comboBox.GetCount();
+
+                if (count > 0)
+                {
+                    const int newSelection = std::min(n, count - 1);
+                    comboBox.SetCurSel(newSelection);
+                    return comboBox.GetItemText(newSelection);
+                }
+
+                return wds::strEmpty;
+            }
+        }
+    }
+    return std::nullopt;
+}
