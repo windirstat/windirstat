@@ -349,7 +349,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
 
     pdc->FillSolidRect(rc, drawColor);
 
-    RenderLabel(pdc, item, rc);
+    RenderLabel(pdc, item, rc, drawColor);
 
     // Each item owns its right and bottom separators. Solid strips avoid a GDI
     // pen allocation per tile and remain crisp at every scaled row height.
@@ -377,7 +377,7 @@ void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rec
     if (!fillRc.IsEmpty())
     {
         pdc->FillSolidRect(fillRc, color);
-        RenderLabel(pdc, item, fillRc);
+        RenderLabel(pdc, item, fillRc, color);
     }
 
     if (separator > 0)
@@ -390,14 +390,16 @@ void CFlameGraph::RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rec
     }
 }
 
-void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item, const CRect& rc) const
+void CFlameGraph::RenderLabel(CDC* pdc, const CItem* item,
+    const CRect& rc, const COLORREF background) const
 {
     if (rc.Width() < m_minLabelWidth || rc.Height() < m_minLabelHeight) return;
 
     const auto name = item->GetNameView(true);
     if (name.empty()) return;
 
-    const ScopedTextColor textColor(pdc->Handle(), DarkMode::SystemColor(COLOR_WINDOWTEXT));
+    const ScopedTextColor textColor(pdc->Handle(),
+        CColorSpace::GetTextColor(background, DarkMode::SystemColor(COLOR_WINDOWTEXT)));
     CRect textRc = rc;
     textRc.Deflate(m_textInsetX, m_textInsetY);
     pdc->DrawText(name, &textRc,

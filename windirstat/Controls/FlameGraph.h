@@ -104,7 +104,7 @@ private:
     void RenderLayout(CDC* pdc, bool breadcrumbs) const;
     void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle) const;
     void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle) const;
-    void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc) const;
+    void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc, COLORREF background) const;
 
     template<typename Visitor>
         requires std::invocable<Visitor&, const RowItem&, const CRect&>

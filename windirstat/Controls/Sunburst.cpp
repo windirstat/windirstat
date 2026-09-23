@@ -532,7 +532,8 @@ bool CSunburst::RenderLabel(Gdiplus::Graphics& graphics,
 
     const auto dpiScale = static_cast<Gdiplus::REAL>(m_dpiScale);
     const COLORREF itemColor = GetItemColor(entry);
-    const Gdiplus::SolidBrush textBrush(ToGdiColor(CColorSpace::GetContrastingColor(itemColor)));
+    const Gdiplus::SolidBrush textBrush(ToGdiColor(
+        CColorSpace::GetTextColor(itemColor, DarkMode::SystemColor(COLOR_WINDOWTEXT))));
     if (entry.depth == 0)
     {
         const auto half = static_cast<Gdiplus::REAL>(entry.outerRadius * 0.70);

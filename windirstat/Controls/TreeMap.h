@@ -39,6 +39,17 @@ public:
         return GetRelativeLuminance(color) > 0.179 ? RGB(0, 0, 0) : RGB(255, 255, 255);
     }
 
+    static COLORREF GetTextColor(const COLORREF background, const COLORREF preferred)
+    {
+        const double backgroundLuminance = GetRelativeLuminance(background) + 0.05;
+        const double textLuminance = GetRelativeLuminance(preferred) + 0.05;
+        const double contrast = std::max(backgroundLuminance, textLuminance)
+            / std::min(backgroundLuminance, textLuminance);
+
+        // Favor consistent theme text until its contrast drops below 3:1.
+        return contrast >= 3.0 ? preferred : GetContrastingColor(background);
+    }
+
     static constexpr double GraphPaletteBrightness = 0.6;
     static constexpr DWORD GraphColorDarker = 0x01000000;
     static constexpr DWORD GraphColorLighter = 0x02000000;
