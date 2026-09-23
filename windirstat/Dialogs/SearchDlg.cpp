@@ -86,11 +86,9 @@ bool SearchDlg::OnInitDialog()
     m_layout.AddControl(IDC_SEARCH_OWNER, 0, 0, 1, 0);
 
     const CSize minimumSize = GetWindowRect().Size();
-    m_layout.OnInitDialog(false);
-
-    CRect rect = GetWindowRect();
-    SetWindowPos(nullptr, 0, 0, windowRect.Width(), minimumSize.cy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-    CenterWindow();
+    m_minWidth = minimumSize.cx;
+    m_fixedHeight = minimumSize.cy;
+    m_layout.OnInitDialog(true);
 
     const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
     for (const auto line : std::views::split(COptions::SearchHistory.Obj(), L'\n'))
@@ -229,4 +227,14 @@ HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
     return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void SearchDlg::OnGetMinMaxInfo(MINMAXINFO* pMMI)
+{
+    if (pMMI != nullptr && m_fixedHeight > 0)
+    {
+        pMMI->ptMinTrackSize.x = m_minWidth;
+        pMMI->ptMinTrackSize.y = m_fixedHeight;
+        pMMI->ptMaxTrackSize.y = m_fixedHeight;
+    }
 }

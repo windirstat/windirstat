@@ -45,9 +45,12 @@ protected:
     void OnChangeSearchTerm();
     void UpdateControlStatus();
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    void OnGetMinMaxInfo(MINMAXINFO* pMMI);
 
     CComboBox m_searchTerm;
     std::vector<std::wstring> m_searchHistory;
+    int m_minWidth = 0;
+    int m_fixedHeight = 0;
 };
 
 inline std::span<const RouteEntry> SearchDlg::Routes()
@@ -68,6 +71,7 @@ inline std::span<const RouteEntry> SearchDlg::Routes()
         Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_FILES),
         Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_FOLDERS),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
+        Route::Window<&OnGetMinMaxInfo>(WM_GETMINMAXINFO),
     };
     return entries;
 }
