@@ -316,7 +316,7 @@ std::optional<CTreeMap::Preset> CTreeMap::GetMatchingPreset(const Options& optio
             candidate.GetLightSourceXPercent(), candidate.GetLightSourceYPercent());
     };
     const auto current = appearance(options);
-    const int maxPreset = std::to_underlying(Preset::HighContrast);
+    constexpr auto maxPreset = std::to_underlying(Preset::HighContrast);
     const auto presets = std::views::iota(0, maxPreset + 1);
     const auto it = std::ranges::find_if(presets, [&](const int preset) {
         return current == appearance(GetPreset(static_cast<Preset>(preset)));
@@ -655,6 +655,7 @@ void CTreeMap::RecurseCheckTree(const CItem* item)
         assert(sum == item->TmiGetSize());
     }
 }
+
 void CTreeMap::DrawTreeMap(HDC dc, CRect rc, CItem* root, const Options* options)
 {
     ClearLayout();
