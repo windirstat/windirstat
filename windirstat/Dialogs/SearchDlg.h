@@ -56,6 +56,11 @@ protected:
     int m_fixedHeight = 0;
 };
 
+inline constexpr int CombineSearchFlags(bool regex, bool wholePhrase, bool caseSensitive) noexcept
+{
+    return (regex ? 1 : 0) | (wholePhrase ? 2 : 0) | (caseSensitive ? 4 : 0);
+}
+
 inline std::span<const RouteEntry> SearchDlg::Routes()
 {
     static constexpr std::array entries

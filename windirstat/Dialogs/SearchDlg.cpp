@@ -91,8 +91,8 @@ bool SearchDlg::OnInitDialog()
     m_layout.OnInitDialog(true);
 
     const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
-    const DWORD_PTR defaultFlags = COptions::SearchRegex.Obj() |
-        (COptions::SearchWholePhrase.Obj() << 1) | (COptions::SearchCase.Obj() << 2);
+    const DWORD_PTR defaultFlags = CombineSearchFlags(COptions::SearchRegex.Obj(),
+        COptions::SearchWholePhrase.Obj(), COptions::SearchCase.Obj());
     for (const auto line : std::views::split(COptions::SearchHistory.Obj(), L'\n'))
     {
         if (m_searchHistory.size() >= historyLimit) break;
@@ -217,7 +217,7 @@ void SearchDlg::SaveSearchHistory(const SearchCriteria* criteria) const
     std::vector<std::wstring> history;
     if (criteria != nullptr && !criteria->term.empty() && historyLimit > 0)
     {
-        const int flags = criteria->regex | (criteria->wholePhrase << 1) | (criteria->caseSensitive << 2);
+        const int flags = CombineSearchFlags(criteria->regex, criteria->wholePhrase, criteria->caseSensitive);
         history.push_back(std::format(L"\x1f{}{}", flags, criteria->term));
     }
     for (int i = 0; i < m_searchTerm.GetCount() && history.size() < historyLimit; ++i)
