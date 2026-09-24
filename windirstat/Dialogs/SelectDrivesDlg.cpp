@@ -55,65 +55,68 @@ CDriveItem::CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstr
     , m_subst(!m_mtp && IsSUBSTedDrive(m_path))
     , m_name(m_mtp && !name.empty() ? std::move(name) : m_path) {}
 
-CDriveItem::~CDriveItem()
+void CDriveItem::StartQuery()
 {
-    StopQuery();
-}
-
-void CDriveItem::StartQuery(const HWND dialog)
-{
-    assert(dialog != nullptr);
-    assert(!m_queryThread.joinable()); // must not be called while a query is in progress
-
-    m_dialog = dialog;
-
-    // Capture 'this' and the path for the thread
-    m_queryThread = std::jthread([this](const std::stop_token& stopToken)
-    {
-        std::wstring name;
-        ULONGLONG total = 0;
-        ULONGLONG free = 0;
-        const bool success = RetrieveDriveInformation(m_path, name, total, free);
-
-        if (stopToken.stop_requested())
-        {
-            return;
-        }
-
-        // Store results before posting; Windows message-queue delivery ensures
-        // these writes are visible to the GUI thread when it handles the message.
-        if (success)
-        {
-            if (!name.empty()) m_name = std::move(name);
-            m_totalBytes = total;
-            m_freeBytes = free;
-        }
-
-        if (const HWND dialog = m_dialog.load(); dialog != nullptr)
-        {
-            ::PostMessage(dialog, WM_WDS_DRIVE_INFO_FINISHED, success ? 1 : 0, reinterpret_cast<LPARAM>(this));
-        }
+    // Only the GUI thread accesses this registry; reuse queries still pending when the dialog is reopened.
+    static std::map<std::wstring, std::shared_future<DriveInformation>> queries;
+    std::erase_if(queries, [](const auto& entry) {
+        return entry.second.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
     });
-}
-
-void CDriveItem::StopQuery()
-{
-    m_dialog = nullptr;   // prevent any pending PostMessage from reaching the dialog
-    m_queryThread = {};   // triggers request_stop + join via jthread destructor
-}
-
-void CDriveItem::SetDriveInformation(const bool success)
-{
-    m_querying = false;
-    m_success  = success;
-
-    if (m_success)
+    if (const auto it = queries.find(m_path); it != queries.end())
     {
-        // guard against quotas where free may exceed total, or total is zero
-        m_used = (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)
-            ? static_cast<double>(m_totalBytes - m_freeBytes) / m_totalBytes
-            : 0.0;
+        m_query = it->second;
+        return;
     }
+
+    try
+    {
+        std::packaged_task<DriveInformation()> query([path = m_path]
+        {
+            SetThreadErrorMode(GetThreadErrorMode() | SEM_FAILCRITICALERRORS, nullptr);
+            DriveInformation info;
+            info.success = RetrieveDriveInformation(path, info.name, info.total, info.free);
+            return info;
+        });
+        m_query = query.get_future().share();
+        queries.emplace(m_path, m_query);
+
+        // The worker owns its inputs and result; neither dialog teardown nor future destruction waits for it.
+        std::thread(std::move(query)).detach();
+    }
+    catch (...)
+    {
+        queries.erase(m_path);
+        m_query = {};
+    }
+}
+
+bool CDriveItem::UpdateDriveInformation()
+{
+    if (!m_query.valid() || m_query.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return false;
+
+    try
+    {
+        const auto& info = m_query.get();
+        m_success = info.success;
+        if (m_success)
+        {
+            if (!info.name.empty()) m_name = info.name;
+            m_totalBytes = info.total;
+            m_freeBytes = info.free;
+
+            // guard against quotas where free may exceed total, or total is zero
+            m_used = (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)
+                ? static_cast<double>(m_totalBytes - m_freeBytes) / m_totalBytes
+                : 0.0;
+        }
+    }
+    catch (...)
+    {
+        m_success = false;
+    }
+    m_query = {};
+
+    return true;
 }
 
 int CDriveItem::Compare(const CWdsListItem* baseOther, const int subitem) const
@@ -191,7 +194,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         break;
 
     case COL_DRIVES_GRAPH:
-        if (m_querying)
+        if (IsQuerying())
         {
             s = Localization::Lookup(IDS_QUERYING);
         }
@@ -357,14 +360,14 @@ bool CSelectDrivesDlg::OnInitDialog()
 
     {
         const auto driveList = GetDriveList({ DRIVE_REMOVABLE, DRIVE_FIXED,
-            DRIVE_REMOTE, DRIVE_CDROM, DRIVE_RAMDISK });
+            DRIVE_REMOTE, DRIVE_CDROM, DRIVE_RAMDISK }, false, false);
         const bool wasSuppressingItemChanged = m_suppressItemChanged;
         m_suppressItemChanged = true;
         for (const auto & drive : driveList)
         {
             const auto item = new CDriveItem(&m_driveList, drive + L'\\');
+            item->StartQuery();
             m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
-            item->StartQuery(m_hWnd);
 
             if (std::ranges::contains(m_selectedDrives, drive))
             {
@@ -376,8 +379,8 @@ bool CSelectDrivesDlg::OnInitDialog()
         for (const auto& device : FinderMtp::GetDevices())
         {
             const auto item = new CDriveItem(&m_driveList, device.path, device.name);
+            item->StartQuery();
             m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
-            item->StartQuery(m_hWnd);
 
             if (std::ranges::contains(m_selectedDrives, device.path))
             {
@@ -409,6 +412,7 @@ bool CSelectDrivesDlg::OnInitDialog()
         m_okButton.SetFocus();
 
     UpdateButtons();
+    SetTimer(QUERY_TIMER_ID, 100);
     return false; // we have set the focus.
 }
 
@@ -597,27 +601,27 @@ LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
     return 0;
 }
 
-LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM wParam, const LPARAM lparam)
+void CSelectDrivesDlg::OnTimer(const UINT_PTR nIDEvent)
 {
-    const auto item = std::bit_cast<CDriveItem*>(lparam);
-    const bool success = (wParam != 0);
-
-    // Item may have already been deleted during dialog teardown; nothing to update
-    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = lparam };
-    if (m_driveList.FindItem(&fi) == -1)
+    if (nIDEvent != QUERY_TIMER_ID)
     {
-        return 0;
+        CLayoutDialog::OnTimer(nIDEvent);
+        return;
     }
 
-    // Update the item with the query result (data written by thread) and recompute m_used
-    item->SetDriveInformation(success);
+    bool updated = false;
+    bool querying = false;
+    for (const int i : std::views::iota(0, m_driveList.GetItemCount()))
+    {
+        CDriveItem* item = m_driveList.GetItem(i);
+        updated |= item->UpdateDriveInformation();
+        querying |= item->IsQuerying();
+    }
+    if (!querying) ::KillTimer(m_hWnd, QUERY_TIMER_ID);
+    if (!updated) return;
 
-    const bool wasSuppressingItemChanged = m_suppressItemChanged;
-    m_suppressItemChanged = true;
+    const ScopedValue suppressItemChanged(m_suppressItemChanged, true);
     m_driveList.SortItems();
-    m_suppressItemChanged = wasSuppressingItemChanged;
-
-    return 0;
 }
 
 void CSelectDrivesDlg::OnSysColorChange()

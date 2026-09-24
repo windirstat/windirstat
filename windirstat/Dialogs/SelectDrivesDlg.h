@@ -22,7 +22,6 @@
 #include "Layout.h"
 
 inline constexpr UINT WM_WDS_SELECT_DRIVES_OK = WM_APP + 0x110;
-inline constexpr UINT WM_WDS_DRIVE_INFO_FINISHED = WM_APP + 0x111;
 
 //
 // The dialog has these three radio buttons.
@@ -44,12 +43,10 @@ class CDriveItem final : public CWdsListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstring name = {});
-    ~CDriveItem() override;
 
-    void StartQuery(HWND dialog);
-    void StopQuery();
-
-    void SetDriveInformation(bool success);
+    void StartQuery();
+    bool UpdateDriveInformation();
+    bool IsQuerying() const { return m_query.valid(); }
 
     int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
@@ -69,8 +66,7 @@ private:
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_querying = true; // Information thread is running.
-    bool m_success = false; // Drive is accessible. false while m_querying is true.
+    bool m_success = false; // Drive is accessible. false while querying.
     bool m_subst = false; // Drive is subst'd
 
     std::wstring m_name; // e.g. "BOOT (C:)"
@@ -79,9 +75,15 @@ private:
 
     double m_used = 0.0; // used space / total space
 
-    // Thread for querying drive information
-    std::jthread m_queryThread;
-    std::atomic<HWND> m_dialog{ nullptr };
+    struct DriveInformation
+    {
+        bool success = false;
+        std::wstring name;
+        ULONGLONG total = 0;
+        ULONGLONG free = 0;
+    };
+
+    std::shared_future<DriveInformation> m_query;
 };
 
 //
@@ -116,6 +118,7 @@ class CSelectDrivesDlg final : public MessageTarget<CSelectDrivesDlg, CLayoutDia
 {
 public:
     enum : std::uint8_t { IDD = IDD_SELECTDRIVES };
+    static constexpr UINT_PTR QUERY_TIMER_ID = 1;
 
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;
@@ -154,7 +157,7 @@ protected:
     void OnBnClickedFastScanCheckbox();
     void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     LRESULT OnWmuOk(WPARAM, LPARAM);
-    LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
+    void OnTimer(UINT_PTR nIDEvent);
     void OnSysColorChange();
     void OnBnClickedRadioTargetDrivesAll();
     void OnBnClickedRadioTargetDrivesSubset();
@@ -201,7 +204,7 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
         Route::Notify<&OnLvnItemChangedDrives>(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST),
         Route::Notify<&OnNMSetfocusTargetDrivesList>(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST),
         Route::Window<&OnWmuOk>(WM_WDS_SELECT_DRIVES_OK),
-        Route::Window<&OnWmDriveInfoThreadFinished>(WM_WDS_DRIVE_INFO_FINISHED),
+        Route::Window<&OnTimer>(WM_TIMER),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnSysColorChange>(WM_SYSCOLORCHANGE),
     };

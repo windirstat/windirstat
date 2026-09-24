@@ -83,7 +83,7 @@ std::vector<std::wstring> GetDriveList(
 
 // File system helpers
 bool FolderExists(const std::wstring& path) noexcept;
-bool DriveExists(const std::wstring& path) noexcept;
+bool DriveExists(const std::wstring& path, bool checkAccess = true) noexcept;
 bool IsLocalDrive(const std::wstring& path) noexcept;
 std::wstring GetVolumeName(const std::wstring& rootPath);
 bool DeleteFileForce(const std::wstring& path, DWORD attributes = INVALID_FILE_ATTRIBUTES);

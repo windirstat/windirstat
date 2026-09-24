@@ -210,15 +210,13 @@ bool FolderExists(const std::wstring& path) noexcept
     return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
-bool DriveExists(const std::wstring& path) noexcept
+bool DriveExists(const std::wstring& path, const bool checkAccess) noexcept
 {
     if (path.size() < 2 || path[1] != wds::chrColon) return false;
 
-    const int d = std::toupper(path[0]) - wds::strAlpha[0];
-    const DWORD mask = 0x1 << d;
-
-    return (mask & GetLogicalDrives()) != 0 &&
-        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != 0;
+    const int d = std::towupper(path[0]) - wds::strAlpha[0];
+    return d >= 0 && d < 26 && (GetLogicalDrives() & (1UL << d)) != 0 &&
+        (!checkAccess || GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != 0);
 }
 
 bool IsLocalDrive(const std::wstring& path) noexcept
@@ -920,7 +918,8 @@ void CopyAllDriveMappings() noexcept
             keyDrive.QueryStringValue(L"RemotePath", remotePath.data(), &remotePathSize) == ERROR_SUCCESS)
         {
             std::wstring withColon = driveLetter.data() + std::wstring(L":");
-            if (DriveExists(withColon)) continue;
+            // An assigned drive letter needs no mapping, even if its server is unresponsive.
+            if (DriveExists(withColon, false)) continue;
 
             futures.emplace_back(std::async(std::launch::async, [withColon, remotePath]
             {
