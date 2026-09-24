@@ -91,16 +91,24 @@ bool SearchDlg::OnInitDialog()
     m_layout.OnInitDialog(true);
 
     const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
+    const DWORD_PTR defaultFlags = COptions::SearchRegex.Obj() |
+        (COptions::SearchWholePhrase.Obj() << 1) | (COptions::SearchCase.Obj() << 2);
     for (const auto line : std::views::split(COptions::SearchHistory.Obj(), L'\n'))
     {
         if (m_searchHistory.size() >= historyLimit) break;
         std::wstring term(std::from_range, line);
         if (term.ends_with(L'\r')) term.pop_back();
+        auto flags = defaultFlags;
+        if (term.size() >= 2 && term[0] == L'\x1f' && term[1] >= L'0' && term[1] <= L'7')
+        {
+            flags = term[1] - L'0';
+            term.erase(0, 2);
+        }
         if (term.empty() || std::ranges::find(m_searchHistory, term) != m_searchHistory.end()) continue;
+        m_searchTerm.SetItemData(m_searchTerm.AddString(term), flags);
         m_searchHistory.push_back(std::move(term));
     }
-    COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
-    for (const auto& term : m_searchHistory) m_searchTerm.AddString(term);
+    SaveSearchHistory();
     SetText(IDC_SEARCH_TERM, COptions::SearchTerm.Obj());
     SetChecked(IDC_SEARCH_WHOLE_PHRASE, COptions::SearchWholePhrase);
     SetChecked(IDC_SEARCH_CASE, COptions::SearchCase);
@@ -124,8 +132,8 @@ bool SearchDlg::PreprocessMessage(MSG* pMsg)
     if (const auto removed = RemoveSelectedHistoryEntry(pMsg, m_searchTerm, m_searchHistory))
     {
         if (COptions::SearchTerm.Obj() == *removed) COptions::SearchTerm = wds::strEmpty;
-        COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
-        OnChangeSearchTerm();
+        SaveSearchHistory();
+        OnSelectSearchTerm();
         return true;
     }
 
@@ -178,14 +186,7 @@ void SearchDlg::OnBnClickedOk()
             criteria.regex).flags() & std::regex_constants::optimize) == 0) return;
 
     COptions::SearchTerm = criteria.term;
-    const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
-    if (!criteria.term.empty() && historyLimit > 0)
-    {
-        std::erase(m_searchHistory, criteria.term);
-        m_searchHistory.insert(m_searchHistory.begin(), criteria.term);
-    }
-    if (m_searchHistory.size() > historyLimit) m_searchHistory.resize(historyLimit);
-    COptions::SearchHistory = JoinString(m_searchHistory, L'\n');
+    SaveSearchHistory(&criteria);
     COptions::SearchWholePhrase = criteria.wholePhrase;
     COptions::SearchCase = criteria.caseSensitive;
     COptions::SearchRegex = criteria.regex;
@@ -207,6 +208,39 @@ void SearchDlg::OnBnClickedOk()
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
     tabbedView->SetActiveSearchView();
+}
+
+void SearchDlg::SaveSearchHistory(const SearchCriteria* criteria) const
+{
+    // Prefix each term with U+001F and a digit: regex = 1, whole phrase = 2, case sensitive = 4.
+    const size_t historyLimit = static_cast<size_t>(COptions::SearchHistoryCount.Obj());
+    std::vector<std::wstring> history;
+    if (criteria != nullptr && !criteria->term.empty() && historyLimit > 0)
+    {
+        const int flags = criteria->regex | (criteria->wholePhrase << 1) | (criteria->caseSensitive << 2);
+        history.push_back(std::format(L"\x1f{}{}", flags, criteria->term));
+    }
+    for (int i = 0; i < m_searchTerm.GetCount() && history.size() < historyLimit; ++i)
+    {
+        const std::wstring term = m_searchTerm.GetItemText(i);
+        if (criteria != nullptr && term == criteria->term) continue;
+        history.push_back(std::format(L"\x1f{}{}", m_searchTerm.GetItemData(i), term));
+    }
+    COptions::SearchHistory = JoinString(history, L'\n');
+}
+
+void SearchDlg::OnSelectSearchTerm()
+{
+    const int selection = m_searchTerm.GetCurSel();
+    if (selection != CB_ERR)
+    {
+        const DWORD_PTR flags = m_searchTerm.GetItemData(selection);
+        m_searchTerm.SetCurSel(selection);
+        SetChecked(IDC_SEARCH_REGEX, (flags & 1) != 0);
+        SetChecked(IDC_SEARCH_WHOLE_PHRASE, (flags & 2) != 0);
+        SetChecked(IDC_SEARCH_CASE, (flags & 4) != 0);
+    }
+    UpdateControlStatus();
 }
 
 void SearchDlg::OnChangeSearchTerm()

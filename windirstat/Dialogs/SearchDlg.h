@@ -43,6 +43,8 @@ public:
 protected:
     bool ReadCriteria(SearchCriteria& criteria) const;
     void OnBnClickedOk();
+    void SaveSearchHistory(const SearchCriteria* criteria = nullptr) const;
+    void OnSelectSearchTerm();
     void OnChangeSearchTerm();
     void UpdateControlStatus();
     HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -60,7 +62,7 @@ inline std::span<const RouteEntry> SearchDlg::Routes()
     {
         Route::Control<&OnBnClickedOk>(BN_CLICKED, IDOK),
         Route::Control<&OnChangeSearchTerm>(CBN_EDITCHANGE, IDC_SEARCH_TERM),
-        Route::Control<&OnChangeSearchTerm>(CBN_SELENDOK, IDC_SEARCH_TERM),
+        Route::Control<&OnSelectSearchTerm>(CBN_SELENDOK, IDC_SEARCH_TERM),
         Route::Control<&OnChangeSearchTerm>(BN_CLICKED, IDC_SEARCH_REGEX),
         Route::Control<&UpdateControlStatus>(BN_CLICKED, IDC_SEARCH_CASE),
         Route::Control<&UpdateControlStatus>(EN_CHANGE, IDC_SEARCH_SIZE_MIN),
