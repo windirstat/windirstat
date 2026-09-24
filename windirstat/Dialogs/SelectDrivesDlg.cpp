@@ -650,34 +650,11 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
     }
 
     // Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
-    else if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && m_browseList.GetDroppedState())
+    else if (RemoveSelectedHistoryEntry(pMsg, m_browseList, COptions::SelectDrivesFolder.Obj()))
     {
-        if (pMsg->hwnd == m_browseList || ::GetParent(pMsg->hwnd) == m_browseList.m_hWnd)
-        {
-            const int n = m_browseList.GetCurSel();
-            auto& h = COptions::SelectDrivesFolder.Obj();
-            if (n != CB_ERR && n < static_cast<int>(h.size()))
-            {
-                h.erase(h.begin() + n);
-                m_browseList.DeleteString(n);
-                const int cnt = m_browseList.GetCount();
-
-                if (cnt > 0)
-                {
-                    const int newSel = std::min(n, cnt - 1);
-                    m_browseList.SetCurSel(newSel);
-                    m_folderName = m_browseList.GetItemText(newSel);
-                }
-                else
-                {
-                    m_folderName = wds::strEmpty;
-                    SetText(IDC_BROWSE_FOLDER, m_folderName);
-                }
-
-                UpdateButtons();
-                return true;
-            }
-        }
+        m_folderName = m_browseList.GetText();
+        UpdateButtons();
+        return true;
     }
 
     return CLayoutDialog::PreprocessMessage(pMsg);
