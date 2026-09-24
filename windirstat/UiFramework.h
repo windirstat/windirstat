@@ -2296,6 +2296,7 @@ public:
     virtual void OnOK() { CloseModal(IDOK); }
     virtual void OnCancel() { CloseModal(IDCANCEL); }
     void CloseModal(const int result) { EndDialog(m_hWnd, result); }
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
     static std::span<const RouteEntry> Routes()
     {
@@ -2303,6 +2304,7 @@ public:
         {
             Route::Command<&OnOK>(IDOK),
             Route::Command<&OnCancel>(IDCANCEL),
+            Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         };
         return entries;
     }
@@ -3374,7 +3376,7 @@ protected:
     virtual bool OnInitDialog();
     bool PreprocessMessage(MSG* pMsg) override;
     bool OnEraseBkgnd(CDC* pDC) const;
-    HBRUSH OnCtlColor(CDC*, CWnd*, UINT) { return reinterpret_cast<HBRUSH>(CallDefaultHandler()); }
+    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     LRESULT OnRequestedPageChanged(WPARAM wParam, LPARAM lParam);
     void OnClose() { RequestModalExit(IDCANCEL); }
     void RequestModalExit(const int result) { m_modalResult = result; }

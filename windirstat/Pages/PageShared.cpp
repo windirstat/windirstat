@@ -84,9 +84,3 @@ bool CSettingsPage::OnEraseBkgnd(CDC* pDC)
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
     return true;
 }
-
-HBRUSH CSettingsPage::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
-}

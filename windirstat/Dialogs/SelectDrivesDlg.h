@@ -164,7 +164,6 @@ protected:
     void OnBnClickedRadioTargetFolder();
     void OnBnDoubleclickedRadio();
     void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     void BrowseFolders(bool append);
     void OnBnClickedBrowseButton() { BrowseFolders(false); }
     void OnBnClickedAddFolder() { BrowseFolders(true); }
@@ -205,7 +204,6 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
         Route::Notify<&OnNMSetfocusTargetDrivesList>(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST),
         Route::Window<&OnWmuOk>(WM_WDS_SELECT_DRIVES_OK),
         Route::Window<&OnTimer>(WM_TIMER),
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnSysColorChange>(WM_SYSCOLORCHANGE),
     };
     return entries;

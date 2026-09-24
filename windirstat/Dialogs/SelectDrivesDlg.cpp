@@ -669,12 +669,6 @@ std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
     return m_drives; // valid for both RADIO_TARGET_DRIVES_ALL and RADIO_TARGET_DRIVES_SUBSET
 }
 
-HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 void CSelectDrivesDlg::BrowseFolders(const bool append)
 {
     // Show dialog and validate results

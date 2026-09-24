@@ -70,7 +70,6 @@ public:
 protected:
     void OnTimer(UINT_PTR nIDEvent);
     void OnCancel() override;
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 private:
     void StartWorkerThread();
@@ -97,7 +96,6 @@ inline std::span<const RouteEntry> CProgressDlg::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnTimer>(WM_TIMER),
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Control<&OnCancel>(BN_CLICKED, IDCANCEL),
     };
     return entries;

@@ -151,12 +151,6 @@ INT_PTR CProgressDlg::ShowModal()
     return result;
 }
 
-HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 void CWdsProgressCtrl::OnPaint()
 {
     CPaintDC dc(this);

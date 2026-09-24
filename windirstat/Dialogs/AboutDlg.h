@@ -64,7 +64,6 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     LRESULT OnTabChanged(WPARAM wParam, LPARAM lParam);
 };
 
@@ -83,7 +82,6 @@ inline std::span<const RouteEntry> CAboutDlg::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnTabChanged>(WM_WDS_TAB_CHANGED),
     };
     return entries;

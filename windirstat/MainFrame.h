@@ -66,7 +66,6 @@ public:
 
 protected:
     bool OnCommand(WPARAM wParam, LPARAM lParam) override;
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     bool OnEraseBkgnd(CDC* pDC) const;
 
     bool m_restartRequest = false;
@@ -352,7 +351,6 @@ inline std::span<const RouteEntry> CSettingsSheet::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
     };
     return entries;

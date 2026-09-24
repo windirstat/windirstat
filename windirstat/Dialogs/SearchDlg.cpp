@@ -270,12 +270,6 @@ void SearchDlg::UpdateControlStatus()
         (regexTest.flags() & std::regex_constants::optimize) != 0);
 }
 
-HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 void SearchDlg::OnGetMinMaxInfo(MINMAXINFO* pMMI)
 {
     if (pMMI != nullptr && m_fixedHeight > 0)

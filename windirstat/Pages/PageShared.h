@@ -58,7 +58,6 @@ public:
 
 protected:
     bool OnEraseBkgnd(CDC* pDC);
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };
 
 inline std::span<const RouteEntry> CSettingsPage::Routes()
@@ -66,7 +65,6 @@ inline std::span<const RouteEntry> CSettingsPage::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
     };
     return entries;
 }

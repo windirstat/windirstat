@@ -51,12 +51,6 @@ bool CSettingsSheet::OnEraseBkgnd(CDC* pDC) const
     return true;
 }
 
-HBRUSH CSettingsSheet::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CPropertySheet::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 bool CSettingsSheet::OnInitDialog()
 {
     if (!CPropertySheet::OnInitDialog()) return false;

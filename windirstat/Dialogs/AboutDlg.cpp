@@ -207,12 +207,6 @@ LRESULT CAboutDlg::OnTabChanged(WPARAM, LPARAM)
     return 0;
 }
 
-HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 bool CAboutDlg::PreprocessMessage(MSG* pMsg)
 {
     // Handle tab key when focus is on OK button

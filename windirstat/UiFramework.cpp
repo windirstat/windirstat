@@ -1314,6 +1314,12 @@ void CWnd::CenterWindow(const CWnd* pAlternate)
     ::SetWindowPos(m_hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
+HBRUSH CDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
 std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter, const CWnd* parent)
 {
     std::ranges::replace(filter, L'|', L'\0');
@@ -1604,6 +1610,7 @@ std::span<const RouteEntry> CPropertySheet::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnRequestedPageChanged>(WM_WDS_TAB_CHANGED),
+        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnClose>(WM_CLOSE),
     };
     return entries;
@@ -1685,6 +1692,12 @@ void CPropertySheet::ApplyPages()
         page->m_bModified = false;
     }
     UpdateApplyButton();
+}
+
+HBRUSH CPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 bool CPropertySheet::OnEraseBkgnd(CDC* pDC) const
