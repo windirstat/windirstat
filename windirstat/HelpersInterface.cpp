@@ -771,30 +771,23 @@ std::wstring GetAcceleratorString(const UINT commandID)
     return (cacheEntry != cache.end() && cacheEntry->first == commandID) ? cacheEntry->second : wds::strEmpty;
 }
 
-// Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
-std::optional<std::wstring> RemoveSelectedHistoryEntry(MSG* pMsg, CComboBox& comboBox, std::vector<std::wstring>& history)
+// Return the deleted text when handled, or nullopt when the message does not remove a history entry.
+std::optional<std::wstring> RemoveSelectedHistoryEntry(const MSG* pMsg, CComboBox& comboBox,
+    std::vector<std::wstring>& history)
 {
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && comboBox.GetDroppedState())
-    {
-        if (pMsg->hwnd == comboBox.m_hWnd || ::GetParent(pMsg->hwnd) == comboBox.m_hWnd)
-        {
-            const int n = comboBox.GetCurSel();
-            if (n != CB_ERR && n < static_cast<int>(history.size()))
-            {
-                history.erase(history.begin() + n);
-                comboBox.DeleteString(n);
-                const int count = comboBox.GetCount();
+    if (pMsg == nullptr || pMsg->message != WM_KEYDOWN || pMsg->wParam != VK_DELETE ||
+        (pMsg->hwnd != comboBox.m_hWnd && ::GetParent(pMsg->hwnd) != comboBox.m_hWnd) ||
+        !comboBox.GetDroppedState()) return std::nullopt;
 
-                if (count > 0)
-                {
-                    const int newSelection = std::min(n, count - 1);
-                    comboBox.SetCurSel(newSelection);
-                    return comboBox.GetItemText(newSelection);
-                }
+    const int selection = comboBox.GetCurSel();
+    if (selection == CB_ERR) return std::nullopt;
 
-                return wds::strEmpty;
-            }
-        }
-    }
-    return std::nullopt;
+    const std::wstring removed = comboBox.GetItemText(selection);
+    const auto entry = std::ranges::find(history, removed);
+    if (entry == history.end() || comboBox.DeleteString(selection) == CB_ERR) return std::nullopt;
+
+    history.erase(entry);
+    const int count = comboBox.GetCount();
+    comboBox.SetCurSel(count > 0 ? std::min(selection, count - 1) : -1);
+    return removed;
 }

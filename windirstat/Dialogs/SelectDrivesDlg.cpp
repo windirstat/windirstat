@@ -648,14 +648,11 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
         SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
         UpdateButtons();
     }
-    // Handle MRU delete key for the browse combo box
-    else if (auto result = RemoveSelectedHistoryEntry(pMsg, m_browseList, COptions::SelectDrivesFolder.Obj()))
+
+    // Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
+    else if (RemoveSelectedHistoryEntry(pMsg, m_browseList, COptions::SelectDrivesFolder.Obj()))
     {
-        m_folderName = *result;
-        if (m_folderName.empty())
-        {
-            SetText(IDC_BROWSE_FOLDER, m_folderName);
-        }
+        m_folderName = m_browseList.GetText();
         UpdateButtons();
         return true;
     }
