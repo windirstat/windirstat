@@ -131,7 +131,7 @@ bool SearchDlg::PreprocessMessage(MSG* pMsg)
 {
     if (const auto removed = RemoveSelectedHistoryEntry(pMsg, m_searchTerm, m_searchHistory))
     {
-        if (COptions::SearchTerm.Obj() == *removed) COptions::SearchTerm = wds::strEmpty;
+        if (COptions::SearchTerm.Obj() == *removed) COptions::SearchTerm = std::wstring{};
         SaveSearchHistory();
         OnSelectSearchTerm();
         return true;
