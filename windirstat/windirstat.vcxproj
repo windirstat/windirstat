@@ -188,12 +188,15 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderMtp.h" />
     <ClInclude Include="FinderNtfs.h" />
+    <ClInclude Include="RecoveryNtfs.h" />
+    <ClInclude Include="RecoveryExFat.h" />
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
     <ClInclude Include="Pages\PagePermissions.h" />
     <ClInclude Include="res\LangStrings.h" />
     <ClInclude Include="Dialogs\SearchDlg.h" />
+    <ClInclude Include="Dialogs\RecoveryDlg.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="Tracer.h" />
     <ClInclude Include="version.h" />
@@ -267,6 +270,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderMtp.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
+    <ClCompile Include="RecoveryExFat.cpp" />
+    <ClCompile Include="RecoveryNtfs.cpp" />
     <ClCompile Include="HelpersTasks.cpp">
     </ClCompile>
     <ClCompile Include="..\contrib\xxhash\xxhash.c">
@@ -306,6 +311,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     </ClCompile>
     <ClCompile Include="Property.cpp" />
     <ClCompile Include="Dialogs\SearchDlg.cpp" />
+    <ClCompile Include="Dialogs\RecoveryDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

@@ -45,10 +45,11 @@ void CPacman::UpdatePosition()
     m_done = false;
 }
 
-void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
+void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor,
+    const bool dots, const std::optional<bool> suspended)
 {
     const ULONGLONG now = GetTickCount64();
-    if (m_suspended)
+    if (suspended.value_or(m_suspended))
     {
         // Rebase time if suspended
         m_lastUpdate = now;
@@ -73,7 +74,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
     CRect rc(rect);
     rc.Deflate(5, 1);
     rc.bottom -= rc.Height() % 2;
-    rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / 2.0f));
+    rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / (dots ? 1.0f : 2.0f)));
     rc.right = rc.left + rc.Height();
     const Gdiplus::Rect grect(rc.left, rc.top, rc.Width(), rc.Height());
 
@@ -97,6 +98,16 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
     // Draw filled shape if we started and recently updated
     Gdiplus::Graphics graphics(pdc->Handle());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    if (dots)
+    {
+        const int spacing = std::max(8, rc.Height()), diameter = std::max(2, rc.Height() / 5);
+        for (int x = rect.left + spacing; x < rect.right - spacing / 2; x += spacing)
+        {
+            if (m_toTheRight ? x <= rc.right : x >= rc.left) continue;
+            graphics.FillEllipse(&yellowBrush, x - diameter / 2,
+                rc.top + (rc.Height() - diameter) / 2, diameter, diameter);
+        }
+    }
     graphics.FillPie(&yellowBrush, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
     if (m_moving) return;

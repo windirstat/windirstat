@@ -31,7 +31,8 @@ public:
     void Start() { m_moving = true; }
     void Stop() { m_done = true; }
     void UpdatePosition();
-    void Draw(CDC* pdc, const CRect& rect, COLORREF backColor = ~COLORREF());
+    void Draw(CDC* pdc, const CRect& rect, COLORREF backColor = ~COLORREF(),
+        bool dots = false, std::optional<bool> suspended = {});
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);

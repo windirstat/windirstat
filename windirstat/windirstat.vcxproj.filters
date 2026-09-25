@@ -209,6 +209,9 @@
     <ClInclude Include="Dialogs\SearchDlg.h">
       <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="Dialogs\RecoveryDlg.h">
+      <Filter>Header Files\User Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\FileSearchControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -294,6 +297,12 @@
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="FinderNtfs.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="RecoveryNtfs.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="RecoveryExFat.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="HelpersInterface.h">
@@ -439,6 +448,9 @@
     <ClCompile Include="Dialogs\SearchDlg.cpp">
       <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="Dialogs\RecoveryDlg.cpp">
+      <Filter>Source Files\User Interface\Dialogs</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\FileSearchControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
@@ -518,6 +530,12 @@
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="FinderNtfs.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="RecoveryNtfs.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="RecoveryExFat.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="HelpersInterface.cpp">

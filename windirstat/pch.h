@@ -69,6 +69,8 @@
 #include <cassert>
 #include <cctype>
 #include <cerrno>
+#include <chrono>
+#include <climits>
 #include <cmath>
 #include <concepts>
 #include <condition_variable>
@@ -89,6 +91,7 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <malloc.h>
 #include <map>
 #include <memory>
 #include <mutex>

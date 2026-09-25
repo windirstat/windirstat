@@ -463,8 +463,9 @@ void DisplayError(const std::wstring& error)
 std::wstring TranslateError(const HRESULT hr)
 {
     SmartPointer lpMsgBuf(LocalFree, static_cast<LPVOID>(nullptr));
-    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr) == 0)
+    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr) == 0)
     {
         return std::format(L"Windows error {:#08x}", static_cast<DWORD>(hr));
 

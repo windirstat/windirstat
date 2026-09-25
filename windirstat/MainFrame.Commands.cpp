@@ -24,8 +24,19 @@
 #include "DrawTextCache.h"
 #include "ExtensionView.h"
 #include "ProgressDlg.h"
+#include "RecoveryDlg.h"
 
 static const int UdcMenuTag = 0;
+
+void CMainFrame::OnToolsRecovery()
+{
+    if (IsElevationActive()) RecoveryDlg(this).ShowModal();
+}
+
+void CMainFrame::OnUpdateToolsRecovery(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(IsElevationActive());
+}
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const bool bSysMenu)
 {
