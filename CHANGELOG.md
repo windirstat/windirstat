@@ -15,6 +15,8 @@ Enhancements
 - Added live path filtering with regular expressions in File Watcher
 - Added search filters for size ranges, item type, and owner (thanks @djdomi)
 - Added size totals for search results
+- Added option to display seconds in timestamps
+- Added deleted file recovery for NTFS and exFAT volumes
 - Added free / unknown space labels to sunburst and flame graphs
 - Added option to exclude Dropbox "ignored" files and folders (thanks @djdomi)
 - Added Arabic translation (thanks @Alhlhli, @harryytm)
@@ -54,8 +56,14 @@ Bug Fixes
 - Corrected directory enumeration in recursive user-defined cleanups
 - Corrected directory modification timestamps being overwritten during parallel scans
 - Corrected potential race condition when releasing MFT indexes during scan cancellation
-- Corrected root item allocation when loading or exporting CSV scan results
-- Corrected light incidence control distortion in Treemap settings (thanks @harryytm)
+- Corrected unresponsive drives blocking drive selection and elevated drive mapping
+- Corrected extensions pane remaining collapsed when restored
+- Corrected folder expansion during active scans
+- Corrected indentation for deeply nested directories
+- Corrected Permissions view actions to resolve items in the current scan
+- Corrected pending File Watcher operations being released before cancellation completes
+- Corrected NTFS file references losing their sequence numbers
+- Corrected shadow copy menu when running without administrator privileges
 - Restored support for volume path formats (thanks @harryytm)
 
 <a name="windirstat-2.8.0"></a>
