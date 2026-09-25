@@ -699,6 +699,7 @@ LPCWSTR RegisterWindowClass(UINT classStyle, HCURSOR hCursor = nullptr,
 struct WindowCreationScope;
 inline thread_local WindowCreationScope* g_pWndInit = nullptr;
 inline thread_local MSG g_currentMsg{};
+inline thread_local bool g_waitCursorActive = false;
 
 inline MSG MakeMessageSnapshot(const HWND window, const UINT message, const WPARAM wParam, const LPARAM lParam)
 {
@@ -1596,6 +1597,12 @@ inline bool CCmdTarget::RouteCommand(const UINT nID, const int nCode, void* pExt
 
 inline bool CWnd::RouteWindowMessage(const UINT msg, const WPARAM wParam, const LPARAM lParam, LRESULT* pResult)
 {
+    if (msg == WM_SETCURSOR && g_waitCursorActive)
+    {
+        SetCursor(LoadCursorW(nullptr, IDC_WAIT));
+        if (pResult) *pResult = true;
+        return true;
+    }
     if (msg == WM_COMMAND)
     {
         if (OnCommand(wParam, lParam)) { if (pResult) *pResult = 0; return true; }
@@ -2130,6 +2137,7 @@ public:
     ~CWaitCursor() { SetCursor(m_previous); }
 private:
     HCURSOR m_previous = nullptr;
+    const ScopedValue<bool> m_waitCursorActive{ g_waitCursorActive, true };
 };
 
 class ScopedRedrawPause final

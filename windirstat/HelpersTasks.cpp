@@ -931,10 +931,11 @@ void CopyAllDriveMappings() noexcept
         }
     }
 
-    // Wait for all mappings to complete with a progress dialog
+    // Wait for all mappings to complete with a busy cursor while keeping the window responsive.
     if (futures.empty()) return;
-    CProgressDlg(futures.size(), CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg* pdlg)
+    CWaitCursor wc;
+    CWinApp::RunTaskWithUiUpdates([&]
     {
-        for (auto& f : futures) f.wait(), pdlg->Increment();
-    }).ShowModal();
+        for (auto& f : futures) f.wait();
+    });
 }
