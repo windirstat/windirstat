@@ -43,29 +43,12 @@ HFONT GetAppFont(const HWND window)
     if (const auto found = s_appFonts.find(key); found != s_appFonts.end()) return found->second;
 
     NONCLIENTMETRICSW metrics{ .cbSize = sizeof(metrics) };
-    using SystemParametersInfoForDpiFn = BOOL(WINAPI*)(UINT, UINT, PVOID, UINT, UINT);
-    static const auto systemParametersInfoForDpi = reinterpret_cast<SystemParametersInfoForDpiFn>(
-        GetProcAddress(GetModuleHandleW(L"user32.dll"), "SystemParametersInfoForDpi"));
-    const bool dpiAdjusted = systemParametersInfoForDpi != nullptr &&
-        systemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0, dpi);
-    const bool systemMetrics = dpiAdjusted ||
-        SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
-    if (!systemMetrics)
-    {
-        LOGFONTW fallback{};
-        GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(fallback), &fallback);
-        metrics.lfMessageFont = fallback;
-    }
-    else if (!dpiAdjusted)
-    {
-        const int systemDpi = GetWindowDpi(nullptr);
-        metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, dpi, systemDpi);
-        metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, dpi, systemDpi);
-    }
+    if (!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
+        GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONTW), &metrics.lfMessageFont);
 
-    const int sourcePercent = systemMetrics ? ReadWindowsTextScalePercent() : 100;
-    metrics.lfMessageFont.lfHeight = MulDiv(metrics.lfMessageFont.lfHeight, percent, sourcePercent);
-    metrics.lfMessageFont.lfWidth = MulDiv(metrics.lfMessageFont.lfWidth, percent, sourcePercent);
+    // System font sizes can retain a different text scale after RDP reconnects. Use a stable 9-point baseline.
+    metrics.lfMessageFont.lfHeight = -MulDiv(9 * percent, dpi, 72 * 100);
+    metrics.lfMessageFont.lfWidth = 0;
     // Keep fonts alive for controls that still use them, and reuse identical metrics after a settings broadcast.
     static std::map<std::array<BYTE, sizeof(LOGFONTW)>, CFont> fonts;
     const auto fontKey = std::bit_cast<std::array<BYTE, sizeof(LOGFONTW)>>(metrics.lfMessageFont);
