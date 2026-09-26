@@ -319,6 +319,7 @@
 #define ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST 32972
 #define ID_VIEW_GRAPH_PRESET_CUSTOM     32973
 #define ID_TOOLS_RECOVERY               32974
+#define IDS_APP_TITLE                   57344
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -327,6 +328,10 @@
 #define IDS_FILTER_EXAMPLE_DIRS         57350
 #define IDS_FILTER_EXAMPLE_FILES_REGEX  57351
 #define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
+#define ID_APP_ABOUT                    57664
+#define ID_APP_EXIT                     57665
+#define ID_VIEW_TOOLBAR                 59392
+#define ID_VIEW_STATUS_BAR              59393
 
 // Next default values for new objects
 //

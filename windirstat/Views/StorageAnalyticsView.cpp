@@ -139,9 +139,9 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     }
 
     m_lblUnit.Create(L"Unit:", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
-    m_comboUnit.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, rect, this, 1007);
+    m_comboUnit.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, rect, this, UnitId);
 
-    m_btnRecalculate.Create(L"Recalculate", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, rect, this, 1001);
+    m_btnRecalculate.Create(L"Recalculate", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, rect, this, RecalculateId);
 
     m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_TiB));
     m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_GiB));

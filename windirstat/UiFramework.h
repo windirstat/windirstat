@@ -2590,8 +2590,7 @@ inline bool CFrameWnd::PreCreateWindow(CREATESTRUCT& cs)
     if (cs.lpszName) m_strTitle = cs.lpszName;
     if (cs.lpszClass == nullptr)
         cs.lpszClass = RegisterWindowClass(CS_DBLCLKS, LoadCursorW(nullptr, IDC_ARROW),
-            reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1),
-            LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(128 /*IDR_MAINFRAME*/)));
+            reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1));
     return true;
 }
 
@@ -2612,8 +2611,10 @@ inline bool CFrameWnd::CreateFromResource(const UINT nIDResource)
         LoadAcceleratorsW(GetAppInstance(), MAKEINTRESOURCEW(nIDResource))
     };
 
+    const auto className = RegisterWindowClass(CS_DBLCLKS, LoadCursorW(nullptr, IDC_ARROW),
+        reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1), LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(nIDResource)));
     if (const std::wstring strTitle = LoadResourceString(nIDResource);
-        !CreateEx(0, nullptr, strTitle.empty() ? nullptr : strTitle.c_str(),
+        !CreateEx(0, className, strTitle.empty() ? nullptr : strTitle.c_str(),
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         nullptr, resources.hMenu))
     {
@@ -3410,12 +3411,9 @@ private:
 // -----------------------------------------------------------------------------
 //  Application command and resource IDs
 // -----------------------------------------------------------------------------
-inline constexpr UINT IDS_APP_TITLE = 0xE000;
+#include "resource.h"
+
 inline constexpr UINT ID_SEPARATOR = 0;
-inline constexpr UINT ID_APP_ABOUT = 0xE140;
-inline constexpr UINT ID_APP_EXIT = 0xE141;
-inline constexpr UINT ID_VIEW_TOOLBAR = 0xE800;
-inline constexpr UINT ID_VIEW_STATUS_BAR = 0xE801;
 
 // CWinApp's routes are defined here because ID_APP_EXIT must be visible first.
 // It is inline because this header is included by multiple translation units.

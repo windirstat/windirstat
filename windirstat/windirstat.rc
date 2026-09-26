@@ -9,7 +9,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "UiFrameworkRes.h"
+#include <winres.h>
 #include "verrsrc.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -71,7 +71,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""UiFrameworkRes.h""\r\n"
+    "#include <winres.h>\r\n"
     "#include ""verrsrc.h""\0"
 END
 
@@ -460,8 +460,8 @@ BEGIN
     LISTBOX         IDC_LIST,7,7,120,177,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      L"\x002B",IDC_ADD_CLEANUP,7,193,15,14
     PUSHBUTTON      L"\x2212",IDC_REMOVE_CLEANUP,25,193,15,14
-    PUSHBUTTON      L"\x2191",IDC_UP,97,193,15,14
-    PUSHBUTTON      L"\x2193",IDC_DOWN,115,193,15,14
+    PUSHBUTTON      L"\x2191",IDC_UP,94,193,15,14
+    PUSHBUTTON      L"\x2193",IDC_DOWN,112,193,15,14
     CONTROL         "IDS_PAGE_CLEANUPS_ENABLED",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,7,178,12
     LTEXT           "IDS_PAGE_CLEANUPS_NAME",IDC_STATIC,137,25,260,10
     EDITTEXT        IDC_TITLE,137,37,260,14,ES_AUTOHSCROLL

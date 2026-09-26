@@ -83,6 +83,9 @@ struct TierInfo {
     };
 
 private:
+    static constexpr UINT RecalculateId = 1001;
+    static constexpr UINT UnitId = 1007;
+
     // Recalculates metrics by traversing the loaded directory tree
     void Recalculate();
 
@@ -133,8 +136,8 @@ inline std::span<const RouteEntry> CStorageAnalyticsView::Routes()
         Route::Window<&OnSize>(WM_SIZE),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
-        Route::Control<&OnBtnRecalculate>(BN_CLICKED, 1001),
-        Route::Control<&OnComboUnitSelChange>(CBN_SELCHANGE, 1007),
+        Route::Control<&OnBtnRecalculate>(BN_CLICKED, RecalculateId),
+        Route::Control<&OnComboUnitSelChange>(CBN_SELCHANGE, UnitId),
         Route::Control<&OnEditChangeRange>(EN_CHANGE, 2000, 2100),
     };
     return entries;

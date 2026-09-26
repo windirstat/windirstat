@@ -140,7 +140,6 @@
 #include <contrib/xxhash/xxhash.h>
 
 // Common WinDirStat headers
-#include "resource.h"
 #include "Tracer.h"
 #include "DarkMode.h"
 #include "Constants.h"
