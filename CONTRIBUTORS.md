@@ -42,3 +42,6 @@
 * Dariusz Małachowski
 * Sergey Polyetayev
 * @VenusGirl
+* @bovirus
+* Amer Alhlhli @Alhlhli
+* 大眼仔旭 @wcxu21
