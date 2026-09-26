@@ -258,6 +258,7 @@ public:
 static std::span<const RouteEntry> Routes();
 
 protected:
+    void PostNcDestroy() override;
     CCmdTarget* GetCommandTarget() const override { return CWinDirStatModel::Get(); }
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSetFocus(CWnd* pOldWnd);
