@@ -42,6 +42,7 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
+    void OnFontSizeChanged(int oldPercent, int newPercent) override;
     void OnHScroll(UINT nSBCode, UINT nPos, CWnd* pScrollBar);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     void OnLButtonDown(UINT nFlags, CPoint point);
