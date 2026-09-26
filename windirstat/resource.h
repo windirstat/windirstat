@@ -15,12 +15,12 @@
 #define IDD_PROGRESS                    110
 #define IDD_PAGE_PROMPTS                111
 #define IDD_PAGE_PERMISSIONS            112
-#define IDR_MAINFRAME                   113
+#define IDD_RECOVERY                    113
 #define IDR_POPUP_TREE                  114
 #define IDR_POPUP_MAP                   115
 #define IDR_LICENSE                     116
 #define IDR_LANGS                       117
-#define IDD_RECOVERY                    118
+#define IDR_MAINFRAME                   128
 #define IDC_RADIO_TARGET_DRIVES_ALL     1000
 #define IDC_RADIO_TARGET_DRIVES_SUBSET  1001
 #define IDC_RADIO_TARGET_FOLDER         1002
@@ -332,7 +332,7 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        119
+#define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         32975
 #define _APS_NEXT_CONTROL_VALUE         1176
 #define _APS_NEXT_SYMED_VALUE           110
