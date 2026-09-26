@@ -1,5 +1,5 @@
-<a name="windirstat-2.8.x"></a>
-# WinDirStat 2.8.x (Upcoming)
+<a name="windirstat-2.9.0"></a>
+# WinDirStat 2.9.0
 
 Enhancements
 - Added selection of multiple individual folders (thanks @djdomi)
