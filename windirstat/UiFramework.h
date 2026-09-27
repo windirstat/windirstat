@@ -1941,6 +1941,16 @@ public:
         ti.lpszText = const_cast<LPWSTR>(lpszText);
         return static_cast<bool>(SendNativeMessage(TTM_ADDTOOLW, 0, &ti));
     }
+    void UpdateTipText(const CWnd* pWnd, const std::wstring& text)
+    {
+        if (pWnd == nullptr) return;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.uFlags = TTF_IDISHWND;
+        ti.hwnd = pWnd->m_hWnd;
+        ti.uId = reinterpret_cast<UINT_PTR>(pWnd->m_hWnd);
+        ti.lpszText = const_cast<LPWSTR>(text.c_str());
+        SendNativeMessage(TTM_UPDATETIPTEXTW, 0, &ti);
+    }
     void Activate() { SendNativeMessage(TTM_ACTIVATE, true); }
     void Pop() { SendNativeMessage(TTM_POP); }
     void SetToolRect(const CWnd* pWnd, const UINT_PTR id, const RECT& rect)

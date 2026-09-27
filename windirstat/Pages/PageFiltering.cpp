@@ -84,21 +84,21 @@ void CPageFiltering::AdjustControls()
 
 void CPageFiltering::SetToolTips()
 {
+    const auto setToolTip = [this](const CWnd* control, const std::wstring& text)
+    {
+        if (IsInitialized()) m_toolTip.UpdateTipText(control, text);
+        else m_toolTip.AddTool(control, text);
+    };
+    const bool useRegex = IsChecked(IDC_FILTERING_USE_REGEX);
     const std::wstring tip = Localization::Lookup(IDS_PAGE_FILTERING_TOOLTIP_PREFIX) + L"\n\n";
-    if (IsChecked(IDC_FILTERING_USE_REGEX))
-    {
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX));
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX));
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX));
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX));
-    }
-    else
-    {
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS));
-        m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES));
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS));
-        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES));
-    }
+    const std::wstring dirs = tip + Localization::LookupNeutral(useRegex
+        ? IDS_FILTER_EXAMPLE_DIRS_REGEX : IDS_FILTER_EXAMPLE_DIRS);
+    const std::wstring files = tip + Localization::LookupNeutral(useRegex
+        ? IDS_FILTER_EXAMPLE_FILES_REGEX : IDS_FILTER_EXAMPLE_FILES);
+    setToolTip(&m_ctrlFilteringExcludeDirs, dirs);
+    setToolTip(&m_ctrlFilteringExcludeFiles, files);
+    setToolTip(&m_ctrlFilteringIncludeDirs, dirs);
+    setToolTip(&m_ctrlFilteringIncludeFiles, files);
 }
 
 void CPageFiltering::OnOK()
