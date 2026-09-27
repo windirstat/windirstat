@@ -59,7 +59,7 @@ void CPageFiltering::InitializePage()
     // Initialize the tooltip control
     m_toolTip.Create(this);
     SetToolTips();
-    m_toolTip.SetMaxTipWidth(200);
+    m_toolTip.SetMaxTipWidth(ScaleForDpi(200));
     m_toolTip.Activate();
 }
 

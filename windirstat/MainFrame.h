@@ -225,6 +225,7 @@ public:
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
     bool m_placementRestored = false;
+    bool m_fontChangePending = false;
     bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count when m_progressRange == 0)

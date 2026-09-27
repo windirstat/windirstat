@@ -693,6 +693,8 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
     if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
     m_wndToolBar.SetFont(GetAppFont(m_wndToolBar));
     m_watcherFilter.SetFont(GetAppFont(m_wndToolBar));
+    const auto toolTip = reinterpret_cast<HWND>(m_wndToolBar.SendNativeMessage(TB_GETTOOLTIPS));
+    ::SendMessageW(toolTip, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(toolTip)), true);
     if (!rebuildButtons)
     {
         m_wndToolBar.SetButtonSize(buttonSize);
@@ -986,6 +988,10 @@ void CMainFrame::OnConfigure()
 void CMainFrame::OnFontSizeChanged(const int oldPercent, const int newPercent)
 {
     if (oldPercent != 0 || newPercent != 0) return;
+
+    // Keep modal controls and their persisted dimensions at the same scale until they close.
+    m_fontChangePending = !::IsWindowEnabled(m_hWnd);
+    if (m_fontChangePending) return;
 
     const int previousPercent = GetFontSizePercent();
     const int fontPercent = ResolveTextScalePercent(COptions::FontSizePercent);

@@ -65,6 +65,17 @@ static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
     return true;
 }
 
+static BOOL CALLBACK RefreshToolTipFontCallback(const HWND window, LPARAM) noexcept
+{
+    std::array<WCHAR, MAX_CLASS_NAME> className{};
+    GetClassNameW(window, className.data(), static_cast<int>(className.size()));
+    if (wcscmp(className.data(), TOOLTIPS_CLASSW) != 0) return true;
+
+    SendMessageW(window, TTM_POP, 0, 0);
+    SetAppFontCallback(window, 0);
+    return true;
+}
+
 static BOOL CALLBACK NotifyFontSizeChangedCallback(const HWND window, const LPARAM oldPercent) noexcept
 {
     try
@@ -83,6 +94,7 @@ void ApplyAppFont(const HWND window, const int oldPercent)
     SetAppFontCallback(window, 0);
     EnumChildWindows(window, SetAppFontCallback, 0);
     if (oldPercent == 0) return;
+    EnumThreadWindows(GetWindowThreadProcessId(window, nullptr), RefreshToolTipFontCallback, 0);
     NotifyFontSizeChangedCallback(window, oldPercent);
     EnumChildWindows(window, NotifyFontSizeChangedCallback, oldPercent);
 }
