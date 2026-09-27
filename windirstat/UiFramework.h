@@ -2679,8 +2679,8 @@ public:
         if ((nRows != 1 && nCols != 1) || nRows < 1 || nRows > 2 || nCols < 1 || nCols > 2)
             return false;
 
-        m_rowSizes.assign(nRows, 0);
-        m_columnSizes.assign(nCols, 0);
+        m_rowSizes.assign(nRows, -1);
+        m_columnSizes.assign(nCols, -1);
         const CRect rc(0, 0, 0, 0);
         const LPCWSTR cls = RegisterWindowClass(CS_DBLCLKS, LoadCursorW(nullptr, IDC_ARROW));
         return CreateEx(0, cls, nullptr, (dwStyle & ~WS_BORDER) | WS_CLIPCHILDREN, rc, pParentWnd, nID);
@@ -2789,7 +2789,7 @@ inline void CSplitterWnd::UpdateLayout()
         const int total = rcWork.Width();
         constexpr int bar = SplitterSize;
         int w0 = m_columnSizes[0];
-        if (w0 <= 0) w0 = (total - bar) / 2;
+        if (w0 < 0) w0 = (total - bar) / 2;
         w0 = std::clamp(w0, 0, std::max(0, total - bar));
         const int w1 = std::max(0, total - bar - w0);
         m_columnSizes[0] = w0; m_columnSizes[1] = w1;
@@ -2801,7 +2801,7 @@ inline void CSplitterWnd::UpdateLayout()
         const int total = rcWork.Height();
         constexpr int bar = SplitterSize;
         int h0 = m_rowSizes[0];
-        if (h0 <= 0) h0 = (total - bar) / 2;
+        if (h0 < 0) h0 = (total - bar) / 2;
         h0 = std::clamp(h0, 0, std::max(0, total - bar));
         const int h1 = std::max(0, total - bar - h0);
         m_rowSizes[0] = h0; m_rowSizes[1] = h1;
