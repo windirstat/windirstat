@@ -145,7 +145,7 @@ protected:
     int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);
     bool IsColumnRequired(int subitem) const;
     virtual void OnItemContextMenu(CPoint /*point*/) {}
-    void SavePersistentAttributes() const;
+    void SavePersistentAttributes() const override;
     void ShowColumnContextMenu(CPoint point);
 
     // Owner-drawn related members

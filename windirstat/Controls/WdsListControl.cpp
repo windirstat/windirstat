@@ -695,6 +695,8 @@ void CWdsListControl::LoadPersistentAttributes()
 
 void CWdsListControl::SavePersistentAttributes() const
 {
+    if (!IsWindow(m_hWnd) || m_columnCount == 0) return;
+
     GetColumnOrder(*m_columnOrder);
     for (const auto [i, width] : std::views::enumerate(*m_columnWidths))
     {

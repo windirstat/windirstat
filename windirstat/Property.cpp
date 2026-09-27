@@ -239,6 +239,19 @@ void PersistedSetting::ReadPersistedProperties()
 
 void PersistedSetting::WritePersistedProperties()
 {
+    // Include owned dialogs as well as the main frame's child controls.
+    EnumThreadWindows(GetCurrentThreadId(), [](const HWND window, LPARAM) -> BOOL
+    {
+        const auto capture = [](const HWND control, LPARAM) -> BOOL
+        {
+            if (const CWnd* attached = CWnd::FindAttached(control)) attached->SavePersistentAttributes();
+            return true;
+        };
+        capture(window, 0);
+        EnumChildWindows(window, capture, 0);
+        return true;
+    }, 0);
+
     for (PersistedSetting* property : GetPropertySet())
     {
         if (!property->m_section.empty()) property->WritePersistedProperty();

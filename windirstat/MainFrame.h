@@ -224,6 +224,7 @@ public:
     UINT_PTR m_timer = 0;           // Timer for updating the display
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
+    bool m_placementRestored = false;
     bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count when m_progressRange == 0)
@@ -259,6 +260,8 @@ static std::span<const RouteEntry> Routes();
 
 protected:
     void PostNcDestroy() override;
+    void SavePersistentAttributes() const override;
+    void OnEndSession(bool ending) const;
     CCmdTarget* GetCommandTarget() const override { return CWinDirStatModel::Get(); }
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSetFocus(CWnd* pOldWnd);
@@ -428,6 +431,7 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Update<&OnUpdateViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
         Route::Update<&OnUpdateViewShowWatcher>(ID_TOOLS_WATCHER),
         Route::Window<&OnClose>(WM_CLOSE),
+        Route::Window<&OnEndSession>(WM_ENDSESSION),
         Route::Window<&OnCreate>(WM_CREATE),
         Route::Window<&OnDestroy>(WM_DESTROY),
         Route::Window<&OnInitMenuPopup>(WM_INITMENUPOPUP),

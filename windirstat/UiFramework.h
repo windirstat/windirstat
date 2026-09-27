@@ -807,6 +807,7 @@ public:
     virtual void PostNcDestroy();
     virtual bool PreprocessMessage(MSG*) { return false; }
     virtual void OnFontSizeChanged(int, int) {}
+    virtual void SavePersistentAttributes() const {}
     bool InitializeDialogControls(UINT resourceId);
 
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,

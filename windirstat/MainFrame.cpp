@@ -564,6 +564,7 @@ void CMainFrame::InitialShowWindow()
         SetWindowPlacement(&wpsetting);
     }
 
+    m_placementRestored = true;
     SetTimer(ID_WDS_CONTROL, 25);
 }
 
@@ -606,16 +607,30 @@ void CMainFrame::OnDestroy()
     // Force early cleanup of taskbar resources
     m_taskbarList.Release();
 
+    SavePersistentAttributes();
+
+    // Windows destroys child windows after WM_DESTROY returns.
+    CFrameWnd::OnDestroy();
+}
+
+void CMainFrame::SavePersistentAttributes() const
+{
+    if (!m_placementRestored) return;
+
     // Save our window position
     WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
     COptions::MainWindowPlacement = wp;
 
+    COptions::ShowToolBar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowStatusBar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
     COptions::ShowFileTypes = GetExtensionView()->IsShowTypes();
     COptions::ShowVisualization = IsVisualizationShown();
+}
 
-    // Windows destroys child windows after WM_DESTROY returns.
-    CFrameWnd::OnDestroy();
+void CMainFrame::OnEndSession(const bool ending) const
+{
+    if (ending) PersistedSetting::WritePersistedProperties();
 }
 
 void CMainFrame::PostNcDestroy()

@@ -121,6 +121,7 @@ protected:
     void OnSize(UINT nType, int cx, int cy);
     void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     void OnDestroy();
+    void SavePersistentAttributes() const override { m_layout.OnDestroy(); }
 };
 
 inline std::span<const RouteEntry> CLayoutDialog::Routes()
