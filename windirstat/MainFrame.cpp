@@ -614,11 +614,17 @@ void CMainFrame::OnDestroy()
     COptions::ShowFileTypes = GetExtensionView()->IsShowTypes();
     COptions::ShowVisualization = IsVisualizationShown();
 
-    // Close all artifacts and our child windows
+    // Windows destroys child windows after WM_DESTROY returns.
     CFrameWnd::OnDestroy();
+}
 
-    // Persist values at very end after all children have closed
+void CMainFrame::PostNcDestroy()
+{
+    // Child controls have captured their final persistent state by this point.
     PersistedSetting::WritePersistedProperties();
+
+    // The base implementation deletes this object; it must be called last.
+    CFrameWnd::PostNcDestroy();
 }
 
 bool CMainFrame::OnCreateClient()
