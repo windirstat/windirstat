@@ -113,11 +113,8 @@ namespace
         const double weightPerPixel = static_cast<double>(remainingWeight)
             / remaining.Width() / remaining.Height();
         std::size_t head = 0;
-        while (head < request.weights.size())
+        while (head < request.weights.size() && !remaining.IsEmpty())
         {
-            assert(remaining.Width() > 0 && remaining.Height() > 0);
-            if (remaining.Width() <= 0 || remaining.Height() <= 0) break;
-
             const bool horizontal = remaining.Width() >= remaining.Height();
             const int rowThickness = horizontal ? remaining.Height() : remaining.Width();
             const double squaredRowWeight = rowThickness * rowThickness * weightPerPixel;

@@ -12,6 +12,7 @@ Bug Fixes
 - Corrected filtering tooltips retaining outdated examples after changing regex mode
 - Corrected hidden views leaving empty panels in some window layouts
 - Corrected menu, checkbox, and radio button scaling with the font size setting
+- Corrected an assertion when rendering very small squarified treemap regions
 
 <a name="windirstat-2.9.0"></a>
 # WinDirStat 2.9.0
