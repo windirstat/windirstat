@@ -1,3 +1,18 @@
+<a name="windirstat-2.9.1"></a>
+# WinDirStat 2.9.1 (Upcoming)
+
+Bug Fixes
+- Corrected list column widths and order not being restored after restart
+- Corrected window and column settings not being saved before administrator restart
+- Corrected automatic column resizing being applied when disabled
+- Corrected sorting by hidden columns after restart
+- Corrected navigation scrolling reordered Name columns out of view
+- Corrected tooltip font sizing and wrapping after font size changes
+- Corrected dialog column widths after font changes while a dialog is open
+- Corrected filtering tooltips retaining outdated examples after changing regex mode
+- Corrected hidden views leaving empty panels in some window layouts
+- Corrected menu, checkbox, and radio button scaling with the font size setting
+
 <a name="windirstat-2.9.0"></a>
 # WinDirStat 2.9.0
 
