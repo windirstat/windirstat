@@ -98,6 +98,18 @@ void CFileTreeControl::SelectFirstItemByType(const ITEMTYPE itemType)
     }
 }
 
+void CFileTreeControl::OnFontSizeChanged(const int oldPercent, const int newPercent)
+{
+    CTreeListControl::OnFontSizeChanged(oldPercent, newPercent);
+    if (!IsWindow(m_toolTip.Handle())) return;
+
+    ClearPortionToolTip();
+
+    // The tooltip is a popup window, so ApplyAppFont's child enumeration misses it.
+    m_toolTip.SetFont(GetAppFont(m_toolTip.Handle()));
+    m_toolTip.SetMaxTipWidth(ScaleForDpi(400));
+}
+
 void CFileTreeControl::OnHScroll(const UINT nSBCode, const UINT nPos, CWnd* pScrollBar)
 {
     ClearPortionToolTip();
