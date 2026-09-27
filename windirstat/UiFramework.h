@@ -2164,6 +2164,27 @@ private:
     CWnd* m_window;
 };
 
+// System Wake Lock that prevents the system from going to sleep
+// while long-running operations are in progress.
+class ScopedSystemWakeLock
+{
+public:
+    ScopedSystemWakeLock() noexcept
+    {
+        ::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+    }
+
+    ~ScopedSystemWakeLock() noexcept
+    {
+        ::SetThreadExecutionState(ES_CONTINUOUS);
+    }
+
+    ScopedSystemWakeLock(const ScopedSystemWakeLock&) = delete;
+    ScopedSystemWakeLock& operator=(const ScopedSystemWakeLock&) = delete;
+    ScopedSystemWakeLock(ScopedSystemWakeLock&&) = delete;
+    ScopedSystemWakeLock& operator=(ScopedSystemWakeLock&&) = delete;
+};
+
 class CBufferedDC final : public CDC
 {
 public:

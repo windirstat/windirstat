@@ -589,7 +589,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     return status || GetLastError() == ERROR_COMPRESSION_NOT_BENEFICIAL;
 }
 
-bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, const ULONGLONG chunkSize)
+bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG chunkSize, const ULONGLONG minZeroRunSize)
 {
     // Open file with read/write access
     const SmartPointer h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
@@ -605,7 +605,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     ::GetVolumePathName(path.c_str(), volume, MAX_PATH);
     ::GetDiskFreeSpace(volume, &sectorsPerCluster, &bytesPerSector, &dummy1, &dummy2);
     ULONGLONG clusterSize = static_cast<ULONGLONG>(sectorsPerCluster) * bytesPerSector;
-    if (clusterSize == 0) clusterSize = 4096;
+    if (clusterSize == 0) clusterSize = 4 * wds::Ki;
 
     auto alignDown = [clusterSize](const ULONGLONG val) { return (val / clusterSize) * clusterSize; };
     auto alignUp = [clusterSize](const ULONGLONG val) { return ((val + clusterSize - 1) / clusterSize) * clusterSize; };
@@ -629,8 +629,12 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     };
 
     // Scan file in chunks to detect zero byte runs
+    auto isCancelled = [pdlg] { return pdlg != nullptr && pdlg->IsCancelled(); };
+    auto stepProgress = [pdlg] { if (pdlg != nullptr) pdlg->Increment(); };
+
     for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)
     {
+        if (isCancelled()) return false;
         const DWORD toRead = static_cast<DWORD>(std::min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
         if (!ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
 
@@ -660,6 +664,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
                 ++i;
             }
         }
+        stepProgress();
     }
     saveRun();
 
@@ -673,6 +678,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     // Deallocate storage for each zero range
     bool success = true;
     for (const auto& [offset, length] : ranges) {
+        if (isCancelled()) return false;
         FILE_ZERO_DATA_INFORMATION zdi{};
         zdi.FileOffset.QuadPart = static_cast<LONGLONG>(offset);
         zdi.BeyondFinalZero.QuadPart = static_cast<LONGLONG>(offset + length);

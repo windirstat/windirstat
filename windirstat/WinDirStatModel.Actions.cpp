@@ -216,18 +216,26 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
 {
     // Only sparsify files (no recursion)
     const auto& itemsSelected = GetAllSelected();
-    CProgressDlg(itemsSelected.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
+
+    // Calculate total chunk count across all selected files for chunk-based progress reporting
+    ULONGLONG totalChunks = 0;
+    for (const auto* item : itemsSelected)
     {
+        totalChunks += (item->GetSizeLogical() + wds::Mi - 1) / wds::Mi;
+    }
+
+    CProgressDlg(static_cast<size_t>(totalChunks), CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
+    {
+        const ScopedSystemWakeLock wakeLock;
+
         for (const auto* item : itemsSelected)
         {
             if (pdlg->IsCancelled()) break;
 
-            if (!SparsifyFile(item->GetPathLong()))
+            if (!SparsifyFile(item->GetPathLong(), pdlg))
             {
-                DisplayError(TranslateError());
+                if (!pdlg->IsCancelled()) DisplayError(TranslateError());
             }
-
-            pdlg->Increment();
         }
     }).ShowModal();
 
