@@ -324,7 +324,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
     }
 
     const int targetIndex = FindTreeItem(paths[0]);
-    if (targetIndex == -1) return;
+    if (targetIndex == -1 || !COptions::AutomaticallyResizeColumns) return;
 
     if (const int w = GetSubItemWidth(GetItem(targetIndex), 0) + 5; GetColumnWidth(0) < w)
     {
@@ -610,7 +610,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         }
     }
 
-    if (scroll && GetColumnWidth(0) < maxwidth)
+    if (COptions::AutomaticallyResizeColumns && scroll && GetColumnWidth(0) < maxwidth)
     {
         constexpr int padding = 3;
         SetColumnWidth(0, maxwidth + padding);
@@ -815,10 +815,10 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
     }
     EnsureVisible(i, false);
 
-    // Scroll to the left to show the beginning of the item
-    if (const int currentScrollPos = GetScrollPos(SB_HORZ); currentScrollPos > 0)
+    // Scroll to show the beginning of the Name column.
+    if (const int nameLeft = GetWholeSubitemRect(i, 0).left; nameLeft != 0)
     {
-        Scroll(CSize(-currentScrollPos, 0));
+        Scroll(CSize(nameLeft, 0));
     }
 }
 

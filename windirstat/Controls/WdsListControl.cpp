@@ -323,6 +323,12 @@ void CWdsListControl::OnColumnsInserted(
         ApplyColumnVisibility(column);
     }
 
+    if (!IsColumnVisible(m_sorting.subitem1))
+    {
+        const bool ascending = GetAscendingDefault(ColumnToSubItem(0));
+        SetSorting(0, ascending, 0, ascending);
+    }
+
     // Calculate row height now that window is created
     CalculateRowHeight();
 
