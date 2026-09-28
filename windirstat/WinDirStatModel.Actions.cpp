@@ -217,25 +217,38 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
     // Only sparsify files (no recursion)
     const auto& itemsSelected = GetAllSelected();
 
-    // Calculate total chunk count across all selected files for chunk-based progress reporting
-    ULONGLONG totalChunks = 0;
+    // Reserve equal progress shares for scanning and deallocation, weighted by each file's chunk count.
+    std::vector<std::pair<const CItem*, size_t>> files;
+    size_t totalProgress = 0;
     for (const auto* item : itemsSelected)
     {
-        totalChunks += (item->GetSizeLogical() + wds::Mi - 1) / wds::Mi;
+        const ULONGLONG size = item->GetSizeLogical();
+        const size_t chunks = static_cast<size_t>(size / wds::Mi + (size % wds::Mi != 0));
+        const size_t weight = 2 * std::max<size_t>(1, chunks);
+        files.emplace_back(item, weight);
+        totalProgress += weight;
     }
 
-    CProgressDlg(static_cast<size_t>(totalChunks), CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
+    CProgressDlg(totalProgress, CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         const ScopedSystemWakeLock wakeLock;
+        size_t completed = 0;
 
-        for (const auto* item : itemsSelected)
+        for (const auto& [item, weight] : files)
         {
             if (pdlg->IsCancelled()) break;
 
-            if (!SparsifyFile(item->GetPathLong(), pdlg))
+            const auto reportProgress = [&](const double fraction)
+            {
+                pdlg->SetProgress(completed + static_cast<size_t>(fraction * weight));
+            };
+            if (!SparsifyFile(item->GetPathLong(), pdlg, reportProgress))
             {
                 if (!pdlg->IsCancelled()) DisplayError(TranslateError());
             }
+            if (pdlg->IsCancelled()) break;
+            completed += weight;
+            pdlg->SetProgress(completed);
         }
     }).ShowModal();
 

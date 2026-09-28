@@ -589,7 +589,8 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     return status || GetLastError() == ERROR_COMPRESSION_NOT_BENEFICIAL;
 }
 
-bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG chunkSize, const ULONGLONG minZeroRunSize)
+bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg,
+    const std::function<void(double)>& reportProgress, const ULONGLONG chunkSize, const ULONGLONG minZeroRunSize)
 {
     // Open file with read/write access
     const SmartPointer h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
@@ -630,7 +631,6 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
 
     // Scan file in chunks to detect zero byte runs
     auto isCancelled = [pdlg] { return pdlg != nullptr && pdlg->IsCancelled(); };
-    auto stepProgress = [pdlg] { if (pdlg != nullptr) pdlg->Increment(); };
 
     for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)
     {
@@ -664,7 +664,7 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
                 ++i;
             }
         }
-        stepProgress();
+        if (reportProgress) reportProgress(0.5 * static_cast<double>(pos + bytesRead) / fileSize.QuadPart);
     }
     saveRun();
 
@@ -677,6 +677,7 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
 
     // Deallocate storage for each zero range
     bool success = true;
+    size_t completedRanges = 0;
     for (const auto& [offset, length] : ranges) {
         if (isCancelled()) return false;
         FILE_ZERO_DATA_INFORMATION zdi{};
@@ -685,6 +686,7 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
         if (!DeviceIoControl(h, FSCTL_SET_ZERO_DATA, &zdi, sizeof(zdi),
             nullptr, 0, &bytesReturned, nullptr))
             success = false;
+        if (reportProgress) reportProgress(0.5 + 0.5 * static_cast<double>(++completedRanges) / ranges.size());
     }
     return success;
 }
