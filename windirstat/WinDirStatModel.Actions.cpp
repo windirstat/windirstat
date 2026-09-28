@@ -231,7 +231,6 @@ void CWinDirStatModel::OnCleanupSparsifyFile()
 
     CProgressDlg(totalProgress, CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
-        const ScopedSystemWakeLock wakeLock;
         size_t completed = 0;
 
         for (const auto& [item, weight] : files)
