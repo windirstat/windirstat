@@ -182,10 +182,10 @@ void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 {
     // Defer to standard update handler for initial value
     OnUpdateCentralHandler(pCmdUI);
-    if (pCmdUI->m_pMenu == nullptr) return;
+    if (pCmdUI->m_menu == nullptr) return;
 
     // See if each path supports available compression options
-    bool allow = pCmdUI->m_pMenu->IsItemEnabled(pCmdUI->m_nID, CMenu::ItemLookup::Command);
+    bool allow = pCmdUI->m_menu.IsItemEnabled(pCmdUI->m_nID, CMenu::ItemLookup::Command);
     for (const auto& item : GetSelectedItemsView())
     {
         allow &= CompressFileAllowed(item->GetVolumeRoot()->GetPath(),

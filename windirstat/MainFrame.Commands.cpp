@@ -38,7 +38,7 @@ void CMainFrame::OnUpdateToolsRecovery(CCmdUI* pCmdUI) const
     pCmdUI->Enable(IsElevationActive());
 }
 
-void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const bool bSysMenu)
+void CMainFrame::OnInitMenuPopup(MenuRef pPopupMenu, const UINT nIndex, const bool bSysMenu)
 {
     CFrameWnd::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
@@ -46,34 +46,34 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const boo
         Localization::Lookup(IDS_MENU_EXPLORER_MENU), false); explorerMenu != nullptr)
     {
         // Add placeholder only
-        if (explorerMenu->GetItemCount() == 0)
+        if (explorerMenu.GetItemCount() == 0)
         {
-            explorerMenu->Append(MF_STRING | MF_DISABLED | MF_GRAYED, 0,
+            explorerMenu.Append(MF_STRING | MF_DISABLED | MF_GRAYED, 0,
                 Localization::Lookup(IDS_PROGRESS).c_str());
         }
 
-        pPopupMenu->SetItemEnabled(explorerMenuPos, true);
+        pPopupMenu.SetItemEnabled(explorerMenuPos, true);
     }
 
     // If the menu being opened is a placeholder, populate it
-    if (pPopupMenu->GetItemCount() == 1 && (pPopupMenu->GetItemState(0, MF_BYPOSITION) & MF_SEPARATOR) != 0)
+    if (pPopupMenu.GetItemCount() == 1 && (pPopupMenu.GetItemState(0, MF_BYPOSITION) & MF_SEPARATOR) != 0)
     {
-        while (pPopupMenu->GetItemCount() > 0)
+        while (pPopupMenu.GetItemCount() > 0)
         {
-            pPopupMenu->Remove(0);
+            pPopupMenu.Remove(0);
         }
 
         // Populate the placeholder submenu with verbs for the selected shell items.
         if (const CComPtr contextMenu = GetContextMenu(CWinDirStatModel::Get()->GetAllSelected());
             contextMenu != nullptr)
         {
-            (void) contextMenu->QueryContextMenu(pPopupMenu->Handle(), 0,
+            (void) contextMenu->QueryContextMenu(pPopupMenu.Handle(), 0,
                 CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
         }
     }
 
     // update cleanup menu if this is the cleanup submenu
-    if (pPopupMenu->GetItemState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != static_cast<UINT>(-1))
+    if (pPopupMenu.GetItemState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != static_cast<UINT>(-1))
     {
         UpdateCleanupMenu(pPopupMenu);
     }
@@ -85,7 +85,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const boo
     }
 }
 
-void CMainFrame::UpdateCleanupMenu(CMenu* menu, const bool triggerAsync)
+void CMainFrame::UpdateCleanupMenu(MenuRef menu, const bool triggerAsync)
 {
     // Define menu items structure with cached values
     struct { ULONGLONG* count; ULONGLONG* bytes; UINT menuId; LPCWSTR prefix; } menuItems[] = {
@@ -100,12 +100,12 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu, const bool triggerAsync)
             Localization::Format(IDS_ONEITEMs, FormatBytes(*bytes)) :
             Localization::Format(IDS_sITEMSs, FormatCount(*count), FormatBytes(*bytes)));
 
-        const UINT state = menu->GetItemState(menuId, MF_BYCOMMAND);
-        menu->Modify(menuId, MF_BYCOMMAND | MF_STRING, menuId, label);
-        menu->EnableItem(menuId, state);
+        const UINT state = menu.GetItemState(menuId, MF_BYCOMMAND);
+        menu.Modify(menuId, MF_BYCOMMAND | MF_STRING, menuId, label);
+        menu.EnableItem(menuId, state);
     }
 
-    UpdateDynamicMenuItems(menu);
+    if (triggerAsync) UpdateDynamicMenuItems(menu);
 
     // Keep one background query alive until its results are collected by the UI.
     if (!triggerAsync || m_shuttingDown || m_cleanupQuery.valid()) return;
@@ -138,28 +138,28 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     }
 }
 
-std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, const bool removeItems) const
+std::pair<MenuRef,int> CMainFrame::LocateNamedMenu(MenuRef menu, const std::wstring & subMenuText, const bool removeItems) const
 {
     // locate submenu
-    CMenu* subMenu = nullptr;
+    MenuRef subMenu = nullptr;
     int subMenuPos = -1;
-    const auto range = std::views::iota(0, menu->GetItemCount());
+    const auto range = std::views::iota(0, menu.GetItemCount());
     if (const auto it = std::ranges::find_if(range, [&](const int i) {
-        const std::wstring menuString = menu->GetItemText(i);
+        const std::wstring menuString = menu.GetItemText(i);
         return !menuString.empty() && _wcsicmp(menuString.c_str(), subMenuText.c_str()) == 0;
     }); it != range.end())
     {
         subMenuPos = *it;
-        subMenu = menu->GetSubMenu(subMenuPos);
+        subMenu = menu.GetSubMenu(subMenuPos);
     }
 
     // clean up old items
-    if (removeItems && subMenu != nullptr) while (subMenu->GetItemCount() > 0)
-        subMenu->Remove(0);
+    if (removeItems && subMenu != nullptr) while (subMenu.GetItemCount() > 0)
+        subMenu.Remove(0);
     return { subMenu, subMenuPos };
 }
 
-void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
+void CMainFrame::UpdateDynamicMenuItems(MenuRef menu, MenuRef menuHeader) const
 {
     CWinDirStatModel* model = CWinDirStatModel::Get();
     const auto& items = model->GetAllSelected();
@@ -170,18 +170,18 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
     if (compressMenu && compressMenuPos >= 0)
     {
         // Check if any submenu items are enabled
-        const int menuItemCount = compressMenu->GetItemCount();
+        const int menuItemCount = compressMenu.GetItemCount();
         const bool anyEnabled = std::ranges::any_of(std::views::iota(0, menuItemCount), [&](const int i)
         {
             CCmdUI state;
             state.m_nIndex = i;
-            state.m_nID = compressMenu->GetItemId(i);
-            state.m_pMenu = compressMenu;
+            state.m_nID = compressMenu.GetItemId(i);
+            state.m_menu = compressMenu;
             state.Update(const_cast<CMainFrame*>(this), false);
-            return compressMenu->IsItemEnabled(i);
+            return compressMenu.IsItemEnabled(i);
         });
 
-        menu->SetItemEnabled(compressMenuPos, anyEnabled);
+        menu.SetItemEnabled(compressMenuPos, anyEnabled);
     }
 
     auto[customMenu, customMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP));
@@ -189,16 +189,16 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
 
     if (menuHeader == nullptr) menuHeader = GetMenu();
     MENUINFO headerInfo{ .cbSize = sizeof(headerInfo), .fMask = MIM_STYLE };
-    if (menuHeader != nullptr && ::GetMenuInfo(menuHeader->Handle(), &headerInfo))
+    if (menuHeader != nullptr && ::GetMenuInfo(menuHeader.Handle(), &headerInfo))
     {
         headerInfo.fMask |= MIM_APPLYTOSUBMENUS;
         headerInfo.dwStyle |= MNS_NOTIFYBYPOS;
-        ::SetMenuInfo(menuHeader->Handle(), &headerInfo);
+        ::SetMenuInfo(menuHeader.Handle(), &headerInfo);
     }
 
     MENUINFO customMenuInfo{ .cbSize = sizeof(customMenuInfo), .fMask = MIM_MENUDATA,
         .dwMenuData = reinterpret_cast<ULONG_PTR>(&UdcMenuTag) };
-    ::SetMenuInfo(customMenu->Handle(), &customMenuInfo);
+    ::SetMenuInfo(customMenu.Handle(), &customMenuInfo);
 
     for (auto&& [iCurrent, udc] : std::views::enumerate(COptions::UserDefinedCleanups))
     {
@@ -211,27 +211,27 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader) const
             std::ranges::all_of(items,
                 [&](const auto& item) { return model->UserDefinedCleanupWorksForItem(&udc, item); });
 
-        const int position = customMenu->GetItemCount();
-        customMenu->Append(MF_STRING, 0, string);
+        const int position = customMenu.GetItemCount();
+        customMenu.Append(MF_STRING, 0, string);
         MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo), .fMask = MIIM_DATA, .dwItemData = static_cast<ULONG_PTR>(iCurrent) };
-        customMenu->SetItemInfo(position, &itemInfo);
-        customMenu->SetItemEnabled(position, udcValid);
+        customMenu.SetItemInfo(position, &itemInfo);
+        customMenu.SetItemEnabled(position, udcValid);
     }
 
     // conditionally disable menu if empty
-    menu->SetItemEnabled(customMenuPos, customMenu->GetItemCount() > 0 && scanReady);
+    menu.SetItemEnabled(customMenuPos, customMenu.GetItemCount() > 0 && scanReady);
 }
 
 LRESULT CMainFrame::OnMenuCommand(const WPARAM position, const LPARAM menuHandle)
 {
-    CMenu* menu = CMenu::FromHandle(reinterpret_cast<HMENU>(menuHandle));
+    MenuRef menu = MenuRef(reinterpret_cast<HMENU>(menuHandle));
     MENUINFO menuInfo{ .cbSize = sizeof(menuInfo), .fMask = MIM_MENUDATA };
-    if (menu == nullptr || !::GetMenuInfo(menu->Handle(), &menuInfo)) return CallDefaultHandler();
+    if (menu == nullptr || !::GetMenuInfo(menu.Handle(), &menuInfo)) return CallDefaultHandler();
 
     const bool userDefinedCleanupMenu = menuInfo.dwMenuData == reinterpret_cast<ULONG_PTR>(&UdcMenuTag);
     MENUITEMINFOW itemInfo{ .cbSize = sizeof(itemInfo),
         .fMask = static_cast<UINT>(userDefinedCleanupMenu ? MIIM_DATA : MIIM_ID) };
-    if (!menu->GetItemInfo(static_cast<UINT>(position), &itemInfo)) return CallDefaultHandler();
+    if (!menu.GetItemInfo(static_cast<UINT>(position), &itemInfo)) return CallDefaultHandler();
 
     if (userDefinedCleanupMenu) CWinDirStatModel::Get()->RunUserDefinedCleanup(itemInfo.dwItemData);
     else if (itemInfo.wID != 0 && itemInfo.wID != static_cast<UINT>(-1)) SendMessage(WM_COMMAND, itemInfo.wID);
@@ -269,7 +269,7 @@ void CMainFrame::OnAdvancedChkdsk(const UINT nID)
     ExecuteCommandInConsole(std::format(L"CHKDSK.EXE {:c}: /F", driveLetter), L"CHKDSK");
 }
 
-void CMainFrame::UpdateToolsMenu(CMenu* menu) const
+void CMainFrame::UpdateToolsMenu(MenuRef menu) const
 {
     // menu is the Tools popup menu itself
     // Find each operation submenu and populate with drives
@@ -279,9 +279,9 @@ void CMainFrame::UpdateToolsMenu(CMenu* menu) const
 
     // Get available local drives and conditionally enable based on elevation
     const auto drives = GetDriveList({DRIVE_FIXED, DRIVE_REMOVABLE, DRIVE_RAMDISK});
-    menu->SetItemEnabled(shadowCopyPos, IsElevationActive() && !drives.empty());
-    menu->SetItemEnabled(defragPos, IsElevationPossible() && !drives.empty());
-    menu->SetItemEnabled(chkdskPos, IsElevationPossible() && !drives.empty());
+    menu.SetItemEnabled(shadowCopyPos, IsElevationActive() && !drives.empty());
+    menu.SetItemEnabled(defragPos, IsElevationPossible() && !drives.empty());
+    menu.SetItemEnabled(chkdskPos, IsElevationPossible() && !drives.empty());
 
     for (const auto& drive : drives)
     {
@@ -291,9 +291,9 @@ void CMainFrame::UpdateToolsMenu(CMenu* menu) const
             ? GetDrive(drive) : std::format(L"{:.2} ({})", drive, volumeName);
 
         const int driveIndex = std::toupper(drive[0]) - L'A';
-        shadowCopyMenu->Append(MF_STRING, ID_TOOLS_SHADOW_COPY_BASE + driveIndex, displayName);
-        defragMenu->Append(MF_STRING, ID_TOOLS_DEFRAG_BASE + driveIndex, displayName);
-        chkdskMenu->Append(MF_STRING, ID_TOOLS_CHKDSK_BASE + driveIndex, displayName);
+        shadowCopyMenu.Append(MF_STRING, ID_TOOLS_SHADOW_COPY_BASE + driveIndex, displayName);
+        defragMenu.Append(MF_STRING, ID_TOOLS_DEFRAG_BASE + driveIndex, displayName);
+        chkdskMenu.Append(MF_STRING, ID_TOOLS_CHKDSK_BASE + driveIndex, displayName);
     }
 }
 
@@ -720,7 +720,7 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
         { ID_REFRESH_ALL,             IDS_REFRESH_ALL,             Icons::Char(L'↻', RGB(  0, 156, 221))},
         { ID_REFRESH_SELECTED,        IDS_REFRESH_SELECTED,        Icons::PaintRefreshSelected},
         { ID_SEPARATOR,               {},{}},
-        { ID_SEARCH,                  IDS_SEARCH_TITLE,            Icons::Char(L'⌕', Icons::NeutralRef())},
+        { ID_SEARCH,                  IDS_SEARCH_TITLE,            [](auto& g) { Icons::PaintCharacter(g, L'⌕', Icons::NeutralRef()); }},
         { ID_FILTER,                  IDS_PAGE_FILTERING_TITLE,    [](auto& g){ Icons::PaintFilter(g, CFiltering::IsFilterActive()); } },
         { ID_SEPARATOR,               {},{}},
         { ID_CLEANUP_OPEN_SELECTED,   IDS_CLEANUP_OPEN_SELECTED,   Icons::PaintOpenSelected},
@@ -997,9 +997,12 @@ void CMainFrame::OnFontSizeChanged(const int oldPercent, const int newPercent)
     const int fontPercent = ResolveTextScalePercent(COptions::FontSizePercent);
     const int toolBarPercent = ResolveTextScalePercent(COptions::ToolBarSizePercent);
     const bool toolBarChanged = toolBarPercent != GetToolBarSizePercent();
+    // Menu item measurements remain cached until the menu closes.
+    if (fontPercent != previousPercent) EndMenu();
     COptions::RescaleFontDependentState(previousPercent, fontPercent);
     SetFontSizePercent(fontPercent);
     SetToolBarSizePercent(toolBarPercent);
+    DrawTextCache::Get().ClearCache();
     ApplyAppFont(m_hWnd, previousPercent);
     RebuildToolBar(toolBarChanged);
     UpdatePaneText();
@@ -1008,20 +1011,29 @@ void CMainFrame::OnFontSizeChanged(const int oldPercent, const int newPercent)
 
 void CMainFrame::OnSysColorChange()
 {
-    GetFileTreeView()->SysColorChanged();
-    GetExtensionView()->SysColorChanged();
-    DrawTextCache::Get().ClearCache();
-
     // Redraw menus for dark mode
-    DarkMode::SetAppDarkMode();
-    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
+    if (DarkMode::SetAppDarkMode()) EndMenu();
+    DrawTextCache::Get().ClearCache();
+    RebuildToolBar();
+    EnumThreadWindows(GetCurrentThreadId(), [](const HWND window, LPARAM) -> BOOL
+    {
+        std::array<WCHAR, MAX_CLASS_NAME> className{};
+        GetClassNameW(window, className.data(), static_cast<int>(className.size()));
+        if (CWnd::FindAttached(window) == nullptr && wcscmp(className.data(), TOOLTIPS_CLASSW) != 0) return TRUE;
+
+        DarkMode::AdjustControls(window);
+        NotifyAppearanceChanged(window);
+        ApplyMenuFont(window);
+        ::RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
+        return TRUE;
+    }, 0);
 }
 
 void CMainFrame::OnSettingChange(const UINT flags, const LPCTSTR section)
 {
     CFrameWnd::OnSettingChange(flags, section);
-    OnFontSizeChanged(0, 0);
     OnSysColorChange();
+    OnFontSizeChanged(0, 0);
 }
 
 UINT CMainFrame::OnPowerBroadcast(UINT, LPARAM)
@@ -1057,7 +1069,8 @@ bool CMainFrame::CreateFromResource(const UINT nIDResource)
         return false;
     }
 
-    Localization::UpdateMenu(*GetMenu());
+    Localization::UpdateMenu(GetMenu());
+    ApplyMenuFont(m_hWnd);
     Localization::UpdateDialogs(*this);
     UpdateFrameTitleForScan();
 

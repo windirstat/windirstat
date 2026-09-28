@@ -76,6 +76,7 @@ protected:
     void DrawHighlights(CDC* pDC);
     void Inactivate(bool clearLayout = true);
     void EmptyView();
+    void OnAppearanceChanged() override { DiscardRenderCache(false); m_dimmed.Reset(); Invalidate(); }
 
     CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
     void ClearHover();
@@ -110,8 +111,8 @@ protected:
     void OnLButtonDblClk(UINT nFlags, CPoint point);
     void OnLButtonDown(UINT nFlags, CPoint point);
     void OnMButtonDown(UINT nFlags, CPoint point);
-    void OnSetFocus(CWnd* pOldWnd);
-    void OnContextMenu(CWnd* pWnd, CPoint point);
+    void OnSetFocus(WindowRef pOldWnd);
+    void OnContextMenu(WindowRef pWnd, CPoint point);
     void OnMouseMove(UINT nFlags, CPoint point);
     void OnMouseLeave();
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);

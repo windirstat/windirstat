@@ -154,8 +154,21 @@ void CIconHandler::StopAsyncShellInfoQueue()
     });
 }
 
-void CIconHandler::DrawIcon(CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
+void CIconHandler::DrawIcon(CDC* hdc, HICON image, const CPoint & pt, const CSize& sz)
 {
+    // Items retain stable icon handles; palette-dependent glyphs are rendered at the current size.
+    for (const auto& [handle, glyph] : { std::pair{ m_emptyImage, L'▢' }, { m_hardlinksImage, L'⧉' },
+        { m_dupesImage, L'⧈' }, { m_searchImage, L'⊙' }, { m_largestImage, L'⋙' } })
+    {
+        if (image == nullptr || image != handle) continue;
+        const COLORREF color = DarkMode::Color(DarkMode::ColorRole::WindowText);
+        if (m_iconColor != color) m_themedIcons.clear();
+        m_iconColor = color;
+        const auto [entry, inserted] = m_themedIcons.try_emplace(std::pair{ glyph, std::max(sz.cx, sz.cy) }, DestroyIcon);
+        if (inserted) entry->second = Icons::IconFromFontChar(glyph, color, false, entry->first.second);
+        if (entry->second.IsValid()) image = entry->second;
+        break;
+    }
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);
 }
 

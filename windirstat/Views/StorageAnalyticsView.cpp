@@ -75,7 +75,7 @@ void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, const UINT nFla
 
 CStorageAnalyticsView::CStorageAnalyticsView() = default;
 
-void CStorageAnalyticsView::OnSetFocus(CWnd* pOldWnd)
+void CStorageAnalyticsView::OnSetFocus(WindowRef pOldWnd)
 {
     CWinDirStatPane::OnSetFocus(pOldWnd);
     CMainFrame::Get()->SetLogicalFocus(LF_STORAGEANALYTICS);
@@ -249,7 +249,7 @@ void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
     Invalidate();
 }
 
-HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
 {
     if (nCtlColor == CTLCOLOR_STATIC)
     {
@@ -283,11 +283,11 @@ bool CStorageAnalyticsView::PreprocessMessage(MSG* pMsg)
 {
     if (pMsg->message >= WM_KEYFIRST && pMsg->message <= WM_KEYLAST)
     {
-        const CWnd* pFocus = GetFocus();
-        if (pFocus && pFocus->GetParent() == this)
+        const auto pFocus = GetFocus();
+        if (pFocus && pFocus.GetParent().Handle() == Handle())
         {
             TCHAR className[16]{};
-            if (::GetClassName(pFocus->m_hWnd, className, 16) &&
+            if (::GetClassName(pFocus.m_hWnd, className, 16) &&
                 _tcsicmp(className, _T("Edit")) == 0)
             {
                 bool shouldBypass = false;

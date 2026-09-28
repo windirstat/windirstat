@@ -43,7 +43,7 @@ protected:
     void OnSomethingChanged();
 
     void InitializePage() override;
-    void OnOK() override;
+    std::optional<ValidationError> PrepareSettings() override;
 
     CTreeMap::Options m_options{}; // Current options
     std::optional<CTreeMap::Options> m_customOptions;
@@ -67,7 +67,7 @@ public:
 protected:
     void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
     void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
-    void OnHScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
+    void OnHScroll(UINT nSBCode, UINT nPos, WindowRef scrollBar);
     void OnLightSourceChanged(NMHDR*, LRESULT*);
     void OnSetModified();
     void OnPresetChanged();

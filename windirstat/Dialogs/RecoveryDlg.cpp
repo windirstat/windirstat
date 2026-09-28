@@ -19,16 +19,16 @@
 #include "RecoveryDlg.h"
 #include "IconHandler.h"
 
-bool RecoveryDlg::ResultsList::OnNotify(const WPARAM wParam, const LPARAM lParam, LRESULT* result)
+MessageResult RecoveryDlg::ResultsList::OnNotify(const WPARAM wParam, const LPARAM lParam)
 {
     // Keep native header text readable with the dark palette.
     const auto header = reinterpret_cast<NMHDR*>(lParam);
     if (!header || header->code != NM_CUSTOMDRAW || header->hwndFrom != GetHeader().Handle() ||
-        !DarkMode::IsDarkModeActive()) return CListCtrl::OnNotify(wParam, lParam, result);
+        !DarkMode::IsDarkModeActive()) return CListCtrl::OnNotify(wParam, lParam);
     const auto draw = reinterpret_cast<NMCUSTOMDRAW*>(header);
-    *result = draw->dwDrawStage == CDDS_PREPAINT ? CDRF_NOTIFYITEMDRAW : CDRF_DODEFAULT;
+    const LRESULT result = draw->dwDrawStage == CDDS_PREPAINT ? CDRF_NOTIFYITEMDRAW : CDRF_DODEFAULT;
     if (draw->dwDrawStage == CDDS_ITEMPREPAINT) ::SetTextColor(draw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
-    return true;
+    return result;
 }
 
 void RecoveryDlg::ProgressAnimation::DrawItem(LPDRAWITEMSTRUCT item)
@@ -75,7 +75,7 @@ bool RecoveryDlg::OnInitDialog()
             (_wcsicmp(filesystem, L"NTFS") != 0 && _wcsicmp(filesystem, L"exFAT") != 0)) continue;
         m_roots.push_back(root);
         const auto text = label[0] == L'\0' ? root : std::format(L"{} ({})", root, label);
-        GetDlgItem(IDC_RECOVERY_SOURCE)->SendNativeMessage(CB_ADDSTRING, 0, text.c_str());
+        GetDlgItem(IDC_RECOVERY_SOURCE).SendMessage(CB_ADDSTRING, 0, text.c_str());
     }
     SetComboSelection(IDC_RECOVERY_SOURCE, m_roots.empty() ? -1 : 0);
     const int iconSize = ScaleForDpi(16);
@@ -88,7 +88,7 @@ bool RecoveryDlg::OnInitDialog()
     const std::array tipKeys{ IDS_MENU_SELECT, IDS_RESUME, IDS_SUSPEND, IDS_STOP };
     for (size_t i = 0; i < tipIds.size(); ++i)
     {
-        GetDlgItem(tipIds[i])->SendNativeMessage(BM_SETIMAGE, IMAGE_ICON, m_icons[i].Get());
+        GetDlgItem(tipIds[i]).SendMessage(BM_SETIMAGE, IMAGE_ICON, m_icons[i].Get());
         m_tooltipText[i] = Localization::Lookup(tipKeys[i]);
         std::erase(m_tooltipText[i], L'&');
         m_tooltips.AddTool(GetDlgItem(tipIds[i]), m_tooltipText[i]);
@@ -117,13 +117,13 @@ void RecoveryDlg::UpdateActions()
     const bool ready = !m_busy && !m_filterPending && m_filterValid && m_volume != nullptr;
     const bool stopping = m_progress.cancel.load();
     const bool paused = m_progress.paused.load();
-    GetDlgItem(IDC_RECOVERY_RECOVER)->EnableWindow(ready && m_list.GetSelectedCount() != 0 &&
+    GetDlgItem(IDC_RECOVERY_RECOVER).EnableWindow(ready && m_list.GetSelectedCount() != 0 &&
         !GetText(IDC_RECOVERY_DEST).empty());
-    GetDlgItem(IDC_RECOVERY_PLAY)->EnableWindow(!m_closing && !m_root.empty() &&
+    GetDlgItem(IDC_RECOVERY_PLAY).EnableWindow(!m_closing && !m_root.empty() &&
         (!m_busy || (paused && !stopping)));
-    GetDlgItem(IDC_RECOVERY_PAUSE)->EnableWindow(m_busy && !paused && !stopping);
-    GetDlgItem(IDC_RECOVERY_STOP)->EnableWindow(m_busy && !stopping);
-    GetDlgItem(IDCANCEL)->EnableWindow(!m_closing);
+    GetDlgItem(IDC_RECOVERY_PAUSE).EnableWindow(m_busy && !paused && !stopping);
+    GetDlgItem(IDC_RECOVERY_STOP).EnableWindow(m_busy && !stopping);
+    GetDlgItem(IDCANCEL).EnableWindow(!m_closing);
 }
 
 void RecoveryDlg::SetBusy(const bool busy)
@@ -139,7 +139,7 @@ void RecoveryDlg::SetBusy(const bool busy)
         // Discoveries append in scan order, so hide the sort indicator until completion.
         if (!m_recovering)
         {
-            auto& header = m_list.GetHeader();
+            auto header = m_list.GetHeader();
             HDITEM item{ .mask = HDI_FORMAT };
             if (header.GetItem(m_sortColumn, &item))
             {
@@ -155,7 +155,7 @@ void RecoveryDlg::SetBusy(const bool busy)
     m_animation.ShowWindow(busy ? SW_SHOW : SW_HIDE);
     if (busy) m_animation.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
     for (const int id : { IDC_RECOVERY_SOURCE, IDC_RECOVERY_FILTER, IDC_RECOVERY_REGEX,
-        IDC_RECOVERY_DEST, IDC_RECOVERY_BROWSE }) GetDlgItem(id)->EnableWindow(!busy);
+        IDC_RECOVERY_DEST, IDC_RECOVERY_BROWSE }) GetDlgItem(id).EnableWindow(!busy);
     UpdateActions();
 }
 
@@ -469,7 +469,7 @@ void RecoveryDlg::UpdateList(const size_t first, const bool append)
         CRect rect;
         if (m_list.GetItemRect(index, rect)) m_list.Scroll(CSize(0, rect.top - anchorRect.top));
     }
-    auto& header = m_list.GetHeader();
+    auto header = m_list.GetHeader();
     for (int i = 0; i < header.GetItemCount(); ++i)
     {
         HDITEM item{ .mask = HDI_FORMAT };
@@ -578,7 +578,7 @@ void RecoveryDlg::OnRecover()
     });
 }
 
-HBRUSH RecoveryDlg::OnCtlColor(CDC* dc, CWnd* window, const UINT type)
+HBRUSH RecoveryDlg::OnCtlColor(CDC* dc, WindowRef window, const UINT type)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(dc, type);
     return brush ? brush : CDialog::OnCtlColor(dc, window, type);

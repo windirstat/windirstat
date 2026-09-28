@@ -33,7 +33,19 @@ public:
 
 protected:
     void InitializePage() override;
-    void OnOK() override;
+    std::optional<ValidationError> PrepareSettings() override;
+
+    static constexpr std::array CheckboxBindings
+    {
+        &COptions::AutoElevate,
+        &COptions::AutomaticallyResizeColumns,
+        &COptions::ListFullRowSelection,
+        &COptions::ListGrid,
+        &COptions::ListStripes,
+        &COptions::UseSizeSuffixes,
+        &COptions::UseWindowsLocaleSetting,
+        &COptions::ShowTimeSeconds,
+    };
 
     CComboBox m_combo;
 
@@ -41,33 +53,26 @@ protected:
     static bool IsContextMenuRegistered(HKEY root);
     static bool SetContextMenuRegistration(bool enable);
 
-    int GetSelectedDarkMode() const;
-
 public:
     static std::span<const RouteEntry> Routes();
 
-protected:
-    void OnBnClickedSetModified();
 };
 
 inline std::span<const RouteEntry> CPageGeneral::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_AUTO_ELEVATE),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_COLUMN_AUTOSIZE),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_CONTEXT_MENU),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_FULL_ROW_SELECTION),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_PORTABLE_MODE),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_GRID),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_STRIPES),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SIZE_SUFFIXES),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_USE_WINDOWS_LOCALE),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_SHOW_TIME_SECONDS),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_DISABLED),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_ENABLED),
-        Route::Control<&OnBnClickedSetModified>(BN_CLICKED, IDC_DARK_MODE_USE_WINDOWS),
-        Route::Control<&OnBnClickedSetModified>(CBN_SELENDOK, IDC_COMBO),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_AUTO_ELEVATE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_COLUMN_AUTOSIZE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_CONTEXT_MENU),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_FULL_ROW_SELECTION),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PORTABLE_MODE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOW_GRID),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOW_STRIPES, IDC_SHOW_TIME_SECONDS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SIZE_SUFFIXES),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_USE_WINDOWS_LOCALE),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DARK_MODE_DISABLED, IDC_DARK_MODE_USE_WINDOWS),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_COMBO),
     };
     return entries;
 }

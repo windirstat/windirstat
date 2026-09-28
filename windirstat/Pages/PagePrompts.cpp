@@ -20,31 +20,9 @@
 
 CPagePrompts::CPagePrompts() : MessageTarget(IDD) {}
 
-std::span<const CSettingsPage::CheckboxSettingBinding> CPagePrompts::CheckboxSettings()
-{
-    static constexpr std::array bindings
-    {
-        CheckboxSettingBinding{ IDC_SHOW_MICROSOFT_PROGRESS, COptions::ShowMicrosoftProgress },
-        CheckboxSettingBinding{ IDC_ELEVATION_PROMPT, COptions::ShowElevationPrompt },
-        CheckboxSettingBinding{ IDC_CLOUD_LINKS_WARNING, COptions::ShowDupeDetectionCloudLinksWarning },
-        CheckboxSettingBinding{ IDC_DELETION_WARNING, COptions::ShowDeletePermanentlyWarning },
-        CheckboxSettingBinding{ IDC_DELETION_BIN_WARNING, COptions::ShowDeleteToRecycleBinWarning },
-        CheckboxSettingBinding{ IDC_PROMPT_EMPTY_BIN, COptions::ShowEmptyRecycleBinPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_CREATE_HARDLINK, COptions::ShowCreateHardlinkPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_MOTW, COptions::ShowRemoveMotwPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_DISABLE_HIBERNATE, COptions::ShowDisableHibernatePrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_SHADOW, COptions::ShowRemoveShadowCopiesPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_DISM_NORMAL, COptions::ShowDismCleanupPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_DISM_RESET, COptions::ShowDismResetPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_SET_DATES, COptions::ShowSetDatesPrompt },
-        CheckboxSettingBinding{ IDC_PROMPT_REMOVE_EMPTY, COptions::ShowRemoveEmptyFoldersPrompt },
-    };
-    return bindings;
-}
-
 void CPagePrompts::InitializePage()
 {
-    LoadCheckboxSettings(CheckboxSettings());
+    LoadBinds(CheckboxBindings);
 
     struct PromptControl
     {
@@ -74,7 +52,8 @@ void CPagePrompts::InitializePage()
     }
 }
 
-void CPagePrompts::OnOK()
+std::optional<CPropertyPage::ValidationError> CPagePrompts::PrepareSettings()
 {
-    SaveCheckboxSettings(CheckboxSettings());
+    StageBinds(ReadBinds(CheckboxBindings).value());
+    return {};
 }

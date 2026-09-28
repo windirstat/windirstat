@@ -48,19 +48,29 @@ void CPagePermissions::InitializePage()
     SetText(IDC_PERMS_EXCLUDE, COptions::PermsExcludeRegex.Obj());
 }
 
-void CPagePermissions::OnOK()
+std::optional<CPropertyPage::ValidationError> CPagePermissions::PrepareSettings()
 {
     for (const auto [i, accountOpt, levelOpt, colorOpt, colorButton] :
         std::views::zip(std::views::iota(0, PERMSRULECOUNT),
             COptions::PermsColorAccount, COptions::PermsColorLevel, COptions::PermsColor, m_colorButton))
     {
-        accountOpt.Obj() = GetText(IDC_PERMS_ACCOUNT0 + i);
-        levelOpt = GetComboSelection(IDC_PERMS_LEVEL0 + i);
-        colorOpt = colorButton.GetColor();
+        const std::wstring account = GetText(IDC_PERMS_ACCOUNT0 + i);
+        int level = 0;
+        if (auto error = ValidateRegex(IDC_PERMS_ACCOUNT0 + i, account)) return error;
+        if (auto error = ReadSelection(IDC_PERMS_LEVEL0 + i, level, levelOpt.Min(), levelOpt.Max())) return error;
+        Stage(accountOpt, account);
+        Stage(levelOpt, level);
+        Stage(colorOpt, colorButton.GetColor());
     }
-    COptions::PermsExcludeRegex.Obj() = GetText(IDC_PERMS_EXCLUDE);
+    const std::wstring exclude = GetText(IDC_PERMS_EXCLUDE);
+    if (auto error = ValidateRegex(IDC_PERMS_EXCLUDE, exclude)) return error;
+    Stage(COptions::PermsExcludeRegex, exclude);
 
     // Force colorization to be recomputed and repaint the list
-    CItemPerm::InvalidateRuleColors();
-    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
+    StageEffect([]
+    {
+        CItemPerm::InvalidateRuleColors();
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
+    });
+    return {};
 }

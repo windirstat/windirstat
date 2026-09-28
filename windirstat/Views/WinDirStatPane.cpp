@@ -18,11 +18,6 @@
 #include "pch.h"
 #include "WinDirStatPane.h"
 
-void CWinDirStatPane::PostNcDestroy()
-{
-    delete this;
-}
-
 void CWinDirStatPane::OnPaint()
 {
     CPaintDC dc(this);
@@ -33,7 +28,7 @@ void CWinDirStatPane::OnDraw(CDC* /*pDC*/)
 {
 }
 
-int CWinDirStatPane::OnMouseActivate(CWnd* pDesktopWnd, const UINT nHitTest, const UINT message)
+int CWinDirStatPane::OnMouseActivate(WindowRef pDesktopWnd, const UINT nHitTest, const UINT message)
 {
     const int result = CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
     if (result != MA_NOACTIVATE && result != MA_NOACTIVATEANDEAT)
@@ -79,13 +74,13 @@ void CWinDirStatPane::ShowGraphContextMenu(CItem* clickedItem, const CPoint poin
     if (!menu) return;
     Localization::UpdateMenu(menu);
 
-    const CMenu* subMenu = menu.GetSubMenu(0);
-    if (subMenu == nullptr) return;
+    const auto subMenu = menu.GetSubMenu(0);
+    if (!subMenu) return;
 
     UINT command;
     do
     {
-        command = subMenu->ShowPopup(
+        command = subMenu.ShowPopup(
             TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
             point, GetMainWindow());
         if (command != 0) GetMainWindow()->SendMessage(WM_COMMAND, command);

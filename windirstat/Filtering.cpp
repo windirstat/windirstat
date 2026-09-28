@@ -142,6 +142,31 @@ std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
 
 // --- Public methods ---
 
+std::wregex CFiltering::CompilePattern(const std::wstring& pattern, const bool useRegex, const bool pathFilter)
+{
+    // In regex mode, normalize lone backslashes in path-based patterns so
+    // users can type V:\Folder without having to escape the path separators.
+    const std::wstring normalized = useRegex && pathFilter ? NormalizePathRegex(pattern) : pattern;
+
+    // Directory filters apply to the directory itself and everything below it.
+    std::wstring expression = useRegex ? normalized : GlobToRegex(normalized, false);
+    if (pathFilter) expression = MatchDirectoryAndDescendants(std::move(expression));
+    return std::wregex(expression, std::regex_constants::icase | std::regex_constants::optimize);
+}
+
+std::optional<std::wstring> CFiltering::ValidateFilters(
+    const std::wstring& text, const bool useRegex, const bool pathFilter)
+{
+    for (auto& token : SplitString(text, L'\n'))
+    {
+        while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
+        if (token.empty()) continue;
+        try { CompilePattern(token, useRegex, pathFilter); }
+        catch (const std::regex_error&) { return token; }
+    }
+    return {};
+}
+
 void CFiltering::CompileFilters()
 {
     ExcludeDirsRegex.clear();
@@ -166,20 +191,12 @@ void CFiltering::CompileFilters()
                 while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
                 if (token.empty()) continue;
 
-                // In regex mode, normalize lone backslashes in path-based patterns so
-                // users can type V:\Folder without having to escape the path separators.
-                const std::wstring normalized = (COptions::FilteringUseRegex && isPathFilter)
-                    ? NormalizePathRegex(token) : token;
-
-                // Directory filters apply to the directory itself and everything below it.
-                std::wstring expr = COptions::FilteringUseRegex ? normalized : GlobToRegex(normalized, false);
-                if (isIncludeDirs || isExcludeDirs) expr = MatchDirectoryAndDescendants(std::move(expr));
-                optionRegex.get().emplace_back(expr,
-                    std::regex_constants::icase | std::regex_constants::optimize);
+                optionRegex.get().push_back(CompilePattern(token, COptions::FilteringUseRegex, isPathFilter));
 
                 if (isIncludeDirs)
                 {
-                    IncludeDirsAnchors.emplace_back(ExtractIncludeAnchor(normalized, COptions::FilteringUseRegex));
+                    IncludeDirsAnchors.emplace_back(ExtractIncludeAnchor(COptions::FilteringUseRegex
+                        ? NormalizePathRegex(token) : token, COptions::FilteringUseRegex));
                 }
             }
             catch (const std::regex_error&)

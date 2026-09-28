@@ -40,23 +40,23 @@ bool SearchDlg::OnInitDialog()
     ModifyStyle(0, WS_CLIPCHILDREN);
 
     CClientDC dc(this);
-    const GdiObjectSelection font(&dc, GetDlgItem(IDC_SEARCH_SIZE_LABEL)->GetFont());
-    const CRect labelRect = GetChildWindowRect(GetDlgItem(IDC_SEARCH_SIZE_LABEL)->Handle());
+    const GdiObjectSelection font(&dc, GetDlgItem(IDC_SEARCH_SIZE_LABEL).GetFont());
+    const CRect labelRect = GetChildWindowRect(GetDlgItem(IDC_SEARCH_SIZE_LABEL).Handle());
     LONG labelWidth = 0;
-    for (CWnd* child = GetWindow(GW_CHILD); child != nullptr; child = child->GetWindow(GW_HWNDNEXT))
+    for (auto child = GetWindow(GW_CHILD); child != nullptr; child = child.GetWindow(GW_HWNDNEXT))
     {
-        if (GetChildWindowRect(child->Handle()).right > labelRect.right) continue;
-        std::wstring text = child->GetText();
-        if (!text.ends_with(L':')) child->SetText(text += L":");
+        if (GetChildWindowRect(child.Handle()).right > labelRect.right) continue;
+        std::wstring text = child.GetText();
+        if (!text.ends_with(L':')) child.SetText(text += L":");
         labelWidth = std::max(labelWidth, dc.GetTextExtent(text).cx);
     }
     const int shift = labelRect.Width() - labelWidth - ScaleForDpi(2);
-    for (CWnd* child = GetWindow(GW_CHILD); child != nullptr; child = child->GetWindow(GW_HWNDNEXT))
+    for (auto child = GetWindow(GW_CHILD); child != nullptr; child = child.GetWindow(GW_HWNDNEXT))
     {
-        CRect rect = GetChildWindowRect(child->Handle());
+        CRect rect = GetChildWindowRect(child.Handle());
         if (rect.right <= labelRect.right) rect.right -= shift;
         else rect.Offset(-shift, 0);
-        child->MoveWindow(rect);
+        child.MoveWindow(rect);
     }
     const CRect windowRect = GetWindowRect();
     SetWindowPos(nullptr, 0, 0, windowRect.Width() - shift, windowRect.Height(), SWP_NOMOVE | SWP_NOZORDER);
@@ -76,10 +76,10 @@ bool SearchDlg::OnInitDialog()
         m_layout.AddControl(separator, 0, 0, 0, 0);
         m_layout.AddControl(maximum, 0, 0, 0, 0);
         m_layout.AddControl(units, 0, 0, 0, 0);
-        GetDlgItem(minimum)->SendNativeMessage(EM_SETCUEBANNER, true, L"0");
-        GetDlgItem(maximum)->SendNativeMessage(EM_SETCUEBANNER, true, L"\u221e");
+        GetDlgItem(minimum).SendMessage(EM_SETCUEBANNER, true, L"0");
+        GetDlgItem(maximum).SendMessage(EM_SETCUEBANNER, true, L"\u221e");
         for (const auto& unit : { GetSpec_Bytes(), GetSpec_KiB(), GetSpec_MiB(), GetSpec_GiB(), GetSpec_TiB() })
-            GetDlgItem(units)->SendNativeMessage(CB_ADDSTRING, 0, unit.c_str());
+            GetDlgItem(units).SendMessage(CB_ADDSTRING, 0, unit.c_str());
     }
     m_layout.AddControl(IDC_SEARCH_FILES, 0, 0, 0, 0);
     m_layout.AddControl(IDC_SEARCH_FOLDERS, 0, 0, 0, 0);
@@ -266,7 +266,7 @@ void SearchDlg::UpdateControlStatus()
 
     // Excluding both files and folders would ask for nothing at all, so refuse that
     // combination rather than running a search that cannot return anything
-    GetDlgItem(IDOK)->EnableWindow(sizesValid && (criteria.includeFiles || criteria.includeFolders) &&
+    GetDlgItem(IDOK).EnableWindow(sizesValid && (criteria.includeFiles || criteria.includeFolders) &&
         (regexTest.flags() & std::regex_constants::optimize) != 0);
 }
 

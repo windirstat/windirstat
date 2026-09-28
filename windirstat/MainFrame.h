@@ -57,7 +57,10 @@ class CSettingsSheet final : public MessageTarget<CSettingsSheet, CPropertySheet
 {
 public:
     CSettingsSheet();
-    void SetRestartRequired(const bool changed) { m_restartRequest = changed; }
+    void SetRestartRequired(const int darkMode, const int language)
+    {
+        m_restartRequest = darkMode != m_initialDarkMode || language != m_initialLanguage;
+    }
     bool OnInitDialog() override;
     static bool ShowSettings(int initialPage = -1, bool refreshOnFilteringChange = true);
 
@@ -67,7 +70,12 @@ public:
 protected:
     bool OnCommand(WPARAM wParam, LPARAM lParam) override;
     bool OnEraseBkgnd(CDC* pDC) const;
+    bool ConfirmApply(UINT command) override;
+    void OnApplied(UINT command) override;
 
+    const int m_initialDarkMode = COptions::DarkMode;
+    const int m_initialLanguage = COptions::LanguageId;
+    bool m_restartAfterApply = false;
     bool m_restartRequest = false;
     bool m_alreadyAsked = false;
 
@@ -200,8 +208,8 @@ public:
     bool IsScanSuspended() const { return m_scanSuspend; }
 
     void UpdateProgress();
-    void UpdateDynamicMenuItems(CMenu* menu, CMenu* menuHeader = nullptr) const;
-    std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, bool removeItems = true) const;
+    void UpdateDynamicMenuItems(MenuRef menu, MenuRef menuHeader = nullptr) const;
+    std::pair<MenuRef, int> LocateNamedMenu(MenuRef menu, const std::wstring& subMenuText, bool removeItems = true) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const { return m_logicalFocus; }
@@ -219,7 +227,7 @@ public:
     void DestroyProgress();
 
     void SetStatusPaneText(const CDC& cdc, CStatusBar::PaneId pane, const std::wstring& text, int minWidth = 0);
-    void UpdateCleanupMenu(CMenu* menu, bool triggerAsync = true);
+    void UpdateCleanupMenu(MenuRef menu, bool triggerAsync = true);
 
     UINT_PTR m_timer = 0;           // Timer for updating the display
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
@@ -265,14 +273,14 @@ protected:
     void OnEndSession(bool ending) const;
     CCmdTarget* GetCommandTarget() const override { return CWinDirStatModel::Get(); }
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     LRESULT OnEnterSizeMove(WPARAM, LPARAM) const;
     LRESULT OnExitSizeMove(WPARAM, LPARAM) const;
     LRESULT OnCallbackRequest(WPARAM, LPARAM lParam);
     void OnTimer(UINT_PTR nIDEvent);
     void OnClose();
-    void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, bool bSysMenu);
+    void OnInitMenuPopup(MenuRef pPopupMenu, UINT nIndex, bool bSysMenu);
     LRESULT OnMenuCommand(WPARAM position, LPARAM menuHandle);
     void OnSize(UINT nType, int cx, int cy);
     void OnUpdateViewShowVisualization(CCmdUI* pCmdUI) const;
@@ -326,18 +334,19 @@ protected:
     void OnUpdateToolsPermissions(CCmdUI* pCmdUI) const;
     void OnToolsStorageAnalytics() const;
     void OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI) const;
-    void UpdateToolsMenu(CMenu* menu) const;
+    void UpdateToolsMenu(MenuRef menu) const;
     void OnViewWindowLayout();
     void OnConfigure();
     void OnDestroy();
     LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
     UINT OnPowerBroadcast(UINT, LPARAM);
     void OnSysColorChange();
+    void OnAppearanceChanged() override;
     void OnSettingChange(UINT, LPCTSTR);
     LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam) const;
     void OnNcPaint();
     bool OnNcActivate(bool bActive);
-    bool OnEraseBkgnd(CDC*) { return true; }
+    bool OnEraseBkgnd(CDC* dc);
 public:
     static CMainFrame* Get() { return s_Singleton; }
     void UpdateFrameTitleForScan(std::wstring_view scanName = {});

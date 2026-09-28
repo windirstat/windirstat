@@ -82,7 +82,7 @@ public:
 
 protected:
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
+    void OnVScroll(UINT nSBCode, UINT nPos, WindowRef scrollBar);
 };
 
 inline std::span<const RouteEntry> CFlameGraphView::Routes()

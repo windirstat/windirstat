@@ -38,8 +38,6 @@ public:
     CWinDirStatPane() = default;
     ~CWinDirStatPane() override = default;
 
-    void PostNcDestroy() override;
-
     virtual void OnDraw(CDC* pDC);
 
     virtual void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item);
@@ -50,7 +48,7 @@ static std::span<const RouteEntry> Routes();
 
 protected:
     int OnCreate(LPCREATESTRUCT) { return 0; }
-    int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message) override;
+    int OnMouseActivate(WindowRef pDesktopWnd, UINT nHitTest, UINT message) override;
     void OnPaint();
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 

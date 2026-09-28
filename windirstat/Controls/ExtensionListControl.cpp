@@ -279,7 +279,7 @@ void CExtensionListControl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = 0;
 }
 
-void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
+void CExtensionListControl::OnSetFocus(WindowRef pOldWnd)
 {
     CWdsListControl::OnSetFocus(pOldWnd);
     CMainFrame::Get()->SetLogicalFocus(LF_EXTLIST);

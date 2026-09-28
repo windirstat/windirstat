@@ -43,14 +43,14 @@ public:
 
 protected:
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
-    void OnHScroll(UINT nSBCode, UINT nPos, CWnd* pScrollBar);
+    void OnHScroll(UINT nSBCode, UINT nPos, WindowRef pScrollBar);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     void OnLButtonDown(UINT nFlags, CPoint point);
     void OnMouseMove(UINT nFlags, CPoint point);
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint point);
-    bool OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+    bool OnSetCursor(WindowRef pWnd, UINT nHitTest, UINT message);
     void OnTtnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
-    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* pScrollBar);
+    void OnVScroll(UINT nSBCode, UINT nPos, WindowRef pScrollBar);
 };
 
 inline std::span<const RouteEntry> CFileTreeControl::Routes()

@@ -34,7 +34,7 @@ public:
 
 protected:
     void InitializePage() override;
-    void OnOK() override;
+    std::optional<ValidationError> PrepareSettings() override;
 
     CComboBox m_levelCombo[PERMSRULECOUNT];
     CColorButton m_colorButton[PERMSRULECOUNT];
@@ -48,9 +48,9 @@ inline std::span<const RouteEntry> CPagePermissions::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Notify<&OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON4),
-        Route::Control<&OnSettingRangeChanged>(EN_CHANGE, IDC_PERMS_ACCOUNT0, IDC_PERMS_ACCOUNT4),
-        Route::Control<&OnSettingRangeChanged>(CBN_SELCHANGE, IDC_PERMS_LEVEL0, IDC_PERMS_LEVEL4),
+        Route::Notify<&OnSettingChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON4),
+        Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_PERMS_ACCOUNT0, IDC_PERMS_ACCOUNT4),
+        Route::Control<&OnSettingChanged>(CBN_SELCHANGE, IDC_PERMS_LEVEL0, IDC_PERMS_LEVEL4),
         Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_PERMS_EXCLUDE),
     };
     return entries;

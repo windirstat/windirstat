@@ -107,7 +107,7 @@ protected:
     CLayout m_layout;
 
     // Constructor that takes dialog ID and window placement
-    CLayoutDialog(const UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
+    CLayoutDialog(const UINT nIDTemplate, RECT* placement, WindowRef pParent = nullptr)
         : MessageTarget(nIDTemplate, pParent)
         , m_layout(this, placement)
     {

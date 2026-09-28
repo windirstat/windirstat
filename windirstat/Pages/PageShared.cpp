@@ -21,13 +21,6 @@
 
 CSettingsPage::CSettingsPage(const UINT templateId) : MessageTarget(templateId) {}
 
-CSettingsSheet* CSettingsPage::GetSheet() const
-{
-    const auto sheet = GetParent<CSettingsSheet>();
-    assert(sheet != nullptr);
-    return sheet;
-}
-
 bool CSettingsPage::OnInitDialog()
 {
     if (!CPropertyPage::OnInitDialog()) return false;
@@ -37,18 +30,6 @@ bool CSettingsPage::OnInitDialog()
     AdjustControls();
     m_initialized = true;
     return true;
-}
-
-void CSettingsPage::LoadCheckboxSettings(const std::span<const CheckboxSettingBinding> bindings)
-{
-    for (const auto& [controlId, setting] : bindings)
-        SetChecked(controlId, setting.Obj());
-}
-
-void CSettingsPage::SaveCheckboxSettings(const std::span<const CheckboxSettingBinding> bindings)
-{
-    for (const auto& [controlId, setting] : bindings)
-        setting = IsChecked(controlId);
 }
 
 void CSettingsPage::AdjustControls()
@@ -62,25 +43,64 @@ void CSettingsPage::SetModified(const bool changed)
         CPropertyPage::SetModified(changed);
 }
 
-void CSettingsPage::OnSettingChanged()
-{
-    SetModified();
-}
-
-void CSettingsPage::OnSettingRangeChanged(UINT)
-{
-    SetModified();
-}
-
-void CSettingsPage::OnSettingNotifyChanged(UINT, NMHDR*, LRESULT*)
-{
-    SetModified();
-}
-
 bool CSettingsPage::OnEraseBkgnd(CDC* pDC)
 {
     const CRect rect = GetClientRect();
     pDC->FillSolidRect(rect, DarkMode::SystemColor(
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
     return true;
+}
+
+std::optional<CPropertyPage::ValidationError> CSettingsPage::PrepareApply()
+{
+    m_pending.clear();
+    m_effects.clear();
+    return PrepareSettings();
+}
+
+void CSettingsPage::CommitApply()
+{
+    for (auto& commit : m_pending) commit();
+    m_pending.clear();
+}
+
+void CSettingsPage::AfterApply()
+{
+    for (auto& effect : m_effects) effect();
+    m_effects.clear();
+}
+
+std::optional<CPropertyPage::ValidationError> CSettingsPage::ReadInteger(
+    const UINT control, int& value, const int minimum, const int maximum) const
+{
+    const std::wstring text = GetText(control);
+    wchar_t* end = nullptr;
+    const long long parsed = std::wcstoll(text.c_str(), &end, 10);
+    if (end == text.c_str() || *end != L'\0' || parsed < minimum || parsed > maximum)
+        return ValidationError{ ::GetDlgItem(Handle(), control),
+            std::format(L"{}\n[{}, {}]", TranslateError(ERROR_INVALID_DATA), minimum, maximum) };
+    value = static_cast<int>(parsed);
+    return {};
+}
+
+std::optional<CPropertyPage::ValidationError> CSettingsPage::ReadSelection(
+    const UINT control, int& value, const int minimum, const int maximum) const
+{
+    value = GetComboSelection(control);
+    if (value < minimum || value > maximum)
+        return ValidationError{ ::GetDlgItem(Handle(), control),
+            TranslateError(ERROR_INVALID_DATA) };
+    return {};
+}
+
+std::optional<CPropertyPage::ValidationError> CSettingsPage::ValidateRegex(
+    const UINT control, const std::wstring& pattern) const
+{
+    try { std::wregex{ pattern, std::regex::icase | std::regex::optimize }; }
+    catch (const std::regex_error&)
+    {
+        return ValidationError{ ::GetDlgItem(Handle(), control),
+            Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + pattern };
+    }
+    return {};
 }

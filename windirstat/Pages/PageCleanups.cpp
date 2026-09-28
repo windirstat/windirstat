@@ -38,11 +38,16 @@ void CPageCleanups::InitializePage()
     OnLbnSelchangeList();
 }
 
-void CPageCleanups::OnOK()
+std::optional<CPropertyPage::ValidationError> CPageCleanups::PrepareSettings()
 {
+    int refreshPolicy = 0;
+    if (HasCurrentUdc())
+        if (auto error = ReadSelection(IDC_REFRESHPOLICY, refreshPolicy,
+            RP_NO_REFRESH, RP_REFRESH_THIS_ENTRYS_PARENT)) return error;
     CheckEmptyTitle();
     DialogToCurrentUdc();
-    COptions::SetUserDefinedCleanups(m_udc);
+    Stage([cleanups = m_udc] { COptions::SetUserDefinedCleanups(cleanups); });
+    return {};
 }
 
 void CPageCleanups::OnLbnSelchangeList()
@@ -74,30 +79,13 @@ void CPageCleanups::CheckEmptyTitle()
 void CPageCleanups::CurrentUdcToDialog()
 {
     const ScopedValue updating(m_updating, true);
-    if (!HasCurrentUdc())
-    {
-        for (const UINT id : { IDC_ASKFORCONFIRMATION, IDC_ENABLED, IDC_RECURSEINTOSUBDIRECTORIES,
-            IDC_SHOWCONSOLEWINDOW, IDC_WAITFORCOMPLETION, IDC_WORKSFORDIRECTORIES, IDC_WORKSFORDRIVES,
-            IDC_WORKSFORFILES, IDC_WORKSFORUNCPATHS }) SetChecked(id, false);
-        for (const UINT id : { IDC_COMMANDLINE, IDC_TITLE }) SetText(id, L"");
-        SetComboSelection(IDC_REFRESHPOLICY, -1);
-        UpdateControlStatus();
-        return;
-    }
-
-    auto& udc = m_udc[m_current];
-    SetChecked(IDC_ASKFORCONFIRMATION, udc.AskForConfirmation);
+    const bool hasCurrent = HasCurrentUdc();
+    std::optional<USERDEFINEDCLEANUP> empty;
+    auto& udc = hasCurrent ? m_udc[m_current] : empty.emplace();
+    LoadBinds(CheckboxBindings, udc);
     SetText(IDC_COMMANDLINE, udc.CommandLine.Obj());
-    SetChecked(IDC_ENABLED, udc.Enabled);
-    SetChecked(IDC_RECURSEINTOSUBDIRECTORIES, udc.RecurseIntoSubdirectories);
-    SetComboSelection(IDC_REFRESHPOLICY, udc.RefreshPolicy);
-    SetChecked(IDC_SHOWCONSOLEWINDOW, udc.ShowConsoleWindow);
+    SetComboSelection(IDC_REFRESHPOLICY, hasCurrent ? udc.RefreshPolicy.Obj() : -1);
     SetText(IDC_TITLE, udc.Title.Obj());
-    SetChecked(IDC_WAITFORCOMPLETION, udc.WaitForCompletion);
-    SetChecked(IDC_WORKSFORDIRECTORIES, udc.WorksForDirectories);
-    SetChecked(IDC_WORKSFORDRIVES, udc.WorksForDrives);
-    SetChecked(IDC_WORKSFORFILES, udc.WorksForFiles);
-    SetChecked(IDC_WORKSFORUNCPATHS, udc.WorksForUncPaths);
 
     UpdateControlStatus();
 }
@@ -107,18 +95,11 @@ void CPageCleanups::DialogToCurrentUdc()
     if (!HasCurrentUdc()) return;
 
     auto& udc = m_udc[m_current];
-    udc.Enabled                   = IsChecked(IDC_ENABLED);
-    udc.Title.Obj()               = GetText(IDC_TITLE);
-    udc.WorksForDrives            = IsChecked(IDC_WORKSFORDRIVES);
-    udc.WorksForDirectories       = IsChecked(IDC_WORKSFORDIRECTORIES);
-    udc.WorksForFiles             = IsChecked(IDC_WORKSFORFILES);
-    udc.WorksForUncPaths          = IsChecked(IDC_WORKSFORUNCPATHS);
-    udc.CommandLine.Obj()         = GetText(IDC_COMMANDLINE);
-    udc.RecurseIntoSubdirectories = IsChecked(IDC_RECURSEINTOSUBDIRECTORIES);
-    udc.AskForConfirmation        = IsChecked(IDC_ASKFORCONFIRMATION);
-    udc.ShowConsoleWindow         = IsChecked(IDC_SHOWCONSOLEWINDOW);
-    udc.WaitForCompletion         = IsChecked(IDC_WAITFORCOMPLETION);
-    udc.RefreshPolicy             = GetComboSelection(IDC_REFRESHPOLICY);
+    const auto checkboxes = ReadBinds(CheckboxBindings, udc).value();
+    for (const auto& [setting, value] : checkboxes) setting = value;
+    udc.Title.Obj() = GetText(IDC_TITLE);
+    udc.CommandLine.Obj() = GetText(IDC_COMMANDLINE);
+    udc.RefreshPolicy = GetComboSelection(IDC_REFRESHPOLICY);
 }
 
 void CPageCleanups::OnSomethingChanged()
@@ -141,19 +122,19 @@ void CPageCleanups::UpdateControlStatus()
     const bool enabled = hasCurrent && IsChecked(IDC_ENABLED);
     const bool recurseIntoSubdirectories = IsChecked(IDC_RECURSEINTOSUBDIRECTORIES);
 
-    for (const UINT id : { IDC_REMOVE_CLEANUP, IDC_ENABLED }) GetDlgItem(id)->EnableWindow(hasCurrent);
+    for (const UINT id : { IDC_REMOVE_CLEANUP, IDC_ENABLED }) GetDlgItem(id).EnableWindow(hasCurrent);
     for (const UINT id : { IDC_TITLE, IDC_WORKSFORDRIVES, IDC_WORKSFORDIRECTORIES, IDC_WORKSFORFILES,
         IDC_WORKSFORUNCPATHS, IDC_COMMANDLINE, IDC_ASKFORCONFIRMATION, IDC_SHOWCONSOLEWINDOW,
-        IDC_REFRESHPOLICY }) GetDlgItem(id)->EnableWindow(enabled);
-    GetDlgItem(IDC_RECURSEINTOSUBDIRECTORIES)->EnableWindow(enabled &&
+        IDC_REFRESHPOLICY }) GetDlgItem(id).EnableWindow(enabled);
+    GetDlgItem(IDC_RECURSEINTOSUBDIRECTORIES).EnableWindow(enabled &&
         (IsChecked(IDC_WORKSFORDRIVES) || IsChecked(IDC_WORKSFORDIRECTORIES)));
-    GetDlgItem(IDC_WAITFORCOMPLETION)->EnableWindow(enabled && !recurseIntoSubdirectories);
+    GetDlgItem(IDC_WAITFORCOMPLETION).EnableWindow(enabled && !recurseIntoSubdirectories);
 
     const int showHints = hasCurrent && recurseIntoSubdirectories ? SW_SHOW : SW_HIDE;
-    for (const UINT id : { IDC_HINTSP, IDC_HINTSN }) GetDlgItem(id)->ShowWindow(showHints);
+    for (const UINT id : { IDC_HINTSP, IDC_HINTSN }) GetDlgItem(id).ShowWindow(showHints);
 
-    GetDlgItem(IDC_UP)->EnableWindow(hasCurrent && m_current > 0);
-    GetDlgItem(IDC_DOWN)->EnableWindow(hasCurrent && std::cmp_less(m_current + 1, m_udc.size()));
+    GetDlgItem(IDC_UP).EnableWindow(hasCurrent && m_current > 0);
+    GetDlgItem(IDC_DOWN).EnableWindow(hasCurrent && std::cmp_less(m_current + 1, m_udc.size()));
 }
 
 void CPageCleanups::OnBnClickedEnabled()

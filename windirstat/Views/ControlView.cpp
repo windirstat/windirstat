@@ -92,7 +92,7 @@ void CControlView::OnSize(UINT /*nType*/, const int cx, const int cy)
     }
 }
 
-void CControlView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CControlView::OnSetFocus(WindowRef /*pOldWnd*/)
 {
     GetControl().SetFocus();
 }

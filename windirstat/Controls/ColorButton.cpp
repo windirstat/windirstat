@@ -37,14 +37,14 @@ void CColorButton::CPreview::OnPaint()
     CRect rc = GetClientRect();
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
-    const bool disabled = (GetParent()->GetStyle() & WS_DISABLED) != 0;
+    const bool disabled = (GetParent().GetStyle() & WS_DISABLED) != 0;
     dc.FillSolidRect(rc, disabled ? DarkMode::SystemColor(COLOR_BTNFACE) : m_color);
 }
 
 void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point) const
 {
-    point = GetParent()->ToClient(ToScreen(point));
-    GetParent()->SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x, point.y));
+    point = GetParent().ToClient(ToScreen(point));
+    GetParent().SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x, point.y));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ void CColorButton::OnBnClicked()
             .code     = COLBN_CHANGED
         };
 
-        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), &hdr);
+        GetParent().SendMessage(WM_NOTIFY, GetDlgCtrlID(), &hdr);
     }
 }
 

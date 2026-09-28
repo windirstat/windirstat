@@ -49,7 +49,7 @@ static std::span<const RouteEntry> Routes();
 protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSize(UINT nType, int cx, int cy);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     bool OnEraseBkgnd(CDC*) { return true; }
 };
 

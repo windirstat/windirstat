@@ -96,7 +96,7 @@ public:
 protected:
     void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
     void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult) const;
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     void OnSearchExtension() const;

@@ -26,9 +26,10 @@ struct string_hash {
 
 class Localization final
 {
+    static bool m_rightToLeft;
     static bool CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix = {});
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
-    static void UpdateWindowText(CWnd& wnd);
+    static void UpdateWindowText(WindowRef wnd);
 
 public:
     static std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> m_map;
@@ -66,9 +67,10 @@ public:
         }
     }
 
-    static void UpdateMenu(CMenu& menu);
+    static bool IsRightToLeft() noexcept { return m_rightToLeft; }
+    static void UpdateMenu(MenuRef menu);
     static void UpdateTabControl(CTabControl& tab);
-    static void UpdateDialogs(CWnd& wnd);
+    static void UpdateDialogs(WindowRef wnd);
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(LANGID language);

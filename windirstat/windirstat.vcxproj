@@ -235,6 +235,11 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
+    <ClInclude Include="UiTypes.h" />
+    <ClInclude Include="UiWindow.h" />
+    <ClInclude Include="UiControls.h" />
+    <ClInclude Include="UiApplication.h" />
+    <ClInclude Include="UiPanes.h" />
     <ClInclude Include="UiFramework.h" />
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +261,9 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DarkMode.cpp" />
+    <ClCompile Include="UiAppearance.cpp" />
+    <ClCompile Include="UiControls.cpp" />
+    <ClCompile Include="UiDialogs.cpp" />
     <ClCompile Include="UiFramework.cpp" />
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />

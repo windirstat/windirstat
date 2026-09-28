@@ -82,6 +82,7 @@
 #include <cwctype>
 #include <exception>
 #include <execution>
+#include <expected>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -108,6 +109,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>

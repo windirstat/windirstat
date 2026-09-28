@@ -33,7 +33,7 @@ public:
 
 protected:
     void InitializePage() override;
-    void OnOK() override;
+    std::optional<ValidationError> PrepareSettings() override;
 
     void CurrentUdcToDialog();
     void DialogToCurrentUdc();
@@ -42,6 +42,19 @@ protected:
     void CheckEmptyTitle();
     bool HasCurrentUdc() const noexcept { return m_current >= 0 && std::cmp_less(m_current, m_udc.size()); }
     void MoveCurrentUdc(int offset);
+
+    static constexpr std::array CheckboxBindings
+    {
+        &USERDEFINEDCLEANUP::AskForConfirmation,
+        &USERDEFINEDCLEANUP::Enabled,
+        &USERDEFINEDCLEANUP::RecurseIntoSubdirectories,
+        &USERDEFINEDCLEANUP::ShowConsoleWindow,
+        &USERDEFINEDCLEANUP::WaitForCompletion,
+        &USERDEFINEDCLEANUP::WorksForDirectories,
+        &USERDEFINEDCLEANUP::WorksForDrives,
+        &USERDEFINEDCLEANUP::WorksForFiles,
+        &USERDEFINEDCLEANUP::WorksForUncPaths,
+    };
 
     std::vector<USERDEFINEDCLEANUP> m_udc;
     int m_current = -1; // currently selected user defined cleanup
@@ -73,15 +86,11 @@ inline std::span<const RouteEntry> CPageCleanups::Routes()
         Route::Control<&OnLbnSelchangeList>(LBN_SELCHANGE, IDC_LIST),
         Route::Control<&OnBnClickedEnabled>(BN_CLICKED, IDC_ENABLED),
         Route::Control<&OnEnChangeTitle>(EN_CHANGE, IDC_TITLE),
-        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDRIVES),
-        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORDIRECTORIES),
-        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORFILES),
-        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WORKSFORUNCPATHS),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION, IDC_WORKSFORUNCPATHS),
         Route::Control<&OnSomethingChanged>(EN_CHANGE, IDC_COMMANDLINE),
         Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_RECURSEINTOSUBDIRECTORIES),
         Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_ASKFORCONFIRMATION),
         Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_SHOWCONSOLEWINDOW),
-        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_WAITFORCOMPLETION),
         Route::Control<&OnSomethingChanged>(CBN_SELENDOK, IDC_REFRESHPOLICY),
         Route::Control<&OnBnClickedAdd>(BN_CLICKED, IDC_ADD_CLEANUP),
         Route::Control<&OnBnClickedRemove>(BN_CLICKED, IDC_REMOVE_CLEANUP),

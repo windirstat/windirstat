@@ -841,32 +841,32 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
 
     m_contextMenu = CMenu::LoadResource(IDR_POPUP_TREE);
     Localization::UpdateMenu(m_contextMenu);
-    CMenu* sub = m_contextMenu.GetSubMenu(0);
+    const auto sub = m_contextMenu.GetSubMenu(0);
     if (sub == nullptr) return;
 
     // Populate default menu items
     if (item != nullptr && item->GetTreeListChildCount() == 0)
     {
-        sub->Remove(0); // Remove "Expand/Collapse" item
-        sub->Remove(0); // Remove separator
-        sub->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED);
+        sub.Remove(0); // Remove "Expand/Collapse" item
+        sub.Remove(0); // Remove separator
+        sub.SetDefaultItem(ID_CLEANUP_OPEN_SELECTED);
     }
     else
     {
         const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        sub->Modify(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command);
-        sub->SetDefaultItem(ID_POPUP_TOGGLE);
+        sub.Modify(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command);
+        sub.SetDefaultItem(ID_POPUP_TOGGLE);
     }
 
     // Deduplicating with hardlinks is only valid in the duplicate list, where
     // entries are confirmed to share identical content; hide it elsewhere
     if (m_logicalFocus != LF_DUPELIST)
     {
-        sub->Remove(ID_CLEANUP_CREATE_HARDLINK, MF_BYCOMMAND);
+        sub.Remove(ID_CLEANUP_CREATE_HARDLINK, MF_BYCOMMAND);
     }
 
     // Update dynamic menu items
-    CMainFrame::Get()->UpdateDynamicMenuItems(sub, &m_contextMenu);
+    CMainFrame::Get()->UpdateDynamicMenuItems(sub, m_contextMenu);
 
     // Show popup menu and act accordingly.
     //
@@ -888,10 +888,10 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     tp.rcExclude.top += overlap;
     tp.rcExclude.bottom -= overlap;
 
-    sub->ShowPopup(TPM_LEFTALIGN | TPM_LEFTBUTTON, point, GetMainWindow(), &tp);
+    sub.ShowPopup(TPM_LEFTALIGN | TPM_LEFTBUTTON, point, GetMainWindow(), &tp);
 }
 
-void CTreeListControl::OnSetFocus(CWnd* pOldWnd)
+void CTreeListControl::OnSetFocus(WindowRef pOldWnd)
 {
     CWdsListControl::OnSetFocus(pOldWnd);
     if (m_logicalFocus != static_cast<LOGICAL_FOCUS>(0) && CMainFrame::Get() != nullptr)

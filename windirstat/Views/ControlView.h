@@ -47,7 +47,7 @@ protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSize(UINT nType, int cx, int cy);
     bool OnEraseBkgnd(CDC*) { return true; }
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
     void OnUpdatePopupToggle(CCmdUI* pCmdUI);
     void OnPopupToggle();

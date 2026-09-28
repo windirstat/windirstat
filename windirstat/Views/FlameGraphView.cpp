@@ -443,7 +443,7 @@ bool CFlameGraphView::OnMouseWheel(const UINT nFlags, const short zDelta, const 
     return true;
 }
 
-void CFlameGraphView::OnVScroll(const UINT nSBCode, const UINT nPos, CWnd*)
+void CFlameGraphView::OnVScroll(const UINT nSBCode, const UINT nPos, WindowRef)
 {
     // A direct scrollbar action starts a new input sequence; do not carry a
     // fractional high-resolution wheel delta into a later wheel gesture.

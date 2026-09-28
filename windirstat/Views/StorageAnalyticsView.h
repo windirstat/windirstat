@@ -50,10 +50,10 @@ public:
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     bool PreprocessMessage(MSG* pMsg) override;
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnSize(UINT nType, int cx, int cy);
     bool OnEraseBkgnd(CDC*) { return true; }
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    HBRUSH OnCtlColor(CDC* pDC, WindowRef pWnd, UINT nCtlColor);
     void OnBtnRecalculate();
     void OnComboUnitSelChange();
     void OnEditChange();

@@ -37,7 +37,7 @@ protected:
 private:
     class ResultsList final : public CListCtrl
     {
-        bool OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* result) override;
+        MessageResult OnNotify(WPARAM wParam, LPARAM lParam) override;
     };
 
     class ProgressAnimation final : public CStatic
@@ -61,7 +61,7 @@ private:
     void OnTimer(UINT_PTR timer);
     void OnDisplayInfo(NMHDR* header, LRESULT* result);
     void OnColumnClick(NMHDR* header, LRESULT* result);
-    HBRUSH OnCtlColor(CDC* dc, CWnd* window, UINT type);
+    HBRUSH OnCtlColor(CDC* dc, WindowRef window, UINT type);
     void SetBusy(bool busy);
     void StartWorker(std::function<void()> work);
     void UpdateList(size_t first = 0, bool append = false);

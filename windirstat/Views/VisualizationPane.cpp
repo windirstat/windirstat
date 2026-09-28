@@ -25,6 +25,11 @@ static_assert(std::to_underlying(GraphPane::TreeMap) == 0
     && std::to_underlying(GraphPane::FlameGraph) == 1
     && std::to_underlying(GraphPane::Sunburst) == 2);
 
+CVisualizationPane::~CVisualizationPane()
+{
+    DestroyWindow();
+}
+
 bool CVisualizationPane::PreCreateWindow(CREATESTRUCT& cs)
 {
     cs.style |= WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
@@ -37,26 +42,22 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     struct ViewDefinition
     {
-        CGraphView* (*create)();
+        std::unique_ptr<CGraphView> (*create)();
         DWORD style;
     };
     const std::array definitions{
-        ViewDefinition{ []() -> CGraphView* { return new CTreeMapView; }, WS_CHILD },
-        ViewDefinition{ []() -> CGraphView* { return new CFlameGraphView; }, WS_CHILD | WS_VSCROLL },
-        ViewDefinition{ []() -> CGraphView* { return new CSunburstView; }, WS_CHILD },
+        ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CTreeMapView>(); }, WS_CHILD },
+        ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CFlameGraphView>(); },
+            WS_CHILD | WS_VSCROLL },
+        ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CSunburstView>(); }, WS_CHILD },
     };
 
     for (const auto [index, def] : std::views::enumerate(definitions))
     {
-        CGraphView* view = def.create();
-        m_views[index] = view;
-        if (!view->Create(nullptr, nullptr, def.style, CRect{}, this,
+        m_views[index] = def.create();
+        if (!m_views[index]->Create(nullptr, nullptr, def.style, CRect{}, this,
             static_cast<UINT>(WDS_PANE_ID_BASE + index)))
-        {
-            // Create invokes PostNcDestroy on failure, which deletes the view.
-            m_views[index] = nullptr;
             return -1;
-        }
     }
 
     m_activePane = DecodeGraphPane(COptions::GraphPaneStyle);
@@ -118,10 +119,10 @@ void CVisualizationPane::ShowVisualization(const bool show)
 
 void CVisualizationPane::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)
 {
-    for (CGraphView* view : m_views)
+    for (const auto& view : m_views)
     {
-        if (view != nullptr && view != sender)
-            static_cast<CWinDirStatPane*>(view)->OnUpdate(sender, change, item);
+        if (view != nullptr && view.get() != sender)
+            static_cast<CWinDirStatPane*>(view.get())->OnUpdate(sender, change, item);
     }
 }
 
@@ -151,13 +152,13 @@ void CVisualizationPane::SuspendRecalculationDrawing(const bool suspend)
         if (--m_drawingSuspensionCount != 0) return;
     }
 
-    for (CGraphView* view : m_views)
+    for (const auto& view : m_views)
     {
         if (view != nullptr) view->SuspendRecalculationDrawing(suspend);
     }
 }
 
-void CVisualizationPane::OnSetFocus(CWnd* /*pOldWnd*/)
+void CVisualizationPane::OnSetFocus(WindowRef /*pOldWnd*/)
 {
     if (CGraphView* active = GetActiveView(); m_showVisualization && active != nullptr)
         active->SetFocus();

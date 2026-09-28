@@ -253,7 +253,7 @@ void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
     SetItemState(-1, 0, LVIS_SELECTED | LVIS_FOCUSED);
     SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
-    (void) GetParent()->SendMessage(WM_WDS_SELECT_DRIVES_OK);
+    (void) GetParent().SendMessage(WM_WDS_SELECT_DRIVES_OK);
 }
 
 void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult) const
@@ -305,9 +305,9 @@ bool CSelectDrivesDlg::OnInitDialog()
     if (!IsElevationActive())
     {
         // Show unavailable message when user is not elevated
-        if (CWnd* checkbox = GetDlgItem(IDC_FAST_SCAN_CHECKBOX); checkbox != nullptr)
+        if (auto checkbox = GetDlgItem(IDC_FAST_SCAN_CHECKBOX); checkbox != nullptr)
         {
-            checkbox->SetText(std::format(L"{} ({})",
+            checkbox.SetText(std::format(L"{} ({})",
                 Localization::Lookup(IDS_FAST_SCAN_CHECKBOX),
                 Localization::Lookup(IDS_ELEVATION_REQUIRED)).c_str());
         }
@@ -403,7 +403,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     }
 
     // Append list of local drives to "All Local Drives" option
-    SetText(IDC_RADIO_TARGET_DRIVES_ALL, std::format(L"{} ({})",
+    SetText(IDC_RADIO_TARGET_DRIVES_ALL, std::format(L"{} (\u200E{}\u200E)",
         Localization::Lookup(IDS_DRIVES_ALL), JoinString(localDrives, L' ')));
 
     if (COptions::SelectDrivesRadio == RADIO_TARGET_DRIVES_SUBSET)
@@ -724,6 +724,6 @@ void CSelectDrivesDlg::SetActiveRadio(const int radio)
     // Keep the active mode's input first in the keyboard order.
     const int firstInput = radio == IDC_RADIO_TARGET_FOLDER ? IDC_BROWSE_FOLDER : IDC_TARGET_DRIVES_LIST;
     const int secondInput = radio == IDC_RADIO_TARGET_FOLDER ? IDC_TARGET_DRIVES_LIST : IDC_BROWSE_FOLDER;
-    GetDlgItem(secondInput)->SetWindowPos(GetDlgItem(firstInput), 0, 0, 0, 0,
+    GetDlgItem(secondInput).SetWindowPos(GetDlgItem(firstInput), 0, 0, 0, 0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }

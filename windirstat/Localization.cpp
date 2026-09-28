@@ -19,6 +19,7 @@
 #include "FinderBasic.h"
 
 std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> Localization::m_map;
+bool Localization::m_rightToLeft = false;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
@@ -108,18 +109,21 @@ bool Localization::LoadResource(const LANGID language)
 
     // Load English strings first as a baseline fallback
     CrackStrings(sResourceData, L"en");
+    m_rightToLeft = false;
 
     if (GetLocaleInfo(lcid, LOCALE_SLANGUAGE, nullptr, 0) == 0) return true;
 
-    // Short-circuit language resource loading sequence; first successful load will return true and exit the function
-    return
+    // Short-circuit the language resource loading sequence at the first successful load
+    const bool loaded =
         LoadExternalLanguage(LOCALE_SNAME, language) ||                                 // External BCP 47 language file
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||                       // External ISO 639-1 language file
         CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||         // Built-in BCP 47 resource
         CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)); // Built-in ISO 639-1 resource
+    m_rightToLeft = loaded && GetLocaleString(LOCALE_IREADINGLAYOUT, lcid) == L"1";
+    return loaded;
 }
 
-void Localization::UpdateMenu(CMenu& menu)
+void Localization::UpdateMenu(MenuRef menu)
 {
     for (const int i : std::views::iota(0, menu.GetItemCount()))
     {
@@ -146,7 +150,7 @@ void Localization::UpdateMenu(CMenu& menu)
             menu.SetItemInfo(i, &mi);
         }
 
-        if (CMenu* sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(*sub);
+        if (const auto sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(sub);
     }
 }
 
@@ -160,24 +164,29 @@ void Localization::UpdateTabControl(CTabControl& tab)
     }
 }
 
-void Localization::UpdateWindowText(CWnd& wnd)
+void Localization::UpdateWindowText(WindowRef wnd)
 {
     wnd.SetFont(GetAppFont(wnd.Handle()));
 
     // Update window text if it's a localizable ID
     const std::wstring text = wnd.GetText();
-    if (text.starts_with(L"ID") && Contains(text))
-        wnd.SetText(m_map[text]);
+    const bool localizable = text.starts_with(L"ID") && Contains(text);
+    if (localizable) wnd.SetText(m_map[text]);
+    std::array<WCHAR, MAX_CLASS_NAME> className{};
+    GetClassNameW(wnd.Handle(), className.data(), static_cast<int>(className.size()));
+    if (_wcsicmp(className.data(), WC_BUTTON) == 0 ||
+        (localizable && _wcsicmp(className.data(), WC_STATIC) == 0))
+        wnd.ModifyStyleEx(WS_EX_RTLREADING, m_rightToLeft ? WS_EX_RTLREADING : 0);
 }
 
-void Localization::UpdateDialogs(CWnd& wnd)
+void Localization::UpdateDialogs(WindowRef wnd)
 {
     UpdateWindowText(wnd);
 
-    for (CWnd* child = wnd.GetWindow(GW_CHILD); child != nullptr;
-        child = child->GetWindow(GW_HWNDNEXT))
+    for (auto child = wnd.GetWindow(GW_CHILD); child != nullptr;
+        child = child.GetWindow(GW_HWNDNEXT))
     {
-        UpdateWindowText(*child);
+        UpdateWindowText(child);
     }
 }
 

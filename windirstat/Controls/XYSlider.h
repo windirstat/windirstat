@@ -75,8 +75,8 @@ public:
 protected:
     UINT OnGetDlgCode() { return DLGC_WANTARROWS; }
     LRESULT OnNcHitTest(CPoint) { return HTCLIENT; }
-    void OnSetFocus(CWnd* pOldWnd);
-    void OnKillFocus(CWnd* pNewWnd);
+    void OnSetFocus(WindowRef pOldWnd);
+    void OnKillFocus(WindowRef pNewWnd);
     void OnPaint();
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     void OnLButtonDown(UINT nFlags, CPoint point);

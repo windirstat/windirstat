@@ -47,7 +47,11 @@ CDirStatApp::CDirStatApp()
     m_altEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
 
-CDirStatApp::~CDirStatApp() = default;
+CDirStatApp::~CDirStatApp()
+{
+    if (m_mainFrame != nullptr) m_mainFrame->DestroyWindow();
+    m_mainFrame.reset();
+}
 
 CIconHandler* CDirStatApp::GetIconHandler()
 {
@@ -166,7 +170,7 @@ bool CDirStatApp::InPortableMode()
     return GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
+DWORD CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
 {
     const std::wstring ini = GetAppFileName(L"ini");
     if (enable)
@@ -179,24 +183,28 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
         {
             // Open successful, set up settings to store to file
             PersistedSetting::UseIniStorage(ini);
-            return true;
+            return ERROR_SUCCESS;
         }
+
+        const DWORD error = GetLastError();
 
         // Fall back to registry mode for any failures
         PersistedSetting::UseRegistryStorage();
-        return false;
+        return error;
     }
 
     // Attempt to remove file succeeded
     if (DeleteFile(ini.c_str()) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
     {
         PersistedSetting::UseRegistryStorage();
-        return true;
+        return ERROR_SUCCESS;
     }
+
+    const DWORD error = GetLastError();
 
     // Deletion failed  - go back to ini mode
     PersistedSetting::UseIniStorage(ini);
-    return false;
+    return error;
 }
 
 class CWinDirStatCommandLineInfo final
@@ -404,10 +412,12 @@ bool CDirStatApp::InitInstance()
 
     m_model = std::make_unique<CWinDirStatModel>();
 
-    m_pMainWnd = new CMainFrame;
-    if (!static_cast<CMainFrame*>(m_pMainWnd)->CreateFromResource(IDR_MAINFRAME))
+    m_mainFrame = std::make_unique<CMainFrame>();
+    m_pMainWnd = m_mainFrame.get();
+    if (!m_mainFrame->CreateFromResource(IDR_MAINFRAME))
     {
         m_pMainWnd = nullptr;
+        m_mainFrame.reset();
         return false;
     }
 

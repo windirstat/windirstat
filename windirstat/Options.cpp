@@ -58,7 +58,7 @@ void COptions::SanitizeRect(RECT& rect)
     rect = rc;
 }
 
-void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
+void COptions::SetTreeMapOptions(const CTreeMap::Options& options, const bool notify)
 {
     TreeMapOptions = options;
     SaveCustomTreeMapPreset(options);
@@ -78,7 +78,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapLightSourceX = TreeMapOptions.GetLightSourceXPercent();
     TreeMapLightSourceY = TreeMapOptions.GetLightSourceYPercent();
 
-    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
+    if (notify) CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
 void COptions::SaveCustomTreeMapPreset(const CTreeMap::Options& options)

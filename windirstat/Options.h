@@ -102,16 +102,17 @@ struct USERDEFINEDCLEANUP
     USERDEFINEDCLEANUP(const std::wstring_view sEntry) :
         Title(Setting<std::wstring>(sEntry, L"Title", L"")),
         CommandLine(Setting<std::wstring>(sEntry, L"CommandLine", L"")),
-        Enabled(Setting(sEntry, L"Enable", false)),
+        Enabled(Setting(sEntry, L"Enable", false, CheckboxBind(IDC_ENABLED))),
         VirginTitle(Setting(sEntry, L"VirginTitle", true)),
-        WorksForDrives(Setting(sEntry, L"WorksForDrives", false)),
-        WorksForDirectories(Setting(sEntry, L"WorksForDirectories", false)),
-        WorksForFiles(Setting(sEntry, L"WorksForFiles", false)),
-        WorksForUncPaths(Setting(sEntry, L"WorksForUncPaths", false)),
-        RecurseIntoSubdirectories(Setting(sEntry, L"RecurseIntoSubdirectories", false)),
-        AskForConfirmation(Setting(sEntry, L"AskForConfirmation", false)),
-        ShowConsoleWindow(Setting(sEntry, L"ShowConsoleWindow", false)),
-        WaitForCompletion(Setting(sEntry, L"WaitForCompletion", false)),
+        WorksForDrives(Setting(sEntry, L"WorksForDrives", false, CheckboxBind(IDC_WORKSFORDRIVES))),
+        WorksForDirectories(Setting(sEntry, L"WorksForDirectories", false, CheckboxBind(IDC_WORKSFORDIRECTORIES))),
+        WorksForFiles(Setting(sEntry, L"WorksForFiles", false, CheckboxBind(IDC_WORKSFORFILES))),
+        WorksForUncPaths(Setting(sEntry, L"WorksForUncPaths", false, CheckboxBind(IDC_WORKSFORUNCPATHS))),
+        RecurseIntoSubdirectories(Setting(sEntry, L"RecurseIntoSubdirectories",
+            false, CheckboxBind(IDC_RECURSEINTOSUBDIRECTORIES))),
+        AskForConfirmation(Setting(sEntry, L"AskForConfirmation", false, CheckboxBind(IDC_ASKFORCONFIRMATION))),
+        ShowConsoleWindow(Setting(sEntry, L"ShowConsoleWindow", false, CheckboxBind(IDC_SHOWCONSOLEWINDOW))),
+        WaitForCompletion(Setting(sEntry, L"WaitForCompletion", false, CheckboxBind(IDC_WAITFORCOMPLETION))),
         RefreshPolicy(Setting(sEntry, L"RefreshPolicy", 0)) {}
 
     Setting<std::wstring> Title;
@@ -130,7 +131,7 @@ struct USERDEFINEDCLEANUP
 
     // This will not transfer the property persistent settings but allows
     // this to be used as a generalized structure in the cleanup page
-    USERDEFINEDCLEANUP(const USERDEFINEDCLEANUP& other) { *this = other; }
+    USERDEFINEDCLEANUP(const USERDEFINEDCLEANUP& other) : USERDEFINEDCLEANUP() { *this = other; }
     USERDEFINEDCLEANUP(USERDEFINEDCLEANUP&&) noexcept = default;
     USERDEFINEDCLEANUP& operator=(const USERDEFINEDCLEANUP& other)
     {
@@ -170,22 +171,34 @@ class COptions final
     inline static constexpr std::wstring_view OptionsDriveSelect = L"DriveSelect";
 
 public:
-    inline static Setting<bool> AutomaticallyResizeColumns{ OptionsGeneral, L"AutomaticallyResizeColumns", true };
-    inline static Setting<bool> ExcludeJunctions{ OptionsGeneral, L"ExcludeJunctions", true };
-    inline static Setting<bool> ExcludeSymbolicLinksDirectory{ OptionsGeneral, L"ExcludeSymbolicLinksDirectory", true };
-    inline static Setting<bool> ExcludeVolumeMountPoints{ OptionsGeneral, L"ExcludeVolumeMountPoints", true };
-    inline static Setting<bool> ExcludeHiddenDirectory{ OptionsGeneral, L"ExcludeHiddenDirectory", false };
-    inline static Setting<bool> ExcludeProtectedDirectory{ OptionsGeneral, L"ExcludeProtectedDirectory", false };
-    inline static Setting<bool> ExcludeDropboxIgnored{ OptionsGeneral, L"ExcludeDropboxIgnored", false };
-    inline static Setting<bool> ExcludeSymbolicLinksFile{ OptionsGeneral, L"ExcludeSymbolicLinksFile", true };
-    inline static Setting<bool> ExcludeHiddenFile{ OptionsGeneral, L"ExcludeHiddenFile", false };
-    inline static Setting<bool> ExcludeProtectedFile{ OptionsGeneral, L"ExcludeProtectedFile", false };
+    inline static Setting<bool> AutomaticallyResizeColumns{ OptionsGeneral,
+        L"AutomaticallyResizeColumns", true, CheckboxBind(IDC_COLUMN_AUTOSIZE) };
+    inline static Setting<bool> ExcludeJunctions{ OptionsGeneral,
+        L"ExcludeJunctions", true, CheckboxBind(IDC_EXCLUDE_JUNCTIONS) };
+    inline static Setting<bool> ExcludeSymbolicLinksDirectory{ OptionsGeneral,
+        L"ExcludeSymbolicLinksDirectory", true, CheckboxBind(IDC_EXCLUDE_SYMLINKS_DIRECTORY) };
+    inline static Setting<bool> ExcludeVolumeMountPoints{ OptionsGeneral,
+        L"ExcludeVolumeMountPoints", true, CheckboxBind(IDC_EXCLUDE_VOLUME_MOUNT_POINTS) };
+    inline static Setting<bool> ExcludeHiddenDirectory{ OptionsGeneral,
+        L"ExcludeHiddenDirectory", false, CheckboxBind(IDC_EXCLUDE_HIDDEN_DIRECTORY) };
+    inline static Setting<bool> ExcludeProtectedDirectory{ OptionsGeneral,
+        L"ExcludeProtectedDirectory", false, CheckboxBind(IDC_EXCLUDE_PROTECTED_DIRECTORY) };
+    inline static Setting<bool> ExcludeDropboxIgnored{ OptionsGeneral,
+        L"ExcludeDropboxIgnored", false, CheckboxBind(IDC_EXCLUDE_DROPBOX_IGNORED) };
+    inline static Setting<bool> ExcludeSymbolicLinksFile{ OptionsGeneral,
+        L"ExcludeSymbolicLinksFile", true, CheckboxBind(IDC_EXCLUDE_SYMLINKS_FILE) };
+    inline static Setting<bool> ExcludeHiddenFile{ OptionsGeneral,
+        L"ExcludeHiddenFile", false, CheckboxBind(IDC_EXCLUDE_HIDDEN_FILE) };
+    inline static Setting<bool> ExcludeProtectedFile{ OptionsGeneral,
+        L"ExcludeProtectedFile", false, CheckboxBind(IDC_EXCLUDE_PROTECTED_FILE) };
     inline static Setting<bool> FilteringUseRegex{ OptionsGeneral, L"FilteringUseRegex", false };
     inline static Setting<bool> FollowVolumeMountPoints{ OptionsGeneral, L"FollowVolumeMountPoints", false };
-    inline static Setting<bool> UseSizeSuffixes{ OptionsGeneral, L"UseSizeSuffixes", true };
-    inline static Setting<bool> ListFullRowSelection{ OptionsGeneral, L"ListFullRowSelection", true };
-    inline static Setting<bool> ListGrid{ OptionsGeneral, L"ListGrid", false };
-    inline static Setting<bool> ListStripes{ OptionsGeneral, L"ListStripes", false };
+    inline static Setting<bool> UseSizeSuffixes{ OptionsGeneral,
+        L"UseSizeSuffixes", true, CheckboxBind(IDC_SIZE_SUFFIXES) };
+    inline static Setting<bool> ListFullRowSelection{ OptionsGeneral,
+        L"ListFullRowSelection", true, CheckboxBind(IDC_FULL_ROW_SELECTION) };
+    inline static Setting<bool> ListGrid{ OptionsGeneral, L"ListGrid", false, CheckboxBind(IDC_SHOW_GRID) };
+    inline static Setting<bool> ListStripes{ OptionsGeneral, L"ListStripes", false, CheckboxBind(IDC_SHOW_STRIPES) };
     inline static Setting<bool> PacmanAnimation{ OptionsGeneral, L"PacmanAnimation", true };
     inline static Setting<bool> ScanForDuplicates{ OptionsDupeTree, L"ScanForDuplicates", false };
     inline static Setting<bool> SearchWholePhrase{ OptionsSearch, L"SearchWholePhrase", false };
@@ -197,19 +210,32 @@ public:
     inline static Setting<int> SearchPhysicalUnits{ OptionsSearch, L"SearchPhysicalUnits", 2, 0, 4 };
     inline static Setting<bool> SearchIncludeFiles{ OptionsSearch, L"SearchIncludeFiles", true };
     inline static Setting<bool> SearchIncludeFolders{ OptionsSearch, L"SearchIncludeFolders", true };
-    inline static Setting<bool> ShowDeletePermanentlyWarning{ OptionsGeneral, L"ShowDeletePermanentlyWarning", true };
-    inline static Setting<bool> ShowDeleteToRecycleBinWarning{ OptionsGeneral, L"ShowDeleteToRecycleBinWarning", true };
-    inline static Setting<bool> ShowElevationPrompt{ OptionsGeneral, L"ShowElevationPrompt", true };
-    inline static Setting<bool> ShowEmptyRecycleBinPrompt{ OptionsGeneral, L"ShowEmptyRecycleBinPrompt", true };
-    inline static Setting<bool> ShowCreateHardlinkPrompt{ OptionsGeneral, L"ShowCreateHardlinkPrompt", true };
-    inline static Setting<bool> ShowRemoveMotwPrompt{ OptionsGeneral, L"ShowRemoveMotwPrompt", true };
-    inline static Setting<bool> ShowDisableHibernatePrompt{ OptionsGeneral, L"ShowDisableHibernatePrompt", true };
-    inline static Setting<bool> ShowRemoveShadowCopiesPrompt{ OptionsGeneral, L"ShowRemoveShadowCopiesPrompt", true };
-    inline static Setting<bool> ShowDismCleanupPrompt{ OptionsGeneral, L"ShowDismCleanupPrompt", true };
-    inline static Setting<bool> ShowDismResetPrompt{ OptionsGeneral, L"ShowDismResetPrompt", true };
-    inline static Setting<bool> ShowSetDatesPrompt{ OptionsGeneral, L"ShowSetDatesPrompt", true };
-    inline static Setting<bool> ShowRemoveEmptyFoldersPrompt{ OptionsGeneral, L"ShowRemoveEmptyFoldersPrompt", true };
-    inline static Setting<bool> ShowMicrosoftProgress{ OptionsGeneral, L"ShowMicrosoftProgress", false };
+    inline static Setting<bool> ShowDeletePermanentlyWarning{ OptionsGeneral,
+        L"ShowDeletePermanentlyWarning", true, CheckboxBind(IDC_DELETION_WARNING) };
+    inline static Setting<bool> ShowDeleteToRecycleBinWarning{ OptionsGeneral,
+        L"ShowDeleteToRecycleBinWarning", true, CheckboxBind(IDC_DELETION_BIN_WARNING) };
+    inline static Setting<bool> ShowElevationPrompt{ OptionsGeneral,
+        L"ShowElevationPrompt", true, CheckboxBind(IDC_ELEVATION_PROMPT) };
+    inline static Setting<bool> ShowEmptyRecycleBinPrompt{ OptionsGeneral,
+        L"ShowEmptyRecycleBinPrompt", true, CheckboxBind(IDC_PROMPT_EMPTY_BIN) };
+    inline static Setting<bool> ShowCreateHardlinkPrompt{ OptionsGeneral,
+        L"ShowCreateHardlinkPrompt", true, CheckboxBind(IDC_PROMPT_CREATE_HARDLINK) };
+    inline static Setting<bool> ShowRemoveMotwPrompt{ OptionsGeneral,
+        L"ShowRemoveMotwPrompt", true, CheckboxBind(IDC_PROMPT_REMOVE_MOTW) };
+    inline static Setting<bool> ShowDisableHibernatePrompt{ OptionsGeneral,
+        L"ShowDisableHibernatePrompt", true, CheckboxBind(IDC_PROMPT_DISABLE_HIBERNATE) };
+    inline static Setting<bool> ShowRemoveShadowCopiesPrompt{ OptionsGeneral,
+        L"ShowRemoveShadowCopiesPrompt", true, CheckboxBind(IDC_PROMPT_REMOVE_SHADOW) };
+    inline static Setting<bool> ShowDismCleanupPrompt{ OptionsGeneral,
+        L"ShowDismCleanupPrompt", true, CheckboxBind(IDC_PROMPT_DISM_NORMAL) };
+    inline static Setting<bool> ShowDismResetPrompt{ OptionsGeneral,
+        L"ShowDismResetPrompt", true, CheckboxBind(IDC_PROMPT_DISM_RESET) };
+    inline static Setting<bool> ShowSetDatesPrompt{ OptionsGeneral,
+        L"ShowSetDatesPrompt", true, CheckboxBind(IDC_PROMPT_SET_DATES) };
+    inline static Setting<bool> ShowRemoveEmptyFoldersPrompt{ OptionsGeneral,
+        L"ShowRemoveEmptyFoldersPrompt", true, CheckboxBind(IDC_PROMPT_REMOVE_EMPTY) };
+    inline static Setting<bool> ShowMicrosoftProgress{ OptionsGeneral,
+        L"ShowMicrosoftProgress", false, CheckboxBind(IDC_SHOW_MICROSOFT_PROGRESS) };
     inline static Setting<bool> ShowFileTypes{ OptionsGeneral, L"ShowFileTypes", true };
     inline static Setting<bool> GroupUnregisteredTypes{ OptionsGeneral, L"GroupUnregisteredTypes", false };
     inline static Setting<bool> ShowFreeSpace{ OptionsGeneral, L"ShowFreeSpace", false };
@@ -219,21 +245,27 @@ public:
     inline static Setting<int> ToolBarSizePercent{ OptionsGeneral, L"ToolBarSizePercent", 0, 0, 200 };
     inline static Setting<bool> ShowVisualization{ OptionsTreeMap, L"ShowVisualization", true };
     inline static Setting<bool> ShowUnknown{ OptionsGeneral, L"ShowUnknown", false };
-    inline static Setting<bool> SkipDupeDetectionCloudLinks{ OptionsGeneral, L"SkipDupeDetectionCloudLinks", true };
-    inline static Setting<bool> ShowDupeDetectionCloudLinksWarning{ OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true };
-    inline static Setting<bool> AutoElevate{ OptionsGeneral, L"AutoElevate", false };
+    inline static Setting<bool> SkipDupeDetectionCloudLinks{ OptionsGeneral,
+        L"SkipDupeDetectionCloudLinks", true, CheckboxBind(IDC_SKIP_CLOUD_LINKS) };
+    inline static Setting<bool> ShowDupeDetectionCloudLinksWarning{ OptionsGeneral,
+        L"ShowDupeDetectionCloudLinksWarning", true, CheckboxBind(IDC_CLOUD_LINKS_WARNING) };
+    inline static Setting<bool> AutoElevate{ OptionsGeneral, L"AutoElevate", false, CheckboxBind(IDC_AUTO_ELEVATE) };
     inline static Setting<bool> AutoMapDrivesWhenElevated{ OptionsGeneral, L"AutoMapDrivesWhenElevated", true };
     inline static Setting<bool> TreeMapGrid{ OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid) };
     inline static Setting<bool> TreeMapShowExtensions{ OptionsTreeMap, L"TreeMapShowExtensions", (CTreeMap::GetDefaults().showExtensions) };
     inline static Setting<bool> TreeMapShowFolderFrames{ OptionsTreeMap, L"TreeMapShowFolderFrames", (CTreeMap::GetDefaults().showFolderFrames) };
     inline static Setting<bool> TreeMapUseLogical{ OptionsTreeMap, L"TreeMapUseLogicalSize", false };
     inline static Setting<bool> UseAbsolutePercentages{ OptionsFileTree, L"UseAbsolutePercentages", true };
-    inline static Setting<bool> UseBackupRestore{ OptionsGeneral, L"UseBackupRestore", true };
+    inline static Setting<bool> UseBackupRestore{ OptionsGeneral,
+        L"UseBackupRestore", true, CheckboxBind(IDC_BACKUP_RESTORE) };
     inline static Setting<bool> UseDrawTextCache{ OptionsGeneral, L"UseDrawTextCache", true };
     inline static Setting<bool> UseFastScanEngine{ OptionsGeneral, L"UseFastScanEngine", true };
-    inline static Setting<bool> UseWindowsLocaleSetting{ OptionsGeneral, L"UseWindowsLocaleSetting", true };
-    inline static Setting<bool> ShowTimeSeconds{ OptionsGeneral, L"ShowTimeSeconds", false };
-    inline static Setting<bool> ProcessHardlinks{ OptionsGeneral, L"ProcessHardlinks", true };
+    inline static Setting<bool> UseWindowsLocaleSetting{ OptionsGeneral,
+        L"UseWindowsLocaleSetting", true, CheckboxBind(IDC_USE_WINDOWS_LOCALE) };
+    inline static Setting<bool> ShowTimeSeconds{ OptionsGeneral,
+        L"ShowTimeSeconds", false, CheckboxBind(IDC_SHOW_TIME_SECONDS) };
+    inline static Setting<bool> ProcessHardlinks{ OptionsGeneral,
+        L"ProcessHardlinks", true, CheckboxBind(IDC_PROCESS_HARDLINKS) };
     inline static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT] =
     {
         { OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140) },
@@ -280,12 +312,17 @@ public:
     inline static Setting<int> DarkMode{ OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS };
     inline static Setting<int> FontSizePercent{ OptionsGeneral, L"FontSizePercent", 0, 0, 200 };
     inline static Setting<int> LanguageId{ OptionsGeneral, L"LanguageId", 0 };
-    inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority", NORMAL, LOW, HIGH };
-    inline static Setting<int> FileHashAlgorithm{ OptionsGeneral, L"FileHashAlgorithm", HASH_XXHASH, HASH_MD5, HASH_XXHASH };
-    inline static Setting<bool> SampleLargeFiles{ OptionsGeneral, L"SampleLargeFiles", false };
-    inline static Setting<int> LargeFileCount{ OptionsGeneral, L"LargeFileCount", 50, 0, 10000 };
+    inline static Setting<int> ProcessPriority{ OptionsGeneral, L"ProcessPriority",
+        NORMAL, LOW, HIGH, SelectionBind(IDC_PROCESS_PRIORITY) };
+    inline static Setting<int> FileHashAlgorithm{ OptionsGeneral, L"FileHashAlgorithm",
+        HASH_XXHASH, HASH_MD5, HASH_XXHASH, SelectionBind(IDC_HASH_ALGORITHM) };
+    inline static Setting<bool> SampleLargeFiles{ OptionsGeneral,
+        L"SampleLargeFiles", false, CheckboxBind(IDC_SAMPLE_LARGE_FILES) };
+    inline static Setting<int> LargeFileCount{ OptionsGeneral, L"LargeFileCount",
+        50, 0, 10000, IntegerBind(IDC_LARGEST_FILE_COUNT) };
     inline static Setting<int> MinimizeViewThreshold{ OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000 };
-    inline static Setting<int> ScanningThreads{ OptionsGeneral, L"ScanningThreads", 4, 1, 16 };
+    inline static Setting<int> ScanningThreads{ OptionsGeneral,
+        L"ScanningThreads", 4, 1, 16, SelectionBind(IDC_COMBO_THREADS, 1) };
     inline static Setting<int> SelectDrivesRadio{ OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2 };
     inline static Setting<int> SizeProportionIndent{ OptionsFileTree, L"SizeProportionIndent", 16, 0, 1000 };
     inline static Setting<int> FileTreeColorCount{ OptionsFileTree, L"FileTreeColorCount", 8, 1, TREELISTCOLORCOUNT };
@@ -306,7 +343,8 @@ public:
     inline static Setting<int> TreeMapStyle{ OptionsTreeMap, L"TreeMapStyle", static_cast<int>(CTreeMap::GetDefaults().style), static_cast<int>(TreeMapLayout::Style::Rows), static_cast<int>(TreeMapLayout::Style::Moore) };
     inline static Setting<int> GraphPaneStyle{ OptionsTreeMap, L"GraphPaneStyle", EncodeGraphPane(GraphPane::TreeMap), 0, MaxPersistedGraphPane };
     inline static Setting<int> TreeMapMaxDepth{ OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64 };
-    inline static Setting<int> FolderHistoryCount{ OptionsDriveSelect, L"FolderHistoryCount", 10, 0, 100 };
+    inline static Setting<int> FolderHistoryCount{ OptionsDriveSelect,
+        L"FolderHistoryCount", 10, 0, 100, IntegerBind(IDC_FOLDER_HISTORY_COUNT) };
     inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_VISUALIZATION_FULL };
     inline static Setting<int> LayoutPermutation{ OptionsGeneral, L"LayoutPermutation", 0, 0, 3 };
     inline static Setting<RECT> AboutWindowRect{ OptionsGeneral, L"AboutWindowRect" };
@@ -346,10 +384,14 @@ public:
     inline static Setting<std::wstring> SearchSizeMaximum{ OptionsSearch, L"SearchSizeMaximum" };
     inline static Setting<std::wstring> SearchPhysicalMinimum{ OptionsSearch, L"SearchPhysicalMinimum" };
     inline static Setting<std::wstring> SearchPhysicalMaximum{ OptionsSearch, L"SearchPhysicalMaximum" };
-    inline static Setting<std::wstring> FilteringExcludeDirs{ OptionsDriveSelect, L"FilteringExcludeDirs" };
-    inline static Setting<std::wstring> FilteringExcludeFiles{ OptionsDriveSelect, L"FilteringExcludeFiles" };
-    inline static Setting<std::wstring> FilteringIncludeDirs{ OptionsDriveSelect, L"FilteringIncludeDirs" };
-    inline static Setting<std::wstring> FilteringIncludeFiles{ OptionsDriveSelect, L"FilteringIncludeFiles" };
+    inline static Setting<std::wstring> FilteringExcludeDirs{ OptionsDriveSelect,
+        L"FilteringExcludeDirs", {}, TextBind(IDC_FILTERING_EXCLUDE_DIRS) };
+    inline static Setting<std::wstring> FilteringExcludeFiles{ OptionsDriveSelect,
+        L"FilteringExcludeFiles", {}, TextBind(IDC_FILTERING_EXCLUDE_FILES) };
+    inline static Setting<std::wstring> FilteringIncludeDirs{ OptionsDriveSelect,
+        L"FilteringIncludeDirs", {}, TextBind(IDC_FILTERING_INCLUDE_DIRS) };
+    inline static Setting<std::wstring> FilteringIncludeFiles{ OptionsDriveSelect,
+        L"FilteringIncludeFiles", {}, TextBind(IDC_FILTERING_INCLUDE_FILES) };
     inline static Setting<std::vector<int>> TreeMapCustomPreset{ OptionsTreeMap, L"TreeMapCustomPreset" };
     inline static Setting<WINDOWPLACEMENT> MainWindowPlacement{ OptionsGeneral, L"MainWindowPlacement" };
 
@@ -364,7 +406,7 @@ public:
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
     static void SetUserDefinedCleanups(const std::vector<USERDEFINEDCLEANUP>& cleanups);
-    static void SetTreeMapOptions(const CTreeMap::Options& options);
+    static void SetTreeMapOptions(const CTreeMap::Options& options, bool notify = true);
     static void SaveCustomTreeMapPreset(const CTreeMap::Options& options);
     static std::optional<CTreeMap::Options> GetCustomTreeMapPreset();
 

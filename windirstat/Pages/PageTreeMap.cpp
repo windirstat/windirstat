@@ -32,29 +32,15 @@ bool CPageTreeMap::PreprocessMessage(MSG* pMsg)
 {
     if (pMsg->message == WM_MOUSEWHEEL)
     {
-        const CPoint pt = ToClient(pMsg->pt);
-
-        if (CWnd* pWnd = ChildWindowFromPoint(pt); pWnd != nullptr)
+        const WindowRef control = ChildWindowFromPoint(ToClient(pMsg->pt));
+        for (CSliderCtrl* slider : { &m_brightness, &m_cushionShading, &m_height, &m_scaleFactor })
         {
-            if (const int nID = pWnd->GetDlgCtrlID();
-                nID == IDC_BRIGHTNESS || nID == IDC_CUSHIONSHADING ||
-                nID == IDC_HEIGHT || nID == IDC_SCALEFACTOR)
-            {
-                CSliderCtrl* pSlider = static_cast<CSliderCtrl*>(pWnd);
-                const short zDelta = static_cast<short>(HIWORD(pMsg->wParam));
-
-                const int currentPos = pSlider->GetPos();
-
-                // Perform "Natural Scroll" (Up = Increase)
-                if (zDelta > 0)
-                    pSlider->SetPos(currentPos + 1);
-                else
-                    pSlider->SetPos(currentPos - 1);
-
-                OnSomethingChanged();
-
-                return true;
-            }
+            if (control == nullptr || slider->Handle() != control.Handle()) continue;
+            // Perform "Natural Scroll" (Up = Increase)
+            const short delta = static_cast<short>(HIWORD(pMsg->wParam));
+            slider->SetPos(slider->GetPos() + (delta > 0 ? 1 : -1));
+            OnSomethingChanged();
+            return true;
         }
     }
     return CSettingsPage::PreprocessMessage(pMsg);
@@ -103,14 +89,24 @@ void CPageTreeMap::InitializePage()
     m_preview.SetOptions(&m_options);
 }
 
-void CPageTreeMap::OnOK()
+std::optional<CPropertyPage::ValidationError> CPageTreeMap::PrepareSettings()
 {
+    int style = 0;
+    if (auto error = ReadSelection(IDC_TREEMAPSTYLE, style,
+        COptions::TreeMapStyle.Min(), COptions::TreeMapStyle.Max())) return error;
     UpdateOptions(true);
-
-    if (m_customOptions) COptions::SaveCustomTreeMapPreset(*m_customOptions);
-    COptions::SetTreeMapOptions(m_options);
-    COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
-    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
+    Stage([options = m_options, customOptions = m_customOptions]
+    {
+        if (customOptions) COptions::SaveCustomTreeMapPreset(*customOptions);
+        COptions::SetTreeMapOptions(options, false);
+    });
+    Stage(COptions::TreeMapHighlightColor, m_highlightColor.GetColor());
+    StageEffect([]
+    {
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_STYLE);
+    });
+    return {};
 }
 
 void CPageTreeMap::UpdateOptions(const bool save)
@@ -182,7 +178,7 @@ void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
     OnSomethingChanged();
 }
 
-void CPageTreeMap::OnHScroll(UINT, UINT, CWnd*)
+void CPageTreeMap::OnHScroll(UINT, UINT, WindowRef)
 {
     OnSomethingChanged();
 }

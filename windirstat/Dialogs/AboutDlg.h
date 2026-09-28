@@ -46,7 +46,7 @@ class CAboutDlg final : public MessageTarget<CAboutDlg, CLayoutDialog>
     protected:
         void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
         void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
-        void OnSetFocus(CWnd* pOldWnd);
+        void OnSetFocus(WindowRef pOldWnd);
     };
 
 public:

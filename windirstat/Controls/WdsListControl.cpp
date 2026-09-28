@@ -181,7 +181,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     if (width == nullptr)
     {
         // Draw the actual text
-        DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcRest);
+        DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcRest, true, false, (state & ODS_SELECTED) == 0);
     }
 
     rcLabel.Inflate(1, 1);
@@ -403,7 +403,7 @@ void CWdsListControl::ShowFullRowSelection(const bool show)
 
 COLORREF CWdsListControl::GetHighlightColor() const
 {
-    if (HasFocus())
+    if (HasFocus() || DarkMode::IsHighContrastActive())
     {
         return DarkMode::SystemColor(COLOR_HIGHLIGHT);
     }
@@ -413,7 +413,7 @@ COLORREF CWdsListControl::GetHighlightColor() const
 
 COLORREF CWdsListControl::GetHighlightTextColor() const
 {
-    if (HasFocus())
+    if (HasFocus() || DarkMode::IsHighContrastActive())
     {
         return DarkMode::SystemColor(COLOR_HIGHLIGHTTEXT);
     }
@@ -489,7 +489,8 @@ void CWdsListControl::InitializeColors()
         b = std::min<double>(b, 1.0);
     }
 
-    m_stripeColor = DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOWFRAME) :
+    m_stripeColor = DarkMode::IsHighContrastActive() ? m_windowColor :
+        DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOWFRAME) :
         CColorSpace::MakeBrightColor(m_windowColor, b);
 }
 
@@ -514,6 +515,7 @@ void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
     GdiObjectSelection sofont(&dcMem, GetFont());
 
     int focusLeft = 0;
+    CPen pen;
     for (const int i : std::views::iota(0, m_columnCount))
     {
         // The subitem tracks the identifier that maps to the column enum
@@ -551,14 +553,15 @@ void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
             ScopedBkColor backColorObj(&dcMem, backColorSub);
 
             // Draw the (sub)item text
-            DrawTextCache::Get().DrawTextCached(&dcMem, s, rcText, leftAlign);
+            DrawTextCache::Get().DrawTextCached(&dcMem, s, rcText, leftAlign, false,
+                !(pdis->itemState & ODS_SELECTED && IsFullRowSelection()));
         }
 
         if (m_showGrid)
         {
             constexpr COLORREF gridColor = RGB(212, 208, 200);
             constexpr COLORREF gridColorDark = RGB(99, 99, 99);
-            CPen pen(PS_SOLID, 1, DarkMode::IsDarkModeActive() ? gridColorDark : gridColor);
+            if (!pen) pen = CPen(PS_SOLID, 1, DarkMode::IsDarkModeActive() ? gridColorDark : gridColor);
             GdiObjectSelection sopen(&dcMem, &pen);
 
             // Draw top line for first item
@@ -763,10 +766,10 @@ void CWdsListControl::ApplyColumnVisibility(const int column)
     }
 }
 
-void CWdsListControl::SetColumnVisible(const int subitem, const bool visible)
+void CWdsListControl::SetColumnVisible(const int subitem, const bool visible, const bool force)
 {
     const int column = SubItemToColumn(subitem);
-    if (column < 0 || (!visible && IsColumnRequired(subitem)) || visible == IsColumnVisible(subitem)) return;
+    if (column < 0 || (!visible && IsColumnRequired(subitem)) || (!force && visible == IsColumnVisible(subitem))) return;
 
     if (!visible && column < static_cast<int>(m_columnWidths->size()))
     {
@@ -882,8 +885,10 @@ void CWdsListControl::SortItems()
 
 void CWdsListControl::UpdateSortIndicator()
 {
-    CHeaderCtrl& header = GetHeader();
+    auto header = GetHeader();
     HDITEM hditem{ .mask = HDI_FORMAT };
+    if (m_indicatedColumn == m_sorting.column1 && header.GetItem(m_indicatedColumn, &hditem) &&
+        (hditem.fmt & (HDF_SORTUP | HDF_SORTDOWN)) == (m_sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN)) return;
 
     // Remove the sort indicator from the previously sorted column if one exists.
     if (m_indicatedColumn != -1)
@@ -926,7 +931,7 @@ void CWdsListControl::DeselectAll()
 /////////////////////////////////////////////////////////////////////////////
 // Message Map
 
-void CWdsListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
+void CWdsListControl::OnContextMenu(WindowRef /*pWnd*/, const CPoint point)
 {
     if (point != CPoint(-1, -1))
     {

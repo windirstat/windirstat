@@ -351,7 +351,7 @@ void CGraphView::EmptyView()
     OnViewEmptied();
 }
 
-void CGraphView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CGraphView::OnSetFocus(WindowRef /*pOldWnd*/)
 {
     CMainFrame::Get()->GetFileTreeView()->SetFocus();
 }
@@ -460,7 +460,7 @@ std::span<const UINT> CGraphView::GetPersistentContextCommands() const
     return commands;
 }
 
-void CGraphView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
+void CGraphView::OnContextMenu(WindowRef /*pWnd*/, const CPoint point)
 {
     ShowGraphContextMenu(ResolveItemAtPoint(point, true), point,
         GetPersistentContextCommands());

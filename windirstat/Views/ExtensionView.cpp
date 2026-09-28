@@ -145,7 +145,7 @@ void CExtensionView::OnSize(UINT /*nType*/, const int cx, const int cy)
     }
 }
 
-void CExtensionView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CExtensionView::OnSetFocus(WindowRef /*pOldWnd*/)
 {
     m_extensionListControl.SetFocus();
 }

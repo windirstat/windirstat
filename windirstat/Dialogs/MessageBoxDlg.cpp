@@ -17,7 +17,7 @@
 
 #include "pch.h"
 
-CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent,
+CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& title, const UINT type, WindowRef pParent,
     const std::vector<std::wstring>& listViewItems, const std::wstring& checkBoxText, const bool checkBoxValue)
     : MessageTarget(IDD_MESSAGEBOX, &m_windowRect, pParent)
     , m_message(message)
@@ -55,13 +55,12 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
 
     const auto iconType = type & MB_ICONMASK;
     const auto iconIter = std::ranges::find(iconMap, iconType, &std::pair<UINT, LPCWSTR>::first);
-    m_icon = LoadIcon(nullptr, iconIter != iconMap.end() ?
-        iconIter->second : IDI_INFORMATION);
+    m_iconName = iconIter != iconMap.end() ? iconIter->second : IDI_INFORMATION;
 }
 
-WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, const bool checkboxValue, const UINT type, CWnd* pParent, const CSize& initialSize, const std::wstring& title)
+WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, const bool checkboxValue, const UINT type, WindowRef pParent, const CSize& initialSize, const std::wstring& title)
 {
-    CWnd* parent = pParent ? pParent : GetMainWindow();
+    WindowRef parent = pParent != nullptr ? pParent : WindowRef(GetMainWindow());
 
     CMessageBoxDlg dlg(message, title, type, parent, listViewItems, checkboxText, checkboxValue);
 
@@ -127,6 +126,7 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
 bool CMessageBoxDlg::OnInitDialog()
 {
     CLayoutDialog::OnInitDialog();
+    Localization::UpdateDialogs(*this);
 
     m_iconCtrl.SubclassDlgItem(IDC_MESSAGE_ICON, this);
     m_messageCtrl.SubclassDlgItem(IDC_MESSAGE_TEXT, this);
@@ -151,7 +151,11 @@ bool CMessageBoxDlg::OnInitDialog()
     m_buttonRight.SetText(Localization::Lookup(m_buttonContext.btnRightIDS));
 
     // Set display icon
-    m_iconCtrl.SetIcon(m_icon);
+    const CSize iconSize = m_iconCtrl.GetClientRect().Size();
+    m_icon.Release();
+    LoadIconWithScaleDown(nullptr, m_iconName, iconSize.cx, iconSize.cy, &m_icon);
+    m_iconCtrl.ModifyStyle(0, SS_REALSIZECONTROL);
+    m_iconCtrl.SetIcon(m_icon.IsValid() ? m_icon.Get() : LoadIconW(nullptr, m_iconName));
 
     // Configure optional owner-data list view
     m_listView.ShowWindow(m_listViewItems.empty() ? SW_HIDE : SW_SHOW);
@@ -369,16 +373,17 @@ INT_PTR CMessageBoxDlg::ShowModal()
     return CLayoutDialog::ShowModal();
 }
 
-HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
 {
     // Let DarkMode handle setting the colors first
     const HBRUSH brush = CLayoutDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
     // Set checkbox background to match dialog background in dark mode
-    if (const int nID = pWnd->GetDlgCtrlID(); nID == IDC_MESSAGE_CHECKBOX)
+    if (const int nID = pWnd.GetDlgCtrlID(); nID == IDC_MESSAGE_CHECKBOX)
     {
         pDC->SetBkColor(DarkMode::SystemColor(COLOR_BTNFACE));
-        return m_checkboxBrush;
+        pDC->SetDCBrushColor(pDC->GetBkColor());
+        return static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
     }
 
     // Set icon and message text backgrounds to white in light mode
@@ -441,6 +446,6 @@ int ShowMessageBox(const HWND wnd, const std::wstring& message, const std::wstri
         return MessageBox(wnd, message.c_str(), title.c_str(), type);
     }
 
-    CMessageBoxDlg dlg(message, title, type, CWnd::FromHandle(wnd));
+    CMessageBoxDlg dlg(message, title, type, WindowRef(wnd));
     return static_cast<int>(dlg.ShowModal());
 }

@@ -74,9 +74,9 @@ protected:
     void OnLButtonDown(UINT nFlags, CPoint point);
     void OnLButtonUp(UINT nFlags, CPoint point);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    void OnKillFocus(CWnd* pNewWnd);
+    void OnKillFocus(WindowRef pNewWnd);
     void OnActivateApp(bool bActive, DWORD dwThreadID);
-    void OnCaptureChanged(CWnd* pWnd);
+    void OnCaptureChanged(WindowRef pWnd);
     LRESULT OnMouseLeave(WPARAM, LPARAM);
 };
 

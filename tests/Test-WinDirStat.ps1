@@ -3545,11 +3545,12 @@ function Test-MenuNavigation {
     $legacyLargeToolBarItems = @($optionsMenuItems | Where-Object { $_.ItemName -eq 'Large Toolbar Icons' })
     Assert-That $g 'Options no longer exposes Large Toolbar Icons' `
         ($legacyLargeToolBarItems.Count -eq 0) "Found $($legacyLargeToolBarItems.Count) legacy item(s)"
+    $showVisualizationId = Get-ResourceId 'ID_VIEW_SHOWVISUALIZATION'
     $showVisualizationItems = @($optionsMenuItems | Where-Object {
-        $_.ItemName -eq 'Show Visualization' -and $_.CommandId -eq 32772
+        $_.ItemName -eq 'Show Visualization' -and $_.CommandId -eq $showVisualizationId
     })
     $showVisualizationChecks = @($showVisualizationItems | ForEach-Object { $_.IsChecked })
-    Assert-That $g 'Options exposes one checked Show Visualization command on F9 ID 32772' `
+    Assert-That $g 'Options exposes one checked Show Visualization command' `
         ($showVisualizationItems.Count -eq 1 -and $showVisualizationItems[0].IsChecked) `
         "Found $($showVisualizationItems.Count); checked=$($showVisualizationChecks -join ', ')"
     $duplicateRendererOptions = @($optionsMenuItems | Where-Object {
@@ -5351,8 +5352,10 @@ function Test-VisualizationPaneLayout {
 
     $showVisualizationId = Get-ResourceId 'ID_VIEW_SHOWVISUALIZATION'
     $showFileTypesId = Get-ResourceId 'ID_VIEW_SHOWFILETYPES'
-    Assert-That $g 'Show Visualization retains the F9 command ID' ($showVisualizationId -eq 32772) `
-        "Expected 32772, got $showVisualizationId"
+    $resourceScript = Get-Content -LiteralPath $MainResourceScriptPath -Raw
+    Assert-That $g 'F9 is bound to Show Visualization' `
+        ($resourceScript -match '(?m)^\s*VK_F9\s*,\s*ID_VIEW_SHOWVISUALIZATION\s*,\s*VIRTKEY\b') `
+        'Expected VK_F9 accelerator for ID_VIEW_SHOWVISUALIZATION'
 
     $graphModes = @(
         [pscustomobject] @{

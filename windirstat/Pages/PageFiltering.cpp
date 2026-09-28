@@ -51,10 +51,7 @@ void CPageFiltering::InitializePage()
     SetChecked(IDC_FILTERING_USE_REGEX, COptions::FilteringUseRegex);
     SetText(IDC_FILTERING_MAX_AGE_DAYS, std::to_wstring(COptions::FilteringMaxAgeDays));
     SetComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON, COptions::FilteringMaxAgeComparison);
-    SetText(IDC_FILTERING_EXCLUDE_DIRS, COptions::FilteringExcludeDirs.Obj());
-    SetText(IDC_FILTERING_EXCLUDE_FILES, COptions::FilteringExcludeFiles.Obj());
-    SetText(IDC_FILTERING_INCLUDE_DIRS, COptions::FilteringIncludeDirs.Obj());
-    SetText(IDC_FILTERING_INCLUDE_FILES, COptions::FilteringIncludeFiles.Obj());
+    LoadBinds(FilterBindings);
 
     // Initialize the tooltip control
     m_toolTip.Create(this);
@@ -84,7 +81,7 @@ void CPageFiltering::AdjustControls()
 
 void CPageFiltering::SetToolTips()
 {
-    const auto setToolTip = [this](const CWnd* control, const std::wstring& text)
+    const auto setToolTip = [this](const WindowRef control, const std::wstring& text)
     {
         if (IsInitialized()) m_toolTip.UpdateTipText(control, text);
         else m_toolTip.AddTool(control, text);
@@ -101,50 +98,66 @@ void CPageFiltering::SetToolTips()
     setToolTip(&m_ctrlFilteringIncludeFiles, files);
 }
 
-void CPageFiltering::OnOK()
+std::optional<CPropertyPage::ValidationError> CPageFiltering::PrepareSettings()
 {
-    const int filteringSizeMinimum = std::stoi(GetText(IDC_FILTERING_SIZE_MIN));
-    const int filteringSizeUnits = GetComboSelection(IDC_FILTERING_MIN_UNITS);
-    const int filteringSizeComparison = std::clamp<int>(GetComboSelection(IDC_FILTERING_SIZE_COMPARISON), 0, 1);
+    m_filtersChanged = false;
+    int filteringSizeMinimum = 0, filteringSizeUnits = 0, filteringSizeComparison = 0;
+    int filteringMaxAgeDays = 0, filteringMaxAgeComparison = 0;
+    if (auto error = ReadSelection(IDC_FILTERING_MIN_UNITS, filteringSizeUnits, 0, 4)) return error;
+    if (auto error = ReadSelection(IDC_FILTERING_SIZE_COMPARISON, filteringSizeComparison, 0, 1)) return error;
+    if (auto error = ReadSelection(IDC_FILTERING_MAX_AGE_COMPARISON, filteringMaxAgeComparison, 0, 1)) return error;
+    const int maximumSize = static_cast<int>(std::min<ULONGLONG>(INT_MAX,
+        ULLONG_MAX >> (10 * filteringSizeUnits)));
+    const int maximumAge = static_cast<int>(std::bit_cast<ULONGLONG>(CurrentSystemFileTime()) / 864'000'000'000ULL);
+    if (auto error = ReadInteger(IDC_FILTERING_SIZE_MIN, filteringSizeMinimum, 0, maximumSize)) return error;
+    if (auto error = ReadInteger(IDC_FILTERING_MAX_AGE_DAYS, filteringMaxAgeDays, 0, maximumAge)) return error;
     const bool filteringUseRegex = IsChecked(IDC_FILTERING_USE_REGEX);
-    const int filteringMaxAgeDays = std::stoi(GetText(IDC_FILTERING_MAX_AGE_DAYS));
-    const int filteringMaxAgeComparison = std::clamp<int>(GetComboSelection(IDC_FILTERING_MAX_AGE_COMPARISON), 0, 1);
-    const std::wstring filteringExcludeFiles = GetText(IDC_FILTERING_EXCLUDE_FILES);
-    const std::wstring filteringExcludeDirs = GetText(IDC_FILTERING_EXCLUDE_DIRS);
-    const std::wstring filteringIncludeFiles = GetText(IDC_FILTERING_INCLUDE_FILES);
-    const std::wstring filteringIncludeDirs = GetText(IDC_FILTERING_INCLUDE_DIRS);
+    const auto patterns = ReadBinds(FilterBindings).value();
+
+    bool patternsChanged = false;
+    for (const auto& pattern : patterns)
+    {
+        const bool pathFilter = &pattern.setting == &COptions::FilteringExcludeDirs ||
+            &pattern.setting == &COptions::FilteringIncludeDirs;
+        if (auto invalid = CFiltering::ValidateFilters(pattern.value, filteringUseRegex, pathFilter))
+            return ValidationError{ ::GetDlgItem(Handle(), pattern.setting.Bind().controlId),
+                Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + *invalid };
+        patternsChanged |= pattern.Changed();
+    }
 
     const bool refreshAll = COptions::FilteringSizeMinimum != filteringSizeMinimum ||
         COptions::FilteringSizeUnits != filteringSizeUnits ||
         COptions::FilteringUseRegex != filteringUseRegex ||
         COptions::FilteringMaxAgeDays != filteringMaxAgeDays ||
         COptions::FilteringSizeComparison != filteringSizeComparison ||
-        COptions::FilteringMaxAgeComparison != filteringMaxAgeComparison ||
-        COptions::FilteringExcludeFiles.Obj() != filteringExcludeFiles ||
-        COptions::FilteringExcludeDirs.Obj() != filteringExcludeDirs ||
-        COptions::FilteringIncludeFiles.Obj() != filteringIncludeFiles ||
-        COptions::FilteringIncludeDirs.Obj() != filteringIncludeDirs;
+        COptions::FilteringMaxAgeComparison != filteringMaxAgeComparison || patternsChanged;
 
-    if (!refreshAll) return;
-    CWinDirStatModel::Get()->StopScanningEngine();
+    if (!refreshAll) return {};
+    m_filtersChanged = true;
 
-    COptions::FilteringSizeMinimum = filteringSizeMinimum;
-    COptions::FilteringSizeUnits = filteringSizeUnits;
-    COptions::FilteringSizeComparison = filteringSizeComparison;
-    COptions::FilteringUseRegex = filteringUseRegex;
-    COptions::FilteringMaxAgeDays = filteringMaxAgeDays;
-    COptions::FilteringMaxAgeComparison = filteringMaxAgeComparison;
-    COptions::FilteringExcludeFiles.Obj() = filteringExcludeFiles;
-    COptions::FilteringExcludeDirs.Obj() = filteringExcludeDirs;
-    COptions::FilteringIncludeFiles.Obj() = filteringIncludeFiles;
-    COptions::FilteringIncludeDirs.Obj() = filteringIncludeDirs;
-    CFiltering::CompileFilters();
-
-    if (m_refreshOnFilteringChange)
+    Stage(COptions::FilteringSizeMinimum, filteringSizeMinimum);
+    Stage(COptions::FilteringSizeUnits, filteringSizeUnits);
+    Stage(COptions::FilteringSizeComparison, filteringSizeComparison);
+    Stage(COptions::FilteringUseRegex, filteringUseRegex);
+    Stage(COptions::FilteringMaxAgeDays, filteringMaxAgeDays);
+    Stage(COptions::FilteringMaxAgeComparison, filteringMaxAgeComparison);
+    StageBinds(patterns);
+    StageEffect([refresh = m_refreshOnFilteringChange]
     {
-        CWinDirStatModel::Get()->StartScan(
-            CWinDirStatModel::Get()->GetScanPathSpec());
-    }
+        CFiltering::CompileFilters();
+
+        if (refresh)
+        {
+            CWinDirStatModel::Get()->StartScan(
+                CWinDirStatModel::Get()->GetScanPathSpec());
+        }
+    });
+    return {};
+}
+
+void CPageFiltering::BeforeApply()
+{
+    if (m_filtersChanged) CWinDirStatModel::Get()->StopScanningEngine();
 }
 
 void CPageFiltering::OnSettingChanged()

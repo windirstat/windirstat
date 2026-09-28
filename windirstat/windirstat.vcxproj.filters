@@ -335,6 +335,21 @@
     <ClInclude Include="..\contrib\xxhash\xxhash.h">
       <Filter>Header Files\Contrib</Filter>
     </ClInclude>
+    <ClInclude Include="UiTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UiWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UiControls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UiApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UiPanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="UiFramework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -483,6 +498,15 @@
     </ClCompile>
     <ClCompile Include="DarkMode.cpp">
       <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="UiAppearance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UiControls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UiDialogs.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UiFramework.cpp">
       <Filter>Source Files\User Interface</Filter>

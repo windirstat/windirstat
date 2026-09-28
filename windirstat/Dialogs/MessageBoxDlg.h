@@ -29,13 +29,13 @@ struct WdsMessageBoxResult { int nID; bool isChecked; };
 class CMessageBoxDlg final : public MessageTarget<CMessageBoxDlg, CLayoutDialog>
 {
 public:
-    CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr,
+    CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, WindowRef pParent = nullptr,
         const std::vector<std::wstring>& listViewItems = {}, const std::wstring& checkBoxText = {}, bool checkBoxValue = false);
     ~CMessageBoxDlg() override = default;
 
-    static int Show(const std::wstring& message, const UINT type = MB_OK, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, {}, false, type, pParent, initialSize, title).nID; }
-    static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, const bool checkboxValue = false, const UINT type = MB_YESNO | MB_ICONQUESTION, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
-    static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE));
+    static int Show(const std::wstring& message, const UINT type = MB_OK, WindowRef pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, {}, false, type, pParent, initialSize, title).nID; }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, const bool checkboxValue = false, const UINT type = MB_YESNO | MB_ICONQUESTION, WindowRef pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, WindowRef pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE));
 
     INT_PTR ShowModal() override;
     void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
@@ -56,7 +56,7 @@ protected:
     void OnButtonLeft();
     void OnButtonMiddle();
     void OnButtonRight();
-    HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    HBRUSH OnCtlColor(CDC* pDC, WindowRef pWnd, UINT nCtlColor);
     bool OnEraseBkgnd(CDC* pDC) const;
     void OnSize(UINT nType, int cx, int cy);
     void OnListViewCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
@@ -86,7 +86,8 @@ private:
     ButtonContext m_buttonContext;
     RECT m_windowRect {};
 
-    HICON m_icon;
+    LPCWSTR m_iconName;
+    SmartPointer<HICON, decltype(&DestroyIcon)> m_icon{ &DestroyIcon };
     CStatic m_iconCtrl;
     CStatic m_messageCtrl;
     CButton m_buttonLeft;
@@ -97,7 +98,6 @@ private:
 
     // Optional controls
     CButton m_checkbox;
-    CBrush m_checkboxBrush{ DarkMode::SystemColor(COLOR_BTNFACE) };
     CListCtrl m_listView;
     std::wstring m_checkboxText;
     std::vector<std::wstring> m_listViewItems;

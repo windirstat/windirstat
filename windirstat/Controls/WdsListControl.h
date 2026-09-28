@@ -87,6 +87,7 @@ public:
     void OnColumnsInserted(std::initializer_list<int> requiredColumns = {}, std::initializer_list<int> defaultHiddenColumns = {});
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
     virtual void SysColorChanged();
+    void OnAppearanceChanged() override { SysColorChanged(); }
 
     int GetRowHeight() const { return m_rowHeight; }
     int GetIconSize() const { return m_iconSize; }
@@ -123,7 +124,7 @@ public:
     int ColumnToSubItem(int col) const;
     int SubItemToColumn(int subitem) const;
     bool IsColumnVisible(int subitem) const;
-    void SetColumnVisible(int subitem, bool visible);
+    void SetColumnVisible(int subitem, bool visible, bool force = false);
     void SetSorting(const SSorting& sorting) { m_sorting = sorting; }
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
@@ -179,7 +180,7 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
-    void OnContextMenu(CWnd* pWnd, CPoint point);
+    void OnContextMenu(WindowRef pWnd, CPoint point);
     bool OnEraseBkgnd(CDC* pDC) const;
     void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);

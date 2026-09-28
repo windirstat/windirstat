@@ -20,11 +20,16 @@
 #include "FileTreeView.h"
 #include "StorageAnalyticsView.h"
 
+CFileTabbedView::~CFileTabbedView()
+{
+    DestroyWindow();
+}
+
 template<typename Pane>
 Pane* CFileTabbedView::AddPane(int& index, const std::wstring_view& tabLabel)
 {
     static_assert(std::is_base_of_v<CWinDirStatPane, Pane>);
-    auto* pane = new Pane;
+    auto pane = std::make_unique<Pane>();
     index = GetTabControl().GetTabCount();
     if (!pane->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, CRect(), &m_tabControl,
         static_cast<UINT>(WDS_PANE_ID_BASE + index)))
@@ -33,8 +38,10 @@ Pane* CFileTabbedView::AddPane(int& index, const std::wstring_view& tabLabel)
         return nullptr;
     }
 
-    GetTabControl().AddTab(pane, tabLabel);
-    return pane;
+    Pane* view = pane.get();
+    m_panes.push_back(std::move(pane));
+    GetTabControl().AddTab(view, tabLabel);
+    return view;
 }
 
 int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
@@ -70,7 +77,7 @@ void CFileTabbedView::FocusActiveTabContent()
     }
 }
 
-void CFileTabbedView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CFileTabbedView::OnSetFocus(WindowRef /*pOldWnd*/)
 {
     FocusActiveTabContent();
 }
@@ -161,8 +168,8 @@ LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
     // Route keyboard focus to the newly active tab's content when focus is
     // already inside this container (tab clicked while app is focused, or
     // programmatic switch from within this pane).
-    if (const CWnd* focused = GetFocus(); focused != nullptr &&
-        (focused->Handle() == m_hWnd || IsChild(focused)))
+    if (const auto focused = GetFocus(); focused != nullptr &&
+        (focused.Handle() == m_hWnd || IsChild(focused)))
     {
         FocusActiveTabContent();
     }

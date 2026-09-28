@@ -172,8 +172,8 @@ void CLayoutPopup::DismissPopup(const bool cancel, const bool resetPositions)
         ReleaseCapture();
 
     if (HasFocus())
-        if (CWnd* parent = GetParent())
-            parent->SetFocus();
+        if (auto parent = GetParent())
+            parent.SetFocus();
 
     if (!cancel)
         CMainFrame::Get()->RebuildLayout(resetPositions);
@@ -519,7 +519,7 @@ void CLayoutPopup::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/
     if (nChar == VK_ESCAPE) DismissPopup(true);
 }
 
-void CLayoutPopup::OnKillFocus(CWnd* /*pNewWnd*/)
+void CLayoutPopup::OnKillFocus(WindowRef /*pNewWnd*/)
 {
     if (IsWindowVisible()) DismissPopup(true);
 }
@@ -529,8 +529,8 @@ void CLayoutPopup::OnActivateApp(const bool bActive, DWORD /*dwThreadID*/)
     if (!bActive && IsWindowVisible()) DismissPopup(true);
 }
 
-void CLayoutPopup::OnCaptureChanged(CWnd* pWnd)
+void CLayoutPopup::OnCaptureChanged(WindowRef pWnd)
 {
-    if (pWnd != this && IsWindowVisible())
+    if (pWnd.Handle() != Handle() && IsWindowVisible())
         DismissPopup(true);
 }

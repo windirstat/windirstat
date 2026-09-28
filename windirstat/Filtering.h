@@ -23,6 +23,7 @@ class CFiltering final
 {
     static std::wstring ExtractIncludeAnchor(std::wstring_view pattern, bool useRegex);
     static std::wstring NormalizePathRegex(std::wstring_view pattern);
+    static std::wregex CompilePattern(const std::wstring& pattern, bool useRegex, bool pathFilter);
 
 public:
     CFiltering() = delete;
@@ -37,6 +38,7 @@ public:
     static bool FilterActive;
 
     static void CompileFilters();
+    static std::optional<std::wstring> ValidateFilters(const std::wstring& text, bool useRegex, bool pathFilter);
     static bool IsFilterActive() { return FilterActive; }
     static std::wstring_view WithoutTrailingBackslashes(std::wstring_view path);
     static bool MatchesAnyPath(const std::wstring& path, const std::vector<std::wregex>& patterns);

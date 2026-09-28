@@ -24,6 +24,7 @@ class DrawTextCache
 public:
 
     static constexpr size_t MAX_CACHE_SIZE = 1000;
+    static constexpr size_t MAX_BITMAP_BYTES = 16 * 1024 * 1024;
 
     // Singleton access
     static DrawTextCache& Get()
@@ -33,7 +34,8 @@ public:
     }
 
     // Main drawing function - replacement for DrawText
-    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAlign = true, bool calcRect = false);
+    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect,
+        bool leftAlign = true, bool calcRect = false, bool cacheBitmap = true);
 
     // Clears all cached entries
     void ClearCache();
@@ -50,8 +52,8 @@ private:
         COLORREF textColor;
         COLORREF backgroundColor;
         UINT format;
-        USHORT width;
-        USHORT height;
+        int width;
+        int height;
         USHORT dpi;
         HFONT font;
 
@@ -67,8 +69,8 @@ private:
             hash ^= std::hash<COLORREF>{}(key.textColor) << 1;
             hash ^= std::hash<COLORREF>{}(key.backgroundColor) << 2;
             hash ^= std::hash<UINT>{}(key.format) << 3;
-            hash ^= std::hash<USHORT>{}(key.width) << 4;
-            hash ^= std::hash<USHORT>{}(key.height) << 5;
+            hash ^= std::hash<int>{}(key.width) << 4;
+            hash ^= std::hash<int>{}(key.height) << 5;
             hash ^= std::hash<USHORT>{}(key.dpi) << 6;
             hash ^= std::hash<HFONT>{}(key.font) << 7;
             return hash;
@@ -80,8 +82,7 @@ private:
     {
         CBitmap bmp;
         CSize bmpSize;
-        CSmallRect calcRect;
-        UINT format = 0;
+        size_t bitmapBytes = 0;
     };
 
     // LRU list type - stores keys in order of use (most recent at front)
@@ -93,8 +94,8 @@ private:
         CacheKeyHash>;
 
     // Create cache key from current DC state
-    CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
-        const CRect& rect, UINT format) const noexcept;
+    static CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
+        const CRect& rect, UINT format) noexcept;
 
     // Create cached bitmap for the text
     static std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
@@ -108,6 +109,5 @@ private:
 
     CacheMap m_cache;
     LRUList m_leastRecentList;
-    mutable HDC m_lastHDC = nullptr;
-    mutable USHORT m_lastDpi = USER_DEFAULT_SCREEN_DPI;
+    size_t m_bitmapBytes = 0;
 };

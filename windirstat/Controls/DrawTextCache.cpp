@@ -18,7 +18,8 @@
 #include "pch.h"
 #include "DrawTextCache.h"
 
-void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
+void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect,
+    const bool leftAlign, const bool calcRect, const bool cacheBitmap)
 {
     // If no DC or empty text, collapse rect and return
     if (!pDC || text.empty())
@@ -30,9 +31,14 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     const UINT format = DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX |
         (leftAlign ? DT_LEFT : DT_RIGHT) | (calcRect ? DT_CALCRECT : 0);
+    const size_t bitmapBytes = !calcRect && rect.Width() > 0 && rect.Height() > 0
+        ? static_cast<size_t>(rect.Width()) * rect.Height() * sizeof(COLORREF) : 0;
 
-    // If caching is disabled, use normal DrawText API
-    if (!COptions::UseDrawTextCache)
+    // Selected cells retain their partially highlighted background.
+    const int backgroundMode = cacheBitmap ? GetBkMode(pDC->m_hDC) : TRANSPARENT;
+    ScopedBkMode background(pDC, backgroundMode);
+    if (!COptions::UseDrawTextCache || (!calcRect && (backgroundMode == TRANSPARENT || GetLayout(pDC->m_hDC) != 0
+        || bitmapBytes == 0 || bitmapBytes > MAX_BITMAP_BYTES)))
     {
         pDC->DrawText(text, &rect, format);
         return;
@@ -47,115 +53,74 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
         // Handle rectangle calculation or normal drawing
         auto& entry = *it->second.first;
-        if (format & DT_CALCRECT) rect = entry.calcRect;
+        if (calcRect)
+            rect.SetBounds(rect.left, rect.top, rect.left + entry.bmpSize.cx, rect.top + entry.bmpSize.cy);
         else PaintCachedEntry(pDC, rect, entry);
         return;
     }
 
     // Cache miss - create new cached entry
-    if (format & DT_CALCRECT)
+    std::unique_ptr<CacheEntry> entry;
+    if (calcRect)
     {
-        SIZE size{};
-        if (GetTextExtentPoint32W(pDC->m_hDC, text.c_str(), static_cast<int>(text.length()), &size))
+        pDC->DrawText(text, &rect, format);
+        entry = std::make_unique<CacheEntry>();
+        entry->bmpSize = rect.Size();
+    }
+    else
+    {
+        entry = CreateCachedBitmap(pDC, text, rect, format);
+        if (!entry)
         {
-            rect.right = rect.left + size.cx;
-            rect.bottom = rect.top + size.cy;
+            pDC->DrawText(text, &rect, format);
+            return;
         }
-
-        while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
-        {
-            const CacheKey& keyToRemove = m_leastRecentList.back();
-            m_cache.erase(keyToRemove);
-            m_leastRecentList.pop_back();
-        }
-
-        auto entry = std::make_unique<CacheEntry>();
-        entry->bmpSize = size;
-        entry->format = format;
-        entry->calcRect = rect;
-
-        m_leastRecentList.push_front(key);
-        m_cache.emplace(std::move(key), std::make_pair(std::move(entry), m_leastRecentList.begin()));
-        return;
+        PaintCachedEntry(pDC, rect, *entry);
     }
 
-    while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
+    while (m_cache.size() >= MAX_CACHE_SIZE || m_bitmapBytes + bitmapBytes > MAX_BITMAP_BYTES)
     {
         // Remove least recently used (back of list)
-        const CacheKey& keyToRemove = m_leastRecentList.back();
-        m_cache.erase(keyToRemove);
+        const auto it = m_cache.find(m_leastRecentList.back());
+        m_bitmapBytes -= it->second.first->bitmapBytes;
+        m_cache.erase(it);
         m_leastRecentList.pop_back();
     }
 
-    // Handle normal drawing
-    auto entry = CreateCachedBitmap(pDC, text, rect, format);
-    PaintCachedEntry(pDC, rect, *entry);
-
     // Add to LRU list and cache
+    entry->bitmapBytes = bitmapBytes;
+    m_bitmapBytes += bitmapBytes;
     m_leastRecentList.push_front(key);
     m_cache.emplace(std::move(key), std::make_pair(std::move(entry), m_leastRecentList.begin()));
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
-    const std::wstring& text, const CRect& rect, const UINT format) const noexcept
+    const std::wstring& text, const CRect& rect, const UINT format) noexcept
 {
-    if (pDC->m_hDC != m_lastHDC)
-    {
-        m_lastHDC = pDC->m_hDC;
-        m_lastDpi = static_cast<USHORT>(pDC->GetDeviceCaps(LOGPIXELSX));
-    }
-
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),
         .backgroundColor = pDC->GetBkColor(), .format = format,
-        .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
-        .dpi = m_lastDpi,
+        .width = rect.Width(), .height = rect.Height(),
+        .dpi = static_cast<USHORT>(pDC->GetDeviceCaps(LOGPIXELSX)),
         .font = pDC->GetCurrentFont()};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     CDC* pDC, const std::wstring& text, const CRect& rect, const UINT format) noexcept
 {
-    // Create temporary DC to calculate text bounds
     CDC memDC(pDC);
-
-    // Select the same font to get accurate measurements
-    GdiObjectSelection sofont(&memDC, pDC->GetCurrentFont());
-
-    // Calculate actual text dimensions
-    CRect calcRect(0, 0, rect.Width(), rect.Height());
-    memDC.DrawText(text.c_str(), static_cast<int>(text.length()),
-        &calcRect, format | DT_CALCRECT);
-
-    // Get font metrics for accurate text height
-    const auto metrics = memDC.GetTextMetrics();
-    const int textHeight = metrics ? metrics->tmHeight : calcRect.Height();
-
     auto entry = std::make_unique<CacheEntry>();
-    entry->bmpSize = CSize(calcRect.Width(), textHeight);
-    entry->format = format;
-
-    // Store the calculated rectangle for DT_CALCRECT requests
-    // Preserve the original position (left, top) from input rect, only update size
-    entry->calcRect = CRect(rect.left, rect.top,
-        rect.left + calcRect.Width(), rect.top + calcRect.Height());
-
-    // Create compatible bitmap sized exactly for the text
-    entry->bmp.CreateCompatible(pDC, calcRect.Width(), textHeight);
+    entry->bmpSize = rect.Size();
+    if (!memDC.m_hDC || !entry->bmp.CreateCompatible(pDC, rect.Width(), rect.Height())) return nullptr;
+    GdiObjectSelection sofont(&memDC, pDC->GetCurrentFont());
     GdiObjectSelection sobmp(&memDC, &entry->bmp);
 
-    // Fill with background color and draw text with actual text color
+    // Native layout within the entire cell preserves fallback glyphs and overhangs.
+    CRect drawRect(0, 0, rect.Width(), rect.Height());
     memDC.SetBkColor(pDC->GetBkColor());
     memDC.SetTextColor(pDC->GetTextColor());
-
-    // Fill the bitmap with background color
-    CRect drawRect(0, 0, calcRect.Width(), textHeight);
     memDC.FillSolidRect(drawRect, pDC->GetBkColor());
-
-    // Draw the text without vertical centering (bitmap is exact text height)
-    memDC.DrawText(text.c_str(), static_cast<int>(text.length()),
-        &drawRect, format & ~DT_VCENTER);
-
+    memDC.DrawText(text, &drawRect, format);
     return entry;
 }
 
@@ -163,8 +128,7 @@ void DrawTextCache::ClearCache()
 {
     m_cache.clear();
     m_leastRecentList.clear();
-    m_lastHDC = nullptr;
-    m_lastDpi = 96;
+    m_bitmapBytes = 0;
 }
 
 void DrawTextCache::TouchEntry(const CacheMap::iterator& it)
@@ -179,13 +143,5 @@ void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, const CacheEnt
     // Create memory DC
     CDC memDC(pDC);
     GdiObjectSelection sobmp(&memDC, &entry.bmp);
-
-    // Calculate horizontal position based on alignment
-    const int xPos = entry.format & DT_RIGHT ? rect.right - entry.bmpSize.cx : rect.left;
-
-    // Calculate vertical position for centering
-    const int yPos = rect.top + (rect.Height() - entry.bmpSize.cy) / 2;
-
-    // BitBlt at the calculated position (skip 1 pixel top border)
-    pDC->BitBlt(xPos, yPos, entry.bmpSize.cx, entry.bmpSize.cy, &memDC, 0, 0, SRCCOPY);
+    pDC->BitBlt(rect.left, rect.top, entry.bmpSize.cx, entry.bmpSize.cy, &memDC, 0, 0, SRCCOPY);
 }

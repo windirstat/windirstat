@@ -49,35 +49,37 @@ void CPageFileTree::InitializePage()
     EnableButtons();
 }
 
-void CPageFileTree::OnOK()
+std::optional<CPropertyPage::ValidationError> CPageFileTree::PrepareSettings()
 {
     const bool pacmanChanged = COptions::PacmanAnimation != IsChecked(IDC_PACMANANIMATION);
-    COptions::PacmanAnimation = IsChecked(IDC_PACMANANIMATION);
-    COptions::ShowTimeSpent = IsChecked(IDC_SHOWTIMESPENT);
+    Stage(COptions::PacmanAnimation, IsChecked(IDC_PACMANANIMATION));
+    Stage(COptions::ShowTimeSpent, IsChecked(IDC_SHOWTIMESPENT));
 
-    const auto setColumnVisible = [](const int column, const bool visible)
-    {
-        if (auto* control = CFileTreeControl::Get())
-        {
-            control->SetColumnVisible(column, visible);
-        }
-        else
-        {
-            COptions::SetColumnVisible(COptions::FileTreeColumnVisibility.Obj(), column, visible);
-        }
-    };
+    const auto previousVisibility = COptions::FileTreeColumnVisibility.Obj();
+    auto visibility = previousVisibility;
     for (const auto [controlId, subItem] : c_columns)
-        setColumnVisible(subItem, IsChecked(controlId));
-
-    COptions::FileTreeColorCount = m_fileTreeColorCount;
+        COptions::SetColumnVisible(visibility, subItem, IsChecked(controlId));
+    Stage(COptions::FileTreeColumnVisibility, visibility);
+    Stage(COptions::FileTreeColorCount, m_fileTreeColorCount);
     for (auto&& [button, color, optionColor] : std::views::zip(m_colorButton, m_fileTreeColor, COptions::FileTreeColors))
     {
         color = button.GetColor();
-        optionColor = color;
+        Stage(optionColor, color);
     }
 
-    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
-    if (const auto control = CFileTreeControl::Get(); pacmanChanged && control != nullptr) control->SortItems();
+    StageEffect([previousVisibility, visibility = std::move(visibility), pacmanChanged]
+    {
+        if (auto* control = CFileTreeControl::Get())
+        {
+            for (const auto [controlId, subItem] : c_columns)
+                if (COptions::IsColumnVisible(previousVisibility, subItem) !=
+                    COptions::IsColumnVisible(visibility, subItem))
+                    control->SetColumnVisible(subItem, COptions::IsColumnVisible(visibility, subItem), true);
+            if (pacmanChanged) control->SortItems();
+        }
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
+    });
+    return {};
 }
 
 void CPageFileTree::EnableButtons()
@@ -88,15 +90,11 @@ void CPageFileTree::EnableButtons()
     }
 }
 
-void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CWnd* scrollBar)
+void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, const WindowRef scrollBar)
 {
-    if (scrollBar == &m_slider)
+    if (scrollBar.Handle() == m_slider.Handle())
     {
-        const int pos = m_slider.GetPos();
-        assert(pos > 0);
-        assert(pos <= TREELISTCOLORCOUNT);
-
-        m_fileTreeColorCount = pos;
+        m_fileTreeColorCount = m_slider.GetPos();
         EnableButtons();
         SetModified();
     }

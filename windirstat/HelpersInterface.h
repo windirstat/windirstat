@@ -113,7 +113,7 @@ CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, 
 
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
-constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
+constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul; // Application commands begin at 0x8000.
 CComPtr<IContextMenu> GetContextMenu(const std::vector<CItem*>& items);
 
 // Application info

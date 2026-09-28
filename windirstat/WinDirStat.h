@@ -43,7 +43,7 @@ public:
     bool IsIdleMessage(const MSG* pMsg) const noexcept override;
 
     static bool InPortableMode();
-    bool SetPortableMode(bool enable, bool onlyOpen = false);
+    DWORD SetPortableMode(bool enable, bool onlyOpen = false);
 
     bool IsFollowingAllowed(DWORD reparseTag = 0) const;
 
@@ -69,6 +69,7 @@ protected:
     COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which) const;
 
     std::unique_ptr<CWinDirStatModel> m_model;
+    std::unique_ptr<CMainFrame> m_mainFrame;
 
     CIconHandler m_iconList;        // Central icon list
     COLORREF m_altColor;            // Coloring of compressed items

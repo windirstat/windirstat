@@ -33,8 +33,25 @@ public:
 
 protected:
     void InitializePage() override;
-    void OnOK() override;
-    static std::span<const CheckboxSettingBinding> CheckboxSettings();
+    std::optional<ValidationError> PrepareSettings() override;
+
+    static constexpr std::array CheckboxBindings
+    {
+        &COptions::ShowMicrosoftProgress,
+        &COptions::ShowElevationPrompt,
+        &COptions::ShowDupeDetectionCloudLinksWarning,
+        &COptions::ShowDeletePermanentlyWarning,
+        &COptions::ShowDeleteToRecycleBinWarning,
+        &COptions::ShowEmptyRecycleBinPrompt,
+        &COptions::ShowCreateHardlinkPrompt,
+        &COptions::ShowRemoveMotwPrompt,
+        &COptions::ShowDisableHibernatePrompt,
+        &COptions::ShowRemoveShadowCopiesPrompt,
+        &COptions::ShowDismCleanupPrompt,
+        &COptions::ShowDismResetPrompt,
+        &COptions::ShowSetDatesPrompt,
+        &COptions::ShowRemoveEmptyFoldersPrompt,
+    };
 
 public:
     static std::span<const RouteEntry> Routes();
@@ -45,12 +62,11 @@ inline std::span<const RouteEntry> CPagePrompts::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_WARNING),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DELETION_BIN_WARNING, IDC_DELETION_WARNING),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_ELEVATION_PROMPT),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_CLOUD_LINKS_WARNING),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOW_MICROSOFT_PROGRESS),
-        Route::Control<&OnSettingRangeChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PROMPT_EMPTY_BIN, IDC_PROMPT_REMOVE_EMPTY),
     };
     return entries;
 }

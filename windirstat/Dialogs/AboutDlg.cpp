@@ -107,11 +107,11 @@ bool CAboutDlg::WdsTabControl::HandleTabKey(const bool shiftPressed)
     }
 
     // If we reach here, move focus to OK button
-    GetParent()->GetDlgItem(IDOK)->SetFocus();
+    GetParent().GetDlgItem(IDOK).SetFocus();
     return true;
 }
 
-void CAboutDlg::WdsTabControl::OnSetFocus(CWnd* pOldWnd)
+void CAboutDlg::WdsTabControl::OnSetFocus(WindowRef pOldWnd)
 {
     CTabControl::OnSetFocus(pOldWnd);
 
@@ -141,7 +141,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
     {
         if (mf->wParam == VK_ESCAPE)
         {
-            GetParent()->PostMessage(WM_COMMAND, IDOK);
+            GetParent().PostMessage(WM_COMMAND, IDOK);
             *pResult = 1;
         }
         else if (mf->wParam == VK_TAB)
@@ -179,9 +179,9 @@ bool CAboutDlg::OnInitDialog()
     m_caption.SubclassDlgItem(IDC_CAPTION, this);
 
     // Re-create the tab control
-    CWnd* placeholderTabCtrl = GetDlgItem(IDC_TAB);
-    const CRect placeholderRect = GetChildWindowRect(placeholderTabCtrl->Handle());
-    placeholderTabCtrl->DestroyWindow();
+    auto placeholderTabCtrl = GetDlgItem(IDC_TAB);
+    const CRect placeholderRect = GetChildWindowRect(placeholderTabCtrl.Handle());
+    placeholderTabCtrl.DestroyWindow();
     m_tab.Create(placeholderRect, this, IDC_TAB);
     Localization::UpdateDialogs(*this);
 

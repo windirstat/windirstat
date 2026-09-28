@@ -23,7 +23,7 @@ void CXySlider::Initialize()
     if (!m_inited && IsWindow(m_hWnd))
     {
         // Make size odd, so that zero lines are central
-        CRect rc = GetParent()->GetChildWindowRect(Handle());
+        CRect rc = GetParent().GetChildWindowRect(Handle());
         if (rc.Width() % 2 == 0) rc.right--;
         if (rc.Height() % 2 == 0) rc.bottom--;
         MoveWindow(rc);
@@ -110,7 +110,7 @@ void CXySlider::NotifyParent() const
         .code     = XYSLIDER_CHANGED
     };
 
-    GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), &hdr);
+    GetParent().SendMessage(WM_NOTIFY, GetDlgCtrlID(), &hdr);
 }
 
 void CXySlider::PaintBackground(CDC* pdc)
@@ -270,13 +270,13 @@ void CXySlider::HighlightGripper(const bool on)
     RedrawWindow();
 }
 
-void CXySlider::OnSetFocus(CWnd* pOldWnd)
+void CXySlider::OnSetFocus(WindowRef pOldWnd)
 {
     CStatic::OnSetFocus(pOldWnd);
     Invalidate();
 }
 
-void CXySlider::OnKillFocus(CWnd* pNewWnd)
+void CXySlider::OnKillFocus(WindowRef pNewWnd)
 {
     CStatic::OnKillFocus(pNewWnd);
     Invalidate();

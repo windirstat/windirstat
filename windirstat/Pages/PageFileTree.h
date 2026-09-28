@@ -34,7 +34,7 @@ public:
 
 protected:
     void InitializePage() override;
-    void OnOK() override;
+    std::optional<ValidationError> PrepareSettings() override;
     void EnableButtons();
 
     static constexpr std::array<std::pair<UINT, int>, 9> c_columns = {{
@@ -59,26 +59,18 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
-    void OnVScroll(UINT nSBCode, UINT nPos, CWnd* scrollBar);
+    void OnVScroll(UINT nSBCode, UINT nPos, WindowRef scrollBar);
 };
 
 inline std::span<const RouteEntry> CPageFileTree::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Notify<&OnSettingNotifyChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7),
+        Route::Notify<&OnSettingChanged>(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7),
         Route::Window<&OnVScroll>(WM_VSCROLL),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PACMANANIMATION),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SHOWTIMESPENT),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FOLDERS),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ITEMS),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_FILES),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ATTRIBUTES),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_LAST_CHANGE),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_OWNER),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_PERCENTAGE),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_LOGICAL),
-        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_SIZE_PHYSICAL),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_TREECOL_ATTRIBUTES, IDC_TREECOL_SIZE_PHYSICAL),
     };
     return entries;
 }

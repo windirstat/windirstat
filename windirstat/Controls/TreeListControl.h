@@ -172,7 +172,7 @@ protected:
     void OnLButtonDown(UINT nFlags, CPoint point);
     void OnLButtonDblClk(UINT nFlags, CPoint point);
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     bool OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult) const;
     LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam) override;
 };

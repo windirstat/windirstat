@@ -62,7 +62,8 @@ bool CSettingsSheet::OnInitDialog()
 
     const int page = (m_initialPage >= 0) ? m_initialPage : static_cast<int>(COptions::ConfigPage);
     SelectPage(std::min(static_cast<int>(page), GetPageCount() - 1));
-    return true;
+    GetTabControl().SetFocus();
+    return false;
 }
 
 bool CSettingsSheet::ShowSettings(const int initialPage, const bool refreshOnFilteringChange)
@@ -85,36 +86,26 @@ bool CSettingsSheet::ShowSettings(const int initialPage, const bool refreshOnFil
 bool CSettingsSheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 {
     COptions::ConfigPage = GetActivePageIndex();
-
-    if (const UINT cmd = LOWORD(wParam); IDOK == cmd || ID_APPLY_NOW == cmd)
-    {
-        if (m_restartRequest && (IDOK == cmd || !m_alreadyAsked))
-        {
-            const int r = ShowMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
-                wds::strWinDirStat, MB_YESNOCANCEL);
-            if (IDCANCEL == r)
-            {
-                return true; // "Message handled". Don't proceed.
-            }
-            if (IDNO == r)
-            {
-                m_alreadyAsked = true; // Don't ask twice.
-            }
-            else
-            {
-                assert(IDYES == r);
-                m_restartApplication = true;
-
-                if (ID_APPLY_NOW == cmd)
-                {
-                    // Exit after the base handler applies the modified pages
-                    RequestModalExit(IDOK);
-                }
-            }
-        }
-    }
-
     return CPropertySheet::OnCommand(wParam, lParam);
+}
+
+bool CSettingsSheet::ConfirmApply(const UINT command)
+{
+    m_restartAfterApply = false;
+    if (!m_restartRequest || (command != IDOK && m_alreadyAsked)) return true;
+
+    const int result = ShowMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
+        wds::strWinDirStat, MB_YESNOCANCEL);
+    if (result == IDCANCEL) return false;
+    m_alreadyAsked = result == IDNO;
+    m_restartAfterApply = result == IDYES;
+    return true;
+}
+
+void CSettingsSheet::OnApplied(const UINT command)
+{
+    m_restartApplication = m_restartAfterApply;
+    if (m_restartApplication && command == ID_APPLY_NOW) RequestModalExit(IDOK);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -288,7 +279,7 @@ CMainFrame::~CMainFrame()
     s_Singleton = nullptr;
 }
 
-void CMainFrame::OnSetFocus(CWnd* pOldWnd)
+void CMainFrame::OnSetFocus(WindowRef pOldWnd)
 {
     CFrameWnd::OnSetFocus(pOldWnd);
     if (HasFocus() && GetLogicalFocus() != LF_NONE)
@@ -458,13 +449,7 @@ void CMainFrame::CreateStatusProgress()
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
         m_progress.ModifyStyle(WS_BORDER, 0);
 
-        if (DarkMode::IsDarkModeActive())
-        {
-            // Disable theming for progress bar to avoid light background in dark mode
-            SetWindowTheme(m_progress.Handle(), L"", L"");
-            m_progress.SetBkColor(DarkMode::SystemColor(COLOR_WINDOWFRAME));
-            m_progress.ModifyStyleEx(WS_EX_STATICEDGE, 0);
-        }
+        OnAppearanceChanged();
     }
     if (m_taskbarList)
     {
@@ -522,13 +507,6 @@ int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     UpdatePaneText();
 
-    // Set up status pane for dark mode
-    if (DarkMode::IsDarkModeActive())
-    {
-        m_wndStatusBar.SetBackgroundColor(DarkMode::SystemColor(COLOR_WINDOW));
-
-    }
-
     m_wndToolBar.Create(this);
     m_wndToolBar.ModifyStyle(0, WS_CLIPCHILDREN);
     if (!m_watcherFilter.Create(WS_CHILD | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL,
@@ -547,11 +525,7 @@ int CMainFrame::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     // apply dark mode to main frame window
     DarkMode::AdjustControls(Handle());
 
-    if (DarkMode::IsDarkModeActive())
-    {
-        static CBrush s_darkBkgndBrush(DarkMode::SystemColor(COLOR_WINDOW));
-        SetClassLongPtr(Handle(), GCLP_HBRBACKGROUND, reinterpret_cast<LONG_PTR>(s_darkBkgndBrush.Handle()));
-    }
+    OnAppearanceChanged();
 
     return 0;
 }
@@ -638,7 +612,6 @@ void CMainFrame::PostNcDestroy()
     // Child controls have captured their final persistent state by this point.
     PersistedSetting::WritePersistedProperties();
 
-    // The base implementation deletes this object; it must be called last.
     CFrameWnd::PostNcDestroy();
 }
 
@@ -692,6 +665,7 @@ bool CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
     static std::wstring title = std::format(L"{}{}", GetAppTitle(),
         IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : wds::strEmpty);
     cs.lpszName = title.c_str();
+    cs.style |= WS_CLIPCHILDREN;
 
     if (!CFrameWnd::PreCreateWindow(cs))
     {
@@ -935,4 +909,20 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
     const auto & callback = *static_cast<std::function<void()>*>(std::bit_cast<LPVOID>(lParam));
     callback();
     return 0;
+}
+
+void CMainFrame::OnAppearanceChanged()
+{
+    const bool dark = DarkMode::IsDarkModeActive();
+    m_wndStatusBar.SetBackgroundColor(dark ? DarkMode::Color(DarkMode::ColorRole::Window) : CLR_NONE);
+    if (m_progress.Handle() == nullptr) return;
+    SetWindowTheme(m_progress.Handle(), dark ? L"" : nullptr, dark ? L"" : nullptr);
+    m_progress.SetBkColor(dark ? DarkMode::Color(DarkMode::ColorRole::Frame) : CLR_DEFAULT);
+}
+
+bool CMainFrame::OnEraseBkgnd(CDC* dc)
+{
+    dc->FillSolidRect(GetClientRect(), DarkMode::Color(DarkMode::IsDarkModeActive() ?
+        DarkMode::ColorRole::Window : DarkMode::ColorRole::Control));
+    return true;
 }

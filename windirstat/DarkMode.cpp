@@ -37,70 +37,81 @@ static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpre
 static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
     reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetVersion")));
 
+bool DarkMode::s_darkModeSupported = false;
 bool DarkMode::s_darkModeEnabled = false;
-static std::array<COLORREF, 50> OriginalColors;
-static std::array<COLORREF, 50> DarkModeColors;
+bool DarkMode::s_highContrastEnabled = false;
 
-void DarkMode::SetAppDarkMode() noexcept
+bool DarkMode::SetAppDarkMode() noexcept
 {
     // Determine if dark mode should be set based on settings
-    s_darkModeEnabled = COptions::DarkMode == DM_ENABLED;
+    bool darkMode = COptions::DarkMode == DM_ENABLED;
 
     if (COptions::DarkMode == DM_USE_WINDOWS)
     {
         // Check Windows dark mode setting
         if (CRegKey key; key.Open(HKEY_CURRENT_USER, wds::strThemesKey, KEY_READ) == ERROR_SUCCESS)
         {
-            DWORD darkSetting = 0;
-            key.QueryDWORDValue(L"AppsUseLightTheme", darkSetting);
-            s_darkModeEnabled = (darkSetting == 0);
+            DWORD lightTheme = 1;
+            key.QueryDWORDValue(L"AppsUseLightTheme", lightTheme);
+            darkMode = lightTheme == 0;
         }
     }
 
-    // Validate this version of Windows supports dark mode
-    OSVERSIONINFOEXW verInfo { .dwOSVersionInfoSize  = sizeof(verInfo) };
-    RtlGetVersion(&verInfo);
-    s_darkModeEnabled &= verInfo.dwMajorVersion >= 10 && verInfo.dwBuildNumber >= 17763;
+    HIGHCONTRASTW contrast{ .cbSize = sizeof(contrast) };
+    const bool highContrast = SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(contrast), &contrast, 0)
+        && (contrast.dwFlags & HCF_HIGHCONTRASTON) != 0;
 
-    // Disable if functions are not accessible
-    s_darkModeEnabled &= SetPreferredAppMode != nullptr;
-    s_darkModeEnabled &= AllowDarkModeForWindow != nullptr;
+    // Validate this version of Windows supports dark mode
+    OSVERSIONINFOEXW version{ .dwOSVersionInfoSize = sizeof(version) };
+    const bool supported = RtlGetVersion != nullptr && RtlGetVersion(&version) == 0
+        && version.dwMajorVersion >= 10 && version.dwBuildNumber >= 17763
+        && SetPreferredAppMode != nullptr && AllowDarkModeForWindow != nullptr;
+    s_darkModeSupported = supported;
+    darkMode = darkMode && supported && !highContrast;
+    const bool changed = s_darkModeEnabled != darkMode || s_highContrastEnabled != highContrast;
+    s_darkModeEnabled = darkMode;
+    s_highContrastEnabled = highContrast;
 
     // Signal this app can support dark mode
-    if (s_darkModeEnabled) SetPreferredAppMode(ForceDark);
-
-    // Record initial system colors
-    for (auto [i, color] : std::views::enumerate(OriginalColors))
+    if (supported)
     {
-        color = GetSysColor(static_cast<int>(i));
+        if (version.dwBuildNumber < 18362)
+        {
+            using AllowDarkModeForApp = bool(WINAPI*)(bool);
+            reinterpret_cast<AllowDarkModeForApp>(reinterpret_cast<LPVOID>(SetPreferredAppMode))(darkMode);
+        }
+        else SetPreferredAppMode(highContrast ? Default : darkMode ? ForceDark : ForceLight);
     }
+    return changed;
+}
 
-    // Set up dark mode colors
-    DarkModeColors = OriginalColors;
-    DarkModeColors[CTLCOLOR_DLG] = RGB(40, 40, 40);
-    DarkModeColors[CTLCOLOR_STATIC] = RGB(40, 40, 40);
-    DarkModeColors[CTLCOLOR_EDIT] = RGB(32, 32, 32);
-    DarkModeColors[CTLCOLOR_LISTBOX] = RGB(32, 32, 32);
-    DarkModeColors[COLOR_3DHIGHLIGHT] = RGB(70, 70, 70);
-    DarkModeColors[COLOR_3DLIGHT] = RGB(60, 60, 60);
-    DarkModeColors[COLOR_3DSHADOW] = RGB(20, 20, 20);
-    DarkModeColors[COLOR_BACKGROUND] = RGB(25, 25, 25);
-    DarkModeColors[COLOR_BTNFACE] = RGB(45, 45, 45);
-    DarkModeColors[COLOR_BTNTEXT] = RGB(220, 220, 220);
-    DarkModeColors[COLOR_GRAYTEXT] = RGB(120, 120, 120);
-    DarkModeColors[COLOR_HIGHLIGHT] = RGB(0, 120, 215);
-    DarkModeColors[COLOR_HIGHLIGHTTEXT] = RGB(255, 255, 255);
-    DarkModeColors[COLOR_MENU] = RGB(35, 35, 35);
-    DarkModeColors[COLOR_MENUBAR] = RGB(30, 30, 30);
-    DarkModeColors[COLOR_WINDOW] = RGB(32, 32, 32);
-    DarkModeColors[COLOR_WINDOWFRAME] = RGB(50, 50, 50);
-    DarkModeColors[COLOR_WINDOWTEXT] = RGB(220, 220, 220);
-
+COLORREF DarkMode::Color(const ColorRole role)
+{
+    if (!s_darkModeEnabled) return GetSysColor(std::to_underlying(role));
+    switch (role)
+    {
+    case ColorRole::Edge: return RGB(70, 70, 70);
+    case ColorRole::Light: return RGB(60, 60, 60);
+    case ColorRole::Shadow: return RGB(20, 20, 20);
+    case ColorRole::Desktop: return RGB(25, 25, 25);
+    case ColorRole::Control: return RGB(45, 45, 45);
+    case ColorRole::ControlText:
+    case ColorRole::MenuText:
+    case ColorRole::WindowText: return RGB(220, 220, 220);
+    case ColorRole::DisabledText: return RGB(120, 120, 120);
+    case ColorRole::Selection: return RGB(0, 120, 215);
+    case ColorRole::SelectionText: return RGB(255, 255, 255);
+    case ColorRole::Menu: return RGB(44, 44, 44);
+    case ColorRole::MenuBar: return RGB(30, 30, 30);
+    case ColorRole::Window: return RGB(32, 32, 32);
+    case ColorRole::Frame: return RGB(50, 50, 50);
+    }
+    return GetSysColor(std::to_underlying(role));
 }
 
 COLORREF DarkMode::SystemColor(const DWORD index)
 {
-    return s_darkModeEnabled ? DarkModeColors[index] : OriginalColors[index];
+    return Color(static_cast<ColorRole>(index));
 }
 
 bool DarkMode::EnhancedDarkModeSupport()
@@ -123,30 +134,35 @@ bool DarkMode::EnhancedDarkModeSupport()
 
 void DarkMode::AdjustControls(const HWND hWnd)
 {
-    if (!s_darkModeEnabled) return;
+    if (!IsWindow(hWnd)) return;
 
     auto ProcessWindow = [](const HWND hWnd, const LPARAM) -> BOOL
     {
-        std::array<WCHAR, MAX_CLASS_NAME> classNameBuffer;
+        std::array<WCHAR, MAX_CLASS_NAME> classNameBuffer{};
         const int length = GetClassName(hWnd, classNameBuffer.data(), static_cast<int>(classNameBuffer.size()));
         const std::wstring_view className(classNameBuffer.data(), length);
 
         // Control whether the window is allowed for dark mode
-        AllowDarkModeForWindow(hWnd, true);
+        if (s_darkModeSupported) AllowDarkModeForWindow(hWnd, s_darkModeEnabled);
 
         // Set toplevel theme
-        constexpr BOOL dark = TRUE;
-        if (DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark)) == E_INVALIDARG)
+        if ((GetWindowLongPtrW(hWnd, GWL_STYLE) & WS_CHILD) == 0)
         {
-            // Fallback for older operating systems
-            DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE - 1, &dark, sizeof(dark));
+            const BOOL dark = s_darkModeEnabled;
+            if (DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark)) == E_INVALIDARG)
+            {
+                // Fallback for older operating systems
+                DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE - 1, &dark, sizeof(dark));
+            }
         }
 
-        if (className == WC_BUTTON)
+        if (!s_darkModeEnabled) SetWindowTheme(hWnd, nullptr, nullptr);
+        else if (className == WC_BUTTON)
         {
+            static const bool enhancedButtons = EnhancedDarkModeSupport();
             if (const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
                 style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON ||
-                (EnhancedDarkModeSupport() && (style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)))
+                (enhancedButtons && (style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)))
             {
                 SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
             }
@@ -156,19 +172,25 @@ void DarkMode::AdjustControls(const HWND hWnd)
                 SetWindowTheme(hWnd, L"", L"");
             }
         }
-        else if (className == WC_HEADER)
-        {
-            SetWindowTheme(hWnd, L"DarkMode_ItemsView", nullptr);
-        }
-        else if (className == WC_COMBOBOX)
-        {
-            SetWindowTheme(hWnd, L"DarkMode_CFD", nullptr);
-        }
-        else
-        {
-            SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
-        }
+        else if (className == WC_HEADER) SetWindowTheme(hWnd, L"DarkMode_ItemsView", nullptr);
+        else if (className == WC_COMBOBOX) SetWindowTheme(hWnd, L"DarkMode_CFD", nullptr);
+        else SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
 
+        if (className == WC_LISTVIEW)
+        {
+            SendMessageW(hWnd, LVM_SETBKCOLOR, 0, Color(ColorRole::Window));
+            SendMessageW(hWnd, LVM_SETTEXTBKCOLOR, 0, Color(ColorRole::Window));
+            SendMessageW(hWnd, LVM_SETTEXTCOLOR, 0, Color(ColorRole::WindowText));
+        }
+        else if (className == MSFTEDIT_CLASS)
+        {
+            CHARFORMAT2W format{};
+            format.cbSize = sizeof(format);
+            format.dwMask = CFM_COLOR;
+            format.crTextColor = Color(ColorRole::WindowText);
+            SendMessageW(hWnd, EM_SETCHARFORMAT, SCF_ALL, reinterpret_cast<LPARAM>(&format));
+            SendMessageW(hWnd, EM_SETBKGNDCOLOR, 0, Color(ColorRole::Window));
+        }
         return TRUE;
     };
 
@@ -176,7 +198,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
     EnumChildWindows(hWnd, ProcessWindow, 0);
 
     SetWindowPos(hWnd, nullptr, 0, 0, 0, 0,
-        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
 }
 
 HBRUSH DarkMode::OnCtlColor(CDC* pDC, const UINT nCtlColor)
@@ -185,8 +207,8 @@ HBRUSH DarkMode::OnCtlColor(CDC* pDC, const UINT nCtlColor)
         (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC ||
          nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX))
     {
-        pDC->SetTextColor(SystemColor(COLOR_WINDOWTEXT));
-        pDC->SetBkColor(SystemColor(CTLCOLOR_DLG));
+        pDC->SetTextColor(Color(ColorRole::WindowText));
+        pDC->SetBkColor(Color(ColorRole::Window));
         pDC->SetBkMode(nCtlColor == CTLCOLOR_STATIC ? TRANSPARENT : OPAQUE);
         return GetDialogBackgroundBrush();
     }
@@ -196,8 +218,9 @@ HBRUSH DarkMode::OnCtlColor(CDC* pDC, const UINT nCtlColor)
 
 HBRUSH DarkMode::GetDialogBackgroundBrush()
 {
-    static CBrush darkBrush(DarkModeColors[COLOR_WINDOW]);
-    return s_darkModeEnabled ? static_cast<HBRUSH>(darkBrush) : GetSysColorBrush(COLOR_WINDOW);
+    if (!s_darkModeEnabled) return GetSysColorBrush(COLOR_WINDOW);
+    static const CBrush darkBrush(Color(ColorRole::Window));
+    return darkBrush;
 }
 
 void DarkMode::DrawMenuClientArea(CWnd& wnd)
@@ -264,9 +287,10 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         UAHDRAWMENUITEM* pUDMI = std::bit_cast<UAHDRAWMENUITEM*>(lParam);
 
         std::array<WCHAR, 256> menuString = { L'\0' };
-        MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,
+        MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING | MIIM_FTYPE,
             .dwTypeData = menuString.data(), .cch = static_cast<UINT>(menuString.size() - 1) };
         GetMenuItemInfoW(pUDMI->um.hmenu, pUDMI->iPosition, true, &mii);
+        if ((mii.fType & MFT_OWNERDRAW) != 0) return DefWindowProc(hWnd, message, wParam, lParam);
 
         // Use structured bindings and lambda for state determination
         auto [txtId, bgId] = [&]() -> std::pair<int, int>

@@ -25,7 +25,7 @@ class CVisualizationPane final : public MessageTarget<CVisualizationPane, CWinDi
 {
 public:
     CVisualizationPane() = default;
-    ~CVisualizationPane() override = default;
+    ~CVisualizationPane() override;
 
     bool PreCreateWindow(CREATESTRUCT& cs) override;
     void OnDraw(CDC* pDC) override;
@@ -34,14 +34,14 @@ GraphPane GetActivePaneType() const { return m_activePane; }
     void SelectPane(GraphPane pane);
     void ShowVisualization(bool show);
     bool IsVisualizationShown() const { return m_showVisualization; }
-    CGraphView* GetActiveView() const { return m_views[std::to_underlying(m_activePane)]; }
+    CGraphView* GetActiveView() const { return m_views[std::to_underlying(m_activePane)].get(); }
 
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     HoverInfo GetHoverInfo() const override;
     void SuspendRecalculationDrawing(bool suspend) override;
 
 protected:
-    std::array<CGraphView*, 3> m_views{};
+    std::array<std::unique_ptr<CGraphView>, 3> m_views{};
     GraphPane m_activePane = GraphPane::TreeMap;
     bool m_showVisualization = true;
     unsigned int m_drawingSuspensionCount = 0;
@@ -51,7 +51,7 @@ public:
 
 protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnSize(UINT nType, int cx, int cy);
 };
 

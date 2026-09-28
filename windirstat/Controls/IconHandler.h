@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "SmartPointer.h"
+
 #include "pch.h"
 
 //
@@ -54,6 +56,8 @@ private:
     // Only the UI thread accesses request identities; completed requests retain no item state.
     std::unordered_map<const CWdsListItem*, std::uint64_t> m_pendingLookups;
     std::uint64_t m_nextLookupId = 0;
+    std::map<std::pair<WCHAR, int>, SmartPointer<HICON, decltype(&DestroyIcon)>> m_themedIcons;
+    COLORREF m_iconColor = CLR_INVALID;
 
 public:
 
@@ -91,7 +95,11 @@ namespace Icons
 {
     using namespace Gdiplus;
 
-    inline COLORREF NeutralRef() { return DarkMode::IsDarkModeActive() ? RGB(210, 210, 210) : RGB(90, 90, 90); }
+    inline COLORREF NeutralRef()
+    {
+        if (DarkMode::IsHighContrastActive()) return DarkMode::Color(DarkMode::ColorRole::ControlText);
+        return DarkMode::IsDarkModeActive() ? RGB(210, 210, 210) : RGB(90, 90, 90);
+    }
     inline Color C(const BYTE r, const BYTE g, const BYTE b, const BYTE a = 255) { return Color(a, r, g, b); }
     inline Color C(const COLORREF clr) { return C(GetRValue(clr), GetGValue(clr), GetBValue(clr)); }
     inline Color Neutral() { return C(NeutralRef()); }

@@ -61,7 +61,7 @@ public:
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
 
 CFileTabbedView() = default;
-    ~CFileTabbedView() override = default;
+    ~CFileTabbedView() override;
     void OnInitialUpdate();
     CTabControl& GetTabControl() { return m_tabControl; }
     const CTabControl& GetTabControl() const { return m_tabControl; }
@@ -72,6 +72,7 @@ CFileTabbedView() = default;
 
     // Used for storing and retrieving the various tab views
     CTabControl m_tabControl;
+    std::vector<std::unique_ptr<CWinDirStatPane>> m_panes;
     int m_fileTreeViewIndex = -1;
     CFileTreeView* m_fileTreeView = nullptr;
     int m_fileDupeViewIndex = -1;
@@ -93,7 +94,7 @@ static std::span<const RouteEntry> Routes();
 
 protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    void OnSetFocus(CWnd* pOldWnd);
+    void OnSetFocus(WindowRef pOldWnd);
     void OnSize(UINT nType, int cx, int cy);
     bool OnEraseBkgnd(CDC*) { return true; }
     LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
