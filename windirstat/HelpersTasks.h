@@ -112,7 +112,6 @@ std::wstring GetNameFromSid(PSID sid);
 bool CompressFileAllowed(const std::wstring& volumeName, CompressionAlgorithm algorithm);
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
 bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg = nullptr,
-    const std::function<void(double)>& reportProgress = {},
     ULONGLONG chunkSize = wds::Mi, ULONGLONG minZeroRunSize = 64ull * wds::Ki);
 bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
 
