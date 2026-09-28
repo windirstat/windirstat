@@ -53,6 +53,7 @@ public:
     // Methods for task lambda to interact with the dialog
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
     size_t Increment() noexcept { return ++m_current; }
+    void SetProgress(const size_t current) noexcept { m_current = current; }
     size_t GetTotal() const noexcept { return m_total; }
     bool HasFlag(const Flags flag) const noexcept
     {
