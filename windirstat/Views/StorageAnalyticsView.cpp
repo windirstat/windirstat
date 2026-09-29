@@ -88,7 +88,10 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     const CRect rect(0, 0, 0, 0);
 
-    m_lblTitle.Create(L"Configuration", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
+    const auto timeSuffixes = SplitString(Localization::Lookup(IDS_GENERIC_TIME_SUFFIXES), L',');
+    if (timeSuffixes.size() > 1) m_monthSuffix = timeSuffixes[1];
+
+    m_lblTitle.Create(Localization::Lookup(IDS_ANALYTICS_CONFIG).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
 
     // Dynamic Tier Parsing from comma-separated list
     const std::vector<std::wstring> tierNames = SplitString(Localization::Lookup(IDS_TIERS), L',');
@@ -121,7 +124,8 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         if (i > 0)
         {
             tier.lblThreshold = std::make_unique<CStatic>();
-            std::wstring lblText = tier.name + L" Threshold (Days):";
+            const std::wstring lblText = std::format(L"{} ({}):",
+                Localization::Format(IDS_ANALYTICS_THRESHOLD, tier.name), Localization::Lookup(IDS_GENERIC_DAYS));
             tier.lblThreshold->Create(lblText.c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
 
             tier.editThreshold = std::make_unique<CCenteredEdit>();
@@ -129,7 +133,7 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         }
 
         tier.lblCost = std::make_unique<CStatic>();
-        tier.lblCost->Create(L"Cost:", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
+        tier.lblCost->Create(L"", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
 
         tier.editCost = std::make_unique<CCenteredEdit>();
         tier.editCost->m_isDecimal = true;
@@ -138,10 +142,10 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         m_tiers.push_back(std::move(tier));
     }
 
-    m_lblUnit.Create(L"Unit:", WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
+    m_lblUnit.Create(Localization::Lookup(IDS_ANALYTICS_UNIT).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, rect, this);
     m_comboUnit.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST, rect, this, UnitId);
 
-    m_btnRecalculate.Create(L"Recalculate", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, rect, this, RecalculateId);
+    m_btnRecalculate.Create(Localization::Lookup(IDS_RECALCULATE).c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, rect, this, RecalculateId);
 
     m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_TiB));
     m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_GiB));
@@ -149,11 +153,7 @@ int CStorageAnalyticsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_comboUnit.AddString(Localization::Lookup(IDS_SPEC_KiB));
     m_comboUnit.SetCurSel(1);
 
-    // Apply localization texts
-    m_lblTitle.SetText(Localization::Lookup(IDS_ANALYTICS_CONFIG));
-    m_lblUnit.SetText(Localization::Lookup(IDS_ANALYTICS_UNIT));
     UpdateCostLabels();
-    m_btnRecalculate.SetText(Localization::Lookup(IDS_RECALCULATE));
 
     OnFontSizeChanged(0, 0);
 
@@ -211,35 +211,20 @@ void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
     m_lblTitle.MoveWindow(panelX, currentY, panelW, controlH);
     currentY += controlH + spacing;
 
-    for (const auto& tier : m_tiers)
+    const auto placeField = [&](CStatic* label, CWnd* control, const int windowHeight)
     {
-        if (tier.lblThreshold && tier.editThreshold && tier.lblThreshold->Handle())
-        {
-            tier.lblThreshold->MoveWindow(panelX, currentY, panelW, labelH);
-            currentY += labelH;
-            tier.editThreshold->MoveWindow(panelX, currentY, panelW, controlH);
-            currentY += controlH + spacing;
-        }
-    }
-
-    if (m_lblUnit.Handle())
-    {
-        m_lblUnit.MoveWindow(panelX, currentY, panelW, labelH);
+        if (label == nullptr || control == nullptr || !label->Handle()) return;
+        label->MoveWindow(panelX, currentY, panelW, labelH);
         currentY += labelH;
-        m_comboUnit.MoveWindow(panelX, currentY, panelW, ScaleForDpi(150));
+        control->MoveWindow(panelX, currentY, panelW, windowHeight);
         currentY += controlH + spacing;
-    }
+    };
 
     for (const auto& tier : m_tiers)
-    {
-        if (tier.lblCost->Handle())
-        {
-            tier.lblCost->MoveWindow(panelX, currentY, panelW, labelH);
-            currentY += labelH;
-            tier.editCost->MoveWindow(panelX, currentY, panelW, controlH);
-            currentY += controlH + spacing;
-        }
-    }
+        placeField(tier.lblThreshold.get(), tier.editThreshold.get(), controlH);
+    placeField(&m_lblUnit, &m_comboUnit, ScaleForDpi(150));
+    for (const auto& tier : m_tiers)
+        placeField(tier.lblCost.get(), tier.editCost.get(), controlH);
 
     if (m_btnRecalculate.Handle())
     {
@@ -483,8 +468,8 @@ void CStorageAnalyticsView::UpdateCostLabels() const
 
     for (auto& tier : m_tiers)
     {
-        std::wstring lblText = tier.name + L" Cost ($/" + unit + L"/mo):";
-        tier.lblCost->SetText(lblText);
+        tier.lblCost->SetText(std::format(L"{} ($/{}/{}):",
+            Localization::Format(IDS_ANALYTICS_COST, tier.name), unit, m_monthSuffix));
     }
 }
 
@@ -578,22 +563,26 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         ScopedTextColor setMuted(&memDC, fgMuted);
         CRect msgRect = rightRect;
         msgRect.Deflate(ScaleForDpi(50), ScaleForDpi(150));
-        memDC.DrawTextW(L"No statistics available.\n\nPlease scan a drive or folder, then click Recalculate to view the dashboard.", &msgRect, DT_CENTER | DT_WORDBREAK);
+        memDC.DrawTextW(Localization::Lookup(IDS_ANALYTICS_NO_STATISTICS), &msgRect, DT_CENTER | DT_WORDBREAK);
     }
     else
     {
+        auto activeTiers = m_tiers | std::views::filter(&TierInfo::active);
         const double scale = GetActiveUnitScale();
         const ULONGLONG totalSize = std::ranges::fold_left(m_tiers, static_cast<ULONGLONG>(0),
             [](const ULONGLONG total, const TierInfo& tier) { return total + tier.totalSize; });
         const double totalUnit = static_cast<double>(totalSize) / scale;
 
         const double currentCost = totalUnit * m_tiers[0].costGiB;
-        const double optimizedCost = std::ranges::fold_left(m_tiers, 0.0,
+        const double optimizedCost = std::ranges::fold_left(activeTiers, 0.0,
             [scale](const double total, const TierInfo& tier) {
-                return tier.active ? total + static_cast<double>(tier.totalSize) / scale * tier.costGiB : total;
+            return total + static_cast<double>(tier.totalSize) / scale * tier.costGiB;
             });
         const double savings = std::max(0.0, currentCost - optimizedCost);
         const double savingsPct = currentCost > 0.0 ? (savings / currentCost) * 100.0 : 0.0;
+        const auto formatMonthlyCost = [this](const double cost) {
+            return std::format(L"${:.2f}/{}", cost, m_monthSuffix);
+        };
 
         // Draw Metric Cards
         const int barW = ScaleForDpi(765);
@@ -607,39 +596,22 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         };
         std::vector<CardDrawData> activeCards;
 
-        std::wstring daysStr = Localization::Lookup(IDS_GENERIC_DAYS);
-        const auto findActiveTierFrom = [&](const size_t index) {
-            return std::ranges::find_if(m_tiers.begin() + static_cast<std::ptrdiff_t>(index), m_tiers.end(),
-                [](const TierInfo& tier) { return tier.active; });
-        };
-
-        for (const auto [i, tier] : std::views::enumerate(m_tiers))
+        const std::wstring daysStr = Localization::Lookup(IDS_GENERIC_DAYS);
+        for (auto tier = activeTiers.begin(); tier != activeTiers.end(); ++tier)
         {
-            if (tier.active)
+            const auto next = std::next(tier);
+            std::wstring range;
+            if (&*tier == &m_tiers.front())
             {
-                CardDrawData card{ &tier, tier.name };
-                if (i == 0)
-                {
-                    const auto firstActiveTier = findActiveTierFrom(1);
-                    if (firstActiveTier != m_tiers.end())
-                    {
-                        card.legendDesc += std::format(L" (<{:.0f} {})", firstActiveTier->thresholdDays, daysStr);
-                    }
-                    else card.legendDesc += L" (All Files)";
-                }
-                else
-                {
-                    const auto nextActiveTier = findActiveTierFrom(static_cast<size_t>(i + 1));
-                    if (nextActiveTier != m_tiers.end())
-                    {
-                        card.legendDesc += std::format(L" ({:.0f}-{:.0f} {})", tier.thresholdDays,
-                            nextActiveTier->thresholdDays, daysStr);
-                    }
-                    else card.legendDesc += std::format(L" (>{:.0f} {})", tier.thresholdDays, daysStr);
-                }
-
-                activeCards.push_back(std::move(card));
+                range = next != activeTiers.end() ? std::format(L"<{:.0f} {}", next->thresholdDays, daysStr) :
+                    Localization::Lookup(IDS_ALL_FILES);
             }
+            else
+            {
+                range = next != activeTiers.end() ? std::format(L"{:.0f}-{:.0f} {}", tier->thresholdDays, next->thresholdDays, daysStr) :
+                    std::format(L">{:.0f} {}", tier->thresholdDays, daysStr);
+            }
+            activeCards.push_back({ &*tier, std::format(L"{} ({})", tier->name, range) });
         }
 
         const int activeCount = static_cast<int>(activeCards.size());
@@ -664,9 +636,9 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
             DrawText(fontCardLbl, fgMuted, textX, rcCard.top + ScaleForDpi(10), tier.name);
             DrawText(fontCardVal, fgText, textX, rcCard.top + ScaleForDpi(30), FormatSizeSuffixes(tier.totalSize));
             DrawText(fontBody, fgMuted, textX, rcCard.top + ScaleForDpi(53),
-                FormatCount(tier.filesCount) + L" files");
+                std::format(L"{} {}", FormatCount(tier.filesCount), Localization::Lookup(IDS_COL_FILES)));
             DrawText(fontCardVal, tier.accent, textX, rcCard.top + ScaleForDpi(70),
-                std::format(L"${:.2f}/mo", static_cast<double>(tier.totalSize) / scale * tier.costGiB));
+                formatMonthlyCost(static_cast<double>(tier.totalSize) / scale * tier.costGiB));
         }
 
         // Draw Distribution Bars
@@ -674,60 +646,36 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         const int barX = leftWidth + ScaleForDpi(20);
 
         auto DrawSegmentedBar = [&](const int yPos, const std::wstring& barLabel, const bool sizeBar) {
-            {
-                GdiObjectSelection selectFont(&memDC, &fontBody);
-                ScopedTextColor setLabelColor(&memDC, fgText);
-                memDC.TextOut(barX, yPos - ScaleForDpi(18), barLabel);
-            }
-
-            const double totalVal = std::ranges::fold_left(m_tiers, 0.0,
-                [&](const double total, const TierInfo& tier) {
-                    return tier.active
-                        ? total + (sizeBar ? static_cast<double>(tier.totalSize) : static_cast<double>(tier.filesCount))
-                        : total;
-                });
+            DrawText(fontBody, fgText, barX, yPos - ScaleForDpi(18), barLabel);
+            const auto valueOf = [sizeBar](const TierInfo& tier) {
+                return static_cast<double>(sizeBar ? tier.totalSize : tier.filesCount);
+            };
+            const double totalVal = std::ranges::fold_left(activeTiers | std::views::transform(valueOf), 0.0, std::plus{});
 
             int currentX = barX;
+            COLORREF remainderColor = m_tiers[0].accent;
 
-            for (const auto& tier : m_tiers)
+            for (const auto& tier : activeTiers)
             {
-                if (tier.active)
-                {
-                    const double val = sizeBar ? static_cast<double>(tier.totalSize) : static_cast<double>(tier.filesCount);
-                    if (val > 0 && totalVal > 0)
-                    {
-                        const int w = static_cast<int>((val / totalVal) * barW);
-                        if (w > 0)
-                        {
-                            CRect rc(currentX, yPos, currentX + w, yPos + barH);
-                            memDC.FillSolidRect(rc, tier.accent);
-                            currentX += w;
-                        }
-                    }
-                }
+                const double value = valueOf(tier);
+                if (value <= 0 || totalVal <= 0) continue;
+                remainderColor = tier.accent;
+                const int width = static_cast<int>((value / totalVal) * barW);
+                if (width <= 0) continue;
+                memDC.FillSolidRect(CRect(currentX, yPos, currentX + width, yPos + barH), tier.accent);
+                currentX += width;
             }
 
             if (totalVal > 0 && currentX < barX + barW)
-            {
-                const CRect rcRemainder(currentX, yPos, barX + barW, yPos + barH);
-                COLORREF remainderColor = m_tiers[0].accent;
-                auto reversedTiers = m_tiers | std::views::reverse;
-                if (const auto it = std::ranges::find_if(reversedTiers, [&](const TierInfo& tier) {
-                    return tier.active && (sizeBar ? tier.totalSize > 0 : tier.filesCount > 0);
-                }); it != reversedTiers.end())
-                {
-                    remainderColor = it->accent;
-                }
-                memDC.FillSolidRect(rcRemainder, remainderColor);
-            }
+                memDC.FillSolidRect(CRect(currentX, yPos, barX + barW, yPos + barH), remainderColor);
 
             const CRect rcFrame(barX, yPos, barX + barW, yPos + barH);
             CBrush brFrame(clrBorder);
             memDC.FrameRect(&rcFrame, &brFrame);
         };
 
-        DrawSegmentedBar(ScaleForDpi(205), L"File Count Distribution", false);
-        DrawSegmentedBar(ScaleForDpi(245), L"Capacity Size Distribution", true);
+        DrawSegmentedBar(ScaleForDpi(205), Localization::Lookup(IDS_ANALYTICS_FILE_DISTRIBUTION), false);
+        DrawSegmentedBar(ScaleForDpi(245), Localization::Lookup(IDS_ANALYTICS_CAPACITY_DISTRIBUTION), true);
 
         // Draw Legends
         const int legendY = ScaleForDpi(270);
@@ -740,11 +688,7 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
             CBrush brLegend(clrBorder);
             memDC.FrameRect(&rcColor, &brLegend);
 
-            {
-                GdiObjectSelection selectFont(&memDC, &fontBody);
-                ScopedTextColor setLegendColor(&memDC, fgText);
-                memDC.TextOut(legendX + ScaleForDpi(16), legendY, activeCards[i].legendDesc);
-            }
+            DrawText(fontBody, fgText, legendX + ScaleForDpi(16), legendY, card.legendDesc);
         }
 
         // Draw Storage Cost Savings Banner
@@ -764,15 +708,15 @@ void CStorageAnalyticsView::OnDraw(CDC* pDC)
         DrawText(fontCardLbl, fgMuted, rcSavings.left + ScaleForDpi(15), labelY,
             Localization::Lookup(IDS_CURRENT_COST_LABEL));
         DrawText(fontCardVal, fgText, rcSavings.left + ScaleForDpi(15),
-            rcSavings.top + ScaleForDpi(38), std::format(L"${:.2f}/mo", currentCost));
+            rcSavings.top + ScaleForDpi(38), formatMonthlyCost(currentCost));
         DrawText(fontCardLbl, fgMuted, rcSavings.left + colW + ScaleForDpi(10), labelY,
             Localization::Lookup(IDS_OPTIMIZED_COST_LABEL));
         DrawText(fontCardVal, fgText, rcSavings.left + colW + ScaleForDpi(10),
-            rcSavings.top + ScaleForDpi(38), std::format(L"${:.2f}/mo", optimizedCost));
+            rcSavings.top + ScaleForDpi(38), formatMonthlyCost(optimizedCost));
         DrawText(fontCardLbl, textSavings, rcSavings.left + colW * 2 + ScaleForDpi(10), labelY,
             Localization::Lookup(IDS_STORAGE_SAVINGS));
         DrawText(fontTitle, textSavings, rcSavings.left + colW * 2 + ScaleForDpi(10),
-            rcSavings.top + ScaleForDpi(36), std::format(L"${:.2f}/mo ({:.1f}%)", savings, savingsPct));
+            rcSavings.top + ScaleForDpi(36), std::format(L"{} ({:.1f}%)", formatMonthlyCost(savings), savingsPct));
     }
 
     pDC->BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &memDC, 0, 0, SRCCOPY);

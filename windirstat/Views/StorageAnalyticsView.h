@@ -101,6 +101,7 @@ private:
     void UpdateCostLabels() const;
 
     std::vector<TierInfo> m_tiers;
+    std::wstring m_monthSuffix;
 
     // UI Configuration controls on the left panel
     CStatic m_lblTitle;
