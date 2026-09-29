@@ -85,6 +85,7 @@ public:
             Route::Window<&OnMouseMove>(WM_MOUSEMOVE),
             Route::Window<&OnCaptureChanged>(WM_CAPTURECHANGED),
             Route::Window<&OnCancelMode>(WM_CANCELMODE),
+            Route::Window<&OnNcHitTest>(WM_NCHITTEST),
             Route::Window<&OnSetCursor>(WM_SETCURSOR),
         };
         return entries;
@@ -102,6 +103,7 @@ protected:
     void OnMouseMove(UINT nFlags, CPoint pt);
     void OnCaptureChanged(WindowRef pWnd);
     void OnCancelMode();
+    LRESULT OnNcHitTest(CPoint point);
     bool OnSetCursor(WindowRef pWnd, UINT nHitTest, UINT message);
 
 private:
@@ -114,19 +116,16 @@ private:
     bool IsValidPane(const int row, const int column) const { return IsValidRow(row) && IsValidColumn(column); }
 
     CRect WorkRect() const;
-    CRect TrackerRect(int pos) const;
+    CRect SplitterRect() const;
     void DrawBackground(CDC& dc, const CRect& rect) const;
-    void DrawTrackerRect(CDC& dc, const CRect& rect) const;
-    void DrawTracker();
     void FinishTracking(bool bAccept, bool releaseCapture);
 
     std::vector<int> m_rowSizes;
     std::vector<int> m_columnSizes;
     bool m_bTracking = false;
     bool m_bTrackingColumn = false;
-    bool m_bTrackerVisible = false;
-    int m_nTrackPos = 0;
-    CRect m_rectTracker;
+    int m_nTrackStart = 0;
+    int m_nTrackOffset = 0;
 };
 
 inline void CSplitterWnd::UpdateLayout()
@@ -175,32 +174,20 @@ inline CRect CSplitterWnd::WorkRect() const
     return rc;
 }
 
-inline CRect CSplitterWnd::TrackerRect(const int pos) const
+inline CRect CSplitterWnd::SplitterRect() const
 {
     const CRect rcWork = WorkRect();
-    if (m_bTrackingColumn)
+    if (m_columnSizes.size() > 1)
     {
-        const int x = rcWork.left + std::clamp(pos, 0, std::max(0, rcWork.Width() - SplitterSize));
-        return CRect(x, rcWork.top, x + SplitterSize, rcWork.bottom);
+        const int left = rcWork.left + std::clamp(m_columnSizes[0], 0, std::max(0, rcWork.Width() - SplitterSize));
+        return CRect(left, rcWork.top, left + SplitterSize, rcWork.bottom);
     }
-
-    const int y = rcWork.top + std::clamp(pos, 0, std::max(0, rcWork.Height() - SplitterSize));
-    return CRect(rcWork.left, y, rcWork.right, y + SplitterSize);
-}
-
-inline void CSplitterWnd::DrawTrackerRect(CDC& dc, const CRect& rect) const
-{
-    if (!rect.IsEmpty())
-        dc.PatBlt(rect.left, rect.top, rect.Width(), rect.Height(), DSTINVERT);
-}
-
-inline void CSplitterWnd::DrawTracker()
-{
-    if (!IsWindow(m_hWnd) || m_rectTracker.IsEmpty())
-        return;
-
-    CClientDC dc(this);
-    DrawTrackerRect(dc, m_rectTracker);
+    if (m_rowSizes.size() > 1)
+    {
+        const int top = rcWork.top + std::clamp(m_rowSizes[0], 0, std::max(0, rcWork.Height() - SplitterSize));
+        return CRect(rcWork.left, top, rcWork.right, top + SplitterSize);
+    }
+    return {};
 }
 
 inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseCapture)
@@ -209,28 +196,18 @@ inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseC
         return;
 
     const bool trackingColumn = m_bTrackingColumn;
-    const int trackPos = m_nTrackPos;
-
-    if (m_bTrackerVisible)
-        DrawTracker();
-
     m_bTracking = false;
-    m_bTrackerVisible = false;
-    m_rectTracker.Clear();
 
     if (releaseCapture && HasCapture())
         ReleaseCapture();
 
     if (!bAccept)
     {
-        Invalidate(false);
-        return;
+        if (trackingColumn && m_columnSizes.size() > 1)
+            m_columnSizes[0] = m_nTrackStart;
+        else if (!trackingColumn && m_rowSizes.size() > 1)
+            m_rowSizes[0] = m_nTrackStart;
     }
-
-    if (trackingColumn && m_columnSizes.size() > 1)
-        m_columnSizes[0] = trackPos;
-    else if (!trackingColumn && m_rowSizes.size() > 1)
-        m_rowSizes[0] = trackPos;
 
     UpdateLayout();
 }
@@ -241,36 +218,15 @@ inline void CSplitterWnd::OnLButtonDown(UINT, const CPoint pt)
     if (m_bTracking)
         StopTracking(false);
 
-    const CRect rcWork = WorkRect();
-    bool onBar = false;
-    bool trackingColumn = false;
-    int trackPos = 0;
-
-    if (m_columnSizes.size() > 1)
-    {
-        trackingColumn = true;
-        trackPos = std::clamp(m_columnSizes[0], 0, std::max(0, rcWork.Width() - SplitterSize));
-        const int x = rcWork.left + trackPos;
-        onBar = (pt.x >= x && pt.x <= x + SplitterSize);
-    }
-    else if (m_rowSizes.size() > 1)
-    {
-        trackPos = std::clamp(m_rowSizes[0], 0, std::max(0, rcWork.Height() - SplitterSize));
-        const int y = rcWork.top + trackPos;
-        onBar = (pt.y >= y && pt.y <= y + SplitterSize);
-    }
-
-    if (!onBar)
+    const CRect rect = SplitterRect();
+    if (!::PtInRect(&rect, pt))
         return;
 
     m_bTracking = true;
-    m_bTrackingColumn = trackingColumn;
-    m_nTrackPos = trackPos;
-    m_rectTracker = TrackerRect(m_nTrackPos);
-    m_bTrackerVisible = !m_rectTracker.IsEmpty();
+    m_bTrackingColumn = m_columnSizes.size() > 1;
+    m_nTrackStart = m_bTrackingColumn ? m_columnSizes[0] : m_rowSizes[0];
+    m_nTrackOffset = m_bTrackingColumn ? pt.x - rect.left : pt.y - rect.top;
     SetCapture();
-    if (m_bTrackerVisible)
-        DrawTracker();
 }
 inline void CSplitterWnd::OnMouseMove(UINT, const CPoint pt)
 {
@@ -278,19 +234,15 @@ inline void CSplitterWnd::OnMouseMove(UINT, const CPoint pt)
 
     const CRect rcWork = WorkRect();
     const int trackPos = m_bTrackingColumn ?
-        std::clamp(static_cast<int>(pt.x - rcWork.left), 0, std::max(0, rcWork.Width() - SplitterSize)) :
-        std::clamp(static_cast<int>(pt.y - rcWork.top), 0, std::max(0, rcWork.Height() - SplitterSize));
-    if (trackPos == m_nTrackPos)
+        std::clamp(static_cast<int>(pt.x - rcWork.left - m_nTrackOffset), 0, std::max(0, rcWork.Width() - SplitterSize)) :
+        std::clamp(static_cast<int>(pt.y - rcWork.top - m_nTrackOffset), 0, std::max(0, rcWork.Height() - SplitterSize));
+    int& paneSize = m_bTrackingColumn ? m_columnSizes[0] : m_rowSizes[0];
+    if (trackPos == paneSize)
         return;
 
-    if (m_bTrackerVisible)
-        DrawTracker();
-
-    m_nTrackPos = trackPos;
-    m_rectTracker = TrackerRect(m_nTrackPos);
-    m_bTrackerVisible = !m_rectTracker.IsEmpty();
-    if (m_bTrackerVisible)
-        DrawTracker();
+    paneSize = trackPos;
+    UpdateLayout();
+    ::RedrawWindow(m_hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 inline void CSplitterWnd::OnLButtonUp(UINT, CPoint) { if (m_bTracking) StopTracking(true); }
 inline void CSplitterWnd::OnCaptureChanged(WindowRef pWnd)
@@ -299,30 +251,28 @@ inline void CSplitterWnd::OnCaptureChanged(WindowRef pWnd)
         FinishTracking(false, false);
 }
 inline void CSplitterWnd::OnCancelMode() { StopTracking(false); }
-inline bool CSplitterWnd::OnSetCursor(WindowRef, const UINT nHitTest, UINT)
+inline LRESULT CSplitterWnd::OnNcHitTest(const CPoint point)
 {
-    if (nHitTest == HTCLIENT)
+    const CWnd* parent = FindAttached(::GetParent(m_hWnd));
+    if (parent != nullptr && parent->IsSplitterWindow())
+    {
+        const auto* splitter = static_cast<const CSplitterWnd*>(parent);
+        const CRect rect = splitter->SplitterRect();
+        if (::PtInRect(&rect, splitter->ToClient(point)))
+            return HTTRANSPARENT;
+    }
+    return CallDefaultHandler();
+}
+inline bool CSplitterWnd::OnSetCursor(const WindowRef pWnd, const UINT nHitTest, UINT)
+{
+    if (nHitTest == HTCLIENT && pWnd.Handle() == m_hWnd)
     {
         const auto pt = GetClientCursorPos();
-        if (!pt) return static_cast<bool>(CallDefaultHandler());
-        const CRect rcWork = WorkRect();
-        if (m_columnSizes.size() > 1)
+        const CRect rect = SplitterRect();
+        if (pt && (m_bTracking || ::PtInRect(&rect, *pt)))
         {
-            const int x = rcWork.left + m_columnSizes[0];
-            if (pt->x >= x && pt->x <= x + SplitterSize)
-            {
-                SetCursor(LoadCursorW(nullptr, IDC_SIZEWE));
-                return true;
-            }
-        }
-        else if (m_rowSizes.size() > 1)
-        {
-            const int y = rcWork.top + m_rowSizes[0];
-            if (pt->y >= y && pt->y <= y + SplitterSize)
-            {
-                SetCursor(LoadCursorW(nullptr, IDC_SIZENS));
-                return true;
-            }
+            SetCursor(LoadCursorW(nullptr, m_columnSizes.size() > 1 ? IDC_SIZEWE : IDC_SIZENS));
+            return true;
         }
     }
     return static_cast<bool>(CallDefaultHandler());

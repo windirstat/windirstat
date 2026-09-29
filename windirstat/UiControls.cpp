@@ -52,7 +52,6 @@ void CSplitterWnd::OnPaint()
     CPaintDC dc(this);
     const CRect rect = GetClientRect();
     DrawBackground(dc, rect);
-    if (m_bTrackerVisible) DrawTrackerRect(dc, m_rectTracker);
 }
 
 HBRUSH CToolBar::OnCtlColor(CDC* dc, WindowRef control, const UINT type)
