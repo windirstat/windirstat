@@ -182,6 +182,7 @@ public:
 protected:
     void OnContextMenu(WindowRef pWnd, CPoint point);
     bool OnEraseBkgnd(CDC* pDC) const;
+    void OnHdnBeginTrack(NMHDR* pNMHDR, LRESULT* pResult);
     void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
     void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const;
@@ -199,6 +200,7 @@ inline std::span<const RouteEntry> CWdsListControl::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnSelectionChanged>(WM_SELECTION_CHANGED),
+        Route::Notify<&OnHdnBeginTrack>(HDN_BEGINTRACK, 0),
         Route::Notify<&OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
         Route::Notify<&OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
         Route::Notify<&OnHdnItemClick>(HDN_ITEMCLICK, 0),

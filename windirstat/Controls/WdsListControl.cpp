@@ -1027,8 +1027,17 @@ bool CWdsListControl::OnEraseBkgnd(CDC* pDC) const
     return true;
 }
 
+void CWdsListControl::OnHdnBeginTrack(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
+    *pResult = column >= 0 && column < m_columnCount && !IsColumnVisible(ColumnToSubItem(column));
+}
+
 void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
+    OnHdnBeginTrack(pNMHDR, pResult);
+    if (*pResult) return;
+
     const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     const int subitem = ColumnToSubItem(column);
 
@@ -1056,8 +1065,15 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = false;
 }
 
-void CWdsListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void CWdsListControl::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
 {
+    const auto* header = reinterpret_cast<LPNMHEADER>(pNMHDR);
+    if (header->pitem != nullptr && (header->pitem->mask & HDI_WIDTH) != 0 && header->pitem->cxy != 0)
+    {
+        OnHdnBeginTrack(pNMHDR, pResult);
+        if (*pResult) return;
+    }
+
     CallDefaultHandler();
     Invalidate();
 
