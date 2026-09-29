@@ -79,8 +79,14 @@
     <Filter Include="Source Files\Contrib">
       <UniqueIdentifier>{a87d04f4-5518-4f28-8d78-5c42d1d673af}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Icon\Languages">
+    <Filter Include="Resource Files\Languages">
       <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface\Framework">
+      <UniqueIdentifier>{19038821-0cec-4be0-b979-1d5423c321f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface\Framework">
+      <UniqueIdentifier>{412f5a73-a67c-400a-8612-c3a703af1109}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -97,7 +103,7 @@
       <Filter>Resource Files\License</Filter>
     </None>
     <None Include="res\lang_combined.bin">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -216,7 +222,7 @@
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="res\LangStrings.h">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\MessageBoxDlg.h">
       <Filter>Header Files\User Interface\Dialogs</Filter>
@@ -335,23 +341,23 @@
     <ClInclude Include="..\contrib\xxhash\xxhash.h">
       <Filter>Header Files\Contrib</Filter>
     </ClInclude>
-    <ClInclude Include="UiTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UiWindow.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UiApplication.h">
+      <Filter>Header Files\User Interface\Framework</Filter>
     </ClInclude>
     <ClInclude Include="UiControls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UiApplication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UiPanes.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Framework</Filter>
     </ClInclude>
     <ClInclude Include="UiFramework.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="UiPanes.h">
+      <Filter>Header Files\User Interface\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="UiTypes.h">
+      <Filter>Header Files\User Interface\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="UiWindow.h">
+      <Filter>Header Files\User Interface\Framework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -499,18 +505,6 @@
     <ClCompile Include="DarkMode.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
-    <ClCompile Include="UiAppearance.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UiControls.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UiDialogs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UiFramework.cpp">
-      <Filter>Source Files\User Interface</Filter>
-    </ClCompile>
     <ClCompile Include="Layout.cpp">
       <Filter>Source Files\User Interface</Filter>
     </ClCompile>
@@ -589,6 +583,18 @@
     <ClCompile Include="LegacyOsCompat.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="UiFramework.cpp">
+      <Filter>Source Files\User Interface\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="UiAppearance.cpp">
+      <Filter>Source Files\User Interface\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="UiControls.cpp">
+      <Filter>Source Files\User Interface\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="UiDialogs.cpp">
+      <Filter>Source Files\User Interface\Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
@@ -605,79 +611,79 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\langs\lang_ar.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_et.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_es.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_fi.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_fr.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_hi.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_hu.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_it.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_pl.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_pt.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ru.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_de.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_en.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_nl.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_zh.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ko.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sv.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ja.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_tr.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_da.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_uk.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_cs.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_zh-hk.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sl.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_nb.txt">
-      <Filter>Resource Files\Icon\Languages</Filter>
+      <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
 </Project>
