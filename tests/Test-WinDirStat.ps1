@@ -75,6 +75,9 @@ param(
     # With -Only Ui, run only the issue 704 regressions.
     [switch] $Issue704Only,
 
+    # With -Only Ui, run only refresh and context-menu regressions.
+    [switch] $RefreshAndMenusOnly,
+
     # --- Suite selection (optional; default = run everything) ----------------
     # Comma/space-separated suite name(s). Passed as a single string so it works
     # with `pwsh -File` (which cannot bind multi-element array arguments).
@@ -1291,7 +1294,7 @@ public static class Win32Helper {
         }
     }
 
-    private static int GetTabSelection(IntPtr tabControl)
+    public static int GetTabSelection(IntPtr tabControl)
     {
         const uint TCM_GETCURSEL = 0x130B;
         const uint SMTO_ABORTIFHUNG = 0x0002;
@@ -1299,6 +1302,17 @@ public static class Win32Helper {
         return SendMessageTimeout(tabControl, TCM_GETCURSEL, IntPtr.Zero, IntPtr.Zero,
                                   SMTO_ABORTIFHUNG, 100, out result) != IntPtr.Zero ?
             unchecked((int)result.ToUInt64()) : -1;
+    }
+
+    public static int GetTabCount(IntPtr tabControl)
+    {
+        const uint TCM_GETITEMCOUNT = 0x1304;
+        const uint SMTO_ABORTIFHUNG = 0x0002;
+        UIntPtr result;
+        if (SendMessageTimeout(tabControl, TCM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero,
+                               SMTO_ABORTIFHUNG, 1000, out result) == IntPtr.Zero)
+            throw new TimeoutException("Could not read the native tab count.");
+        return unchecked((int)result.ToUInt64());
     }
 
     public static bool PostKeyWithModifiers(IntPtr root, IntPtr tabControl, int expectedTab, uint virtualKey,
@@ -1381,6 +1395,71 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 public static class Win32MenuHelper {
+    [ComImport, Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellItem
+    {
+        void BindToHandler(IntPtr context, ref Guid handler, ref Guid iid, out IContextMenu menu);
+        void GetParent(out IShellItem parent);
+        void GetDisplayName(uint type, out IntPtr name);
+        void GetAttributes(uint mask, out uint attributes);
+        void Compare(IShellItem other, uint hint, out int order);
+    }
+
+    [ComImport, Guid("000214E4-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IContextMenu
+    {
+        [PreserveSig] int QueryContextMenu(IntPtr menu, uint index, uint first, uint last, uint flags);
+        void InvokeCommand(IntPtr command);
+        [PreserveSig] int GetCommandString(UIntPtr id, uint flags, IntPtr reserved,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder text, uint capacity);
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    private static extern void SHCreateItemFromParsingName(string path,
+        IntPtr context, ref Guid iid, out IShellItem item);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CreatePopupMenu();
+
+    [DllImport("user32.dll")]
+    private static extern bool DestroyMenu(IntPtr menu);
+
+    public static string GetShellVerbLabel(string path, string verb)
+    {
+        IShellItem item = null;
+        IContextMenu contextMenu = null;
+        IntPtr menu = IntPtr.Zero;
+        try
+        {
+            Guid itemId = typeof(IShellItem).GUID;
+            SHCreateItemFromParsingName(path, IntPtr.Zero, ref itemId, out item);
+            Guid handler = new Guid("3981E225-F559-11D3-8E3A-00C04F6837D5"); // BHID_SFUIObject
+            Guid menuId = typeof(IContextMenu).GUID;
+            item.BindToHandler(IntPtr.Zero, ref handler, ref menuId, out contextMenu);
+            menu = CreatePopupMenu();
+            if (menu == IntPtr.Zero) throw new InvalidOperationException("Could not create the shell query menu.");
+            Marshal.ThrowExceptionForHR(contextMenu.QueryContextMenu(menu, 0, 1, 0x7FFF, 0));
+            for (int index = 0; index < GetMenuItemCount(menu); ++index)
+            {
+                uint id = GetMenuItemID(menu, index);
+                if (id == 0 || id == uint.MaxValue) continue;
+                var canonical = new StringBuilder(256);
+                if (contextMenu.GetCommandString((UIntPtr)(id - 1), 4, IntPtr.Zero, canonical, 256) < 0 ||
+                    !string.Equals(canonical.ToString(), verb, StringComparison.OrdinalIgnoreCase)) continue;
+                var label = new StringBuilder(256);
+                GetMenuString(menu, id, label, label.Capacity, 0);
+                return label.ToString();
+            }
+            throw new InvalidOperationException("The shell did not expose the canonical verb: " + verb);
+        }
+        finally
+        {
+            if (menu != IntPtr.Zero) DestroyMenu(menu);
+            if (contextMenu != null) Marshal.FinalReleaseComObject(contextMenu);
+            if (item != null) Marshal.FinalReleaseComObject(item);
+        }
+    }
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr GetMenu(IntPtr hWnd);
 
@@ -2189,6 +2268,36 @@ function Find-UiaRows {
         if (!$AllTypes) { break }
     }
     @($items)
+}
+
+function Get-ScanTabs {
+    param([System.Windows.Automation.AutomationElement] $Window)
+
+    $mainHwnd = [IntPtr] $Window.Current.NativeWindowHandle
+    foreach ($handle in [Win32Helper]::GetProcessWindowHandles([uint32] $Window.Current.ProcessId)) {
+        if (![Win32Helper]::IsDescendant($mainHwnd, $handle) -or
+            [NativeListViewHelper]::GetWindowClassName($handle) -ne 'SysTabControl32' -or
+            [Win32Helper]::GetDlgCtrlID($handle) -ne (Get-ResourceId 'ID_WDS_CONTROL')) { continue }
+        if ([NativeListViewHelper]::GetVisibleListViewsIncludingEmpty($handle).Count -eq 0) { continue }
+
+        # Bind to the current results control, excluding visualization and dialog tabs.
+        $script:tabCtrl = [System.Windows.Automation.AutomationElement]::FromHandle($handle)
+        return [pscustomobject] @{
+            Handle = $handle
+            NativeCount = [Win32Helper]::GetTabCount($handle)
+            Items = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
+        }
+    }
+    throw 'The native scan-results tab control was not found.'
+}
+
+function Select-AllFilesTab {
+    param([System.Windows.Automation.AutomationElement] $Window)
+
+    $tabs = Get-ScanTabs -Window $Window
+    $allFiles = $tabs.Items | Where-Object { $_.Current.Name.Trim() -eq 'All Files' } | Select-Object -First 1
+    if (!$allFiles -or !(Select-TabItem $allFiles)) { return $false }
+    return [Win32Helper]::GetTabSelection($tabs.Handle) -eq 0
 }
 
 function Find-DuplicateRows {
@@ -5941,78 +6050,58 @@ function Test-SearchAfterScan {
 }
 
 function Test-ContextMenu {
-    param([System.Windows.Automation.AutomationElement] $Window)
+    param([System.Windows.Automation.AutomationElement] $Window, [string] $ScanRoot)
     Write-GroupHeader 'Context Menu'
     $g = 'ContextMenu'
 
-    Focus-Window $Window; Start-Sleep -Milliseconds 300
-
-    # Get a focusable item
-    $item = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::DataItem)
-    if (!$item) { $item = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::ListItem) }
-    if (!$item) { $item = Find-UiaFirst -Root $Window -Type ([System.Windows.Automation.ControlType]::TreeItem) }
-
-    if (!$item) {
-        # [Pre-Scan / UIA-OwnerDraw] No UIA item type found to right-click on.
-        # Either the scan has not run (list is empty) or the tree rows are fully
-        # custom-rendered and expose no UIA element.
-        Assert-Skip $g 'Context menu test' 'No focusable item found (scan may not have completed)'
-        return
-    }
-
-    $ctxMenu = $null
-
-    # --- Attempt 1: mouse right-click (GetClickablePoint with BoundingRect fallback) ---
-    $cp = Get-ElementClickPoint $item
-    if ($cp) {
-        try {
-            [void][MouseHelper]::SetCursorPos($cp.X, $cp.Y)
-            Start-Sleep -Milliseconds 200
-            [MouseHelper]::RightClick($cp.X, $cp.Y)
-            Start-Sleep -Milliseconds 700
-
-            $deadline = [System.DateTime]::UtcNow.AddSeconds(3)
+    try {
+        Assert-WindowReady $Window
+        if (!(Select-TreeFiles -Window $Window -FullPaths @($ScanRoot) -ScanRoot $ScanRoot)) {
+            throw 'The known All Files root could not be selected.'
+        }
+        $row = Find-NativeAllFilesRow -Window $Window -ScanRoot $ScanRoot -TargetPath $ScanRoot
+        if (!$row -or ![NativeListViewHelper]::FocusListView([IntPtr] $row.ListView)) {
+            throw 'The selected All Files row could not receive keyboard focus.'
+        }
+        $item = Find-TreeRow -Window $Window -FullPath $ScanRoot
+        foreach ($inputMethod in @('Right-click', 'Shift+F10')) {
+            Focus-Window $Window
+            if (![NativeListViewHelper]::FocusListView([IntPtr] $row.ListView)) {
+                throw 'The selected All Files row lost keyboard focus.'
+            }
+            if ($inputMethod -eq 'Right-click') {
+                $point = if ($item) { Get-ElementClickPoint $item } else { $null }
+                if (!$point) { throw 'The selected All Files row has no clickable point.' }
+                [MouseHelper]::RightClick($point.X, $point.Y)
+            }
+            else {
+                Send-Keys '+{F10}' 100
+            }
+            $ctxMenu = $null
+            $deadline = [System.DateTime]::UtcNow.AddSeconds(4)
             while ([System.DateTime]::UtcNow -lt $deadline -and !$ctxMenu) {
                 $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
-                if (!$ctxMenu) { Start-Sleep -Milliseconds 200 }
+                if (!$ctxMenu) { Start-Sleep -Milliseconds 100 }
             }
-        }
-        catch { $ctxMenu = $null }
-    }
+            if (!$ctxMenu) { throw "$inputMethod did not open the selected row's context menu." }
+            Assert-Pass $g "$inputMethod opens the selected All Files row's context menu"
 
-    # --- Attempt 2: Shift+F10 keyboard shortcut ---
-    if (!$ctxMenu) {
-        try {
-            $item.SetFocus()
-            Start-Sleep -Milliseconds 200
-            Send-Keys '+{F10}' 700
-            $ctxMenu = Find-ProcessPopupMenu -ProcessId $script:proc.Id
-        }
-        catch {}
-    }
-
-    if ($ctxMenu) {
-        Assert-Pass $g 'Context menu appears'
-        $menuItems = @(Find-UiaAll -Root $ctxMenu -Type ([System.Windows.Automation.ControlType]::MenuItem))
-        if ($menuItems.Count -gt 0) {
-            Assert-Pass $g "$($menuItems.Count) context menu item(s) found"
+            $menuItems = @(Find-UiaAll -Root $ctxMenu -Type ([System.Windows.Automation.ControlType]::MenuItem))
+            Assert-That $g "$inputMethod menu exposes its commands" ($menuItems.Count -gt 0) 'No menu items found'
             if ($Details) {
-                Write-ColoredLine "    Items: $(($menuItems | ForEach-Object { $_.Current.Name }) -join ', ')" DarkGray
+                $names = ($menuItems | ForEach-Object { $_.Current.Name }) -join ', '
+                Write-ColoredLine "    Items: $names" DarkGray
             }
+            Send-Keys '{ESC}' 300
+            Assert-That $g "$inputMethod menu dismissed with Escape" `
+                (!(Find-ProcessPopupMenu -ProcessId $script:proc.Id)) 'Popup remains open'
         }
-        else {
-            Assert-Skip $g 'Context menu items enumerable' 'Items not accessible via UIA (owner-drawn)'
-        }
-        Send-Keys '{ESC}' 300
-        Assert-Pass $g 'Context menu dismissed with Escape'
     }
-    else {
-        # [UIA-OwnerDraw] The tree/list row may be off-screen or the control may
-        # swallow WM_RBUTTONDOWN without producing a standard popup menu.
-        # Shift+F10 is the keyboard fallback; if it also fails, the control is not
-        # exposing a context menu through any standard mechanism.
-        Assert-Skip $g 'Context menu appears' 'No menu via right-click or Shift+F10 (custom owner-drawn control)'
-        Send-Keys '{ESC}' 200
+    catch {
+        Assert-Fail $g 'Selected-row context menu operates' $_.Exception.Message
+    }
+    finally {
+        try { Send-Keys '{ESC}' 50 } catch {}
     }
 }
 
@@ -7143,10 +7232,9 @@ function Test-RefreshAll {
     }
 
     # Ensure All Files tab is active
-    if ($script:tabCtrl) {
-        $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
-        $allTab   = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
-        if ($allTab) { Select-TabItem $allTab | Out-Null; Start-Sleep -Milliseconds 300 }
+    if (!(Select-AllFilesTab -Window $Window)) {
+        Assert-Fail $g 'All Files tab selected before Refresh All' 'The results tab could not be selected'
+        return
     }
 
     # Locate the Refresh All toolbar button
@@ -7201,7 +7289,9 @@ function Test-RefreshAll {
         if ($refreshBtn -and $refreshBtn.Current.IsEnabled) {
             Click-Element $refreshBtn
         }
-        Invoke-Win32CommandId -Window $script:win -CommandId (Get-ResourceId 'ID_REFRESH_ALL') | Out-Null
+        elseif (!(Invoke-Win32CommandId -Window $Window -CommandId (Get-ResourceId 'ID_REFRESH_ALL'))) {
+            throw 'Could not queue the Refresh All command.'
+        }
         Start-Sleep -Milliseconds 800
         Assert-Pass $g 'Exact Refresh All command invoked'
     }
@@ -7309,13 +7399,18 @@ function Test-RefreshAll {
     Assert-WindowReady $script:win
 
     # Verify tabs are still present and accessible
-    if ($script:tabCtrl) {
-        $tabItems2 = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
-        if ($tabItems2.Count -ge 3) {
+    try {
+        $tabs = Get-ScanTabs -Window $script:win
+        $tabItems2 = $tabs.Items
+        Assert-That $g 'All three native scan-result tabs remain after Refresh All' `
+            ($tabs.NativeCount -eq 3) "Native tab count: $($tabs.NativeCount)"
+        if ($tabItems2.Count -eq $tabs.NativeCount -and $tabItems2.Count -eq 3) {
             Assert-Pass $g "$($tabItems2.Count) tab(s) still accessible after Refresh All"
         }
         else {
-            Assert-Fail $g 'All three scan-result tabs still accessible after Refresh All' "Only $($tabItems2.Count) tab(s) found"
+            Assert-Fail $g 'All three scan-result tabs still accessible after Refresh All' (
+                "UIA=$($tabItems2.Count); native=$($tabs.NativeCount)"
+            )
         }
 
         # Cycle through All Files, Largest Files, and Duplicate Files tabs to
@@ -7339,6 +7434,9 @@ function Test-RefreshAll {
         # Return to All Files
         $allTab3 = $tabItems2 | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
         if ($allTab3) { Select-TabItem $allTab3 | Out-Null; Start-Sleep -Milliseconds 300 }
+    }
+    catch {
+        Assert-Fail $g 'Scan-result tabs available after Refresh All' $_.Exception.Message
     }
 
     Focus-Window $script:win
@@ -7448,102 +7546,30 @@ function Test-RefreshSelected {
         return
     }
 
-    # Ensure All Files tab is active
-    if ($script:tabCtrl) {
-        $tabItems = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
-        $allTab   = $tabItems | Where-Object { $_.Current.Name -like '*All Files*' } | Select-Object -First 1
-        if ($allTab) { Select-TabItem $allTab | Out-Null; Start-Sleep -Milliseconds 300 }
-    }
-
     # Locate the exact directory node before invoking Refresh Selected.
     # Refreshing a file cannot discover a new sibling, while selecting the scan
     # root redirects to Refresh All inside the product.  Neither is a valid
     # substitute for selecting refresh_subdir itself.
-    $allItems = @(Find-UiaRows -Root $Window -AllTypes)
-    $targetNorm = Normalize-ComparePath $RefreshTargetDir
-    $targetLeaf = Split-Path -Leaf $RefreshTargetDir
-
     $nativeTarget = $null
+    $targetItem = $null
     try {
+        if (!(Select-TreeFiles -Window $Window -FullPaths @($RefreshTargetDir) -ScanRoot $ScanRoot)) {
+            throw "The fixture directory could not be selected: $RefreshTargetDir"
+        }
         $nativeTarget = Find-NativeAllFilesRow -Window $Window -ScanRoot $ScanRoot -TargetPath $RefreshTargetDir
+        if ($nativeTarget) {
+            if (![NativeListViewHelper]::FocusListView([IntPtr] $nativeTarget.ListView)) {
+                throw 'Could not focus the selected All Files directory.'
+            }
+        }
+        else {
+            $targetItem = Find-TreeRow -Window $Window -FullPath $RefreshTargetDir
+        }
+        Assert-Pass $g "Exact directory selected for Refresh Selected: '$RefreshTargetDir'"
     }
     catch {
-        $cause = $_.Exception
-        $timedOut = $false
-        while ($cause) {
-            if ($cause -is [System.TimeoutException]) { $timedOut = $true; break }
-            $cause = $cause.InnerException
-        }
-        if ($timedOut) {
-            Assert-Fail $g 'Native All Files list remains responsive during Refresh Selected' $_.Exception.Message
-            return
-        }
-        if ($Details) { Write-ColoredLine "    Native directory lookup unavailable: $($_.Exception.Message)" DarkGray }
-    }
-
-    $targetItem = $null
-    if ($nativeTarget) {
-        try {
-            Focus-Window $Window
-            if (-not [NativeListViewHelper]::SelectSingleItem(
-                    [IntPtr] $nativeTarget.ListView, [int] $nativeTarget.Index)) {
-                throw "The native list view did not report row $($nativeTarget.Index) selected and focused."
-            }
-            Start-Sleep -Milliseconds 400
-            Assert-Pass $g "Exact directory selected for Refresh Selected: '$($nativeTarget.Text)'"
-        }
-        catch {
-            Assert-Fail $g 'Exact directory selected for Refresh Selected' $_.Exception.Message
-            return
-        }
-    }
-    else {
-        # UIA fallback: accept either the exact full directory path, or one
-        # unique, visible TreeItem with the fixture's unique leaf name.  In both
-        # cases SelectionItemPattern must prove that selection actually changed.
-        $exactItems = @($allItems | Where-Object {
-            $candidate = $_.Current.Name
-            try {
-                -not $_.Current.IsOffscreen -and
-                (Test-Path -LiteralPath $candidate -PathType Container) -and
-                (Normalize-ComparePath $candidate) -ieq $targetNorm
-            }
-            catch { $false }
-        })
-        $leafItems = @($allItems | Where-Object {
-            try {
-                -not $_.Current.IsOffscreen -and
-                $_.Current.ControlType -eq [System.Windows.Automation.ControlType]::TreeItem -and
-                $_.Current.Name -ieq $targetLeaf
-            }
-            catch { $false }
-        })
-        $candidates = @(if ($exactItems.Count -gt 0) { $exactItems } else { $leafItems })
-
-        if ($candidates.Count -ne 1) {
-            $reason = if ($candidates.Count -eq 0) {
-                'The directory is absent from both the native All Files rows and verifiable UI Automation rows'
-            } else {
-                "$($candidates.Count) ambiguous UI Automation rows matched the directory"
-            }
-            Assert-Skip $g 'Exact directory available for Refresh Selected' $reason
-            return
-        }
-
-        $targetItem = $candidates[0]
-        try {
-            $selection = $targetItem.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-            $selection.Select()
-            Start-Sleep -Milliseconds 400
-            if (-not $selection.Current.IsSelected) {
-                throw 'SelectionItemPattern did not report the directory selected.'
-            }
-            Assert-Pass $g "Exact directory selected for Refresh Selected: '$($targetItem.Current.Name)'"
-        }
-        catch {
-            Assert-Skip $g 'Exact directory selected through UI Automation' $_.Exception.Message
-            return
-        }
+        Assert-Fail $g 'Exact directory selected for Refresh Selected' $_.Exception.Message
+        return
     }
 
     # -- Trigger Refresh Selected -----------------------------------------------
@@ -7566,7 +7592,6 @@ function Test-RefreshSelected {
         Assert-Pass $g "Refresh Selected toolbar button found and enabled: '$($refreshSelBtn.Current.Name)'"
         try {
             Click-Element $refreshSelBtn
-            Invoke-Win32CommandId -Window $Window -CommandId (Get-ResourceId 'ID_REFRESH_SELECTED') | Out-Null
             Start-Sleep -Milliseconds 500
             Assert-Pass $g 'Refresh Selected invoked via toolbar button'
             $refreshTriggered = $true
@@ -7892,7 +7917,7 @@ function Start-UiScanSession {
     if (!$win) { Assert-Fail $Group 'Main window after scan' 'Lost window reference'; return $null }
 
     $script:win = $win
-    $script:tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
+    Get-ScanTabs -Window $win | Out-Null
     return $win
 }
 
@@ -8319,26 +8344,26 @@ function Find-TreeRow {
 # selection keeps this coverage available when the accessibility provider omits
 # collapsed file rows; coordinate/Ctrl-click remains a cross-bitness fallback.
 function Select-TreeFiles {
-    param([System.Windows.Automation.AutomationElement] $Window, [string[]] $FullPaths)
+    param(
+        [System.Windows.Automation.AutomationElement] $Window,
+        [string[]] $FullPaths,
+        [string] $ScanRoot = ''
+    )
 
     if (!$FullPaths -or $FullPaths.Count -eq 0) { return $false }
 
-    if ($script:tabCtrl) {
-        $allTab = @(Find-UiaAll -Root $script:tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem)) |
-            Where-Object { $_.Current.Name -like '*All Files*' } |
-            Select-Object -First 1
-        if ($allTab -and -not (Select-TabItem $allTab)) { return $false }
-        Start-Sleep -Milliseconds 250
-    }
+    if (!(Select-AllFilesTab -Window $Window)) { return $false }
 
-    $scanRoots = @(
-        (Get-Variable -Scope Script -Name opsVerifyScan -ValueOnly -ErrorAction SilentlyContinue),
-        (Get-Variable -Scope Script -Name opsScanRoot -ValueOnly -ErrorAction SilentlyContinue)
-    ) | Where-Object { $_ }
-    $scanRoot = $scanRoots | Where-Object {
-        $candidate = $_
-        @($FullPaths | Where-Object { Test-PathUnder -Path $_ -Root $candidate }).Count -eq $FullPaths.Count
-    } | Select-Object -First 1
+    if (!$ScanRoot) {
+        $scanRoots = @(
+            (Get-Variable -Scope Script -Name opsVerifyScan -ValueOnly -ErrorAction SilentlyContinue),
+            (Get-Variable -Scope Script -Name opsScanRoot -ValueOnly -ErrorAction SilentlyContinue)
+        ) | Where-Object { $_ }
+        $ScanRoot = $scanRoots | Where-Object {
+            $candidate = $_
+            @($FullPaths | Where-Object { Test-PathUnder -Path $_ -Root $candidate }).Count -eq $FullPaths.Count
+        } | Select-Object -First 1
+    }
 
     if ($scanRoot) {
         try {
@@ -8348,6 +8373,7 @@ function Select-TreeFiles {
             $expanded = [System.Collections.Generic.HashSet[string]]::new(
                 [System.StringComparer]::OrdinalIgnoreCase)
             foreach ($path in $FullPaths) {
+                if ((Normalize-ComparePath $path) -ieq (Normalize-ComparePath $scanRoot)) { continue }
                 $chain = [System.Collections.Generic.List[string]]::new()
                 $current = Split-Path -Parent $path
                 while ($current -and
@@ -8549,12 +8575,14 @@ function Test-ShellCutClipboard {
     $target = Join-Path $ScanRoot 'compress\c_single.bin'
 
     if (!(Select-TreeFiles -Window $Window -FullPaths @($target))) {
-        Assert-Skip $g 'Select Cut fixture file' 'Native/UIA file selection was unavailable'
+        Assert-Fail $g 'Select Cut fixture file' 'Native/UIA file selection was unavailable'
         return
     }
     Assert-Pass $g 'Select Cut fixture file'
 
     try {
+        $cutLabel = ([Win32MenuHelper]::GetShellVerbLabel($target, 'cut') -replace '&', '').Split("`t")[0].Trim()
+        if (!$cutLabel) { throw 'The shell returned an empty caption for its canonical Cut verb.' }
         [System.Windows.Forms.Clipboard]::Clear()
         $nativeTarget = $null
         try {
@@ -8604,21 +8632,22 @@ function Test-ShellCutClipboard {
         }
         Start-Sleep -Milliseconds 500
 
-        $desktop = [System.Windows.Automation.AutomationElement]::RootElement
-        $processCondition = [System.Windows.Automation.PropertyCondition]::new(
-            [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $script:proc.Id)
-        $menuItemCondition = [System.Windows.Automation.PropertyCondition]::new(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::MenuItem)
-        $allMenuItems = $desktop.FindAll(
-            [System.Windows.Automation.TreeScope]::Descendants,
-            [System.Windows.Automation.AndCondition]::new($processCondition, $menuItemCondition))
-        $cut = @($allMenuItems) |
-            Where-Object { $_.Current.Name -ceq 'Cut' } |
-            Select-Object -First 1
+        $cut = $null
+        $cutDeadline = [System.DateTime]::UtcNow.AddSeconds(4)
+        while ([System.DateTime]::UtcNow -lt $cutDeadline -and !$cut) {
+            $menuItems = @(foreach ($handle in [Win32Helper]::GetProcessWindowHandles([uint32] $script:proc.Id)) {
+                if ([NativeListViewHelper]::GetWindowClassName($handle) -ne '#32768') { continue }
+                $popup = [System.Windows.Automation.AutomationElement]::FromHandle($handle)
+                Find-UiaAll -Root $popup -Type ([System.Windows.Automation.ControlType]::MenuItem)
+            })
+            $cut = $menuItems | Where-Object {
+                ($_.Current.Name -replace '&', '').Split("`t")[0].Trim() -ceq $cutLabel
+            } | Select-Object -First 1
+            if (!$cut) { Start-Sleep -Milliseconds 100 }
+        }
         if (!$cut) {
-            Assert-Skip $g 'Windows Explorer Cut verb' `
-                'The host shell did not expose an English Cut item in its context menu'
+            $names = ($menuItems | ForEach-Object { $_.Current.Name }) -join ', '
+            Assert-Fail $g 'Windows Explorer Cut verb' "Expected '$cutLabel'; popup commands: $names"
             return
         }
         if (!$cut.Current.IsEnabled) {
@@ -9781,6 +9810,16 @@ function Invoke-UiSuite {
             Test-FileOpsVerification -Exe $ExePath -DedupOnly
             return
         }
+        if ($RefreshAndMenusOnly) {
+            Test-FileOperations -Exe $ExePath
+            if ($script:win) { Test-ContextMenu -Window $script:win -ScanRoot $script:opsScanRoot }
+            $cutFile = Join-Path $script:opsVerifyScan 'compress\c_single.bin'
+            New-TestFile -Path $cutFile -Size 4096 -Seed 173
+            $win = Start-UiScanSession -Exe $ExePath -ScanPath $script:opsVerifyScan `
+                -Group 'OpShellCut' -Label 'shell Cut verification'
+            if ($win) { Test-ShellCutClipboard -Window $win -ScanRoot $script:opsVerifyScan }
+            return
+        }
         Write-ColoredLine '  Setting up UI scan data...' DarkGray
         if (!(Test-Path -LiteralPath $script:workRoot)) { New-Item -ItemType Directory -Force -Path $script:workRoot | Out-Null }
         New-ScanRoot -Root $script:scanRoot
@@ -9818,7 +9857,7 @@ function Invoke-UiSuite {
             & $runPhase 'Tree navigation'     { Test-TreeNavigation     -Window $script:win }
             & $runPhase 'Duplicate detection' { Test-DuplicateDetection -Window $script:win }
             & $runPhase 'Search after scan'   { Test-SearchAfterScan    -Window $script:win }
-            & $runPhase 'Context menu'        { Test-ContextMenu        -Window $script:win }
+            & $runPhase 'Context menu'        { Test-ContextMenu        -Window $script:win -ScanRoot $script:scanRoot }
             & $runPhase 'Keyboard navigation' { Test-KeyboardNavigation -Window $script:win }
             & $runPhase 'Storage analytics view' { Test-StorageAnalytics -Window $script:win }
             & $runPhase 'Permissions view'       { Test-PermissionsView  -Window $script:win }
@@ -9850,7 +9889,7 @@ function Invoke-UiSuite {
                 Test-LargeCorpusCount -Exe $ExePath -ScanPath $script:largeScanRoot -Meta $corpusMeta
                 if ($script:win) {
                     Test-TreeNavigation     -Window $script:win
-                    Test-ContextMenu        -Window $script:win
+                    Test-ContextMenu        -Window $script:win -ScanRoot $script:largeScanRoot
                     Test-KeyboardNavigation -Window $script:win
                 }
             }
@@ -15155,7 +15194,10 @@ function Invoke-CliSuite {
             try {
                 $probe = Invoke-CliProbe -Arguments (@('/saveto', $multiOut) + $case.Roots)
                 if ($probe.TimedOut -or $probe.ExitCode -ne 0 -or !(Test-Path -LiteralPath $multiOut)) {
-                    Assert-Fail $g $case.Name "TimedOut=$($probe.TimedOut); Exit=$($probe.ExitCode)"
+                    Assert-Fail $g $case.Name (
+                        "TimedOut=$($probe.TimedOut); Exit=$($probe.ExitCode); " +
+                        "Command=$($probe.CommandLine); StdErr=$($probe.StdErr)"
+                    )
                     continue
                 }
                 $rows = @(Read-CsvRows -Csv $multiOut)
