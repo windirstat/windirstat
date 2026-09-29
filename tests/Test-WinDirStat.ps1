@@ -72,8 +72,11 @@ param(
     # With -Only Ui, run only the deduplication regressions.
     [switch] $DedupOnly,
 
-    # With -Only Ui, run only the issue 704 regressions.
-    [switch] $Issue704Only,
+    # With -Only Ui, run only the display-option and pane-recovery regressions.
+    [switch] $DisplayAndPaneOnly,
+
+    # With -Only Ui, run only the shared-control and Analytics localization regressions.
+    [switch] $SharedControlsOnly,
 
     # With -Only Ui, run only refresh and context-menu regressions.
     [switch] $RefreshAndMenusOnly,
@@ -1267,6 +1270,13 @@ public static class Win32Helper {
         return threadId != 0 && GetGUIThreadInfo(threadId, ref info) ? info.Focus : IntPtr.Zero;
     }
 
+    public static IntPtr GetCapturedWindow(IntPtr root)
+    {
+        uint threadId = GetWindowThreadProcessId(root, IntPtr.Zero);
+        var info = new GUITHREADINFO { Size = (uint)Marshal.SizeOf(typeof(GUITHREADINFO)) };
+        return threadId != 0 && GetGUIThreadInfo(threadId, ref info) ? info.Capture : IntPtr.Zero;
+    }
+
     public static bool IsDescendant(IntPtr parent, IntPtr child)
     {
         return parent == child || IsChild(parent, child);
@@ -1577,6 +1587,23 @@ public static class NativeListViewHelper
         public int iGroup;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct HDITEM
+    {
+        public uint mask;
+        public int cxy;
+        public IntPtr text;
+        public IntPtr bitmap;
+        public int textCapacity;
+        public int format;
+        public IntPtr parameter;
+        public int image;
+        public int order;
+        public uint type;
+        public IntPtr filter;
+        public uint state;
+    }
+
     [DllImport("user32.dll")]
     private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
 
@@ -1703,6 +1730,41 @@ public static class NativeListViewHelper
     public static int GetSelectedCount(IntPtr listView)
     {
         return SendBounded(listView, LVM_GETSELECTEDCOUNT, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
+    public static bool SetHeaderWidth(IntPtr listView, int column, int width)
+    {
+        const uint HDM_SETITEMW = 0x120C;
+        IntPtr header = SendBounded(listView, LVM_GETHEADER, IntPtr.Zero, IntPtr.Zero);
+        uint processId;
+        GetWindowThreadProcessId(listView, out processId);
+        IntPtr process = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION,
+                                     false, processId);
+        if (process == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error());
+        IntPtr remote = IntPtr.Zero;
+        IntPtr local = IntPtr.Zero;
+        bool releaseRemote = true;
+        try
+        {
+            EnsureSameBitness(process);
+            int size = Marshal.SizeOf(typeof(HDITEM));
+            remote = AllocateRemote(process, size);
+            local = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(new HDITEM { mask = 1, cxy = width }, local, false);
+            WriteRemote(process, remote, local, size);
+            return SendBounded(header, HDM_SETITEMW, (IntPtr)column, remote) != IntPtr.Zero;
+        }
+        catch (TimeoutException)
+        {
+            releaseRemote = false;
+            throw;
+        }
+        finally
+        {
+            if (local != IntPtr.Zero) Marshal.FreeHGlobal(local);
+            if (releaseRemote && remote != IntPtr.Zero) VirtualFreeEx(process, remote, UIntPtr.Zero, MEM_RELEASE);
+            CloseHandle(process);
+        }
     }
 
     public static bool ClickFirstHeader(IntPtr listView)
@@ -3370,7 +3432,8 @@ function Start-App {
         [string] $Arguments = '',
         [string[]] $OptionLines = @(),
         [string[]] $TreeMapLines = @(),
-        [string[]] $DriveSelectLines = @()
+        [string[]] $DriveSelectLines = @(),
+        [string[]] $LanguageLines = @()
     )
     if ($script:proc -and !$script:proc.HasExited) { Stop-App }
 
@@ -3387,6 +3450,10 @@ function Start-App {
     }
     New-PortableIni -IniPath ([System.IO.Path]::ChangeExtension($runExe, 'ini')) `
         -OptionLines $OptionLines -TreeMapLines $TreeMapLines -DriveSelectLines $DriveSelectLines
+    if ($LanguageLines.Count -gt 0) {
+        [System.IO.File]::WriteAllLines((Join-Path $runDir 'lang_en.txt'), $LanguageLines,
+            [System.Text.UTF8Encoding]::new($false))
+    }
 
     $si = [System.Diagnostics.ProcessStartInfo]@{
         FileName = $runExe; Arguments = $Arguments; WorkingDirectory = $runDir; UseShellExecute = $false
@@ -3782,7 +3849,7 @@ function Test-DriveSelectionDialog {
 
     # Keep All Local Drives stable while asynchronous drive information arrives.
     # A persisted row selection used to be restored during sorting and silently
-    # switch this radio to Individual Drives (issue #492).
+    # switch this radio to Individual Drives.
     $radios = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::RadioButton))
     if ($radios.Count -ge 3) {
         Assert-Pass $g "$($radios.Count) radio buttons present"
@@ -4000,7 +4067,7 @@ function Test-DriveSelectionDialog {
     }
 
     # A missing CBS_AUTOHSCROLL style used the edit width as a character limit
-    # and silently truncated pasted Individual Folder paths (issue #525).
+    # and silently truncated pasted Individual Folder paths.
     $folderEdit = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Edit)
     if ($folderEdit) {
         $longFolderPath = 'C:\' + ('i' * 180)
@@ -4032,7 +4099,7 @@ function Test-DriveSelectionDialog {
     }
 
     # The Filtering shortcut in this modal dialog previously recursed through
-    # CMainFrame::OnCmdMsg until the process crashed (issue #586, item 3).
+    # CMainFrame::OnCmdMsg until the process crashed.
     $filterButtonId = [int] $script:ResourceIds['IDC_FILTER_BUTTON']
     $dialogHwnd = [IntPtr] $dialog.Current.NativeWindowHandle
     $filterButtonHwnd = [Win32MenuHelper]::GetDlgItem($dialogHwnd, $filterButtonId)
@@ -7894,10 +7961,11 @@ function Start-UiScanSession {
         [string] $Group,
         [string] $Label,
         [int] $ScanTimeoutMs = ([Math]::Max($TimeoutSeconds * 1000, 60000)),
-        [string[]] $OptionLines = @()
+        [string[]] $OptionLines = @(),
+        [string[]] $LanguageLines = @()
     )
 
-    $win = Start-App -Exe $Exe -OptionLines $OptionLines
+    $win = Start-App -Exe $Exe -OptionLines $OptionLines -LanguageLines $LanguageLines
     if (!$win) { Assert-Fail $Group "App launches for $Label" 'Window not found'; return $null }
     Assert-Pass $Group "App launches for $Label"
 
@@ -8963,7 +9031,7 @@ function Test-DedupOps {
         [string] $ScanRoot,
         [ValidateSet('Groups', 'Files', 'Singletons')] [string] $Selection = 'Groups'
     )
-    Write-GroupHeader "File Op: Deduplicate Multiple $Selection (#655)"
+    Write-GroupHeader "File Op: Deduplicate Multiple $Selection"
     $g = "OpDedup/$Selection"
     $files = @('d_src.bin', 'd_copy.bin', 'e_src.bin', 'e_copy.bin') |
         ForEach-Object { Join-Path (Join-Path $ScanRoot 'dedup') $_ }
@@ -9423,7 +9491,7 @@ function Test-LoadResults {
 
     # Produce an authentic duplicate-results CSV. It intentionally lacks the
     # directory-result columns accepted by /loadfrom; loading this shape used
-    # to index missing columns and crash (issue #409).
+    # to index missing columns and crash.
     try {
         New-Item -ItemType Directory -Force -Path $duplicateRunRoot | Out-Null
         $duplicateExe = Join-Path $duplicateRunRoot (Split-Path -Leaf $Exe)
@@ -9538,7 +9606,7 @@ function Test-LoadResults {
 
         # Refresh a real non-root directory in the model restored from the plain
         # CSV. This guards both the empty-result regression and the partial-tree
-        # crash reported in issues #268 and #415.
+        # crash.
         if ($testFile -ceq $csvPath -and $win -and !$script:proc.HasExited) {
             $script:tabCtrl = Find-UiaFirst -Root $win -Type ([System.Windows.Automation.ControlType]::Tab)
             Test-RefreshSelected -Window $win `
@@ -9551,7 +9619,7 @@ function Test-LoadResults {
     }
 
     # Unsupported result shapes must be rejected without indexing missing
-    # columns or terminating the process (#409 and the error-handling part of #406).
+    # columns or terminating the process.
     $invalidLoads = @(
         [pscustomobject] @{ Path = $duplicateCsvPath; Description = 'duplicate-results CSV' },
         [pscustomobject] @{ Path = $malformedCsvPath; Description = 'malformed non-results CSV' }
@@ -9585,7 +9653,7 @@ function Test-LoadResults {
 # =============================================================================
 function Test-TimestampDisplayOptions {
     param([string] $Exe)
-    Write-GroupHeader 'Issue 704: Timestamp Display Options'
+    Write-GroupHeader 'Timestamp Display Options'
     $g = 'TimestampDisplay'
     $testRoot = Join-Path $BuildRoot 'timestamp-display-test'
     $scanRoot = Join-Path $testRoot 'scan-root'
@@ -9594,8 +9662,8 @@ function Test-TimestampDisplayOptions {
 
     try {
         New-Item -ItemType Directory -Force -Path $scanRoot | Out-Null
-        New-TestFile -Path $timestampPath -Size 4096 -Seed 704
-        New-TestFile -Path $nextTimestampPath -Size 4096 -Seed 705
+        New-TestFile -Path $timestampPath -Size 4096 -Seed 42
+        New-TestFile -Path $nextTimestampPath -Size 4096 -Seed 43
         $localTime = [datetime]::Today.AddHours(13).AddMinutes(14).AddSeconds(15)
         [System.IO.File]::SetLastWriteTime($timestampPath, $localTime)
         [System.IO.File]::SetLastWriteTime($nextTimestampPath, $localTime.AddSeconds(2))
@@ -9675,7 +9743,7 @@ function Test-TimestampDisplayOptions {
 
 function Test-FileTypesPaneRecovery {
     param([string] $Exe)
-    Write-GroupHeader 'Issue 704: File Types Pane Recovery'
+    Write-GroupHeader 'File Types Pane Recovery'
     $g = 'FileTypesRecovery'
     $testRoot = Join-Path $BuildRoot 'file-types-recovery-test'
     $scanRoot = Join-Path $testRoot 'scan-root'
@@ -9692,7 +9760,7 @@ function Test-FileTypesPaneRecovery {
 
     try {
         New-Item -ItemType Directory -Force -Path $scanRoot | Out-Null
-        New-TestFile -Path (Join-Path $scanRoot 'visible.wds704') -Size 4096 -Seed 704
+        New-TestFile -Path (Join-Path $scanRoot 'visible.wdsrecovery') -Size 4096 -Seed 42
         foreach ($case in $cases) {
             $topology, $permutation, $position, $initiallyVisible, $axis, $label = $case
             $splitterPos = [Convert]::ToHexString([BitConverter]::GetBytes([double] $position))
@@ -9729,7 +9797,7 @@ function Test-FileTypesPaneRecovery {
             $extent = & $getExtent
             $list = [Win32MenuHelper]::GetDlgItem($pane, (Get-ResourceId 'ID_WDS_CONTROL'))
             Assert-That $g "$label leaves File Types visible and populated" `
-                ($extent -gt 50 -and '.wds704' -in [NativeListViewHelper]::GetItemTexts($list)) `
+                ($extent -gt 50 -and '.wdsrecovery' -in [NativeListViewHelper]::GetItemTexts($list)) `
                 "File Types extent: $extent pixels"
             Assert-That $g "$label keeps the File Types menu state consistent" `
                 (& $isChecked) 'Show File Types is not checked'
@@ -9760,6 +9828,132 @@ function Test-FileTypesPaneRecovery {
         }
     }
     catch { Assert-Fail $g 'File Types recovery regression executes' $_.Exception.Message }
+    finally {
+        try { Stop-App } catch {}
+        Remove-TestArtifacts -Path $testRoot
+    }
+}
+
+function Test-SharedControls {
+    param([string] $Exe)
+    Write-GroupHeader 'Shared Controls and Analytics Localization'
+    $group = 'SharedControls'
+    $testRoot = Join-Path $BuildRoot 'shared-controls-test'
+    $scanRoot = Join-Path $testRoot 'scan-root'
+    $pointParam = { param($coordinates) [IntPtr] (($coordinates[1] -shl 16) -bor ($coordinates[0] -band 0xFFFF)) }
+    try {
+        New-Item -ItemType Directory -Force -Path $scanRoot | Out-Null
+        New-TestFile -Path (Join-Path $scanRoot 'visible.wdscontrols') -Size 4096 -Seed 42
+        foreach ($layout in @(@(0, 0), @(4, 3))) {
+            $topology, $permutation = $layout
+            $win = Start-UiScanSession -Exe $Exe -ScanPath $scanRoot -Group $group -Label "layout $topology" `
+                -OptionLines @("LayoutTopology=$topology", "LayoutPermutation=$permutation", 'ShowFileTypes=1') `
+                -LanguageLines @('IDS_ANALYTICS_THRESHOLD=Threshold: {0}', 'IDS_ANALYTICS_COST=Cost: {0}',
+                    'IDS_GENERIC_TIME_SUFFIXES=day-test,month-test,year-test')
+            if (!$win) { continue }
+            $main = [IntPtr] $win.Current.NativeWindowHandle
+            $outer = [Win32MenuHelper]::GetDlgItem($main, 0xE900)
+            $inner = [Win32MenuHelper]::GetDlgItem($outer, 0xE900)
+            foreach ($splitter in $outer, $inner) {
+                $first = [Win32MenuHelper]::GetDlgItem($splitter, 0xE900)
+                $second = [Win32MenuHelper]::GetDlgItem($splitter, 0xE901)
+                $axis = 0
+                if ($second -eq [IntPtr]::Zero) {
+                    $second = [Win32MenuHelper]::GetDlgItem($splitter, 0xE910)
+                    $axis = 1
+                }
+                if ($first -eq [IntPtr]::Zero -or $second -eq [IntPtr]::Zero) {
+                    throw 'Expected two splitter panes'
+                }
+                $label = "layout $topology splitter $splitter"
+                foreach ($offset in 0, 3, 6) {
+                    $splitRect = [NativeListViewHelper]::GetWindowRectangle($splitter)
+                    $before = [NativeListViewHelper]::GetWindowRectangle($first)
+                    $bar = $before[$axis + 2] - $(if ($first -eq $inner) { 2 } else { 0 })
+                    $start = @(20, 20)
+                    $start[$axis] = $bar - $splitRect[$axis] + $offset
+                    if ($first -eq $inner -and $offset -eq 0) {
+                        $screen = @(($start[0] + $splitRect[0]), ($start[1] + $splitRect[1]))
+                        $hit = [Win32MenuHelper]::SendMessage($inner, 0x0084, [IntPtr]::Zero, (& $pointParam $screen))
+                        Assert-That $group "$label nested edge passes hit testing to parent" ($hit.ToInt32() -eq -1) `
+                            "Expected HTTRANSPARENT, got $hit"
+                    }
+                    $startParam = & $pointParam $start
+                    [void] [Win32MenuHelper]::SendMessage($splitter, 0x0201, [IntPtr] 1, $startParam)
+                    Assert-That $group "$label offset $offset starts dragging" `
+                        ([Win32Helper]::GetCapturedWindow($main) -eq $splitter) 'Splitter did not capture the mouse'
+                    [void] [Win32MenuHelper]::SendMessage($splitter, 0x0200, [IntPtr] 1, $startParam)
+                    $unchanged = [NativeListViewHelper]::GetWindowRectangle($first)
+                    Assert-That $group "$label offset $offset preserves grab position" `
+                        ($unchanged[$axis + 2] -eq $before[$axis + 2]) 'Splitter jumped on the first mouse move'
+                    $finish = @($start[0], $start[1])
+                    $finish[$axis] += 40
+                    $endParam = & $pointParam $finish
+                    [void] [Win32MenuHelper]::SendMessage($splitter, 0x0200, [IntPtr] 1, $endParam)
+                    $during = [NativeListViewHelper]::GetWindowRectangle($first)
+                    Assert-That $group "$label offset $offset resizes while dragging" `
+                        ($during[$axis + 2] - $before[$axis + 2] -eq 40) 'Pane did not follow the drag before mouse-up'
+                    if ($offset -eq 3) {
+                        [void] [Win32MenuHelper]::SendMessage($splitter, 0x0202, [IntPtr]::Zero, $endParam)
+                        $after = [NativeListViewHelper]::GetWindowRectangle($first)
+                        Assert-That $group "$label accepts dragged position" `
+                            ($after[$axis + 2] -eq $during[$axis + 2]) 'Accepted splitter position changed'
+                    } else {
+                        if ($offset -eq 0) {
+                            [void] [Win32MenuHelper]::SendMessage($splitter, 0x001F, [IntPtr]::Zero, [IntPtr]::Zero)
+                        } else {
+                            [void] [Win32Helper]::SetForegroundWindow($main)
+                            [void] [Win32MenuHelper]::SendMessage($splitter, 0x0215, [IntPtr]::Zero, [IntPtr]::Zero)
+                            [void] [Win32MenuHelper]::SendMessage($splitter, 0x0202, [IntPtr]::Zero, $endParam)
+                        }
+                        $after = [NativeListViewHelper]::GetWindowRectangle($first)
+                        Assert-That $group "$label offset $offset restores cancelled position" `
+                            ($after[$axis + 2] -eq $before[$axis + 2]) 'Cancelled splitter position was retained'
+                    }
+                }
+            }
+
+            $hiddenCount = 0
+            foreach ($list in [NativeListViewHelper]::GetVisibleListViewsIncludingEmpty($main)) {
+                $header = [Win32MenuHelper]::SendMessage($list, 0x101F, [IntPtr]::Zero, [IntPtr]::Zero)
+                $count = [Win32MenuHelper]::SendMessage($header, 0x1200, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32()
+                for ($column = 0; $column -lt $count; ++$column) {
+                    $width = [Win32MenuHelper]::SendMessage($list, 0x101D, [IntPtr] $column, [IntPtr]::Zero).ToInt32()
+                    if ($width -eq 0) {
+                        ++$hiddenCount
+                        $accepted = [NativeListViewHelper]::SetHeaderWidth($list, $column, 80)
+                        $actual = [Win32MenuHelper]::SendMessage($list, 0x101D, [IntPtr] $column, [IntPtr]::Zero).ToInt32()
+                        Assert-That $group "layout $topology list $list hidden column $column rejects expansion" `
+                            (!$accepted -and $actual -eq 0) "Accepted: $accepted; width: $actual"
+                        [void] [Win32MenuHelper]::SendMessage($list, 0x101E, [IntPtr] $column, [IntPtr] 80)
+                        $actual = [Win32MenuHelper]::SendMessage($list, 0x101D, [IntPtr] $column, [IntPtr]::Zero).ToInt32()
+                        Assert-That $group "layout $topology list $list hidden column $column stays zero width" `
+                            ($actual -eq 0) "Width: $actual"
+                    } else {
+                        $accepted = [NativeListViewHelper]::SetHeaderWidth($list, $column, $width + 10)
+                        $actual = [Win32MenuHelper]::SendMessage($list, 0x101D, [IntPtr] $column, [IntPtr]::Zero).ToInt32()
+                        Assert-That $group "layout $topology list $list visible column $column still resizes" `
+                            ($accepted -and $actual -eq $width + 10) "Accepted: $accepted; width: $actual"
+                        [void] [NativeListViewHelper]::SetHeaderWidth($list, $column, $width)
+                    }
+                }
+            }
+            Assert-That $group "layout $topology exercises hidden columns" ($hiddenCount -ge 2) "Hidden columns: $hiddenCount"
+
+            Test-StorageAnalytics -Window $win
+            $analyticsTab = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::TabItem)) |
+                Where-Object { $_.Current.Name -like '*Storage Analytics*' } | Select-Object -First 1
+            if (!$analyticsTab -or !(Select-TabItem $analyticsTab)) { throw 'Could not select the existing Analytics tab' }
+            $labels = @(Find-UiaAll -Root $win -Type ([System.Windows.Automation.ControlType]::Text) |
+                ForEach-Object { $_.Current.Name })
+            foreach ($text in 'Threshold: Cool Tier (days):', 'Threshold: Cold Tier (days):', 'Threshold: Archive Tier (days):',
+                'Cost: Hot Tier ($/GiB/month-test):', 'Cost: Cool Tier ($/GiB/month-test):',
+                'Cost: Cold Tier ($/GiB/month-test):', 'Cost: Archive Tier ($/GiB/month-test):') {
+                Assert-That $group "layout $topology localizes $text" ($text -in $labels) "Labels: $($labels -join '; ')"
+            }
+        }
+    }
+    catch { Assert-Fail $group 'Shared-control regressions execute' $_.Exception.Message }
     finally {
         try { Stop-App } catch {}
         Remove-TestArtifacts -Path $testRoot
@@ -9801,7 +9995,11 @@ function Invoke-UiSuite {
     }
 
     try {
-        if ($Issue704Only) {
+        if ($SharedControlsOnly) {
+            Test-SharedControls -Exe $ExePath
+            return
+        }
+        if ($DisplayAndPaneOnly) {
             Test-TimestampDisplayOptions -Exe $ExePath
             Test-FileTypesPaneRecovery -Exe $ExePath
             return
@@ -9868,6 +10066,7 @@ function Invoke-UiSuite {
 
         & $runPhase 'Timestamp display options' { Test-TimestampDisplayOptions -Exe $ExePath }
         & $runPhase 'File Types pane recovery' { Test-FileTypesPaneRecovery -Exe $ExePath }
+        & $runPhase 'Shared controls and Analytics localization' { Test-SharedControls -Exe $ExePath }
 
         # -- Phase 2.5: load saved results --------------------------------------
         & $runPhase 'Load saved results' { Test-LoadResults -Exe $ExePath }
@@ -10853,7 +11052,7 @@ function Invoke-FilteringSuite {
             @{ Name = 'Glob_TrailingSlash_IncludeExcludeDirs'; Regex = $false; IncludeDirs = $glob.IncludeAlphaTrailing; ExcludeDirs = $glob.ExcludeAlphaTrailing; Expected = @{ IncludeDirRoots = $roots.Alpha; ExcludeDirRoots = $roots.AlphaExcluded }; Behavior = 'Trailing slashes in glob directory filters should be tolerated, and the excluded child branch should override the included parent.' }
             @{ Name = 'Glob_ExcludeDirs'; Regex = $false; ExcludeDirs = $glob.ExcludeDirs; Expected = @{ ExcludeDirRoots = $roots.Excluded }; Behavior = 'Glob directory excludes should remove matching branches and descendants while leaving all other branches intact.' }
             @{ Name = 'Glob_IncludeFiles'; Regex = $false; IncludeFiles = $glob.IncludeFiles; Expected = @{ IncludeFilePatterns = $true }; Behavior = 'Glob file includes should keep all directories but export only include-*.keep and anchor-pass.dat files.' }
-            @{ Name = 'Glob_ConsecutiveStars_NoBacktracking'; Regex = $false; IncludeFiles = $glob.ConsecutiveStarsNoMatch; Expected = @{ IncludeFileNames = @('__never__') }; Behavior = 'Consecutive stars should collapse before regex conversion, reject every fixture file, and finish without catastrophic backtracking (issue #363).' }
+            @{ Name = 'Glob_ConsecutiveStars_NoBacktracking'; Regex = $false; IncludeFiles = $glob.ConsecutiveStarsNoMatch; Expected = @{ IncludeFileNames = @('__never__') }; Behavior = 'Consecutive stars should collapse before regex conversion, reject every fixture file, and finish without catastrophic backtracking.' }
             @{ Name = 'Glob_ExcludeFiles'; Regex = $false; ExcludeFiles = $glob.ExcludeFiles; Expected = @{ ExcludeFilePatterns = $true }; Behavior = 'Glob file excludes should remove include-blocked.keep and *.skip files while preserving all directories and other files.' }
             @{ Name = 'Glob_IncludeDirsAndFiles'; Regex = $false; IncludeDirs = $glob.IncludeTop; IncludeFiles = $glob.IncludeFiles; Expected = @{ IncludeDirRoots = $roots.GlobTop; IncludeFilePatterns = $true }; Behavior = 'Glob directory includes and file includes should combine so only selected branches and selected file names appear.' }
             @{ Name = 'Glob_ExcludeDirsAndFiles'; Regex = $false; ExcludeDirs = $glob.ExcludeDirs; ExcludeFiles = $glob.ExcludeFiles; Expected = @{ ExcludeDirRoots = $roots.Excluded; ExcludeFilePatterns = $true }; Behavior = 'Glob directory excludes and file excludes should both apply, with directory excludes removing whole branches first.' }
@@ -12431,7 +12630,7 @@ try {
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Portable_LongMultilineFilteringRoundTrip' `
-        -Behavior 'Issue #253: portable settings must round-trip a multiline directory exclusion list longer than 8K.' `
+        -Behavior 'Portable settings must round-trip a multiline directory exclusion list longer than 8K.' `
         -Body {
         param($ctx)
 
@@ -12499,7 +12698,7 @@ try {
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Item_PercentageModesAndPausedTime' `
-        -Behavior ('Issues #227/#381/#455/#654: percentages and proportion sorting honor display modes; elapsed ' +
+        -Behavior ('Percentages and proportion sorting honor display modes; elapsed ' +
             'time excludes suspension.') `
         -Body {
         param($ctx)
@@ -12641,7 +12840,7 @@ try {
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'Localization_InstallerGeneration' `
-        -Behavior 'Issue #534: GenerateOnly should emit valid WiX localization for every packaged language.' `
+        -Behavior 'GenerateOnly should emit valid WiX localization for every packaged language.' `
         -Body {
         param($ctx)
 
@@ -12680,7 +12879,7 @@ try {
     }))
 
     [void] $results.Add((Invoke-Scenario -Name 'FinderBasic_RemoteBufferContract' `
-        -Behavior 'Issue #631: UNC and mapped-drive enumeration must use the older-redirector-safe 64 KiB buffer.' `
+        -Behavior 'UNC and mapped-drive enumeration must use the older-redirector-safe 64 KiB buffer.' `
         -Body {
         param($ctx)
 
@@ -14464,7 +14663,7 @@ function Invoke-EnumerationSuite {
     finally { Remove-TestArtifacts -Path $workRoot } }
 
 # #############################################################################
-# UNC SHARE-ROOT SUITE  (regression: issue #538)
+# UNC SHARE-ROOT SUITE
 # #############################################################################
 #
 # WinDirStat 2.6.2 fail-fast crashed (exception 0xC0000409) the instant it
@@ -14475,7 +14674,7 @@ function Invoke-EnumerationSuite {
 #
 # This suite reproduces that exact shape deterministically and cheaply. It also
 # puts an exact 481-entry, 14-character-name listing behind SMB: the byte
-# boundary that was silently reported as empty on older redirectors (#631).
+# boundary that was silently reported as empty on older redirectors.
 # Using a purpose-built share instead of a real c$ keeps the scan small and
 # self-cleaning while exercising both remote enumeration paths.
 #
@@ -14562,7 +14761,7 @@ function Invoke-UncSuite {
             return
         }
 
-        # The share ROOT — the exact \\server\share shape that crashed in #538.
+        # The share ROOT — the exact \\server\share shape that previously crashed.
         $uncRoot = "\\$env:COMPUTERNAME\$shareName"
 
         # SMB share visibility can lag a beat after creation; poll briefly.
@@ -14576,7 +14775,7 @@ function Invoke-UncSuite {
             return
         }
 
-        Write-ColoredLine 'UNC share-root and large-listing scan suite (issues #538 and #631)' Cyan
+        Write-ColoredLine 'UNC share-root and large-listing scan suite' Cyan
         Write-LabelValue 'Share root' $uncRoot
         Write-LabelValue 'Backing'    $dataRoot
         Write-LabelValue 'Exe'        $runnerExe
@@ -14585,7 +14784,7 @@ function Invoke-UncSuite {
         # --- Core regression check: scan the share ROOT, expect a clean exit -
         # Invoke-WinDirStatCsv throws on a non-zero exit code; a fail-fast
         # surfaces as the shared fail-fast exit code, which is precisely the
-        # #538 crash we are guarding against.
+        # share-root crash we are guarding against.
         $scanOk = $false
         try {
             $run = Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csvOut -Root $uncRoot
@@ -14597,7 +14796,7 @@ function Invoke-UncSuite {
         catch {
             $detail = $_.Exception.Message
             if ($detail -match [regex]::Escape([string] $script:FailFastExitCode)) {
-                $detail += "  (exit $script:FailFastExitHex fail-fast - issue #538 regression)"
+                $detail += "  (exit $script:FailFastExitHex fail-fast during share-root scan)"
             }
             Assert-Fail $g 'Scan UNC share root without crashing' $detail
         }
