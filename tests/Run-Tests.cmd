@@ -1,57 +1,19 @@
-@echo off
-setlocal EnableDelayedExpansion
+@ECHO OFF
+SETLOCAL
 
-:: ---------------------------------------------------------------------------
-:: Run-Tests.cmd
-:: Runs the WinDirStat test suite via PowerShell 7.6 (pwsh).
-::
-:: Usage:
-::   Run-Tests.cmd [options passed through to Test-WinDirStat.ps1]
-::
-:: All tests live in a single script, Test-WinDirStat.ps1, which runs ten
-:: suites in one pass and prints one unified summary:
-::
-::   Filtering  - CSV filtering / regex / glob / size (headless CLI scans)
-::   Settings   - non-visual settings load/clamping/derived behavior. Auto-builds an
-::                instrumented (/DWDS_SETTINGS_TEST) binary when MSBuild is
-::                available; otherwise the suite skips.  Pass
-::                -SettingsExePath <exe> to use a prebuilt one.
-::   Ui         - UIAutomation end-to-end navigation, plus file-operation
-::                verification (Compress / Sparsify / Deduplicate-with-Hardlink /
-::                Remove Mark-Of-The-Web) on single AND multiple selections,
-::                each validated against the real file system; large-corpus
-::                count/extension/dupe checks; and a pause/resume stress phase.
-::   Mtp        - connected-device scan plus CSV save/load round-trip. Skips
-::                when Windows does not expose an MTP device.
-::   Reparse    - symlinks / junctions / mount points.  FORMATS the two scratch
-::                drives (LINK_TEST_DRIVE_ONE / LINK_TEST_DRIVE_TWO, default
-::                E: / F:) and runs only when elevated AND both drives exist;
-::                otherwise the suite skips.  Never uses C:.
-::   EdgeCases  - deep paths, unicode, attributes, file properties.
-::   Enumeration - path spelling, redirect, engine, size, and file-system parity.
-::   Unc        - UNC share-root scan regression coverage.
-::   Permissions - permissions scanner CSV / JSON exports.
-::   Cli        - command-line parsing, validation, and quiet-mode termination.
-::
-:: EVERY suite runs by default -- no opt-in switches are required.  Suites whose
-:: prerequisites are not met skip gracefully.  Narrow a run with -Only / -Skip,
-:: e.g.:  Run-Tests.cmd -Only Filtering,EdgeCases
-::
-:: The binary under test defaults to publish\x64\WinDirStat.exe; override with
-:: -ExePath <path>.
-::
-:: Requirements:
-::   pwsh (PowerShell 7.6+)  -  https://github.com/PowerShell/PowerShell/releases
-:: ---------------------------------------------------------------------------
+:: Runs the behavioral suite against the newest local x64 build or published executable.
+:: All arguments are passed through unchanged; -List shows scenario selection.
+:: Examples:
+::   Run-Tests.cmd -List
+::   Run-Tests.cmd -Only Rendering
+::   Run-Tests.cmd -Tag Race -Repeat 5 -Shuffle -Seed 42
+::   Run-Tests.cmd -Profile Extended -ExePath build\WinDirStat_x64.exe
 
-where pwsh >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: pwsh ^(PowerShell 7.6^) was not found on PATH.
-    echo Install from https://github.com/PowerShell/PowerShell/releases
-    exit /b 1
+WHERE pwsh >NUL 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO ERROR: PowerShell 7.6 or newer ^(pwsh^) is required.
+    EXIT /B 2
 )
-
-set TESTS_DIR=%~dp0
-
-pwsh -NoProfile -ExecutionPolicy Bypass -File "%TESTS_DIR%Test-WinDirStat.ps1" %*
-exit /b %ERRORLEVEL%
+SET TESTS_DIR=%~dp0
+pwsh -NoProfile -STA -ExecutionPolicy Bypass -File "%TESTS_DIR%Test-WinDirStat.ps1" %*
+EXIT /B %ERRORLEVEL%
