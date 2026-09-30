@@ -2,6 +2,7 @@
     [string]$Path = $PSScriptRoot
 )
 
+Write-Host "Normalizing source files"
 # Ensure we have UTF-8 encoding with BOM
 $Utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 

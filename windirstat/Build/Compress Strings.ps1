@@ -4,6 +4,7 @@
 $env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsPowerShell\v1.0\Modules'
 
 # Combine all language files into lang_combined.txt
+Write-Host "Compiling language resource"
 $Encoding = [System.Text.UTF8Encoding]::new($false)
 $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
 $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
@@ -28,6 +29,7 @@ Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object {
 }
 
 # Write out language header file
+Write-Host "Generating language header file"
 $TempHeader = (New-TemporaryFile).FullName
 @(
     '#pragma once'
@@ -40,6 +42,7 @@ if (!(Test-Path "$Path\LangStrings.h") -or
 Remove-Item -LiteralPath $TempHeader -Force
 
 # Compress file data
+Write-Host "Generating language resource"
 foreach ($File in $Files) {
     makecab /D CompressionType=LZX /D CompressionMemory=21 $File.FullName ($File.FullName -replace '\.txt$', '.bin') | Out-Null
     if ($File.Name -eq 'lang_combined.txt') { Remove-Item $File.FullName -Force }
