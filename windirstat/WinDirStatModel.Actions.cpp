@@ -244,7 +244,7 @@ void CWinDirStatModel::OnRefreshSelected()
 {
     // Optimize refresh selected when done on root item
     const auto& selected = GetAllSelected();
-    if (selected.size() == 1 && selected.front() == GetRootItem()) OnRefreshAll();
+    if (selected.size() == 1 && selected.front() == GetRootItem() && !SearchListHasFocus()) OnRefreshAll();
     else RefreshItem(selected);
 }
 
@@ -1007,6 +1007,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     CWaitCursor wc;
     StopScanningEngine();
 
+    // Watcher entries are detached snapshots; refresh the matching scan item or its nearest scanned ancestor.
+    if (!HasRootItem()) return;
+    for (auto*& item : items)
+        if (item != nullptr && item != GetRootItem() && item->GetParent() == nullptr)
+            item = GetRootItem()->FindItemByPath(item->GetPath(), true);
+    std::erase(items, nullptr);
+
     // Resolve hardlink references before their derived snapshot can be discarded.
     for (auto*& item : items)
         if (item != nullptr && item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
@@ -1317,6 +1324,10 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             ExitProcess(SavePermissions(permsSavePath, ptrs) ? 0 : 1);
         }
 
+        CMainFrame::Get()->InvokeInMessageThread([]
+        {
+            CFileSearchControl::Get()->RestoreItems();
+        });
         const auto searchTotals = CFileSearchControl::Get()->GetRootItem()->CalculateTotals();
 
         // Invoke a UI thread to do updates

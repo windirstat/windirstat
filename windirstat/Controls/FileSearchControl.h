@@ -36,6 +36,7 @@ struct SearchCriteria
     std::wstring owner;
 
     bool MatchesSize(const CItem* item) const;
+    bool Matches(const CItem* item, const std::wregex& termRegex) const;
 };
 
 class CFileSearchControl final : public CTreeListControl
@@ -49,6 +50,7 @@ public:
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
     void RemoveItem(CItem* item);
+    void RestoreItems();
     void AfterDeleteAllItems() override;
 
 protected:
@@ -56,6 +58,7 @@ protected:
     inline static CFileSearchControl* m_singleton = nullptr;
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
-    bool m_sizeFilterActive = false;
+    SearchCriteria m_criteria;
+    std::vector<std::pair<std::wstring, bool>> m_removedItems;
 
 };

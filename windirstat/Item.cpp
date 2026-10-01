@@ -831,28 +831,37 @@ bool CItem::HasUncPath() const
     return GetPath().starts_with(L"\\\\");
 }
 
-CItem* CItem::FindItemByPath(const std::wstring& path) const
+CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor) const
 {
-    auto* pathDrive = GetParentDrive();
-    if (pathDrive == nullptr) return nullptr;
+    // Find the most specific enumeration root containing the requested path.
+    CItem* root = GetEnumRoot();
+    const auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
+        std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
+    CItem* current = nullptr;
+    size_t rootLength = 0;
+    for (CItem* candidate : roots)
+    {
+        std::wstring rootPath = candidate->GetPath();
+        while (!rootPath.empty() && rootPath.back() == L'\\') rootPath.pop_back();
+        if (rootPath.size() <= rootLength || path.size() < rootPath.size() ||
+            _wcsnicmp(path.c_str(), rootPath.c_str(), rootPath.size()) != 0 ||
+            (path.size() > rootPath.size() && path[rootPath.size()] != L'\\')) continue;
+        current = candidate;
+        rootLength = rootPath.size();
+    }
+    if (current == nullptr) return nullptr;
 
     // Split the path into components, filtering out empty strings
-    const std::vector<std::wstring> components = SplitString(path, wds::chrBackslash);
-    if (components.empty()) return nullptr;
-
-    // First component should match the drive (e.g., "C:")
-    if (components[0] != GetDrive(GetNameView())) return nullptr;
-
-    // Start from the drive and process remaining components
-    CItem* current = pathDrive;
-    for (const auto& component : components | std::views::drop(1))
+    for (const auto part : std::views::split(std::wstring_view(path).substr(rootLength), wds::chrBackslash))
     {
-        if (current->IsLeaf()) return nullptr;
+        const std::wstring_view component(part.begin(), part.end());
+        if (component.empty()) continue;
+        if (current->IsLeaf()) return findAncestor ? current : nullptr;
 
         // Find the matching child using GetNameView for comparison
         auto it = std::ranges::find_if(current->GetChildren(),
             [&](const CItem* child) { return child->GetNameView() == component; });
-        if (it == current->GetChildren().end()) return nullptr;
+        if (it == current->GetChildren().end()) return findAncestor ? current : nullptr;
         current = *it;
     }
 

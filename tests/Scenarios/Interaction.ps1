@@ -130,6 +130,154 @@ function Test-SearchRecovery {
         'Search results remain keyboard-focusable after validation recovery'
 }
 
+function Test-WatcherRefresh {
+    param($Context, $Case)
+    $root = New-TestTree
+    $roots = @($root)
+    if ($Case.MultiRoot) {
+        $root = New-TestTree (Join-Path $Context.Root 'fixture-sibling')
+        $roots += $root
+    }
+    $app = Start-TestApp $roots
+    $list = Start-ObservedWatcher $app $root
+    $sentinel = New-TestFile (Join-Path $root 'beta\unrefreshed.txt') 313
+    $deleted = Join-Path $root 'alpha\selected-a.bin'
+    [IO.File]::Delete($deleted)
+    Wait-WatcherEvent $list $deleted 'Deleted'
+    Select-AppRows $app $list @($deleted)
+    Invoke-AppKeys $app '{F5}'
+    Wait-AppIdle $app
+    $rows = Save-AppReport $app 'watcher-deleted'
+    Assert-Equal @($rows | Where-Object Name -IEQ $deleted).Count 0 'Watcher refresh removes a deleted scanned item'
+    Assert-Equal @($rows | Where-Object Name -IEQ $sentinel).Count 0 'Watcher refresh preserves unrelated branches'
+    Assert-True ($deleted -in [NativeListViewHelper]::GetItemTexts($list)) 'Refreshing preserves watcher history'
+
+    # A repeated deleted entry and a new directory must resolve to an existing scanned ancestor.
+    $created = New-TestFile (Join-Path $root 'alpha\new-directory\created.txt') 317
+    Wait-WatcherEvent $list $created 'Created'
+    Select-AppRows $app $list @($deleted)
+    Invoke-AppKeys $app '{F5}'
+    Wait-AppIdle $app
+    $rows = Save-AppReport $app 'watcher-missing-ancestor'
+    Assert-Equal @($rows | Where-Object Name -IEQ $created).Count 1 `
+        'Missing watcher paths refresh their scanned ancestor'
+    Assert-Equal @($rows | Where-Object Name -IEQ $sentinel).Count 0 'Ancestor refresh stays within its scanned branch'
+
+    $modified = Join-Path $root 'alpha\selected-b.bin'
+    New-TestFile $modified 32003 | Out-Null
+    Wait-WatcherEvent $list $modified 'Modified'
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $actions = [NativeListViewHelper]::GetItemTexts($list, 2)
+    $index = @(for ($i = 0; $i -lt $names.Length; ++$i) {
+        if ($names[$i] -ieq $modified -and $actions[$i] -eq 'Modified') { $i }
+    })[0]
+    Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+        [NativeListViewHelper]::SelectItems($list, [int[]]@($index))) 'A modified watcher snapshot is selected'
+    Invoke-AppKeys $app '{F5}'
+    Wait-AppIdle $app
+    $rows = Save-AppReport $app 'watcher-modified'
+    Assert-Equal ([long]@($rows | Where-Object Name -IEQ $modified)[0].'Logical Size') 32003 `
+        'Refreshing a watcher snapshot updates the scanned item size'
+    Assert-Equal @($rows | Where-Object Name -IEQ $sentinel).Count 0 `
+        'Modified watcher refresh preserves sibling branches'
+}
+
+function Test-SearchRefresh {
+    param($Context, $Case)
+    $root = New-TestTree
+    $app = Start-TestApp @($root)
+    Get-AppList $app -AllFiles | Out-Null
+    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    $term = 'selected-[ab]\.bin$|^alpha$'
+    if ($Case.Root) { $term += '|fixture$' }
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), $term)
+    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
+    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $Case.Folders
+    if ($Case.Minimum) {
+        [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_MIN'), '1000')
+        [void] [TestDesktop]::Message((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_UNITS'), 0x014E, 0)
+    }
+    Close-AppDialog $dialog 1
+    $list = Get-AppList $app -TabName 'Search Results'
+    $first = Join-Path $root 'alpha\selected-a.bin'
+    $second = Join-Path $root 'alpha\selected-b.bin'
+    $folder = Join-Path $root 'alpha'
+    $expected = @($first, $second)
+    if ($Case.Folders) { $expected += $folder }
+    if ($Case.Root) { $expected += $root }
+    foreach ($selection in @(@($first), @($first, $second), @($folder), @($root))) {
+        if ($selection[0] -eq $folder -and -not $Case.Folders) { continue }
+        if ($selection[0] -eq $root -and -not $Case.Root) { continue }
+        New-TestFile $first 32771 | Out-Null
+        New-TestFile $second 8197 | Out-Null
+        Select-AppRows $app $list $selection
+        Invoke-AppKeys $app '{F5}'
+        Wait-AppIdle $app
+        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
+            'Single, multiple, and folder refreshes preserve surviving search results'
+        Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selection.Count `
+            'Refreshed search rows retain their selection'
+        $sizes = [NativeListViewHelper]::GetItemTexts($list, 2)
+        Assert-Equal ([long]($sizes[(Find-AppRow $list $first)] -replace '\D', '')) 32771 `
+            'The restored search row displays refreshed metadata'
+        Assert-True ([NativeListViewHelper]::GetItemTexts($list)[0] -eq "Search Results ($($expected.Count)+)") `
+            'Refresh reports the surviving count and retains the existing incomplete-results marker'
+    }
+
+    if ($Case.Minimum) {
+        New-TestFile $first 17 | Out-Null
+        Select-AppRows $app $list @($first)
+        Invoke-AppKeys $app '{F5}'
+        Wait-AppIdle $app
+        $expected = @($expected | Where-Object { $_ -ne $first })
+        Assert-Equal (Find-AppRow $list $first -Optional) -1 'Refresh reapplies the original search size filter'
+    }
+    [IO.File]::Delete($second)
+    Select-AppRows $app $list @($second)
+    Invoke-AppKeys $app '{F5}'
+    Wait-AppIdle $app
+    $expected = @($expected | Where-Object { $_ -ne $second })
+    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
+        'Refreshing a deleted search result removes only results that no longer match'
+}
+
+function Test-SearchRefreshCaseSensitive {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $folder = Join-Path $root 'alpha'
+    [IO.Directory]::CreateDirectory($folder) | Out-Null
+    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
+    $probe = Invoke-TestProcess $utility @('file', 'setCaseSensitiveInfo', $folder, 'enable')
+    if ($probe.ExitCode -ne 0) { Skip-Scenario 'Case-sensitive directories are unavailable for this fixture.' }
+    $first = New-TestFile (Join-Path $folder 'selected-a.bin') 65537
+    $second = New-TestFile (Join-Path $folder 'SELECTED-A.bin') 173
+    if ([IO.Directory]::GetFiles($folder).Count -ne 2) {
+        Skip-Scenario 'The filesystem did not preserve two filenames differing only in case.'
+    }
+    $app = Start-TestApp @($root)
+    Get-AppList $app -AllFiles | Out-Null
+    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^selected-a\.bin$|^alpha$')
+    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
+    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
+    Close-AppDialog $dialog 1
+    $list = Get-AppList $app -TabName 'Search Results'
+    Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 4 `
+        'The search finds both case-distinct files and their folder'
+    Select-AppRows $app $list @($folder)
+    Invoke-AppKeys $app '{F5}'
+    Wait-AppIdle $app
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $paths = @($names | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($paths | Sort-Object -CaseSensitive) @($first, $second, $folder | Sort-Object -CaseSensitive) `
+        'Refresh preserves distinct results whose filenames differ only in case'
+    $sizes = [NativeListViewHelper]::GetItemTexts($list, 2)
+    Assert-Equal ([long]($sizes[[Array]::IndexOf($names, $second)] -replace '\D', '')) 173 `
+        'The restored result references the file with the exact original name'
+}
+
 function Preserve-TestClipboard {
     $clipboard = [System.Windows.Forms.Clipboard]::GetDataObject()
     Add-Cleanup 'Restore clipboard' {
@@ -308,6 +456,25 @@ Register-Scenario interaction.settings-transaction Interaction `
 Register-Scenario interaction.search-recovery Interaction `
     'Invalid search criteria recover without destroying the previous results' `
     Test-SearchRecovery -Tags Desktop -Requires Windows,Desktop
+foreach ($multiRoot in $false, $true) {
+    $scope = if ($multiRoot) { 'multiple' } else { 'single' }
+    Register-Scenario "interaction.watcher-refresh.$scope" Interaction `
+        'Watcher snapshot refresh reconciles deleted and modified paths in the current scan' `
+        Test-WatcherRefresh -Tags Desktop,External -Requires Windows,Desktop -Data @{ MultiRoot = $multiRoot }
+}
+foreach ($search in @(
+    @{ Id = 'files'; Folders = $false; Minimum = $false; Root = $false },
+    @{ Id = 'folders'; Folders = $true; Minimum = $false; Root = $false },
+    @{ Id = 'size'; Folders = $true; Minimum = $true; Root = $false },
+    @{ Id = 'root'; Folders = $true; Minimum = $false; Root = $true }
+)) {
+    Register-Scenario "interaction.search-refresh.$($search.Id)" Interaction `
+        'Search refresh preserves matching rows and selections while updating metadata and filters' `
+        Test-SearchRefresh -Tags Desktop,External -Requires Windows,Desktop -Data $search
+}
+Register-Scenario interaction.search-refresh.case-sensitive Interaction `
+    'Search refresh distinguishes separate files whose names differ only in case' `
+    Test-SearchRefreshCaseSensitive -Tags Desktop,External,Filesystem -Requires Windows,Desktop,Ntfs
 Register-Scenario interaction.context-selection Interaction `
     'Keyboard popup cancellation preserves selection and command targeting' `
     Test-ContextSelection -Tags Desktop -Requires Windows,Desktop

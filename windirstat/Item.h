@@ -214,7 +214,7 @@ public:
     std::wstring GetPathLong() const;
     std::wstring GetFolderPath() const;
     bool HasUncPath() const;
-    CItem* FindItemByPath(const std::wstring& path) const;
+    CItem* FindItemByPath(const std::wstring& path, bool findAncestor = false) const;
 
     // Scanning & Done State
     void SetDone();
