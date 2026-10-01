@@ -543,7 +543,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         [](const size_t total, const CItem* item) { return total + static_cast<size_t>(1 + item->GetItemsCount()); });
 
     // Use direct parallel deletion only for filesystem items without shell progress UI
-    bool cancelled = false;
+    std::atomic<bool> cancelled = false;
     if (!hasMtpItems && !toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(
         totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
         {
