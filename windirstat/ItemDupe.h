@@ -64,6 +64,6 @@ public:
     bool IsSampled() const { return m_sampled; }
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const { return m_children; }
-    void AddDupeItemChild(CItemDupe* child);
+    void AddDupeItemChildren(std::span<CItemDupe* const> children);
     void RemoveDupeItemChild(CItemDupe* child);
 };

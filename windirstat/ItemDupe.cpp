@@ -154,25 +154,30 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     return m_caption;
 }
 
-void CItemDupe::AddDupeItemChild(CItemDupe* child)
+void CItemDupe::AddDupeItemChildren(std::span<CItemDupe* const> children)
 {
-    // Adjust parent item sizes
-    if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
-    {
-        m_sizeLogical += childItem->GetSizeLogical();
-        m_sizePhysical += childItem->GetSizePhysical();
-    }
-
-    child->SetParent(this);
+    if (children.empty()) return;
 
     std::scoped_lock guard(m_protect);
-    m_children.push_back(child);
-    m_captionDirty = true;
 
-    if (IsVisible() && IsExpanded())
+    // Adjust parent item sizes
+    for (CItemDupe* child : children)
     {
-        CFileDupeControl::Get()->OnChildAdded(this, child);
+        if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
+        {
+            m_sizeLogical += childItem->GetSizeLogical();
+            m_sizePhysical += childItem->GetSizePhysical();
+        }
+        child->SetParent(this);
     }
+
+    m_children.append_range(children);
+    m_captionDirty = true;
+    if (!IsVisible() || !IsExpanded()) return;
+
+    // Publish visible rows with a single list insertion.
+    const std::vector<CTreeListItem*> rows(children.begin(), children.end());
+    CFileDupeControl::Get()->OnChildrenAdded(this, rows);
 }
 
 void CItemDupe::RemoveDupeItemChild(CItemDupe* child)

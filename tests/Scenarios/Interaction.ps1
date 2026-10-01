@@ -453,6 +453,75 @@ function Test-DeduplicateGroups {
     Assert-ScanSnapshot (Save-AppReport $app 'after-dedup') (Get-DiskSnapshot $root) $root -Physical
 }
 
+function Test-DuplicateBatchUpdates {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $incoming = Join-Path $root 'incoming'
+    [IO.Directory]::CreateDirectory($incoming) | Out-Null
+    $stable = @(foreach ($group in 1, 2) {
+        foreach ($member in 'a', 'b') {
+            New-TestFile (Join-Path $root "stable\group-$group-$member.bin") 32768 $group
+        }
+    })
+    $app = Start-TestApp @($root) -Settings @{ DupeView = @{ ScanForDuplicates = 1 } }
+    Get-AppList $app -AllFiles | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_DUPLICATE_FILES'
+    $list = Get-AppList $app
+    $texts = [NativeListViewHelper]::GetItemTexts($list)
+    Assert-Equal $texts.Count 3 'The initial duplicate tree exposes two collapsed hash groups'
+    Select-AppRows $app $list @($texts[1])
+    [void] [NativeListViewHelper]::PostRight($list)
+    Wait-Until { [NativeListViewHelper]::GetItemCount($list) -eq 5 } 'Only the selected hash group expands' | Out-Null
+    $texts = [NativeListViewHelper]::GetItemTexts($list)
+    $expanded = @($stable | Where-Object { $_ -in $texts })
+    $hidden = @($stable | Where-Object { $_ -notin $texts })
+    Select-AppRows $app $list $expanded
+    if ($Case.Collapsed) {
+        Select-AppRows $app $list @($texts[0])
+        [void] [TestDesktop]::Message($list, 0x0100, 0x25)
+        Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 1 'The duplicate root collapses before refresh'
+    }
+
+    $added = @(foreach ($group in 1, 2, 3) {
+        foreach ($member in 'c', 'd') {
+            New-TestFile (Join-Path $incoming "group-$group-$member.bin") 32768 $group
+        }
+    })
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($incoming)
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Invoke-AppCommand $app 'ID_VIEW_DUPLICATE_FILES'
+    $texts = [NativeListViewHelper]::GetItemTexts($list)
+    if ($Case.Collapsed) {
+        Assert-Equal $texts.Count 1 'New groups and files leave the duplicate root collapsed'
+        Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) 1 'The collapsed root retains its selection'
+    } else {
+        Assert-Equal $texts.Count 8 'The expanded group receives new files while the other groups stay collapsed'
+        Assert-Equal @($hidden | Where-Object { $_ -in $texts }).Count 0 'Existing collapsed groups remain collapsed'
+        Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $expanded.Count `
+            'Adding new groups and files preserves the existing multi-selection'
+        foreach ($file in $expanded) {
+            Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $file), 2).ToInt32()) 2 `
+                'The same file remains selected after row insertion and sorting'
+        }
+        $counts = [NativeListViewHelper]::GetItemTexts($list, 1)
+        $groupCounts = @(for ($index = 1; $index -lt $texts.Count; ++$index) {
+            if (-not [IO.Path]::IsPathFullyQualified($texts[$index])) { $counts[$index] }
+        })
+        Assert-Sequence @($groupCounts | Sort-Object) @('2', '4', '4') 'Every hash group displays its updated count'
+    }
+    $expected = @($stable + $added | Sort-Object)
+    $rows = Save-AppReport $app 'batched-duplicates' -Command 'ID_SAVE_DUPLICATES'
+    Assert-Sequence @($rows.Name | Sort-Object) $expected `
+        'Duplicate export includes every old and new matching file once'
+    Assert-Equal @($rows | Where-Object { [long]$_.'Logical Size' -ne 32768 }).Count 0 `
+        'Batched duplicate additions retain each file size'
+    Expand-AppGroups $app $list $expected
+    Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 14 `
+        'Expanding all groups reveals every duplicate exactly once'
+}
+
 function Test-CleanupReparseReplacement {
     param($Context, $Case)
     $root = New-TestTree
@@ -530,3 +599,9 @@ Register-Scenario interaction.dedup-groups Interaction `
 Register-Scenario interaction.cleanup-reparse Interaction `
     'Empty-folder cleanup rechecks reparse boundaries after external replacement' `
     Test-CleanupReparseReplacement -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
+foreach ($collapsed in $false, $true) {
+    $state = if ($collapsed) { 'collapsed' } else { 'expanded' }
+    Register-Scenario "interaction.duplicate-batch.$state" Interaction `
+        'Batched duplicate additions preserve tree expansion, selection, counts, and export contents' `
+        Test-DuplicateBatchUpdates -Tags Desktop,External -Requires Windows,Desktop -Data @{ Collapsed = $collapsed }
+}
