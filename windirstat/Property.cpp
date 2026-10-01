@@ -308,7 +308,7 @@ template <> void Setting<std::wstring>::ReadPersistedProperty()
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
-    static const std::wregex reWrite(LR"((\r|\n)+)");
+    static const std::wregex reWrite(LR"(\r\n|\r|\n)");
     const std::wstring valueCleaned = std::regex_replace(m_value, reWrite, L"\x1e");
     GetPersistedSettingStorage().WriteString(m_section, m_entry, valueCleaned);
 }
