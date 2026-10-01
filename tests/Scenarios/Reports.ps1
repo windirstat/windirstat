@@ -99,6 +99,21 @@ function Test-MalformedReportType {
     Assert-ScanSnapshot (Save-AppReport $app 'valid-reloaded') (Get-DiskSnapshot $root) $root -Physical
 }
 
+function Test-MalformedLayoutSettings {
+    param($Context, $Case)
+    $root = New-TestTree
+    $snapshot = Get-DiskSnapshot $root
+    $invalid = @('10,', ',10', '10,,20', 'word', '2147483648', '-2147483649', '10x,20')
+    for ($index = 0; $index -lt $invalid.Count; ++$index) {
+        $value = $invalid[$index]
+        $runner = New-TestRunner @{
+            FileTreeView = @{ ColumnWidths = $value; ColumnOrder = $value; ColumnVisibility = $value }
+            TreeMapView = @{ TreeMapCustomPreset = $value }
+        }
+        Assert-ScanSnapshot (Invoke-ScanReport $runner @($root) "malformed-layout-$index") $snapshot $root -Physical
+    }
+}
+
 function Test-PermissionExport {
     param($Context, $Case)
     $root = New-TestTree
@@ -141,5 +156,7 @@ foreach ($format in 'csv', 'json') {
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `
     Test-QuietFailure -Tags External
+Register-Scenario reports.malformed-layout Reports 'Malformed persisted integer lists recover to usable defaults' `
+    Test-MalformedLayoutSettings -Tags Persistence,External
 Register-Scenario reports.permissions Reports 'Real ACL inheritance agrees across CSV and JSON exports' `
     Test-PermissionExport -Tags Filesystem -Requires Windows,Ntfs

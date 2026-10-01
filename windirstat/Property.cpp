@@ -361,8 +361,17 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
     for (const std::wstring s = GetPersistedSettingStorage().ReadString(m_section, m_entry);
         const auto& token : SplitString(s, L','))
     {
+        // Reject malformed lists so the control can restore its default layout.
+        wchar_t* end = nullptr;
+        errno = 0;
+        int value = wcstol(token.c_str(), &end, 10);
+        if (end == token.c_str() || *end != L'\0' || errno == ERANGE)
+        {
+            m_value.clear();
+            return;
+        }
+
         // Scale from stored 96 DPI values to current DPI
-        int value = std::stoi(token);
         if (m_entry == L"ColumnWidths") value = ScaleForDpi(value);
         m_value.push_back(value);
     }
