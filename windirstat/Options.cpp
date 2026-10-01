@@ -48,7 +48,7 @@ void COptions::SanitizeRect(RECT& rect)
 
     if (rc.top < 0)
     {
-        rc.Offset(-rc.top, 0);
+        rc.Offset(0, -rc.top);
     }
     if (rc.top > rcDesktop.bottom - visible)
     {
