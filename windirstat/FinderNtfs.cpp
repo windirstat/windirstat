@@ -279,11 +279,15 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 const auto fileRecord = ByteOffset<FILE_RECORD>(buffer.get(), offset);
 
                 // Bounds check for fixup array access
-                if (fileRecord->UsaOffset + sizeof(USHORT) * fileRecord->UsaCount > volumeInfo.BytesPerFileRecordSegment) continue;
-                if (fileRecord->FirstAttributeOffset >= volumeInfo.BytesPerFileRecordSegment) continue;
+                constexpr auto MFT_RECORD_SECTOR_SIZE = 512u;
+                if (!fileRecord->IsValid() ||
+                    fileRecord->UsaCount != volumeInfo.BytesPerFileRecordSegment / MFT_RECORD_SECTOR_SIZE + 1 ||
+                    fileRecord->UsaOffset < sizeof(FILE_RECORD) || fileRecord->UsaOffset % sizeof(USHORT) != 0 ||
+                    fileRecord->UsaOffset + sizeof(USHORT) * fileRecord->UsaCount >
+                        volumeInfo.BytesPerFileRecordSegment ||
+                    fileRecord->FirstAttributeOffset >= volumeInfo.BytesPerFileRecordSegment) continue;
 
                 // Apply fixup (NTFS MFTs always have a 512 byte sector size)
-                constexpr auto MFT_RECORD_SECTOR_SIZE = 512u;
                 constexpr auto wordsPerSector = MFT_RECORD_SECTOR_SIZE / sizeof(USHORT);
                 const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
                 bool skipRecord = false;
@@ -300,7 +304,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 }
 
                 // Skip if corrupt record detected
-                if (skipRecord) [[unlikely]] break;
+                if (skipRecord) [[unlikely]] continue;
 
                 // Only process records that have valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
@@ -310,9 +314,12 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                     fileRecord->BaseFileRecordSequence : fileRecord->SequenceNumber;
                 const auto baseFileReference = baseRecordIndex | (baseRecordSequence << 48);
 
-                // Base and extension records can update the same file from different data runs.
-                std::scoped_lock recordLock(m_baseFileRecordMutex);
-                auto& baseRecord = m_baseFileRecordMap[baseRecordIndex];
+                FileRecordBase* baseRecordPtr = nullptr;
+                if (std::scoped_lock lock(m_baseFileRecordMutex); true)
+                {
+                    baseRecordPtr = &m_baseFileRecordMap[baseRecordIndex];
+                }
+                auto& baseRecord = *baseRecordPtr;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
