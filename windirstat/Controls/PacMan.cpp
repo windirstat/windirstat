@@ -49,6 +49,11 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor,
     const bool dots, const std::optional<bool> suspended)
 {
     const ULONGLONG now = GetTickCount64();
+    if (rect.Width() <= 0 || rect.Height() <= 0)
+    {
+        m_lastDraw = now;
+        return;
+    }
     if (suspended.value_or(m_suspended))
     {
         // Rebase time if suspended
