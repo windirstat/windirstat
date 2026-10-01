@@ -82,7 +82,7 @@ std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, c
         {
             if (i == 0 && c == L'^') continue;
             if (c == L'\\' && i + 1 < pattern.size() &&
-                literalEscapes.contains(pattern[i + 1]))
+                (literalEscapes.contains(pattern[i + 1]) || iswspace(pattern[i + 1]) || iswpunct(pattern[i + 1])))
             {
                 literal.push_back(pattern[++i]);
                 continue;
@@ -114,16 +114,17 @@ std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, c
 }
 
 // In path filters, treat single backslashes as Windows separators even in regex
-// mode. Already escaped separators and escaped regex metacharacters are preserved.
+// mode, except for valid regex escapes, which retain their regex meaning.
 std::wstring CFiltering::NormalizePathRegex(const std::wstring_view pattern)
 {
-    constexpr std::wstring_view preservedEscapes = L"\\.+*?()[]{}^$|";
+    constexpr std::wstring_view preservedEscapes = LR"(\.+*?()[]{}^$|/bBdDsSwWfnrtv0cux123456789)";
     std::wstring result;
     result.reserve(pattern.size());
     for (size_t i = 0; i < pattern.size(); ++i)
     {
         if (pattern[i] == L'\\' &&
-            (i + 1 >= pattern.size() || !preservedEscapes.contains(pattern[i + 1])))
+            (i + 1 >= pattern.size() || (!preservedEscapes.contains(pattern[i + 1]) &&
+                !iswspace(pattern[i + 1]) && !iswpunct(pattern[i + 1]))))
         {
             result += L"\\\\";
         }

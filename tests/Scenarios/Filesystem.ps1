@@ -141,6 +141,33 @@ function Test-FilterTraversal {
     Assert-Equal ([long]$rows[0].'Logical Size') 923L 'Filtered recursive totals reflect only retained bytes'
 }
 
+function Test-RegexDirectoryFilters {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $numeric = New-TestFile (Join-Path $root '123-abc\file.bin') 101
+    $descendant = New-TestFile (Join-Path $root '123-abc\nested\file.bin') 103
+    $repeated = New-TestFile (Join-Path $root 'abc-abc\file.bin') 107
+    $spaced = New-TestFile (Join-Path $root 'abc xyz\file.bin') 109
+    New-TestFile (Join-Path $root 'abc-123\file.bin') 113 | Out-Null
+    New-TestFile (Join-Path $root 'abc-xyz\file.bin') 127 | Out-Null
+    $patterns = @(
+        @{ Regex = '\\(\d+)-\w+\b$'; Files = @($numeric, $descendant) },
+        @{ Regex = '\\(\w+)-\1$'; Files = @($repeated) },
+        @{ Regex = '\\\w+\s+\w+$'; Files = @($spaced) }
+    )
+    for ($index = 0; $index -lt $patterns.Count; ++$index) {
+        $pattern = [regex]::Escape($root) + $patterns[$index].Regex
+        $runner = New-TestRunner @{
+            Options = @{ UseFastScanEngine = $Case.Engine; FilteringUseRegex = 1 }
+            DriveSelect = @{ FilteringIncludeDirs = $pattern }
+        }
+        $rows = Invoke-ScanReport $runner @($root) "regex-$index"
+        Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
+            @($patterns[$index].Files | Sort-Object) `
+            'Directory regex escapes retain their meaning and include matching descendants'
+    }
+}
+
 function Test-DeniedDirectory {
     param($Context, $Case)
     $visible = New-TestFile (Join-Path $Context.Fixture 'visible.txt') 317
@@ -176,6 +203,8 @@ foreach ($engine in 0, 1) {
         Test-AllocatedSizes -Tags Filesystem -Requires Windows,Ntfs,Compression -Data @{ Engine = $engine }
     Register-Scenario "fs.filters.$engineName" Filesystem 'Nested include anchors across exclusion boundaries' `
         Test-FilterTraversal -Tags Filesystem -Data @{ Engine = $engine }
+    Register-Scenario "fs.regex.$engineName" Filesystem 'Regex escapes and backreferences in directory filters' `
+        Test-RegexDirectoryFilters -Tags Filesystem -Data @{ Engine = $engine }
 }
 Register-Scenario fs.symlinks Filesystem 'File and directory symlinks share targets without losing their paths' `
     Test-SymbolicLinks -Tags Filesystem -Requires Windows,Ntfs
