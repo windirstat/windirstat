@@ -32,6 +32,7 @@ class FinderNtfsContext final
         ULONG Attributes = 0;
         DWORD ReparsePointTag = 0;
         bool HasIgnoredStream = false;
+        bool HasWofData = false;
     };
 
     using FileRecordName = struct FileRecordName

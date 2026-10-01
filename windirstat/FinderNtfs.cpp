@@ -309,12 +309,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 const ULONGLONG baseRecordSequence = fileRecord->BaseFileRecordNumber > 0 ?
                     fileRecord->BaseFileRecordSequence : fileRecord->SequenceNumber;
                 const auto baseFileReference = baseRecordIndex | (baseRecordSequence << 48);
-                FileRecordBase* baseRecordPtr = nullptr;
-                if (std::scoped_lock lock(m_baseFileRecordMutex); true)
-                {
-                    baseRecordPtr = &m_baseFileRecordMap[baseRecordIndex];
-                }
-                auto& baseRecord = *baseRecordPtr;
+
+                // Base and extension records can update the same file from different data runs.
+                std::scoped_lock recordLock(m_baseFileRecordMutex);
+                auto& baseRecord = m_baseFileRecordMap[baseRecordIndex];
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
@@ -324,7 +322,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         baseRecord.LastModifiedTime = si->LastModificationTime;
-                        baseRecord.Attributes = si->FileAttributes;
+                        baseRecord.Attributes |= si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
                         if (baseRecord.Attributes == 0) baseRecord.Attributes = FILE_ATTRIBUTE_NORMAL;
                     }
@@ -355,6 +353,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                                 baseRecord.PhysicalSize = curAttribute->IsNonResident() ?
                                     curAttribute->Form.Nonresident.AllocatedLength :
                                     (curAttribute->Form.Resident.ValueLength + 7) & ~7;
+                                baseRecord.HasWofData = true;
                             }
 
                             // Dropbox (and compatible tools) set this stream to mark items as ignored
@@ -375,7 +374,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                             baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
 
                             if (const ULONGLONG physSize = (curAttribute->IsCompressed() || curAttribute->IsSparse()) ?
-                                curAttribute->Form.Nonresident.Compressed : curAttribute->Form.Nonresident.AllocatedLength; physSize > 0)
+                                curAttribute->Form.Nonresident.Compressed :
+                                    curAttribute->Form.Nonresident.AllocatedLength;
+                                !baseRecord.HasWofData && physSize > 0)
                             {
                                 baseRecord.PhysicalSize = physSize;
                             }
@@ -383,7 +384,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         else
                         {
                             baseRecord.LogicalSize = curAttribute->Form.Resident.ValueLength;
-                            baseRecord.PhysicalSize = (curAttribute->Form.Resident.ValueLength + 7) & ~7;
+                            if (!baseRecord.HasWofData)
+                                baseRecord.PhysicalSize = (curAttribute->Form.Resident.ValueLength + 7) & ~7;
                         }
                     }
                     else if (curAttribute->TypeCode == AttributeReparsePoint)
