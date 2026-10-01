@@ -209,6 +209,33 @@ function Test-ExternalMutationDuringScan {
     Assert-GraphRendered $app | Out-Null
 }
 
+function Test-ExtensionGroupingDuringScan {
+    param($Context, $Case)
+    $root = New-StressTree
+    $app = Start-TestApp @($root) -Settings @{
+        Options = @{ UseFastScanEngine = 0; ScanningThreads = 1 }; DupeView = @{ ScanForDuplicates = 1 }
+    } -DuringScan
+    Wait-AppScanning $app
+    Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
+    Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } 'The scan suspends' | Out-Null
+    $grouping = Get-AppCommandState $app 'ID_VIEW_GROUP_TYPES'
+    Assert-True (-not $grouping.Enabled) 'Extension grouping is unavailable until the scan settles'
+    [void] [TestDesktop]::Message($app.Window, 0x0111, (Get-ResourceId 'ID_VIEW_GROUP_TYPES'))
+    Assert-Equal (Get-AppCommandState $app 'ID_VIEW_GROUP_TYPES').Checked $grouping.Checked `
+        'Direct command dispatch cannot rebuild extension data while workers are active'
+    Invoke-AppCommand $app 'ID_SCAN_RESUME'
+    Wait-AppIdle $app
+    Wait-Until { (Get-AppCommandState $app 'ID_VIEW_GROUP_TYPES').Enabled } `
+        'Extension grouping becomes available after worker completion' | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_GROUP_TYPES'
+    Assert-Equal (Get-AppCommandState $app 'ID_VIEW_GROUP_TYPES').Checked (-not $grouping.Checked) `
+        'Extension grouping works after the scan settles'
+    Assert-Equal @(Get-ReportFiles (Save-AppReport $app 'grouped')).Count $StressFileCount `
+        'Regrouping preserves the completed scan model'
+}
+
+Register-Scenario lifecycle.extension-grouping Lifecycle 'Extension regrouping waits for scan worker completion' `
+    Test-ExtensionGroupingDuringScan -Tags Desktop,Race -Requires Windows,Desktop
 Register-Scenario lifecycle.watcher-events Lifecycle `
     'External create/write/rename/delete notifications and history clearing' `
     Test-WatcherTransitions -Tags Desktop,External,Race -Requires Windows,Desktop

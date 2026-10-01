@@ -628,6 +628,7 @@ void CMainFrame::OnViewShowFileTypes()
 
 void CMainFrame::OnViewGroupUnregisteredTypes() const
 {
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
     COptions::GroupUnregisteredTypes = !COptions::GroupUnregisteredTypes;
 
     // Recolor extensions so the unregistered group shares one color, then refresh the list and graph
