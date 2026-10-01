@@ -47,9 +47,7 @@ If you prefer a manual installer, need a portable archive, or want to browse old
 
 * Copyright © WinDirStat Team ([windirstat.net](https://windirstat.net/))
 
-The application itself is distributed under the terms of the [GPL v2](windirstat/res/license.txt), but parts of the source code are also available under more lenient license terms.
-
-*Note:* you are not at liberty to upgrade the GPL version to anything later than v2 at this moment.
+The application itself is distributed under the terms of the [GPL v3 or later](windirstat/res/license.txt), but parts of the source code are also available under more lenient license terms.
 
 The logo and all derivatives are available under the terms of the Creative
 Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
