@@ -848,6 +848,6 @@ int CToolBar::AddImage(const CBitmap& bmp)
 
 void CTabControl::OnAppearanceChanged()
 {
-    SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::Color(DarkMode::ColorRole::WindowText) :
+    SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::Color(DarkMode::ColorRole::Window) :
         CLR_NONE);
 }

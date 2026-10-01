@@ -71,6 +71,6 @@ class CTabCtrlHelper final
 public:
     static void SetupTabControl(CTabControl& tab)
     {
-        tab.SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOWTEXT) : CLR_NONE);
+        tab.SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOW) : CLR_NONE);
     }
 };
