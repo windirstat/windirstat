@@ -58,6 +58,6 @@ protected:
     inline static CFileDupeControl* m_singleton = nullptr;
     CItemDupe* m_rootItem = nullptr;
     bool m_sampleLargeFiles = COptions::SampleLargeFiles;
-    bool m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
+    std::atomic<bool> m_showCloudWarningOnThisScan{ COptions::ShowDupeDetectionCloudLinksWarning.Obj() };
 
 };

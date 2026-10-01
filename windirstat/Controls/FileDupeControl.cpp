@@ -35,9 +35,8 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
     if (item->IsTypeOrFlag(ITRP_CLOUD) && COptions::SkipDupeDetectionCloudLinks)
     {
         // Show warning and skip
-        if (m_showCloudWarningOnThisScan)
+        if (m_showCloudWarningOnThisScan.exchange(false))
         {
-            m_showCloudWarningOnThisScan = false;
             if (const auto [nID, isChecked] = CMessageBoxDlg::Show(Localization::Lookup(IDS_DUPLICATES_WARNING),
                 Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_OK | MB_ICONINFORMATION, this);
                 nID == IDOK && isChecked)
