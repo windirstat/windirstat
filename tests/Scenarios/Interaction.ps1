@@ -54,6 +54,37 @@ function Get-ValidationDialog {
     } 'Invalid input produces an owned validation dialog' -Seconds 10
 }
 
+function Test-SettingsRoundTrip {
+    param($Context, $Case)
+    $root = New-TestTree
+    $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapHeightFactor = 38 } }
+    $settings = Open-AppDialog $app 'ID_CONFIGURE'
+    Select-SettingsPage $settings 'Graphs'
+    $height = Get-DialogControl $settings 'IDC_HEIGHT'
+    $label = Get-DialogControl $settings 'IDC_STATICHEIGHT'
+    Assert-Equal ([TestDesktop]::Text($label)) '38' 'The height label matches the active treemap factor'
+    [void] [TestDesktop]::Message($height, 0x0405, 1, 159)
+    [void] [NativeListViewHelper]::FocusWindow($height)
+    Invoke-AppKeys $app '{RIGHT}' -Window $settings
+    Wait-Until { [TestDesktop]::Text($label) -eq '160' } 'The slider label follows its actual value' | Out-Null
+    Select-SettingsPage $settings 'Filtering'
+    $filter = "first`r`n`r`nthird"
+    [TestDesktop]::SetText((Get-DialogControl $settings 'IDC_FILTERING_EXCLUDE_FILES'), $filter)
+    Close-AppDialog $settings 1
+    Stop-TestApp $app
+    $app = Start-TestApp @($root) -Runner $app.Runner
+    $settings = Open-AppDialog $app 'ID_CONFIGURE'
+    Select-SettingsPage $settings 'Graphs'
+    Assert-Equal ([TestDesktop]::Text((Get-DialogControl $settings 'IDC_STATICHEIGHT'))) '160' `
+        'Height values above 100 survive a fresh process with matching display values'
+    Assert-Equal ([TestDesktop]::Message((Get-DialogControl $settings 'IDC_HEIGHT'), 0x0400).ToInt32()) 160 `
+        'The loaded slider position matches the applied height factor'
+    Select-SettingsPage $settings 'Filtering'
+    Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $settings 'IDC_FILTERING_EXCLUDE_FILES'))) $filter `
+        'Saving and restarting preserves blank lines in filter text'
+    Close-AppDialog $settings
+}
+
 function Test-SettingsTransaction {
     param($Context, $Case)
     $root = $Context.Fixture
@@ -450,6 +481,9 @@ Register-Scenario interaction.scoped-refresh Interaction `
 Register-Scenario interaction.removed-root Interaction `
     'Refreshing a vanished multi-root selection preserves surviving roots' `
     Test-RemovedRootRefresh -Tags Desktop,External,Race -Requires Windows,Desktop
+Register-Scenario interaction.settings-roundtrip Interaction `
+    'Height factors and blank lines survive settings persistence' `
+    Test-SettingsRoundTrip -Tags Desktop,Persistence -Requires Windows,Desktop
 Register-Scenario interaction.settings-transaction Interaction `
     'Cross-page validation applies display settings atomically and persists them' `
     Test-SettingsTransaction -Tags Desktop,Persistence -Requires Windows,Desktop

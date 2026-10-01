@@ -335,7 +335,7 @@ public:
     inline static Setting<int> TreeMapBrightness{ OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100 };
     inline static Setting<bool> TreeMapContrastLabels{ OptionsTreeMap, L"TreeMapContrastLabels", CTreeMap::GetDefaults().contrastLabels };
     inline static Setting<int> TreeMapFolderFramesDrawThreshold{ OptionsTreeMap, L"TreeMapFolderFramesDrawThreshold", CTreeMap::GetDefaults().folderFramesDrawThreshold, 3, 128 };
-    inline static Setting<int> TreeMapHeightFactor{ OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100 };
+    inline static Setting<int> TreeMapHeightFactor{ OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 200 };
     inline static Setting<int> TreeMapLightSourceX{ OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200 };
     inline static Setting<int> TreeMapLightSourceY{ OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200 };
     inline static Setting<int> TreeMapSaturation{ OptionsTreeMap, L"TreeMapSaturation", CTreeMap::GetDefaults().GetSaturationPercent(), 0, 100 };

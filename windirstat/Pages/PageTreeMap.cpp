@@ -140,7 +140,7 @@ void CPageTreeMap::UpdateStatics()
         ? IDS_PAGE_GRAPHS_GRID_AUTO : IDS_PAGE_GRAPHS_GRID_COLOR));
     SetText(IDC_STATICBRIGHTNESS, m_brightness.GetPos());
     SetText(IDC_STATICCUSHIONSHADING, m_cushionShading.GetPos());
-    SetText(IDC_STATICHEIGHT, m_height.GetPos() / (c_MaxHeight / 100));
+    SetText(IDC_STATICHEIGHT, m_height.GetPos());
     SetText(IDC_STATICSCALEFACTOR, m_scaleFactor.GetPos());
 }
 
