@@ -77,6 +77,28 @@ function Test-QuietFailure {
     Assert-ScanSnapshot $rows (Get-DiskSnapshot $root) $root
 }
 
+function Test-MalformedReportType {
+    param($Context, $Case)
+    $root = New-TestTree
+    $runner = New-TestRunner
+    $source = Invoke-ScanReport $runner @($root) 'valid' -Format $Case.Format
+    foreach ($type in '0x30000200', '0x30000204') {
+        $row = $source[0].PSObject.Copy()
+        $row.'WinDirStat Attributes' = $type
+        $row.Index = '0x0000000000000001'
+        $path = Join-Path $Context.Root "malformed-$type.$($Case.Format)"
+        if ($Case.Format -eq 'json') {
+            [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject @($row)))
+        } else { $row | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
+        $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path)
+        Assert-True (-not (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled) `
+            'A report cannot create pointer-backed hardlink nodes, including mixed type masks'
+        Stop-TestApp $app
+    }
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)"))
+    Assert-ScanSnapshot (Save-AppReport $app 'valid-reloaded') (Get-DiskSnapshot $root) $root -Physical
+}
+
 function Test-PermissionExport {
     param($Context, $Case)
     $root = New-TestTree
@@ -113,6 +135,8 @@ foreach ($format in 'csv', 'json') {
     Register-Scenario "reports.roundtrip.$format" Reports `
         'Saved models survive external changes and refresh to current disk state' `
         Test-ReportRoundTrip -Tags Desktop,Persistence,External -Requires Windows,Desktop -Data @{ Format = $format }
+    Register-Scenario "reports.malformed-type.$format" Reports 'Reject pointer-backed nodes in external reports' `
+        Test-MalformedReportType -Tags Desktop,External -Requires Windows,Desktop -Data @{ Format = $format }
 }
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `

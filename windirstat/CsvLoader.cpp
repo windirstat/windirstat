@@ -202,6 +202,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
 
     const auto itType = IT_MASK & type;
+    if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
+        itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
 
     std::wstring_view displayName = namePath;
