@@ -43,8 +43,8 @@ void CAboutDlg::WdsTabControl::Initialize()
 
     m_textThanks.SetText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT));
 
-    m_textLicense.SetText(GetTextResource(IDR_LICENSE));
     m_textLicense.SetFont(m_monoFont);
+    m_textLicense.SetText(GetTextResource(IDR_LICENSE));
 
     // Set default rich edit settings
     CHARFORMAT2 charFormat = {{.cbSize = sizeof(CHARFORMAT2)}};
