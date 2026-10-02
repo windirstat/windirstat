@@ -6,25 +6,23 @@
 
 #pragma once
 
-#include "RecoveryNtfs.h"
+#include "RecoveryShared.h"
 
-class ExFatRecovery final
+class ExFatRecovery final : public RecoveryShared
 {
 public:
-    explicit ExFatRecovery(const std::wstring& volumeName, NtfsRecovery::Progress* progress = nullptr);
-    void Scan(NtfsRecovery::Progress& progress, NtfsRecovery::ScanResult& result,
-        const std::function<void(const NtfsRecovery::Record&)>& discovered = {});
-    std::wstring Recover(const NtfsRecovery::Record& record, const std::wstring& canonicalDestination,
-        NtfsRecovery::Progress& progress);
+    explicit ExFatRecovery(const std::wstring& volumeName, Progress* progress = nullptr);
+    void Scan(Progress& progress, ScanResult& result,
+        const std::function<void(const Record&)>& discovered = {}) override;
 
 private:
-    using Condition = NtfsRecovery::Condition;
-    using Failure = NtfsRecovery::Failure;
-    using Progress = NtfsRecovery::Progress;
-    using Record = NtfsRecovery::Record;
+    std::wstring RecoverFile(const Record& record,
+        const std::wstring& canonicalDestination, Progress& progress) override;
 
-    static constexpr DWORD ReadSize = 1024 * 1024;
-    static constexpr size_t MaxEntrySetSize = 256 * 32;
+    // One primary entry, one stream entry and at least one filename entry; up to 255 secondary entries.
+    static constexpr size_t EntryBytes = 32;
+    static constexpr size_t MinEntrySetSize = 3 * EntryBytes;
+    static constexpr size_t MaxEntrySetSize = (1 + size_t(UCHAR_MAX)) * EntryBytes;
 
     // Sizes and offsets are in bytes; cluster indices retain exFAT's numbering from two.
     struct Geometry
@@ -40,15 +38,12 @@ private:
     };
 
     static bool ParseBootRegion(std::span<const BYTE> bytes, ULONGLONG deviceLength, Geometry& geometry);
-    static bool ParseEntrySet(std::span<const BYTE> bytes, const Geometry& geometry, NtfsRecovery::Record& record);
+    static bool ParseEntrySet(std::span<const BYTE> bytes, const Geometry& geometry, Record& record);
 
     static FILETIME Timestamp(DWORD packed, BYTE increment, BYTE offset);
 
-    SmartPointer<HANDLE, decltype(&CloseHandle)> m_volume{ CloseHandle };
-    SmartPointer<void*, decltype(&_aligned_free)> m_rawBuffer{ _aligned_free };
-    size_t m_rawBufferSize = 0;
     ULONGLONG m_length = 0;
-    DWORD m_alignment = 4096;
+    DWORD m_alignment = InitialSectorAlignment;
     Geometry m_geometry;
     std::vector<BYTE> m_boot;
     std::vector<DWORD> m_rootClusters;
@@ -61,17 +56,14 @@ private:
     std::vector<BYTE> m_bitmapPage;
     ULONGLONG m_bitmapPageOffset = ULLONG_MAX;
 
-    void ReadRaw(ULONGLONG offset, std::span<BYTE> bytes);
     void ReadAt(ULONGLONG offset, std::span<BYTE> bytes);
-    void Initialize(NtfsRecovery::Progress* progress);
+    void Initialize(Progress* progress);
     DWORD NextCluster(DWORD cluster);
     ULONGLONG ClusterOffset(DWORD cluster) const;
-    std::vector<DWORD> Chain(DWORD first, ULONGLONG length, bool contiguous,
-        NtfsRecovery::Progress& progress);
-    void VisitEntries(const std::vector<DWORD>& clusters, NtfsRecovery::Progress& progress,
+    std::vector<DWORD> Chain(DWORD first, ULONGLONG length, bool contiguous, Progress& progress);
+    void VisitEntries(const std::vector<DWORD>& clusters, Progress& progress,
         const std::function<bool(std::span<const BYTE>, ULONGLONG)>& visit);
     void ReadBitmap(ULONGLONG offset, std::span<BYTE> bytes);
-    bool ClustersHaveState(DWORD first, ULONGLONG count, bool allocated,
-        NtfsRecovery::Progress& progress, bool fresh = false);
-    void Validate(const NtfsRecovery::Record& record, NtfsRecovery::Progress& progress);
+    bool ClustersHaveState(DWORD first, ULONGLONG count, bool allocated, Progress& progress, bool fresh = false);
+    void Validate(const Record& record, Progress& progress);
 };

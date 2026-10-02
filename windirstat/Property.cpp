@@ -194,7 +194,7 @@ bool PersistedSettingStorage::WriteBinary(const std::wstring& section, const std
         {
             const unsigned byte = std::to_integer<unsigned>(value);
             buffer[2 * i] = hexDigits[byte >> 4];
-            buffer[2 * i + 1] = hexDigits[byte & 0x0f];
+            buffer[2 * i + 1] = hexDigits[byte & 0x0F];
         }
         return size;
     });
@@ -291,14 +291,14 @@ template <> void Setting<bool>::WritePersistedProperty()
 template <> void Setting<std::wstring>::ReadPersistedProperty()
 {
     m_value = GetPersistedSettingStorage().ReadString(m_section, m_entry, m_value);
-    static const std::wregex reRead(LR"(\x1e)");
+    static const std::wregex reRead(LR"(\x1E)");
     m_value = std::regex_replace(m_value, reRead, L"\r\n");
 }
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
     static const std::wregex reWrite(LR"(\r\n|\r|\n)");
-    const std::wstring valueCleaned = std::regex_replace(m_value, reWrite, L"\x1e");
+    const std::wstring valueCleaned = std::regex_replace(m_value, reWrite, L"\x1E");
     GetPersistedSettingStorage().WriteString(m_section, m_entry, valueCleaned);
 }
 

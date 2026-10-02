@@ -14,7 +14,7 @@
 class CStatic : public CWnd
 {
 public:
-    bool Create(const LPCWSTR lpszText, const DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID = 0xffff)
+    bool Create(const LPCWSTR lpszText, const DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID = 0xFFFF)
     {
         return CreateEx(0, WC_STATICW, lpszText, dwStyle, rect, pParentWnd, nID);
     }

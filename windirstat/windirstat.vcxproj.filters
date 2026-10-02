@@ -308,6 +308,9 @@
     <ClInclude Include="RecoveryNtfs.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
+    <ClInclude Include="RecoveryShared.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
     <ClInclude Include="RecoveryExFat.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
@@ -358,6 +361,9 @@
     </ClInclude>
     <ClInclude Include="UiWindow.h">
       <Filter>Header Files\User Interface\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="RecoveryFat.h">
+      <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -553,6 +559,9 @@
     <ClCompile Include="RecoveryNtfs.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
+    <ClCompile Include="RecoveryShared.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
     <ClCompile Include="RecoveryExFat.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
@@ -594,6 +603,9 @@
     </ClCompile>
     <ClCompile Include="UiDialogs.cpp">
       <Filter>Source Files\User Interface\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="RecoveryFat.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

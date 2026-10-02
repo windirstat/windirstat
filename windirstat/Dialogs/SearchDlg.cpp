@@ -66,7 +66,7 @@ bool SearchDlg::OnInitDialog()
         m_layout.AddControl(maximum, 0, 0, 0, 0);
         m_layout.AddControl(units, 0, 0, 0, 0);
         GetDlgItem(minimum).SendMessage(EM_SETCUEBANNER, true, L"0");
-        GetDlgItem(maximum).SendMessage(EM_SETCUEBANNER, true, L"\u221e");
+        GetDlgItem(maximum).SendMessage(EM_SETCUEBANNER, true, L"\u221E");
         for (const auto& unit : { GetSpec_Bytes(), GetSpec_KiB(), GetSpec_MiB(), GetSpec_GiB(), GetSpec_TiB() })
             GetDlgItem(units).SendMessage(CB_ADDSTRING, 0, unit.c_str());
     }
@@ -88,7 +88,7 @@ bool SearchDlg::OnInitDialog()
         std::wstring term(std::from_range, line);
         if (term.ends_with(L'\r')) term.pop_back();
         auto flags = defaultFlags;
-        if (term.size() >= 2 && term[0] == L'\x1f' && term[1] >= L'0' && term[1] <= L'7')
+        if (term.size() >= 2 && term[0] == L'\x1F' && term[1] >= L'0' && term[1] <= L'7')
         {
             flags = term[1] - L'0';
             term.erase(0, 2);
@@ -207,13 +207,13 @@ void SearchDlg::SaveSearchHistory(const SearchCriteria* criteria) const
     if (criteria != nullptr && !criteria->term.empty() && historyLimit > 0)
     {
         const int flags = CombineSearchFlags(criteria->regex, criteria->wholePhrase, criteria->caseSensitive);
-        history.push_back(std::format(L"\x1f{}{}", flags, criteria->term));
+        history.push_back(std::format(L"\x1F{}{}", flags, criteria->term));
     }
     for (int i = 0; i < m_searchTerm.GetCount() && history.size() < historyLimit; ++i)
     {
         const std::wstring term = m_searchTerm.GetItemText(i);
         if (criteria != nullptr && term == criteria->term) continue;
-        history.push_back(std::format(L"\x1f{}{}", m_searchTerm.GetItemData(i), term));
+        history.push_back(std::format(L"\x1F{}{}", m_searchTerm.GetItemData(i), term));
     }
     COptions::SearchHistory = JoinString(history, L'\n');
 }

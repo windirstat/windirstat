@@ -124,8 +124,8 @@ $script:ExecutableInfo = [pscustomobject]@{
     MayBeStale = $exeInfo.LastWriteTimeUtc -lt $newestSource.LastWriteTimeUtc
 }
 $binary = [IO.File]::ReadAllBytes($ExePath)
-$peOffset = [BitConverter]::ToInt32($binary, 0x3c)
-$script:BinaryIs64Bit = [BitConverter]::ToUInt16($binary, $peOffset + 4) -in @(0x8664, 0xaa64)
+$peOffset = [BitConverter]::ToInt32($binary, 0x3C)
+$script:BinaryIs64Bit = [BitConverter]::ToUInt16($binary, $peOffset + 4) -in @(0x8664, 0xAA64)
 $script:ResourceIds = Read-CHeaderNumericDefines $ResourceHeaderPath
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 Add-Type -Path (Join-Path $PSScriptRoot 'Harness\NativeInterop.cs')

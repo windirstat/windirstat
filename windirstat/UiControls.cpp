@@ -810,7 +810,7 @@ int CToolBar::AddImage(const CBitmap& bmp)
 
             for (RGBQUAD& pixel : pixelSpan)
             {
-                const BYTE alpha = sourceHasAlpha ? pixel.rgbReserved : 0xff;
+                const BYTE alpha = sourceHasAlpha ? pixel.rgbReserved : 0xFF;
 
                 // Grayscale using NTSC weights
                 const BYTE gray = static_cast<BYTE>(

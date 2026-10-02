@@ -8,7 +8,7 @@
 
 #include "pch.h"
 #include "Layout.h"
-#include "RecoveryNtfs.h"
+#include "RecoveryShared.h"
 #include "PacMan.h"
 
 class RecoveryDlg final : public MessageTarget<RecoveryDlg, CLayoutDialog>
@@ -55,7 +55,7 @@ private:
     void StartWorker(std::function<void()> work);
     void UpdateList(size_t first = 0, bool append = false);
     std::wstring CellText(size_t index, int column) const;
-    static std::wstring ErrorText(const NtfsRecovery::Failure& failure);
+    static std::wstring ErrorText(const RecoveryShared::Failure& failure);
 
     ResultsList m_list;
     ProgressAnimation m_animation;
@@ -65,15 +65,15 @@ private:
     std::vector<std::wstring> m_roots;
     std::vector<std::wstring> m_confirmedVolumes;
     std::wstring m_root;
-    std::unique_ptr<NtfsRecovery> m_volume;
-    NtfsRecovery::ScanResult m_scan;
-    NtfsRecovery::ScanResult m_completedScan;
+    std::unique_ptr<RecoveryShared> m_volume;
+    RecoveryShared::ScanResult m_scan;
+    RecoveryShared::ScanResult m_completedScan;
     std::vector<std::wstring> m_outcomes;
     std::mutex m_resultMutex;
-    std::vector<NtfsRecovery::Record> m_pendingRecords;
+    std::vector<RecoveryShared::Record> m_pendingRecords;
     std::vector<std::pair<size_t, std::wstring>> m_pendingOutcomes;
     std::vector<size_t> m_visible;
-    NtfsRecovery::Progress m_progress;
+    RecoveryShared::Progress m_progress;
     std::wstring m_error;
     std::wstring m_cell;
     bool m_busy = false;
