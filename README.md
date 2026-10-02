@@ -2,25 +2,32 @@
 
 ## Description
 
-WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows. It scans local drives, selected drives, individual folders, and command-line targets, then shows where storage is being used through a sortable directory tree, an extension/type breakdown, and an interactive [treemap](https://en.wikipedia.org/wiki/Treemap) where larger files and folders take up larger areas.
+WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows. Scan drives, folders, network shares, or connected MTP devices, then explore disk usage through sortable file lists, file-type statistics, and interactive treemaps, sunbursts, or flame graphs.
 
-Alongside the visual overview, WinDirStat helps you investigate and act on disk usage. You can find large files, search and filter results, detect duplicates by hash, inspect logical versus physical size, watch file-system changes, save or reload scans, and launch cleanup or Windows maintenance actions directly from the interface.
-
-For more information on the background of WinDirStat and alternative versions on other operating systems, please visit the [WinDirStat website](https://windirstat.net/).
+Find large or duplicate files, inspect permissions, estimate storage costs, export reports, and run cleanup or deleted-file recovery tools. See the [website](https://windirstat.net/) for an overview and the [user guide](https://github.com/windirstat/windirstat/wiki) for usage details.
 
 ### Major features
 
-* Flexible scanning for local drives, selected drives, folders, and command-line targets, with refresh, suspend, resume, stop, fast NTFS scanning, multithreading, and elevated privilege support
-* All Files, Largest Files, Duplicate Files, Search Results, File Watcher, Extension, and Treemap views
-* Interactive treemap navigation with zooming, parent/child reselection, extension labels, logical or physical sizing, and configurable KDirStat or SequoiaView styling
-* Sortable file details including logical/physical size, percentages, item counts, attributes, owner, modified time, free/unknown space, hardlinks, and hash prefixes
-* Search, duplicate detection, and filtering with regular expressions, configurable hash algorithms, cloud-file safeguards, hardlink deduplication, path/name filters, size filters, and reparse-point exclusions
-* File watching and reporting with created/deleted/modified/renamed events, CSV scan import/export, duplicate CSV export, and command-line CSV workflows
-* Built-in actions for opening items, copying paths, selecting in Explorer, invoking the Explorer context menu, opening Command Prompt or PowerShell, moving files, showing properties, deleting files, and emptying folders or the Recycle Bin
-* Windows cleanup and maintenance shortcuts for Disk Cleanup, Programs and Features, DISM, shadow copies, defrag, CHKDSK, VHDX optimization, hibernate files, user profiles, Mark-of-the-Web tags, sparse files, and NTFS compression
-* User-defined cleanup actions plus dark mode, portable settings, Explorer context-menu integration, localization, locale-aware formatting, configurable columns, larger toolbar icons, and high-DPI aware UI behavior
+* Scan multiple drives or folders together, with pause/resume, refresh, and accelerated local NTFS scanning when elevated
+* Explore largest files, file types, logical versus physical size, hardlinks, and free/unknown space with configurable visualizations
+* Search scanned results by name, size, file/folder type, or owner; filter scans by path, name, size, or age, with regular-expression support
+* Detect duplicates using configurable hashes and cloud-file safeguards; optional sparse hashing labels sampled matches as **Probable duplicates**
+* Inspect file and folder permission entries and estimate storage tier costs by file modification age
+* Watch file-system changes, save/load scans as CSV or JSON, and export scan, duplicate, or permission reports from the command line
+* [Recover deleted files](https://github.com/windirstat/windirstat/wiki/Recovering-Files) from local NTFS, exFAT, and FAT drives with administrator access; recovery depends on surviving metadata and file data
+* Open, move, or delete files; run Windows cleanup tools, NTFS compression, hardlink deduplication, and custom cleanup commands
+* Customize layouts, columns, colors, fonts, and toolbar size, with dark mode, portable settings, translations, and Explorer integration
 
 For changes in recent versions, please check out [the change log](CHANGELOG.md).
+
+### Getting started
+
+1. Choose drives or **Individual Folders** in **Select Drives**. Use the add-folder button to scan several folders together. Connected MTP devices appear under **Individual Drives**.
+2. Enable **Scan for duplicate files** only when needed; hashing adds file reads. For accelerated full-drive NTFS scans, use **File > Run Elevated**.
+3. Sort **All Files** or open **Largest Files**, select an item to locate it in the visualization, and use `Ctrl+F` to search. Right-click column headers to choose details and use **View** to switch graphs.
+4. Review items in Explorer before cleanup, then refresh affected results. Use **File > Save Results To CSV/JSON** to keep a scan snapshot.
+
+For scripting, use `/SaveTo`, `/SaveDupesTo`, or `/SavePermsTo` followed by an output filename and scan targets. Save modes write a report and exit; `/LoadFrom` reopens a saved scan. See [command-line examples and export formats](https://github.com/windirstat/windirstat/wiki/Command-Line-and-CSV).
 
 ### Installation
 
@@ -72,6 +79,7 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 ## Resources
 
 * A [website](https://windirstat.net/)
+* The [user guide and reference](https://github.com/windirstat/windirstat/wiki)
 * A [blog](https://blog.windirstat.net/)
 * Twitter/X as [@windirstat](https://x.com/windirstat)
 * SubReddit [r/WinDirStat](https://www.reddit.com/r/WinDirStat/)
