@@ -2,6 +2,9 @@
 TITLE Building WinDirStat
 SETLOCAL EnableExtensions EnableDelayedExpansion
 
+:: let Windows PowerShell initialize its own module paths
+SET PSMODULEPATH=
+
 :: solicit whether this is production or beta build
 ECHO Please choose a release type:
 ECHO 1. Beta
