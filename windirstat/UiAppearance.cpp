@@ -443,9 +443,12 @@ static void DrawScaledButton(const HWND window, const HDC dc)
                 return Gdiplus::Color(alpha, GetRValue(value), GetGValue(value), GetBValue(value));
             };
             Gdiplus::Graphics graphics(memory);
+
+            // Keep antialiased outlines inside the bitmap and centered on its pixels.
             graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-            const float stroke = std::max(1.0f, glyphWidth / 15.0f), inset = stroke / 2.0f;
-            const float width = glyphWidth - stroke, height = glyphHeight - stroke;
+            graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+            const float stroke = std::max(1.0f, glyphWidth / 15.0f), inset = (stroke + 1.0f) / 2.0f;
+            const float width = glyphWidth - 2.0f * inset, height = glyphHeight - 2.0f * inset;
             Gdiplus::SolidBrush fill(color(COLOR_HIGHLIGHT, pressed ? 208 : hot ? 232 : 255));
             Gdiplus::SolidBrush mark(color(enabled ? COLOR_HIGHLIGHTTEXT : COLOR_GRAYTEXT));
             Gdiplus::Pen border(color(!enabled ? COLOR_GRAYTEXT :
