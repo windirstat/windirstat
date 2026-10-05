@@ -280,6 +280,7 @@ bool FatRecovery::ParseEntry(const std::span<const BYTE> bytes, const Geometry& 
     record.modified = timestamp(entry.modifiedDate, entry.modifiedTime, 0);
     record.data.size = record.data.initialized = entry.size;
     record.data.nonresident = count != 0;
+    record.supported = record.data.supported = record.inUse || count <= 1;
     if (count != 0 || record.directory) record.data.runs.push_back({ 0, LONGLONG(first) - FatFirstDataCluster, count });
     record.condition = count == 0 ? Condition::Resident : Condition::Unallocated;
     const auto snapshot = longName ? bytes : bytes.last(FatEntryBytes);
@@ -469,9 +470,9 @@ void FatRecovery::Scan(Progress& progress, ScanResult& result,
                 if (record.directory && record.inUse)
                     pending.push_back({ static_cast<DWORD>(record.data.runs.front().lcn + FatFirstDataCluster),
                         record.path + L"\\" });
-                if (record.inUse || record.directory) return true;
+                if (record.inUse || record.directory || !record.supported) return true;
 
-                // FAT deletion erases the chain: larger candidates explicitly assume consecutive free clusters.
+                // FAT deletion erases the chain; only the starting cluster remains identifiable.
                 try
                 {
                     for (const auto& run : record.data.runs)
@@ -580,7 +581,8 @@ void FatRecovery::Validate(const Record& record, Progress& progress)
     }
     Record current;
     if (entries != record.snapshot || !ParseEntry(entries, m_geometry, current) ||
-        current.inUse || current.directory || current.data.size != record.data.size ||
+        current.inUse || current.directory || !current.supported || !current.data.supported ||
+        current.data.size != record.data.size ||
         current.data.initialized != record.data.initialized || current.data.runs != record.data.runs)
         throw Failure{ L"IDS_RECOVERY_CHANGED" };
     for (const auto& run : current.data.runs)

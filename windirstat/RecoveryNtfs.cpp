@@ -699,14 +699,14 @@ std::wstring NtfsRecovery::RecoverFile(const Record& record,
         if (position != stream.size) throw Failure{ {}, ERROR_INVALID_DATA };
     }
 
-    // Revalidate the completed copy before its temporary file can acquire the final output name.
-    ValidateRecord(record);
-    for (const auto& run : stream.runs)
-        if (run.lcn >= 0 && !ClustersFree(run.lcn, run.count, progress)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
-    output.Commit([&progress]
+    // Revalidate source metadata and allocation on both sides of the destination flush.
+    output.Commit([&]
     {
-        // Honor pause and cancellation before finalizing the recovered file.
+        // Honor pause and cancellation before reading fresh source metadata and allocation.
         progress.Check();
+        ValidateRecord(record);
+        for (const auto& run : stream.runs)
+            if (run.lcn >= 0 && !ClustersFree(run.lcn, run.count, progress)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
     }, &record.created, &record.modified);
     return output.Path();
 }
