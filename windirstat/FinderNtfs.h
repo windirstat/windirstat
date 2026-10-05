@@ -63,6 +63,7 @@ class FinderNtfs final : public Finder
 
     std::wstring m_base;
     ULONGLONG m_index = 0;
+    ScanResult m_result{ ScanOutcome::Complete, {} };
 
 public:
 
@@ -80,4 +81,5 @@ public:
     std::wstring GetFilePath() const override;
     bool IsReserved() const override { return m_index < FinderNtfsContext::NtfsReservedMax; }
     bool HasIgnoredStream() const override { return m_currentRecord->HasIgnoredStream; }
+    const ScanResult& GetResult() const noexcept override { return m_result; }
 };

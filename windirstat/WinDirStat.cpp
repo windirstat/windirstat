@@ -9,6 +9,7 @@
 #include "AboutDlg.h"
 #include "CsvLoader.h"
 #include "FinderMtp.h"
+#include "StorageSource.h"
 
 CIconHandler* GetIconHandler()
 {
@@ -294,6 +295,17 @@ private:
                     m_invalidPath = true;
                     continue;
                 }
+
+                // Remote targets are validated locally; network access belongs to scan workers.
+                if (StorageSource::IsPath(paramSpilt))
+                {
+                    const auto target = StorageSource::Parse(paramSpilt);
+                    if (!target) { m_invalidPath = true; continue; }
+                    if (!m_path.empty()) m_path += wds::chrPipe;
+                    m_path += target->ToString();
+                    continue;
+                }
+
                 // Preserve valid MTP shell paths without filesystem normalization.
                 if (FinderMtp::IsPath(paramSpilt) && FinderMtp::DoesFileExist(paramSpilt))
                 {

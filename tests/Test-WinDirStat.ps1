@@ -84,7 +84,8 @@ foreach ($pattern in $scenarioPatterns) {
 $selected = @($script:Scenarios | Where-Object {
     $entry = $_
     $profileMatches = $Profile -eq 'All' -or
-        ('Hardware' -notin $entry.Tags -and ($Profile -eq 'Extended' -or 'Extended' -notin $entry.Tags))
+        ('Hardware' -notin $entry.Tags -and 'External' -notin $entry.Tags -and
+            ($Profile -eq 'Extended' -or 'Extended' -notin $entry.Tags))
     $explicitSelection = $tags.Count -or $scenarioPatterns.Count -or $entry.Suite -in $onlyNames
     ($profileMatches -or $explicitSelection) -and
         (-not $onlyNames.Count -or $entry.Suite -in $onlyNames) -and $entry.Suite -notin $skipNames -and

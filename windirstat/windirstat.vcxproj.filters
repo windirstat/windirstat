@@ -302,6 +302,15 @@
     <ClInclude Include="FinderMtp.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
+    <ClInclude Include="FinderRemote.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="StorageSource.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteStorage.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
     <ClInclude Include="FinderNtfs.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
@@ -551,6 +560,12 @@
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="FinderMtp.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderRemote.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="StorageSource.cpp">
       <Filter>Source Files\Core\Finders</Filter>
     </ClCompile>
     <ClCompile Include="FinderNtfs.cpp">

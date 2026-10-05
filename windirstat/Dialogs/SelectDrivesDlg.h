@@ -157,6 +157,8 @@ protected:
     void OnBnClickedBrowseButton() { BrowseFolders(false); }
     void OnBnClickedAddFolder() { BrowseFolders(true); }
     void OnBnClickedFilterButton();
+    void OnCloudStorage();
+    void OnCloudStorageDropdown(NMHDR*, LRESULT* result) { OnCloudStorage(); *result = 0; }
     bool PreprocessMessage(MSG* pMsg) override;
     void OnEditchangeBrowseFolder();
     void OnSelchangeBrowseFolder();
@@ -179,6 +181,8 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
         Route::Control<&OnBnClickedBrowseButton>(STN_CLICKED, IDC_BROWSE_BUTTON),
         Route::Control<&OnBnClickedAddFolder>(STN_CLICKED, IDC_ADD_FOLDER),
         Route::Control<&OnBnClickedFilterButton>(STN_CLICKED, IDC_FILTER_BUTTON),
+        Route::Control<&OnCloudStorage>(BN_CLICKED, IDC_CLOUD_STORAGE),
+        Route::Notify<&OnCloudStorageDropdown>(BCN_DROPDOWN, IDC_CLOUD_STORAGE),
         Route::Control<&OnBnClickedFastScanCheckbox>(BN_CLICKED, IDC_FAST_SCAN_CHECKBOX),
         Route::Control<&OnBnClickedRadioTargetDrivesAll>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_ALL),
         Route::Control<&OnBnClickedRadioTargetDrivesSubset>(BN_CLICKED, IDC_RADIO_TARGET_DRIVES_SUBSET),

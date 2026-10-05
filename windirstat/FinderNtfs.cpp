@@ -434,20 +434,28 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 
 bool FinderNtfs::FindNext()
 {
-    if (m_recordIterator == m_recordIteratorEnd) return false;
-    m_index = m_recordIterator->FileReference & FinderNtfsContext::NtfsRecordMask;
-    const auto it = m_master->m_baseFileRecordMap.find(m_index);
-    if (it == m_master->m_baseFileRecordMap.end()) return false;
-    m_currentRecord = &it->second;
-    m_currentRecordName = &(*m_recordIterator);
-    ++m_recordIterator;
-
-    return true;
+    // Retain healthy entries when an indexed child has no usable file record.
+    while (m_recordIterator != m_recordIteratorEnd)
+    {
+        m_currentRecordName = &(*m_recordIterator++);
+        m_index = m_currentRecordName->FileReference & FinderNtfsContext::NtfsRecordMask;
+        const auto it = m_master->m_baseFileRecordMap.find(m_index);
+        if (it == m_master->m_baseFileRecordMap.end())
+        {
+            if (m_result.error.empty())
+                m_result = { ScanOutcome::Partial, GetFilePath() + L": " + TranslateError(ERROR_INVALID_DATA) };
+            continue;
+        }
+        m_currentRecord = &it->second;
+        return true;
+    }
+    return false;
 }
 
 bool FinderNtfs::FindFile(const CItem* item)
 {
     m_base = item->GetPath();
+    m_result = { ScanOutcome::Complete, {} };
     const auto result = m_master->m_parentToChildMap.find(item->GetIndex() & FinderNtfsContext::NtfsRecordMask);
     if (result == m_master->m_parentToChildMap.end()) return false;
     m_recordIteratorEnd = result->second.end();

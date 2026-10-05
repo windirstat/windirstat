@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "CsvLoader.h"
 #include "FinderMtp.h"
+#include "StorageSource.h"
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -121,6 +122,8 @@ enum : std::uint8_t
     FIELD_ATTRIBUTES_WDS,
     FIELD_INDEX,
     FIELD_OWNER,
+    FIELD_SCAN_OUTCOME,
+    FIELD_SCAN_ERROR,
     FIELD_COUNT
 };
 
@@ -139,7 +142,9 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
         { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
         { (Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
-        { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
+        { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER },
+        { L"ScanOutcome", FIELD_SCAN_OUTCOME },
+        { L"ScanError", FIELD_SCAN_ERROR }
     };
 
     for (const auto [c, name] : std::views::enumerate(header))
@@ -180,14 +185,44 @@ static std::string QuoteAndConvert(const std::wstring_view inc)
 
 // ── shared item-construction helper ─────────────────────────────────────────
 
+static constexpr std::array<std::wstring_view, 7> scanOutcomes =
+    { L"not-started", L"complete", L"partial", L"cancelled", L"missing", L"connection-error", L"enumeration-error" };
+
+static void FinalizeImportedResults(CItem* root)
+{
+    if (root == nullptr) return;
+    std::vector<CItem*> items{ root };
+    for (size_t i = 0; i < items.size(); ++i)
+        if (!items[i]->IsLeaf()) for (auto* child : items[i]->GetChildren())
+            if (!child->IsLeaf()) items.push_back(child);
+
+    // Reconstruct known local bytes under mixed containers whose exported physical total is unknown.
+    for (auto* item : items | std::views::reverse)
+    {
+        if (!item->HasSizePhysical() && !item->IsLeaf())
+        {
+            ULONGLONG physical = 0;
+            for (const auto* child : item->GetChildren()) physical += child->GetSizePhysicalRaw();
+            item->SetSizePhysical(physical);
+        }
+        if (!item->IsLeaf())
+            COptions::TreeMapUseLogical ? item->SortItemsBySizeLogical() : item->SortItemsBySizePhysical();
+    }
+    CItem::ReconcileScanResults(root);
+}
+
 // Build a CItem from decoded field values, attach to tree, and register in parentMap
 static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstring_view wdsAttr,
     const std::wstring_view lastChange, const std::wstring_view sizePhysical, const std::wstring_view sizeLogical,
     const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
-    const std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
+    const std::wstring_view folders, CItem*& newroot,
+    std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap,
+    const std::wstring_view scanOutcome = {}, const std::wstring_view scanError = {})
 {
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
     const bool isMtp = (type & ITF_MTP) != 0;
+    const bool isRemote = (type & ITF_REMOTE) != 0;
+    if (isRemote && !StorageSource::Parse(namePath)) return nullptr;
     const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
 
     const auto itType = IT_MASK & type;
@@ -197,7 +232,37 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     std::wstring_view displayName = namePath;
     CItem* parent = nullptr;
-    if (!isRoot && itType != IT_DRIVE)
+    if (isRemote && !isRoot)
+    {
+        // Directory URIs include their delimiter; marker objects can share that exact URI.
+        const auto query = namePath.find(L'?');
+        const auto address = std::wstring_view(namePath).substr(0, query);
+        const auto suffix = query == namePath.npos ? std::wstring{} : namePath.substr(query);
+        auto leaf = address;
+        if (itType == IT_DIRECTORY && leaf.ends_with(L'/')) leaf.remove_suffix(1);
+        const auto slash = leaf.rfind(L'/');
+        if (slash != leaf.npos)
+        {
+            const auto found = parentMap.find(std::wstring(leaf.substr(0, slash + 1)) + suffix);
+            if (found != parentMap.end()) { parent = found->second; displayName = leaf.substr(slash + 1); }
+        }
+        if (parent == nullptr && newroot != nullptr)
+        {
+            const auto roots = newroot->IsTypeOrFlag(IT_MYCOMPUTER) ?
+                std::span(newroot->GetChildren()) : std::span<CItem* const>(&newroot, 1);
+            for (auto* root : roots)
+            {
+                if (!root->IsTypeOrFlag(ITF_REMOTE)) continue;
+                const std::wstring rootPath = root->GetPath();
+                const auto q = rootPath.find(L'?');
+                const auto rootAddress = std::wstring_view(rootPath).substr(0, q);
+                if ((q == rootPath.npos ? std::wstring{} : rootPath.substr(q)) != suffix ||
+                    !leaf.starts_with(rootAddress) || leaf.substr(rootAddress.size()).contains(L'/')) continue;
+                parent = root; displayName = leaf.substr(rootAddress.size()); break;
+            }
+        }
+    }
+    else if (!isRoot && itType != IT_DRIVE)
     {
         if (const auto separator = namePath.rfind(L'\\'); separator != std::wstring_view::npos)
         {
@@ -225,9 +290,14 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
     CItem* newitem = CItem::Create(type, mtpName.empty() ? displayName : std::wstring_view(mtpName),
         FromTimeString(lastChange),
-        wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(),  nullptr, 10),
+        isRemote ? 0 : wcstoull(sizePhysical.data(), nullptr, 10), wcstoull(sizeLogical.data(), nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
+    const auto outcome = std::ranges::find(scanOutcomes, scanOutcome);
+    newitem->SetScanResult({ outcome != scanOutcomes.end() ?
+        static_cast<ScanOutcome>(outcome - scanOutcomes.begin()) :
+        (type & ITF_SCANERROR) != 0 ? ScanOutcome::Partial : ScanOutcome::Complete,
+        StorageSource::DisplayName(scanError) });
     if (isMtpRoot)
         newitem->SetIndex(FinderMtp::RegisterPath(mtpPath, !mtpName.empty() ? mtpPath : std::wstring{}));
 
@@ -244,7 +314,7 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     assert(newitem->IsMtpRoot() == isMtpRoot);
 
-    if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
+    if (!newitem->TmiIsLeaf() && (isRemote || newitem->GetItemsCount() > 0))
     {
         parentMap[namePath] = newitem;
 
@@ -308,7 +378,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             // Validate all necessary fields are present
             for (const auto [i, order] : std::views::enumerate(orderMap))
             {
-                if (i == FIELD_OWNER) continue;
+                if (i >= FIELD_OWNER) continue;
                 if (order == UCHAR_MAX)
                 {
                     delete newroot;
@@ -327,12 +397,12 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
-            fields[orderMap[FIELD_FOLDERS]], newroot, parentMap);
+            fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
+            orderMap[FIELD_SCAN_OUTCOME] < fields.size() ? fields[orderMap[FIELD_SCAN_OUTCOME]] : std::wstring_view{},
+            orderMap[FIELD_SCAN_ERROR] < fields.size() ? fields[orderMap[FIELD_SCAN_ERROR]] : std::wstring_view{});
     }
 
-    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
-    for (const auto& val : parentMap | std::views::values)
-        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
+    FinalizeImportedResults(newroot);
 
     return newroot;
 }
@@ -353,7 +423,9 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         { Localization::Lookup(IDS_COL_LAST_CHANGE),   FIELD_LAST_CHANGE   },
         { Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_INDEX),         FIELD_INDEX         },
-        { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         }
+        { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         },
+        { L"ScanOutcome", FIELD_SCAN_OUTCOME },
+        { L"ScanError", FIELD_SCAN_ERROR }
     };
 
     CItem* newroot = nullptr;
@@ -386,12 +458,11 @@ static CItem* LoadResultsJson(std::ifstream& reader)
             fieldValues[FIELD_LAST_CHANGE], fieldValues[FIELD_SIZE_PHYSICAL],
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
-            fieldValues[FIELD_FOLDERS], newroot, parentMap);
+            fieldValues[FIELD_FOLDERS], newroot, parentMap,
+            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR]);
     }
 
-    if (newroot != nullptr) COptions::TreeMapUseLogical ? newroot->SortItemsBySizeLogical() : newroot->SortItemsBySizePhysical();
-    for (const auto& val : parentMap | std::views::values)
-        COptions::TreeMapUseLogical ? val->SortItemsBySizeLogical() : val->SortItemsBySizePhysical();
+    FinalizeImportedResults(newroot);
 
     return newroot;
 }
@@ -487,12 +558,15 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             item->GetFilesCount(),
             item->GetFoldersCount(),
             item->GetSizeLogical(),
-            item->GetSizePhysicalRaw() + adjustedSize,
+            item->HasSizePhysical() ? std::to_string(item->GetSizePhysicalRaw() + adjustedSize) : std::string{},
             QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
             std::to_underlying(itemType),
             index);
         if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
+        const auto& result = item->GetScanResult();
+        outf << "," << QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]) << "," <<
+            QuoteAndConvert(StorageSource::EscapeName(result.error, true));
     }
     outf.flush();
     return outf.good();
@@ -541,7 +615,9 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << keys[FIELD_FILES]          << ": " << item->GetFilesCount()                                       << ",\r\n";
         outf << "  " << keys[FIELD_FOLDERS]        << ": " << item->GetFoldersCount()                                     << ",\r\n";
         outf << "  " << keys[FIELD_SIZE_LOGICAL]   << ": " << item->GetSizeLogical()                                      << ",\r\n";
-        outf << "  " << keys[FIELD_SIZE_PHYSICAL]  << ": " << (item->GetSizePhysicalRaw() + adjustedSize)                << ",\r\n";
+        const auto physical = item->HasSizePhysical() ?
+            std::to_string(item->GetSizePhysicalRaw() + adjustedSize) : "null";
+        outf << "  " << keys[FIELD_SIZE_PHYSICAL]  << ": " << physical << ",\r\n";
         outf << "  " << keys[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
         outf << "  " << keys[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
         std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
@@ -549,6 +625,10 @@ static bool SaveResultsJson(std::ofstream& outf,
             keys[FIELD_INDEX], index);
         if (includeOwner)
             outf << ",\r\n  " << keys[FIELD_OWNER] << ": " << JsonQuoteW(item->GetOwner(true));
+        const auto& result = item->GetScanResult();
+        outf << ",\r\n  " << keys[keys.size() - 2] << ": " <<
+            JsonQuoteW(scanOutcomes[static_cast<size_t>(result.outcome)]);
+        outf << ",\r\n  " << keys.back() << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
         outf << "\r\n}";
     });
 }
@@ -572,6 +652,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         Localization::Lookup(IDS_COL_INDEX)
     };
     if (includeOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
+    cols.emplace_back(L"ScanOutcome");
+    cols.emplace_back(L"ScanError");
 
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;

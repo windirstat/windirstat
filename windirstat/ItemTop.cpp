@@ -83,8 +83,10 @@ HICON CItemTop::GetIcon()
     }
 
     // Fetch all other icons
+    const std::wstring iconPath = m_item->IsTypeOrFlag(ITF_REMOTE) ?
+        L"C:\\~" + m_item->GetExtension() : m_item->GetPath();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+        viewState->control, iconPath, m_item->GetAttributes(), &viewState->icon, nullptr));
     return viewState->icon;
 }
 

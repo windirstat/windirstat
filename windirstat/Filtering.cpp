@@ -6,6 +6,7 @@
 
 #include "pch.h"
 #include "Filtering.h"
+#include "StorageSource.h"
 #include "HelpersInterface.h"
 #include "Options.h"
 
@@ -32,12 +33,6 @@ static bool HasUnescapedTrailingDollar(const std::wstring_view pattern)
         ++slashCount;
     }
     return slashCount % 2 == 0;
-}
-
-static std::wstring MatchDirectoryAndDescendants(std::wstring pattern)
-{
-    if (HasUnescapedTrailingDollar(pattern)) pattern.pop_back();
-    return L"(?:" + pattern + L")(?:\\\\.*)?";
 }
 
 static bool CompareThreshold(const ULONGLONG value, const ULONGLONG threshold, const int comparison)
@@ -93,10 +88,10 @@ std::wstring CFiltering::ExtractIncludeAnchor(const std::wstring_view pattern, c
 
     if (truncated)
     {
-        // Trim back to the last directory boundary; chars after the last
-        // backslash are part of the wildcarded segment, not a fixed dir.
-        const auto bs = literal.find_last_of(L'\\');
-        literal.resize(bs == std::wstring::npos ? 0 : bs);
+        // Trim wildcarded components; a partial remote authority provides no fixed directory anchor.
+        const bool remote = StorageSource::IsPath(literal);
+        const auto bs = literal.find_last_of(remote ? L'/' : L'\\');
+        literal.resize(bs == std::wstring::npos || (remote && bs < literal.find(L"://") + 3) ? 0 : bs);
     }
     while (!literal.empty() && literal.back() == L'\\') literal.pop_back();
     return literal;
@@ -139,9 +134,16 @@ std::wregex CFiltering::CompilePattern(const std::wstring& pattern, const bool u
     const std::wstring normalized = useRegex && pathFilter ? NormalizePathRegex(pattern) : pattern;
 
     // Directory filters apply to the directory itself and everything below it.
+    const bool remote = StorageSource::IsPath(pattern) ||
+        pattern.starts_with(L'^') && StorageSource::IsPath(std::wstring_view(pattern).substr(1));
     std::wstring expression = useRegex ? normalized : GlobToRegex(normalized, false);
-    if (pathFilter) expression = MatchDirectoryAndDescendants(std::move(expression));
-    return std::wregex(expression, std::regex_constants::icase | std::regex_constants::optimize);
+    if (pathFilter)
+    {
+        if (HasUnescapedTrailingDollar(expression)) expression.pop_back();
+        expression = L"(?:" + expression + (remote ? L")(?:/.*)?" : L")(?:\\\\.*)?");
+    }
+    return std::wregex(expression, std::regex_constants::optimize |
+        (remote ? std::regex_constants::ECMAScript : std::regex_constants::icase));
 }
 
 std::optional<std::wstring> CFiltering::ValidateFilters(
@@ -220,7 +222,9 @@ void CFiltering::CompileFilters()
 
 std::wstring_view CFiltering::WithoutTrailingBackslashes(std::wstring_view path)
 {
-    while (!path.empty() && path.back() == L'\\') path.remove_suffix(1);
+    const wchar_t separator = StorageSource::IsPath(path) ? L'/' : L'\\';
+    if (separator == L'/') path = path.substr(0, path.find(L'?'));
+    while (!path.empty() && path.back() == separator) path.remove_suffix(1);
     return path;
 }
 
@@ -231,21 +235,43 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
     const auto matches = [&patterns](std::wstring_view candidate)
     {
         return std::ranges::any_of(patterns,
-            [&candidate](const auto& pattern) { return std::regex_match(candidate.begin(), candidate.end(), pattern); });
+        [&candidate](const auto& pattern) { return std::regex_match(candidate.begin(), candidate.end(), pattern); });
     };
 
     if (matches(path)) return true;
+
+    // Match remote ancestors at URI boundaries, preserving connection options after each candidate path.
+    if (StorageSource::IsPath(path))
+    {
+        const auto query = path.find(L'?');
+        std::wstring candidate = path.substr(0, query);
+        const std::wstring options = query == path.npos ? std::wstring{} : path.substr(query);
+        const auto rootEnd = candidate.find(L'/', candidate.find(L"://") + 3);
+        for (;;)
+        {
+            if (matches(candidate) || (!options.empty() && matches(candidate + options))) return true;
+            if (candidate.ends_with(L'/')) { candidate.pop_back(); continue; }
+            const auto slash = candidate.rfind(L'/');
+            if (slash == candidate.npos || slash < rootEnd) return false;
+            candidate.resize(slash + 1);
+        }
+    }
 
     const std::wstring_view trimmed = WithoutTrailingBackslashes(path);
     return trimmed != path && matches(trimmed);
 }
 
-bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
+bool CFiltering::IsFilteredOut(const std::wstring& directoryName, const bool scanRoot)
 {
     if (!FilterActive) return false;
     if (MatchesAnyPath(directoryName, ExcludeDirsRegex)) return true;
     if (IncludeDirsRegex.empty()) return false;
     if (MatchesAnyPath(directoryName, IncludeDirsRegex)) return false;
+
+    // Object scan roots may end within a key component rather than at a directory boundary.
+    const bool objectPrefix = scanRoot &&
+        (directoryName.starts_with(L"s3://") || directoryName.starts_with(L"azure://")) &&
+        !std::wstring_view(directoryName).substr(0, directoryName.find(L'?')).ends_with(L'/');
 
     // Check if path is the same as or an ancestor of any include-anchor,
     // meaning we still need to descend into this directory to reach an included one.
@@ -255,8 +281,9 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
         const std::wstring_view a = WithoutTrailingBackslashes(anchor);
         const std::wstring_view d = WithoutTrailingBackslashes(directoryName);
         if (d.empty() || d.size() > a.size()) return false;
-        if (_wcsnicmp(d.data(), a.data(), d.size()) != 0) return false;
-        return d.size() == a.size() || a[d.size()] == L'\\';
+        const bool remote = StorageSource::IsPath(d);
+        if (remote ? d != a.substr(0, d.size()) : _wcsnicmp(d.data(), a.data(), d.size()) != 0) return false;
+        return d.size() == a.size() || objectPrefix || a[d.size()] == (remote ? L'/' : L'\\');
     });
 }
 
@@ -308,5 +335,5 @@ bool CFiltering::IsFilteredOut(const CItem* item)
     if (item->IsTypeOrFlag(IT_FILE))
         return IsFilteredOut(item->GetName(), IncludeDirsRegex.empty() ? std::wstring() : item->GetPath(),
             item->GetSizeLogical(), item->GetLastChange());
-    return IsFilteredOut(item->GetPath());
+    return IsFilteredOut(item->GetPath(), item->IsTypeOrFlag(ITF_REMOTE) && item->IsScanRoot());
 }

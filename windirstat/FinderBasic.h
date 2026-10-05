@@ -76,6 +76,10 @@ class FinderBasic final : public Finder
     bool m_statMode = false;
     bool m_isUncPath = false;
     bool m_baseCapacityQueried = false;
+    bool m_published = false;
+    ScanResult m_result;
+
+    void SetError(DWORD error);
 
 public:
 
@@ -99,6 +103,7 @@ public:
     DWORD GetReparseTag() const override { return m_reparseTag; }
     bool IsReserved() const override { return false; }
     bool HasIgnoredStream() const override;
+    const ScanResult& GetResult() const noexcept override { return m_result; }
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

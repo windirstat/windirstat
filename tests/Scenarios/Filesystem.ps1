@@ -170,9 +170,11 @@ function Test-RegexDirectoryFilters {
 
 function Test-DeniedDirectory {
     param($Context, $Case)
-    $visible = New-TestFile (Join-Path $Context.Fixture 'visible.txt') 317
-    $blocked = Join-Path $Context.Fixture 'blocked'
+    $visible = New-TestFile (Join-Path $Context.Fixture 'a-good\visible.txt') 317
+    $blocked = Join-Path $Context.Fixture 'z-denied'
     New-TestFile (Join-Path $blocked 'private.txt') 331 | Out-Null
+    $empty = Join-Path $Context.Fixture 'empty'
+    [IO.Directory]::CreateDirectory($empty) | Out-Null
     $acl = Get-Acl -LiteralPath $blocked
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     try { $sid = $identity.User } finally { $identity.Dispose() }
@@ -185,10 +187,86 @@ function Test-DeniedDirectory {
     } @($blocked, $acl)
     Set-Acl -LiteralPath $blocked -AclObject $denied
     $runner = New-TestRunner
-    $rows = Invoke-ScanReport $runner @($Context.Fixture) 'access-denied'
+    $report = Join-Path $Context.Root "access-denied.$($Case.Format)"
+    $result = Invoke-TestProcess $runner @('/saveto', $report, $Context.Fixture)
+    Assert-Equal $result.ExitCode 1 'An unreadable branch makes the saved scan incomplete'
+    $rows = Read-ScanReport $report
     Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name) @($visible) `
         'An unreadable directory neither hangs enumeration nor hides readable siblings'
     Assert-Equal @($rows | Where-Object Name -IEQ $blocked).Count 1 'The inaccessible directory remains visible'
+    $failed = @($rows | Where-Object Name -IEQ $blocked)[0]
+    Assert-Equal $failed.ScanOutcome 'enumeration-error' 'The failed directory owns its enumeration outcome'
+    Assert-True ([Uri]::UnescapeDataString($failed.ScanError).Contains($blocked)) `
+        'The report preserves the failing filesystem path and system error'
+    Assert-True (([Convert]::ToUInt32($failed.'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+        'The unreadable branch carries the shared scan-error flag'
+    Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+        'The ancestor reflects incomplete descendants'
+    Assert-Equal $rows[0].ScanOutcome 'complete' 'The parent listing has its own successful outcome'
+    Assert-Equal @($rows | Where-Object Name -IEQ $empty)[0].ScanOutcome 'complete' `
+        'An empty directory is a successful enumeration'
+
+    $directReport = Join-Path $Context.Root "denied-root.$($Case.Format)"
+    $result = Invoke-TestProcess $runner @('/saveto', $directReport, $blocked)
+    Assert-Equal $result.ExitCode 1 'An inaccessible root still produces an incomplete report'
+    Assert-Equal (Read-ScanReport $directReport)[0].ScanOutcome 'enumeration-error' `
+        'Root enumeration failures retain their diagnostics'
+    $filteredRunner = New-TestRunner @{ DriveSelect = @{ FilteringExcludeDirs = $blocked } }
+    $filtered = Invoke-ScanReport $filteredRunner @($Context.Fixture) 'excluded-denied' -Format $Case.Format
+    Assert-Equal @($filtered | Where-Object {
+        ([Convert]::ToUInt32($_.'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0
+    }).Count 0 'An intentional directory exclusion does not mark the scan incomplete'
+
+    # Inspect and refresh the loaded model through targeted messages while its main window stays hidden.
+    $process = Start-TestProcess $runner @('/loadfrom', $report) -Hidden
+    $app = [pscustomobject]@{
+        Process = $process; Runner = $runner; Window = [IntPtr]::Zero; Roots = @($Context.Fixture)
+        ExpectExit = $false; TreeList = [IntPtr]::Zero; ExtensionList = [IntPtr]::Zero
+    }
+    $Context.Apps.Add($app)
+    $app.Window = Wait-Until {
+        @([TestDesktop]::Windows($process.Id) | Where-Object {
+            [TestDesktop]::Class($_) -like 'WdsWindow.*' -and [TestDesktop]::Text($_) -like '*WinDirStat*'
+        } | Select-Object -First 1)
+    } 'The background process creates its main window'
+    $list = Wait-Until {
+        foreach ($control in [TestDesktop]::Children($app.Window)) {
+            if ([TestDesktop]::Class($control) -ne 'SysListView32') { continue }
+            if ('z-denied (Scan incomplete)' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
+        }
+    } 'The loaded model preserves the failed local branch and its label'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'The validation does not activate a desktop window'
+    Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+        [NativeListViewHelper]::SelectItems($list, [int[]]@((Find-AppRow $list 'z-denied (Scan incomplete)')))) `
+        'The inaccessible branch remains selectable'
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Assert-True ('z-denied (Scan incomplete)' -in [NativeListViewHelper]::GetItemTexts($list)) `
+        'Refreshing an inaccessible branch retains it with its error state'
+    Assert-Equal @(Get-AppDialog $app).Count 0 'Local scan failures do not open a blocking error dialog'
+    Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+        [NativeListViewHelper]::SelectItems($list, [int[]]@((Find-AppRow $list 'a-good')))) `
+        'The healthy branch is selected in the loaded model'
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Assert-True ('z-denied (Scan incomplete)' -in [NativeListViewHelper]::GetItemTexts($list)) `
+        'Refreshing a healthy sibling preserves the failed branch'
+    Assert-True ([NativeListViewHelper]::GetItemTexts($list)[0].EndsWith(' (Scan incomplete)')) `
+        'Refreshing a healthy sibling preserves ancestor incompleteness'
+
+    Set-Acl -LiteralPath $blocked -AclObject $acl
+    Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+        [NativeListViewHelper]::SelectItems($list, [int[]]@((Find-AppRow $list 'z-denied (Scan incomplete)')))) `
+        'The repaired branch is selected without sending desktop keystrokes'
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Assert-True ('z-denied' -in [NativeListViewHelper]::GetItemTexts($list)) `
+        'A successful branch refresh clears its error label'
+    Assert-True (-not [NativeListViewHelper]::GetItemTexts($list)[0].EndsWith(' (Scan incomplete)')) `
+        'A successful branch refresh clears ancestor incompleteness'
+    Assert-Equal ([NativeListViewHelper]::GetItemTexts($list, 6)[(Find-AppRow $list 'z-denied')]) '1' `
+        'The refreshed branch includes its previously unreadable file'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'The recovery check leaves the main window hidden'
 }
 
 foreach ($engine in 0, 1) {
@@ -209,4 +287,6 @@ foreach ($engine in 0, 1) {
 Register-Scenario fs.symlinks Filesystem 'File and directory symlinks share targets without losing their paths' `
     Test-SymbolicLinks -Tags Filesystem -Requires Windows,Ntfs
 Register-Scenario fs.access-denied Filesystem 'Access-denied enumeration preserves visible siblings' `
-    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs
+    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs -Data @{ Format = 'csv' }
+Register-Scenario fs.access-denied.json Filesystem 'Local failure diagnostics survive JSON reload and scoped recovery' `
+    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs -Data @{ Format = 'json' }

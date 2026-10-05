@@ -13,6 +13,7 @@
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
 #include "FinderMtp.h"
+#include "FinderRemote.h"
 #include "ProgressDlg.h"
 
 CWinDirStatModel::CWinDirStatModel()
@@ -122,9 +123,15 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
         const std::wstring name = ppszName != nullptr ?
             static_cast<wchar_t*>(ppszName) : Localization::Lookup(IDS_THISPC);
         m_rootItem = CItem::Create(IT_MYCOMPUTER | ITF_ROOTITEM, name);
-        // Add filesystem drives, arbitrary folders and registered MTP roots under This PC
+
+        // Add the selected filesystem, device, and remote roots under This PC.
         for (const auto& rootFolder : selections)
         {
+            if (StorageSource::IsPath(rootFolder))
+            {
+                m_rootItem->AddChild(CItem::Create(IT_DIRECTORY | ITF_REMOTE, rootFolder));
+                continue;
+            }
             if (FinderMtp::IsPath(rootFolder))
             {
                 m_rootItem->AddChild(createMtpItem(rootFolder, ITF_NONE));
@@ -143,7 +150,9 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     {
         // Create a storage-specific root for a single selection
         const ITEMTYPE type = isDrivePath(selections.front()) ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem = FinderMtp::IsPath(selections.front()) ? createMtpItem(selections.front(), ITF_ROOTITEM) :
+        m_rootItem = StorageSource::IsPath(selections.front()) ?
+            CItem::Create(IT_DIRECTORY | ITF_REMOTE | ITF_ROOTITEM, selections.front()) :
+            FinderMtp::IsPath(selections.front()) ? createMtpItem(selections.front(), ITF_ROOTITEM) :
             CItem::Create(type | ITF_ROOTITEM, selections.front());
         m_rootItem->UpdateStatsFromDisk();
     }
@@ -256,7 +265,7 @@ ULONGLONG CWinDirStatModel::GetRootSize() const
 {
     assert(m_rootItem != nullptr);
     assert(IsRootDone());
-    return m_rootItem->GetSizePhysical();
+    return m_rootItem->GetSizeLogical();
 }
 
 // Starts a refresh of all mount points in our tree.
@@ -487,6 +496,9 @@ void CWinDirStatModel::RebuildExtensionData()
 
 void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
+    const bool hasRemoteItems = std::ranges::any_of(items,
+        [](const CItem* item) { return item->IsTypeOrFlag(ITF_REMOTE); });
+    if (toTrashBin && hasRemoteItems) return;
     auto& showDeleteWarning = toTrashBin ?
         COptions::ShowDeleteToRecycleBinWarning : COptions::ShowDeletePermanentlyWarning;
     if (showDeleteWarning)
@@ -498,7 +510,10 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
         // Display the file deletion warning dialog with custom width and height
         if (![&]() -> bool {
-            const auto result = CMessageBoxDlg::Show(Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING), filePaths,
+            const std::wstring warning = emptyOnly ? Localization::Lookup(IDS_EMPTY_FOLDER_WARNING) : hasRemoteItems ?
+                Localization::Format(IDS_OPERATION_CONFIRMATIONs, GetLocalizedMenuText(IDS_MENU_DELETE)) :
+                Localization::Lookup(IDS_DELETE_WARNING);
+            const auto result = CMessageBoxDlg::Show(warning, filePaths,
                 Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, GetMainWindow(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
 
             if (result.nID != IDYES) return false;
@@ -518,10 +533,37 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
     // Build list of items to delete
     std::vector itemsToDelete{ items };
+    std::atomic<bool> cancelled = false;
+    std::vector<CItem*> remoteItems;
+    std::unordered_set<const CItem*> remoteChanged;
+    std::erase_if(itemsToDelete, [&](CItem* item)
+    {
+        if (!item->IsTypeOrFlag(ITF_REMOTE)) return false;
+        remoteItems.push_back(item);
+        return true;
+    });
+
+    // Route remote selections through their storage service and keep network operations cancellable.
+    if (!remoteItems.empty())
+    {
+        std::unordered_set<CItem*> sources;
+        for (const auto* item : remoteItems)
+            if (sources.insert(item->GetEnumRoot()).second) item->GetStorageSource(true);
+        std::wstring error;
+        CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
+        {
+            auto result = FinderRemote::Delete(remoteItems, pdlg, emptyOnly);
+            error = std::move(result.error);
+            remoteChanged.insert(result.refresh.begin(), result.refresh.end());
+            cancelled = pdlg->IsCancelled();
+        }).ShowModal();
+        if (!error.empty()) ShowMessageBox(GetMainWindowHandle(), error, wds::strWinDirStat, MB_OK | MB_ICONERROR);
+    }
+
     if (emptyOnly)
     {
-        auto childrenView = items | std::views::transform(&CItem::GetChildren) | std::views::join;
-        itemsToDelete.assign(childrenView.begin(), childrenView.end());
+        auto childrenView = itemsToDelete | std::views::transform(&CItem::GetChildren) | std::views::join;
+        itemsToDelete = std::vector<CItem*>(childrenView.begin(), childrenView.end());
     }
     // MTP items require shell deletion instead of direct filesystem calls
     const bool hasMtpItems = std::ranges::any_of(itemsToDelete,
@@ -532,8 +574,8 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         [](const size_t total, const CItem* item) { return total + static_cast<size_t>(1 + item->GetItemsCount()); });
 
     // Use direct parallel deletion only for filesystem items without shell progress UI
-    std::atomic<bool> cancelled = false;
-    if (!hasMtpItems && !toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(
+    if (!cancelled && !itemsToDelete.empty() && !hasMtpItems && !toTrashBin &&
+        !COptions::ShowMicrosoftProgress) CProgressDlg(
         totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
         {
             // Collect items depth-first and separate into files and directories
@@ -636,15 +678,17 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
     // Refresh the items and recycler directories
     std::vector<CItem*> itemsToRefresh;
-    // Refresh an MTP file's parent after its shell identity is deleted
+    // Refresh parents of deleted remote items and MTP files, retaining folders that were only emptied.
     for (auto* item : items)
     {
-        CItem* refresh = item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
+        if (item->IsTypeOrFlag(ITF_REMOTE) && !remoteChanged.contains(item)) continue;
+        CItem* refresh = item->IsTypeOrFlag(ITF_REMOTE) && !emptyOnly ||
+            item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
         if (refresh != nullptr && !std::ranges::contains(itemsToRefresh, refresh))
             itemsToRefresh.push_back(refresh);
     }
     itemsToRefresh.append_range(recyclers);
-    RefreshItem(itemsToRefresh);
+    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh);
 }
 
 void CWinDirStatModel::SetZoomItem(CItem* item)

@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "ItemSearch.h"
 #include "FileTreeView.h"
+#include "StorageSource.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr(), COptions::SearchViewColumnVisibility.Ptr(), LF_SEARCHLIST, false)
 {
@@ -39,6 +40,8 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 
 bool SearchCriteria::MatchesSize(const CItem* item) const
 {
+    if ((physicalMinimum || physicalMaximum) && !item->HasSizePhysical()) return false;
+
     return (!sizeMinimum || item->GetSizeLogical() >= *sizeMinimum) &&
         (!sizeMaximum || item->GetSizeLogical() <= *sizeMaximum) &&
         (!physicalMinimum || item->GetSizePhysical() >= *physicalMinimum) &&
@@ -53,7 +56,8 @@ bool SearchCriteria::Matches(const CItem* item, const std::wregex& termRegex) co
     if (!MatchesSize(item) || !typeWanted) return false;
 
     // Check for match
-    const auto nameView = item->GetNameView();
+    const std::wstring remoteName = item->IsTypeOrFlag(ITF_REMOTE) ? item->GetName() : std::wstring{};
+    const auto nameView = item->IsTypeOrFlag(ITF_REMOTE) ? std::wstring_view(remoteName) : item->GetNameView();
     const bool isMatch = term.empty() || (wholePhrase ?
         std::regex_match(nameView.begin(), nameView.end(), termRegex) :
         std::regex_search(nameView.begin(), nameView.end(), termRegex));
@@ -157,17 +161,18 @@ void CFileSearchControl::RemoveItem(CItem* item)
         m_criteria.physicalMinimum || m_criteria.physicalMaximum;
     std::erase_if(m_itemTracker, [&](const auto& pair)
     {
-        if (pair.first != item && !item->IsAncestorOf(pair.first) &&
-            !(sizeFilterActive && pair.first->IsAncestorOf(item))) return false;
+        const bool insideRefresh = pair.first == item || item->IsAncestorOf(pair.first);
+        if (!insideRefresh && !(sizeFilterActive && pair.first->IsAncestorOf(item))) return false;
 
-        // Preserve result identities before their scan-tree items can be deleted.
-        m_removedItems.emplace_back(pair.first->GetPath(), IsItemSelected(pair.second));
+        // Preserve untouched ancestors and distinguish directories from marker objects at the same URI.
+        m_removedItems.push_back({ pair.first->GetPath(), pair.first->GetRawType() & IT_MASK,
+            IsItemSelected(pair.second), insideRefresh ? nullptr : pair.first });
         m_rootItem->RemoveSearchItemChild(pair.second);
         return true;
     });
 }
 
-void CFileSearchControl::RestoreItems()
+void CFileSearchControl::RestoreItems(const std::span<CItem* const> refreshed)
 {
     if (m_removedItems.empty()) return;
 
@@ -177,9 +182,35 @@ void CFileSearchControl::RestoreItems()
     auto selected = GetAllSelected<CItemSearch>(true);
     const bool expanded = m_rootItem->IsExpanded();
     CollapseItem(0);
-    for (const auto& [path, wasSelected] : m_removedItems)
+
+    // Resolve typed identities in one traversal of the refreshed source branches.
+    std::unordered_map<StorageIdentity, RemovedItem*, StorageIdentityHash> remoteItems;
+    for (auto& removed : m_removedItems)
+        if (removed.item == nullptr && StorageSource::IsPath(removed.path))
+            if (auto identity = StorageSource::Identity(removed.path, removed.type == IT_DIRECTORY))
+                remoteItems.emplace(std::move(*identity), &removed);
+    if (!remoteItems.empty())
     {
-        CItem* item = CWinDirStatModel::Get()->GetRootItem()->FindItemByPath(path);
+        std::vector<CItem*> pending;
+        for (auto* item : refreshed) if (item->IsTypeOrFlag(ITF_REMOTE)) pending.push_back(item);
+        while (!pending.empty() && !remoteItems.empty())
+        {
+            auto* item = pending.back(); pending.pop_back();
+            if (const auto identity = StorageSource::Identity(item))
+                if (const auto found = remoteItems.find(*identity); found != remoteItems.end())
+                {
+                    found->second->item = item;
+                    remoteItems.erase(found);
+                }
+            if (!item->IsLeaf()) pending.append_range(item->GetChildren());
+        }
+    }
+    CItem* root = CWinDirStatModel::Get()->GetRootItem();
+    for (const auto& removed : m_removedItems)
+    {
+        CItem* item = removed.item;
+        if (item == nullptr && !StorageSource::IsPath(removed.path))
+            item = root->FindItemByPath(removed.path, false, removed.type);
         if (item == nullptr || !m_criteria.Matches(item, termRegex)) continue;
         const auto [iter, inserted] = m_itemTracker.try_emplace(item, nullptr);
         if (inserted)
@@ -187,7 +218,7 @@ void CFileSearchControl::RestoreItems()
             iter->second = new CItemSearch(item);
             m_rootItem->AddSearchItemChild(iter->second);
         }
-        if (wasSelected) selected.push_back(iter->second);
+        if (removed.selected) selected.push_back(iter->second);
     }
     m_removedItems.clear();
     if (expanded) ExpandItem(0, false);

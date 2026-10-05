@@ -39,7 +39,7 @@ public:
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
     void RemoveItem(CItem* item);
-    void RestoreItems();
+    void RestoreItems(std::span<CItem* const> refreshed);
     void AfterDeleteAllItems() override;
 
 protected:
@@ -48,6 +48,13 @@ protected:
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
     SearchCriteria m_criteria;
-    std::vector<std::pair<std::wstring, bool>> m_removedItems;
+    struct RemovedItem
+    {
+        std::wstring path;
+        ITEMTYPE type;
+        bool selected;
+        CItem* item;
+    };
+    std::vector<RemovedItem> m_removedItems;
 
 };

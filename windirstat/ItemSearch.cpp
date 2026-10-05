@@ -45,7 +45,7 @@ std::wstring CItemSearch::GetText(const int subitem) const
         if (subitem == COL_ITEMSEARCH_SIZE_LOGICAL)
             return m_totalsPending ? std::wstring{} : FormatBytes(m_totalSizeLogical);
         if (subitem == COL_ITEMSEARCH_SIZE_PHYSICAL)
-            return m_totalsPending ? std::wstring{} : FormatBytes(m_totalSizePhysical);
+            return m_totalsPending || !m_physicalKnown ? std::wstring{} : FormatBytes(m_totalSizePhysical);
         if (subitem != COL_ITEMSEARCH_NAME) return {};
 
         // Mark results that were limited, cancelled, or pruned after a refresh.
@@ -95,8 +95,10 @@ HICON CItemSearch::GetIcon()
     }
 
     // Fetch all other icons
+    const std::wstring iconPath = m_item->IsTypeOrFlag(ITF_REMOTE) ?
+        L"C:\\~" + (m_item->IsTypeOrFlag(IT_FILE) ? m_item->GetExtension() : std::wstring{}) : m_item->GetPath();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+        viewState->control, iconPath, m_item->GetAttributes(), &viewState->icon, nullptr));
     return viewState->icon;
 }
 
@@ -143,7 +145,9 @@ CItemSearch::SizeTotals CItemSearch::CalculateTotals() const
 
 void CItemSearch::SetTotals(const SizeTotals& totals)
 {
-    std::tie(m_totalSizeLogical, m_totalSizePhysical) = totals;
+    m_totalSizeLogical = totals.logical;
+    m_totalSizePhysical = totals.physical;
+    m_physicalKnown = totals.physicalKnown;
     m_totalsPending = false;
 }
 
@@ -152,6 +156,7 @@ std::optional<CItemSearch::SizeTotals> CItemSearch::CalculateTotals(const std::s
 {
     ULONGLONG totalLogical = 0;
     ULONGLONG totalPhysical = 0;
+    bool physicalKnown = true;
     const std::unordered_set<const CItem*> matches(items.begin(), items.end());
 
     // Count only the outermost matching items, so nested results contribute once.
@@ -163,6 +168,7 @@ std::optional<CItemSearch::SizeTotals> CItemSearch::CalculateTotals(const std::s
         if (parent != nullptr) continue;
         totalLogical += item->GetSizeLogical();
         totalPhysical += item->GetSizePhysical();
+        physicalKnown &= item->HasSizePhysical();
     }
-    return SizeTotals{ totalLogical, totalPhysical };
+    return SizeTotals{ totalLogical, totalPhysical, physicalKnown };
 }

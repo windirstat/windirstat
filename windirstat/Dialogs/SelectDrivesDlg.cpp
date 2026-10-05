@@ -9,6 +9,159 @@
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
 #include "FinderMtp.h"
+#include "StorageSource.h"
+
+class S3ConnectionDialog final : public CDialog
+{
+public:
+    S3ConnectionDialog(CWnd* parent, const std::wstring& current) : CDialog(IDD_S3_CONNECTION, parent)
+    {
+        if (const auto parsed = StorageSource::Parse(current); parsed && parsed->protocol == RemoteProtocol::S3)
+            target = *parsed;
+    }
+
+    RemoteTarget target;
+
+    bool OnInitDialog() override
+    {
+        CDialog::OnInitDialog();
+        SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
+        Localization::UpdateDialogs(*this);
+        DarkMode::AdjustControls(Handle());
+        SetText(IDC_S3_BUCKET, target.bucket);
+        SetText(IDC_REMOTE_PREFIX, target.prefix);
+        SetText(IDC_S3_REGION, target.region);
+        SetText(IDC_REMOTE_ENDPOINT, target.endpoint);
+        const auto credentials = StorageSource::GetCredentials(target);
+        SetText(IDC_S3_ACCESS, credentials.user);
+        SetText(IDC_REMOTE_SECRET, credentials.secret);
+        SetText(IDC_S3_TOKEN, credentials.token);
+        UpdateButtons();
+        return true;
+    }
+
+    bool OnCommand(const WPARAM wParam, const LPARAM lParam) override
+    {
+        // Keep confirmation in sync with edits to the connection settings.
+        if (lParam != 0 && HIWORD(wParam) == EN_CHANGE)
+        {
+            UpdateButtons();
+            return true;
+        }
+        return CDialog::OnCommand(wParam, lParam);
+    }
+
+    void OnOK() override
+    {
+        // Revalidate before accepting the target.
+        const auto parsed = ReadTarget();
+        if (!parsed) return;
+        target = *parsed;
+        const RemoteCredentials credentials{
+            GetText(IDC_S3_ACCESS), GetText(IDC_REMOTE_SECRET), GetText(IDC_S3_TOKEN) };
+        const DWORD error = StorageSource::SetCredentials(target, credentials, IsChecked(IDC_REMOTE_REMEMBER));
+        if (error != ERROR_SUCCESS) { DisplayError(TranslateError(error)); return; }
+        CDialog::OnOK();
+    }
+
+private:
+    std::optional<RemoteTarget> ReadTarget() const
+    {
+        // Require explicit connection settings and credentials without contacting the server.
+        if (GetText(IDC_S3_ACCESS).empty() || GetText(IDC_REMOTE_SECRET).empty()) return {};
+        RemoteTarget settings;
+        settings.bucket = GetText(IDC_S3_BUCKET);
+        settings.prefix = GetText(IDC_REMOTE_PREFIX);
+        settings.region = GetText(IDC_S3_REGION);
+        settings.endpoint = GetText(IDC_REMOTE_ENDPOINT);
+        for (auto* value : { &settings.bucket, &settings.region, &settings.endpoint })
+            TrimString(*value);
+        return StorageSource::Parse(settings);
+    }
+
+    void UpdateButtons() { GetDlgItem(IDOK).EnableWindow(ReadTarget().has_value()); }
+};
+
+class RemoteConnectionDialog final : public CDialog
+{
+public:
+    RemoteConnectionDialog(CWnd* parent, const std::wstring& current, const RemoteProtocol protocol) :
+        CDialog(protocol == RemoteProtocol::Azure ? IDD_AZURE_CONNECTION : IDD_WEBDAV_CONNECTION, parent)
+    {
+        target.protocol = protocol;
+        if (const auto parsed = StorageSource::Parse(current); parsed && parsed->protocol == protocol) target = *parsed;
+    }
+
+    RemoteTarget target;
+
+    bool OnInitDialog() override
+    {
+        CDialog::OnInitDialog();
+        SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
+        Localization::UpdateDialogs(*this);
+        DarkMode::AdjustControls(Handle());
+        const bool azure = target.protocol == RemoteProtocol::Azure;
+        const auto credentials = StorageSource::GetCredentials(target);
+        SetText(IDC_REMOTE_ENDPOINT, azure || target.endpoint.empty() ? target.endpoint : target.ToString());
+        SetText(IDC_REMOTE_ACCOUNT, azure ? target.account : credentials.user);
+        SetText(IDC_REMOTE_SECRET, credentials.secret);
+        if (azure)
+        {
+            SetText(IDC_REMOTE_CONTAINER, target.bucket);
+            SetText(IDC_REMOTE_PREFIX, target.prefix);
+        }
+        UpdateButtons();
+        return true;
+    }
+
+    bool OnCommand(const WPARAM wParam, const LPARAM lParam) override
+    {
+        // Keep confirmation in sync with edits to the connection settings.
+        if (lParam != 0 && HIWORD(wParam) == EN_CHANGE)
+        {
+            UpdateButtons();
+            return true;
+        }
+        return CDialog::OnCommand(wParam, lParam);
+    }
+
+    void OnOK() override
+    {
+        // Validate the connection locally, keeping secrets outside history and saved scan paths.
+        const bool azure = target.protocol == RemoteProtocol::Azure;
+        const auto parsed = ReadTarget();
+        if (!parsed) return;
+        target = *parsed;
+        if (!azure && !target.prefix.empty() && !target.prefix.ends_with(L'/')) target.prefix += L'/';
+        RemoteCredentials credentials{ GetText(IDC_REMOTE_ACCOUNT), GetText(IDC_REMOTE_SECRET) };
+        const DWORD error = StorageSource::SetCredentials(target, credentials, IsChecked(IDC_REMOTE_REMEMBER));
+        if (error != ERROR_SUCCESS) { DisplayError(TranslateError(error)); return; }
+        CDialog::OnOK();
+    }
+
+private:
+    std::optional<RemoteTarget> ReadTarget() const
+    {
+        // Require explicit connection settings and credentials without contacting the server.
+        if (GetText(IDC_REMOTE_ACCOUNT).empty() || GetText(IDC_REMOTE_SECRET).empty()) return {};
+        const bool azure = target.protocol == RemoteProtocol::Azure;
+        RemoteTarget settings = target;
+        std::wstring endpoint = GetText(IDC_REMOTE_ENDPOINT);
+        TrimString(endpoint);
+        if (azure)
+        {
+            settings.endpoint = endpoint;
+            settings.account = GetText(IDC_REMOTE_ACCOUNT);
+            settings.bucket = GetText(IDC_REMOTE_CONTAINER);
+            settings.prefix = GetText(IDC_REMOTE_PREFIX);
+            TrimString(settings.account); TrimString(settings.bucket);
+        }
+        const auto parsed = azure ? StorageSource::Parse(settings) : StorageSource::Parse(endpoint);
+        return parsed && parsed->protocol == target.protocol ? parsed : std::nullopt;
+    }
+
+    void UpdateButtons() { GetDlgItem(IDOK).EnableWindow(ReadTarget().has_value()); }
+};
 
 namespace
 {
@@ -275,6 +428,18 @@ bool CSelectDrivesDlg::OnInitDialog()
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(Handle());
 
+    // Open the provider menu from the whole button and center its localized label between Filter and OK.
+    const auto cloudButton = GetDlgItem(IDC_CLOUD_STORAGE);
+    BUTTON_SPLITINFO splitInfo{ .mask = BCSIF_STYLE, .uSplitStyle = BCSS_NOSPLIT };
+    Button_SetSplitInfo(cloudButton.Handle(), &splitInfo);
+    const CRect cloudRect = GetChildWindowRect(cloudButton.Handle());
+    SIZE cloudSize{};
+    const int cloudWidth = Button_GetIdealSize(cloudButton.Handle(), &cloudSize) ? cloudSize.cx : cloudRect.Width();
+    const int cloudLeft = (GetChildWindowRect(m_filterButton.Handle()).right +
+        GetChildWindowRect(m_okButton.Handle()).left - cloudWidth) / 2;
+    cloudButton.SetWindowPos(nullptr, cloudLeft, cloudRect.top, cloudWidth, cloudRect.Height(),
+        SWP_NOZORDER | SWP_NOACTIVATE);
+
     ModifyStyle(0, WS_CLIPCHILDREN);
 
     m_layout.AddControl(IDOK, 1, 1, 0, 0);
@@ -289,6 +454,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
     m_layout.AddControl(IDC_FILTER_BUTTON, 0, 1, 0, 0);
+    m_layout.AddControl(IDC_CLOUD_STORAGE, 0.5, 1, 0, 0);
 
     // Update checkbox text based on elevation status
     if (!IsElevationActive())
@@ -437,7 +603,7 @@ bool CSelectDrivesDlg::SaveSelection()
         {
             // Remove the folder from the most recently used list to avoid duplicates
             std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folder](const std::wstring& s) {
-                return _wcsicmp(s.c_str(), folder.c_str()) == 0;
+                return StorageSource::IsPath(folder) ? s == folder : _wcsicmp(s.c_str(), folder.c_str()) == 0;
             });
 
             // Insert it at the beginning of the used list
@@ -482,7 +648,7 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
     const int currentRadio = GetCheckedRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER) - IDC_RADIO_TARGET_DRIVES_ALL;
     const std::wstring currentFolder = folderOverride == nullptr ? GetText(IDC_BROWSE_FOLDER) : *folderOverride;
 
-    bool enableOk = false;
+    bool enableOk = false, remoteOnly = false;
     switch (currentRadio)
     {
     case RADIO_TARGET_DRIVES_ALL:
@@ -494,12 +660,14 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
     case RADIO_TARGET_FOLDER:
         if (!currentFolder.empty())
         {
-            // Every pipe-separated path must be a UNC path or exist on disk
+            // Validate remote targets locally and check filesystem paths without blocking on network shares.
             auto folders = SplitString(currentFolder);
             std::erase(folders, std::wstring{});
+            remoteOnly = !folders.empty() && std::ranges::all_of(folders, StorageSource::IsPath);
             enableOk = !folders.empty() && std::ranges::all_of(folders, [](const std::wstring& part)
             {
-                return part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part);
+                return StorageSource::IsPath(part) ? StorageSource::Parse(part).has_value() :
+                    part.starts_with(L"\\\\") || FinderBasic::DoesFileExist(part);
             });
         }
         break;
@@ -507,6 +675,8 @@ void CSelectDrivesDlg::UpdateButtons(const std::wstring* const folderOverride)
         assert(false);
     }
     m_okButton.EnableWindow(enableOk);
+    GetDlgItem(IDC_FAST_SCAN_CHECKBOX).ShowWindow(remoteOnly ? SW_HIDE : SW_SHOW);
+    GetDlgItem(IDC_SCAN_DUPLICATES).ShowWindow(remoteOnly ? SW_HIDE : SW_SHOW);
 }
 
 void CSelectDrivesDlg::UpdateFilterButton()
@@ -682,6 +852,37 @@ void CSelectDrivesDlg::OnBnClickedFilterButton()
         return;
     }
     UpdateFilterButton();
+}
+
+void CSelectDrivesDlg::OnCloudStorage()
+{
+    // Choose a provider before editing its connection settings.
+    CMenu menu = CMenu::CreatePopup();
+    menu.Append(MF_STRING, 1, L"&S3...");
+    menu.Append(MF_STRING, 2, L"&Azure Blob...");
+    menu.Append(MF_STRING, 3, L"&WebDAV...");
+    const auto bounds = GetDlgItem(IDC_CLOUD_STORAGE).GetWindowRect();
+    const UINT choice = menu.ShowPopup(TPM_RETURNCMD | TPM_LEFTALIGN, bounds.left, bounds.bottom, this);
+    if (choice == 0) return;
+
+    // Apply an accepted connection to the scan target.
+    RemoteTarget target;
+    if (choice == 1)
+    {
+        S3ConnectionDialog dialog(this, GetText(IDC_BROWSE_FOLDER));
+        if (dialog.ShowModal() != IDOK) return;
+        target = std::move(dialog.target);
+    }
+    else
+    {
+        RemoteConnectionDialog dialog(this, GetText(IDC_BROWSE_FOLDER),
+            choice == 2 ? RemoteProtocol::Azure : RemoteProtocol::WebDav);
+        if (dialog.ShowModal() != IDOK) return;
+        target = std::move(dialog.target);
+    }
+    SetText(IDC_BROWSE_FOLDER, target.ToString());
+    SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
+    UpdateButtons();
 }
 
 void CSelectDrivesDlg::OnEditchangeBrowseFolder()

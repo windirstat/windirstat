@@ -24,6 +24,7 @@ class CItemSearch final : public CTreeListItem
     CItem* m_item = nullptr;
     ULONGLONG m_totalSizeLogical = 0;
     ULONGLONG m_totalSizePhysical = 0;
+    bool m_physicalKnown = true;
     bool m_limitExceeded = false;
     bool m_totalsPending = false;
 
@@ -48,7 +49,7 @@ public:
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);
-    using SizeTotals = std::pair<ULONGLONG, ULONGLONG>;
+    struct SizeTotals { ULONGLONG logical = 0, physical = 0; bool physicalKnown = true; };
     static std::optional<SizeTotals> CalculateTotals(std::span<CItem* const> items,
         const std::function<bool()>& isCancelled = {});
     SizeTotals CalculateTotals() const;

@@ -416,7 +416,7 @@ HoverInfo CGraphView::GetHoverInfo() const
 
     const auto point = GetClientCursorPos();
     if (!point || !GetClientRect().Contains(*point)) return {};
-    return { m_paneTextOverride, m_paneSizeOverride };
+    return { m_paneTextOverride, m_paneSizeOverride, m_hoverItem != nullptr && !m_hoverItem->HasSizePhysical() };
 }
 
 void CGraphView::ClearHover()
@@ -479,7 +479,7 @@ bool CGraphView::UpdateHoverDetails(const CItem* item, const bool itemChanged)
 {
     if (!itemChanged) return false;
     const std::wstring path = item == nullptr ? std::wstring{} : item->GetPath();
-    const ULONGLONG size = item == nullptr ? 0 : item->TmiGetSize();
+    const ULONGLONG size = item == nullptr ? 0 : !item->HasSizePhysical() ? item->GetSizeLogical() : item->TmiGetSize();
     if (path == m_paneTextOverride && size == m_paneSizeOverride) return false;
 
     m_paneTextOverride = path;

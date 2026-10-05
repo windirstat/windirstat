@@ -9,6 +9,7 @@
 #include "Filtering.h"
 #include "FinderBasic.h"
 #include "FinderMtp.h"
+#include "FinderRemote.h"
 #include "FinderNtfs.h"
 
 class CItem::ScanBatch final
@@ -17,9 +18,9 @@ class CItem::ScanBatch final
     BlockingQueue<CItem*>* m_queue;
     std::vector<CItem*> m_children;
     std::unordered_map<std::wstring, std::pair<ULONGLONG, ULONGLONG>> m_extensions;
-    ULONGLONG m_physical = 0, m_logical = 0, m_lastFlush = GetTickCount64();
+    ULONGLONG m_physical = 0, m_logical = 0, m_unknownPhysical = 0, m_lastFlush = GetTickCount64();
     FILETIME m_lastChange{};
-    ULONG m_files = 0, m_folders = 0;
+    ULONG m_files = 0, m_folders = 0, m_unknownCount = 0;
 
 public:
     ScanBatch(CItem* parent, BlockingQueue<CItem*>* queue) : m_parent(parent), m_queue(queue)
@@ -30,11 +31,14 @@ public:
 
     void Add(CItem* child)
     {
-        if (m_parent->IsTypeOrFlag(ITF_MTP)) child->SetFlag(ITF_MTP);
+        if (m_parent->IsTypeOrFlag(ITF_MTP, ITF_REMOTE))
+            child->SetFlag(m_parent->GetRawType() & (ITF_MTP | ITF_REMOTE));
         child->SetParent(m_parent);
         m_children.push_back(child);
         m_physical += child->GetSizePhysical();
         m_logical += child->GetSizeLogical();
+        m_unknownPhysical += child->GetUnknownPhysicalBytes();
+        m_unknownCount += child->GetUnknownPhysicalCount();
         m_lastChange = std::max(m_lastChange, child->GetLastChange());
         if (!child->IsTypeOrFlag(IT_FILE)) { ++m_folders; return; }
 
@@ -55,6 +59,7 @@ public:
         if (m_children.empty()) return;
         m_parent->UpwardAddSizePhysical(std::exchange(m_physical, 0));
         m_parent->UpwardAddSizeLogical(std::exchange(m_logical, 0));
+        m_parent->UpwardAddUnknownPhysical(std::exchange(m_unknownPhysical, 0), std::exchange(m_unknownCount, 0));
         m_parent->UpwardAddFiles(std::exchange(m_files, 0));
         m_parent->UpwardAddFolders(std::exchange(m_folders, 0));
         m_parent->UpwardUpdateLastChange(std::exchange(m_lastChange, FILETIME{}));
@@ -141,6 +146,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring_view name) : m_type(type)
     {
         SetName(name);
     }
+    if (IsTypeOrFlag(ITF_REMOTE)) m_attributes = FILE_ATTRIBUTE_DIRECTORY;
 }
 
 CItem::CItem(CItem* linkedItem) : m_type(IT_HLINKS_FILE)
@@ -252,6 +258,7 @@ bool CItem::IsMtpRoot() const noexcept
 
 bool CItem::HasShellIdentity() const noexcept
 {
+    if (IsTypeOrFlag(ITF_REMOTE)) return false;
     return !IsTypeOrFlag(ITF_MTP) || FinderMtp::HasShellIdentity(m_index);
 }
 
@@ -270,7 +277,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
         GetParentDrive()->GetReadJobs() > 0 || FindHardlinksItem() == nullptr);
 
-    if (IsTypeOrFlag(ITF_MTP)) child->SetFlag(ITF_MTP);
+    if (IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) child->SetFlag(GetRawType() & (ITF_MTP | ITF_REMOTE));
 
     if (!addOnly)
     {
@@ -281,6 +288,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
+    UpwardAddUnknownPhysical(child->GetUnknownPhysicalBytes(), child->GetUnknownPhysicalCount());
     const auto append = [this, child] { m_folderInfo->m_children.push_back(child); };
     if (!MutateHiddenChildren(append)) CMainFrame::Get()->InvokeInMessageThread([&]
     {
@@ -335,7 +343,8 @@ CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
     const bool follow = IsTypeOrFlag(ITF_MTP) || !finder.IsProtectedReparsePoint() &&
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
-    auto* const child = CItem::Create(IT_DIRECTORY, finder.GetFileName());
+    auto* const child = CItem::Create(IT_DIRECTORY, IsTypeOrFlag(ITF_REMOTE) ?
+        StorageSource::EscapeName(finder.GetFileName()) : finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
@@ -348,13 +357,15 @@ CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
         child->SetFlag(ITF_BASIC);
     batch.Add(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
+    if (!follow) child->SetScanResult({ ScanOutcome::Complete, {} });
 
     return child;
 }
 
 CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
 {
-    auto* const child = CItem::Create(IT_FILE, finder.GetFileName());
+    auto* const child = CItem::Create(IT_FILE, IsTypeOrFlag(ITF_REMOTE) ?
+        StorageSource::EscapeName(finder.GetFileName()) : finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
@@ -370,11 +381,96 @@ CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
     return child;
 }
 
+std::shared_ptr<StorageSource> CItem::GetStorageSource(const bool renew) const
+{
+    if (!IsTypeOrFlag(ITF_REMOTE)) return {};
+    auto* root = GetEnumRoot();
+    if (renew || root->m_folderInfo->m_source == nullptr)
+        root->m_folderInfo->m_source = StorageSource::Open(root->GetNameView());
+    return root->m_folderInfo->m_source;
+}
+
+const ScanResult& CItem::GetScanResult() const noexcept
+{
+    static const ScanResult complete{ ScanOutcome::Complete, {} };
+    return IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY) ? m_folderInfo->m_scanResult : complete;
+}
+
+void CItem::SetScanResult(ScanResult result)
+{
+    if (!IsLeaf()) m_folderInfo->m_scanResult = std::move(result);
+}
+
+void CItem::ReconcileScanResults(CItem* root, const bool cancelled)
+{
+    if (root == nullptr) return;
+    std::vector<CItem*> items{ root };
+    for (size_t i = 0; i < items.size(); ++i)
+        if (!items[i]->IsLeaf()) for (auto* child : items[i]->GetChildren())
+            if (!child->IsLeaf()) items.push_back(child);
+    for (auto* item : items | std::views::reverse)
+    {
+        if (item->IsLeaf()) continue;
+        auto& result = item->m_folderInfo->m_scanResult;
+        const bool enumerated = item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY);
+        if (cancelled && enumerated && result.outcome == ScanOutcome::NotStarted)
+            result.outcome = ScanOutcome::Cancelled;
+        const bool incomplete = enumerated && result.Incomplete() ||
+            std::ranges::any_of(item->GetChildren(),
+            [](const CItem* child) { return child->IsTypeOrFlag(ITF_SCANERROR); });
+        item->SetFlag(ITF_SCANERROR, !incomplete);
+    }
+}
+
 // --- Size & Stats ---
 
 ULONGLONG CItem::GetSizePhysical() const noexcept
 {
     return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
+}
+
+bool CItem::HasSizePhysical() const noexcept
+{
+    return !IsTypeOrFlag(ITF_REMOTE) && GetUnknownPhysicalCount() == 0;
+}
+
+ULONGLONG CItem::GetUnknownPhysicalBytes() const noexcept
+{
+    return IsLeaf() ? (IsTypeOrFlag(ITF_REMOTE) ? GetSizeLogical() : 0) :
+        m_folderInfo->m_unknownPhysicalBytes.load(std::memory_order_relaxed);
+}
+
+ULONG CItem::GetUnknownPhysicalCount() const noexcept
+{
+    return (IsTypeOrFlag(ITF_REMOTE) ? 1 : 0) + (IsLeaf() ? 0 :
+        m_folderInfo->m_unknownPhysicalCount.load(std::memory_order_relaxed));
+}
+
+ULONGLONG CItem::GetSizeWeight() const noexcept
+{
+    return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical() + GetUnknownPhysicalBytes();
+}
+
+void CItem::UpwardAddUnknownPhysical(const ULONGLONG bytes, const ULONG count) const noexcept
+{
+    if (bytes == 0 && count == 0) return;
+    for (auto* item = this; item != nullptr; item = item->GetParent())
+    {
+        if (item->IsLeaf()) continue;
+        item->m_folderInfo->m_unknownPhysicalBytes += bytes;
+        item->m_folderInfo->m_unknownPhysicalCount += count;
+    }
+}
+
+void CItem::UpwardSubtractUnknownPhysical(const ULONGLONG bytes, const ULONG count) const noexcept
+{
+    if (bytes == 0 && count == 0) return;
+    for (auto* item = this; item != nullptr; item = item->GetParent())
+    {
+        if (item->IsLeaf()) continue;
+        item->m_folderInfo->m_unknownPhysicalBytes -= bytes;
+        item->m_folderInfo->m_unknownPhysicalCount -= count;
+    }
 }
 
 void CItem::UpwardAddSizePhysical(const ULONGLONG bytes) noexcept
@@ -467,12 +563,12 @@ double CItem::GetFraction() const noexcept
     {
         return 1.0;
     }
-    const ULONGLONG parentSize = COptions::TreeMapUseLogical ? GetParent()->GetSizeLogical() : GetParent()->GetSizePhysical();
+    const ULONGLONG parentSize = GetParent()->GetSizeWeight();
     if (parentSize == 0)
     {
         return 1.0;
     }
-    const ULONGLONG size = COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+    const ULONGLONG size = GetSizeWeight();
     return static_cast<double>(size) / static_cast<double>(parentSize);
 }
 
@@ -489,13 +585,13 @@ double CItem::GetAbsoluteFraction() const noexcept
         root = root->GetParent();
     }
 
-    const ULONGLONG rootSize = COptions::TreeMapUseLogical ? root->GetSizeLogical() : root->GetSizePhysical();
+    const ULONGLONG rootSize = root->GetSizeWeight();
     if (rootSize == 0)
     {
         return 0.0;
     }
 
-    const ULONGLONG size = COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+    const ULONGLONG size = GetSizeWeight();
     return static_cast<double>(size) / static_cast<double>(rootSize);
 }
 
@@ -590,8 +686,8 @@ void CItem::SetReparseTag(const DWORD reparseType) noexcept
 
 std::wstring CItem::GetOwner(const bool force) const
 {
-    // Skip filesystem security queries for MTP items
-    if (IsTypeOrFlag(ITF_MTP)) return {};
+    // Remote objects have no Windows security descriptor.
+    if (!SupportsFilesystemApis()) return {};
     auto* viewState = force ? nullptr : GetViewState();
     if (!force && viewState == nullptr) return {};
 
@@ -651,6 +747,7 @@ void CItem::SetName(const std::wstring_view name)
 
 std::wstring CItem::GetName(const bool stripDrivePrefix) const noexcept
 {
+    if (IsTypeOrFlag(ITF_REMOTE) && !IsScanRoot()) return StorageSource::DisplayName(GetNameView());
     return std::wstring(GetNameView(stripDrivePrefix));
 }
 
@@ -688,6 +785,7 @@ std::wstring CItem::GetExtension() const
 
 std::wstring CItem::GetPath() const
 {
+    if (IsTypeOrFlag(ITF_REMOTE)) return StorageSource::ItemPath(this);
     if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetPath();
 
     if (IsTypeOrFlag(IT_HLINKS_SET, IT_HLINKS_IDX))
@@ -784,7 +882,8 @@ int CItem::ComparePath(const CItem* other) const
     const auto rightView = getSlice(right);
 
     const size_t minLen = (std::min)(leftView.size(), rightView.size());
-    if (const int cmp = _wcsnicmp(leftView.data(), rightView.data(), minLen))
+    if (const int cmp = left->IsTypeOrFlag(ITF_REMOTE) && right->IsTypeOrFlag(ITF_REMOTE) ?
+        leftView.compare(rightView) : _wcsnicmp(leftView.data(), rightView.data(), minLen))
     {
         return (cmp > 0) - (cmp < 0);
     }
@@ -794,13 +893,13 @@ int CItem::ComparePath(const CItem* other) const
 
 std::wstring CItem::GetPathLong() const
 {
-    if (IsTypeOrFlag(ITF_MTP)) return GetPath();
+    if (!SupportsFilesystemApis()) return GetPath();
     return FinderBasic::MakeLongPathCompatible(GetPath());
 }
 
 std::wstring CItem::GetFolderPath() const
 {
-    if (IsTypeOrFlag(ITF_MTP))
+    if (!SupportsFilesystemApis())
         return IsTypeOrFlag(IT_FILE) && GetParent() != nullptr ? GetParent()->GetPath() : GetPath();
 
     std::wstring path = GetPath();
@@ -816,12 +915,36 @@ std::wstring CItem::GetFolderPath() const
 
 bool CItem::HasUncPath() const
 {
-    if (IsTypeOrFlag(ITF_MTP)) return false;
+    if (!SupportsFilesystemApis()) return false;
     return GetPath().starts_with(L"\\\\");
 }
 
-CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor) const
+CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, const ITEMTYPE kind) const
 {
+    if (StorageSource::IsPath(path))
+    {
+        // Match exact source/key identities and optionally distinguish a directory from its marker object.
+        const auto target = StorageSource::Identity(path, kind == IT_DIRECTORY);
+        if (!target) return nullptr;
+        auto* root = GetEnumRoot();
+        std::vector<CItem*> pending = root->IsTypeOrFlag(IT_MYCOMPUTER) ? root->GetChildren() : std::vector{ root };
+        CItem* ancestor = nullptr;
+        while (!pending.empty())
+        {
+            CItem* candidate = pending.back(); pending.pop_back();
+            if (!candidate->IsTypeOrFlag(ITF_REMOTE)) continue;
+            const auto identity = StorageSource::Identity(candidate);
+            if (!identity || identity->source != target->source) continue;
+            if (identity->key == target->key && (kind == IT_NONE || identity->directory == target->directory))
+                return candidate;
+            if (!candidate->IsLeaf() && target->key.starts_with(identity->key))
+            {
+                ancestor = candidate;
+                pending.append_range(candidate->GetChildren());
+            }
+        }
+        return findAncestor ? ancestor : nullptr;
+    }
     // Find the most specific enumeration root containing the requested path.
     CItem* root = GetEnumRoot();
     const auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
@@ -1021,7 +1144,7 @@ void CItem::SortItemsBySizePhysical() const
     const auto sort = [this]
     {
         m_folderInfo->m_children.shrink_to_fit();
-        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
+        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeWeight);
     };
     if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }
@@ -1044,8 +1167,8 @@ void CItem::UpdateStatsFromDisk()
     assert(!IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
         FindHardlinksItem() == nullptr);
 
-    // Keep MTP metadata supplied by device enumeration
-    if (IsTypeOrFlag(ITF_MTP)) return;
+    // Remote metadata is supplied by its enumeration backend.
+    if (!SupportsFilesystemApis()) return;
 
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
@@ -1088,12 +1211,85 @@ void CItem::UpdateStatsFromDisk()
     }
 }
 
-void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
-    std::unordered_map<const CItem*, FinderBasicContext>* folderContexts)
+void CItem::ScanRemoteFlat(FinderRemote& finder, BlockingQueue<CItem*>* queue)
 {
-    // Reuse the NTFS and MTP finders throughout this worker
+    // Build the hierarchy directly from flat pages without scheduling synthetic prefixes for network reads.
+    std::unordered_map<std::wstring, CItem*> directories{ { L"", this } };
+    std::unique_ptr<ScanBatch> batch;
+    CItem* batchParent = nullptr;
+    finder.UseFlatListing(true);
+    for (bool found = finder.FindFile(this); found; found = finder.FindNext())
+    {
+        queue->WaitIfSuspended();
+        const std::wstring relative = finder.GetRelativeKey();
+        size_t start = 0;
+        CItem* parent = this;
+        for (size_t slash = relative.find(L'/'); slash != relative.npos; slash = relative.find(L'/', start))
+        {
+            const auto prefix = relative.substr(0, slash + 1);
+            if (const auto foundDirectory = directories.find(prefix); foundDirectory != directories.end())
+                parent = foundDirectory->second;
+            else
+            {
+                auto* child = CItem::Create(IT_DIRECTORY,
+                    StorageSource::EscapeName(relative.substr(start, slash - start)));
+                child->SetAttributes(FILE_ATTRIBUTE_DIRECTORY);
+                ScanBatch directoryBatch(parent, queue);
+                directoryBatch.Add(child);
+                directoryBatch.Flush();
+                directories.emplace(prefix, child);
+                parent = child;
+            }
+            start = slash + 1;
+        }
+        finder.SetEntryName(relative.substr(start));
+        if (finder.IsDirectory())
+        {
+            if (start == relative.size()) parent->UpwardUpdateLastChange(finder.GetLastWriteTime());
+            else
+            {
+                const auto prefix = relative + L"/";
+                auto [entry, inserted] = directories.try_emplace(prefix, nullptr);
+                if (inserted)
+                {
+                    auto* child = CItem::Create(IT_DIRECTORY, StorageSource::EscapeName(finder.GetFileName()));
+                    child->SetAttributes(FILE_ATTRIBUTE_DIRECTORY);
+                    ScanBatch directoryBatch(parent, queue);
+                    directoryBatch.Add(child);
+                    directoryBatch.Flush();
+                    entry->second = child;
+                }
+                entry->second->UpwardUpdateLastChange(finder.GetLastWriteTime());
+            }
+            continue;
+        }
+        if (CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder.GetFileName(), {},
+            finder.GetFileSizeLogical(), finder.GetLastWriteTime())) continue;
+        if (batchParent != parent)
+        {
+            batch = std::make_unique<ScanBatch>(parent, queue);
+            batchParent = parent;
+        }
+        parent->AddFile(finder, *batch);
+        batch->FlushIfNeeded();
+    }
+    batch.reset();
+
+    // A flat page failure leaves the listed subtree incomplete; successful pages remain visible.
+    for (auto* directory : directories | std::views::values)
+    {
+        directory->SetScanResult({ finder.GetResult().outcome, directory == this ? finder.GetResult().error : L"" });
+        if (directory != this) directory->SetDone();
+    }
+}
+
+void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
+    std::unordered_map<const CItem*, FinderBasicContext>* folderContexts, RemoteScanContext* contextRemote)
+{
+    // Reuse storage finders throughout this worker.
     FinderNtfs finderNtfs(&contextNtfs);
     FinderMtp finderMtp;
+    FinderRemote finderRemote(contextRemote, queue);
 
     for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
     {
@@ -1104,8 +1300,9 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
         item->ResetScanStartTime();
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY) && CFiltering::IsFilterActive() &&
-            CFiltering::IsFilteredOut(item->GetPath()))
+            CFiltering::IsFilteredOut(item->GetPath(), item->IsTypeOrFlag(ITF_REMOTE) && item->IsScanRoot()))
         {
+            item->SetScanResult({ ScanOutcome::Complete, {} });
             item->UpwardSubtractReadJobs(1);
             item->UpwardDrivePacman();
             continue;
@@ -1131,10 +1328,22 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             FinderBasic finderBasic(basicContext);
 
             // Select the enumeration backend for the queued item
-            Finder* finder = item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
+            Finder* finder = item->IsTypeOrFlag(ITF_REMOTE) ? static_cast<Finder*>(&finderRemote) :
+                item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
                 static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
+            const bool flat = item->IsTypeOrFlag(ITF_REMOTE) && contextRemote->source != nullptr &&
+                contextRemote->source->capabilities.flatListing && CFiltering::IncludeDirsRegex.empty() &&
+                CFiltering::ExcludeDirsRegex.empty();
+            if (flat)
+            {
+                item->ScanRemoteFlat(finderRemote, queue);
+                item->UpwardSubtractReadJobs(1);
+                item->UpwardDrivePacman();
+                continue;
+            }
+            finderRemote.UseFlatListing(false);
             ScanBatch batch(item, queue);
             for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
@@ -1177,6 +1386,9 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 batch.FlushIfNeeded(queue->IsPauseOrCancelRequested());
                 queue->WaitIfSuspended();
             }
+            if (item->IsTypeOrFlag(ITF_REMOTE))
+                item->UpwardUpdateLastChange(finderRemote.GetDirectoryTime());
+            item->SetScanResult(finder->GetResult());
         }
         else if (item->IsTypeOrFlag(IT_FILE))
         {

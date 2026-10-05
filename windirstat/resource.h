@@ -337,14 +337,28 @@
 #define ID_WATCHER_PAUSE                32966
 #define ID_WATCHER_START                32967
 #define ID_WDS_CONTROL                  32968
+#define IDD_S3_CONNECTION               119
+#define IDC_CLOUD_STORAGE               1176
+#define IDC_S3_BUCKET                   1177
+#define IDC_S3_ACCESS                   1179
+#define IDC_S3_REGION                   1180
+#define IDD_WEBDAV_CONNECTION           120
+#define IDD_AZURE_CONNECTION            121
+#define IDC_REMOTE_ENDPOINT             1183
+#define IDC_REMOTE_ACCOUNT              1184
+#define IDC_REMOTE_CONTAINER            1185
+#define IDC_REMOTE_PREFIX               1186
+#define IDC_REMOTE_SECRET               1187
+#define IDC_REMOTE_REMEMBER             1188
+#define IDC_S3_TOKEN                    1190
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        119
+#define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         32969
-#define _APS_NEXT_CONTROL_VALUE         1176
-#define _APS_NEXT_SYMED_VALUE           119
+#define _APS_NEXT_CONTROL_VALUE         1191
+#define _APS_NEXT_SYMED_VALUE           122
 #endif
 #endif

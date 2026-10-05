@@ -83,7 +83,7 @@
       <SubSystem>Windows</SubSystem>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>bcrypt.dll;comdlg32.dll;mpr.dll;msimg32.dll;oleaut32.dll;powrprof.dll;shlwapi.dll;virtdisk.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>bcrypt.dll;comdlg32.dll;crypt32.dll;mpr.dll;msimg32.dll;oleaut32.dll;powrprof.dll;shlwapi.dll;virtdisk.dll;winhttp.dll;xmllite.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <TargetMachine Condition="'$(Platform)'=='Win32'">MachineX86</TargetMachine>
       <TargetMachine Condition="'$(Platform)'=='x64'">MachineX64</TargetMachine>
@@ -187,6 +187,9 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderMtp.h" />
+    <ClInclude Include="FinderRemote.h" />
+    <ClInclude Include="StorageSource.h" />
+    <ClInclude Include="RemoteStorage.h" />
     <ClInclude Include="FinderNtfs.h" />
     <ClInclude Include="RecoveryNtfs.h" />
     <ClInclude Include="RecoveryShared.h" />
@@ -279,6 +282,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderMtp.cpp" />
+    <ClCompile Include="FinderRemote.cpp" />
+    <ClCompile Include="StorageSource.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="RecoveryExFat.cpp" />
     <ClCompile Include="RecoveryFat.cpp" />

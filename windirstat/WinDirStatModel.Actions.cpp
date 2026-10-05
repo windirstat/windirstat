@@ -12,6 +12,7 @@
 #include "FilePermsControl.h"
 #include "FinderBasic.h"
 #include "FinderMtp.h"
+#include "FinderRemote.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
@@ -48,6 +49,11 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     {
         return item != nullptr && !item->IsRootItem() && !item->IsMtpRoot() && item->HasShellIdentity();
     };
+    static bool (*isDeletable)(CItem*) = [](CItem* item)
+    {
+        if (item != nullptr && item->IsTypeOrFlag(ITF_REMOTE)) return !item->IsScanRoot();
+        return isShellChild(item);
+    };
     static bool (*hasShellIdentity)(CItem*) = [](CItem* item)
     {
         return item != nullptr && item->HasShellIdentity();
@@ -59,6 +65,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     };
     static bool (*isRefreshable)(CItem*) = [](CItem* item)
     {
+        if (item != nullptr && item->IsTypeOrFlag(ITF_REMOTE)) return !item->IsTypeOrFlag(IT_FILE);
         return item != nullptr && (!item->IsTypeOrFlag(ITF_MTP) ||
             (item->HasShellIdentity() && !item->IsTypeOrFlag(IT_FILE)));
     };
@@ -87,7 +94,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus        types
-        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isShellChild } },
+        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isDeletable } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, hasRecycleBin } },
         { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_STORAGE_SENSE,   { true,  true,  false, LF_NONE,     ITF_ANY, isStorageSenseAvailable } },
@@ -97,7 +104,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isShellChild } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isDeletable } },
         { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE, hasShellIdentity } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     ITF_ANY, isHibernate } },
@@ -1098,6 +1105,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         item->UpwardRecalcLastChange();
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
+        item->UpwardSubtractUnknownPhysical(item->GetUnknownPhysicalBytes(),
+            item->GetUnknownPhysicalCount() - (item->IsTypeOrFlag(ITF_REMOTE) ? 1 : 0));
         item->UpwardSubtractFiles(item->GetFilesCount());
         item->UpwardSubtractFolders(item->GetFoldersCount());
         item->RemoveAllChildren();
@@ -1110,12 +1119,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Handle if item to be refreshed has been removed or filtered
         bool exists = true;
-        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE))
+        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE))
         {
-            // Resolve existence through the matching filesystem or MTP backend.
-            exists = item->IsTypeOrFlag(ITF_MTP) ? FinderMtp::DoesFileExist(item) :
-                FinderBasic::DoesFileExist(item->GetFolderPath(),
-                    item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring());
+            // Retain inaccessible filesystem items so enumeration can report their failure.
+            if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
+            else
+            {
+                FinderBasic finder(true);
+                exists = finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
+            }
         }
         if (CFiltering::IsFilteredOut(item) || !exists)
         {
@@ -1139,6 +1151,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 parent->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
                 parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             }
+            parent->UpwardSubtractUnknownPhysical(0, item->IsTypeOrFlag(ITF_REMOTE) ? 1 : 0);
             parent->RemoveChild(item);
         }
     }
@@ -1147,6 +1160,12 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Refresh filter cutoffs immediately before scanning in case settings
     // were compiled long ago (e.g. dialog left open before clicking scan).
     CFiltering::CompileFilters();
+
+    // Capture credentials once per source for this operation before workers or UI readers use the connection.
+    std::unordered_set<CItem*> remoteRoots;
+    for (auto* item : items)
+        if (item->IsTypeOrFlag(ITF_REMOTE) && remoteRoots.insert(item->GetEnumRoot()).second)
+            item->GetStorageSource(true);
 
     // Start a thread so we do not hang the message loop during inserts.
     // Lambda captures assume the model exists for the duration of the scan.
@@ -1157,9 +1176,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Add items to processing queue
         for (const auto & item : items)
         {
+            item->SetFlag(ITF_SCANERROR, true);
+            item->SetScanResult({});
+
             // Skip any items we should not follow
             if (!item->IsTypeOrFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
             {
+                item->SetScanResult({ ScanOutcome::Complete, {} });
                 continue;
             }
 
@@ -1175,7 +1198,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             // Share a bounded worker pool for folder roots while keeping volume metadata separate.
             const CItem* volumeRoot = item->GetVolumeRoot();
             const std::wstring volumePath = volumeRoot->GetPath();
-            const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && !volumeRoot->IsTypeOrFlag(ITF_MTP);
+            const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && volumeRoot->SupportsFilesystemApis();
             if (basicFolder) folderContexts.try_emplace(volumeRoot, volumePath);
             m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
         }
@@ -1183,6 +1206,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Create subordinate threads if there is work to do
         std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
         std::unordered_map<std::wstring, FinderBasicContext> queueContextBasic;
+        std::unordered_map<std::wstring, RemoteScanContext> queueContextRemote;
         for (auto& queue : m_queues)
         {
             queueContextNtfs.try_emplace(queue.first);
@@ -1191,13 +1215,22 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];
             auto* basicCtx = &queueContextBasic[queue.first];
+            RemoteScanContext* remoteCtx = StorageSource::IsPath(queue.first) ?
+                &queueContextRemote[queue.first] : nullptr;
 
-            // Use one worker per MTP volume while retaining configured parallelism for filesystems.
-            const unsigned int threads = FinderMtp::IsPath(queue.first) ? 1 : COptions::ScanningThreads;
-            auto* contexts = queue.first.empty() ? &folderContexts : nullptr;
-            queue.second.StartThreads(threads, [queuePtr, ntfsCtx, basicCtx, contexts]
+            // Bound remote traversal while sharing one connection and credential scope across workers.
+            if (remoteCtx != nullptr) for (auto* item : items)
             {
-                CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx, contexts);
+                if (item->GetVolumeRoot()->GetPath() != queue.first) continue;
+                remoteCtx->source = item->GetStorageSource();
+                break;
+            }
+            const unsigned int threads = remoteCtx != nullptr ? std::clamp(COptions::ScanningThreads.Obj(), 1, 4) :
+                FinderMtp::IsPath(queue.first) ? 1 : COptions::ScanningThreads.Obj();
+            auto* contexts = queue.first.empty() ? &folderContexts : nullptr;
+            queue.second.StartThreads(threads, [queuePtr, ntfsCtx, basicCtx, contexts, remoteCtx]
+            {
+                CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx, contexts, remoteCtx);
             });
         }
 
@@ -1273,6 +1306,25 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             });
         }
 
+        // Recompute ancestor completeness after branch refreshes without hiding untouched failures.
+        CItem::ReconcileScanResults(GetRootItem(), stopReason == Stop);
+        std::wstring scanErrors;
+        std::unordered_set<std::wstring> reported;
+        std::vector<CItem*> pending = items.empty() ? std::vector{ GetRootItem() } : items;
+        while (!pending.empty())
+        {
+            auto* item = pending.back(); pending.pop_back();
+            const auto& result = item->GetScanResult();
+            if (item->IsTypeOrFlag(ITF_REMOTE) && !result.error.empty())
+            {
+                const auto& message = result.error;
+                if (reported.insert(message).second)
+                    scanErrors += (scanErrors.empty() ? L"" : L"\n") + message;
+            }
+            if (!item->IsLeaf()) for (auto* child : item->GetChildren())
+                if (!child->IsLeaf() && child->IsTypeOrFlag(ITF_REMOTE)) pending.push_back(child);
+        }
+
         // Sorting and other finalization tasks
         CItem::ScanItemsFinalize(GetRootItem());
         Get()->RebuildExtensionData();
@@ -1285,7 +1337,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (!model->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveResults(savePath, model->GetRootItem()) ? 0 : 1);
+            ExitProcess(SaveResults(savePath, model->GetRootItem()) &&
+                !model->GetRootItem()->IsTypeOrFlag(ITF_SCANERROR) ? 0 : 1);
         }
 
         // Handle quiet save duplicates mode if path is set
@@ -1300,7 +1353,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (dupeRoot == nullptr) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) ? 0 : 1);
+            ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) && !GetRootItem()->IsTypeOrFlag(ITF_SCANERROR) ? 0 : 1);
         }
 
         // Handle quiet save permissions mode if path is set
@@ -1310,12 +1363,12 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (!HasRootItem()) ExitProcess(1);
             const auto rows = CFilePermsControl::ScanTree(GetRootItem());
             const std::vector<const CItemPerm*> ptrs(rows.begin(), rows.end());
-            ExitProcess(SavePermissions(permsSavePath, ptrs) ? 0 : 1);
+            ExitProcess(SavePermissions(permsSavePath, ptrs) && !GetRootItem()->IsTypeOrFlag(ITF_SCANERROR) ? 0 : 1);
         }
 
-        CMainFrame::Get()->InvokeInMessageThread([]
+        CMainFrame::Get()->InvokeInMessageThread([&]
         {
-            CFileSearchControl::Get()->RestoreItems();
+            CFileSearchControl::Get()->RestoreItems(items);
         });
         const auto searchTotals = CFileSearchControl::Get()->GetRootItem()->CalculateTotals();
 
@@ -1338,6 +1391,12 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 // Restore selection if previously set
                 if (visualInfo[item].isSelected) GetFocusControl()->SelectItem(item, false, true);
             }
+        });
+
+        // Present remote failures after the scan UI has settled.
+        if (!scanErrors.empty()) CMainFrame::Get()->InvokeInMessageThread([&]
+        {
+            DisplayError(Localization::Lookup(IDS_SCAN_INCOMPLETE) + L"\n\n" + scanErrors);
         });
 
         // Defer heap cleanup until the timer observes that this thread has exited.

@@ -8,6 +8,7 @@
 #include "HelpersInterface.h"
 #include "Item.h"
 #include "FinderMtp.h"
+#include "StorageSource.h"
 #include "Options.h"
 #include "Localization.h"
 #include "Version.h"
@@ -335,9 +336,29 @@ std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR de
 std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec)
 {
     std::vector<std::pair<std::wstring, std::wstring>> roots;
+    std::vector<RemoteTarget> remote;
     for (auto& path : SplitString(pathSpec))
     {
         if (path.empty()) continue;
+        if (StorageSource::IsPath(path))
+        {
+            // Compare remote prefixes on the same connection, respecting WebDAV directory boundaries.
+            auto target = StorageSource::Parse(path);
+            if (!target) continue;
+            if (target->protocol == RemoteProtocol::WebDav &&
+                !target->prefix.empty() && !target->prefix.ends_with(L'/'))
+                target->prefix += L'/';
+            if (std::ranges::any_of(remote, [&](const auto& other)
+            {
+                return target->SameConnection(other) && target->prefix.starts_with(other.prefix);
+            })) continue;
+            std::erase_if(remote, [&](const auto& other)
+            {
+                return target->SameConnection(other) && other.prefix.starts_with(target->prefix);
+            });
+            remote.push_back(*target);
+            continue;
+        }
         const bool isMtp = FinderMtp::IsPath(path);
         if (!isMtp)
         {
@@ -358,6 +379,7 @@ std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec)
     std::vector<std::wstring> paths;
     paths.reserve(roots.size());
     for (auto& [path, key] : roots) paths.emplace_back(std::move(path));
+    for (const auto& target : remote) paths.push_back(target.ToString());
     return paths;
 }
 
@@ -515,7 +537,7 @@ PIDLIST_ABSOLUTE CreateShellPidl(const std::wstring& path)
 
 PIDLIST_ABSOLUTE CreateShellPidl(const CItem* item)
 {
-    if (item == nullptr) return nullptr;
+    if (item == nullptr || item->IsTypeOrFlag(ITF_REMOTE)) return nullptr;
     if (!item->IsTypeOrFlag(ITF_MTP)) return CreateShellPidl(item->GetPath());
 
     // Prefer the registered MTP PIDL, then rebuild one from the stored shell path

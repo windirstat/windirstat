@@ -4,6 +4,43 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
+public static class WdsNativeCredentials
+{
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct Credential
+    {
+        public uint Flags, Type;
+        public string TargetName, Comment;
+        public long LastWritten;
+        public uint CredentialBlobSize;
+        public IntPtr CredentialBlob;
+        public uint Persist, AttributeCount;
+        public IntPtr Attributes;
+        public string TargetAlias, UserName;
+    }
+
+    [DllImport("advapi32.dll", EntryPoint = "CredWriteW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool CredWrite(ref Credential credential, uint flags);
+
+    public static void Save(string name, string user, string secret)
+    {
+        // Store fixture credentials through the native API, including opaque session token blobs.
+        byte[] bytes = Encoding.Unicode.GetBytes(secret);
+        IntPtr blob = Marshal.AllocHGlobal(bytes.Length);
+        try
+        {
+            Marshal.Copy(bytes, 0, blob, bytes.Length);
+            var credential = new Credential
+            {
+                Type = 1, TargetName = name, UserName = user, CredentialBlob = blob,
+                CredentialBlobSize = (uint)bytes.Length, Persist = 2
+            };
+            if (!CredWrite(ref credential, 0)) throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+        finally { Marshal.FreeHGlobal(blob); }
+    }
+}
+
 public static class WdsNativeFs
 {
     // Normalize paths at the Win32 boundary, including long paths and UNC spellings.
