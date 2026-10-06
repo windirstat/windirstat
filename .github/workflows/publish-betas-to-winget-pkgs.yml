@@ -23,22 +23,35 @@ jobs:
               "skip=true" >> $env:GITHUB_OUTPUT
           }
         shell: pwsh
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         if: ${{ steps.get-version.outputs.skip != 'true' }}
-      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
+      - name: Install WinGet validator
+        if: ${{ steps.get-version.outputs.skip != 'true' }}
+        run: |
+          Install-Module Microsoft.WinGet.Client -Repository PSGallery -Scope CurrentUser -Force
+          Repair-WinGetPackageManager -Latest -Force | Out-Null
+          $appsPath = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps"
+          $env:PATH += ";$appsPath"
+          $appsPath >> $env:GITHUB_PATH
+          winget --version
+          if ($LASTEXITCODE -ne 0) { throw "WinGet validator is unavailable." }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: cargo-bins/cargo-binstall@7bebc2e59eb8820162b7ac8f62a92bfdb2732447 # v1.25.1
         if: ${{ steps.get-version.outputs.skip != 'true' }}
         with:
-          version: v1.21.1
+          version: v1.25.1
       - name: Install Komac 2.16.0
         if: ${{ steps.get-version.outputs.skip != 'true' }}
-        # This version writes --output manifests before --dry-run exits, allowing the locale correction below.
+        # Generate manifests locally so installer and locale checks can run before submission.
         run: |
           cargo binstall komac@2.16.0 --no-confirm
           if ((komac --version) -ne "komac 2.16.0") { throw "Unexpected Komac version." }
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Publish corrected WinGet manifests
+      - name: Validate and publish WinGet manifests
         if: ${{ steps.get-version.outputs.skip != 'true' }}
         run: |
           $Parameters = @{

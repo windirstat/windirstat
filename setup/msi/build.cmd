@@ -10,12 +10,12 @@ IF "%~1" EQU "PRODUCTION" SET RELTYPE=PRODUCTION
 CD /D "%~dp0"
 SET BLDDIR=..\..\build
 
-:: test for wix being installed (WiX 4 uses wix.exe instead of candle.exe)
+:: test for WiX being installed
 wix --version >NUL 2>&1
 IF %ERRORLEVEL% NEQ 0 (
-  ECHO WiX Toolset v4 not found; skipping MSI build
+  ECHO WiX Toolset not found; MSI build failed
   ECHO Install via: dotnet tool install --global wix
-  EXIT /B 0
+  EXIT /B 1
 )
 
 :: grab current version information from source
@@ -69,5 +69,10 @@ FOR %%A IN (arm64 x86 x64) DO (
 :: clean up temporary files
 IF EXIST "%LICENSERTF%" DEL "%LICENSERTF%"
 IF EXIST "temp_wxl" RD /S /Q "temp_wxl"
+
+:: verify the multilingual packages before publishing
+POWERSHELL -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
+   "& '..\..\tests\Test-Installer.ps1' -MsiPath @('%BLDDIR%\WinDirStat-arm64.msi','%BLDDIR%\WinDirStat-x86.msi','%BLDDIR%\WinDirStat-x64.msi')"
+IF ERRORLEVEL 1 EXIT /B 1
 
 EXIT /B 0

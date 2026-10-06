@@ -346,6 +346,7 @@ $languageJobScript = {
             '-d', "BUILD=$Build",
             '-d', "EstimatedSize=$EstimatedSize",
             '-d', "ProductCode=$ProductCode",
+            '-d', "ProductLanguage=$Lcid",
             '-d', "LicenseRtf=$LicenseRtf"
         )
 

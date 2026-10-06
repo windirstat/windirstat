@@ -55,6 +55,7 @@ IF ERRORLEVEL 1 ECHO Executable signing failed; continuing without signed execut
 
 :: build the msi
 CALL "%THISDIR%\setup\msi\build.cmd" "%RELTYPE%"
+IF ERRORLEVEL 1 EXIT /B 1
 
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"
