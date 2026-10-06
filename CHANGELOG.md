@@ -1,5 +1,5 @@
-<a name="windirstat-2.9.1"></a>
-# WinDirStat 2.9.1 (Upcoming)
+<a name="windirstat-2.9.2"></a>
+# WinDirStat 2.9.2 (Upcoming)
 
 Bug Fixes
 - Corrected list column widths and order not being restored after restart
