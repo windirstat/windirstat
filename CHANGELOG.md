@@ -1,18 +1,33 @@
 <a name="windirstat-2.9.2"></a>
-# WinDirStat 2.9.2 (Upcoming)
+# WinDirStat 2.9.2
+
+Enhancements
+- Added deleted file recovery for FAT12, FAT16, and FAT32 volumes
+- Added original filename and path detection for Recycle Bin recovery
+- Improved duplicate view responsiveness for large duplicate groups
+- Improved progress reporting and cancellation when creating sparse files (thanks @harryytm)
+- Improved General settings page layout (thanks @harryytm)
+- Improved Storage Analytics translations across supported languages
 
 Bug Fixes
 - Corrected list column widths and order not being restored after restart
 - Corrected window and column settings not being saved before administrator restart
-- Corrected automatic column resizing being applied when disabled
-- Corrected sorting by hidden columns after restart
-- Corrected navigation scrolling reordered Name columns out of view
-- Corrected tooltip font sizing and wrapping after font size changes
-- Corrected dialog column widths after font changes while a dialog is open
+- Corrected column resizing ignoring disabled autosizing or revealing hidden columns
+- Corrected sorting and navigation with hidden or reordered columns
+- Corrected tooltip rendering and dialog column widths after font changes
 - Corrected filtering tooltips retaining outdated examples after changing regex mode
-- Corrected hidden views leaving empty panels in some window layouts
+- Corrected pane visibility and resizing across window layouts
 - Corrected menu, checkbox, and radio button scaling with the font size setting
 - Corrected an assertion when rendering very small squarified treemap regions
+- Corrected refresh crashes and preserved matching search results after refreshing items
+- Corrected directory regular expressions losing escape sequences
+- Corrected crashes when loading malformed settings or CSV/JSON reports
+- Corrected treemap height slider labels and settings persistence
+- Corrected NTFS scans skipping valid files after encountering damaged records
+- Corrected MSI upgrades across installation languages
+
+Miscellaneous
+- Changed application license to GPL v3 or later
 
 <a name="windirstat-2.9.0"></a>
 # WinDirStat 2.9.0
