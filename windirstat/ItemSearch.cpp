@@ -85,6 +85,9 @@ HICON CItemSearch::GetIcon()
     // No icon to return if not visible yet
     if (viewState == nullptr) return nullptr;
 
+    // Reflect the linked directory's scan state without replacing its cached icon.
+    if (m_item != nullptr && m_item->IsTypeOrFlag(ITF_SCANERROR)) return GetIconHandler()->GetScanErrorImage();
+
     if (viewState->icon != nullptr) return viewState->icon;
 
     // Cache icon for parent nodes

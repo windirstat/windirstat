@@ -52,6 +52,7 @@ public:
 
     HICON m_freeSpaceImage = nullptr;    // <Free Space>
     HICON m_unknownImage = nullptr;      // <Unknown>
+    HICON m_scanErrorImage = nullptr;    // Incomplete scan
     HICON m_hardlinksImage = nullptr;    // <Hardlinks>
     HICON m_dupesImage = nullptr;        // <Duplicates>
     HICON m_searchImage = nullptr;       // <Search>
@@ -73,6 +74,7 @@ public:
     HICON GetJunctionProtectedImage() const { return m_junctionProtected; }
     HICON GetFreeSpaceImage() const { return m_freeSpaceImage; }
     HICON GetUnknownImage() const { return m_unknownImage; }
+    HICON GetScanErrorImage() const { return m_scanErrorImage; }
     HICON GetEmptyImage() const { return m_emptyImage; }
     HICON GetHardlinksImage() const { return m_hardlinksImage; }
     HICON GetDupesImage() const { return m_dupesImage; }

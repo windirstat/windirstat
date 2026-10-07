@@ -390,6 +390,9 @@ HICON CItem::GetIcon()
     assert(viewState != nullptr);
     if (viewState == nullptr) return nullptr;
 
+    // Keep scan state separate from the cached icon so refreshes can restore it.
+    if (IsTypeOrFlag(ITF_SCANERROR)) return GetIconHandler()->GetScanErrorImage();
+
     // Return cached icon if available
     if (viewState->icon != nullptr) return viewState->icon;
 
