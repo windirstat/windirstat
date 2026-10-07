@@ -2,6 +2,9 @@
 TITLE Building WinDirStat
 SETLOCAL EnableExtensions EnableDelayedExpansion
 
+:: let Windows PowerShell initialize its own module paths
+SET PSMODULEPATH=
+
 :: solicit whether this is production or beta build
 ECHO Please choose a release type:
 ECHO 1. Beta
@@ -52,6 +55,7 @@ IF ERRORLEVEL 1 ECHO Executable signing failed; continuing without signed execut
 
 :: build the msi
 CALL "%THISDIR%\setup\msi\build.cmd" "%RELTYPE%"
+IF ERRORLEVEL 1 EXIT /B 1
 
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"

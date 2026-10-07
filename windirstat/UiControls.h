@@ -329,9 +329,8 @@ public:
 
 protected:
 
-    // Cache visual header rectangles by logical subitem. HDM_GETITEMRECT accounts
-    // for both user-reordered columns and horizontal scrolling; accumulating widths
-    // by logical index does not.
+    // Cache visual header rectangles by logical subitem, using the painted row's
+    // origin because the header can move after the rows during horizontal scrolling.
     // Called at most once per WM_DRAWITEM dispatch; subsequent calls are no-ops.
     void EnsureDrawColCache() const
     {
@@ -341,15 +340,13 @@ protected:
         const int n = static_cast<int>(::SendMessageW(hdr, HDM_GETITEMCOUNT, 0, 0));
         constexpr int cap = static_cast<int>(std::size(g_drawItemCtx.colLeft));
         const int cols = std::clamp(n, 0, cap);
-        POINT headerOrigin{};
-        MapWindowPoints(hdr, m_hWnd, &headerOrigin, 1);
         for (const int c : std::views::iota(0, cols))
         {
             RECT columnRect{};
             if (::SendMessageW(hdr, HDM_GETITEMRECT, static_cast<WPARAM>(c), reinterpret_cast<LPARAM>(&columnRect)) != 0)
             {
-                g_drawItemCtx.colLeft[c] = headerOrigin.x + columnRect.left;
-                g_drawItemCtx.colRight[c] = headerOrigin.x + columnRect.right;
+                g_drawItemCtx.colLeft[c] = g_drawItemCtx.rcItem.left + columnRect.left;
+                g_drawItemCtx.colRight[c] = g_drawItemCtx.rcItem.left + columnRect.right;
                 g_drawItemCtx.colValid[c] = true;
             }
             else

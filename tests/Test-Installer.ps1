@@ -2,7 +2,9 @@
 param(
     [Parameter(Mandatory)]
     [string[]] $MsiPath,
-    [string] $OutputFolder
+    [string] $OutputFolder,
+    [string] $ExpectedVersion,
+    [switch] $AllowBuildNumber
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,8 +13,24 @@ if (-not $OutputFolder) {
 }
 $OutputFolder = [IO.Path]::GetFullPath($OutputFolder)
 New-Item -ItemType Directory -Path $OutputFolder -Force | Out-Null
-$installer = New-Object -ComObject WindowsInstaller.Installer
 $results = [Collections.Generic.List[object]]::new()
+$packageVersion = $null
+
+$sourceLanguages = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '..\windirstat\res\langs') -Filter 'lang_*.txt' |
+    ForEach-Object {
+        $metadata = @{}
+        Get-Content -LiteralPath $_.FullName | ForEach-Object {
+            if ($_ -match '^MSI_(CULTURE|LCID|CODEPAGE)=(.+)$') {
+                $metadata[$Matches[1]] = $Matches[2]
+            }
+        }
+        if ($metadata.Count -ne 3) { throw "Installer language metadata is incomplete: $($_.FullName)" }
+        [int] $metadata.LCID
+    } | Sort-Object)
+if ($sourceLanguages.Count -ne @($sourceLanguages | Select-Object -Unique).Count -or 1033 -notin $sourceLanguages) {
+    throw 'Installer source languages are duplicated or omit English.'
+}
+$installer = New-Object -ComObject WindowsInstaller.Installer
 
 function Read-MsiTable {
     param([object] $Database, [string] $Query)
@@ -67,6 +85,26 @@ try {
             [Runtime.InteropServices.Marshal]::FinalReleaseComObject($database) | Out-Null
         }
 
+        if ([int] $baseProperties.ProductLanguage -ne 1033 -or $languages[0] -ne 1033) {
+            throw "The package base language is not English: $path"
+        }
+        if (Compare-Object $sourceLanguages @($languages | Sort-Object)) {
+            throw "Embedded languages differ from the source languages: $path"
+        }
+        if ($packageVersion -and $baseProperties.ProductVersion -ne $packageVersion) {
+            throw "Installer packages have different ProductVersion values: $path"
+        }
+        $packageVersion = $baseProperties.ProductVersion
+        if ($ExpectedVersion) {
+            $versionMatches = $packageVersion -eq $ExpectedVersion
+            if ($AllowBuildNumber) {
+                $version = [version] $packageVersion
+                $versionMatches = $version.Revision -ge 0 -and $version.ToString(3) -eq $ExpectedVersion
+            }
+            if (-not $versionMatches) {
+                throw "ProductVersion does not match ${ExpectedVersion}: $path"
+            }
+        }
         $expected = @($languages | Where-Object { $_ -ne [int] $baseProperties.ProductLanguage } | Sort-Object)
         $actual = @($transforms.Name | ForEach-Object { [int] $_ } | Sort-Object)
         if (Compare-Object $expected $actual) { throw "Embedded languages differ from the summary: $path" }
@@ -90,8 +128,8 @@ try {
                         throw "Transform $language changes ${property}: $path"
                     }
                 }
-                if ([int] $properties.ProductLanguage -notin $languages) {
-                    throw "ProductLanguage is absent from the package summary: $path"
+                if ([int] $properties.ProductLanguage -ne $language) {
+                    throw "Transform $language does not set the matching ProductLanguage: $path"
                 }
 
                 # Check both removal and downgrade detection, including the alternate release channel.

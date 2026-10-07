@@ -4,6 +4,9 @@
     <?ifndef ProductCode ?>
         <?define ProductCode =          "*"?>
     <?endif ?>
+    <?ifndef ProductLanguage ?>
+        <?define ProductLanguage =      "1033"?>
+    <?endif ?>
     <?if $(var.RELTYPE) = PRODUCTION ?>
         <?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH)"?>
         <?define UpgradeCode =              "46F106C9-090C-43D0-8815-D03BA9FA55A9"?>
