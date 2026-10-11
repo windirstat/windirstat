@@ -67,9 +67,11 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor,
     // Calculate rectangle to display graphic
     CRect rc(rect);
     rc.Deflate(5, 1);
-    rc.bottom -= rc.Height() % 2;
-    rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / (dots ? 1.0f : 2.0f)));
-    rc.right = rc.left + rc.Height();
+    const int size = std::min(rc.Width(), rc.Height()) / 2 * 2;
+    rc.top += (rc.Height() - size) / 2;
+    rc.bottom = rc.top + size;
+    rc.left += static_cast<int>(m_position * (rc.Width() - size));
+    rc.right = rc.left + size;
     const Gdiplus::Rect grect(rc.left, rc.top, rc.Width(), rc.Height());
 
     // Determine the share of the figure
@@ -83,7 +85,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor,
     {
         pdc->FillSolidRect(rect, backColor);
     }
-    if (m_done) return;
+    if (m_done || size <= 0) return;
 
     // Create pens and brushes
     static const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
