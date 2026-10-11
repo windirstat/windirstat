@@ -150,6 +150,7 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
 
 bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
 {
+    m_isLoaded = false;
     queue->WaitIfSuspended();
 
     // Trim off excess characters
@@ -205,9 +206,16 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
         vcnStart = vcnNext;
     }
 
-    // Process MFT records
+    // Each data run owns its parse maps across pauses, with no shared record writes.
+    struct RecordPartition
+    {
+        std::unordered_map<ULONGLONG, FileRecordBase> records;
+        std::unordered_map<ULONGLONG, std::vector<FileRecordName>> children;
+    };
+    std::vector<RecordPartition> partitions(dataRuns.size());
+    const auto runIndices = std::views::iota(size_t{}, dataRuns.size());
     std::atomic<bool> readFailed = false;
-    const auto readRun = [&](auto& dataRun)
+    const auto readRun = [&](const size_t runIndex)
     {
         // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size
         constexpr size_t bufferSize = 4ull * wds::Mi;
@@ -215,7 +223,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
             static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
 
-        auto& [runVcnStart, clusterStart, clusterCount, bytesReadFromRun] = dataRun;
+        auto& [runVcnStart, clusterStart, clusterCount, bytesReadFromRun] = dataRuns[runIndex];
+        auto& partition = partitions[runIndex];
 
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster - bytesReadFromRun;
@@ -303,12 +312,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                     fileRecord->BaseFileRecordSequence : fileRecord->SequenceNumber;
                 const auto baseFileReference = baseRecordIndex | (baseRecordSequence << 48);
 
-                FileRecordBase* baseRecordPtr = nullptr;
-                if (std::scoped_lock lock(m_baseFileRecordMutex); true)
-                {
-                    baseRecordPtr = &m_baseFileRecordMap[baseRecordIndex];
-                }
-                auto& baseRecord = *baseRecordPtr;
+                auto& baseRecord = partition.records[baseRecordIndex];
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
@@ -317,6 +321,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        baseRecord.HasStandardInfo = true;
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes |= si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
@@ -331,8 +336,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                             (fn->FileNameLength == 1 && fn->FileName[0] == L'.') ||
                             (fn->FileNameLength == 2 && fn->FileName[0] == L'.' && fn->FileName[1] == L'.')) continue;
 
-                        std::scoped_lock lock(m_parentToChildMutex);
-                        auto& children = m_parentToChildMap.try_emplace(fn->ParentDirectory).first->second;
+                        auto& children = partition.children.try_emplace(fn->ParentDirectory).first->second;
                         children.emplace_back(std::wstring{ fn->FileName, fn->FileNameLength }, baseFileReference);
                     }
                     else if (curAttribute->TypeCode == AttributeData)
@@ -367,6 +371,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         if (curAttribute->IsNonResident())
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
+                            baseRecord.HasData = true;
                             baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
 
                             if (const ULONGLONG physSize = (curAttribute->IsCompressed() || curAttribute->IsSparse()) ?
@@ -379,6 +384,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         }
                         else
                         {
+                            baseRecord.HasData = true;
                             baseRecord.LogicalSize = curAttribute->Form.Resident.ValueLength;
                             if (!baseRecord.HasWofData)
                                 baseRecord.PhysicalSize = (curAttribute->Form.Resident.ValueLength + 7) & ~7;
@@ -407,7 +413,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
     };
     do
     {
-        std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), readRun);
+        std::for_each(std::execution::par, runIndices.begin(), runIndices.end(), readRun);
         // Only the registered worker reports idle after all parallel reads have drained.
         queue->WaitIfSuspended();
         if (readFailed)
@@ -420,6 +426,48 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
     {
         return std::get<3>(run) < std::get<2>(run) * volumeInfo.BytesPerCluster;
     }));
+
+    // Adopt the first run's maps outright, since an unfragmented MFT has no other runs to combine.
+    m_baseFileRecordMap.clear();
+    m_parentToChildMap.clear();
+    if (!partitions.empty())
+    {
+        m_baseFileRecordMap.swap(partitions.front().records);
+        m_parentToChildMap.swap(partitions.front().children);
+    }
+
+    // Transfer unique nodes and combine extension records after all readers have joined.
+    size_t recordCount = m_baseFileRecordMap.size();
+    for (const auto& partition : partitions) recordCount += partition.records.size();
+    m_baseFileRecordMap.reserve(recordCount);
+    for (auto& partition : partitions)
+    {
+        m_baseFileRecordMap.merge(partition.records);
+        for (const auto& [index, record] : partition.records)
+        {
+            auto& merged = m_baseFileRecordMap.at(index);
+            if (record.HasStandardInfo) merged.LastModifiedTime = record.LastModifiedTime;
+            if (record.HasData) merged.LogicalSize = record.LogicalSize;
+            if (record.HasWofData || !merged.HasWofData && record.HasData)
+                merged.PhysicalSize = record.PhysicalSize;
+            merged.Attributes |= record.Attributes;
+            if (record.ReparsePointTag != 0) merged.ReparsePointTag = record.ReparsePointTag;
+            merged.HasIgnoredStream |= record.HasIgnoredStream;
+            merged.HasWofData |= record.HasWofData;
+            merged.HasData |= record.HasData;
+            merged.HasStandardInfo |= record.HasStandardInfo;
+        }
+
+        m_parentToChildMap.merge(partition.children);
+        for (auto& [index, children] : partition.children)
+        {
+            auto& merged = m_parentToChildMap.at(index);
+            merged.append_range(children | std::views::as_rvalue);
+        }
+
+        // Release each run's storage as soon as it has been combined.
+        partition = {};
+    }
 
     // Verify root node exists
     if (!m_parentToChildMap.contains(NtfsNodeRoot))
