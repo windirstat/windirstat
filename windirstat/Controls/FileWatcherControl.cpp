@@ -161,7 +161,7 @@ bool CFileWatcherControl::SetQuickFilter(const std::wstring& pattern)
         if (!pattern.empty()) filter.emplace(pattern, std::regex::icase | std::regex::optimize);
         for (const auto& item : m_history)
         {
-            if (!filter || std::regex_search(item->GetLinkedItem()->GetPath(), *filter)) items.push_back(item.get());
+            if (!filter || std::regex_search(item->GetPath(), *filter)) items.push_back(item.get());
         }
     }
     catch (const std::regex_error&)
@@ -210,7 +210,7 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
         m_history.emplace_back(item);
         try
         {
-            if (m_quickFilter && !std::regex_search(item->GetLinkedItem()->GetPath(), *m_quickFilter)) continue;
+            if (m_quickFilter && !std::regex_search(item->GetPath(), *m_quickFilter)) continue;
         }
         catch (const std::regex_error&)
         {
@@ -236,6 +236,14 @@ LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
     return 0;
 }
 
+CItem* CWatcherItem::GetLinkedItem()
+{
+    // Materialize an action target only for rows used by selection or shell commands.
+    if (m_item == nullptr)
+        m_item.reset(CItem::Create(IT_FILE, m_path, m_timestamp, m_fileSize, m_fileSize, 0, m_attributes, 0, 0));
+    return m_item.get();
+}
+
 HICON CWatcherItem::GetIcon()
 {
     auto* viewState = GetViewState();
@@ -247,6 +255,6 @@ HICON CWatcherItem::GetIcon()
 
     // Fetch all icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+        viewState->control, m_path, m_attributes, &viewState->icon, nullptr));
     return nullptr;
 }

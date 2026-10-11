@@ -335,6 +335,9 @@
     <ClInclude Include="ItemTop.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
+    <ClInclude Include="ItemWrapperNode.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
     <ClInclude Include="Localization.h">
       <Filter>Header Files\User Interface</Filter>
     </ClInclude>

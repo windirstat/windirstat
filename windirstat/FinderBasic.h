@@ -88,7 +88,7 @@ public:
     bool FindFile(const CItem* item) override;
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
     DWORD GetAttributes() const override { return m_currentInfo->FileAttributes; }
-    std::wstring GetFileName() const override { return m_name; }
+    std::wstring_view GetFileName() const override { return m_name; }
     ULONGLONG GetFileSizePhysical() const override { return m_currentInfo->AllocationSize.QuadPart; }
     ULONGLONG GetFileSizeLogical() const override { return m_currentInfo->EndOfFile.QuadPart; }
     FILETIME GetLastWriteTime() const override { return std::bit_cast<FILETIME>(m_currentInfo->LastWriteTime); }

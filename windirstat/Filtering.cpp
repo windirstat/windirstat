@@ -260,7 +260,7 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
     });
 }
 
-bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
+bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstring& filePath,
     const ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
 {
     if (!FilterActive) return false;
@@ -281,7 +281,7 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
 
     // Exclude files matching name filter
     if (!ExcludeFilesRegex.empty() && std::ranges::any_of(ExcludeFilesRegex,
-        [&fileName](const auto& pattern) { return std::regex_match(fileName, pattern); }))
+        [&fileName](const auto& pattern) { return std::regex_match(fileName.begin(), fileName.end(), pattern); }))
     {
         return true;
     }
@@ -294,7 +294,7 @@ bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring&
 
     // Include only files whose name matches the include name filter
     if (!IncludeFilesRegex.empty() && std::ranges::none_of(IncludeFilesRegex,
-        [&fileName](const auto& pattern) { return std::regex_match(fileName, pattern); }))
+        [&fileName](const auto& pattern) { return std::regex_match(fileName.begin(), fileName.end(), pattern); }))
     {
         return true;
     }

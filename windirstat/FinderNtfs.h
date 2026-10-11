@@ -72,7 +72,7 @@ public:
     DWORD GetAttributes() const override { return m_currentRecord->Attributes; }
     ULONGLONG GetIndex() const override { return m_currentRecordName->FileReference; }
     DWORD GetReparseTag() const override { return m_currentRecord->ReparsePointTag; }
-    std::wstring GetFileName() const override { return m_currentRecordName->FileName; }
+    std::wstring_view GetFileName() const override { return m_currentRecordName->FileName; }
     ULONGLONG GetFileSizePhysical() const override { return m_currentRecord->PhysicalSize; }
     ULONGLONG GetFileSizeLogical() const override { return m_currentRecord->LogicalSize; }
     FILETIME GetLastWriteTime() const override { return m_currentRecord->LastModifiedTime; }

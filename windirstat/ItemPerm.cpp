@@ -49,10 +49,10 @@ std::wstring StripMnemonicMarkers(std::wstring text)
 }
 }
 
-CItemPerm::CItemPerm(std::shared_ptr<CItem> item, std::wstring account,
+CItemPerm::CItemPerm(std::shared_ptr<const Snapshot> snapshot, std::wstring account,
     const ACCESS_MASK mask, const bool deny, const BYTE aceFlags, const bool inheritanceDisabled) :
-    m_item(std::move(item)), m_account(std::move(account)), m_mask(mask),
-    m_isContainer((m_item->GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) != 0),
+    m_snapshot(std::move(snapshot)), m_account(std::move(account)), m_mask(mask),
+    m_isContainer((m_snapshot->attributes & FILE_ATTRIBUTE_DIRECTORY) != 0),
     m_level(ComputeRightsLevel(mask)), m_applies(ComputeApplies(aceFlags, m_isContainer)), m_deny(deny),
     m_inheritanceDisabled(inheritanceDisabled)
 {
@@ -60,7 +60,7 @@ CItemPerm::CItemPerm(std::shared_ptr<CItem> item, std::wstring account,
 
 std::wstring CItemPerm::GetText(const int subitem) const
 {
-    if (subitem == COL_ITEMPERM_NAME) return m_item->GetPath();
+    if (subitem == COL_ITEMPERM_NAME) return m_snapshot->path;
     if (subitem == COL_ITEMPERM_ACCOUNT) return m_account;
     if (subitem == COL_ITEMPERM_TYPE) return GetAccessTypeName(m_deny);
     if (subitem == COL_ITEMPERM_RIGHTS) return m_level == PERMSLEVEL_SPECIAL ?
@@ -75,7 +75,7 @@ int CItemPerm::CompareSibling(const CTreeListItem* other, const int subitem) con
     const auto* otherItem = static_cast<const CItemPerm*>(other);
     switch (subitem)
     {
-    case COL_ITEMPERM_NAME:    return m_item->ComparePath(otherItem->m_item.get());
+    case COL_ITEMPERM_NAME:    return signum(_wcsicmp(m_snapshot->path.c_str(), otherItem->m_snapshot->path.c_str()));
     case COL_ITEMPERM_ACCOUNT: return signum(_wcsicmp(m_account.c_str(), otherItem->m_account.c_str()));
     case COL_ITEMPERM_TYPE:    return usignum(m_deny, otherItem->m_deny);
     case COL_ITEMPERM_RIGHTS:  return m_level != otherItem->m_level ?
@@ -92,7 +92,7 @@ CItem* CItemPerm::GetLinkedItem() noexcept
     if (model == nullptr || !model->IsScanSettled()) return nullptr;
 
     // Keep permission rows as snapshots, but resolve actions to the current scan tree.
-    const std::wstring_view path = m_item->GetNameView();
+    const std::wstring_view path = m_snapshot->path;
     CItem* const root = model->GetRootItem();
     const std::span<CItem* const> roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
         std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
@@ -131,7 +131,7 @@ HICON CItemPerm::GetIcon()
 
     // Fetch all icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+        viewState->control, m_snapshot->path, m_snapshot->attributes, &viewState->icon, nullptr));
     return nullptr;
 }
 

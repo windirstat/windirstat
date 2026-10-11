@@ -506,9 +506,9 @@ bool FinderNtfs::FindFile(const CItem* item)
 std::wstring FinderNtfs::GetFilePath() const
 {
     // Get full path to folder or file
-    std::wstring path = (m_base.back() == L'\\') ?
-        (m_base + GetFileName()) :
-        (m_base + L"\\" + GetFileName());
+    std::wstring path = m_base;
+    if (!path.ends_with(L'\\')) path += L'\\';
+    path += GetFileName();
 
     // Strip special dos chars
     if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.length());

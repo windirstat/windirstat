@@ -7,6 +7,7 @@
 #pragma once
 
 #include "pch.h"
+#include "ItemWrapperNode.h"
 
 // Columns
 using ITEMSEARCHCOLUMNS = enum : std::uint8_t
@@ -17,11 +18,8 @@ using ITEMSEARCHCOLUMNS = enum : std::uint8_t
     COL_ITEMSEARCH_LAST_CHANGE
 };
 
-class CItemSearch final : public CTreeListItem
+class CItemSearch final : public CItemWrapperNode<CItemSearch>
 {
-    std::shared_mutex m_protect;
-    std::vector<CItemSearch*> m_children;
-    CItem* m_item = nullptr;
     ULONGLONG m_totalSizeLogical = 0;
     ULONGLONG m_totalSizePhysical = 0;
     bool m_limitExceeded = false;
@@ -33,17 +31,12 @@ public:
     CItemSearch& operator=(const CItemSearch&) = delete;
     CItemSearch& operator=(CItemSearch&&) = delete;
     CItemSearch() = default;
-    CItemSearch(CItem* item);
-    ~CItemSearch() override;
+    CItemSearch(CItem* item) : CItemWrapperNode(item) {}
 
     // CTreeListItem Interface
-    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override { return static_cast<int>(m_children.size()); }
-    CTreeListItem* GetTreeListChild(const int i) const override { return m_children[i]; }
     HICON GetIcon() override;
-    CItem* GetLinkedItem() noexcept override { return m_item; }
     CTreeListItem* GetAncestorCheckItem() override { return m_item; }
 
     void AddSearchItemChild(CItemSearch* child);

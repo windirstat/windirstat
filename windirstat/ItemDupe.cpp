@@ -13,35 +13,7 @@ CItemDupe::CItemDupe(const std::vector<BYTE>& hash, const bool sampled) :
 {
 }
 
-CItemDupe::CItemDupe(CItem* item) : m_item(item) {}
-
-CItemDupe::~CItemDupe()
-{
-    for (const auto& m_child : m_children)
-    {
-        delete m_child;
-    }
-}
-
-static int GetMappedColumn(const int subitem)
-{
-    switch (subitem)
-    {
-    case COL_ITEMDUP_NAME: return COL_NAME;
-    case COL_ITEMDUP_ITEMS: return COL_ITEMS;
-    case COL_ITEMDUP_SIZE_LOGICAL: return COL_SIZE_LOGICAL;
-    case COL_ITEMDUP_SIZE_PHYSICAL: return COL_SIZE_PHYSICAL;
-    case COL_ITEMDUP_LAST_CHANGE: return COL_LAST_CHANGE;
-    default: return -1;
-    }
-}
-
-bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
-{
-    // Handle individual file items
-    if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubItem(COL_NAME, pdc, rc, state, width, focusLeft);
-}
+static constexpr std::array columns{ COL_NAME, COL_ITEMS, COL_SIZE_PHYSICAL, COL_SIZE_LOGICAL, COL_LAST_CHANGE };
 
 std::wstring CItemDupe::GetText(const int subitem) const
 {
@@ -61,9 +33,7 @@ std::wstring CItemDupe::GetText(const int subitem) const
     }
 
     // Individual file names
-    if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
-    const int mapped = GetMappedColumn(subitem);
-    return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
+    return GetLinkedText(subitem, columns);
 }
 
 int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) const
@@ -85,23 +55,14 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     }
 
     // Individual file names
-    const int mapped = GetMappedColumn(subitem);
-    return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
+    return CompareLinked(tlib, subitem, columns);
 }
 
 HICON CItemDupe::GetIcon()
 {
-    auto* viewState = GetViewState();
-
-    // Return generic node for parent nodes
-    if (m_item == nullptr || viewState == nullptr) return GetIconHandler()->GetDupesImage();
-
-    if (viewState->icon != nullptr) return viewState->icon;
-
-    // Fetch all other icons
-    CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
-    return viewState->icon;
+    // Group rows use the duplicate icon even before they become visible.
+    if (m_item == nullptr || GetViewState() == nullptr) return GetIconHandler()->GetDupesImage();
+    return GetWrapperIcon(GetIconHandler()->GetDupesImage());
 }
 
 std::wstring CItemDupe::GetHashAndExtensions() const

@@ -47,7 +47,9 @@ enum PERMSLEVEL : std::uint8_t
 class CItemPerm final : public CTreeListItem
 {
 public:
-    CItemPerm(std::shared_ptr<CItem> item, std::wstring account, ACCESS_MASK mask, bool deny, BYTE aceFlags, bool inheritanceDisabled);
+    struct Snapshot { std::wstring path; DWORD attributes; };
+    CItemPerm(std::shared_ptr<const Snapshot> snapshot, std::wstring account, ACCESS_MASK mask,
+        bool deny, BYTE aceFlags, bool inheritanceDisabled);
     ~CItemPerm() override = default;
 
     // CTreeListItem required overrides
@@ -59,7 +61,7 @@ public:
     HICON GetIcon() override;
     COLORREF GetItemTextColor() const override;
 
-    std::wstring GetPath() const { return m_item->GetPath(); }
+    const std::wstring& GetPath() const { return m_snapshot->path; }
     const std::wstring& GetAccount() const { return m_account; }
     ACCESS_MASK GetAccessMask() const { return m_mask; }
     bool IsDeny() const { return m_deny; }
@@ -83,7 +85,7 @@ public:
 private:
     static std::atomic<int> m_ruleVersion;
 
-    std::shared_ptr<CItem> m_item;
+    std::shared_ptr<const Snapshot> m_snapshot;
     std::wstring m_account;
     ACCESS_MASK m_mask;
     bool m_isContainer;

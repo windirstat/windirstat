@@ -194,6 +194,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="RecoveryFat.h" />
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
+    <ClInclude Include="ItemWrapperNode.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
     <ClInclude Include="Pages\PagePermissions.h" />
     <ClInclude Include="res\LangStrings.h" />

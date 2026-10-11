@@ -30,7 +30,7 @@ public:
     ULONGLONG GetFileSizeLogical() const override { return m_size; }
     FILETIME GetLastWriteTime() const override { return m_lastWrite; }
     std::wstring GetFilePath() const override { return m_path; }
-    std::wstring GetFileName() const override { return m_name; }
+    std::wstring_view GetFileName() const override { return m_name; }
     std::wstring GetShellPath() const override { return m_shellPath; }
     PCIDLIST_ABSOLUTE GetShellPidl() const override { return m_shellPidl.Get(); }
     ULONGLONG GetIndex() const override { return 0; }

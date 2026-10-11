@@ -21,19 +21,16 @@ class CWatcherItem final : public CTreeListItem
 {
 public:
     CWatcherItem(const std::wstring& path, const std::wstring& action, const FILETIME& timestamp, const ULONGLONG fileSize, const DWORD attributes)
-        : m_action(action)
-    {
-        m_item.reset(CItem::Create(IT_FILE, path, timestamp, fileSize, fileSize, 0, attributes, 0, 0));
-    }
+        : m_path(path), m_action(action), m_timestamp(timestamp), m_fileSize(fileSize), m_attributes(attributes) {}
 
     ~CWatcherItem() override = default;
 
     std::wstring GetText(const int subitem) const override
     {
-        if (subitem == COL_ITEMWATCH_TIME) return FormatFileTime(m_item->GetLastChange(), true);
-        if (subitem == COL_ITEMWATCH_NAME) return m_item->GetPath();
+        if (subitem == COL_ITEMWATCH_TIME) return FormatFileTime(m_timestamp, true);
+        if (subitem == COL_ITEMWATCH_NAME) return m_path;
         if (subitem == COL_ITEMWATCH_ACTION) return m_action;
-        if (subitem == COL_ITEMWATCH_SIZE_LOGICAL) return FormatSizeSuffixes(m_item->GetSizeLogical());
+        if (subitem == COL_ITEMWATCH_SIZE_LOGICAL) return FormatSizeSuffixes(m_fileSize);
         return {};
     }
 
@@ -45,9 +42,9 @@ public:
 
         switch (subitem)
         {
-        case COL_ITEMWATCH_TIME:          return m_item->CompareSibling(otherItem->m_item.get(), COL_LAST_CHANGE);
-        case COL_ITEMWATCH_NAME:          return m_item->CompareSibling(otherItem->m_item.get(), COL_NAME);
-        case COL_ITEMWATCH_SIZE_LOGICAL:  return m_item->CompareSibling(otherItem->m_item.get(), COL_SIZE_LOGICAL);
+        case COL_ITEMWATCH_TIME:          return CompareFileTime(&m_timestamp, &otherItem->m_timestamp);
+        case COL_ITEMWATCH_NAME:          return signum(_wcsicmp(m_path.c_str(), otherItem->m_path.c_str()));
+        case COL_ITEMWATCH_SIZE_LOGICAL:  return usignum(m_fileSize, otherItem->m_fileSize);
         default:                          return 0;
         }
     }
@@ -55,13 +52,18 @@ public:
     CTreeListItem* GetTreeListChild(int) const override { return nullptr; }
     int GetTreeListChildCount() const override { return 0; }
 
-    CItem* GetLinkedItem() noexcept override { return m_item.get(); }
+    CItem* GetLinkedItem() override;
     HICON GetIcon() override;
+    const std::wstring& GetPath() const { return m_path; }
 
 private:
 
     std::unique_ptr<CItem> m_item;
+    std::wstring m_path;
     std::wstring m_action;
+    FILETIME m_timestamp;
+    ULONGLONG m_fileSize;
+    DWORD m_attributes;
 };
 
 class CFileWatcherControl final : public MessageTarget<CFileWatcherControl, CTreeListControl>

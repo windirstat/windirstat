@@ -28,7 +28,7 @@ public:
     virtual inline ULONGLONG GetFileSizeLogical() const = 0;
     virtual inline FILETIME GetLastWriteTime() const = 0;
     virtual std::wstring GetFilePath() const = 0;
-    virtual std::wstring GetFileName() const = 0;
+    virtual std::wstring_view GetFileName() const = 0;
     virtual std::wstring GetShellPath() const { return {}; }
     virtual PCIDLIST_ABSOLUTE GetShellPidl() const { return nullptr; }
     virtual inline ULONGLONG GetIndex() const = 0;

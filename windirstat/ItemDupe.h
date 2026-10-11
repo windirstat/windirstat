@@ -7,6 +7,7 @@
 #pragma once
 
 #include "pch.h"
+#include "ItemWrapperNode.h"
 
 // Columns
 using ITEMDUPCOLUMNS = enum : std::uint8_t
@@ -18,17 +19,14 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
     COL_ITEMDUP_LAST_CHANGE
 };
 
-class CItemDupe final : public CTreeListItem
+class CItemDupe final : public CItemWrapperNode<CItemDupe>
 {
     std::wstring m_hashString;
     bool m_sampled = false;
     mutable std::wstring m_caption;
     mutable bool m_captionDirty = true;
-    std::vector<CItemDupe*> m_children;
     ULONGLONG m_sizePhysical = 0;
     ULONGLONG m_sizeLogical = 0;
-    CItem* m_item = nullptr;
-    std::shared_mutex m_protect;
 
 public:
     CItemDupe(const CItemDupe&) = delete;
@@ -37,17 +35,12 @@ public:
     CItemDupe& operator=(CItemDupe&&) = delete;
     CItemDupe() = default;
     CItemDupe(const std::vector<BYTE> & hash, bool sampled = false);
-    CItemDupe(CItem* item);
-    ~CItemDupe() override;
+    CItemDupe(CItem* item) : CItemWrapperNode(item) {}
 
     // Inherited Overrides
-    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override { return static_cast<int>(m_children.size()); }
-    CTreeListItem* GetTreeListChild(const int i) const override { return m_children[i]; }
     HICON GetIcon() override;
-    CItem* GetLinkedItem() noexcept override { return m_item; }
 
     std::wstring GetHash() const { return m_hashString; }
     bool IsSampled() const { return m_sampled; }
