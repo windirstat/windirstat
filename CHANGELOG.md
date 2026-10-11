@@ -1,3 +1,14 @@
+<a name="windirstat-2.9.3"></a>
+# WinDirStat 2.9.3
+
+Enhancements
+- Improved NTFS direct volume scanning performance
+- Reduced memory usage in File Watcher
+- Reduced memory allocations during file enumeration and path filtering
+
+Bug Fixes
+- Corrected list column alignment when scrolling horizontally
+
 <a name="windirstat-2.9.2"></a>
 # WinDirStat 2.9.2
 
