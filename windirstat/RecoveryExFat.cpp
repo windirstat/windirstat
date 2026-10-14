@@ -269,7 +269,7 @@ bool ExFatRecovery::ParseEntrySet(const std::span<const BYTE> bytes, const Geome
     if (count != 0 && flags == ExFatContiguousFlags)
         record.data.runs.push_back({ 0, LONGLONG(first) - ExFatFirstDataCluster, count });
     record.snapshot.assign(bytes.begin(), bytes.end());
-    record.condition = count == 0 ? Condition::Resident : Condition::Unallocated;
+    record.confidence = count == 0 ? Confidence::High : Confidence::Medium;
     return true;
 }
 

@@ -15,6 +15,7 @@ struct HoverInfo
 {
     std::wstring_view path;
     ULONGLONG size = 0;
+    bool logicalSize = false;
 };
 
 //

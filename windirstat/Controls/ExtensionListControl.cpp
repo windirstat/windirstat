@@ -370,7 +370,7 @@ void CExtensionListControl::OnSearchExtension() const
     if (IsSelectedAggregate()) return;
 
     const auto searchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
-        (GlobToRegex(GetSelectedExtension(), false) + L"$");
+        (GlobToRegex(EscapeGlobLiteral(GetSelectedExtension()), false) + L"$");
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         SearchCriteria{ .term = searchTerm, .regex = true, .includeFolders = false });
 
@@ -385,7 +385,7 @@ void CExtensionListControl::OnExcludeExtension() const
     if (ext.empty()) return;
 
     // Build a glob pattern: e.g. "*.txt"; for no-extension files use "*."
-    const std::wstring pattern = (ext == L".") ? L"*." : (L"*" + ext);
+    const std::wstring pattern = L"*" + EscapeGlobLiteral(ext);
 
     CWinDirStatModel::Get()->StopScanningEngine();
     std::wstring& current = COptions::FilteringExcludeFiles.Obj();

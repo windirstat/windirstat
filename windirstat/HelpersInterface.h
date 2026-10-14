@@ -58,6 +58,7 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec);
 std::wstring GetFolderNameFromPath(std::wstring_view path);
 std::wstring GetBaseNameFromPath(std::wstring_view path);
+std::wstring EscapeGlobLiteral(std::wstring_view value);
 std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);
 
 // String helpers

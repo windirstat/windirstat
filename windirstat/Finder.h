@@ -8,6 +8,15 @@
 
 #include "pch.h"
 
+enum class ScanOutcome : std::uint8_t
+    { NotStarted, Complete, Partial, Cancelled, Missing, ConnectionError, EnumerationError };
+
+struct ScanResult
+{
+    ScanOutcome outcome = ScanOutcome::NotStarted;
+    std::wstring error;
+};
+
 class Finder
 {
 protected:
@@ -35,6 +44,11 @@ public:
     virtual DWORD GetReparseTag() const = 0;
     virtual bool IsReserved() const = 0;
     virtual bool HasIgnoredStream() const = 0;
+    virtual const ScanResult& GetResult() const noexcept
+    {
+        static const ScanResult complete{ ScanOutcome::Complete, {} };
+        return complete;
+    }
 
     bool IsDirectory() const
     {

@@ -281,7 +281,9 @@ bool FatRecovery::ParseEntry(const std::span<const BYTE> bytes, const Geometry& 
     record.data.size = record.data.initialized = entry.size;
     record.data.nonresident = count != 0;
     if (count != 0 || record.directory) record.data.runs.push_back({ 0, LONGLONG(first) - FatFirstDataCluster, count });
-    record.condition = count == 0 ? Condition::Resident : Condition::Unallocated;
+
+    // Deletion erases the chain, so clusters after the first are only assumed to follow it.
+    record.confidence = count == 0 ? Confidence::High : count == 1 ? Confidence::Medium : Confidence::Low;
     const auto snapshot = longName ? bytes : bytes.last(FatEntryBytes);
     record.snapshot.assign(snapshot.begin(), snapshot.end());
     return true;
@@ -471,7 +473,7 @@ void FatRecovery::Scan(Progress& progress, ScanResult& result,
                         record.path + L"\\" });
                 if (record.inUse || record.directory) return true;
 
-                // FAT deletion erases the chain: larger candidates explicitly assume consecutive free clusters.
+                // FAT deletion erases the chain; offer an assumed extent only while all of it remains free.
                 try
                 {
                     for (const auto& run : record.data.runs)

@@ -110,7 +110,6 @@ public:
     static constexpr UINT_PTR QUERY_TIMER_ID = 1;
 
     CSelectDrivesDlg(CWnd* pParent = nullptr);
-    ~CSelectDrivesDlg() override = default;
 
     std::vector<std::wstring> GetSelectedItems() const;
     bool OnInitDialog() override;
@@ -162,6 +161,43 @@ protected:
     void OnSelchangeBrowseFolder();
 };
 
+// Recent cloud connections and their editor keep local scan preferences independent.
+class CSelectCloudDlg final : public MessageTarget<CSelectCloudDlg, CLayoutDialog>
+{
+public:
+    CSelectCloudDlg(CWnd* parent = nullptr);
+
+    const std::wstring& GetSelectedPath() const { return m_path; }
+    bool OnInitDialog() override;
+    void OnOK() override;
+    static std::span<const RouteEntry> Routes();
+
+protected:
+    void OnNew();
+    void OnEdit();
+    void OnRemove();
+    void OnSelectionChanged(NMHDR*, LRESULT* result);
+    void OnDoubleClick(NMHDR*, LRESULT* result);
+    void OnListKeyDown(NMHDR* header, LRESULT* result);
+    void OnDisplayInfo(NMHDR* header, LRESULT* result);
+    void OnSize(UINT type, int width, int height);
+    void OnDestroy();
+    void SavePersistentAttributes() const override;
+
+private:
+    class RecentList final : public CListCtrl
+    {
+        MessageResult OnNotify(WPARAM wParam, LPARAM lParam) override;
+    } m_recent;
+    bool ShowEditor(int index);
+    void ReloadRecentTargets();
+    void UpdateButtons();
+    std::vector<std::wstring> m_recentTargets;
+    std::wstring m_path, m_cell;
+    CFont m_headingFont;
+    bool m_initialized = false;
+};
+
 inline std::span<const RouteEntry> CDrivesList::Routes()
 {
     static constexpr std::array entries
@@ -194,6 +230,24 @@ inline std::span<const RouteEntry> CSelectDrivesDlg::Routes()
         Route::Window<&OnWmuOk>(WM_WDS_SELECT_DRIVES_OK),
         Route::Window<&OnTimer>(WM_TIMER),
         Route::Window<&OnSysColorChange>(WM_SYSCOLORCHANGE),
+    };
+    return entries;
+}
+
+inline std::span<const RouteEntry> CSelectCloudDlg::Routes()
+{
+    static constexpr std::array entries
+    {
+        Route::Control<&OnNew>(BN_CLICKED, IDC_REMOTE_NEW),
+        Route::Control<&OnEdit>(BN_CLICKED, IDC_REMOTE_EDIT),
+        Route::Control<&OnRemove>(BN_CLICKED, IDC_REMOTE_REMOVE),
+        Route::Notify<&OnSelectionChanged>(LVN_ITEMCHANGED, IDC_REMOTE_RECENT),
+        Route::Notify<&OnSelectionChanged>(LVN_ODSTATECHANGED, IDC_REMOTE_RECENT),
+        Route::Notify<&OnDoubleClick>(NM_DBLCLK, IDC_REMOTE_RECENT),
+        Route::Notify<&OnListKeyDown>(LVN_KEYDOWN, IDC_REMOTE_RECENT),
+        Route::Notify<&OnDisplayInfo>(LVN_GETDISPINFO, IDC_REMOTE_RECENT),
+        Route::Window<&OnSize>(WM_SIZE),
+        Route::Window<&OnDestroy>(WM_DESTROY),
     };
     return entries;
 }

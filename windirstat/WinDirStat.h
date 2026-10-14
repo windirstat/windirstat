@@ -74,6 +74,7 @@ public:
 
 protected:
     void OnSelectScanRoots();
+    void OnSelectCloudRoot();
     void OnRunElevated();
     void OnFilter();
     void OnUpdateRunElevated(CCmdUI* pCmdUI);
@@ -88,6 +89,7 @@ inline std::span<const RouteEntry> CDirStatApp::Routes()
     {
         Route::Command<&OnAppAbout>(ID_APP_ABOUT),
         Route::Command<&OnSelectScanRoots>(ID_FILE_SELECT),
+        Route::Command<&OnSelectCloudRoot>(ID_FILE_SELECT_CLOUD),
         Route::Command<&OnFilter>(ID_FILTER),
         Route::Command<&OnRunElevated>(ID_RUN_ELEVATED),
         Route::Update<&OnUpdateRunElevated>(ID_RUN_ELEVATED),

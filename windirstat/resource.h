@@ -337,14 +337,45 @@
 #define ID_WATCHER_PAUSE                32966
 #define ID_WATCHER_START                32967
 #define ID_WDS_CONTROL                  32968
+#define ID_FILE_SELECT_CLOUD           32969
+#define IDD_SELECTCLOUD                 122
+#define IDD_CLOUD_CONNECTION            123
+#define IDD_S3_CONNECTION               119
+#define IDC_STORAGE_PAGE                1176
+#define IDC_S3_BUCKET                   1177
+#define IDC_S3_ACCESS                   1179
+#define IDC_S3_REGION                   1180
+#define IDD_WEBDAV_CONNECTION           120
+#define IDD_AZURE_CONNECTION            121
+#define IDC_REMOTE_ENDPOINT             1183
+#define IDC_REMOTE_ACCOUNT              1184
+#define IDC_REMOTE_CONTAINER            1185
+#define IDC_REMOTE_PREFIX               1186
+#define IDC_REMOTE_SECRET               1187
+#define IDC_REMOTE_REMEMBER             1188
+#define IDC_S3_TOKEN                    1190
+#define IDC_REMOTE_RECENT               1191
+
+#define IDC_REMOTE_RECENT_LABEL         1192
+#define IDC_REMOTE_PROVIDER             1193
+#define IDC_REMOTE_PROVIDER_LABEL       1194
+#define IDC_REMOTE_NEW                  1195
+#define IDC_REMOTE_EDIT                 1196
+#define IDC_REMOTE_REMOVE               1197
+#define IDC_REMOTE_STATUS               1199
+#define IDC_REMOTE_CREDENTIALS          1200
+#define IDC_REMOTE_CHANGE               1201
+#define IDC_S3_TOKEN_TOGGLE             1202
+
+#define IDC_REMOTE_TARGET               1203
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        119
-#define _APS_NEXT_COMMAND_VALUE         32969
-#define _APS_NEXT_CONTROL_VALUE         1176
-#define _APS_NEXT_SYMED_VALUE           119
+#define _APS_NEXT_RESOURCE_VALUE        124
+#define _APS_NEXT_COMMAND_VALUE         32970
+#define _APS_NEXT_CONTROL_VALUE         1204
+#define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

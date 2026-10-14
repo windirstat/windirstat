@@ -151,6 +151,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
             static const bool enhancedButtons = EnhancedDarkModeSupport();
             if (const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
                 style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON ||
+                style == BS_SPLITBUTTON || style == BS_DEFSPLITBUTTON ||
                 (enhancedButtons && (style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)))
             {
                 SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);

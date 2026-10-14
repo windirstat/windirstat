@@ -239,7 +239,7 @@ void RecoveryDlg::OnScan()
             preview.path = record.path;
             preview.data.size = record.data.size;
             preview.modified = record.modified;
-            preview.condition = record.condition;
+            preview.confidence = record.confidence;
             const std::lock_guard lock(m_resultMutex);
             m_pendingRecords.push_back(std::move(preview));
         });
@@ -361,8 +361,12 @@ std::wstring RecoveryDlg::CellText(const size_t index, const int column) const
     case 1: return record.path;
     case 2: return FormatSizeSuffixes(record.data.size);
     case 3: return FormatFileTime(record.modified);
-    case 4: return Localization::Lookup(record.condition == RecoveryShared::Condition::Resident ?
-        IDS_RECOVERY_RESIDENT : IDS_RECOVERY_UNALLOCATED);
+    case 4:
+    {
+        static const auto levels = SplitString(Localization::Lookup(IDS_RECOVERY_CONFIDENCE), L'|');
+        const auto level = static_cast<size_t>(record.confidence);
+        return level < levels.size() ? levels[level] : std::wstring{};
+    }
     case 5: return m_outcomes[index];
     default: return {};
     }
@@ -435,7 +439,7 @@ void RecoveryDlg::UpdateList(const size_t first, const bool append)
         case 1: compare = _wcsicmp(a.path.c_str(), b.path.c_str()); break;
         case 2: numeric(a.data.size, b.data.size); break;
         case 3: compare = CompareFileTime(&a.modified, &b.modified); break;
-        case 4: numeric(a.condition, b.condition); break;
+        case 4: numeric(a.confidence, b.confidence); break;
         case 5: compare = _wcsicmp(m_outcomes[left].c_str(), m_outcomes[right].c_str()); break;
         }
 

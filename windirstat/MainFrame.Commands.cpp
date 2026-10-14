@@ -5,6 +5,7 @@
 // Distributed WITHOUT ANY WARRANTY; see LICENSE.md for details.
 
 #include "pch.h"
+#include "FinderRemote.h"
 #include "Filtering.h"
 #include "TreeMap.h"
 #include "VisualizationPane.h"
@@ -333,12 +334,14 @@ void CMainFrame::UpdatePaneText()
     std::wstring fileSelectionText = !CWinDirStatModel::Get()->IsScanRunning() ?
         Localization::Lookup(IDS_IDLEMESSAGE) : wds::strEmpty;
     ULONGLONG size = MAXULONGLONG;
+    bool logicalSize = COptions::TreeMapUseLogical;
 
     // Allow the active visualization to override the selection text while hovered
     if (const auto hoverInfo = GetActiveVisualization()->GetHoverInfo(); !hoverInfo.path.empty())
     {
         fileSelectionText = hoverInfo.path;
         size = hoverInfo.size;
+        logicalSize |= hoverInfo.logicalSize;
     }
 
     // Only get the data if the scan model is not actively updating
@@ -347,6 +350,7 @@ void CMainFrame::UpdatePaneText()
         if (focus != LF_EXTLIST)
         {
             const auto& items = CWinDirStatModel::Get()->GetAllSelected();
+            logicalSize |= std::ranges::any_of(items, [](const CItem* item) { return !item->HasSizePhysical(); });
             if (items.size() == 1)
             {
                 // If single item selected, show full path
@@ -371,7 +375,7 @@ void CMainFrame::UpdatePaneText()
 
             for (size = 0; const auto& item : items)
             {
-                size += COptions::TreeMapUseLogical ? item->GetSizeLogical() : item->GetSizePhysical();
+                size += logicalSize ? item->GetSizeLogical() : item->GetSizePhysical();
             }
 
         }
@@ -386,7 +390,8 @@ void CMainFrame::UpdatePaneText()
     const GdiObjectSelection selectFont(&dc, GetAppFont(m_hWnd));
     SetStatusPaneText(dc, CStatusBar::PaneId::Idle, fileSelectionText);
     SetStatusPaneText(dc, CStatusBar::PaneId::Size, (size == MAXULONGLONG) ? wds::strEmpty :
-        std::format(L"{}: \u2211 {}", Localization::Lookup(COptions::TreeMapUseLogical ? IDS_COL_SIZE_LOGICAL : IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
+        std::format(L"{}: \u2211 {}", Localization::Lookup(logicalSize ?
+            IDS_COL_SIZE_LOGICAL : IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
     SetStatusPaneText(dc, CStatusBar::PaneId::Ram, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
     LayoutProgress();
 }

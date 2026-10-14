@@ -171,6 +171,7 @@ std::wstring CItem::GetText(const int subitem) const
     switch (subitem)
     {
     case COL_SIZE_PHYSICAL:
+        if (!HasSizePhysical()) return {};
         if (IsTypeOrFlag(ITF_HARDLINK))
         {
             return L"⧉ " + FormatBytes(GetSizePhysicalRaw());
@@ -187,6 +188,10 @@ std::wstring CItem::GetText(const int subitem) const
     }
 
     case COL_NAME:
+        if (IsTypeOrFlag(ITF_SCANERROR))
+            return GetName(true) + L" (" + Localization::Lookup(IDS_SCAN_INCOMPLETE) + L")";
+        if (IsTypeOrFlag(ITF_REMOTE) && GetNameView().empty())
+            return Localization::Lookup(IsTypeOrFlag(IT_FILE) ? IDS_S3_FOLDER_OBJECT : IDS_S3_EMPTY_PREFIX);
         return IsTypeOrFlag(IT_HLINKS_FILE) ? GetLinkedItem()->GetPath() : GetName(true);
 
     case COL_OWNER:
@@ -301,6 +306,8 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             const std::wstring otherPath = other->GetLinkedItem()->GetPath();
             return signum(_wcsicmp(path.c_str(), otherPath.c_str()));
         }
+        if (IsTypeOrFlag(ITF_REMOTE) && other->IsTypeOrFlag(ITF_REMOTE))
+            return signum(GetNameView().compare(other->GetNameView()));
         return signum(_wcsicmp(GetNameBuffer(), other->GetNameBuffer()));
     }
 
@@ -312,8 +319,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         }
 
         // Pacman hides the read-job count, so keep the column's normal size ordering.
-        return COptions::TreeMapUseLogical ? usignum(GetSizeLogical(), other->GetSizeLogical()) :
-            usignum(GetSizePhysical(), other->GetSizePhysical());
+        return usignum(TmiGetSize(), other->TmiGetSize());
     }
 
     case COL_PERCENTAGE:
@@ -384,6 +390,9 @@ HICON CItem::GetIcon()
     assert(viewState != nullptr);
     if (viewState == nullptr) return nullptr;
 
+    // Keep scan state separate from the cached icon so refreshes can restore it.
+    if (IsTypeOrFlag(ITF_SCANERROR)) return GetIconHandler()->GetScanErrorImage();
+
     // Return cached icon if available
     if (viewState->icon != nullptr) return viewState->icon;
 
@@ -420,12 +429,11 @@ HICON CItem::GetIcon()
         return viewState->icon;
     }
 
-    // Supply shell-compatible paths and attributes for MTP icon lookup
+    // Supply synthetic filesystem paths for remote file-type icons.
     const CItem* refItem = GetLinkedItem();
-    const bool mtp = refItem->IsTypeOrFlag(ITF_MTP);
-    const std::wstring iconPath = mtp && !refItem->IsMtpRoot() ?
-        L"C:\\~" + (refItem->IsTypeOrFlag(IT_FILE) ? refItem->GetExtension() : std::wstring{}) : refItem->GetPath();
-    const DWORD attributes = mtp ?
+    const bool remote = !refItem->SupportsFilesystemApis();
+    const std::wstring iconPath = refItem->GetIconPath();
+    const DWORD attributes = remote ?
         (refItem->IsTypeOrFlag(IT_DIRECTORY) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL) :
         refItem->GetAttributes();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
@@ -945,6 +953,7 @@ void CItem::DoHardlinkAdjustment()
 
 std::vector<BYTE> CItem::GetFileHash(const ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue, const bool sampled)
 {
+    if (IsTypeOrFlag(ITF_REMOTE)) return {};
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
     const bool useXxHash = hashAlgorithm == HASH_XXHASH;

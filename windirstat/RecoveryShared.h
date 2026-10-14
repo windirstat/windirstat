@@ -17,7 +17,9 @@ public:
         DWORD error = ERROR_SUCCESS;
     };
 
-    enum class Condition { Resident, Unallocated };
+    // Data kept in its record is certain, a recorded extent may since be reused, and an inferred extent may
+    // never have belonged to the file.
+    enum class Confidence { High, Medium, Low };
 
     // Run positions are cluster indices; a negative physical index represents an NTFS sparse hole.
     struct Run
@@ -55,7 +57,7 @@ public:
 
         // exFAT entry sets may cross noncontiguous directory clusters.
         std::vector<ULONGLONG> entryOffsets;
-        Condition condition = Condition::Resident;
+        Confidence confidence = Confidence::High;
     };
 
     struct Progress
