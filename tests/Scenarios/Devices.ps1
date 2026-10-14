@@ -11,8 +11,10 @@
 function Test-DisposableFileSystem {
     param($Context, $Case)
     $image = Assert-OwnedPath (Join-Path $Context.Root 'scratch.vhd')
-    $mount = Assert-OwnedPath (Join-Path $Context.Root 'volume')
-    [IO.Directory]::CreateDirectory($mount) | Out-Null
+    $used = @([IO.Directory]::GetLogicalDrives() | ForEach-Object { $_.Substring(0, 1) })
+    $letter = 90..68 | ForEach-Object { [string][char]$_ } | Where-Object { $_ -notin $used } | Select-Object -First 1
+    if (-not $letter) { Skip-Scenario 'No unused drive letter is available for the disposable volume.' }
+    $volumeRoot = "${letter}:\"
     Add-Cleanup 'Detach owned virtual disk' {
         param($ImageFile)
         $owned = Assert-OwnedPath $ImageFile
@@ -26,21 +28,69 @@ function Test-DisposableFileSystem {
     Invoke-TestDiskPart @(
         "CREATE VDISK FILE=`"$image`" MAXIMUM=2048 TYPE=EXPANDABLE",
         "SELECT VDISK FILE=`"$image`"", 'ATTACH VDISK', 'CREATE PARTITION PRIMARY',
-        "FORMAT FS=$($Case.FileSystem) QUICK LABEL=WdsTest", "ASSIGN MOUNT=`"$mount`""
+        "FORMAT FS=$($Case.FileSystem) QUICK LABEL=WdsTest", "ASSIGN LETTER=$letter"
     ) 'create' | Out-Null
     $imageState = Get-DiskImage -ImagePath $image -ErrorAction SilentlyContinue
     $partitions = @($imageState | Get-Disk -ErrorAction SilentlyContinue | Get-Partition -ErrorAction SilentlyContinue)
     $volume = @($partitions | Get-Volume -ErrorAction SilentlyContinue | Where-Object FileSystem -eq $Case.FileSystem)
     if (-not $imageState -or -not $imageState.Attached -or -not $volume.Count -or
-        ($mount + '\') -notin @($partitions | ForEach-Object AccessPaths)) {
+        $volumeRoot -notin @($partitions | ForEach-Object AccessPaths)) {
+        if ($Case.FileSystem -ne 'ReFS') { throw 'Could not create the disposable volume; see create.log.' }
         Skip-Scenario `
             "$($Case.FileSystem) could not be created on this Windows installation; see create.log with -KeepArtifacts."
     }
-    $root = New-TestTree (Join-Path $mount 'fixture')
-    $snapshot = Get-DiskSnapshot $root
+    $root = New-TestTree (Join-Path $volumeRoot 'fixture')
+    if ($Case.FileSystem -eq 'NTFS') {
+        New-Item -ItemType HardLink -Path (Join-Path $root 'hardlink-alias.bin') `
+            -Target (Join-Path $root 'alpha\selected-a.bin') | Out-Null
+        $blocked = Join-Path $root 'denied'
+        New-TestFile (Join-Path $blocked 'private.bin') 347 | Out-Null
+        $deep = $root
+        foreach ($level in 1..9) { $deep = Join-Path $deep ("level-$level-" + ('x' * 20)) }
+        New-TestFile (Join-Path $deep 'deep-é.txt') 5003 31 | Out-Null
+        $sparse = New-TestFile (Join-Path $root 'wide-sparse.bin') 0
+        $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
+        $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $sparse)
+        if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
+        $stream = [IO.File]::Open($sparse, 'Open', 'ReadWrite')
+        try { $stream.SetLength(4GB + 17L); $stream.WriteByte(0x71); $stream.Flush($true) }
+        finally { $stream.Dispose() }
+    }
+    $snapshot = @([pscustomobject]@{ Path = Get-NormalPath $root; Directory = $true; Link = $false }) +
+        @(Get-DiskSnapshot $root)
     foreach ($engine in 0, 1) {
-        $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $engine } }
-        Assert-ScanSnapshot (Invoke-ScanReport $runner @($root) "volume-$engine") $snapshot $root -Physical
+        $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $engine }
+            DriveSelect = @{ FilteringIncludeDirs = $root } }
+        $rows = Invoke-ScanReport $runner @($volumeRoot) "volume-$engine"
+        Assert-Equal ([Convert]::ToUInt32($rows[0].'WinDirStat Attributes', 16) -band 15) 2 `
+            'A drive root reaches the fast-engine selection path'
+        Assert-ScanSnapshot $rows $snapshot $volumeRoot -Physical
+    }
+    if ($Case.FileSystem -eq 'NTFS') {
+        $acl = Get-Acl -LiteralPath $blocked
+        $denied = Get-Acl -LiteralPath $blocked
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        try { $sid = $identity.User } finally { $identity.Dispose() }
+        $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,
+            [Security.AccessControl.FileSystemRights]::ListDirectory, [Security.AccessControl.AccessControlType]::Deny))
+        Add-Cleanup 'Restore disposable directory access' {
+            param($Directory, $Security); Set-Acl -LiteralPath $Directory -AclObject $Security
+        } @($blocked, $acl)
+        Set-Acl -LiteralPath $blocked -AclObject $denied
+        foreach ($engine in 0, 1) {
+            $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $engine }
+                DriveSelect = @{ FilteringIncludeDirs = $root } }
+            $report = Join-Path $Context.Root "denied-volume-$engine.csv"
+            $result = Invoke-TestProcess $runner @('/saveto', $report, $volumeRoot)
+            Assert-Equal $result.ExitCode $(if ($engine) { 0 } else { 1 }) `
+                'Raw MFT traversal sees denied descendants while basic enumeration reports the denied branch'
+            $rows = Read-ScanReport $report
+            if ($engine) { Assert-ScanSnapshot $rows $snapshot $volumeRoot -Physical }
+            else {
+                Assert-Equal @($rows | Where-Object Name -IEQ (Join-Path $blocked 'private.bin')).Count 0 `
+                    'The basic engine does not bypass the fixture directory ACL'
+            }
+        }
     }
 }
 
@@ -52,7 +102,7 @@ function Test-UncShare {
     $rootNormal = Get-NormalPath $root
     $uncNormal = Get-NormalPath $unc
     foreach ($entry in $snapshot) { $entry.Path = $uncNormal + $entry.Path.Substring($rootNormal.Length) }
-    $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $Case.Engine } }
+    $runner = New-TestRunner
     foreach ($spelling in @($unc, ($unc + '\'), ('\\?\UNC\' + $unc.TrimStart('\')))) {
         $name = 'unc-' + [guid]::NewGuid().ToString('N').Substring(0, 6)
         Assert-ScanSnapshot (Invoke-ScanReport $runner @($spelling) $name) $snapshot $unc
@@ -114,16 +164,14 @@ function Test-MonitorDpiTransition {
         'A real monitor DPI round trip restores equivalent layout and cached painting' 'dpi'
 }
 
-foreach ($fileSystem in 'NTFS', 'FAT32', 'ReFS') {
+foreach ($fileSystem in 'NTFS', 'FAT32', 'exFAT', 'ReFS') {
     Register-Scenario "devices.volume.$($fileSystem.ToLowerInvariant())" `
-        Devices 'Basic and fast-engine fallback agree on a disposable filesystem image' `
+        Devices 'Drive-root scans exercise MFT traversal or filesystem fallback on a disposable image' `
         Test-DisposableFileSystem -Tags Hardware,Filesystem -Requires Windows,Elevated -Data @{ FileSystem = $fileSystem }
 }
-foreach ($engine in 0, 1) {
-    Register-Scenario "devices.unc.$engine" Devices `
-        'Share roots and extended UNC aliases enumerate without a drive-letter assumption' `
-        Test-UncShare -Tags Hardware,Filesystem,External -Requires Windows,Elevated -Data @{ Engine = $engine }
-}
+Register-Scenario devices.unc Devices `
+    'Share roots and extended UNC aliases enumerate without a drive-letter assumption' `
+    Test-UncShare -Tags Hardware,Filesystem,External -Requires Windows,Elevated
 Register-Scenario devices.mtp Devices `
     'An explicitly selected device scan exports and reloads its virtual item metadata' `
     Test-MtpRoundTrip -Tags Hardware,Desktop,Persistence -Requires Windows,Desktop,Mtp

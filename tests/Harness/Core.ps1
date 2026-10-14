@@ -113,6 +113,10 @@ function Get-CapabilityReason {
             if ([Threading.Thread]::CurrentThread.ApartmentState -ne [Threading.ApartmentState]::STA) {
                 return 'Run through Run-Tests.cmd or start PowerShell with -STA for desktop scenarios.'
             }
+            $reason = Get-CapabilityReason NativeLists
+            if ($reason) { return $reason }
+        }
+        NativeLists {
             if ([Environment]::Is64BitProcess -ne $script:BinaryIs64Bit) {
                 return 'PowerShell and WinDirStat must have matching bitness for native virtual-list access.'
             }

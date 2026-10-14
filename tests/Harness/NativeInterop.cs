@@ -90,10 +90,11 @@ public static class WdsNativeFs
     const uint FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
     const uint WOF_PROVIDER_FILE = 2;
 
-    // Returns "volSerial:fileIndex" identity plus the hardlink count, or null on failure.
-    public static string GetFileIdentity(string path, out uint links)
+    // Read identity, link count, and modification time through the handle, including shared hardlink metadata.
+    public static string GetFileIdentity(string path, out uint links, out DateTime lastWrite)
     {
         links = 0;
+        lastWrite = default;
         IntPtr h = CreateFileW(NativePath(path), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero);
         if (h == new IntPtr(-1)) return null;
@@ -102,6 +103,9 @@ public static class WdsNativeFs
             BY_HANDLE_FILE_INFORMATION info;
             if (!GetFileInformationByHandle(h, out info)) return null;
             links = info.NumberOfLinks;
+            long time = ((long)(uint)info.LastWriteTime.dwHighDateTime << 32) |
+                (uint)info.LastWriteTime.dwLowDateTime;
+            lastWrite = DateTime.FromFileTimeUtc(time);
             ulong index = ((ulong)info.FileIndexHigh << 32) | info.FileIndexLow;
             return info.VolumeSerialNumber.ToString("X8") + ":" + index.ToString("X16");
         }

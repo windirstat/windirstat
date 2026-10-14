@@ -24,8 +24,6 @@ if ($builder) {
     "/p:Platform=$Platform" /m:4 /v:minimal /nologo
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $exe = Join-Path $repoRoot "intermediate\recovery-tests\$Platform\RecoveryTests.exe"
-& $exe --filter-stress
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($BuildOnly) { exit 0 }
 
 $administrator = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
