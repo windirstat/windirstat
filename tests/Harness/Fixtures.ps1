@@ -51,9 +51,10 @@ function Get-NormalPath {
 function Get-FileIdentity {
     param([string] $Path)
     $links = [uint32]0
-    $identity = [WdsNativeFs]::GetFileIdentity($Path, [ref]$links)
+    $lastWrite = [datetime]::MinValue
+    $identity = [WdsNativeFs]::GetFileIdentity($Path, [ref]$links, [ref]$lastWrite)
     if (-not $identity) { throw "Cannot read file identity: $Path" }
-    return [pscustomobject]@{ Id = $identity; Links = $links }
+    return [pscustomobject]@{ Id = $identity; Links = $links; LastChange = $lastWrite.ToString('yyyy-MM-ddTHH:mm:ssZ') }
 }
 
 function Get-DiskSnapshot {
@@ -72,7 +73,8 @@ function Get-DiskSnapshot {
                 Path = Get-NormalPath $item.FullName; Relative = [IO.Path]::GetRelativePath($Root, $item.FullName)
                 Directory = $isDirectory; Link = $isLink; Attributes = [uint32]$item.Attributes
                 Logical = $(if ($isDirectory -or $isLink) { 0L } else { [long]$item.Length }); Physical = $allocation
-                LastChange = $item.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ')
+                LastChange = $(if ($isDirectory -or $isLink) { $item.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ') }
+                    else { (Get-FileIdentity $item.FullName).LastChange })
             })
             if ($isDirectory -and -not $isLink) { $pending.Push($item) }
         }
@@ -213,7 +215,7 @@ function Invoke-ScanReport {
 function Read-ScanReport {
     param([string] $Path)
     $rows = if ([IO.Path]::GetExtension($Path) -eq '.json') {
-        [IO.File]::ReadAllText($Path) | ConvertFrom-Json
+        [IO.File]::ReadAllText($Path) | ConvertFrom-Json -DateKind String
     } else { Import-Csv -LiteralPath $Path -Encoding utf8 }
     return ,@($rows)
 }
@@ -231,12 +233,24 @@ function Assert-ScanSnapshot {
         ([Convert]::ToUInt32($_.'WinDirStat Attributes', 16) -band 15) -ne 0
     })
     $paths = @($realRows | ForEach-Object { Get-NormalPath $_.Name } | Sort-Object)
-    $expectedPaths = @(@($rootPath) + @($Snapshot.Path) | Sort-Object)
+    $expectedPaths = @(@($rootPath) + @($Snapshot | ForEach-Object Path) | Sort-Object)
     Assert-Sequence $paths $expectedPaths 'Every physical path is represented exactly once, including empty directories'
     foreach ($row in $realRows) {
         $path = Get-NormalPath $row.Name
         $disk = @($Snapshot | Where-Object Path -eq $path)
+        $missing = @('Files', 'Folders', 'Logical Size') | Where-Object {
+            [string]::IsNullOrEmpty([string]$row.$_)
+        }
+        Assert-Equal @($missing).Count 0 "Local counts and logical bytes are present, including zero values, for $path"
+        if ($Physical) {
+            Assert-True (-not [string]::IsNullOrEmpty([string]$row.'Physical Size')) `
+                "Local allocation is known, including zero bytes, for $path"
+        }
         if ($path -eq $rootPath -or ($disk.Count -and $disk[0].Directory)) {
+            if ($path -ne $rootPath) {
+                Assert-Equal ([Convert]::ToUInt32($row.'WinDirStat Attributes', 16) -band 15) 4 `
+                    "A directory retains its item type for $path"
+            }
             $descendants = @($Snapshot | Where-Object {
                 $_.Path.StartsWith($path + '\', [StringComparison]::OrdinalIgnoreCase)
             })
@@ -253,7 +267,12 @@ function Assert-ScanSnapshot {
             }
             continue
         }
+        Assert-Equal ([Convert]::ToUInt32($row.'WinDirStat Attributes', 16) -band 15) 8 `
+            "A file retains its item type for $path"
         Assert-Equal ([long]$row.'Logical Size') $disk[0].Logical "Logical bytes match disk for $path"
+        if (-not $disk[0].Link) {
+            Assert-Equal $row.'Last Change' $disk[0].LastChange "File modification time matches disk for $path"
+        }
         if ($Physical -and -not $disk[0].Link) {
             Assert-Equal ([long]$row.'Physical Size') $disk[0].Physical `
                 "Allocated bytes match the file handle for $path"

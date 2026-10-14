@@ -5,7 +5,7 @@
     foreach ($level in 1..9) { $deep = Join-Path $deep ("level-$level-" + ('x' * 20)) }
     New-TestFile (Join-Path $deep 'deep-é.txt') 5003 31 | Out-Null
     $snapshot = Get-DiskSnapshot $root
-    $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $Case.Engine } }
+    $runner = New-TestRunner
     foreach ($spelling in @($root, ($root.ToUpperInvariant() + '\'), "\\?\$root", "$root\alpha\..")) {
         $name = 'alias-' + [guid]::NewGuid().ToString('N').Substring(0, 6)
         $rows = Invoke-ScanReport $runner @($spelling) $name
@@ -17,7 +17,7 @@ function Test-OverlappingRoots {
     param($Context, $Case)
     $root = New-TestTree
     $similar = New-TestTree (Join-Path $Context.Root 'fixture extra;folder')
-    $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $Case.Engine } }
+    $runner = New-TestRunner
     $expected = @(@(Get-DiskSnapshot $root) + @(Get-DiskSnapshot $similar) | Where-Object { -not $_.Directory } |
         ForEach-Object Path | Sort-Object)
     $variants = @(
@@ -42,12 +42,12 @@ function Test-ReparseBoundary {
     $sentinel = New-TestFile (Join-Path $outside 'external-sentinel.dat') 7109
     $link = Join-Path $root 'redirected'
     New-TestJunction $link $outside
-    $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $Case.Engine; ExcludeJunctions = 1 } }
+    $runner = New-TestRunner @{ Options = @{ ExcludeJunctions = 1 } }
     $rows = Invoke-ScanReport $runner @($root) 'excluded'
     Assert-True (@($rows | Where-Object Name -Like '*external-sentinel.dat').Count -eq 0) `
         'Excluded junctions hide target content'
     Assert-Equal @($rows | Where-Object Name -IEQ $link).Count 1 'The excluded junction remains visible as a directory'
-    Set-TestSettings $runner @{ Options = @{ UseFastScanEngine = $Case.Engine; ExcludeJunctions = 0 } }
+    Set-TestSettings $runner @{ Options = @{ ExcludeJunctions = 0 } }
     $rows = Invoke-ScanReport $runner @($root) 'followed'
     $redirected = @($rows | Where-Object Name -IEQ (Join-Path $link 'external-sentinel.dat'))
     Assert-Equal $redirected.Count 1 'A followed junction enumerates through its selected path'
@@ -74,6 +74,7 @@ function Test-SymbolicLinks {
     } catch { Skip-Scenario 'Creating symbolic links requires Developer Mode or the symbolic-link privilege.' }
     $runner = New-TestRunner @{ Options = @{ ExcludeSymbolicLinksDirectory = 1; ExcludeSymbolicLinksFile = 1 } }
     $excluded = Invoke-ScanReport $runner @($Context.Fixture) 'excluded-links'
+    Assert-Equal @(Get-ReportFiles $excluded).Count 0 'Excluded file symlinks do not become ordinary files'
     Assert-True (@($excluded | Where-Object Name -Like '*directory-link\target.txt').Count -eq 0) `
         'A directory symlink is not traversed when excluded'
     Set-TestSettings $runner @{ Options = @{ ExcludeSymbolicLinksDirectory = 0; ExcludeSymbolicLinksFile = 0 } }
@@ -111,13 +112,13 @@ function Test-AllocatedSizes {
     $snapshot = Get-DiskSnapshot $root
     Assert-True (($snapshot | Where-Object Relative -eq 'sparse.bin').Physical -lt 4MB) `
         'The sparse fixture has real holes'
-    $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $Case.Engine } }
+    $runner = New-TestRunner
     $rows = Invoke-ScanReport $runner @($root) 'allocations'
     Assert-ScanSnapshot $rows $snapshot $root -Physical
     Assert-Equal @($rows | Where-Object Name -Like '*Zone.Identifier*').Count 0 `
         'Alternate streams do not become standalone files'
     $before = @($rows | ForEach-Object { "$($_.Name)|$($_.'Logical Size')|$($_.'Physical Size')" } | Sort-Object)
-    Set-TestSettings $runner @{ Options = @{ UseFastScanEngine = $Case.Engine; ProcessHardlinks = 1 } }
+    Set-TestSettings $runner @{ Options = @{ ProcessHardlinks = 1 } }
     $accounted = Invoke-ScanReport $runner @($root) 'hardlink-accounting'
     $after = @($accounted | ForEach-Object { "$($_.Name)|$($_.'Logical Size')|$($_.'Physical Size')" } | Sort-Object)
     Assert-Sequence $after $before 'Exported bytes remain comparable when UI hardlink accounting is enabled'
@@ -129,7 +130,7 @@ function Test-FilterTraversal {
     $hidden = New-TestFile (Join-Path $root 'alpha\nested\hidden.txt') 911
     [IO.File]::SetAttributes($hidden, [IO.FileAttributes]::Hidden)
     $runner = New-TestRunner @{
-        Options = @{ UseFastScanEngine = $Case.Engine; ExcludeHiddenFile = 1 }
+        Options = @{ ExcludeHiddenFile = 1 }
         DriveSelect = @{ FilteringIncludeDirs = Join-Path $root 'alpha\nested'; FilteringExcludeFiles = '*.dat' }
     }
     $rows = Invoke-ScanReport $runner @($root) 'filtered-empty'
@@ -158,13 +159,122 @@ function Test-RegexDirectoryFilters {
     for ($index = 0; $index -lt $patterns.Count; ++$index) {
         $pattern = [regex]::Escape($root) + $patterns[$index].Regex
         $runner = New-TestRunner @{
-            Options = @{ UseFastScanEngine = $Case.Engine; FilteringUseRegex = 1 }
+            Options = @{ FilteringUseRegex = 1 }
             DriveSelect = @{ FilteringIncludeDirs = $pattern }
         }
         $rows = Invoke-ScanReport $runner @($root) "regex-$index"
         Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
             @($patterns[$index].Files | Sort-Object) `
             'Directory regex escapes retain their meaning and include matching descendants'
+    }
+}
+
+function Test-EmptyScan {
+    param($Context, $Case)
+    $runner = New-TestRunner
+    foreach ($format in 'csv', 'json') {
+        Assert-ScanSnapshot (Invoke-ScanReport $runner @($Context.Fixture) "empty-$format" -Format $format) `
+            @() $Context.Fixture -Physical
+    }
+    [IO.Directory]::CreateDirectory((Join-Path $Context.Fixture 'empty\nested')) | Out-Null
+    New-TestFile (Join-Path $Context.Fixture 'zero.bin') 0 | Out-Null
+    Assert-ScanSnapshot (Invoke-ScanReport $runner @($Context.Fixture) 'zero-only') `
+        (Get-DiskSnapshot $Context.Fixture) $Context.Fixture -Physical
+}
+
+function Test-LargeFileSizes {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
+    foreach ($size in @((2GB + 17L), (4GB + 31L))) {
+        $path = New-TestFile (Join-Path $root "sparse-$size.bin") 0
+        $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $path)
+        if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
+        $stream = [IO.File]::Open($path, 'Open', 'ReadWrite')
+        try {
+            $stream.SetLength($size)
+            $stream.WriteByte(0x37)
+            $stream.Position = $size - 1
+            $stream.WriteByte(0x71)
+            $stream.Flush($true)
+        } finally { $stream.Dispose() }
+    }
+    $snapshot = Get-DiskSnapshot $root
+    $runner = New-TestRunner
+    foreach ($format in 'csv', 'json') {
+        $rows = Invoke-ScanReport $runner @($root) "large-$format" -Format $format
+        Assert-ScanSnapshot $rows $snapshot $root -Physical
+        Assert-Equal ([long]$rows[0].'Logical Size') (6GB + 48L) `
+            'File and recursive sizes preserve bits above both signed and unsigned 32-bit limits'
+    }
+}
+
+function Test-FilterBoundaries {
+    param($Context, $Case)
+    foreach ($unit in 0, 1, 2) {
+        $root = Join-Path $Context.Fixture "unit-$unit"
+        $threshold = 1 -shl (10 * $unit)
+        $below = New-TestFile (Join-Path $root 'below.bin') ($threshold - 1)
+        $equal = New-TestFile (Join-Path $root 'equal.bin') $threshold
+        $above = New-TestFile (Join-Path $root 'above.bin') ($threshold + 1)
+        New-TestFile (Join-Path $root 'excluded.bin') $threshold | Out-Null
+        New-TestFile (Join-Path $root 'not-included.txt') $threshold | Out-Null
+        $snapshot = Get-DiskSnapshot $root
+        foreach ($comparison in 0, 1) {
+            $runner = New-TestRunner @{
+                Options = @{ FilteringSizeMinimum = 1; FilteringSizeUnits = $unit
+                    FilteringSizeComparison = $comparison }
+                DriveSelect = @{ FilteringIncludeFiles = "*.bin`r`n`r`n"; FilteringExcludeFiles = 'excluded.bin' }
+            }
+            $expected = if ($comparison) { @($below, $equal) } else { @($equal, $above) }
+            $expectedPaths = @($expected | ForEach-Object { Get-NormalPath $_ })
+            $rows = Invoke-ScanReport $runner @($root) "size-$unit-$comparison"
+            Assert-ScanSnapshot $rows @($snapshot | Where-Object { $_.Path -in $expectedPaths }) $root -Physical
+        }
+    }
+    $root = Join-Path $Context.Fixture 'age'
+    $recent = New-TestFile (Join-Path $root 'recent.bin') 17
+    $old = New-TestFile (Join-Path $root 'old.bin') 31
+    [IO.File]::SetLastWriteTimeUtc($recent, [datetime]::UtcNow.AddHours(-1))
+    [IO.File]::SetLastWriteTimeUtc($old, [datetime]::UtcNow.AddDays(-2))
+    foreach ($comparison in 0, 1) {
+        $runner = New-TestRunner @{ Options = @{ FilteringMaxAgeDays = 1; FilteringMaxAgeComparison = $comparison } }
+        $expected = if ($comparison) { $recent } else { $old }
+        $rows = Invoke-ScanReport $runner @($root) "age-$comparison"
+        Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name) @($expected) `
+            'Age filters select recent or old files using their real modification times'
+    }
+}
+
+function Test-AttributeExclusions {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($kind in 'visible', 'hidden', 'protected', 'ignored') {
+        $file = New-TestFile (Join-Path $root "$kind.bin") 317
+        $folder = Join-Path $root "$kind-folder"
+        New-TestFile (Join-Path $folder 'child.bin') 331 | Out-Null
+        foreach ($path in $file, $folder) {
+            if ($kind -in @('hidden', 'protected')) {
+                $attributes = [IO.File]::GetAttributes($path) -bor [IO.FileAttributes]::Hidden
+                if ($kind -eq 'protected') { $attributes = $attributes -bor [IO.FileAttributes]::System }
+                [IO.File]::SetAttributes($path, $attributes)
+            } elseif ($kind -eq 'ignored') { [IO.File]::WriteAllText("${path}:com.dropbox.ignored", '1') }
+        }
+    }
+    $snapshot = Get-DiskSnapshot $root
+    foreach ($case in @(
+        @{ Id = 'hidden'; Options = @{ ExcludeHiddenFile = 1; ExcludeHiddenDirectory = 1 }
+            Omitted = @('hidden', 'protected') },
+        @{ Id = 'protected'; Options = @{ ExcludeProtectedFile = 1; ExcludeProtectedDirectory = 1 }
+            Omitted = @('protected') },
+        @{ Id = 'ignored'; Options = @{ ExcludeDropboxIgnored = 1 }; Omitted = @('ignored') }
+    )) {
+        $runner = New-TestRunner @{ Options = $case.Options }
+        $expected = @($snapshot | Where-Object {
+            $component = ($_.Relative -split '\\', 2)[0] -replace '(?:-folder|\.bin)$', ''
+            $component -notin $case.Omitted
+        })
+        Assert-ScanSnapshot (Invoke-ScanReport $runner @($root) $case.Id) $expected $root -Physical
     }
 }
 
@@ -218,17 +328,7 @@ function Test-DeniedDirectory {
     }).Count 0 'An intentional directory exclusion does not mark the scan incomplete'
 
     # Inspect and refresh the loaded model through targeted messages while its main window stays hidden.
-    $process = Start-TestProcess $runner @('/loadfrom', $report) -Hidden
-    $app = [pscustomobject]@{
-        Process = $process; Runner = $runner; Window = [IntPtr]::Zero; Roots = @($Context.Fixture)
-        ExpectExit = $false; TreeList = [IntPtr]::Zero; ExtensionList = [IntPtr]::Zero
-    }
-    $Context.Apps.Add($app)
-    $app.Window = Wait-Until {
-        @([TestDesktop]::Windows($process.Id) | Where-Object {
-            [TestDesktop]::Class($_) -like 'WdsWindow.*' -and [TestDesktop]::Text($_) -like '*WinDirStat*'
-        } | Select-Object -First 1)
-    } 'The background process creates its main window'
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $report) -Hidden
     $list = Wait-Until {
         foreach ($control in [TestDesktop]::Children($app.Window)) {
             if ([TestDesktop]::Class($control) -ne 'SysListView32') { continue }
@@ -269,24 +369,29 @@ function Test-DeniedDirectory {
     Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'The recovery check leaves the main window hidden'
 }
 
-foreach ($engine in 0, 1) {
-    $engineName = if ($engine) { 'fast' } else { 'basic' }
-    Register-Scenario "fs.paths.$engineName" Filesystem 'Long paths, Unicode, aliases, and exact enumeration' `
-        Test-EnumerationContract -Tags Filesystem -Data @{ Engine = $engine }
-    Register-Scenario "fs.roots.$engineName" Filesystem 'Overlapping and similarly named multi-root targets' `
-        Test-OverlappingRoots -Tags Filesystem -Data @{ Engine = $engine }
-    Register-Scenario "fs.junctions.$engineName" Filesystem 'Reparse boundaries and externally replaced targets' `
-        Test-ReparseBoundary -Tags Filesystem,External -Requires Windows,Ntfs -Data @{ Engine = $engine }
-    Register-Scenario "fs.allocation.$engineName" Filesystem 'Sparse, compressed, WOF, ADS, and hardlink accounting' `
-        Test-AllocatedSizes -Tags Filesystem -Requires Windows,Ntfs,Compression -Data @{ Engine = $engine }
-    Register-Scenario "fs.filters.$engineName" Filesystem 'Nested include anchors across exclusion boundaries' `
-        Test-FilterTraversal -Tags Filesystem -Data @{ Engine = $engine }
-    Register-Scenario "fs.regex.$engineName" Filesystem 'Regex escapes and backreferences in directory filters' `
-        Test-RegexDirectoryFilters -Tags Filesystem -Data @{ Engine = $engine }
-}
+Register-Scenario fs.paths.basic Filesystem 'Long paths, Unicode, aliases, and exact enumeration' `
+    Test-EnumerationContract -Tags Filesystem
+Register-Scenario fs.roots.basic Filesystem 'Overlapping and similarly named multi-root targets' `
+    Test-OverlappingRoots -Tags Filesystem
+Register-Scenario fs.junctions.basic Filesystem 'Reparse boundaries and externally replaced targets' `
+    Test-ReparseBoundary -Tags Filesystem,External -Requires Windows,Ntfs
+Register-Scenario fs.allocation.basic Filesystem 'Sparse, compressed, WOF, ADS, and hardlink accounting' `
+    Test-AllocatedSizes -Tags Filesystem -Requires Windows,Ntfs,Compression
+Register-Scenario fs.filters.basic Filesystem 'Nested include anchors across exclusion boundaries' `
+    Test-FilterTraversal -Tags Filesystem
+Register-Scenario fs.regex.basic Filesystem 'Regex escapes and backreferences in directory filters' `
+    Test-RegexDirectoryFilters -Tags Filesystem
 Register-Scenario fs.symlinks Filesystem 'File and directory symlinks share targets without losing their paths' `
     Test-SymbolicLinks -Tags Filesystem -Requires Windows,Ntfs
 Register-Scenario fs.access-denied Filesystem 'Access-denied enumeration preserves visible siblings' `
-    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs -Data @{ Format = 'csv' }
+    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs,NativeLists -Data @{ Format = 'csv' }
 Register-Scenario fs.access-denied.json Filesystem 'Local failure diagnostics survive JSON reload and scoped recovery' `
-    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs -Data @{ Format = 'json' }
+    Test-DeniedDirectory -Tags Filesystem -Requires Windows,Ntfs,NativeLists -Data @{ Format = 'json' }
+Register-Scenario fs.empty Filesystem 'Empty roots, empty ancestry, and zero-byte files retain known sizes' `
+    Test-EmptyScan -Tags Filesystem
+Register-Scenario fs.large-sizes Filesystem 'Sparse files and recursive totals cross 32-bit size boundaries' `
+    Test-LargeFileSizes -Tags Filesystem -Requires Windows,Ntfs
+Register-Scenario fs.filter-boundaries Filesystem 'Size equality, byte units, age direction, and filename precedence' `
+    Test-FilterBoundaries -Tags Filesystem
+Register-Scenario fs.attribute-exclusions Filesystem 'Hidden, protected, and ignored files and directories filter independently' `
+    Test-AttributeExclusions -Tags Filesystem -Requires Windows,Ntfs

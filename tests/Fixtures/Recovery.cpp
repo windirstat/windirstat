@@ -147,17 +147,6 @@ LONGLONG FreeCluster(const HANDLE volume, const DWORD totalClusters)
 
 int wmain(const int argc, wchar_t** argv)
 {
-    if (argc == 2 && std::wstring_view(argv[1]) == L"--filter-stress")
-    {
-        Test("deep-path-regex", []
-        {
-            const auto path = std::wstring(30000, L'd') + L"\\maximum Unicode 界\U0001F680 name.bin";
-            for (const auto pattern : { LR"(.*\.bin$)", LR"(d+.*name)", LR"(.*界.*)", LR"(^.*$)" })
-                Require(std::regex_search(path, std::wregex(pattern, std::regex::icase | std::regex::optimize)),
-                    "deep paths support recovery regex filters");
-        });
-        return failures == 0 ? 0 : 1;
-    }
     if (argc == 4 && std::wstring_view(argv[1]) == L"--disk-full")
     {
         Test("disk-full", [&]

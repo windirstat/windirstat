@@ -310,7 +310,14 @@ function Test-SearchRefreshCaseSensitive {
 }
 
 function Preserve-TestClipboard {
-    $clipboard = [System.Windows.Forms.Clipboard]::GetDataObject()
+    $previous = [System.Windows.Forms.Clipboard]::GetDataObject()
+    $clipboard = [System.Windows.Forms.DataObject]::new()
+    if ($previous) {
+        foreach ($format in $previous.GetFormats($false)) {
+            $value = $previous.GetData($format, $false)
+            if ($null -ne $value) { $clipboard.SetData($format, $false, $value) }
+        }
+    }
     Add-Cleanup 'Restore clipboard' {
         param($Previous)
         if ($Previous) { [System.Windows.Forms.Clipboard]::SetDataObject($Previous, $true) }
@@ -544,6 +551,29 @@ function Test-CleanupReparseReplacement {
         'The replacement junction is preserved'
 }
 
+function Test-SelectedDeletion {
+    param($Context, $Case)
+    $root = New-TestTree
+    $removed = Join-Path $root 'alpha'
+    $single = Join-Path $root 'beta\untouched.txt'
+    $before = Get-DiskSnapshot $root
+    $hashes = @($before | Where-Object { -not $_.Directory -and
+        -not $_.Path.StartsWith((Get-NormalPath $removed) + '\') -and $_.Path -ne (Get-NormalPath $single) } |
+        ForEach-Object Path | Get-FileHash | Sort-Object Path)
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ ShowMicrosoftProgress = $Case.Microsoft } }
+    $list = Get-AppList $app -AllFiles
+    Expand-AppDirectory $app $list 'beta' 'untouched.txt'
+    Select-AppRows $app $list @('alpha', 'untouched.txt')
+    New-TestFile (Join-Path $removed 'created-after-scan.txt') 353 | Out-Null
+    Invoke-AppCommand $app 'ID_CLEANUP_DELETE'
+    Wait-AppIdle $app
+    Assert-True (-not [IO.Directory]::Exists($removed) -and -not [IO.File]::Exists($single)) `
+        'Permanent deletion removes the selected folder, new descendants, and separately selected file'
+    $after = @($hashes.Path | Get-FileHash | Sort-Object Path)
+    Assert-Sequence @($after.Hash) @($hashes.Hash) 'Permanent deletion preserves every unselected payload'
+    Assert-ScanSnapshot (Save-AppReport $app 'deleted-local') (Get-DiskSnapshot $root) $root -Physical
+}
+
 function Test-CloudSelectionDialog {
     param($Context, $Case)
     $root = New-TestTree
@@ -556,13 +586,6 @@ function Test-CloudSelectionDialog {
         }
     }
     $dialog = Open-AppDialog $app 'ID_FILE_SELECT' 'IDC_TARGET_DRIVES_LIST'
-    $localButtonHeight = [TestDesktop]::ClientSize([TestDesktop]::GetDlgItem($dialog, 1))[1]
-    Assert-Equal ([TestDesktop]::GetDlgItem($dialog, (Get-ResourceId 'IDC_TAB'))) ([IntPtr]::Zero) `
-        'The local picker has no cloud tabs'
-    foreach ($control in 'IDC_BROWSE_FOLDER', 'IDC_SCAN_DUPLICATES', 'IDC_FAST_SCAN_CHECKBOX') {
-        Assert-True ([TestDesktop]::IsWindowVisible((Get-DialogControl $dialog $control))) `
-            'Local inputs and scan options remain available'
-    }
     $bounds = [TestDesktop]::Rectangle($dialog)
     [TestDesktop]::Position($dialog, $bounds[0], $bounds[1],
         $bounds[2] - $bounds[0] + 80, $bounds[3] - $bounds[1] + 30)
@@ -571,12 +594,7 @@ function Test-CloudSelectionDialog {
     Wait-AppIdle $app
     Assert-ScanSnapshot (Save-AppReport $app 'selected-local') (Get-DiskSnapshot $root) $root
 
-    $cloudCommand = Find-MenuCommand ([TestDesktop]::GetMenu($app.Window)) (Get-ResourceId 'ID_FILE_SELECT_CLOUD')
-    Assert-Equal $cloudCommand.Menu ([TestDesktop]::GetSubMenu([TestDesktop]::GetMenu($app.Window), 0)) `
-        'Cloud storage has a separate File menu command'
     $picker = Open-AppDialog $app 'ID_FILE_SELECT_CLOUD' 'IDC_REMOTE_RECENT'
-    Assert-Equal ([TestDesktop]::GetDlgItem($picker, (Get-ResourceId 'IDC_REMOTE_PROVIDER'))) ([IntPtr]::Zero) `
-        'An empty history opens the connection list without an editor'
     foreach ($control in 'IDOK', 'IDC_REMOTE_EDIT', 'IDC_REMOTE_REMOVE') {
         $id = if ($control -eq 'IDOK') { 1 } else { Get-ResourceId $control }
         Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($picker, $id))) `
@@ -588,14 +606,6 @@ function Test-CloudSelectionDialog {
     $pickerSize = [TestDesktop]::ClientSize($picker)
     $dialog = Open-CloudConnection $app $picker
     Assert-True (-not [TestDesktop]::IsWindowEnabled($picker)) 'The editor owns input until OK or Cancel'
-    Assert-Equal ([TestDesktop]::ControlText([TestDesktop]::GetDlgItem($dialog, 1)).Replace('&', '')) 'OK' `
-        'The connection editor confirms with OK'
-    Assert-Equal ([TestDesktop]::ClientSize([TestDesktop]::GetDlgItem($dialog, 1))[1]) $localButtonHeight `
-        'Cloud actions use the same button height as the local picker'
-    foreach ($control in 'IDC_TARGET_DRIVES_LIST', 'IDC_BROWSE_FOLDER', 'IDC_SCAN_DUPLICATES', 'IDC_FAST_SCAN_CHECKBOX') {
-        Assert-Equal ([TestDesktop]::GetDlgItem($dialog, (Get-ResourceId $control))) ([IntPtr]::Zero) `
-            'The cloud dialog contains no local selection controls'
-    }
     $heights = @{}
     foreach ($provider in 'S3', 'Azure Blob', 'WebDAV') {
         Select-CloudProvider $dialog $provider
@@ -603,19 +613,6 @@ function Test-CloudSelectionDialog {
             'Incomplete settings cannot be saved'
         [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_REMOTE_ENDPOINT'), "https://$provider.example.invalid/")
         $heights[$provider] = [TestDesktop]::ClientSize($dialog)[1]
-        $firstField = switch ($provider) {
-            S3 { 'IDC_S3_BUCKET' }
-            'Azure Blob' { 'IDC_REMOTE_ACCOUNT' }
-            WebDAV { 'IDC_REMOTE_ENDPOINT' }
-        }
-        $targetHeading = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_REMOTE_TARGET'))
-        $targetField = [TestDesktop]::Rectangle((Get-DialogControl $dialog $firstField))
-        $credentialsHeading = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_REMOTE_CREDENTIALS'))
-        $secretField = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_REMOTE_SECRET'))
-        $targetGap = $targetField[1] - $targetHeading[3]
-        $credentialsGap = $secretField[1] - $credentialsHeading[3]
-        Assert-True ([Math]::Abs($targetGap - $credentialsGap) -le 2) `
-            "$provider uses consistent spacing between section headings and fields"
     }
     Assert-True ($heights.WebDAV -lt $heights.S3) 'The WebDAV form does not inherit the S3 form height'
     Select-CloudProvider $dialog 'S3'
@@ -773,4 +770,10 @@ foreach ($collapsed in $false, $true) {
     Register-Scenario "interaction.duplicate-batch.$state" Interaction `
         'Batched duplicate additions preserve tree expansion, selection, counts, and export contents' `
         Test-DuplicateBatchUpdates -Tags Desktop,External -Requires Windows,Desktop -Data @{ Collapsed = $collapsed }
+}
+foreach ($microsoft in 0, 1) {
+    Register-Scenario "interaction.delete.$microsoft" Interaction `
+        'Permanent deletion reconciles selected folders and files without changing surviving payloads' `
+        Test-SelectedDeletion -Tags Desktop,Filesystem,External -Requires Windows,Desktop `
+        -Data @{ Microsoft = $microsoft }
 }

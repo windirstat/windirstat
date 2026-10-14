@@ -204,6 +204,46 @@ function Test-GraphResourceCycles {
         "Repeated graph cache replacement keeps GDI resources bounded (before=$baseline, after=$after)"
 }
 
+function Test-EmptyGraphTransitions {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapUseLogicalSize = 1 } }
+    $commands = @('ID_VIEW_TREEMAP_ROWS', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_TREEMAP_HILBERT',
+        'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST')
+    $empty = @{}
+    foreach ($command in $commands) {
+        Invoke-AppCommand $app $command
+        $empty[$command] = Get-StableFrame (Get-GraphWindow $app)
+    }
+    $zero = New-TestFile (Join-Path $root 'zero.bin') 0
+    Invoke-AppCommand $app 'ID_REFRESH_ALL'
+    Wait-AppIdle $app
+    foreach ($command in $commands) {
+        Invoke-AppCommand $app $command
+        Get-StableFrame (Get-GraphWindow $app) | Out-Null
+    }
+    Assert-ScanSnapshot (Save-AppReport $app 'zero-only') (Get-DiskSnapshot $root) $root -Physical
+    $filled = New-TestFile (Join-Path $root 'filled.bin') 65537
+    Invoke-AppCommand $app 'ID_REFRESH_ALL'
+    Wait-AppIdle $app
+    foreach ($command in $commands) {
+        Invoke-AppCommand $app $command
+        $frame = Get-StableFrame (Get-GraphWindow $app)
+        Assert-True ([TestDesktop]::Difference($empty[$command], $frame) -gt 0.01) `
+            "$command renders new data after an empty scan"
+    }
+    [IO.File]::Delete($filled)
+    [IO.File]::Delete($zero)
+    Invoke-AppCommand $app 'ID_REFRESH_ALL'
+    Wait-AppIdle $app
+    foreach ($command in $commands) {
+        Invoke-AppCommand $app $command
+        Assert-FrameEqual $empty[$command] (Get-StableFrame (Get-GraphWindow $app)) `
+            "$command clears stale pixels when a refresh removes every file" $command
+    }
+    Assert-ScanSnapshot (Save-AppReport $app 'emptied') @() $root -Physical
+}
+
 foreach ($graph in @(
     @{ Id = 'rows'; Command = 'ID_VIEW_TREEMAP_ROWS' }, @{ Id = 'squarified'; Command = 'ID_VIEW_TREEMAP_SQUARIFIED' },
     @{ Id = 'hilbert'; Command = 'ID_VIEW_TREEMAP_HILBERT' }, @{ Id = 'moore'; Command = 'ID_VIEW_TREEMAP_MOORE' },
@@ -239,3 +279,5 @@ Register-Scenario render.font-cache Rendering `
     Test-FontCacheRoundTrip -Tags Desktop,Rendering -Requires Windows,Desktop
 Register-Scenario render.resources Rendering 'Repeated renderer changes release obsolete GDI resources' `
     Test-GraphResourceCycles -Tags Desktop,Rendering,Extended -Requires Windows,Desktop
+Register-Scenario render.empty-transitions Rendering 'Empty and zero-byte models render, populate, and clear without stale pixels' `
+    Test-EmptyGraphTransitions -Tags Desktop,Rendering,External -Requires Windows,Desktop

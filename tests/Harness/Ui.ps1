@@ -7,10 +7,10 @@ function Start-TestApp {
     param(
         [string[]] $Roots = @(), [object] $Runner, [hashtable] $Settings = @{},
         [string[]] $Arguments = @(), [switch] $DuringScan, [string[]] $LanguageLines = @(),
-        [int] $Width = 1100, [int] $Height = 760
+        [int] $Width = 1100, [int] $Height = 760, [switch] $Hidden
     )
     if (-not $Runner) { $Runner = New-TestRunner $Settings $LanguageLines }
-    $process = Start-TestProcess $Runner (@($Arguments) + $Roots)
+    $process = Start-TestProcess $Runner (@($Arguments) + $Roots) -Hidden:$Hidden
     $app = [pscustomobject]@{
         Process = $process; Runner = $Runner; Window = [IntPtr]::Zero; Roots = $Roots
         ExpectExit = $false; TreeList = [IntPtr]::Zero; ExtensionList = [IntPtr]::Zero
@@ -18,16 +18,18 @@ function Start-TestApp {
     $script:Context.Apps.Add($app)
     $app.Window = Wait-Until {
         @([TestDesktop]::Windows($process.Id) | Where-Object {
-            [TestDesktop]::IsWindowVisible($_) -and [TestDesktop]::Class($_) -ne '#32770' -and
+            ($Hidden -or [TestDesktop]::IsWindowVisible($_)) -and [TestDesktop]::Class($_) -like 'WdsWindow.*' -and
             [TestDesktop]::Text($_) -like '*WinDirStat*'
         } | Select-Object -First 1)
     } 'The process creates its main window'
-    [void] [TestDesktop]::ShowWindow($app.Window, 9)
-    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-    [TestDesktop]::Position($app.Window, $screen.Left + 20, $screen.Top + 20,
-        [Math]::Min($Width, $screen.Width - 40), [Math]::Min($Height, $screen.Height - 40))
-    [TestDesktop]::KeepVisible($app.Window)
-    [TestDesktop]::Activate($app.Window)
+    if (-not $Hidden) {
+        [void] [TestDesktop]::ShowWindow($app.Window, 9)
+        $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+        [TestDesktop]::Position($app.Window, $screen.Left + 20, $screen.Top + 20,
+            [Math]::Min($Width, $screen.Width - 40), [Math]::Min($Height, $screen.Height - 40))
+        [TestDesktop]::KeepVisible($app.Window)
+        [TestDesktop]::Activate($app.Window)
+    }
     if (-not $DuringScan -and ($Roots.Count -or $Arguments.Count)) { Wait-AppIdle $app }
     return $app
 }
@@ -259,7 +261,7 @@ function Select-CloudProvider {
     param([IntPtr] $Dialog, [string] $Name)
     $provider = Get-DialogControl $Dialog 'IDC_REMOTE_PROVIDER'
     $index = @('S3', 'Azure Blob', 'WebDAV').IndexOf($Name)
-    Assert-True ($index -ge 0) 'The requested cloud provider exists'
+    if ($index -lt 0) { throw "Unknown cloud provider: $Name" }
     [void][TestDesktop]::Message($provider, 0x014E, $index)
     [void][TestDesktop]::Message($Dialog, 0x0111,
         ((1 -shl 16) -bor (Get-ResourceId 'IDC_REMOTE_PROVIDER')), $provider.ToInt64())

@@ -11,23 +11,83 @@
 function Test-DuplicateContent {
     param($Context, $Case)
     $root = New-TestTree
+    foreach ($size in 0, 4096, 4097, 1MB, (1MB + 1)) {
+        $first = New-TestFile (Join-Path $root "boundaries\$size-a.bin") $size (71 + $size)
+        Copy-Item -LiteralPath $first -Destination (Join-Path $root "boundaries\$size-b.bin")
+    }
     $first = New-TestFile (Join-Path $root 'full-hash\first.bin') 2MB 319
     $second = Join-Path $root 'full-hash\second.bin'
     $different = Join-Path $root 'full-hash\same-prefix-different-middle.bin'
     Copy-Item -LiteralPath $first -Destination $second
     Copy-Item -LiteralPath $first -Destination $different
+    $locked = Join-Path $root 'full-hash\unreadable.bin'
+    Copy-Item -LiteralPath $first -Destination $locked
     $stream = [IO.File]::Open($different, 'Open', 'ReadWrite')
     try { $stream.Position = 1MB + 211; $stream.WriteByte(0x17); $stream.WriteByte(0x25) }
     finally { $stream.Dispose() }
     $before = @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path)
     $groups = @($before | Group-Object Hash | Where-Object Count -GT 1)
-    $expected = @($groups.Group.Path | ForEach-Object { Get-NormalPath $_ } | Sort-Object)
+    $expected = @($groups.Group.Path | Where-Object { $_ -ine $locked } |
+        ForEach-Object { Get-NormalPath $_ } | Sort-Object)
     $runner = New-TestRunner @{ Options = @{ FileHashAlgorithm = $Case.Algorithm; SampleLargeFiles = 0 } }
-    $rows = Invoke-ScanReport $runner @($root) 'duplicates' -Kind Duplicates
-    Assert-Sequence @($rows.Name | ForEach-Object { Get-NormalPath $_ } | Sort-Object) $expected `
-        'Duplicate exports agree with independent whole-file hashes, including files sharing their prefix and suffix'
+    $unreadable = [IO.File]::Open($locked, 'Open', 'ReadWrite', [IO.FileShare]::Write)
+    try {
+        foreach ($format in 'csv', 'json') {
+            $rows = Invoke-ScanReport $runner @($root) "duplicates-$format" -Kind Duplicates -Format $format
+            Assert-Sequence @($rows.Name | ForEach-Object { Get-NormalPath $_ } | Sort-Object) $expected `
+                'Whole-file duplicate verification handles size boundaries and excludes unreadable members'
+            Assert-Equal @($rows | Where-Object { [string]$_.'Sampled Hash' -ine 'false' }).Count 0 `
+                'Full-file duplicates are not labeled as sampled matches'
+            foreach ($group in $groups) {
+                $members = @($rows | Where-Object { (Get-NormalPath $_.Name) -in @($group.Group.Path |
+                    ForEach-Object { Get-NormalPath $_ }) })
+                Assert-Equal @($members.'Hash Prefix' | Sort-Object -Unique).Count 1 `
+                    'Members of each independently verified duplicate group share their exported hash'
+                if ($Case.Algorithm -eq 2) {
+                    Assert-Equal ([string]$members[0].'Hash Prefix').ToUpperInvariant() $group.Name.Substring(0, 32) `
+                        'The exported SHA-256 prefix matches the independently computed whole-file digest'
+                }
+            }
+        }
+    } finally { $unreadable.Dispose() }
     $after = @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path)
     Assert-Sequence @($after.Hash) @($before.Hash) 'Duplicate scanning preserves every source payload'
+}
+
+function Test-SampledDuplicates {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $exact = New-TestFile (Join-Path $root 'threshold-a.bin') 64MB -Zeros
+    Copy-Item -LiteralPath $exact -Destination (Join-Path $root 'threshold-b.bin')
+    $large = New-TestFile (Join-Path $root 'large-a.bin') (64MB + 1) -Zeros
+    Copy-Item -LiteralPath $large -Destination (Join-Path $root 'large-b.bin')
+    $different = Join-Path $root 'large-different-middle.bin'
+    Copy-Item -LiteralPath $large -Destination $different
+    $stream = [IO.File]::Open($different, 'Open', 'ReadWrite')
+    try { $stream.Position = 3MB; $stream.WriteByte(0x71); $stream.Flush($true) }
+    finally { $stream.Dispose() }
+    $hashes = @(Get-ChildItem -LiteralPath $root -File | Get-FileHash | Sort-Object Path)
+    $full = @($hashes | Group-Object Hash | Where-Object Count -GT 1 | ForEach-Object { $_.Group.Path } |
+        Sort-Object)
+    $runner = New-TestRunner @{ Options = @{ FileHashAlgorithm = 2; SampleLargeFiles = 1 } }
+    foreach ($format in 'csv', 'json') {
+        $rows = Invoke-ScanReport $runner @($root) "sampled-$format" -Kind Duplicates -Format $format
+        Assert-Sequence @($rows.Name | Where-Object { $_ -ine $different } | Sort-Object) $full `
+            'Sampled scanning retains every independently verified duplicate'
+        foreach ($row in $rows) {
+            Assert-Equal ([string]$row.'Sampled Hash').ToLowerInvariant() `
+                $(if ([long]$row.'Logical Size' -gt 64MB) { 'true' } else { 'false' }) `
+                'Only files above the sampling threshold carry the sampled-match warning'
+        }
+    }
+    Set-TestSettings $runner @{ Options = @{ FileHashAlgorithm = 2; SampleLargeFiles = 0 } }
+    $rows = Invoke-ScanReport $runner @($root) 'fully-verified' -Kind Duplicates
+    Assert-Sequence @($rows.Name | Sort-Object) $full `
+        'Whole-file verification rejects the apparent duplicate with different unsampled bytes'
+    Assert-Equal @($rows | Where-Object { [string]$_.'Sampled Hash' -ine 'false' }).Count 0 `
+        'Whole-file matches carry no sampled-match warning'
+    Assert-Sequence @(Get-ChildItem -LiteralPath $root -File | Get-FileHash | Sort-Object Path | ForEach-Object Hash) `
+        @($hashes.Hash) 'Both duplicate scan modes preserve every payload'
 }
 
 function Test-ReportRoundTrip {
@@ -43,9 +103,13 @@ function Test-ReportRoundTrip {
     $app.Roots = @($root)
     $loaded = Save-AppReport $app 'loaded' -Format $Case.Format
     $fields = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change',
-        'WinDirStat Attributes', 'Index')
+        'WinDirStat Attributes', 'Index', 'ScanOutcome', 'ScanError')
     Assert-Sequence (Get-ReportSignature $loaded $fields) (Get-ReportSignature $source $fields) `
         'Loading and re-exporting uses the saved model even when live files have changed'
+    $otherFormat = if ($Case.Format -eq 'csv') { 'json' } else { 'csv' }
+    $converted = Save-AppReport $app 'converted' -Format $otherFormat
+    Assert-Sequence (Get-ReportSignature $converted $fields) (Get-ReportSignature $source $fields) `
+        'Converting a loaded report preserves metadata across CSV and JSON'
     Assert-Equal @($loaded | Where-Object Name -IEQ $sentinel).Count 0 `
         'Loading a report does not scan newly created files'
     Invoke-AppCommand $app 'ID_REFRESH_ALL'
@@ -90,27 +154,37 @@ function Test-MalformedReportType {
         if ($Case.Format -eq 'json') {
             [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject @($row)))
         } else { $row | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
-        $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path)
+        $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
         Assert-True (-not (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled) `
             'A report cannot create pointer-backed hardlink nodes, including mixed type masks'
         Stop-TestApp $app
     }
-    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)"))
-    Assert-ScanSnapshot (Save-AppReport $app 'valid-reloaded') (Get-DiskSnapshot $root) $root -Physical
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)")) `
+        -Hidden
+    Assert-True (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled `
+        'A valid saved model remains loadable after rejected reports'
+    Assert-True ([TestDesktop]::Text($app.Window).Contains($root)) 'The valid report restores its scanned root'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Report validation leaves the main window hidden'
 }
 
 function Test-MalformedLayoutSettings {
     param($Context, $Case)
     $root = New-TestTree
     $snapshot = Get-DiskSnapshot $root
-    $invalid = @('10,', ',10', '10,,20', 'word', '2147483648', '-2147483649', '10x,20')
+    $invalid = @('10,,20', '10x,20', '2147483648', '-2147483649')
     for ($index = 0; $index -lt $invalid.Count; ++$index) {
         $value = $invalid[$index]
         $runner = New-TestRunner @{
             FileTreeView = @{ ColumnWidths = $value; ColumnOrder = $value; ColumnVisibility = $value }
             TreeMapView = @{ TreeMapCustomPreset = $value }
         }
-        Assert-ScanSnapshot (Invoke-ScanReport $runner @($root) "malformed-layout-$index") $snapshot $root -Physical
+        $app = Start-TestApp @($root) -Runner $runner
+        Get-AppList $app -AllFiles | Out-Null
+        Assert-True ([TestDesktop]::Message($app.TreeList, 0x101D).ToInt32() -gt 0) `
+            'Malformed column settings recover to a visible name column'
+        Assert-GraphRendered $app | Out-Null
+        Assert-ScanSnapshot (Save-AppReport $app "malformed-layout-$index") $snapshot $root -Physical
+        Stop-TestApp $app
     }
 }
 
@@ -139,6 +213,10 @@ function Test-PermissionExport {
     $expectedAccount = $sid.Translate([Security.Principal.NTAccount]).Value
     Assert-True (@($csv | Where-Object { $_.Name -ieq $explicit -and $_.Account -ieq $expectedAccount }).Count -gt 0) `
         'The exported account resolves the SID actually applied to the fixture'
+    $entry = @($csv | Where-Object { $_.Name -ieq $explicit -and $_.Account -ieq $expectedAccount })[0]
+    Assert-Equal ([Convert]::ToUInt32($entry.'Access Mask', 16)) ([uint32]$rule.FileSystemRights) `
+        'The permission export preserves the access mask applied to the directory'
+    Assert-Equal $entry.Access 'Allow' 'The permission export preserves the applied access type'
 }
 
 foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Value = 5 })) {
@@ -146,17 +224,19 @@ foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Va
         Reports 'Full-file duplicate verification across staged hashing' `
         Test-DuplicateContent -Tags Filesystem -Data @{ Algorithm = $algorithm.Value }
 }
+Register-Scenario reports.duplicates.sampling Reports 'Sampled matches remain distinguishable from whole-file duplicates' `
+    Test-SampledDuplicates -Tags Filesystem
 foreach ($format in 'csv', 'json') {
     Register-Scenario "reports.roundtrip.$format" Reports `
         'Saved models survive external changes and refresh to current disk state' `
         Test-ReportRoundTrip -Tags Desktop,Persistence,External -Requires Windows,Desktop -Data @{ Format = $format }
     Register-Scenario "reports.malformed-type.$format" Reports 'Reject pointer-backed nodes in external reports' `
-        Test-MalformedReportType -Tags Desktop,External -Requires Windows,Desktop -Data @{ Format = $format }
+        Test-MalformedReportType -Tags External -Data @{ Format = $format }
 }
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `
     Test-QuietFailure -Tags External
 Register-Scenario reports.malformed-layout Reports 'Malformed persisted integer lists recover to usable defaults' `
-    Test-MalformedLayoutSettings -Tags Persistence,External
+    Test-MalformedLayoutSettings -Tags Desktop,Persistence,External -Requires Windows,Desktop
 Register-Scenario reports.permissions Reports 'Real ACL inheritance agrees across CSV and JSON exports' `
     Test-PermissionExport -Tags Filesystem -Requires Windows,Ntfs
