@@ -139,6 +139,12 @@ function Get-CapabilityReason {
             }
         }
         Mtp { if (-not $MtpDevice) { return 'Set -MtpDevice to the exact connected device label in Select Target.' } }
+        S3 { if (-not $env:WDS_S3_TEST_ENDPOINT) { return 'Run Test-S3.ps1 for the disposable local S3 fixture.' } }
+        Remote {
+            if (-not $env:WDS_REMOTE_TEST_ENDPOINT) {
+                return 'Run Test-Remote.ps1 for local WebDAV and Azure fixtures.'
+            }
+        }
         default { throw "Unknown capability: $Capability" }
     }
     return ''

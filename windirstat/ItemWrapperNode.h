@@ -39,6 +39,10 @@ protected:
         // Cache group and shell icons on visible rows.
         auto* viewState = GetViewState();
         if (viewState == nullptr) return nullptr;
+
+        // Reflect the linked directory's scan state without replacing its cached icon.
+        if (m_item != nullptr && m_item->IsTypeOrFlag(ITF_SCANERROR)) return GetIconHandler()->GetScanErrorImage();
+
         if (viewState->icon != nullptr) return viewState->icon;
         if (m_item == nullptr)
         {
@@ -47,7 +51,7 @@ protected:
         }
 
         CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-            viewState->control, m_item->GetPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
+            viewState->control, m_item->GetIconPath(), m_item->GetAttributes(), &viewState->icon, nullptr));
         return viewState->icon;
     }
 

@@ -42,6 +42,7 @@ void CFileWatcherControl::StartMonitoring()
             std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
         for (const auto& child : children)
         {
+            if (!child->SupportsFilesystemApis()) continue;
             m_watchThreads.emplace_back([this, path = child->GetPath()](const std::stop_token& stopToken)
             {
                 WatchDirectory(path, stopToken);

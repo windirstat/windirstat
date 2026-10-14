@@ -312,6 +312,7 @@ public:
     inline static Setting<int> MinimizeViewThreshold{ OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000 };
     inline static Setting<int> ScanningThreads{ OptionsGeneral,
         L"ScanningThreads", 4, 1, 16, SelectionBind(IDC_COMBO_THREADS, 1) };
+    inline static Setting<int> SelectCloudProvider{ OptionsDriveSelect, L"SelectCloudProvider", 0, 0, 2 };
     inline static Setting<int> SelectDrivesRadio{ OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2 };
     inline static Setting<int> SizeProportionIndent{ OptionsFileTree, L"SizeProportionIndent", 16, 0, 1000 };
     inline static Setting<int> FileTreeColorCount{ OptionsFileTree, L"FileTreeColorCount", 8, 1, TREELISTCOLORCOUNT };
@@ -338,6 +339,7 @@ public:
     inline static Setting<int> LayoutPermutation{ OptionsGeneral, L"LayoutPermutation", 0, 0, 3 };
     inline static Setting<RECT> AboutWindowRect{ OptionsGeneral, L"AboutWindowRect" };
     inline static Setting<RECT> DriveSelectWindowRect{ OptionsDriveSelect, L"WindowRect" };
+    inline static Setting<RECT> CloudSelectWindowRect{ OptionsDriveSelect, L"CloudConnectionsRect" };
     inline static Setting<RECT> SearchWindowRect{ OptionsSearch, L"WindowRect" };
     inline static Setting<std::vector<int>> DriveListColumnOrder{ OptionsDriveSelect, L"ColumnOrder" };
     inline static Setting<std::vector<int>> DriveListColumnWidths{ OptionsDriveSelect, L"ColumnWidths" };
@@ -366,6 +368,7 @@ public:
     inline static Setting<std::vector<int>> PermsViewColumnVisibility{ OptionsPerms, L"ColumnVisibility" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesDrives{ OptionsDriveSelect, L"SelectDrivesDrives" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
+    inline static Setting<std::vector<std::wstring>> SelectDrivesCloud{ OptionsDriveSelect, L"SelectDrivesCloud" };
     inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
     inline static Setting<std::wstring> SearchHistory{ OptionsSearch, L"SearchHistory" };
     inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };

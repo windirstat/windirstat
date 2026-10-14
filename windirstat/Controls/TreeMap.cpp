@@ -123,8 +123,8 @@ COLORREF CFolderColors::GetColor(const CItem* item) const
                     if (!sibling->TmiIsLeaf()) siblings.push_back(sibling);
                 std::ranges::sort(siblings, [](const CItem* left, const CItem* right)
                 {
-                    if (left->GetSizePhysical() != right->GetSizePhysical())
-                        return left->GetSizePhysical() > right->GetSizePhysical();
+                    if (left->TmiGetSize() != right->TmiGetSize())
+                        return left->TmiGetSize() > right->TmiGetSize();
                     return left->GetNameView() < right->GetNameView();
                 });
                 unsigned int used = 0;

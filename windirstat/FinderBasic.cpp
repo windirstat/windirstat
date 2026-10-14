@@ -32,7 +32,7 @@ bool FinderBasic::FindNext()
         thread_local std::vector<LARGE_INTEGER> m_directoryInfo(LOCAL_BUFFER_SIZE / sizeof(LARGE_INTEGER));
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
-        IO_STATUS_BLOCK IoStatusBlock;
+        IO_STATUS_BLOCK IoStatusBlock{};
 
         std::call_once(m_context->InitOnce, [&]
         {
@@ -89,8 +89,17 @@ bool FinderBasic::FindNext()
             status = QueryDirectory(static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation));
         }
 
+        // Distinguish an exhausted directory from a failed or incomplete enumeration.
+        if (status != 0 || IoStatusBlock.Information == 0)
+        {
+            const DWORD error = status != 0 ? RtlNtStatusToDosError(status) : ERROR_INVALID_DATA;
+            if ((error == ERROR_NO_MORE_FILES || error == ERROR_FILE_NOT_FOUND) && (!m_statMode || m_published))
+                m_result = { ScanOutcome::Complete, {} };
+            else SetError(error == ERROR_NO_MORE_FILES ? ERROR_FILE_NOT_FOUND : error);
+            return false;
+        }
         m_currentInfo = std::assume_aligned<8>(reinterpret_cast<FILE_DIR_INFORMATION*>(m_directoryInfo.data()));
-        success = (status == 0);
+        success = true;
     }
     else
     {
@@ -235,7 +244,20 @@ bool FinderBasic::FindNext()
     }
 
     if (success && !m_statMode && (m_name == L"." || m_name == L"..")) return FindNext();
-    return success;}
+    if (success)
+    {
+        m_published = true;
+        if (m_statMode) m_result = { ScanOutcome::Complete, {} };
+    }
+    return success;
+}
+
+void FinderBasic::SetError(const DWORD error)
+{
+    const bool missing = error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND;
+    m_result = { m_published ? ScanOutcome::Partial : missing ? ScanOutcome::Missing : ScanOutcome::EnumerationError,
+        m_base + m_search + L": " + TranslateError(error) };
+}
 
 bool FinderBasic::FindFile(const CItem* item)
 {
@@ -250,6 +272,8 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     m_reparseTag = 0;
     m_baseCapacity.reset();
     m_baseCapacityQueried = false;
+    m_published = false;
+    m_result = {};
     m_base = strFolder;
     m_search = strName;
 
@@ -298,6 +322,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
         VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_baseNt.data());
+        SetError(RtlNtStatusToDosError(status));
         return false;
     }
 

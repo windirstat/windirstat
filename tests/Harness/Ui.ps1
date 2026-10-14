@@ -252,16 +252,56 @@ function Invoke-AppKeys {
 
 function Select-SettingsPage {
     param([IntPtr] $Dialog, [string] $Name)
-    $tab = [TestDesktop]::GetDlgItem($Dialog, 0xCAFE)
+    Select-DialogTab $Dialog $Name 0xCAFE
+}
+
+function Select-CloudProvider {
+    param([IntPtr] $Dialog, [string] $Name)
+    $provider = Get-DialogControl $Dialog 'IDC_REMOTE_PROVIDER'
+    $index = @('S3', 'Azure Blob', 'WebDAV').IndexOf($Name)
+    Assert-True ($index -ge 0) 'The requested cloud provider exists'
+    [void][TestDesktop]::Message($provider, 0x014E, $index)
+    [void][TestDesktop]::Message($Dialog, 0x0111,
+        ((1 -shl 16) -bor (Get-ResourceId 'IDC_REMOTE_PROVIDER')), $provider.ToInt64())
+    Wait-Until { [TestDesktop]::Message($provider, 0x0147).ToInt32() -eq $index } `
+        'The cloud provider becomes active' | Out-Null
+}
+
+function Invoke-CloudAction {
+    param([IntPtr] $Dialog, [string] $Control, [string] $VisibleControl)
+    $button = if ($Control -eq 'IDOK') { [TestDesktop]::GetDlgItem($Dialog, 1) }
+        else { Get-DialogControl $Dialog $Control }
+    [void][TestDesktop]::Message($button, 0x00F5)
+    if ($VisibleControl) { [void](Get-DialogControl $Dialog $VisibleControl) }
+}
+
+function Open-CloudConnection {
+    param([object] $App, [IntPtr] $Picker, [string] $Action = 'IDC_REMOTE_NEW')
+    $button = if ($Action -eq 'IDOK') { [TestDesktop]::GetDlgItem($Picker, 1) }
+        else { Get-DialogControl $Picker $Action }
+    [void][TestDesktop]::PostMessage($button, 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero)
+    return Wait-Until { Get-AppDialog $App 'IDC_REMOTE_PROVIDER' } 'The cloud connection editor opens'
+}
+
+function Select-CloudRecent {
+    param([IntPtr] $Dialog, [int] $Index)
+    $list = Get-DialogControl $Dialog 'IDC_REMOTE_RECENT'
+    Assert-True ([NativeListViewHelper]::SelectItems($list, [int[]]@($Index))) `
+        'The requested recent connection is selected'
+}
+
+function Select-DialogTab {
+    param([IntPtr] $Dialog, [string] $Name, [int] $ControlId = (Get-ResourceId 'IDC_TAB'))
+    $tab = [TestDesktop]::GetDlgItem($Dialog, $ControlId)
     $names = [NativeListViewHelper]::GetTabTexts($tab)
     $index = [Array]::FindIndex($names, [Predicate[string]]{ param($Label); $Label.Trim() -eq $Name })
-    if ($index -lt 0) { throw "Settings tab '$Name' is missing. Tabs: $($names -join '; ')" }
+    if ($index -lt 0) { throw "Dialog tab '$Name' is missing. Tabs: $($names -join '; ')" }
     $rect = [NativeListViewHelper]::GetTabRectangle($tab, $index)
     $point = (([TestDesktop]::ClientSize($tab)[1] / 2 -as [int]) -shl 16) -bor
         (($rect[0] + $rect[2]) / 2 -as [int])
     [void] [TestDesktop]::PostMessage($tab, 0x0201, [IntPtr]1, [IntPtr]$point)
     [void] [TestDesktop]::PostMessage($tab, 0x0202, [IntPtr]::Zero, [IntPtr]$point)
-    Wait-Until { [TestDesktop]::Message($tab, 0x130B).ToInt32() -eq $index } "Settings tab '$Name' becomes active" |
+    Wait-Until { [TestDesktop]::Message($tab, 0x130B).ToInt32() -eq $index } "Dialog tab '$Name' becomes active" |
         Out-Null
 }
 

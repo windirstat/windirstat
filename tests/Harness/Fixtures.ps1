@@ -98,6 +98,23 @@ function New-TestRunner {
     return $runner
 }
 
+function Set-StorageTestCredential {
+    param([string] $Target, [string] $User, [string] $Secret, [string] $Token = '')
+    $endpoint = $Target
+    if ($Target -match '^(s3://windirstat-[a-z-]+/\?region=us-east-1&|azure://windirstat/[^/?]+/\?)endpoint=') {
+        $endpoint = [Uri]::UnescapeDataString(($Target -split 'endpoint=', 2)[1])
+    }
+    if ($endpoint -notmatch '^http://127\.0\.0\.1:\d+(?:/|$)' -or -not $User -or -not $Secret) {
+        throw 'Only loopback fixture credentials can be saved.'
+    }
+    $name = 'WinDirStat/' + $Target
+    Add-Cleanup 'Remove fixture-only storage credential' {
+        param($name); & cmdkey.exe "/delete:$name" | Out-Null
+    } @($name)
+    if ($Token) { $Secret += "`n$Token" }
+    [WdsNativeCredentials]::Save($name, $User, $Secret)
+}
+
 function Set-TestSettings {
     param([object] $Runner, [System.Collections.IDictionary] $Settings = @{})
     $sections = [ordered]@{
@@ -125,14 +142,18 @@ function Set-TestSettings {
 }
 
 function Start-TestProcess {
-    param([object] $Runner, [string[]] $Arguments = @(), [switch] $Redirect)
+    param([object] $Runner, [string[]] $Arguments = @(), [switch] $Redirect, [switch] $Hidden)
     $info = [Diagnostics.ProcessStartInfo]::new()
     $info.FileName = $Runner.Exe
     $info.WorkingDirectory = $Runner.Directory
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
+    if ($Hidden) { $info.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden }
     $info.RedirectStandardOutput = $Redirect.IsPresent
     $info.RedirectStandardError = $Redirect.IsPresent
+    if ($Runner.PSObject.Properties['Environment']) {
+        foreach ($entry in $Runner.Environment.GetEnumerator()) { $info.Environment[$entry.Key] = $entry.Value }
+    }
     foreach ($argument in $Arguments) { $info.ArgumentList.Add($argument) }
     $process = [Diagnostics.Process]::Start($info)
     $script:Context.Commands.Add([pscustomobject]@{

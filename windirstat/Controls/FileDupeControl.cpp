@@ -20,7 +20,7 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 
 void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
-    if (!COptions::ScanForDuplicates) return;
+    if (!COptions::ScanForDuplicates || item->IsTypeOrFlag(ITF_REMOTE)) return;
     if (item->IsTypeOrFlag(ITRP_CLOUD) && COptions::SkipDupeDetectionCloudLinks)
     {
         // Show warning and skip

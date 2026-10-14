@@ -9,10 +9,12 @@
 #include "pch.h"
 #include "TreeListControl.h"
 #include "Finder.h"
+#include "StorageSource.h"
 
 class Finder;
 class FinderNtfsContext;
 class FinderBasicContext;
+class FinderRemote;
 
 // Columns
 enum ITEMCOLUMNS : std::uint8_t
@@ -44,7 +46,10 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_SET  = 1u << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
-    IT_MASK        = 0x0000FFFF,
+    IT_MASK        = 0x00003FFF,
+
+    ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
+    ITF_REMOTE     = 1u << 15, // Indicates a remote file, object, or directory
 
     ITHASH_NONE    = 0u,       // Indicates no hash
     ITHASH_SKIP    = 1u << 16, // Indicates cannot be hashed (unreadable)
@@ -69,7 +74,7 @@ enum ITEMTYPE : std::uint32_t
     ITF_DONE       = 1u << 29, // Indicates done processing
     ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
     ITF_MTP        = 1u << 31, // Indicates MTP item
-    ITF_MASK       = 0xFF000000,
+    ITF_MASK       = 0xFF00C000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
@@ -144,7 +149,11 @@ public:
     CItem* GetVolumeRoot() const noexcept;
     bool IsScanRoot() const noexcept;
     bool IsMtpRoot() const noexcept;
-    bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP); }
+    bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP, ITF_REMOTE); }
+    std::shared_ptr<StorageSource> GetStorageSource(bool renew = false) const;
+    ScanResult GetScanResult() const;
+    void SetScanResult(ScanResult result);
+    static void ReconcileScanResults(CItem* root, bool cancelled = false);
     bool HasShellIdentity() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child) const;
@@ -152,6 +161,7 @@ public:
 
     // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
+    bool HasSizePhysical() const noexcept;
     ULONGLONG GetSizeLogical() const noexcept { return m_sizeLogical; }
     ULONGLONG GetSizePhysicalRaw() const noexcept { return m_sizePhysical; }
     void SetSizePhysical(ULONGLONG size) noexcept { m_sizePhysical = size; }
@@ -202,8 +212,9 @@ public:
     int ComparePath(const CItem* other) const;
     std::wstring GetPathLong() const;
     std::wstring GetFolderPath() const;
+    std::wstring GetIconPath() const;
     bool HasUncPath() const;
-    CItem* FindItemByPath(const std::wstring& path, bool findAncestor = false) const;
+    CItem* FindItemByPath(const std::wstring& path, bool findAncestor = false, ITEMTYPE kind = IT_NONE) const;
 
     // Scanning & Done State
     void SetDone();
@@ -221,7 +232,8 @@ public:
     void SortItemsBySizeLogical() const;
     void UpdateStatsFromDisk();
     static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
-        std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr);
+        std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr,
+        const std::shared_ptr<StorageSource>& remoteSource = {});
     static void ScanItemsFinalize(CItem* item);
 
     // CTreeMap Interface
@@ -335,6 +347,7 @@ private:
     bool MutateHiddenChildren(const std::function<void()>& mutation) const;
     CItem* AddDirectory(const Finder& finder, ScanBatch& batch);
     CItem* AddFile(const Finder& finder, ScanBatch& batch);
+    void ScanRemoteFlat(FinderRemote& finder, BlockingQueue<CItem*>* queue);
 
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most
@@ -348,6 +361,7 @@ private:
         std::atomic<ULONG> m_files = 0;   // # Files in subtree
         std::atomic<ULONG> m_subdirs = 0; // # Folders in subtree
         std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
+        std::atomic<ScanOutcome> m_scanOutcome = ScanOutcome::NotStarted; // how this node's enumeration ended
     };
 
     std::unique_ptr<CHILDINFO> m_folderInfo;   // Child information for non-files
