@@ -68,7 +68,7 @@ public:
         }
         m_extensions.clear();
 
-        const auto append = [this] { m_parent->m_folderInfo->m_children.append_range(m_children); };
+        const auto append = [this] { m_parent->GetFolderInfo()->m_children.append_range(m_children); };
         if (!m_parent->MutateHiddenChildren(append)) CMainFrame::Get()->InvokeInMessageThread([&]
         {
             append();
@@ -89,37 +89,39 @@ public:
 
 // --- Construction / Destruction ---
 
-void* CItem::operator new(const size_t size, const std::wstring_view name)
+void* CItem::operator new(const size_t size, const ITEMTYPE type, const std::wstring_view name)
 {
+    const size_t extraBytes = ((type & IT_CONTAINER) != IT_NONE ? sizeof(CHILDINFO) : 0) +
+        (name.size() + 1) * sizeof(wchar_t);
     if (name.size() > std::numeric_limits<USHORT>::max() ||
-        size > std::numeric_limits<size_t>::max() - (name.size() + 1) * sizeof(wchar_t))
+        size > std::numeric_limits<size_t>::max() - extraBytes)
         throw std::bad_array_new_length();
-    return ::operator new(size + (name.size() + 1) * sizeof(wchar_t));
+    return ::operator new(size + extraBytes);
 }
 
 CItem* CItem::Create(const ITEMTYPE type, const std::wstring_view name)
 {
-    return new (type & IT_DRIVE ? std::wstring_view{} : name) CItem(type, name);
+    return new (type, type & IT_DRIVE ? std::wstring_view{} : name) CItem(type, name);
 }
 
 CItem* CItem::Create(CItem* linkedItem)
 {
-    return new (std::wstring_view{}) CItem(linkedItem);
+    return new (IT_HLINKS_FILE, std::wstring_view{}) CItem(linkedItem);
 }
 
 CItem* CItem::Create(const ITEMTYPE type, const std::wstring_view name, const FILETIME lastChange,
     const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONGLONG index,
     const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
-    return new (type & IT_DRIVE ? std::wstring_view{} : name)
+    return new (type, type & IT_DRIVE ? std::wstring_view{} : name)
         CItem(type, name, lastChange, sizePhysical, sizeLogical, index, attributes, files, subdirs);
 }
 
 CItem::CItem(const ITEMTYPE type, const std::wstring_view name) : m_type(type)
 {
-    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+    if (!IsLeaf())
     {
-        m_folderInfo = std::make_unique<CHILDINFO>();
+        std::construct_at(GetFolderInfo());
 
         // My computer node will never have these attributes set externally
         if (IsTypeOrFlag(IT_MYCOMPUTER))
@@ -161,11 +163,11 @@ CItem::CItem(const ITEMTYPE type, const std::wstring_view name, const FILETIME l
     const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
     m_type = type;
-    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+    if (!IsLeaf())
     {
-        m_folderInfo = std::make_unique<CHILDINFO>();
-        m_folderInfo->m_subdirs = subdirs;
-        m_folderInfo->m_files = files;
+        const auto folderInfo = std::construct_at(GetFolderInfo());
+        folderInfo->m_subdirs = subdirs;
+        folderInfo->m_files = files;
     }
 
     if (IsTypeOrFlag(IT_DRIVE))
@@ -195,18 +197,18 @@ static bool HasScanError(const ScanOutcome outcome) noexcept
 
 CItem::~CItem()
 {
-    if (m_folderInfo != nullptr)
+    if (!IsLeaf())
     {
-        if (HasScanError(m_folderInfo->m_scanOutcome)) SetScanResult({});
-        std::vector<CItem*> queue = std::move(m_folderInfo->m_children);
+        if (HasScanError(GetFolderInfo()->m_scanOutcome)) SetScanResult({});
+        std::vector<CItem*> queue = std::move(GetFolderInfo()->m_children);
         while (!queue.empty())
         {
             const CItem* current = queue.back();
             queue.pop_back();
 
-            if (current->m_folderInfo != nullptr)
+            if (!current->IsLeaf())
             {
-                if (auto& children = current->m_folderInfo->m_children; !children.empty())
+                if (auto& children = current->GetFolderInfo()->m_children; !children.empty())
                 {
                     queue.append_range(children);
                     children.clear();
@@ -214,6 +216,7 @@ CItem::~CItem()
             }
             delete current;
         }
+        std::destroy_at(GetFolderInfo());
     }
     // Release any MTP shell metadata registered to this item
     if (IsTypeOrFlag(ITF_MTP)) FinderMtp::UnregisterPath(m_index);
@@ -223,8 +226,8 @@ CItem::~CItem()
 
 const std::vector<CItem*>& CItem::GetChildren() const noexcept
 {
-    assert(m_folderInfo != nullptr);
-    return m_folderInfo->m_children;
+    assert(!IsLeaf());
+    return GetFolderInfo()->m_children;
 }
 
 CItem* CItem::GetEnumRoot() const noexcept
@@ -296,7 +299,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
-    const auto append = [this, child] { m_folderInfo->m_children.push_back(child); };
+    const auto append = [this, child] { GetFolderInfo()->m_children.push_back(child); };
     if (!MutateHiddenChildren(append)) CMainFrame::Get()->InvokeInMessageThread([&]
     {
         // Add child in UI thread since UI thread immediately uses it
@@ -313,7 +316,7 @@ void CItem::RemoveChild(CItem* child) const
     const auto remove = [this, child]
     {
         if (IsVisible()) CFileTreeControl::Get()->OnChildRemoved(this, child);
-        auto& children = m_folderInfo->m_children;
+        auto& children = GetFolderInfo()->m_children;
         if (const auto it = std::ranges::find(children, child); it != children.end()) children.erase(it);
         delete child;
     };
@@ -337,11 +340,11 @@ void CItem::RemoveAllChildren() const
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
     });
 
-    for (const auto& child : m_folderInfo->m_children)
+    for (const auto& child : GetFolderInfo()->m_children)
     {
         delete child;
     }
-    m_folderInfo->m_children.clear();
+    GetFolderInfo()->m_children.clear();
 }
 
 CItem* CItem::AddDirectory(const Finder& finder, ScanBatch& batch)
@@ -396,7 +399,7 @@ std::shared_ptr<StorageSource> CItem::GetStorageSource(const bool renew) const
 ScanResult CItem::GetScanResult() const
 {
     if (!IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY)) return { ScanOutcome::Complete, {} };
-    ScanResult result{ m_folderInfo->m_scanOutcome, {} };
+    ScanResult result{ GetFolderInfo()->m_scanOutcome, {} };
     if (!HasScanError(result.outcome)) return result;
     std::lock_guard guard(scanErrorsMutex);
     if (const auto found = scanErrors.find(this); found != scanErrors.end()) result.error = found->second;
@@ -407,7 +410,7 @@ void CItem::SetScanResult(ScanResult result)
 {
     if (IsLeaf()) return;
     const bool failed = HasScanError(result.outcome);
-    if (!HasScanError(m_folderInfo->m_scanOutcome.exchange(result.outcome)) && !failed) return;
+    if (!HasScanError(GetFolderInfo()->m_scanOutcome.exchange(result.outcome)) && !failed) return;
     std::lock_guard guard(scanErrorsMutex);
     if (failed && !result.error.empty()) scanErrors[this] = std::move(result.error);
     else scanErrors.erase(this);
@@ -423,7 +426,7 @@ void CItem::ReconcileScanResults(CItem* root, const bool cancelled)
     for (auto* item : items | std::views::reverse)
     {
         if (item->IsLeaf()) continue;
-        auto& outcome = item->m_folderInfo->m_scanOutcome;
+        auto& outcome = item->GetFolderInfo()->m_scanOutcome;
         const bool enumerated = item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY);
         if (cancelled && enumerated && outcome == ScanOutcome::NotStarted) outcome = ScanOutcome::Cancelled;
         const bool incomplete = enumerated && outcome != ScanOutcome::Complete ||
@@ -495,7 +498,7 @@ void CItem::UpwardAddFolders(const ULONG dirCount) const noexcept
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_folderInfo->m_subdirs += dirCount;
+        p->GetFolderInfo()->m_subdirs += dirCount;
     }
 }
 
@@ -504,9 +507,9 @@ void CItem::UpwardSubtractFolders(const ULONG dirCount) const noexcept
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        assert(p->m_folderInfo->m_subdirs >= dirCount);
+        assert(p->GetFolderInfo()->m_subdirs >= dirCount);
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_folderInfo->m_subdirs -= dirCount;
+        p->GetFolderInfo()->m_subdirs -= dirCount;
     }
 }
 
@@ -516,7 +519,7 @@ void CItem::UpwardAddFiles(const ULONG fileCount) const noexcept
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_folderInfo->m_files += fileCount;
+        p->GetFolderInfo()->m_files += fileCount;
     }
 }
 
@@ -526,8 +529,8 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount) const noexcept
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        assert(p->m_folderInfo->m_files >= fileCount);
-        p->m_folderInfo->m_files -= fileCount;
+        assert(p->GetFolderInfo()->m_files >= fileCount);
+        p->GetFolderInfo()->m_files -= fileCount;
     }
 }
 
@@ -572,7 +575,7 @@ double CItem::GetAbsoluteFraction() const noexcept
 ULONGLONG CItem::GetItemsCount() const noexcept
 {
     if (IsLeaf()) return 0;
-    return static_cast<ULONGLONG>(m_folderInfo->m_files) + static_cast<ULONGLONG>(m_folderInfo->m_subdirs);
+    return static_cast<ULONGLONG>(GetFolderInfo()->m_files) + static_cast<ULONGLONG>(GetFolderInfo()->m_subdirs);
 }
 
 void CItem::ExtensionDataAdd()
@@ -715,7 +718,7 @@ void CItem::SetName(const std::wstring_view name)
     wchar_t* buffer = driveName != nullptr ? driveName.get() : GetNameBuffer();
     if (nameLen) std::wmemcpy(buffer, name.data(), nameLen);
     buffer[nameLen] = L'\0';
-    if (driveName != nullptr) m_folderInfo->m_driveName = std::move(driveName);
+    if (driveName != nullptr) GetFolderInfo()->m_driveName = std::move(driveName);
     m_nameLen = nameLen;
 }
 
@@ -1028,7 +1031,7 @@ void CItem::SetDone()
     if (!IsLeaf())
     {
         COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
-        m_folderInfo->m_tfinish = GetScanTickCount();
+        GetFolderInfo()->m_tfinish = GetScanTickCount();
     }
 
     // Mark as done just so other functions do not sort at the same time
@@ -1063,11 +1066,11 @@ void CItem::UpwardSetUndone() noexcept
 void CItem::UpwardAddReadJobs(const ULONG count) const noexcept
 {
     if (IsLeaf() || count == 0) return;
-    if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = GetScanTickCount();
+    if (GetFolderInfo()->m_jobs == 0) GetFolderInfo()->m_tstart = GetScanTickCount();
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_folderInfo->m_jobs += count;
+        p->GetFolderInfo()->m_jobs += count;
     }
 }
 
@@ -1076,7 +1079,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (p->m_folderInfo->m_jobs.fetch_sub(count) == count)
+        if (p->GetFolderInfo()->m_jobs.fetch_sub(count) == count)
         {
             p->SetDone();
         }
@@ -1086,15 +1089,15 @@ void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
 ULONGLONG CItem::GetTicksWorked() const noexcept
 {
     if (IsLeaf()) return 0;
-    return m_folderInfo->m_tfinish > 0 ? (m_folderInfo->m_tfinish - m_folderInfo->m_tstart) :
-        (m_folderInfo->m_tstart > 0) ? (GetScanTickCount() - m_folderInfo->m_tstart) : 0;
+    return GetFolderInfo()->m_tfinish > 0 ? (GetFolderInfo()->m_tfinish - GetFolderInfo()->m_tstart) :
+        (GetFolderInfo()->m_tstart > 0) ? (GetScanTickCount() - GetFolderInfo()->m_tstart) : 0;
 }
 
 void CItem::ResetScanStartTime() const noexcept
 {
     if (IsLeaf()) return;
-    m_folderInfo->m_tfinish = 0;
-    m_folderInfo->m_tstart = GetScanTickCount();
+    GetFolderInfo()->m_tfinish = 0;
+    GetFolderInfo()->m_tstart = GetScanTickCount();
 }
 
 ULONG CItem::GetScanTickCount() noexcept
@@ -1131,8 +1134,8 @@ void CItem::SortItemsBySizePhysical() const
     // sort by size for proper treemap rendering
     const auto sort = [this]
     {
-        m_folderInfo->m_children.shrink_to_fit();
-        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
+        GetFolderInfo()->m_children.shrink_to_fit();
+        std::ranges::sort(GetFolderInfo()->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
     };
     if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }
@@ -1144,8 +1147,8 @@ void CItem::SortItemsBySizeLogical() const
     // sort by size for proper treemap rendering
     const auto sort = [this]
     {
-        m_folderInfo->m_children.shrink_to_fit();
-        std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
+        GetFolderInfo()->m_children.shrink_to_fit();
+        std::ranges::sort(GetFolderInfo()->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
     };
     if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }
@@ -1413,7 +1416,7 @@ void CItem::ScanItemsFinalize(CItem* item)
         const auto & qitem = queue.back();
         queue.pop_back();
         qitem->SetDone();
-        if (qitem->m_folderInfo == nullptr) continue;
+        if (qitem->IsLeaf()) continue;
         for (const auto& child : qitem->GetChildren())
         {
             if (!child->IsDone()) queue.push_back(child);

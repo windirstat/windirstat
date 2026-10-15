@@ -46,6 +46,7 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_SET  = 1u << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
+    IT_CONTAINER   = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_HLINKS | IT_HLINKS_SET | IT_HLINKS_IDX,
     IT_MASK        = 0x00003FFF,
 
     ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
@@ -141,8 +142,8 @@ public:
 
     // Hierarchy / Navigation
     const std::vector<CItem*>& GetChildren() const noexcept;
-    bool IsLeaf() const noexcept { return m_folderInfo == nullptr; }
-    bool HasChildren() const noexcept { return m_folderInfo != nullptr && !m_folderInfo->m_children.empty(); }
+    bool IsLeaf() const noexcept { return !IsTypeOrFlag(IT_CONTAINER); }
+    bool HasChildren() const noexcept { return !IsLeaf() && !GetFolderInfo()->m_children.empty(); }
     CItem* GetParent() const noexcept { return reinterpret_cast<CItem*>(CTreeListItem::GetParent()); }
     CItem* GetEnumRoot() const noexcept;
     CItem* GetParentDrive() const noexcept;
@@ -176,8 +177,8 @@ public:
     void UpwardSubtractFiles(ULONG fileCount) const noexcept;
     double GetFraction() const noexcept;
     double GetAbsoluteFraction() const noexcept;
-    ULONG GetFilesCount() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_files; }
-    ULONG GetFoldersCount() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_subdirs; }
+    ULONG GetFilesCount() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_files; }
+    ULONG GetFoldersCount() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_subdirs; }
     ULONGLONG GetItemsCount() const noexcept;
     void ExtensionDataAdd();
     void ExtensionDataRemove();
@@ -221,7 +222,7 @@ public:
     bool IsDone() const noexcept { return IsTypeOrFlag(ITF_DONE); }
     void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
-    ULONG GetReadJobs() const noexcept { if (IsLeaf()) return 0; return m_folderInfo->m_jobs; }
+    ULONG GetReadJobs() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_jobs; }
     void UpwardAddReadJobs(ULONG count) const noexcept;
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     ULONGLONG GetTicksWorked() const noexcept;
@@ -240,7 +241,7 @@ public:
     bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
     COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
     int TmiGetChildCount() const noexcept;
-    CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
+    CItem* TmiGetChild(const int c) const noexcept { return GetFolderInfo()->m_children[c]; }
     ULONGLONG TmiGetSize() const noexcept;
 
     // Drive/Volume Specific
@@ -316,14 +317,14 @@ private:
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
 
     // Dynamic memory management for flexible buffer layout
-    static void* operator new(size_t size, std::wstring_view name);
-    static void operator delete(void* mem, std::wstring_view) noexcept { ::operator delete(mem); }
+    static void* operator new(size_t size, ITEMTYPE type, std::wstring_view name);
+    static void operator delete(void* mem, ITEMTYPE, std::wstring_view) noexcept { ::operator delete(mem); }
 
     void SetName(std::wstring_view name);
     const wchar_t* GetNameBuffer() const noexcept
     {
-        return IsTypeOrFlag(IT_DRIVE) ? m_folderInfo->m_driveName.get() :
-            reinterpret_cast<const wchar_t*>(this + 1);
+        return IsTypeOrFlag(IT_DRIVE) ? GetFolderInfo()->m_driveName.get() : IsLeaf() ?
+            reinterpret_cast<const wchar_t*>(this + 1) : reinterpret_cast<const wchar_t*>(GetFolderInfo() + 1);
     }
     wchar_t* GetNameBuffer() noexcept
     {
@@ -349,9 +350,7 @@ private:
     CItem* AddFile(const Finder& finder, ScanBatch& batch);
     void ScanRemoteFlat(FinderRemote& finder, BlockingQueue<CItem*>* queue);
 
-    // Special structure for container items that is separately allocated to
-    // reduce memory usage.  This operates under the assumption that most
-    // containers have files in them.
+    // Child information for container items, stored between the item and its name buffer
     using CHILDINFO = struct CHILDINFO
     {
         std::vector<CItem*> m_children;
@@ -364,7 +363,11 @@ private:
         std::atomic<ScanOutcome> m_scanOutcome = ScanOutcome::NotStarted; // how this node's enumeration ended
     };
 
-    std::unique_ptr<CHILDINFO> m_folderInfo;   // Child information for non-files
+    CHILDINFO* GetFolderInfo() const noexcept
+    {
+        return IsLeaf() ? nullptr : reinterpret_cast<CHILDINFO*>(const_cast<CItem*>(this) + 1);
+    }
+
     std::atomic<ULONGLONG> m_sizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_sizeLogical = 0;  // Total local size of self or subtree
     ULONGLONG m_index = 0;                     // Index of item for special scan types
