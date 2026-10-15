@@ -19,6 +19,7 @@ class Localization final
     static bool CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix = {});
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
     static void UpdateWindowText(WindowRef wnd);
+    static std::wstring FormatImpl(std::wstring_view format, std::wformat_args args);
 
 public:
     static std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> m_map;
@@ -29,10 +30,11 @@ public:
         return m_map.contains(name);
     }
 
-    static std::wstring Lookup(const std::wstring_view name)
+    static const std::wstring& Lookup(const std::wstring_view name)
     {
+        static const std::wstring empty;
         const auto it = m_map.find(name);
-        return it != m_map.end() ? it->second : std::wstring();
+        return it != m_map.end() ? it->second : empty;
     }
 
     static std::wstring LookupNeutral(const UINT res)
@@ -43,17 +45,7 @@ public:
     template <typename... Args>
     static std::wstring Format(const std::wstring_view format, const Args&... args)
     {
-        const auto & formatString = Lookup(format);
-        try
-        {
-            return std::vformat(formatString, std::make_wformat_args(args...));
-        }
-        catch (const std::format_error&)
-        {
-            // Translation files are user-editable so a malformed
-            // substitution must not take down the application
-            return formatString;
-        }
+        return FormatImpl(format, std::make_wformat_args(args...));
     }
 
     static bool IsRightToLeft() noexcept { return m_rightToLeft; }
