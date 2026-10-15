@@ -24,21 +24,32 @@ class FinderNtfsContext final
         bool HasWofData = false;
         bool HasData = false;
         bool HasStandardInfo = false;
+        bool IsPresent = false;
     };
 
     using FileRecordName = struct FileRecordName
     {
-        std::wstring FileName;
-        ULONGLONG FileReference;
+        ULONGLONG FileReference = 0;
+        ULONG NameOffset = 0;
+        USHORT NameLength = 0;
+        USHORT NameArena = 0;
 
-        FileRecordName(std::wstring fileName, const ULONGLONG fileReference) :
-            FileName(std::move(fileName)), FileReference(fileReference) {}
+        constexpr FileRecordName(const ULONGLONG fileReference, const ULONG nameOffset,
+            const USHORT nameLength, const USHORT nameArena) noexcept :
+            FileReference(fileReference), NameOffset(nameOffset),
+            NameLength(nameLength), NameArena(nameArena) {}
     };
 
-    std::unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
+    std::vector<FileRecordBase> m_baseFileRecords;
+    std::vector<std::vector<wchar_t>> m_nameArenas;
     std::unordered_map<ULONGLONG, std::vector<FileRecordName>> m_parentToChildMap;
 
     bool m_isLoaded = false;
+
+    std::wstring_view GetName(const FileRecordName& rec) const noexcept
+    {
+        return { m_nameArenas[rec.NameArena].data() + rec.NameOffset, rec.NameLength };
+    }
 
 public:
 
@@ -73,7 +84,7 @@ public:
     DWORD GetAttributes() const override { return m_currentRecord->Attributes; }
     ULONGLONG GetIndex() const override { return m_currentRecordName->FileReference; }
     DWORD GetReparseTag() const override { return m_currentRecord->ReparsePointTag; }
-    std::wstring_view GetFileName() const override { return m_currentRecordName->FileName; }
+    std::wstring_view GetFileName() const override { return m_master->GetName(*m_currentRecordName); }
     ULONGLONG GetFileSizePhysical() const override { return m_currentRecord->PhysicalSize; }
     ULONGLONG GetFileSizeLogical() const override { return m_currentRecord->LogicalSize; }
     FILETIME GetLastWriteTime() const override { return m_currentRecord->LastModifiedTime; }
