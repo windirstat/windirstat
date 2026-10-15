@@ -116,22 +116,6 @@ public:
         return i;
     }
 
-    void PushIfNotQueued(T const& value)
-    {
-        std::scoped_lock lock(m_mutex);
-        if (std::ranges::contains(m_queue, value)) return;
-        m_queue.push_back(value);
-        m_pushed.notify_one();
-    }
-
-    void PushIfNotQueued(T&& value)
-    {
-        std::scoped_lock lock(m_mutex);
-        if (std::ranges::contains(m_queue, value)) return;
-        m_queue.push_back(std::move(value));
-        m_pushed.notify_one();
-    }
-
     bool IsPauseOrCancelRequested()
     {
         std::scoped_lock lock(m_mutex);
