@@ -473,8 +473,8 @@ const CItem* CItem::GetLinkedItem() const noexcept
 
 int CItem::TmiGetChildCount() const noexcept
 {
-    if (m_folderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
-    return static_cast<int>(m_folderInfo->m_children.size());
+    if (IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
+    return static_cast<int>(GetFolderInfo()->m_children.size());
 }
 
 ULONGLONG CItem::TmiGetSize() const noexcept
@@ -897,7 +897,7 @@ void CItem::DoHardlinkAdjustment()
         // Create "Index N" folder under the appropriate Index Set
         const auto indexFolder = CItem::Create(IT_HLINKS_IDX, std::format(L"{} 0x{:016X}", indexLabel, index));
         indexFolder->SetIndex(index);
-        indexFolder->m_folderInfo->m_children.reserve(list.size());
+        indexFolder->GetFolderInfo()->m_children.reserve(list.size());
 
         // Add file reference entries under the Index folder
         for (auto* item : list)
