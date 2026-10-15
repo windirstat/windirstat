@@ -167,8 +167,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
     // Get volume information
     NTFS_VOLUME_DATA_BUFFER volumeInfo = {};
     ULONG bytesReturned;
-    if (!DeviceIoControl(volumeHandle, FSCTL_GET_NTFS_VOLUME_DATA, nullptr, 0, &volumeInfo, sizeof(volumeInfo), &bytesReturned, nullptr)) return
-        false;
+    if (!DeviceIoControl(volumeHandle, FSCTL_GET_NTFS_VOLUME_DATA, nullptr, 0, &volumeInfo, sizeof(volumeInfo), &bytesReturned, nullptr) ||
+        volumeInfo.BytesPerFileRecordSegment == 0) return false;
 
     // Get MFT retrieval pointers
     const SmartPointer fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
@@ -193,6 +193,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
     const std::span extents(retrievalBuffer->Extents, retrievalBuffer->ExtentCount);
+    if (extents.size() > std::numeric_limits<USHORT>::max()) return false;
     std::vector<std::tuple<ULONGLONG, LONGLONG, ULONGLONG, ULONGLONG>> dataRuns(extents.size(), {});
     auto vcnStart = retrievalBuffer->StartingVcn.QuadPart;
     for (const auto [i, extent] : std::views::enumerate(extents))
@@ -206,31 +207,46 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
         vcnStart = vcnNext;
     }
 
-    // Each data run owns its parse maps across pauses, with no shared record writes.
+    // Index base records directly by MFT record number across the full MFT capacity
+    const size_t totalRecords = static_cast<size_t>(
+        (static_cast<ULONGLONG>(vcnStart) * volumeInfo.BytesPerCluster) / volumeInfo.BytesPerFileRecordSegment);
+    m_baseFileRecords.assign(totalRecords, {});
+    m_nameArenas.clear();
+    m_parentToChildMap.clear();
+
+    // Each data run owns its extension records, child map, and contiguous filename arena.
     struct RecordPartition
     {
-        std::unordered_map<ULONGLONG, FileRecordBase> records;
+        std::vector<std::pair<ULONGLONG, FileRecordBase>> extensionRecords;
         std::unordered_map<ULONGLONG, std::vector<FileRecordName>> children;
+        std::vector<wchar_t> nameArena;
     };
     std::vector<RecordPartition> partitions(dataRuns.size());
     const auto runIndices = std::views::iota(size_t{}, dataRuns.size());
     std::atomic<bool> readFailed = false;
     const auto readRun = [&](const size_t runIndex)
     {
-        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size
+        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size; pool threads do not retain it
         constexpr size_t bufferSize = 4ull * wds::Mi;
         constexpr size_t bufferAlignment = 4ull * wds::Ki;
-        thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
+        const std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
             static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
+        const SmartPointer event(CloseHandle, CreateEvent(nullptr, false, false, nullptr));
+        if (!buffer || event == nullptr)
+        {
+            readFailed = true;
+            return;
+        }
 
         auto& [runVcnStart, clusterStart, clusterCount, bytesReadFromRun] = dataRuns[runIndex];
         auto& partition = partitions[runIndex];
+        partition.nameArena.reserve(static_cast<size_t>(
+            clusterCount * volumeInfo.BytesPerCluster / volumeInfo.BytesPerFileRecordSegment * 16));
 
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster - bytesReadFromRun;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(
             clusterStart * volumeInfo.BytesPerCluster + bytesReadFromRun) };
-        thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, false, false, nullptr));
         const ULONGLONG mftRunOffset = runVcnStart * volumeInfo.BytesPerCluster;
         ULONG bytesRead = 0;
         for (; bytesToRead > 0;
@@ -307,12 +323,17 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 // Only process records that have valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = (mftRunOffset + bytesReadFromRun + offset) / volumeInfo.BytesPerFileRecordSegment;
-                const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
-                const ULONGLONG baseRecordSequence = fileRecord->BaseFileRecordNumber > 0 ?
+                const bool isExtensionRecord = fileRecord->BaseFileRecordNumber > 0;
+                const auto baseRecordIndex = isExtensionRecord ? fileRecord->BaseFileRecordNumber : currentRecord;
+                const ULONGLONG baseRecordSequence = isExtensionRecord ?
                     fileRecord->BaseFileRecordSequence : fileRecord->SequenceNumber;
                 const auto baseFileReference = baseRecordIndex | (baseRecordSequence << 48);
 
-                auto& baseRecord = partition.records[baseRecordIndex];
+                // Primary records fill their own slot while extension records are merged after all runs finish
+                FileRecordBase localRecord{};
+                const bool isPrimary = !isExtensionRecord && currentRecord < m_baseFileRecords.size();
+                FileRecordBase& baseRecord = isPrimary ? m_baseFileRecords[currentRecord] : localRecord;
+                baseRecord.IsPresent = true;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
@@ -336,8 +357,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                             (fn->FileNameLength == 1 && fn->FileName[0] == L'.') ||
                             (fn->FileNameLength == 2 && fn->FileName[0] == L'.' && fn->FileName[1] == L'.')) continue;
 
+                        const ULONG nameOffset = static_cast<ULONG>(partition.nameArena.size());
+                        partition.nameArena.append_range(std::wstring_view(fn->FileName, fn->FileNameLength));
                         auto& children = partition.children.try_emplace(fn->ParentDirectory).first->second;
-                        children.emplace_back(std::wstring{ fn->FileName, fn->FileNameLength }, baseFileReference);
+                        children.emplace_back(baseFileReference, nameOffset, fn->FileNameLength, static_cast<USHORT>(runIndex));
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
@@ -408,6 +431,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         }
                     }
                 }
+
+                if (!isPrimary) partition.extensionRecords.emplace_back(baseRecordIndex, localRecord);
             }
         }
     };
@@ -427,25 +452,22 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
         return std::get<3>(run) < std::get<2>(run) * volumeInfo.BytesPerCluster;
     }));
 
-    // Adopt the first run's maps outright, since an unfragmented MFT has no other runs to combine.
-    m_baseFileRecordMap.clear();
-    m_parentToChildMap.clear();
+    // Adopt the first run's child map outright, since an unfragmented MFT has no other runs to combine.
+    m_nameArenas.resize(partitions.size());
     if (!partitions.empty())
     {
-        m_baseFileRecordMap.swap(partitions.front().records);
         m_parentToChildMap.swap(partitions.front().children);
     }
 
-    // Transfer unique nodes and combine extension records after all readers have joined.
-    size_t recordCount = m_baseFileRecordMap.size();
-    for (const auto& partition : partitions) recordCount += partition.records.size();
-    m_baseFileRecordMap.reserve(recordCount);
-    for (auto& partition : partitions)
+    // Merge extension records into the flat MFT record table and combine child maps.
+    for (auto [i, partition] : std::views::enumerate(partitions))
     {
-        m_baseFileRecordMap.merge(partition.records);
-        for (const auto& [index, record] : partition.records)
+        m_nameArenas[i] = std::move(partition.nameArena);
+
+        for (const auto& [index, record] : partition.extensionRecords)
         {
-            auto& merged = m_baseFileRecordMap.at(index);
+            if (index >= m_baseFileRecords.size()) continue;
+            auto& merged = m_baseFileRecords[static_cast<size_t>(index)];
             if (record.HasStandardInfo) merged.LastModifiedTime = record.LastModifiedTime;
             if (record.HasData) merged.LogicalSize = record.LogicalSize;
             if (record.HasWofData || !merged.HasWofData && record.HasData)
@@ -456,6 +478,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
             merged.HasWofData |= record.HasWofData;
             merged.HasData |= record.HasData;
             merged.HasStandardInfo |= record.HasStandardInfo;
+            merged.IsPresent = true;
         }
 
         m_parentToChildMap.merge(partition.children);
@@ -487,14 +510,13 @@ bool FinderNtfs::FindNext()
     {
         m_currentRecordName = &(*m_recordIterator++);
         m_index = m_currentRecordName->FileReference & FinderNtfsContext::NtfsRecordMask;
-        const auto it = m_master->m_baseFileRecordMap.find(m_index);
-        if (it == m_master->m_baseFileRecordMap.end())
+        if (m_index >= m_master->m_baseFileRecords.size() || !m_master->m_baseFileRecords[static_cast<size_t>(m_index)].IsPresent)
         {
             if (m_result.error.empty())
                 m_result = { ScanOutcome::Partial, GetFilePath() + L": " + TranslateError(ERROR_INVALID_DATA) };
             continue;
         }
-        m_currentRecord = &it->second;
+        m_currentRecord = &m_master->m_baseFileRecords[static_cast<size_t>(m_index)];
         return true;
     }
     return false;
