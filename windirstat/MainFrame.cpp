@@ -346,6 +346,9 @@ void CMainFrame::SetProgressComplete()
     CFileTreeControl::Get()->SortItems();
     CFileDupeControl::Get()->SortItems();
     CFileTopControl::Get()->SortItems();
+
+    // Completion arrives as a sent message, so refresh toolbar commands without waiting for input
+    CDirStatApp::Get()->OnIdle(0);
 }
 
 void CMainFrame::SuspendState(const bool suspend)
