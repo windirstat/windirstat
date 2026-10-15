@@ -85,10 +85,11 @@ function Test-SplitterCapture {
     foreach ($splitter in $outer, $inner) {
         $first = [TestDesktop]::GetDlgItem($splitter, 0xE900)
         $second = [TestDesktop]::GetDlgItem($splitter, 0xE901)
-        $axis = 0
-        if ($second -eq [IntPtr]::Zero) { $axis = 1; $second = [TestDesktop]::GetDlgItem($splitter, 0xE910) }
         Assert-True ($first -ne [IntPtr]::Zero -and $second -ne [IntPtr]::Zero) `
             'The configured topology exposes both real splitter panes'
+        $firstRect = [TestDesktop]::Rectangle($first)
+        $secondRect = [TestDesktop]::Rectangle($second)
+        $axis = if ($secondRect[0] -ge $firstRect[2]) { 0 } else { 1 }
         foreach ($offset in 0, 3, 6) {
             [TestDesktop]::Activate($app.Window)
             $rect = [TestDesktop]::Rectangle($splitter)
@@ -139,6 +140,76 @@ function Test-SplitterCapture {
     Assert-GraphRendered $app | Out-Null
 }
 
+function Test-LayoutRoundTrip {
+    param($Context, $Case)
+    $app = Start-TestApp @((New-TestTree)) -Settings @{ Options = @{ DarkMode = $Case.Dark } }
+    $tree = Get-AppList $app -AllFiles
+    Expand-AppDirectory $app $tree 'alpha' -Child 'selected-a.bin'
+    Select-AppRows $app $tree @('selected-a.bin')
+    $graph = Get-GraphWindow $app
+    $baseline = Assert-GraphRendered $app
+    $layouts = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($index in @(1..11) + @(0)) {
+        Invoke-AppCommand $app 'ID_VIEW_WINDOW_LAYOUT'
+        $popup = Wait-Until {
+            @([TestDesktop]::Windows($app.Process.Id) | Where-Object {
+                [TestDesktop]::Class($_) -eq 'WdsLayoutPopup' -and [TestDesktop]::IsWindowVisible($_)
+            } | Select-Object -First 1)
+        } 'The layout picker opens'
+        $size = [TestDesktop]::ClientSize($popup)
+        $x = [int](($index % 3 + 0.5) * $size[0] / 3)
+        $y = [int](([Math]::Floor($index / 3) + 0.5) * $size[1] / 4)
+        $point = ($y -shl 16) -bor $x
+        [void][TestDesktop]::Message($popup, 0x0201, 1, $point)
+        [void][TestDesktop]::Message($popup, 0x0202, 0, $point)
+        Wait-Until { -not [TestDesktop]::IsWindowVisible($popup) } 'Choosing a layout closes the picker' | Out-Null
+        $geometry = @(foreach ($pane in $tree, $app.ExtensionList, $graph) {
+            Assert-True ([TestDesktop]::IsWindow($pane) -and [TestDesktop]::IsChild($app.Window, $pane)) `
+                'Layout changes retain the existing view windows'
+            $rect = [TestDesktop]::Rectangle($pane)
+            Assert-True ($rect[2] - $rect[0] -gt 40 -and $rect[3] - $rect[1] -gt 40) `
+                'Every pane remains visible with usable dimensions'
+            $rect -join ','
+        })
+        [void]$layouts.Add($geometry -join ';')
+        Assert-Equal ([NativeListViewHelper]::GetSelectedCount($tree)) 1 'Reparenting retains the file selection'
+        Assert-GraphRendered $app | Out-Null
+    }
+    Assert-Equal $layouts.Count 12 'Every layout choice produces its own arrangement'
+    Assert-FrameEqual $baseline (Get-StableFrame $graph) 'Returning to the default layout restores the graph' 'layout'
+    Save-Frame (Get-StableFrame $app.Window) (Join-Path $Context.Root 'layout.png')
+}
+
+function Test-ToolbarScaling {
+    param($Context, $Case)
+    $app = Start-TestApp @((New-TestTree)) -Settings @{ Options = @{ DarkMode = $Case.Dark; ToolBarSizePercent = 100 } }
+    $toolbar = [TestDesktop]::Children($app.Window) | Where-Object {
+        [TestDesktop]::Class($_) -eq 'ToolbarWindow32'
+    } | Select-Object -First 1
+    Invoke-AppKeys $app '{ESC}'
+    Wait-Until { [TestDesktop]::Message($toolbar, 0x0409, (Get-ResourceId 'ID_REFRESH_ALL')).ToInt32() -ne 0 } `
+        'Toolbar command states settle after scanning' | Out-Null
+    [TestDesktop]::ParkCursor($app.Window)
+    $baseline = Get-StableFrame $toolbar
+    foreach ($percent in 100, 125, 150, 175, 200, 100) {
+        Invoke-AppCommand $app "ID_VIEW_TOOLBAR_SIZE_$percent"
+        foreach ($command in 'ID_FILE_SELECT', 'ID_SCAN_STOP', 'ID_CONFIGURE', 'ID_WATCHER_AUTOSCROLL') {
+            Assert-True ([TestDesktop]::Message($toolbar, 0x042C, (Get-ResourceId $command)).ToInt32() -ge 0) `
+                "$command retains its toolbar image at $percent percent"
+        }
+        Assert-Equal ([TestDesktop]::Message($toolbar, 0x0409, (Get-ResourceId 'ID_SCAN_STOP')).ToInt32()) 0 `
+            'The idle scan action stays disabled after rebuilding toolbar images'
+        $frame = Get-StableFrame $toolbar
+        Assert-True ([TestDesktop]::ColorCount($frame) -gt 16) 'The toolbar paints its icons at every supported scale'
+        if ($percent -eq 200) {
+            Assert-True ($frame.Height -gt $baseline.Height) 'Increasing toolbar scale enlarges the buttons'
+            Save-Frame $frame (Join-Path $Context.Root 'toolbar-200.png')
+        }
+    }
+    Assert-FrameEqual $baseline $frame 'Restoring toolbar scale restores the original icons' 'toolbar'
+    Save-Frame $frame (Join-Path $Context.Root 'toolbar-100.png')
+}
+
 function Test-ScaledLocalization {
     param($Context, $Case)
     $root = New-TestTree
@@ -163,6 +234,7 @@ function Test-ScaledLocalization {
         'The scaled settings control retains usable geometry'
     Set-DialogCheck $dialog 'IDC_SHOW_TIME_SECONDS' $true
     Assert-Equal ([TestDesktop]::Message($checkbox, 0x00F0).ToInt32()) 1 'A scaled localized checkbox remains operable'
+    Save-Frame (Get-StableFrame $checkbox) (Join-Path $Context.Root 'checkbox.png')
     Close-AppDialog $dialog
     Invoke-AppCommand $app 'ID_VIEW_ALL_FILES'
     Assert-GraphRendered $app | Out-Null
@@ -268,6 +340,12 @@ foreach ($layout in @(@{ Id = 'vertical'; Topology = 0; Permutation = 0; Positio
     Register-Scenario "render.splitter.$($layout.Id)" Rendering `
         'Splitter grab offsets, capture loss, cancellation, and accepted drags' `
         Test-SplitterCapture -Tags Desktop,Rendering,External -Requires Windows,Desktop -Data $layout
+}
+foreach ($dark in 0, 1) {
+    Register-Scenario "render.layouts.$dark" Rendering 'Layout choices preserve view windows, selection, and rendering' `
+        Test-LayoutRoundTrip -Tags Desktop,Rendering -Requires Windows,Desktop -Data @{ Dark = $dark }
+    Register-Scenario "render.toolbar.$dark" Rendering 'Icons and disabled buttons survive all supported toolbar scales' `
+        Test-ToolbarScaling -Tags Desktop,Rendering -Requires Windows,Desktop -Data @{ Dark = $dark }
 }
 foreach ($font in 100, 200) {
     Register-Scenario "render.localization.$font" Rendering `

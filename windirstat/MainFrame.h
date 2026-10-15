@@ -103,8 +103,6 @@ protected:
     double * m_userSplitterPos; // Split ratio as set by the user
     PaneTracking m_paneTracking[2];
 
-    void PostNcDestroy() override;
-
 public:
     static std::span<const RouteEntry> Routes();
 

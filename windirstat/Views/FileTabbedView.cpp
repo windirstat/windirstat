@@ -73,7 +73,6 @@ void CFileTabbedView::OnSetFocus(WindowRef /*pOldWnd*/)
 
 void CFileTabbedView::OnInitialUpdate()
 {
-    CTabCtrlHelper::SetupTabControl(GetTabControl());
     Localization::UpdateTabControl(GetTabControl());
     ResetOptionalTabVisibility();
 }

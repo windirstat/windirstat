@@ -51,15 +51,3 @@ private:
     static bool s_darkModeEnabled;
     static bool s_highContrastEnabled;
 };
-
-//
-// CTabCtrlHelper. Used to set up tab control properties.
-//
-class CTabCtrlHelper final
-{
-public:
-    static void SetupTabControl(CTabControl& tab)
-    {
-        tab.SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::SystemColor(COLOR_WINDOW) : CLR_NONE);
-    }
-};

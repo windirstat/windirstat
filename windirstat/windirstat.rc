@@ -1003,61 +1003,6 @@ IDR_LANGS               TEXT                    "res\\lang_combined.bin"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog Info
-//
-
-IDD_PAGE_ADVANCED DLGINIT
-BEGIN
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0031, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0032, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0033, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0034, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0035, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0036, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0037, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0038, 
-    IDC_COMBO_THREADS, 0x403, 2, 0
-0x0039, 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3031, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3131, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3231, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3331, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3431, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3531, "\000" 
-    IDC_COMBO_THREADS, 0x403, 3, 0
-0x3631, "\000" 
-    IDC_HASH_ALGORITHM, 0x403, 4, 0
-0x444d, 0x0035, 
-    IDC_HASH_ALGORITHM, 0x403, 5, 0
-0x4853, 0x3141, "\000" 
-    IDC_HASH_ALGORITHM, 0x403, 7, 0
-0x4853, 0x3241, 0x3635, "\000" 
-    IDC_HASH_ALGORITHM, 0x403, 7, 0
-0x4853, 0x3341, 0x3438, "\000" 
-    IDC_HASH_ALGORITHM, 0x403, 7, 0
-0x4853, 0x3541, 0x3231, "\000" 
-    IDC_HASH_ALGORITHM, 0x403, 7, 0
-0x7878, 0x6148, 0x6873, "\000" 
-    0
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // AFX_DIALOG_LAYOUT
 //
 

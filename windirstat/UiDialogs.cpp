@@ -93,12 +93,6 @@ void CPropertyPage::SetModified(const bool bChanged)
 bool CPropertySheet::SelectPage(const int i)
 {
     if (i < 0 || i >= GetPageCount()) return false;
-    if (m_tab.Handle() == nullptr)
-    {
-        m_pendingActivePage = i;
-        return true;
-    }
-
     if (!ActivatePage(i)) return false;
     SyncTabSelection(i);
     return true;
@@ -162,7 +156,6 @@ std::span<const RouteEntry> CPropertySheet::Routes()
     static constexpr std::array entries
     {
         Route::Window<&OnRequestedPageChanged>(WM_WDS_TAB_CHANGED),
-        Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnClose>(WM_CLOSE),
     };
     return entries;
@@ -258,12 +251,6 @@ bool CPropertySheet::ApplyPages(const UINT command)
     for (const auto& page : m_pages) if (page->Handle() != nullptr) page->AfterApply();
     OnApplied(command);
     return true;
-}
-
-HBRUSH CPropertySheet::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
-{
-    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 bool CPropertySheet::OnEraseBkgnd(CDC* pDC) const
@@ -377,7 +364,7 @@ bool CPropertySheet::OnInitDialog()
     bx += btnW + btnGap;
     m_applyButton = createButton(bx, ID_APPLY_NOW, L"IDS_GENERIC_APPLY", BS_PUSHBUTTON);
 
-    if (GetPageCount() > 0) SelectPage(std::clamp(m_pendingActivePage, 0, GetPageCount() - 1));
+    if (GetPageCount() > 0) SelectPage(0);
     UpdateApplyButton();
     CenterWindow();
     return true;

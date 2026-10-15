@@ -98,7 +98,7 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
             m_messageCtrl.SetRedraw(false);
             m_messageCtrl.SetText(progressText);
             m_messageCtrl.SetRedraw(true);
-            m_messageCtrl.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
+            m_messageCtrl.RedrawWindow(RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
         }
     }
     CDialog::OnTimer(nIDEvent);

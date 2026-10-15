@@ -401,7 +401,7 @@ static void DrawScaledButton(const HWND window, const HDC dc)
     const UINT state = static_cast<UINT>(SendMessageW(window, BM_GETSTATE, 0, 0));
     const int check = static_cast<int>(SendMessageW(window, BM_GETCHECK, 0, 0));
     const int part = radio ? BP_RADIOBUTTON : BP_CHECKBOX;
-    const int themeState = (check == BST_CHECKED ? 4 : check == BST_INDETERMINATE ? 8 : 0) +
+    const int themeState = (check == BST_CHECKED ? 4 : 0) +
         (!enabled ? 4 : (state & BST_PUSHED) != 0 ? 3 : (state & BST_HOT) != 0 ? 2 : 1);
     const SmartPointer theme(CloseThemeData, OpenThemeData(window, VSCLASS_BUTTON));
     SIZE nativeSize{ ScaleForScreenDpi(13, window), ScaleForScreenDpi(13, window) };
@@ -411,10 +411,8 @@ static void DrawScaledButton(const HWND window, const HDC dc)
     CRect client;
     GetClientRect(window, &client);
     const bool rtl = (exStyle & WS_EX_LAYOUTRTL) != 0;
-    const bool rightGlyph = ((style & BS_LEFTTEXT) != 0) != rtl;
-    CRect glyph(rightGlyph ? client.right - glyphWidth : client.left, client.top, 0, 0);
-    glyph.top += (style & BS_VCENTER) == BS_TOP ? 0 : (style & BS_VCENTER) == BS_BOTTOM
-        ? client.Height() - glyphHeight : (client.Height() - glyphHeight) / 2;
+    CRect glyph(rtl ? client.right - glyphWidth : client.left, client.top, 0, 0);
+    glyph.top += (client.Height() - glyphHeight) / 2;
     glyph.right = glyph.left + glyphWidth;
     glyph.bottom = glyph.top + glyphHeight;
 
@@ -477,9 +475,7 @@ static void DrawScaledButton(const HWND window, const HDC dc)
                 outline.CloseFigure();
                 if (enabled && (check != BST_UNCHECKED || pressed)) graphics.FillPath(&fill, &outline);
                 graphics.DrawPath(&border, &outline);
-                if (check == BST_INDETERMINATE) graphics.FillRectangle(&mark,
-                    glyphWidth * .25f, glyphHeight * .45f, glyphWidth * .5f, glyphHeight * .1f);
-                else if (check == BST_CHECKED)
+                if (check == BST_CHECKED)
                 {
                     const Gdiplus::PointF points[] = { {glyphWidth * .23f, glyphHeight * .52f},
                         {glyphWidth * .43f, glyphHeight * .72f}, {glyphWidth * .78f, glyphHeight * .28f} };
@@ -490,8 +486,7 @@ static void DrawScaledButton(const HWND window, const HDC dc)
         else if (!theme.IsValid() ||
             FAILED(DrawThemeBackground(theme, memory, part, themeState, &nativeRect, nullptr)))
         {
-            const UINT flags = (radio ? DFCS_BUTTONRADIO :
-                check == BST_INDETERMINATE ? DFCS_BUTTON3STATE : DFCS_BUTTONCHECK) |
+            const UINT flags = (radio ? DFCS_BUTTONRADIO : DFCS_BUTTONCHECK) |
                 (check != BST_UNCHECKED ? DFCS_CHECKED : 0) | (!enabled ? DFCS_INACTIVE : 0) |
                 ((state & BST_PUSHED) != 0 ? DFCS_PUSHED : 0);
             DrawFrameControl(memory, &nativeRect, DFC_BUTTON, flags);
@@ -505,25 +500,21 @@ static void DrawScaledButton(const HWND window, const HDC dc)
     std::wstring text(static_cast<size_t>(GetWindowTextLengthW(window)) + 1, L'\0');
     text.resize(GetWindowTextW(window, text.data(), static_cast<int>(text.size())));
     CRect textRect = client;
-    if (rightGlyph) textRect.right = glyph.left - ScaleForDpi(3, window);
+    if (rtl) textRect.right = glyph.left - ScaleForDpi(3, window);
     else textRect.left = glyph.right + ScaleForDpi(3, window);
     const UINT uiState = static_cast<UINT>(SendMessageW(window, WM_QUERYUISTATE, 0, 0));
-    const UINT alignment = (style & BS_CENTER) == BS_CENTER ? DT_CENTER :
-        ((style & BS_CENTER) == BS_RIGHT || rtl) ? DT_RIGHT : DT_LEFT;
-    const UINT flags = alignment | ((style & BS_MULTILINE) != 0 ? DT_WORDBREAK : DT_SINGLELINE) |
+    const UINT flags = (rtl ? DT_RIGHT : DT_LEFT) | DT_SINGLELINE |
         ((uiState & UISF_HIDEACCEL) != 0 ? DT_HIDEPREFIX : 0) |
         ((exStyle & (WS_EX_RTLREADING | WS_EX_LAYOUTRTL)) != 0 ? DT_RTLREADING : 0);
     CRect measured = textRect;
     DrawTextW(dc, text.data(), static_cast<int>(text.size()), &measured, flags | DT_CALCRECT);
-    textRect.top += (style & BS_VCENTER) == BS_TOP ? 0 : (style & BS_VCENTER) == BS_BOTTOM
-        ? client.Height() - measured.Height() : (client.Height() - measured.Height()) / 2;
+    textRect.top += (client.Height() - measured.Height()) / 2;
     textRect.bottom = textRect.top + measured.Height();
     DrawTextW(dc, text.data(), static_cast<int>(text.size()), &textRect, flags);
     if ((state & BST_FOCUS) != 0 && (uiState & UISF_HIDEFOCUS) == 0)
     {
         const int width = std::min(measured.Width(), textRect.Width());
-        if (alignment == DT_RIGHT) textRect.left = textRect.right - width;
-        else if (alignment == DT_CENTER) textRect.left += (textRect.Width() - width) / 2;
+        if (rtl) textRect.left = textRect.right - width;
         textRect.right = textRect.left + width;
         textRect.Inflate(1, 1);
         DrawFocusRect(dc, &textRect);
@@ -534,7 +525,7 @@ static LRESULT CALLBACK ScaledButtonSubclass(const HWND window, const UINT messa
     const WPARAM wParam, const LPARAM lParam, const UINT_PTR id, DWORD_PTR)
 {
     if (message == WM_NCDESTROY) RemoveWindowSubclass(window, ScaledButtonSubclass, id);
-    if (GetFontSizePercent() == 100 || (GetWindowLongPtrW(window, GWL_STYLE) & BS_PUSHLIKE) != 0)
+    if (GetFontSizePercent() == 100)
         return DefSubclassProc(window, message, wParam, lParam);
 
     if (message == WM_ERASEBKGND) return 1;
@@ -569,8 +560,7 @@ static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
         SendMessageW(window, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(window)), false);
         std::array<WCHAR, MAX_CLASS_NAME> className{};
         GetClassNameW(window, className.data(), static_cast<int>(className.size()));
-        constexpr std::array buttonTypes{ BS_CHECKBOX, BS_AUTOCHECKBOX, BS_RADIOBUTTON,
-            BS_AUTORADIOBUTTON, BS_3STATE, BS_AUTO3STATE };
+        constexpr std::array buttonTypes{ BS_CHECKBOX, BS_AUTOCHECKBOX, BS_RADIOBUTTON, BS_AUTORADIOBUTTON };
         if (wcscmp(className.data(), WC_BUTTONW) == 0 && std::ranges::contains(buttonTypes,
             GetWindowLongPtrW(window, GWL_STYLE) & BS_TYPEMASK))
             SetWindowSubclass(window, ScaledButtonSubclass, 1, 0);
@@ -886,13 +876,13 @@ bool MenuRef::SetItemInfo(const UINT item, const MENUITEMINFOW* info, const Item
     return SetMenuItemInfoW(m_hMenu, item, lookup == ItemLookup::Position, &update);
 }
 
-UINT MenuRef::ShowPopup(const UINT flags, const int x, const int y, WindowRef window,
+UINT MenuRef::ShowPopup(const UINT flags, const POINT pt, WindowRef window,
     const LPTPMPARAMS lptpm) const
 {
     const HWND owner = window.Handle();
     if (owner != nullptr) SetWindowSubclass(owner, ScaledMenuSubclass, 1, 0);
     return TrackPopupMenuEx(m_hMenu, flags | (Localization::IsRightToLeft() ? TPM_LAYOUTRTL : 0),
-        x, y, owner, lptpm);
+        pt.x, pt.y, owner, lptpm);
 }
 
 void MenuRef::SetItemEnabled(const int item, const bool enable, const ItemLookup lookup) const
@@ -916,11 +906,6 @@ UINT MenuRef::CheckItem(const UINT id, const UINT flags) const noexcept
 MenuRef WindowRef::GetMenu() const
 {
     return MenuRef(::GetMenu(m_hWnd));
-}
-
-UINT MenuRef::ShowPopup(const UINT flags, const POINT pt, WindowRef window, LPTPMPARAMS lptpm) const
-{
-    return ShowPopup(flags, pt.x, pt.y, window, lptpm);
 }
 
 void NotifyAppearanceChanged(const HWND window)

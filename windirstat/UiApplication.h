@@ -124,12 +124,7 @@ public:
         return CWnd::PreprocessMessage(pMsg);
     }
 
-    virtual bool OnInitDialog()
-    {
-        if (InitializeDialogControls(m_nIDTemplate)) return true;
-        CloseModal(-1);
-        return false;
-    }
+    virtual bool OnInitDialog() { return true; }
     virtual void OnOK() { CloseModal(IDOK); }
     virtual void OnCancel() { CloseModal(IDCANCEL); }
     void CloseModal(const int result) { EndDialog(m_hWnd, result); }
@@ -229,8 +224,8 @@ public:
     ~CWinApp() override { if (g_pApp == this) g_pApp = nullptr; }
 
     virtual bool InitInstance() { return true; }
-    virtual int ExitInstance() const noexcept { return static_cast<int>(m_msgCur.wParam); }
-    virtual bool OnIdle(const LONG lCount)
+    int ExitInstance() const noexcept { return static_cast<int>(m_msgCur.wParam); }
+    bool OnIdle(const LONG lCount)
     {
         if (lCount != 0) return false;
         if (g_idleCmdUiUpdate) g_idleCmdUiUpdate();
@@ -241,12 +236,12 @@ public:
         return !(pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE ||
             pMsg->message == WM_PAINT || pMsg->message == 0x0118 /*WM_SYSTIMER*/);
     }
-    virtual bool PreprocessMessage(MSG* pMsg);
-    virtual bool PumpMessage();
-    virtual int Run();
+    bool PreprocessMessage(MSG* pMsg);
+    bool PumpMessage();
+    int Run();
 
     static void RunTaskWithUiUpdates(const std::function<void()>& task);
-    static void WaitForHandleWithUiUpdates(HANDLE handle, DWORD timeout = INFINITE) noexcept;
+    static void WaitForHandleWithUiUpdates(HANDLE handle) noexcept;
 
     void OnAppExit() const
     {
@@ -350,15 +345,13 @@ public:
     }
 
     virtual bool CreateFromResource(UINT nIDResource);
-    virtual void UpdateLayout();
+    void UpdateLayout();
     void SetDocumentTitle(const std::wstring_view docName = {})
     {
         const std::wstring prefix = m_strTitle.empty() ? L"WinDirStat" : m_strTitle;
         const std::wstring t = !docName.empty() ? prefix + L" - " + std::wstring(docName) : prefix;
         if (m_hWnd) SetWindowTextW(m_hWnd, t.c_str());
     }
-
-    void SetTitle(const std::wstring_view title) { m_strTitle = title; SetText(m_strTitle); }
 
     void SetTopBar(CWnd* bar) { m_topBar = bar; UpdateLayout(); }
     void SetBottomBar(CWnd* bar) { m_bottomBar = bar; UpdateLayout(); }

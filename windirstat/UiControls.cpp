@@ -22,11 +22,9 @@ void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
     }
 
     dc.FillSolidRect(rect, DarkMode::SystemColor(DarkMode::IsDarkModeActive() ? COLOR_WINDOWFRAME : COLOR_BTNFACE));
-    for (const auto [row, column] : std::views::cartesian_product(
-        std::views::iota(0, GetRowCount()),
-        std::views::iota(0, GetColumnCount())))
+    for (const int index : { 0, 1 })
     {
-        const CWnd* pane = GetPane(row, column);
+        const CWnd* pane = GetPane(index);
         if (pane == nullptr || !IsWindow(pane->m_hWnd) || pane->IsSplitterWindow())
             continue;
 
@@ -96,7 +94,8 @@ void CStatusBar::OnPaint()
     for (const auto& [pane, rectLayout] : std::views::zip(m_panes, rects))
     {
         CRect rect = rectLayout;
-        const COLORREF background = m_background != CLR_NONE ? m_background : barFace;
+        const COLORREF background = DarkMode::IsDarkModeActive() ?
+            DarkMode::Color(DarkMode::ColorRole::Window) : barFace;
         dc.FillSolidRect(rect, background);
         DrawPaneBorder(dc, rect);
         CRect textRect = rect;
@@ -118,12 +117,6 @@ void CTabControl::SetLocation(const Location loc)
     Invalidate(false);
 }
 
-void CTabControl::SetContentBackgroundColor(const COLORREF color)
-{
-    m_paneBackgroundColor = color;
-    if (IsWindow(m_hWnd)) Invalidate(false);
-}
-
 std::wstring_view CTabControl::GetTabLabel(const int index) const
 {
     return index >= 0 && index < GetTabCount() ? m_tabs[index].label : std::wstring_view();
@@ -137,9 +130,8 @@ void CTabControl::SetTabLabel(const int i, const std::wstring_view label)
     if (const int native = NativeIndexFromLogical(i); native >= 0)
     {
         TCITEMW item{};
-        item.mask = TCIF_TEXT | TCIF_PARAM;
+        item.mask = TCIF_TEXT;
         item.pszText = const_cast<LPWSTR>(m_tabs[i].label.c_str());
-        item.lParam = static_cast<LPARAM>(i);
         SendNativeMessage(TCM_SETITEMW, static_cast<WPARAM>(native), &item);
     }
     if (IsWindow(m_hWnd)) Invalidate(false);
@@ -325,8 +317,7 @@ void CTabControl::OnPaint()
     const bool bottomTabs = m_location == Location::Bottom;
     const bool labelOnlyTabs = UsesLabelOnlyTabs();
     const bool dark = IsDarkColor(tabStrip) || IsDarkColor(tabPane);
-    const COLORREF paneBackground = m_paneBackgroundColor != CLR_NONE ? m_paneBackgroundColor : tabPane;
-    const COLORREF controlBackground = labelOnlyTabs ? buttonFace : paneBackground;
+    const COLORREF controlBackground = labelOnlyTabs ? buttonFace : tabPane;
     dc.FillSolidRect(rcClient, controlBackground);
 
     CRect rcStrip = bottomTabs ?
@@ -519,9 +510,8 @@ void CTabControl::RebuildNativeTabs()
         }
 
         TCITEMW item{};
-        item.mask = TCIF_TEXT | TCIF_PARAM;
+        item.mask = TCIF_TEXT;
         item.pszText = const_cast<LPWSTR>(tab.label.c_str());
-        item.lParam = static_cast<LPARAM>(logical);
         SendNativeMessage(TCM_INSERTITEMW, static_cast<WPARAM>(native), &item);
         m_visibleToLogical.push_back(static_cast<int>(logical));
         ++native;
@@ -707,78 +697,22 @@ int CToolBar::AddImage(const CBitmap& bmp)
     if (m_imageList == nullptr || m_disabledImageList == nullptr || bmp.Handle() == nullptr) return -1;
     if (ImageList_GetImageCount(m_imageList) != ImageList_GetImageCount(m_disabledImageList)) return -1;
 
-    const auto hbmOriginal = static_cast<HBITMAP>(bmp.m_hObject);
-    const CBitmap scaled([&]() -> HBITMAP
-        {
-            BITMAP bitmap{};
-            if (GetObjectW(hbmOriginal, sizeof(BITMAP), &bitmap) == 0 || m_imageSize <= 0) return nullptr;
+    // Images are rendered at the toolbar's current size before insertion.
+    const auto hbmToAdd = static_cast<HBITMAP>(bmp.m_hObject);
+    BITMAP bitmap{};
+    if (GetObjectW(hbmToAdd, sizeof(bitmap), &bitmap) == 0 || m_imageSize <= 0) return -1;
+    const int64_t heightValue = bitmap.bmHeight < 0 ? -static_cast<int64_t>(bitmap.bmHeight) : bitmap.bmHeight;
+    if (bitmap.bmWidth != m_imageSize || heightValue != m_imageSize) return -1;
+    const int width = bitmap.bmWidth;
+    const int height = static_cast<int>(heightValue);
+    const uint64_t pixelCount = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
+    if (pixelCount > SIZE_MAX / 4) return -1;
 
-            const int64_t sourceHeight = bitmap.bmHeight < 0 ?
-                -static_cast<int64_t>(bitmap.bmHeight) : bitmap.bmHeight;
-            if (bitmap.bmWidth <= 0 || bitmap.bmWidth > INT_MAX / 4 ||
-                sourceHeight <= 0 || sourceHeight > INT_MAX)
-                return nullptr;
-
-            const int sourceWidth = bitmap.bmWidth;
-            const int sourceHeightInt = static_cast<int>(sourceHeight);
-            if (sourceWidth == m_imageSize && sourceHeightInt == m_imageSize) return nullptr;
-
-            const uint64_t sourceBytes =
-                static_cast<uint64_t>(sourceWidth) * static_cast<uint64_t>(sourceHeightInt) * 4;
-            if (sourceBytes > SIZE_MAX) return nullptr;
-
-            std::vector<BYTE> sourcePixels(static_cast<size_t>(sourceBytes));
-            BITMAPINFO bitmapInfo{};
-            bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-            bitmapInfo.bmiHeader.biWidth = sourceWidth;
-            bitmapInfo.bmiHeader.biHeight = -sourceHeightInt;
-            bitmapInfo.bmiHeader.biPlanes = 1;
-            bitmapInfo.bmiHeader.biBitCount = 32;
-            bitmapInfo.bmiHeader.biCompression = BI_RGB;
-
-            const CClientDC dc(nullptr);
-            if (dc.Handle() == nullptr ||
-                GetDIBits(dc, hbmOriginal, 0, static_cast<UINT>(sourceHeightInt), sourcePixels.data(),
-                    &bitmapInfo, DIB_RGB_COLORS) != sourceHeightInt)
-                return nullptr;
-
-            Gdiplus::Bitmap source(sourceWidth, sourceHeightInt, sourceWidth * 4,
-                PixelFormat32bppPARGB, sourcePixels.data());
-            if (source.GetLastStatus() != Gdiplus::Ok) return nullptr;
-
-            Gdiplus::Bitmap destination(m_imageSize, m_imageSize, PixelFormat32bppPARGB);
-            Gdiplus::Graphics graphics(&destination);
-            graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
-            graphics.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
-            graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-            graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
-            graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
-            if (graphics.DrawImage(&source, 0, 0, m_imageSize, m_imageSize) != Gdiplus::Ok) return nullptr;
-
-            HBITMAP result = nullptr;
-            if (destination.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &result) == Gdiplus::Ok) return result;
-            if (result != nullptr) DeleteObject(result);
-            return nullptr;
-        }());
-    const HBITMAP hbmToAdd = scaled.Handle() != nullptr ?
-        static_cast<HBITMAP>(scaled.m_hObject) : hbmOriginal;
     const int index = ImageList_Add(m_imageList, hbmToAdd, nullptr);
     if (index < 0) return -1;
 
     const CBitmap disabled([&]() -> HBITMAP
         {
-            BITMAP bitmap{};
-            if (GetObjectW(hbmToAdd, sizeof(BITMAP), &bitmap) == 0 || bitmap.bmWidth <= 0) return nullptr;
-
-            const int64_t heightValue = bitmap.bmHeight < 0 ?
-                -static_cast<int64_t>(bitmap.bmHeight) : bitmap.bmHeight;
-            if (heightValue <= 0 || heightValue > INT_MAX) return nullptr;
-
-            const int width = bitmap.bmWidth;
-            const int height = static_cast<int>(heightValue);
-            const uint64_t pixelCount = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
-            if (pixelCount > SIZE_MAX / 4) return nullptr;
-
             BITMAPINFO bitmapInfo{};
             bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
             bitmapInfo.bmiHeader.biWidth = width;
@@ -833,10 +767,4 @@ int CToolBar::AddImage(const CBitmap& bmp)
         return -1;
     }
     return index;
-}
-
-void CTabControl::OnAppearanceChanged()
-{
-    SetContentBackgroundColor(DarkMode::IsDarkModeActive() ? DarkMode::Color(DarkMode::ColorRole::Window) :
-        CLR_NONE);
 }
