@@ -994,34 +994,35 @@ void CTreeMap::DrawSolidRect(const BitmapView bitmap, const CRect& rc, const COL
 
 void CTreeMap::DrawCushion(const BitmapView bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
 {
-    const double Ia = m_options.ambientLight;
-    const double Is = 1 - Ia;
-    const double brightnessFactor = brightness / CColorSpace::GraphPaletteBrightness;
+    // Single precision is ample for 8-bit channels and keeps the per-pixel math fast
+    const float Ia = static_cast<float>(m_options.ambientLight);
+    const float Is = 1 - Ia;
+    const float brightnessFactor = static_cast<float>(brightness / CColorSpace::GraphPaletteBrightness);
 
-    const double colR = GetRValue(col);
-    const double colG = GetGValue(col);
-    const double colB = GetBValue(col);
+    const float colR = GetRValue(col) * brightnessFactor;
+    const float colG = GetGValue(col) * brightnessFactor;
+    const float colB = GetBValue(col) * brightnessFactor;
+    const float lx = static_cast<float>(m_lx);
     const size_t stride = bitmap.stride;
-    const double nxStep = -2 * surface[0];
+    const float nxStep = static_cast<float>(-2 * surface[0]);
 
-    const auto drawRow = [this, &bitmap, &rc, &surface, Ia, Is, brightnessFactor,
-        colR, colG, colB, stride, nxStep](const int iy)
+    const auto drawRow = [this, &bitmap, &rc, &surface, Ia, Is, colR, colG, colB, lx, stride, nxStep](const int iy)
     {
         const double ny = -(2 * surface[1] * (iy + 0.5) + surface[3]);
-        const double ny_ly_lz = ny * m_ly + m_lz;
-        const double ny2_1 = ny * ny + 1.0;
+        const float ny_ly_lz = static_cast<float>(ny * m_ly + m_lz);
+        const float ny2_1 = static_cast<float>(ny * ny + 1.0);
         COLORREF* const row = bitmap.bits + static_cast<size_t>(iy) * stride;
-        double nx = -(2 * surface[0] * (rc.left + 0.5) + surface[2]);
+        float nx = static_cast<float>(-(2 * surface[0] * (rc.left + 0.5) + surface[2]));
 
         for (int ix = rc.left; ix < rc.right; ++ix)
         {
-            double cosa = (nx * m_lx + ny_ly_lz) / sqrt(nx * nx + ny2_1);
-            cosa = std::min<double>(cosa, 1.0);
+            float cosa = (nx * lx + ny_ly_lz) / std::sqrt(nx * nx + ny2_1);
+            cosa = std::min(cosa, 1.0f);
 
-            double pixel = Is * cosa;
-            pixel = std::max<double>(pixel, 0.0);
+            float pixel = Is * cosa;
+            pixel = std::max(pixel, 0.0f);
             pixel += Ia;
-            assert(pixel <= 1.0);
+            assert(pixel <= 1.0f);
 
             // Now, pixel is the brightness of the pixel, 0...1.0.
             // Apply contrast.
@@ -1029,8 +1030,6 @@ void CTreeMap::DrawCushion(const BitmapView bitmap, const CRect& rc, const std::
             // Costs performance and nearly the same effect can be
             // made with the m_options->ambientLight parameter.
             // pixel = pow(pixel, m_options->contrast);
-
-            pixel *= brightnessFactor;
 
             int red = static_cast<int>(colR * pixel);
             int green = static_cast<int>(colG * pixel);
