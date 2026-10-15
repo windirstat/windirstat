@@ -10,6 +10,21 @@
 std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> Localization::m_map;
 bool Localization::m_rightToLeft = false;
 
+std::wstring Localization::FormatImpl(const std::wstring_view format, const std::wformat_args args)
+{
+    const auto& formatString = Lookup(format);
+    try
+    {
+        return std::vformat(formatString, args);
+    }
+    catch (const std::format_error&)
+    {
+        // Translation files are user-editable so a malformed
+        // substitution must not take down the application
+        return formatString;
+    }
+}
+
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
     for (size_t pos = 0; (pos = input.find(search, pos)) != std::wstring::npos; pos += replace.size())
