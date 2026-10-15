@@ -104,11 +104,11 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
     if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_OFFLINE) != 0)
     {
         path = GetSysDirectory() + L"\\~" + (dot == std::wstring::npos ? path : path.substr(dot));
-        m_fastQueue.PushIfNotQueued({ std::move(lookupInfo), requestId });
+        m_fastQueue.Push({ std::move(lookupInfo), requestId });
         return;
     }
 
-    (isSlow ? m_slowQueue : m_fastQueue).PushIfNotQueued({ std::move(lookupInfo), requestId });
+    (isSlow ? m_slowQueue : m_fastQueue).Push({ std::move(lookupInfo), requestId });
 }
 
 void CIconHandler::ForgetAsyncShellInfoLookup(const CWdsListItem* item)
