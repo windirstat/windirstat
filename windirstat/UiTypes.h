@@ -113,8 +113,9 @@ inline std::wstring LoadResourceString(const UINT id)
         : std::wstring();
 }
 
-inline std::wstring LoadResourceString(const HINSTANCE instance, const UINT id, const WORD language)
+inline std::wstring LoadResourceString(const UINT id, const WORD language)
 {
+    const HINSTANCE instance = GetAppInstance();
     const HRSRC resource = FindResourceExW(instance, RT_STRING,
         MAKEINTRESOURCEW((id >> 4) + 1), language);
     const DWORD resourceSize = resource != nullptr ? SizeofResource(instance, resource) : 0;
@@ -133,11 +134,6 @@ inline std::wstring LoadResourceString(const HINSTANCE instance, const UINT id, 
         current += length;
     }
     return {};
-}
-
-inline std::wstring LoadResourceString(const UINT id, const WORD language)
-{
-    return LoadResourceString(GetAppInstance(), id, language);
 }
 
 // -----------------------------------------------------------------------------
@@ -341,7 +337,6 @@ public:
     bool SetDefaultItem(UINT item) const noexcept;
     bool GetItemInfo(UINT item, MENUITEMINFOW* info, ItemLookup lookup = ItemLookup::Position) const;
     bool SetItemInfo(UINT item, const MENUITEMINFOW* info, ItemLookup lookup = ItemLookup::Position) const;
-    UINT ShowPopup(UINT flags, int x, int y, WindowRef window, LPTPMPARAMS lptpm = nullptr) const;
     UINT ShowPopup(UINT flags, POINT pt, WindowRef window, LPTPMPARAMS lptpm = nullptr) const;
     void SetItemEnabled(int item, bool enable, ItemLookup lookup = ItemLookup::Position) const;
     bool IsItemEnabled(UINT item, ItemLookup lookup = ItemLookup::Position) const noexcept;
@@ -377,7 +372,7 @@ public:
     virtual void SetCheck(int nCheck = 1);
     virtual void SetRadio(bool bOn = true);
     virtual void SetText(LPCWSTR lpszText);
-    virtual bool Update(CCmdTarget* pTarget, bool disableIfUnhandled);
+    void Update(CCmdTarget* pTarget, bool disableIfUnhandled);
 };
 
 // -----------------------------------------------------------------------------
@@ -602,7 +597,6 @@ public:
 
     // Blit
     bool BitBlt(const int x, const int y, const int cx, const int cy, const CDC* pSrc, const int xs, const int ys, const DWORD rop) noexcept { return ::BitBlt(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, rop); }
-    bool PatBlt(const int x, const int y, const int cx, const int cy, const DWORD rop) noexcept { return ::PatBlt(m_hDC, x, y, cx, cy, rop); }
     bool AlphaBlend(const int x, const int y, const int cx, const int cy, const CDC* pSrc, const int xs, const int ys, const int cxs, const int cys, const BLENDFUNCTION bf) noexcept { return ::AlphaBlend(m_hDC, x, y, cx, cy, pSrc ? pSrc->m_hDC : nullptr, xs, ys, cxs, cys, bf); }
     COLORREF SetDCPenColor(const COLORREF c) noexcept { return ::SetDCPenColor(m_hDC, c); }
     COLORREF SetDCBrushColor(const COLORREF c) noexcept { return ::SetDCBrushColor(m_hDC, c); }
@@ -799,10 +793,9 @@ public:
     bool ShowWindow(const int nCmdShow) const noexcept { return ::ShowWindow(m_hWnd, nCmdShow); }
     bool UpdateWindow() const noexcept { return ::UpdateWindow(m_hWnd); }
     void Invalidate(const bool bErase = true) const noexcept { ::InvalidateRect(m_hWnd, nullptr, bErase); }
-    void InvalidateRect(const LPCRECT rc, const bool bErase = true) const noexcept { ::InvalidateRect(m_hWnd, rc, bErase); }
-    bool RedrawWindow(const LPCRECT rc = nullptr, const CRgn* pRgn = nullptr, const UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) const noexcept
+    bool RedrawWindow(const UINT flags = RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE) const noexcept
     {
-        return ::RedrawWindow(m_hWnd, rc, pRgn ? static_cast<HRGN>(pRgn->m_hObject) : nullptr, flags);
+        return ::RedrawWindow(m_hWnd, nullptr, nullptr, flags);
     }
 
     bool MoveWindow(const int x, const int y, const int cx, const int cy, const bool bRepaint = true) const noexcept { return ::MoveWindow(m_hWnd, x, y, cx, cy, bRepaint); }
@@ -854,7 +847,6 @@ public:
     bool HasFocus() const noexcept { return ::GetFocus() == m_hWnd; }
     WindowRef ChildWindowFromPoint(const POINT pt) const { return WindowRef(::ChildWindowFromPoint(m_hWnd, pt)); }
     WindowRef ChildWindowFromPoint(const POINT pt, const UINT flags) const { return WindowRef(ChildWindowFromPointEx(m_hWnd, pt, flags)); }
-    static WindowRef GetCapture() { return WindowRef(::GetCapture()); }
     bool HasCapture() const noexcept { return ::GetCapture() == m_hWnd; }
 
     LRESULT SendMessage(const UINT msg, const WPARAM wParam = 0, const LPARAM lParam = 0) const noexcept { return ::SendMessageW(m_hWnd, msg, wParam, lParam); }
@@ -875,7 +867,6 @@ public:
             });
         return text;
     }
-    UINT GetButtonCheckState(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id); }
     bool IsChecked(const int id) const noexcept { return IsDlgButtonChecked(m_hWnd, id) == BST_CHECKED; }
     void SetChecked(const int id, const bool checked) const noexcept { CheckDlgButton(m_hWnd, id, checked ? BST_CHECKED : BST_UNCHECKED); }
     std::wstring GetText(const int id) const { return GetDlgItem(id).GetText(); }
@@ -934,14 +925,12 @@ public:
 
     int  GetDlgCtrlID() const noexcept { return ::GetDlgCtrlID(m_hWnd); }
     HICON SetIcon(HICON hIcon, const bool bBig = true) const noexcept { return reinterpret_cast<HICON>(SendMessage(WM_SETICON, bBig ? ICON_BIG : ICON_SMALL, hIcon)); }
-    static WindowRef GetDesktopWindow() { return WindowRef(::GetDesktopWindow()); }
     bool LockWindowUpdate() const noexcept { return ::LockWindowUpdate(m_hWnd); }
     void UnlockWindowUpdate() const noexcept { ::LockWindowUpdate(nullptr); }
     bool HideCaret() const noexcept { return ::HideCaret(m_hWnd); }
 
     MenuRef GetMenu() const;
 
-    int GetScrollPos(const int bar) const noexcept { return ::GetScrollPos(m_hWnd, bar); }
     void ShowScrollBar(const UINT bar, const bool bShow = true) const noexcept { ::ShowScrollBar(m_hWnd, bar, bShow); }
     bool GetScrollInfo(const int bar, SCROLLINFO* psi, const UINT mask = SIF_ALL) const noexcept { psi->cbSize = sizeof(SCROLLINFO); psi->fMask = mask; return ::GetScrollInfo(m_hWnd, bar, psi); }
     int SetScrollInfo(const int bar, SCROLLINFO* psi, const bool bRedraw = true)
@@ -949,6 +938,6 @@ public:
         psi->cbSize = sizeof(SCROLLINFO); return ::SetScrollInfo(m_hWnd, bar, psi, bRedraw);
     }
 
-    void CenterWindow(WindowRef alternate = {});
+    void CenterWindow();
 
 };

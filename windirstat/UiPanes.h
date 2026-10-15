@@ -9,58 +9,52 @@
 #include "UiApplication.h"
 
 // -----------------------------------------------------------------------------
-//  CSplitterWnd (static splitter)
+//  CSplitterWnd (two-pane splitter)
 // -----------------------------------------------------------------------------
 
 class CSplitterWnd : public MessageTarget<CSplitterWnd, CWnd>
 {
 public:
+    enum class Orientation : char { Horizontal, Vertical };
+
     static constexpr int PaneBorderSize = 2;
     static constexpr int SplitterSize = 7;
 
     ~CSplitterWnd() override { DestroyWindow(); }
     bool IsSplitterWindow() const noexcept override { return true; }
 
-    bool CreateStatic(CWnd* pParentWnd, const int nRows, const int nCols,
-        const DWORD dwStyle = WS_CHILD | WS_VISIBLE, const UINT nID = WDS_PANE_ID_BASE)
+    bool CreateStatic(CWnd* pParentWnd, const Orientation orientation, const UINT nID = WDS_PANE_ID_BASE)
     {
-        if ((nRows != 1 && nCols != 1) || nRows < 1 || nRows > 2 || nCols < 1 || nCols > 2)
-            return false;
-
-        m_rowSizes.assign(nRows, -1);
-        m_columnSizes.assign(nCols, -1);
+        m_orientation = orientation;
+        m_paneSizes = { -1, -1 };
+        m_bTracking = false;
         const CRect rc(0, 0, 0, 0);
         const LPCWSTR cls = RegisterWindowClass(CS_DBLCLKS, LoadCursorW(nullptr, IDC_ARROW));
-        return CreateEx(0, cls, nullptr, (dwStyle & ~WS_BORDER) | WS_CLIPCHILDREN, rc, pParentWnd, nID);
+        return CreateEx(0, cls, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, rc, pParentWnd, nID);
     }
     template<typename View>
-    bool CreateView(const int row, const int col, const SIZE& sizeInit)
+    bool CreateView(const int pane, const SIZE& sizeInit)
     {
         static_assert(std::is_base_of_v<CWnd, View>);
-        if (!IsValidPane(row, col)) return false;
+        if (pane < 0 || pane >= 2) return false;
         auto view = std::make_unique<View>();
         const CRect rc(0, 0, sizeInit.cx, sizeInit.cy);
-        if (!view->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-            rc, this, PaneId(row, col)))
+        if (!view->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, this, PaneId(pane)))
             return false;
         m_ownedPanes.push_back(std::move(view));
         return true;
     }
-    CWnd* GetPane(const int row, const int col) const
+    CWnd* GetPane(const int pane) const
     {
-        return IsValidPane(row, col) ? FindAttached(::GetDlgItem(m_hWnd, PaneId(row, col))) : nullptr;
+        return pane >= 0 && pane < 2 ? FindAttached(::GetDlgItem(m_hWnd, PaneId(pane))) : nullptr;
     }
-    template<typename T> T* GetPane(const int row, const int col) const { return static_cast<T*>(GetPane(row, col)); }
-    static constexpr int PaneId(const int row, const int col) noexcept { return WDS_PANE_ID_BASE + row * 16 + col; }
-    int GetColumnCount() const { return static_cast<int>(m_columnSizes.size()); }
-    int GetRowCount() const { return static_cast<int>(m_rowSizes.size()); }
-    int GetRowSize(const int row) const { return IsValidRow(row) ? m_rowSizes[row] : 0; }
-    void SetRowSize(const int row, const int size) { if (IsValidRow(row)) m_rowSizes[row] = size; }
-    int GetColumnSize(const int column) const { return IsValidColumn(column) ? m_columnSizes[column] : 0; }
-    void SetColumnSize(const int column, const int size) { if (IsValidColumn(column)) m_columnSizes[column] = size; }
-    void ResetPanes() { m_rowSizes.clear(); m_columnSizes.clear(); }
+    template<typename T> T* GetPane(const int pane) const { return static_cast<T*>(GetPane(pane)); }
+    static constexpr int PaneId(const int pane) noexcept { return WDS_PANE_ID_BASE + pane; }
+    bool IsVertical() const noexcept { return m_orientation == Orientation::Vertical; }
+    int GetPaneSize(const int pane) const { return m_paneSizes[pane]; }
+    void SetFirstPaneSize(const int size) { m_paneSizes[0] = size; }
 
-    virtual void UpdateLayout();
+    void UpdateLayout();
 
     static std::span<const RouteEntry> Routes()
     {
@@ -97,63 +91,49 @@ protected:
 
 private:
     std::vector<std::unique_ptr<CWnd>> m_ownedPanes;
-    bool IsValidRow(const int row) const { return row >= 0 && std::cmp_less(row, m_rowSizes.size()); }
-    bool IsValidColumn(const int column) const
-    {
-        return column >= 0 && std::cmp_less(column, m_columnSizes.size());
-    }
-    bool IsValidPane(const int row, const int column) const { return IsValidRow(row) && IsValidColumn(column); }
-
     CRect WorkRect() const;
     CRect SplitterRect() const;
     void DrawBackground(CDC& dc, const CRect& rect) const;
     void FinishTracking(bool bAccept, bool releaseCapture);
 
-    std::vector<int> m_rowSizes;
-    std::vector<int> m_columnSizes;
+    Orientation m_orientation = Orientation::Horizontal;
+    std::array<int, 2> m_paneSizes{ -1, -1 };
     bool m_bTracking = false;
-    bool m_bTrackingColumn = false;
     int m_nTrackStart = 0;
     int m_nTrackOffset = 0;
 };
 
 inline void CSplitterWnd::UpdateLayout()
 {
-    if (!IsWindow(m_hWnd) || m_rowSizes.empty() || m_columnSizes.empty()) return;
-    CRect rcWork = GetClientRect();
-    rcWork.Deflate(PaneBorderSize, PaneBorderSize);
-    const auto movePane = [&](const int row, const int column, CRect rect)
+    if (!IsWindow(m_hWnd)) return;
+
+    // Divide the client area around the splitter bar.
+    const CRect rcWork = WorkRect();
+    const int total = IsVertical() ? rcWork.Width() : rcWork.Height();
+    const int first = m_paneSizes[0] < 0 ? (total - SplitterSize) / 2 : m_paneSizes[0];
+    m_paneSizes[0] = std::clamp(first, 0, std::max(0, total - SplitterSize));
+    m_paneSizes[1] = std::max(0, total - SplitterSize - m_paneSizes[0]);
+    std::array<CRect, 2> rects{ rcWork, rcWork };
+    if (IsVertical())
     {
-        CWnd* pane = GetPane(row, column);
-        if (pane == nullptr || !IsWindow(pane->m_hWnd)) return;
+        rects[0].right = rcWork.left + m_paneSizes[0];
+        rects[1].left = rects[0].right + SplitterSize;
+    }
+    else
+    {
+        rects[0].bottom = rcWork.top + m_paneSizes[0];
+        rects[1].top = rects[0].bottom + SplitterSize;
+    }
+
+    // Nested splitters share the surrounding pane border.
+    for (const int index : { 0, 1 })
+    {
+        CWnd* pane = GetPane(index);
+        if (pane == nullptr || !IsWindow(pane->m_hWnd)) continue;
+        CRect rect = rects[index];
         if (pane->IsSplitterWindow()) rect.Inflate(PaneBorderSize, PaneBorderSize);
         pane->MoveWindow(rect);
-    };
-    if (m_columnSizes.size() > 1)
-    {
-        const int total = rcWork.Width();
-        constexpr int bar = SplitterSize;
-        int w0 = m_columnSizes[0];
-        if (w0 < 0) w0 = (total - bar) / 2;
-        w0 = std::clamp(w0, 0, std::max(0, total - bar));
-        const int w1 = std::max(0, total - bar - w0);
-        m_columnSizes[0] = w0; m_columnSizes[1] = w1;
-        movePane(0, 0, CRect(rcWork.left, rcWork.top, rcWork.left + w0, rcWork.bottom));
-        movePane(0, 1, CRect(rcWork.left + w0 + bar, rcWork.top, rcWork.right, rcWork.bottom));
     }
-    else if (m_rowSizes.size() > 1)
-    {
-        const int total = rcWork.Height();
-        constexpr int bar = SplitterSize;
-        int h0 = m_rowSizes[0];
-        if (h0 < 0) h0 = (total - bar) / 2;
-        h0 = std::clamp(h0, 0, std::max(0, total - bar));
-        const int h1 = std::max(0, total - bar - h0);
-        m_rowSizes[0] = h0; m_rowSizes[1] = h1;
-        movePane(0, 0, CRect(rcWork.left, rcWork.top, rcWork.right, rcWork.top + h0));
-        movePane(1, 0, CRect(rcWork.left, rcWork.top + h0 + bar, rcWork.right, rcWork.bottom));
-    }
-    else movePane(0, 0, rcWork);
     Invalidate(false);
 }
 inline CRect CSplitterWnd::WorkRect() const
@@ -166,17 +146,13 @@ inline CRect CSplitterWnd::WorkRect() const
 inline CRect CSplitterWnd::SplitterRect() const
 {
     const CRect rcWork = WorkRect();
-    if (m_columnSizes.size() > 1)
+    if (IsVertical())
     {
-        const int left = rcWork.left + std::clamp(m_columnSizes[0], 0, std::max(0, rcWork.Width() - SplitterSize));
+        const int left = rcWork.left + std::clamp(m_paneSizes[0], 0, std::max(0, rcWork.Width() - SplitterSize));
         return CRect(left, rcWork.top, left + SplitterSize, rcWork.bottom);
     }
-    if (m_rowSizes.size() > 1)
-    {
-        const int top = rcWork.top + std::clamp(m_rowSizes[0], 0, std::max(0, rcWork.Height() - SplitterSize));
-        return CRect(rcWork.left, top, rcWork.right, top + SplitterSize);
-    }
-    return {};
+    const int top = rcWork.top + std::clamp(m_paneSizes[0], 0, std::max(0, rcWork.Height() - SplitterSize));
+    return CRect(rcWork.left, top, rcWork.right, top + SplitterSize);
 }
 
 inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseCapture)
@@ -184,19 +160,12 @@ inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseC
     if (!m_bTracking)
         return;
 
-    const bool trackingColumn = m_bTrackingColumn;
     m_bTracking = false;
 
     if (releaseCapture && HasCapture())
         ReleaseCapture();
 
-    if (!bAccept)
-    {
-        if (trackingColumn && m_columnSizes.size() > 1)
-            m_columnSizes[0] = m_nTrackStart;
-        else if (!trackingColumn && m_rowSizes.size() > 1)
-            m_rowSizes[0] = m_nTrackStart;
-    }
+    if (!bAccept) m_paneSizes[0] = m_nTrackStart;
 
     UpdateLayout();
 }
@@ -212,9 +181,8 @@ inline void CSplitterWnd::OnLButtonDown(UINT, const CPoint pt)
         return;
 
     m_bTracking = true;
-    m_bTrackingColumn = m_columnSizes.size() > 1;
-    m_nTrackStart = m_bTrackingColumn ? m_columnSizes[0] : m_rowSizes[0];
-    m_nTrackOffset = m_bTrackingColumn ? pt.x - rect.left : pt.y - rect.top;
+    m_nTrackStart = m_paneSizes[0];
+    m_nTrackOffset = IsVertical() ? pt.x - rect.left : pt.y - rect.top;
     SetCapture();
 }
 inline void CSplitterWnd::OnMouseMove(UINT, const CPoint pt)
@@ -222,14 +190,13 @@ inline void CSplitterWnd::OnMouseMove(UINT, const CPoint pt)
     if (!m_bTracking) return;
 
     const CRect rcWork = WorkRect();
-    const int trackPos = m_bTrackingColumn ?
+    const int trackPos = IsVertical() ?
         std::clamp(static_cast<int>(pt.x - rcWork.left - m_nTrackOffset), 0, std::max(0, rcWork.Width() - SplitterSize)) :
         std::clamp(static_cast<int>(pt.y - rcWork.top - m_nTrackOffset), 0, std::max(0, rcWork.Height() - SplitterSize));
-    int& paneSize = m_bTrackingColumn ? m_columnSizes[0] : m_rowSizes[0];
-    if (trackPos == paneSize)
+    if (trackPos == m_paneSizes[0])
         return;
 
-    paneSize = trackPos;
+    m_paneSizes[0] = trackPos;
     UpdateLayout();
     ::RedrawWindow(m_hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
@@ -260,7 +227,7 @@ inline bool CSplitterWnd::OnSetCursor(const WindowRef pWnd, const UINT nHitTest,
         const CRect rect = SplitterRect();
         if (pt && (m_bTracking || ::PtInRect(&rect, *pt)))
         {
-            SetCursor(LoadCursorW(nullptr, m_columnSizes.size() > 1 ? IDC_SIZEWE : IDC_SIZENS));
+            SetCursor(LoadCursorW(nullptr, IsVertical() ? IDC_SIZEWE : IDC_SIZENS));
             return true;
         }
     }
@@ -393,7 +360,7 @@ public:
 
             };
         OnUpdateCmdUI(frame);
-        RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(RDW_INVALIDATE | RDW_UPDATENOW);
     }
     int GetButtonIndex(const UINT id) const { return static_cast<int>(SendNativeMessage(TB_COMMANDTOINDEX, id)); }
     bool GetButtonRect(const int index, RECT& rect) const
@@ -524,7 +491,7 @@ public:
         target.width = width;
         Invalidate();
     }
-    void SetBackgroundColor(const COLORREF color) { m_background = color; Invalidate(); }
+    void OnAppearanceChanged() override { if (IsWindow(m_hWnd)) Invalidate(); }
     CRect GetPaneRect(const PaneId pane) const
     {
         return LayoutPanes()[std::to_underlying(pane)];
@@ -574,7 +541,6 @@ private:
         return rects;
     }
     std::array<Pane, 3> m_panes;
-    COLORREF m_background = CLR_NONE;
 };
 
 // -----------------------------------------------------------------------------
@@ -591,8 +557,7 @@ public:
     void SetTabVisible(int i, bool show);
 
     void SetLocation(Location loc);
-    void SetContentBackgroundColor(COLORREF color);
-    void OnAppearanceChanged() override;
+    void OnAppearanceChanged() override { if (IsWindow(m_hWnd)) Invalidate(false); }
     int GetTabCount() const { return static_cast<int>(m_tabs.size()); }
     int GetActiveTab() const { return m_activeTab; }
     CWnd* GetTabWindow(const int index) const { return index >= 0 && index < GetTabCount() ? m_tabs[index].window : nullptr; }
@@ -642,7 +607,6 @@ private:
     std::vector<int> m_visibleToLogical;
     int m_activeTab = -1;
     Location m_location = Location::Bottom;
-    COLORREF m_paneBackgroundColor = CLR_NONE;
     bool m_handledPaintedTabMouseDown = false;
     bool m_focusTabStrip = false;
 };
@@ -701,7 +665,6 @@ protected:
     virtual void OnApplied(UINT) {}
     bool PreprocessMessage(MSG* pMsg) override;
     bool OnEraseBkgnd(CDC* pDC) const;
-    HBRUSH OnCtlColor(CDC* pDC, WindowRef pWnd, UINT nCtlColor);
     LRESULT OnRequestedPageChanged(WPARAM wParam, LPARAM lParam);
     void OnClose() { if (!m_applying) RequestModalExit(IDCANCEL); }
     void RequestModalExit(const int result) { CloseModal(result); }
@@ -719,7 +682,6 @@ private:
     CRect m_pageRect;
     std::wstring m_caption;
     int m_currentPage = -1;
-    int m_pendingActivePage = 0;
     bool m_syncingTabSelection = false;
     bool m_applying = false;
 };

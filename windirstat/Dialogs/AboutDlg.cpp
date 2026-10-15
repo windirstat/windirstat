@@ -12,7 +12,6 @@
 void CAboutDlg::WdsTabControl::Initialize()
 {
     SetLocation(Location::Top);
-    CTabCtrlHelper::SetupTabControl(*this);
 
     // Helper to create and configure RichEdit controls
     auto createText = [&](CRichEditCtrl& ctrl, const DWORD align = ES_CENTER)

@@ -47,13 +47,13 @@ void CWinApp::RunTaskWithUiUpdates(const std::function<void()>& task)
     if (error) std::rethrow_exception(error);
 }
 
-void CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle, const DWORD timeout) noexcept
+void CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle) noexcept
 {
     for (;;)
     {
         MSG message{};
         while (PeekMessageW(&message, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE)) DispatchMessageW(&message);
-        if (MsgWaitForMultipleObjects(1, &handle, false, timeout, QS_PAINT) != WAIT_OBJECT_0 + 1) return;
+        if (MsgWaitForMultipleObjects(1, &handle, false, INFINITE, QS_PAINT) != WAIT_OBJECT_0 + 1) return;
     }
 }
 
@@ -95,23 +95,12 @@ void CCmdUI::SetText(const LPCWSTR lpszText)
         m_nID, lpszText);
 }
 
-bool CCmdUI::Update(CCmdTarget* pTarget, const bool disableIfUnhandled)
+void CCmdUI::Update(CCmdTarget* pTarget, const bool disableIfUnhandled)
 {
     m_bEnableChanged = false;
-    bool handled = pTarget != nullptr && pTarget->RouteCommand(m_nID, UpdateCode, this);
+    const bool handled = pTarget != nullptr && pTarget->RouteCommand(m_nID, UpdateCode, this);
     if (!handled && disableIfUnhandled && !m_bEnableChanged)
-    {
-        if (pTarget != nullptr && pTarget->RouteCommand(m_nID, CommandCode, nullptr, false))
-        {
-            Enable(true);
-            handled = true;
-        }
-        else
-        {
-            Enable(false);
-        }
-    }
-    return handled;
+        Enable(pTarget != nullptr && pTarget->RouteCommand(m_nID, CommandCode, nullptr, false));
 }
 
 void CFrameWnd::UpdateMenuCommands(MenuRef menu, const bool bSysMenu)
@@ -173,53 +162,9 @@ bool WindowRef::CopyTextToClipboard(const std::wstring_view text) const
     return false;
 }
 
-bool CWnd::InitializeDialogControls(const UINT resourceId)
+void WindowRef::CenterWindow()
 {
-    const HINSTANCE instance = GetAppInstance();
-    const HRSRC info = FindResourceW(instance, MAKEINTRESOURCEW(resourceId), MAKEINTRESOURCEW(240));
-    if (info == nullptr) return true;
-
-    const HGLOBAL resource = LoadResource(instance, info);
-    const auto* p = resource != nullptr ? static_cast<const BYTE*>(LockResource(resource)) : nullptr;
-    if (p == nullptr) return false;
-
-    const BYTE* const end = p + SizeofResource(instance, info);
-    auto hasBytes = [&p, end](const size_t count) { return p <= end && std::cmp_greater_equal(end - p, count); };
-    auto read = [&p, &hasBytes]<typename T>(T & value)
-    {
-        if (!hasBytes(sizeof(value))) return false;
-        std::memcpy(&value, p, sizeof(value));
-        p += sizeof(value);
-        return true;
-    };
-
-    for (;;)
-    {
-        WORD controlId = 0;
-        if (!read(controlId)) return false;
-        if (controlId == 0) return true;
-
-        WORD message = 0;
-        DWORD length = 0;
-        if (!read(message) || !read(length) || !hasBytes(length)) return false;
-
-        // Visual C++ stores these in the legacy Win16 form inside RT_DLGINIT.
-        if (message == 0x0401) message = LB_ADDSTRING;
-        else if (message == 0x0403) message = CB_ADDSTRING;
-
-        if (message == LB_ADDSTRING || message == CB_ADDSTRING)
-        {
-            if (length == 0 || std::memchr(p, '\0', length) == nullptr) return false;
-            const LRESULT result = SendDlgItemMessageA(m_hWnd, controlId, message, 0, reinterpret_cast<LPARAM>(p));
-            if (result == LB_ERR || result == LB_ERRSPACE) return false;
-        }
-        p += length;
-    }
-}
-
-void WindowRef::CenterWindow(WindowRef alternate)
-{
-    HWND hParent = alternate != nullptr ? alternate.Handle() : ::GetParent(m_hWnd); // Use the alternate window if provided, otherwise use the parent window for centering
+    HWND hParent = ::GetParent(m_hWnd);
     if (hParent != nullptr && ::IsIconic(hParent)) hParent = nullptr; // If the parent is minimized, center relative to the desktop instead
 
     const HWND hTargetWnd = hParent ? hParent : m_hWnd; // Use the parent window if available, otherwise use the dialog itself for centering

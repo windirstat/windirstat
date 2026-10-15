@@ -834,7 +834,7 @@ void CWatcherFilterEdit::OnChange()
     if (watcher == nullptr) return;
 
     m_valid = watcher->SetQuickFilter(GetText());
-    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
+    RedrawWindow(RDW_INVALIDATE | RDW_FRAME);
 }
 
 void CWatcherFilterEdit::OnPaint()
@@ -1001,7 +1001,7 @@ void CMainFrame::OnFontSizeChanged(const int oldPercent, const int newPercent)
     ApplyAppFont(m_hWnd, previousPercent);
     RebuildToolBar(toolBarChanged);
     UpdatePaneText();
-    RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
+    RedrawWindow(RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
 void CMainFrame::OnSysColorChange()
@@ -1193,97 +1193,97 @@ void CMainFrame::ConfigureSplitterCallbacks(const int topo, const int perm)
 
 void CMainFrame::BuildSplitterLayout(const int topo, const int perm, const HWND hFTV, const HWND hExtV, const HWND hVisualization)
 {
-    auto AttachView = [](CWdsSplitterWnd& splitter, const int row, const int col, const HWND hView)
+    auto AttachView = [](CWdsSplitterWnd& splitter, const int pane, const HWND hView)
     {
         SetParent(hView, splitter.Handle());
-        ::SetWindowLongPtr(hView, GWLP_ID, splitter.PaneId(row, col));
+        ::SetWindowLongPtr(hView, GWLP_ID, splitter.PaneId(pane));
     };
 
     switch (topo)
     {
     case LT_ROWS_SUB_COLS:
-        m_splitter.CreateStatic(this, 2, 1);
+        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Horizontal);
         if (perm == 0) // top: [FTV|ExtV], bottom: visualization
         {
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(0, 0));
-            AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 0, 1, hExtV);
-            AttachView(m_splitter, 1, 0, hVisualization);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(0));
+            AttachView(m_subSplitter, 0, hFTV);
+            AttachView(m_subSplitter, 1, hExtV);
+            AttachView(m_splitter, 1, hVisualization);
         }
         else // perm == 1: visualization top, [FTV|ExtV] bottom
         {
-            AttachView(m_splitter, 0, 0, hVisualization);
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(1, 0));
-            AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 0, 1, hExtV);
+            AttachView(m_splitter, 0, hVisualization);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(1));
+            AttachView(m_subSplitter, 0, hFTV);
+            AttachView(m_subSplitter, 1, hExtV);
         }
         break;
 
     case LT_COLS_THREE:
-        m_splitter.CreateStatic(this, 1, 2);
+        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
         if (perm == 0) // [FTV|visualization] in col 0, ExtV in col 1
         {
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(0, 0));
-            AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 0, 1, hVisualization);
-            AttachView(m_splitter, 0, 1, hExtV);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(0));
+            AttachView(m_subSplitter, 0, hFTV);
+            AttachView(m_subSplitter, 1, hVisualization);
+            AttachView(m_splitter, 1, hExtV);
         }
         else if (perm == 1) // [visualization|FTV] in col 0, ExtV in col 1
         {
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(0, 0));
-            AttachView(m_subSplitter, 0, 0, hVisualization);
-            AttachView(m_subSplitter, 0, 1, hFTV);
-            AttachView(m_splitter, 0, 1, hExtV);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(0));
+            AttachView(m_subSplitter, 0, hVisualization);
+            AttachView(m_subSplitter, 1, hFTV);
+            AttachView(m_splitter, 1, hExtV);
         }
         else if (perm == 2) // FTV in col 0, [ExtV|visualization] in col 1
         {
-            AttachView(m_splitter, 0, 0, hFTV);
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(0, 1));
-            AttachView(m_subSplitter, 0, 0, hExtV);
-            AttachView(m_subSplitter, 0, 1, hVisualization);
+            AttachView(m_splitter, 0, hFTV);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(1));
+            AttachView(m_subSplitter, 0, hExtV);
+            AttachView(m_subSplitter, 1, hVisualization);
         }
         else // perm 3: visualization in col 0, [ExtV|FTV] in col 1
         {
-            AttachView(m_splitter, 0, 0, hVisualization);
-            m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                       m_splitter.PaneId(0, 1));
-            AttachView(m_subSplitter, 0, 0, hExtV);
-            AttachView(m_subSplitter, 0, 1, hFTV);
+            AttachView(m_splitter, 0, hVisualization);
+            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+                m_splitter.PaneId(1));
+            AttachView(m_subSplitter, 0, hExtV);
+            AttachView(m_subSplitter, 1, hFTV);
         }
         break;
 
     case LT_COLS_SUB_ROWS:
-        m_splitter.CreateStatic(this, 1, 2);
-        m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                   m_splitter.PaneId(0, 0));
+        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
+        m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Horizontal,
+            m_splitter.PaneId(0));
         if (perm == 0) // left: visualization/FTV; right: ExtV
         {
-            AttachView(m_subSplitter, 0, 0, hVisualization);
-            AttachView(m_subSplitter, 1, 0, hFTV);
+            AttachView(m_subSplitter, 0, hVisualization);
+            AttachView(m_subSplitter, 1, hFTV);
         }
         else // perm 1: left: FTV/visualization; right: ExtV
         {
-            AttachView(m_subSplitter, 0, 0, hFTV);
-            AttachView(m_subSplitter, 1, 0, hVisualization);
+            AttachView(m_subSplitter, 0, hFTV);
+            AttachView(m_subSplitter, 1, hVisualization);
         }
-        AttachView(m_splitter, 0, 1, hExtV);
+        AttachView(m_splitter, 1, hExtV);
         break;
 
     case LT_COLS_VISUALIZATION_FULL:
     {
-        m_splitter.CreateStatic(this, 1, 2);
+        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
         const int visualizationCol = (perm == 0 || perm == 1) ? 0 : 1;
         const int extRow = (perm == 0 || perm == 2) ? 0 : 1; // ExtV on top (perm 0/2) or bottom (perm 1/3)
-        AttachView(m_splitter, 0, visualizationCol, hVisualization);
-        m_subSplitter.CreateStatic(&m_splitter, 2, 1, WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                   m_splitter.PaneId(0, 1 - visualizationCol));
-        AttachView(m_subSplitter, extRow, 0, hExtV);
-        AttachView(m_subSplitter, 1 - extRow, 0, hFTV);
+        AttachView(m_splitter, visualizationCol, hVisualization);
+        m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Horizontal,
+            m_splitter.PaneId(1 - visualizationCol));
+        AttachView(m_subSplitter, extRow, hExtV);
+        AttachView(m_subSplitter, 1 - extRow, hFTV);
         break;
     }
     }

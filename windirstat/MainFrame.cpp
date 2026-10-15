@@ -43,7 +43,6 @@ bool CSettingsSheet::OnEraseBkgnd(CDC* pDC) const
 bool CSettingsSheet::OnInitDialog()
 {
     if (!CPropertySheet::OnInitDialog()) return false;
-    CTabCtrlHelper::SetupTabControl(GetTabControl());
 
     Localization::UpdateDialogs(*this);
     Localization::UpdateTabControl(GetTabControl());
@@ -111,25 +110,18 @@ bool CWdsSplitterWnd::PreCreateWindow(CREATESTRUCT& cs)
     return CSplitterWnd::PreCreateWindow(cs);
 }
 
-void CWdsSplitterWnd::PostNcDestroy()
-{
-    // Reset row/column state before the embedded splitter is created again.
-    ResetPanes();
-}
-
 void CWdsSplitterWnd::StopTracking(const bool bAccept)
 {
     CSplitterWnd::StopTracking(bAccept);
     if (!bAccept) return;
 
-    const bool isVertical = GetColumnCount() > 1;
-    const int currentPos = isVertical ? GetColumnSize(0) : GetRowSize(0);
+    const int currentPos = GetPaneSize(0);
 
     const CRect rcClient  = GetClientRect();
-    const int   totalSize = isVertical ? rcClient.Width() : rcClient.Height();
+    const int   totalSize = IsVertical() ? rcClient.Width() : rcClient.Height();
     if (totalSize <= 0) return;
 
-    const std::array paneSize = { currentPos, isVertical ? GetColumnSize(1) : GetRowSize(1) };
+    const std::array paneSize = { currentPos, GetPaneSize(1) };
     for (const auto& [size, tracking] : std::views::zip(paneSize, m_paneTracking))
     {
         const auto& [onToggle, onMinimize] = tracking;
@@ -167,13 +159,10 @@ void CWdsSplitterWnd::SetSplitterPos(const double pos)
 {
     m_splitterPos = pos;
     const CRect rc = GetClientRect();
-    if (GetColumnCount() > 1)
+    if (const int size = static_cast<int>(pos * (IsVertical() ? rc.Width() : rc.Height())); size >= 0)
     {
-        if (const int cx = static_cast<int>(pos * rc.Width()); cx >= 0) { SetColumnSize(0, cx); UpdateLayout(); }
-    }
-    else
-    {
-        if (const int cy = static_cast<int>(pos * rc.Height()); cy >= 0) { SetRowSize(0, cy); UpdateLayout(); }
+        SetFirstPaneSize(size);
+        UpdateLayout();
     }
 }
 
@@ -182,22 +171,15 @@ void CWdsSplitterWnd::RestoreSplitterPos(const double posIfVirgin)
     SetSplitterPos(m_wasTrackedByUser ? *m_userSplitterPos : posIfVirgin);
     const CRect rc = GetClientRect();
     const int minimum = ScaleForDpi(COptions::MinimizeViewThreshold);
-    const bool collapsed = GetColumnCount() > 1 ?
-        std::min(static_cast<int>(m_splitterPos * rc.Width()), GetColumnSize(1)) <= minimum :
-        std::min(static_cast<int>(m_splitterPos * rc.Height()), GetRowSize(1)) <= minimum;
+    const int size = static_cast<int>(m_splitterPos * (IsVertical() ? rc.Width() : rc.Height()));
+    const bool collapsed = std::min(size, GetPaneSize(1)) <= minimum;
     if (m_wasTrackedByUser && collapsed) SetSplitterPos(posIfVirgin);
 }
 
 void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
-    if (GetColumnCount() > 1)
-    {
-        if (const int v = static_cast<int>(cx * m_splitterPos); v > 0) SetColumnSize(0, v);
-    }
-    else
-    {
-        if (const int v = static_cast<int>(cy * m_splitterPos); v > 0) SetRowSize(0, v);
-    }
+    if (const int size = static_cast<int>((IsVertical() ? cx : cy) * m_splitterPos); size > 0)
+        SetFirstPaneSize(size);
     CSplitterWnd::OnSize(nType, cx, cy);
 }
 
@@ -609,19 +591,19 @@ void CMainFrame::PostNcDestroy()
 
 bool CMainFrame::OnCreateClient()
 {
-    if (!m_splitter.CreateStatic(this, 2, 1)
-        || !m_splitter.CreateView<CVisualizationPane>(1, 0, CSize(100, 100))
-        || !m_subSplitter.CreateStatic(&m_splitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER,
-            m_splitter.PaneId(0, 0))
-        || !m_subSplitter.CreateView<CFileTabbedView>(0, 0, CSize(700, 500))
-        || !m_subSplitter.CreateView<CExtensionView>(0, 1, CSize(100, 500)))
+    if (!m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Horizontal)
+        || !m_splitter.CreateView<CVisualizationPane>(1, CSize(100, 100))
+        || !m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
+            m_splitter.PaneId(0))
+        || !m_subSplitter.CreateView<CFileTabbedView>(0, CSize(700, 500))
+        || !m_subSplitter.CreateView<CExtensionView>(1, CSize(100, 500)))
     {
         return false;
     }
 
-    m_visualizationPane = m_splitter.GetPane<CVisualizationPane>(1, 0);
-    m_fileTabbedView = m_subSplitter.GetPane<CFileTabbedView>(0, 0);
-    m_extensionView = m_subSplitter.GetPane<CExtensionView>(0, 1);
+    m_visualizationPane = m_splitter.GetPane<CVisualizationPane>(1);
+    m_fileTabbedView = m_subSplitter.GetPane<CFileTabbedView>(0);
+    m_extensionView = m_subSplitter.GetPane<CExtensionView>(1);
     if (m_visualizationPane == nullptr || m_fileTabbedView == nullptr || m_extensionView == nullptr)
         return false;
 
@@ -906,7 +888,6 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
 void CMainFrame::OnAppearanceChanged()
 {
     const bool dark = DarkMode::IsDarkModeActive();
-    m_wndStatusBar.SetBackgroundColor(dark ? DarkMode::Color(DarkMode::ColorRole::Window) : CLR_NONE);
     if (m_progress.Handle() == nullptr) return;
     SetWindowTheme(m_progress.Handle(), dark ? L"" : nullptr, dark ? L"" : nullptr);
     m_progress.SetBkColor(dark ? DarkMode::Color(DarkMode::ColorRole::Frame) : CLR_DEFAULT);

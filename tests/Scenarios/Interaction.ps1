@@ -57,7 +57,10 @@ function Get-ValidationDialog {
 function Test-SettingsRoundTrip {
     param($Context, $Case)
     $root = New-TestTree
-    $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapHeightFactor = 38 } }
+    $app = Start-TestApp @($root) -Settings @{
+        TreeMapView = @{ TreeMapHeightFactor = 38 }
+        Options = @{ ScanningThreads = 16; FileHashAlgorithm = 0 }
+    }
     $settings = Open-AppDialog $app 'ID_CONFIGURE'
     Select-SettingsPage $settings 'Graphs'
     $height = Get-DialogControl $settings 'IDC_HEIGHT'
@@ -70,6 +73,20 @@ function Test-SettingsRoundTrip {
     Select-SettingsPage $settings 'Filtering'
     $filter = "first`r`n`r`nthird"
     [TestDesktop]::SetText((Get-DialogControl $settings 'IDC_FILTERING_EXCLUDE_FILES'), $filter)
+    Select-SettingsPage $settings 'Advanced'
+    $threads = Get-DialogControl $settings 'IDC_COMBO_THREADS'
+    $hash = Get-DialogControl $settings 'IDC_HASH_ALGORITHM'
+    Assert-Equal ([TestDesktop]::Message($threads, 0x0146).ToInt32()) 16 'All scanning thread choices are populated'
+    Assert-Equal ([TestDesktop]::Message($hash, 0x0146).ToInt32()) 6 'All hash algorithms are populated'
+    Assert-Equal ([TestDesktop]::ControlText($threads)) '16' 'The upper thread limit loads its matching choice'
+    Assert-Equal ([TestDesktop]::ControlText($hash)) 'MD5' 'The persisted hash index loads its matching algorithm'
+    $algorithms = @('MD5', 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'xxHash')
+    for ($index = 0; $index -lt $algorithms.Count; ++$index) {
+        [void][TestDesktop]::Message($hash, 0x014E, $index)
+        Assert-Equal ([TestDesktop]::ControlText($hash)) $algorithms[$index] 'Hash choices retain their setting indices'
+    }
+    [void][NativeListViewHelper]::FocusWindow($threads)
+    Invoke-AppKeys $app '{HOME}' -Window $settings
     Close-AppDialog $settings 1
     Stop-TestApp $app
     $app = Start-TestApp @($root) -Runner $app.Runner
@@ -82,6 +99,11 @@ function Test-SettingsRoundTrip {
     Select-SettingsPage $settings 'Filtering'
     Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $settings 'IDC_FILTERING_EXCLUDE_FILES'))) $filter `
         'Saving and restarting preserves blank lines in filter text'
+    Select-SettingsPage $settings 'Advanced'
+    Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $settings 'IDC_COMBO_THREADS'))) '1' `
+        'The first scanning thread choice persists as one thread'
+    Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $settings 'IDC_HASH_ALGORITHM'))) 'xxHash' `
+        'The final hash algorithm survives a fresh process'
     Close-AppDialog $settings
 }
 

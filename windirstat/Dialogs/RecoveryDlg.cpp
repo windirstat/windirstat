@@ -143,7 +143,7 @@ void RecoveryDlg::SetBusy(const bool busy)
         SetTimer(1, 50);
     }
     m_animation.ShowWindow(busy ? SW_SHOW : SW_HIDE);
-    if (busy) m_animation.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
+    if (busy) m_animation.RedrawWindow(RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
     for (const int id : { IDC_RECOVERY_SOURCE, IDC_RECOVERY_FILTER, IDC_RECOVERY_REGEX,
         IDC_RECOVERY_DEST, IDC_RECOVERY_BROWSE }) GetDlgItem(id).EnableWindow(!busy);
     UpdateActions();

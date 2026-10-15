@@ -43,8 +43,6 @@ public:
         if (m_hWnd == hWnd) Detach();
     }
 
-    operator HWND() const noexcept { return m_hWnd; }
-    HWND Handle() const noexcept { return m_hWnd; }
     virtual bool IsSplitterWindow() const noexcept { return false; }
 
     // ---- handle maps ----
@@ -83,10 +81,10 @@ public:
     virtual void OnFontSizeChanged(int, int) {}
     virtual void OnAppearanceChanged() {}
     virtual void SavePersistentAttributes() const {}
-    bool InitializeDialogControls(UINT resourceId);
 
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
-        const int x, const int y, const int nWidth, const int nHeight, const HWND hwndParent, const HMENU nIDorHMenu, const LPVOID lpParam = nullptr)
+        const int x, const int y, const int nWidth, const int nHeight,
+        const HWND hwndParent, const HMENU nIDorHMenu)
     {
         if (m_hWnd != nullptr) return false;
 
@@ -94,7 +92,7 @@ public:
         cs.dwExStyle = dwExStyle; cs.lpszClass = lpszClassName; cs.lpszName = lpszWindowName;
         cs.style = dwStyle; cs.x = x; cs.y = y; cs.cx = nWidth; cs.cy = nHeight;
         cs.hwndParent = hwndParent; cs.hMenu = nIDorHMenu;
-        cs.hInstance = GetAppInstance(); cs.lpCreateParams = lpParam;
+        cs.hInstance = GetAppInstance();
         try
         {
             if (!PreCreateWindow(cs))
@@ -144,13 +142,13 @@ public:
         return true;
     }
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
-        const RECT& rect, CWnd* pParentWnd, const UINT nID, const LPVOID lpParam = nullptr)
+        const RECT& rect, CWnd* pParentWnd, const UINT nID)
     {
         return CreateEx(dwExStyle, lpszClassName, lpszWindowName, dwStyle,
             rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-            pParentWnd ? pParentWnd->m_hWnd : nullptr, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(nID)), lpParam);
+            pParentWnd ? pParentWnd->m_hWnd : nullptr, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(nID)));
     }
-    virtual bool Create(const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
+    bool Create(const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
         const RECT& rect, CWnd* pParentWnd, const UINT nID)
     {
         return CreateEx(0, lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID);
@@ -262,9 +260,7 @@ public:
     void OnClose() { CallDefaultHandler(); }
     void OnNcPaint() { CallDefaultHandler(); }
     void OnSize(UINT, int, int) { CallDefaultHandler(); }
-    bool OnEraseBkgnd(CDC*) { return static_cast<bool>(CallDefaultHandler()); }
     void OnLButtonDown(UINT, CPoint) { CallDefaultHandler(); }
-    void OnLButtonUp(UINT, CPoint) { CallDefaultHandler(); }
     void OnLButtonDblClk(UINT, CPoint) { CallDefaultHandler(); }
     void OnMouseMove(UINT, CPoint) { CallDefaultHandler(); }
     bool OnMouseWheel(UINT, short, CPoint) { return static_cast<bool>(CallDefaultHandler()); }
@@ -272,18 +268,14 @@ public:
     void OnChar(UINT, UINT, UINT) { CallDefaultHandler(); }
     void OnSetFocus(WindowRef) { CallDefaultHandler(); }
     void OnKillFocus(WindowRef) { CallDefaultHandler(); }
-    void OnContextMenu(WindowRef, CPoint) { CallDefaultHandler(); }
     void OnTimer(UINT_PTR) { CallDefaultHandler(); }
     void OnSysColorChange() { CallDefaultHandler(); }
     bool OnNcActivate(bool) { return static_cast<bool>(CallDefaultHandler()); }
     HBRUSH OnCtlColor(CDC*, WindowRef, UINT) { return reinterpret_cast<HBRUSH>(CallDefaultHandler()); }
-    LRESULT OnNcHitTest(CPoint) { return CallDefaultHandler(); }
     void OnGetMinMaxInfo(MINMAXINFO*) { CallDefaultHandler(); }
     void OnEnable(bool) { CallDefaultHandler(); }
     bool OnSetCursor(WindowRef, UINT, UINT) { return static_cast<bool>(CallDefaultHandler()); }
-    void OnCaptureChanged(WindowRef) { CallDefaultHandler(); }
     void OnSettingChange(UINT, LPCTSTR) { CallDefaultHandler(); }
-    void OnShowWindow(bool, UINT) { CallDefaultHandler(); }
     void OnHScroll(UINT, UINT, WindowRef) { CallDefaultHandler(); }
     void OnVScroll(UINT, UINT, WindowRef) { CallDefaultHandler(); }
     void OnNcCalcSize(bool, NCCALCSIZE_PARAMS*) { CallDefaultHandler(); }
@@ -407,8 +399,6 @@ MessageResult InvokeNotifyHandler(CCmdTarget& target, UINT, WPARAM, const LPARAM
     if constexpr (std::is_same_v<Signature, void()>) std::invoke(Handler, object);
     else if constexpr (std::is_same_v<Signature, void(NMHDR*, LRESULT*)>)
         std::invoke(Handler, object, notify, &result);
-    else if constexpr (std::is_same_v<Signature, void(UINT, NMHDR*, LRESULT*)>)
-        std::invoke(Handler, object, static_cast<UINT>(notify->idFrom), notify, &result);
     else if constexpr (std::is_same_v<Signature, bool(UINT, NMHDR*, LRESULT*)>)
     {
         if (!std::invoke(Handler, object, static_cast<UINT>(notify->idFrom), notify, &result)) return {};
@@ -491,8 +481,6 @@ MessageResult InvokeWindowHandler(CCmdTarget& target, const UINT message, WPARAM
     }
     else if constexpr (std::is_same_v<Signature, void(bool, DWORD)>)
         std::invoke(Handler, object, static_cast<bool>(wParam), static_cast<DWORD>(lParam));
-    else if constexpr (std::is_same_v<Signature, void(bool, UINT)>)
-        std::invoke(Handler, object, static_cast<bool>(wParam), static_cast<UINT>(lParam));
     else if constexpr (std::is_same_v<Signature, void(UINT, LPCTSTR)>)
         std::invoke(Handler, object, static_cast<UINT>(wParam), reinterpret_cast<LPCTSTR>(lParam));
     else if constexpr (std::is_same_v<Signature, void(UINT, UINT, WindowRef)>)

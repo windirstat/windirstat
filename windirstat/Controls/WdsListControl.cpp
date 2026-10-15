@@ -584,7 +584,7 @@ CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) co
     if (subitem == 0)
     {
         // Special case column 0:
-        // If we did GetSubItemRect(item 0, LVIR_LABEL, rc)
+        // If we did GetSubItemRect(item, 0, rc)
         // and we have an icon list, then we would get the rectangle
         // excluding the icon.
         HDITEM hditem = { .mask = HDI_WIDTH };
@@ -596,7 +596,7 @@ CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) co
     }
     else
     {
-        [[maybe_unused]] const bool gotSubItemRect = GetSubItemRect(item, subitem, LVIR_LABEL, rc);
+        [[maybe_unused]] const bool gotSubItemRect = GetSubItemRect(item, subitem, rc);
         assert(gotSubItemRect);
     }
 

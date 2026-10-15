@@ -13,6 +13,12 @@ CPageAdvanced::CPageAdvanced() : MessageTarget(IDD)
 
 void CPageAdvanced::InitializePage()
 {
+    // Populate fixed choices in their persisted selection order.
+    for (int threads = 1; threads <= 16; ++threads)
+        GetDlgItem(IDC_COMBO_THREADS).SendMessage(CB_ADDSTRING, 0, std::to_wstring(threads).c_str());
+    for (const auto algorithm : { L"MD5", L"SHA1", L"SHA256", L"SHA384", L"SHA512", L"xxHash" })
+        GetDlgItem(IDC_HASH_ALGORITHM).SendMessage(CB_ADDSTRING, 0, algorithm);
+
     if (m_priorityCombo.SubclassDlgItem(IDC_PROCESS_PRIORITY, this))
         for (const auto& priority : SplitString(Localization::Lookup(IDS_PRIORITY_LEVELS), L','))
             m_priorityCombo.AddString(priority);

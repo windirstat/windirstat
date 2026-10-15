@@ -67,7 +67,6 @@ public:
     DWORD_PTR GetItemData(const int i) const { return static_cast<DWORD_PTR>(SendNativeMessage(CB_GETITEMDATA, static_cast<WPARAM>(i))); }
     int  SetItemData(const int i, const DWORD_PTR data) { return static_cast<int>(SendNativeMessage(CB_SETITEMDATA, static_cast<WPARAM>(i), static_cast<LPARAM>(data))); }
     bool GetDroppedState() const { return static_cast<bool>(SendNativeMessage(CB_GETDROPPEDSTATE)); }
-    void ResetContent() { SendNativeMessage(CB_RESETCONTENT); }
     std::wstring GetItemText(const int i) const
     {
         const int length = static_cast<int>(SendNativeMessage(CB_GETLBTEXTLEN, static_cast<WPARAM>(i)));
@@ -215,10 +214,6 @@ public:
 class CListCtrl : public CWnd
 {
 public:
-    int FindItem(const LVFINDINFOW* info, const int start = -1) const
-    {
-        return static_cast<int>(SendNativeMessage(LVM_FINDITEMW, static_cast<WPARAM>(start), info));
-    }
     bool Create(const DWORD dwStyle, const RECT& rect, CWnd* pParent, const UINT nID)
     {
         return CreateEx(0, WC_LISTVIEWW, nullptr, dwStyle, rect, pParent, nID);
@@ -260,9 +255,9 @@ public:
         r.left = static_cast<LONG>(code);
         return static_cast<bool>(SendNativeMessage(LVM_GETITEMRECT, static_cast<WPARAM>(i), &r));
     }
-    bool GetSubItemRect(const int i, const int sub, const int code, RECT& r) const
+    bool GetSubItemRect(const int i, const int sub, RECT& r) const
     {
-        if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd && code == LVIR_LABEL)
+        if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd)
         {
             EnsureDrawColCache();
             if (sub >= 0 && sub < g_drawItemCtx.colCount && g_drawItemCtx.colValid[sub])
@@ -274,8 +269,10 @@ public:
                 return true;
             }
         }
-        // Fallback: set left = code, top = sub before sending per ListView_GetSubItemRect convention
-        r.left = static_cast<LONG>(code); r.top = sub; return static_cast<bool>(SendNativeMessage(LVM_GETSUBITEMRECT, static_cast<WPARAM>(i), &r));
+        // Request the label rectangle using the native subitem convention.
+        r.left = LVIR_LABEL;
+        r.top = sub;
+        return static_cast<bool>(SendNativeMessage(LVM_GETSUBITEMRECT, static_cast<WPARAM>(i), &r));
     }
     int  HitTest(const CPoint& pt, UINT* pFlags = nullptr) const { LVHITTESTINFO h{}; h.pt = pt; const int r = static_cast<int>(SendNativeMessage(LVM_HITTEST, 0, &h)); if (pFlags) *pFlags = h.flags; return r; }
     void RedrawItems(const int first, const int last) { SendNativeMessage(LVM_REDRAWITEMS, static_cast<WPARAM>(first), (LPARAM)last); }
