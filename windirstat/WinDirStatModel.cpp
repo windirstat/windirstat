@@ -662,7 +662,13 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         };
 
         if (COptions::ShowMicrosoftProgress)
-            doDelete(GetMainWindowHandle(), flags);
+        {
+            // The shell pumps messages while deleting, so block commands against the stale model until refreshed
+            const HWND mainWindow = GetMainWindowHandle();
+            EnableWindow(mainWindow, false);
+            doDelete(mainWindow, flags);
+            EnableWindow(mainWindow, true);
+        }
         else
             CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
                 { doDelete(*pdlg, flags | FOF_NO_UI); }).ShowModal();
