@@ -164,15 +164,17 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
         return;
     }
 
-    // A scanned chunk store is replaced by the attributed data, so its garbage and metadata
-    // are shown too; nothing has changed yet if that split fails
+    // A scanned chunk store is replaced by the attributed data. Its garbage and metadata take
+    // space on the volume either way, also when a filter keeps the store out of the scan;
+    // nothing has changed yet if that split fails
     const auto metric = static_cast<DEDUPMETRIC>(COptions::DedupPhysicalMetric.Obj());
     std::wstring storeDirectory = storePath;
     if (storeDirectory.starts_with(L"\\\\?\\")) storeDirectory.erase(0, 4);
     if (const auto separator = storeDirectory.rfind(L'\\'); separator != std::wstring::npos) storeDirectory.resize(separator);
     CItem* const storeItem = volumeRoot->FindItemByPath(storeDirectory);
     CItem* const chunkStore = metric != DEDUP_ALLOCATION ? storeItem : nullptr; // neutralized below
-    if (chunkStore != nullptr && !store.ComputeSpaceUsage(cancelled))
+    const bool withSpaceItems = metric != DEDUP_ALLOCATION && (chunkStore != nullptr || volumeRoot->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT));
+    if (withSpaceItems && !store.ComputeSpaceUsage(cancelled))
     {
         if (!(cancelled && cancelled())) AddFailure(volumePath, store.GetError());
         return;
@@ -381,7 +383,7 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
         }
         if (externalBytes != 0) pseudo.emplace_back(AddPseudoItem(volumeRoot, DEDUPITEM_EXTERNAL, externalBytes), externalBytes);
     }
-    if (chunkStore != nullptr)
+    if (withSpaceItems)
     {
         // Garbage a regular garbage collection leaves alone needs a full one
         const auto& space = store.GetSpaceUsage();
