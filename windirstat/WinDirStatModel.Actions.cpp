@@ -75,7 +75,8 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         return i != nullptr && i->SupportsFilesystemApis() && !i->IsRootItem() && IsLocalDrive(i->GetPath());
     };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended() &&
+        CDedupAccounting::Get().GetProgress() < 0; }; // the dedup post-scan cannot be suspended
     static bool (*isStoppable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone(); };
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
@@ -1292,6 +1293,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             });
         }
 
+        // A chunk store the scan skips is left out of its drive's progress range; measured
+        // while the scan runs (no I/O without a filter or a hidden folder option)
+        CDedupAccounting::Get().MeasureExcludedStores(GetRootItem()->GetDriveItems());
+        CMainFrame::Get()->InvokeInMessageThread([this]
+        {
+            CMainFrame::Get()->UpdateProgressRange(GetRootItem()->GetProgressRange());
+        });
+
         // Ensure toolbar buttons reflect scanning status
         CMainFrame::Get()->InvokeInMessageThread([]
         {
@@ -1332,6 +1341,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Attribute dedup storage first so hardlink groups see the adjusted sizes
         if (COptions::DedupAccounting)
             CDedupAccounting::Get().RunPostScan(dedupRoots, [this] { return m_postScanStop.load() != Default; });
+        else CDedupAccounting::Get().ReleaseCaches();
         if (m_postScanStop == Abort)
         {
             finishAborted();

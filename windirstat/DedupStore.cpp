@@ -90,25 +90,15 @@ namespace
         return (static_cast<ULONGLONG>(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
     }
 
-    // Total size of every file below a directory
-    ULONGLONG DirectorySize(const std::wstring& dir)
+    // FNV-1a over raw bytes
+    std::uint64_t HashBytes(const void* data, const std::size_t size, std::uint64_t hash = 0xcbf29ce484222325ull) noexcept
     {
-        ULONGLONG total = 0;
-        EnumerateDirectory(dir, [&](const WIN32_FIND_DATAW& data)
+        for (std::size_t i = 0; i < size; i++)
         {
-            if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) total += DirectorySize(JoinPath(dir, data.cFileName));
-            else total += FileSizeOf(data);
-        });
-        return total;
-    }
-
-    template <typename T>
-    void SortUnique(std::vector<T>& values)
-    {
-        std::ranges::sort(values);
-        const auto duplicates = std::ranges::unique(values);
-        values.erase(duplicates.begin(), duplicates.end());
-        values.shrink_to_fit();
+            hash ^= static_cast<const std::uint8_t*>(data)[i];
+            hash *= 0x100000001b3ull;
+        }
+        return hash;
     }
 
     // Reads the reparse data of an open file into a per-thread buffer
@@ -213,16 +203,31 @@ std::wstring CDedupStore::FindStore(const std::wstring& volumeRoot)
     return found;
 }
 
-std::optional<CDedupStore::MapSet> CDedupStore::EnumerateVolumeMaps(const std::wstring& volumeRoot, const CancelCheck& cancelled)
+ULONGLONG CDedupStore::DirectorySize(const std::wstring& dir)
 {
+    ULONGLONG total = 0;
+    EnumerateDirectory(dir, [&](const WIN32_FIND_DATAW& data)
+    {
+        if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) total += DirectorySize(JoinPath(dir, data.cFileName));
+        else total += FileSizeOf(data);
+    });
+    return total;
+}
+
+bool CDedupStore::EnumerateVolumeFiles(const std::wstring& volumeRoot, FileMaps& files, const bool keepKnown,
+    const CancelCheck& cancelled, const ProgressCallback& progress)
+{
+    FileMaps known = keepKnown ? std::move(files) : FileMaps{};
+    files.clear();
+
     using NtQueryDirectoryFileFn = NTSTATUS(WINAPI*)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID,
         ULONG, FILE_INFORMATION_CLASS, BOOLEAN, PUNICODE_STRING, BOOLEAN);
     static const auto queryDirectory = reinterpret_cast<NtQueryDirectoryFileFn>(
         GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile"));
-    if (queryDirectory == nullptr) return std::nullopt;
+    if (queryDirectory == nullptr) return false;
 
     std::wstring root = Finder::MakeLongPathCompatible(volumeRoot);
-    if (root.empty()) return std::nullopt;
+    if (root.empty()) return false;
     if (root.back() != L'\\') root += L'\\';
 
     // The $R index of $Extend\$Reparse lists every reparse point of the volume
@@ -230,7 +235,7 @@ std::optional<CDedupStore::MapSet> CDedupStore::EnumerateVolumeMaps(const std::w
     const SmartPointer index(CloseHandle, CreateFileW((root + L"$Extend\\$Reparse:$R:$INDEX_ALLOCATION").c_str(),
         GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (index == INVALID_HANDLE_VALUE) return std::nullopt;
+    if (index == INVALID_HANDLE_VALUE) return false;
 
     constexpr auto FileReparsePointInformation = static_cast<FILE_INFORMATION_CLASS>(33);
     constexpr NTSTATUS StatusNoMoreFiles = static_cast<NTSTATUS>(0x80000006L);
@@ -240,7 +245,10 @@ std::optional<CDedupStore::MapSet> CDedupStore::EnumerateVolumeMaps(const std::w
         ULONG tag;
     };
 
-    std::vector<LONGLONG> files;
+    // Known files keep their stream maps: those only change when a file is
+    // optimized again, which changes the store as well
+    FileMaps found;
+    std::vector<ULONGLONG> unknown;
     std::vector<std::byte> buffer(64 * wds::Ki);
     for (bool restart = true;; restart = false)
     {
@@ -248,49 +256,54 @@ std::optional<CDedupStore::MapSet> CDedupStore::EnumerateVolumeMaps(const std::w
         const NTSTATUS result = queryDirectory(index, nullptr, nullptr, nullptr, &status, buffer.data(),
             static_cast<ULONG>(buffer.size()), FileReparsePointInformation, FALSE, nullptr, restart ? TRUE : FALSE);
         if (result == StatusNoMoreFiles) break;
-        if (result < 0 || (cancelled && cancelled())) return std::nullopt;
+        if (result < 0 || (cancelled && cancelled())) return false;
 
         const std::size_t returned = std::min<std::size_t>(status.Information, buffer.size());
         for (std::size_t offset = 0; offset + sizeof(ReparsePointInformation) <= returned; offset += sizeof(ReparsePointInformation))
         {
             const auto entry = ReadAt<ReparsePointInformation>(buffer, offset);
-            if (entry.tag == static_cast<ULONG>(IO_REPARSE_TAG_DEDUP)) files.push_back(entry.fileReference);
+            if (entry.tag != static_cast<ULONG>(IO_REPARSE_TAG_DEDUP)) continue;
+            if (auto node = known.extract(static_cast<ULONGLONG>(entry.fileReference)); !node.empty()) found.insert(std::move(node));
+            else unknown.push_back(static_cast<ULONGLONG>(entry.fileReference));
         }
     }
-    if (cancelled && cancelled()) return std::nullopt;
+    if (cancelled && cancelled()) return false;
 
-    // Read the reparse data of each optimized file by its id
+    // Read the reparse data of each new optimized file by its id
     const SmartPointer rootHandle(CloseHandle, CreateFileW(root.c_str(), 0,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (rootHandle == INVALID_HANDLE_VALUE) return std::nullopt;
+    if (rootHandle == INVALID_HANDLE_VALUE) return false;
 
-    std::vector<std::vector<Hash16>> hashes(files.size());
+    std::vector<std::vector<Hash16>> hashes(unknown.size());
     std::atomic<std::size_t> failures = 0;
+    std::atomic<std::size_t> done = 0;
     CancelLatch latch(cancelled);
-    std::for_each(std::execution::par, hashes.begin(), hashes.end(), [&](std::vector<Hash16>& list)
+    ParallelForEach(hashes, [&](std::vector<Hash16>& list)
     {
         if (latch()) return;
         FILE_ID_DESCRIPTOR id{ .dwSize = sizeof(FILE_ID_DESCRIPTOR), .Type = FileIdType };
-        id.FileId.QuadPart = files[static_cast<std::size_t>(&list - hashes.data())];
+        id.FileId.QuadPart = static_cast<LONGLONG>(unknown[static_cast<std::size_t>(&list - hashes.data())]);
         const SmartPointer handle(CloseHandle, OpenFileById(rootHandle, &id, FILE_READ_ATTRIBUTES,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
             FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT));
-        const auto reparse = QueryReparsePoint(handle);
-        if (!reparse.has_value())
-        {
-            failures++;
-            return;
-        }
-        if (auto info = ParseReparseData(*reparse); info.has_value()) list = std::move(info->maps);
+        if (const auto reparse = QueryReparsePoint(handle); !reparse.has_value()) failures++;
+        else if (auto info = ParseReparseData(*reparse); info.has_value()) list = std::move(info->maps);
+        if (progress && (++done & 0x3FF) == 0) progress(static_cast<double>(done) / static_cast<double>(hashes.size()));
     });
 
     // Files deleted between the index query and the read are expected; a
     // large share of failures means the enumeration cannot be trusted
-    if (latch() || (cancelled && cancelled()) || failures > files.size() / 100 + 16) return std::nullopt;
+    if (latch() || (cancelled && cancelled()) || failures > unknown.size() / 100 + 16) return false;
 
-    MapSet maps;
-    for (const auto& list : hashes) maps.insert(list.begin(), list.end());
-    return maps;
+    const std::size_t kept = found.size();
+    for (const auto [reference, list] : std::views::zip(unknown, hashes))
+    {
+        if (!list.empty()) found.emplace(reference, std::move(list));
+    }
+    files = std::move(found);
+    VTRACE(L"Dedup volume {}: {} optimized files, {} kept, {} read ({} unreadable)",
+        volumeRoot, files.size(), kept, unknown.size(), failures.load());
+    return true;
 }
 
 std::optional<CDedupStore::ReparseInfo> CDedupStore::ReadReparseData(const std::wstring& path)
@@ -300,6 +313,38 @@ std::optional<CDedupStore::ReparseInfo> CDedupStore::ReadReparseData(const std::
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
     const auto reparse = QueryReparsePoint(handle);
     return reparse.has_value() ? ParseReparseData(*reparse) : std::nullopt;
+}
+
+std::optional<CDedupStore::Snapshot> CDedupStore::TakeSnapshot(const std::wstring& storePath)
+{
+    // The container files define the model: their names, sizes and write times
+    // are combined independently of the enumeration order
+    Snapshot snapshot;
+    bool listed = true;
+    for (const std::wstring_view part : { L"Stream", L"Data" })
+    {
+        const std::wstring dir = JoinPath(storePath, part);
+        auto& deleteLogs = part == L"Stream" ? snapshot.streamDeleteLogs : snapshot.dataDeleteLogs;
+        listed = listed && EnumerateDirectory(dir, [&](const WIN32_FIND_DATAW& data)
+        {
+            if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) return;
+            const std::wstring_view name(data.cFileName);
+            if (name.ends_with(L".delete.log"))
+            {
+                deleteLogs.push_back(JoinPath(dir, name));
+                return;
+            }
+            std::uint64_t hash = HashBytes(part.data(), part.size() * sizeof(wchar_t));
+            hash = HashBytes(name.data(), name.size() * sizeof(wchar_t), hash);
+            const ULONGLONG size = FileSizeOf(data);
+            hash = HashBytes(&size, sizeof(size), hash);
+            hash = HashBytes(&data.ftLastWriteTime, sizeof(data.ftLastWriteTime), hash);
+            snapshot.signature += hash * 0x9E3779B97F4A7C15ull;
+        });
+    }
+    if (!listed) return std::nullopt;
+    snapshot.storeBytes = DirectorySize(storePath);
+    return snapshot;
 }
 
 bool CDedupStore::ReadFileBytes(const std::wstring& path, std::vector<std::byte>& buffer, const ULONGLONG maxSize)
@@ -387,14 +432,7 @@ CDedupStore::EntryView CDedupStore::ReadEntry(const RecordView& record, const st
     };
 }
 
-std::optional<std::uint32_t> CDedupStore::FindChunkIndex(const std::uint64_t digestKey) const noexcept
-{
-    const auto it = std::ranges::lower_bound(m_chunkKeys, digestKey);
-    if (it == m_chunkKeys.end() || *it != digestKey) return std::nullopt;
-    return static_cast<std::uint32_t>(it - m_chunkKeys.begin());
-}
-
-std::map<std::uint32_t, CDedupStore::Container> CDedupStore::ListContainers(const std::wstring& dir, std::vector<std::wstring>& deleteLogs)
+std::map<std::uint32_t, CDedupStore::Container> CDedupStore::ListContainers(const std::wstring& dir)
 {
     // Only the newest <id>.<generation>.ccc of an id is current. Its record
     // index <id>.<generation>.01.cd (or the .02.cd copy) and delete bitmap
@@ -419,11 +457,11 @@ std::map<std::uint32_t, CDedupStore::Container> CDedupStore::ListContainers(cons
             if (!container.dataPath.empty() && container.generation >= name->generation) return;
             container.dataPath = std::move(path);
             container.generation = name->generation;
+            container.size = FileSizeOf(data);
         }
         else if (name->suffix == L".01.cd") sideFiles[sideKey(name->id, name->generation)][0] = std::move(path);
         else if (name->suffix == L".02.cd") sideFiles[sideKey(name->id, name->generation)][1] = std::move(path);
         else if (name->suffix == L".delete.map") sideFiles[sideKey(name->id, name->generation)][2] = std::move(path);
-        else if (name->suffix == L".delete.log") deleteLogs.push_back(std::move(path));
     });
 
     for (auto& [id, container] : containers)
@@ -437,39 +475,228 @@ std::map<std::uint32_t, CDedupStore::Container> CDedupStore::ListContainers(cons
     return containers;
 }
 
-void CDedupStore::LoadDeleteLogs(const std::vector<std::wstring>& logs)
+bool CDedupStore::ReadRelocationTable(const Container& files, const std::vector<std::uint32_t>& offsets,
+    DataContainer& container, std::uint32_t& lastSpan)
 {
-    // Delete logs ('Dlog', 16-byte header, 40-byte entries of id + digest) list
-    // the stream maps of deleted files that garbage collection has not yet
-    // processed; afterwards the delete bitmaps take over.
-    std::vector<std::byte> bytes;
-    for (const auto& log : logs)
+    // The container header ('Cthr') has three copies at 4 KB steps; the one with
+    // the highest sequence number at 0x08 is current. It holds the record count
+    // at 0x18, the next local id at 0x1c and the valid data length at 0x20.
+    // Compactions keep the local ids of the records they move in a relocation
+    // table ('Rrtl' at 0x3000: count at 0x08, (id, offset) pairs from 0x20) in
+    // record order; records written since get consecutive ids up to the next one.
+    if (offsets.empty())
     {
-        if (!ReadFileBytes(log, bytes, 64ull * wds::Mi) || !HasMagic(bytes, 0, "Dlog")) continue;
-        for (std::size_t offset = 0x10; offset + 40 <= bytes.size(); offset += 40)
-        {
-            Hash16 hash;
-            std::memcpy(hash.data(), bytes.data() + offset + 4, hash.size());
-            m_deadHashes.insert(hash);
-        }
+        container.idsKnown = true;
+        return true;
     }
+    const std::uint32_t headerEnd = offsets.front();
+    if (headerEnd < 0x3020 || headerEnd > 64 * wds::Mi) return false;
+
+    std::vector<std::byte> header(headerEnd);
+    {
+        const SmartPointer handle(CloseHandle, CreateFileW(files.dataPath.c_str(), GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+        DWORD read = 0;
+        if (handle == INVALID_HANDLE_VALUE || !ReadFile(handle, header.data(), headerEnd, &read, nullptr) || read != headerEnd) return false;
+    }
+
+    std::optional<std::size_t> current;
+    for (std::size_t copy = 0; copy < 3; copy++)
+    {
+        const std::size_t base = copy * 0x1000;
+        if (HasMagic(header, base, "Cthr") && (!current.has_value() ||
+            ReadAt<std::uint64_t>(header, base + 0x08) > ReadAt<std::uint64_t>(header, *current + 0x08))) current = base;
+    }
+    if (!current.has_value() || ReadAt<std::uint32_t>(header, *current + 0x18) != offsets.size()) return false;
+    const std::uint32_t nextId = ReadAt<std::uint32_t>(header, *current + 0x1c);
+    const std::uint32_t validLength = ReadAt<std::uint32_t>(header, *current + 0x20);
+    if (validLength > offsets.back()) lastSpan = validLength - offsets.back();
+
+    const std::size_t relocated = HasMagic(header, 0x3000, "Rrtl") ? ReadAt<std::uint32_t>(header, 0x3008) : 0;
+    if (relocated > offsets.size() || 0x3020 + 8ull * relocated > headerEnd) return false;
+    container.relocatedIds.resize(relocated);
+    for (std::size_t i = 0; i < relocated; i++)
+    {
+        const std::uint32_t id = ReadAt<std::uint32_t>(header, 0x3020 + 8 * i);
+        if (ReadAt<std::uint32_t>(header, 0x3024 + 8 * i) != offsets[i] || (i > 0 && id <= container.relocatedIds[i - 1])) return false;
+        container.relocatedIds[i] = id;
+    }
+
+    // A container that was never compacted numbers its records from 1
+    const auto tail = static_cast<std::uint32_t>(offsets.size() - relocated);
+    if (nextId < tail) return false;
+    container.tailBase = nextId - tail;
+    if (relocated == 0 && container.tailBase != 1) return false;
+    if (relocated > 0 && tail > 0 && container.tailBase <= container.relocatedIds.back()) return false;
+    container.idsKnown = true;
+    return true;
 }
 
-bool CDedupStore::ForEachMap(const CancelCheck& cancelled, const MapCallback& callback)
+void CDedupStore::ReadRecordIds(const Container& files, const std::vector<std::uint32_t>& offsets,
+    DataContainer& container, std::uint32_t& lastSpan, const CancelCheck& cancelled)
 {
+    // Record headers ('Ckhr', 0x58 bytes) hold the local id at 0x08 and the size at 0x0c
+    const SmartPointer handle(CloseHandle, CreateFileW(files.dataPath.c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr));
+    if (handle == INVALID_HANDLE_VALUE) return;
+
+    std::array<std::byte, DataRecordHeaderSize> header{};
+    container.headerIds.reserve(offsets.size());
+    for (const auto [record, offset] : std::views::enumerate(offsets))
+    {
+        OVERLAPPED position{};
+        position.Offset = offset;
+        DWORD read = 0;
+        if ((record & 0xFFF) == 0xFFF && cancelled && cancelled() ||
+            !ReadFile(handle, header.data(), static_cast<DWORD>(header.size()), &read, &position) ||
+            read != header.size() || !HasMagic(header, 0, "Ckhr"))
+        {
+            container.headerIds.clear();
+            return;
+        }
+        container.headerIds.emplace_back(ReadAt<std::uint32_t>(header, 0x08), static_cast<std::uint32_t>(record));
+        if (static_cast<std::size_t>(record) + 1 == offsets.size())
+            lastSpan = (DataRecordHeaderSize + ReadAt<std::uint32_t>(header, 0x0c) + 7) & ~7u;
+    }
+    std::ranges::sort(container.headerIds);
+    container.idsKnown = true;
+}
+
+const CDedupStore::DataContainer* CDedupStore::FindDataContainer(const std::uint32_t id) const noexcept
+{
+    const auto it = std::ranges::lower_bound(m_data, id, {}, &DataContainer::id);
+    return it != m_data.end() && it->id == id ? &*it : nullptr;
+}
+
+std::uint32_t CDedupStore::FindRecord(const DataContainer& container, const std::uint32_t localId) const noexcept
+{
+    if (!container.idsKnown) return NoRecord;
+    if (!container.headerIds.empty())
+    {
+        const auto it = std::ranges::lower_bound(container.headerIds, localId, {}, &std::pair<std::uint32_t, std::uint32_t>::first);
+        return it != container.headerIds.end() && it->first == localId ? container.first + it->second : NoRecord;
+    }
+
+    const auto& relocated = container.relocatedIds;
+    if (const auto it = std::ranges::lower_bound(relocated, localId); it != relocated.end() && *it == localId)
+        return container.first + static_cast<std::uint32_t>(it - relocated.begin());
+    const std::uint32_t tail = container.count - static_cast<std::uint32_t>(relocated.size());
+    if (localId >= container.tailBase && localId - container.tailBase < tail)
+        return container.first + static_cast<std::uint32_t>(relocated.size()) + (localId - container.tailBase);
+    return NoRecord;
+}
+
+bool CDedupStore::Load(const std::wstring& storePath, const CancelCheck& cancelled, const ProgressCallback& progress)
+{
+    const auto isCancelled = [&]
+    {
+        if (!cancelled || !cancelled()) return false;
+        m_error = L"Cancelled";
+        return true;
+    };
+
+    m_streams = ListContainers(JoinPath(storePath, L"Stream")) | std::views::values | std::ranges::to<std::vector<Container>>();
+    if (m_streams.empty() || std::ranges::any_of(m_streams, [](const Container& container) { return container.indexPath.empty(); }))
+    {
+        m_error = L"No stream containers found";
+        return false;
+    }
+
+    // Data containers: record offsets from the index, local ids from the
+    // relocation table or, should it not match the index, the record headers.
+    // A container without a readable index is left out; references to it stay
+    // unresolved and its garbage counts as overhead.
+    const auto dataFiles = ListContainers(JoinPath(storePath, L"Data"));
+    std::vector<const Container*> dataPaths;
+    m_data.clear();
+    for (const auto& [id, files] : dataFiles)
+    {
+        if (files.indexPath.empty()) continue;
+        m_data.push_back({ .id = id, .generation = files.generation >> 16 });
+        dataPaths.push_back(&files);
+    }
+    std::vector<std::vector<std::uint32_t>> offsets(m_data.size());
+    std::vector<std::uint32_t> lastSpans(m_data.size(), static_cast<std::uint32_t>(DataRecordHeaderSize));
+    std::atomic<bool> stopped = false;
+    const CancelCheck stop = [&]
+    {
+        if (!stopped.load(std::memory_order_relaxed) && cancelled && cancelled()) stopped = true;
+        return stopped.load(std::memory_order_relaxed);
+    };
+    ParallelForEach(m_data, [&](DataContainer& container)
+    {
+        if (stop()) return;
+        const std::size_t index = static_cast<std::size_t>(&container - m_data.data());
+        std::vector<std::byte> bytes;
+        auto& recordOffsets = offsets[index];
+        if (!ReadFileBytes(dataPaths[index]->indexPath, bytes, 256ull * wds::Mi) || !ParseIndex(bytes, recordOffsets))
+        {
+            recordOffsets.clear();
+            return;
+        }
+
+        // Records are stored in index order; anything else is matched through the headers
+        const bool ordered = std::ranges::is_sorted(recordOffsets);
+        if (!ordered) std::ranges::sort(recordOffsets);
+        if (!ordered || !ReadRelocationTable(*dataPaths[index], recordOffsets, container, lastSpans[index]))
+        {
+            container.relocatedIds.clear();
+            ReadRecordIds(*dataPaths[index], recordOffsets, container, lastSpans[index], stop);
+        }
+    });
+    if (stopped || isCancelled()) return false;
+
+    // Chunks are numbered in 32 bits, data records first
+    std::uint64_t dataRecords = 0;
+    for (const auto [container, recordOffsets] : std::views::zip(m_data, offsets))
+    {
+        container.first = static_cast<std::uint32_t>(dataRecords);
+        container.count = static_cast<std::uint32_t>(recordOffsets.size());
+        dataRecords += container.count;
+    }
+    if (dataRecords >= NoRecord)
+    {
+        m_error = L"Too many chunks in the store";
+        return false;
+    }
+    if (progress) progress(0.1);
+
+    // Every stream map record, live or not, with its distinct chunks. An entry
+    // whose generation matches the data container points straight at its
+    // record; an older generation means a compaction moved the record, which
+    // kept its local id. Unresolved chunks are told apart by their digest.
+    const auto resolve = [&](const EntryView& entry) -> std::uint32_t
+    {
+        const DataContainer* container = FindDataContainer(entry.container);
+        if (container == nullptr || entry.generation > container->generation) return NoRecord;
+        if (entry.generation == container->generation)
+        {
+            const auto& recordOffsets = offsets[static_cast<std::size_t>(container - m_data.data())];
+            if (const auto it = std::ranges::lower_bound(recordOffsets, entry.dataOffset);
+                it != recordOffsets.end() && *it == entry.dataOffset) return container->first + static_cast<std::uint32_t>(it - recordOffsets.begin());
+        }
+        return FindRecord(*container, entry.chunkId);
+    };
+
+    m_chunkSize.assign(static_cast<std::size_t>(dataRecords), 0);
+    m_records.clear();
+    m_recordChunks.assign(1, 0);
+    m_chunkList.clear();
+    m_maps.clear();
+    std::unordered_map<std::uint64_t, std::uint32_t> unresolved; // digest prefix -> chunk after the data records
     std::vector<std::byte> indexBytes;
     std::vector<std::byte> dataBytes;
     std::vector<std::byte> bitmapBytes;
-    std::vector<std::uint32_t> offsets;
-    for (const auto [containerIndex, container] : std::views::enumerate(m_containers))
+    std::vector<std::uint32_t> streamOffsets;
+    std::vector<std::uint32_t> chunks;
+    ULONGLONG streamBytes = 0;
+    ULONGLONG streamBytesDone = 0;
+    for (const Container& container : m_streams) streamBytes += container.size;
+    for (const auto [containerIndex, container] : std::views::enumerate(m_streams))
     {
-        if (cancelled && cancelled())
-        {
-            m_error = L"Cancelled";
-            return false;
-        }
-
-        if (!ReadFileBytes(container.indexPath, indexBytes, 64ull * wds::Mi) || !ParseIndex(indexBytes, offsets))
+        if (isCancelled()) return false;
+        if (!ReadFileBytes(container.indexPath, indexBytes, 64ull * wds::Mi) || !ParseIndex(indexBytes, streamOffsets))
         {
             m_error = L"Invalid stream index: " + container.indexPath;
             return false;
@@ -480,15 +707,12 @@ bool CDedupStore::ForEachMap(const CancelCheck& cancelled, const MapCallback& ca
             return false;
         }
 
-        // The bitmap only matters when no file-based liveness is available
-        std::vector<bool> deleted(offsets.size(), false);
-        if (m_liveMaps == nullptr && !container.deleteMapPath.empty() &&
-            ReadFileBytes(container.deleteMapPath, bitmapBytes, 64ull * wds::Mi))
-        {
-            deleted = ParseDeleteBitmap(bitmapBytes, offsets.size());
-        }
+        // The bitmap only decides liveness when no file-based liveness is available
+        std::vector<bool> deleted(streamOffsets.size(), false);
+        if (!container.deleteMapPath.empty() && ReadFileBytes(container.deleteMapPath, bitmapBytes, 64ull * wds::Mi))
+            deleted = ParseDeleteBitmap(bitmapBytes, streamOffsets.size());
 
-        for (const auto [recordIndex, offset] : std::views::enumerate(offsets))
+        for (const auto [recordIndex, offset] : std::views::enumerate(streamOffsets))
         {
             RecordView record;
             if (!ParseRecord(dataBytes, offset, record))
@@ -496,183 +720,89 @@ bool CDedupStore::ForEachMap(const CancelCheck& cancelled, const MapCallback& ca
                 m_error = std::format(L"Unexpected stream map record at 0x{:x} in {}", offset, container.dataPath);
                 return false;
             }
-            const bool live = m_liveMaps != nullptr ? m_liveMaps->contains(record.hash) :
-                !deleted[static_cast<std::size_t>(recordIndex)] && !m_deadHashes.contains(record.hash);
-            callback(static_cast<std::uint32_t>(containerIndex), offset, record, live);
-        }
-    }
-    return true;
-}
 
-bool CDedupStore::Load(const std::wstring& storePath, const MapSet* liveMaps, const CancelCheck& cancelled)
-{
-    m_liveMaps = liveMaps;
-    m_path = storePath;
-
-    std::vector<std::wstring> deleteLogs;
-    m_containers = ListContainers(JoinPath(storePath, L"Stream"), deleteLogs) | std::views::values |
-        std::ranges::to<std::vector<Container>>();
-    if (m_containers.empty() || std::ranges::any_of(m_containers, [](const Container& container) { return container.indexPath.empty(); }))
-    {
-        m_error = L"No stream containers found";
-        return false;
-    }
-    LoadDeleteLogs(deleteLogs);
-
-    // Register where every live map lives and collect its distinct chunks.
-    // A chunk keeps the disk size of its last entry in visiting order, so the
-    // entries are pushed backwards and both sorts are stable.
-    struct ChunkRef
-    {
-        std::uint64_t digestKey;
-        std::uint64_t diskSize;
-    };
-    std::vector<ChunkRef> refs;
-    if (!ForEachMap(cancelled, [&](const std::uint32_t containerIndex, const std::uint32_t offset, const RecordView& record, const bool live)
-    {
-        // A hash stored twice is resolved once, so it is counted once
-        if (!live || !m_maps.try_emplace(record.hash, MapLocation{ containerIndex, offset }).second) return;
-
-        const std::size_t first = refs.size();
-        for (std::size_t i = record.Count(); i-- > 0;)
-        {
-            const EntryView entry = ReadEntry(record, i);
-            refs.push_back({ entry.digestKey, entry.diskSize });
-        }
-        const std::ranges::subrange mapRefs(refs.begin() + static_cast<std::ptrdiff_t>(first), refs.end());
-        std::ranges::stable_sort(mapRefs, {}, &ChunkRef::digestKey);
-        refs.erase(std::ranges::unique(mapRefs, {}, &ChunkRef::digestKey).begin(), refs.end());
-    })) return false;
-
-    // Count each chunk once per live stream map
-    std::ranges::stable_sort(refs, {}, &ChunkRef::digestKey);
-    for (const ChunkRef& ref : refs)
-    {
-        if (ref.diskSize > UINT32_MAX)
-        {
-            m_error = L"Unexpected chunk entry in a stream map";
-            return false;
-        }
-        if (m_chunkKeys.empty() || m_chunkKeys.back() != ref.digestKey)
-        {
-            m_chunkKeys.push_back(ref.digestKey);
-            m_chunks.emplace_back();
-        }
-        m_chunks.back().refs++;
-        m_chunks.back().diskSize = static_cast<std::uint32_t>(ref.diskSize);
-    }
-    std::vector<ChunkRef>().swap(refs);
-    m_chunkKeys.shrink_to_fit();
-    m_chunks.shrink_to_fit();
-
-    m_loaded = true;
-    VTRACE(L"Dedup store {}: {} live maps, {} chunks", m_path, m_maps.size(), m_chunks.size());
-    return true;
-}
-
-bool CDedupStore::Resolve(const std::span<const Hash16> requests, const ChunkVisitor& visitor, const CancelCheck& cancelled)
-{
-    if (!m_loaded) return false;
-
-    // Group the wanted records by container so each container is read once
-    std::vector<std::unordered_map<std::uint32_t, std::vector<std::size_t>>> perContainer(m_containers.size());
-    for (const auto [requestIndex, hash] : std::views::enumerate(requests))
-    {
-        const auto location = m_maps.find(hash);
-        if (location == m_maps.end()) continue;
-        perContainer[location->second.container][location->second.offset].push_back(static_cast<std::size_t>(requestIndex));
-    }
-
-    std::vector<std::byte> dataBytes;
-    std::vector<std::uint32_t> mapChunks;
-    for (const auto [containerIndex, wantedRecords] : std::views::enumerate(perContainer))
-    {
-        if (wantedRecords.empty()) continue;
-        if (cancelled && cancelled())
-        {
-            m_error = L"Cancelled";
-            return false;
-        }
-
-        // The store may have been compacted since it was loaded; partial results
-        // would leave files unaccounted while the whole store is neutralized
-        const std::wstring& dataPath = m_containers[containerIndex].dataPath;
-        if (!ReadFileBytes(dataPath, dataBytes, 4ull * wds::Gi))
-        {
-            m_error = L"Cannot read stream container: " + dataPath;
-            return false;
-        }
-
-        for (const auto& [offset, requestIndices] : wantedRecords)
-        {
-            RecordView record;
-            if (!ParseRecord(dataBytes, offset, record) || record.hash != requests[requestIndices.front()])
-            {
-                m_error = std::format(L"Stream map record at 0x{:x} in {} changed since loading", offset, dataPath);
-                return false;
-            }
-
-            mapChunks.clear();
+            chunks.clear();
             for (std::size_t i = 0; i < record.Count(); i++)
             {
-                if (const auto index = FindChunkIndex(ReadEntry(record, i).digestKey); index.has_value()) mapChunks.push_back(*index);
+                const EntryView entry = ReadEntry(record, i);
+                if (entry.diskSize > UINT32_MAX)
+                {
+                    m_error = L"Unexpected chunk entry in a stream map";
+                    return false;
+                }
+                std::uint32_t chunk = resolve(entry);
+                if (chunk == NoRecord)
+                {
+                    if (m_chunkSize.size() >= NoRecord)
+                    {
+                        m_error = L"Too many chunks in the store";
+                        return false;
+                    }
+                    const auto [it, added] = unresolved.try_emplace(entry.digestKey, static_cast<std::uint32_t>(m_chunkSize.size()));
+                    if (added) m_chunkSize.push_back(static_cast<std::uint32_t>(entry.diskSize));
+                    chunk = it->second;
+                }
+                else if (m_chunkSize[chunk] == 0) m_chunkSize[chunk] = static_cast<std::uint32_t>(entry.diskSize);
+                chunks.push_back(chunk);
             }
-            std::ranges::sort(mapChunks);
-            const auto duplicates = std::ranges::unique(mapChunks);
-            mapChunks.erase(duplicates.begin(), duplicates.end());
+            std::ranges::sort(chunks);
+            m_chunkList.insert(m_chunkList.end(), chunks.begin(), std::ranges::unique(chunks).begin());
+            m_recordChunks.push_back(m_chunkList.size());
 
-            for (const std::uint32_t index : mapChunks)
-            {
-                for (const std::size_t requestIndex : requestIndices) visitor(requestIndex, index, m_chunks[index]);
-            }
+            const auto map = m_maps.try_emplace(record.hash, static_cast<std::uint32_t>(m_maps.size())).first->second;
+            m_records.push_back({ record.hash, map, static_cast<std::uint32_t>(containerIndex), record.size,
+                deleted[static_cast<std::size_t>(recordIndex)] });
+        }
+
+        streamBytesDone += container.size;
+        if (progress) progress(0.1 + 0.9 * static_cast<double>(streamBytesDone) / static_cast<double>(std::max(streamBytes, 1ull)));
+    }
+    m_chunkList.shrink_to_fit();
+    m_chunkSize.shrink_to_fit();
+
+    // Bytes each data record takes; records are 8-byte aligned, the last one
+    // is sized from a stream map entry or else the valid data length
+    m_span.assign(static_cast<std::size_t>(dataRecords), 0);
+    for (const auto [container, recordOffsets, lastSpan] : std::views::zip(m_data, offsets, lastSpans))
+    {
+        for (std::uint32_t i = 0; i < container.count; i++)
+        {
+            const std::uint32_t record = container.first + i;
+            if (i + 1 < container.count) m_span[record] = recordOffsets[i + 1] - recordOffsets[i];
+            else m_span[record] = m_chunkSize[record] != 0 ?
+                static_cast<std::uint32_t>((DataRecordHeaderSize + m_chunkSize[record] + 7) & ~7ull) : lastSpan;
         }
     }
+
+    VTRACE(L"Dedup store {}: {} stream maps, {} data records, {} unresolved chunks",
+        storePath, m_records.size(), dataRecords, unresolved.size());
     return true;
 }
 
-bool CDedupStore::ComputeSpaceUsage(const CancelCheck& cancelled)
+void CDedupStore::Evaluate(const MapSet* liveMaps, const Snapshot& snapshot)
 {
-    if (!m_loaded) return false;
-    m_space = {};
-    m_space.storeBytes = DirectorySize(m_path);
-    for (const ChunkInfo& chunk : m_chunks) m_space.liveChunkBytes += chunk.diskSize;
-
-    std::vector<std::wstring> dataDeleteLogs;
-    const auto data = ListContainers(JoinPath(m_path, L"Data"), dataDeleteLogs);
-
-    // Chunks a garbage collection already found dead ('Dlog': container id at
-    // 0x08, then 8-byte entries starting with the chunk id)
-    std::vector<std::uint64_t> loggedIds;
+    // Delete logs ('Dlog', 16-byte header, 40-byte entries of id + digest) list
+    // the stream maps of deleted files that garbage collection has not yet
+    // processed; afterwards the delete bitmaps take over.
+    MapSet deadHashes;
+    std::vector<std::byte> bytes;
+    for (const auto& log : snapshot.streamDeleteLogs)
     {
-        std::vector<std::byte> bytes;
-        for (const auto& log : dataDeleteLogs)
+        if (!ReadFileBytes(log, bytes, 64ull * wds::Mi) || !HasMagic(bytes, 0, "Dlog")) continue;
+        for (std::size_t offset = 0x10; offset + 40 <= bytes.size(); offset += 40)
         {
-            if (!ReadFileBytes(log, bytes, 256ull * wds::Mi) || bytes.size() < 0x10 || !HasMagic(bytes, 0, "Dlog")) continue;
-            const std::uint64_t container = ReadAt<std::uint32_t>(bytes, 0x08);
-            for (std::size_t offset = 0x10; offset + 8 <= bytes.size(); offset += 8)
-                loggedIds.push_back((container << 32) | ReadAt<std::uint32_t>(bytes, offset));
+            Hash16 hash;
+            std::memcpy(hash.data(), bytes.data() + offset + 4, hash.size());
+            deadHashes.insert(hash);
         }
-        SortUnique(loggedIds);
     }
 
-    // Live chunk locations: an entry whose generation matches the current
-    // container points straight at its record; an older generation means the
-    // record moved during compaction and is matched by its chunk id instead
-    std::vector<std::uint64_t> liveOffsets;
-    std::vector<std::uint64_t> liveIds;
-    std::vector<std::uint64_t> pendingOffsets; // chunks of deleted files a regular collection processes
-    std::vector<std::uint64_t> pendingIds;
-    const auto collect = [&](const RecordView& record, std::vector<std::uint64_t>& byOffset, std::vector<std::uint64_t>& byId)
-    {
-        for (std::size_t i = 0; i < record.Count(); i++)
-        {
-            const EntryView entry = ReadEntry(record, i);
-            const auto container = data.find(entry.container);
-            if (container != data.end() && (container->second.generation >> 16) == entry.generation)
-                byOffset.push_back((static_cast<std::uint64_t>(entry.container) << 32) | entry.dataOffset);
-            else byId.push_back((static_cast<std::uint64_t>(entry.container) << 32) | entry.chunkId);
-        }
-    };
+    enum : std::uint8_t { Live = 1, Deleted = 2 }; // deleted: known to a regular garbage collection
+    std::vector<std::uint8_t> flags(m_chunkSize.size(), 0);
+    m_refs.assign(m_chunkSize.size(), 0);
+    m_mapRecord.assign(m_maps.size(), NoRecord);
+    m_space = {};
+    m_space.storeBytes = snapshot.storeBytes;
 
     // Stream maps no live file uses are garbage. A regular garbage collection
     // only handles maps listed in the delete logs and compacts a stream
@@ -683,86 +813,76 @@ bool CDedupStore::ComputeSpaceUsage(const CancelCheck& cancelled)
         std::size_t logged = 0;
         ULONGLONG loggedBytes = 0;
     };
-    std::vector<StreamTally> tallies(m_containers.size());
+    std::vector<StreamTally> tallies(m_streams.size());
     ULONGLONG garbage = 0;
-    if (!ForEachMap(cancelled, [&](const std::uint32_t containerIndex, std::uint32_t, const RecordView& record, const bool live)
+    ULONGLONG regularGarbage = 0;
+    for (const auto [recordIndex, record] : std::views::enumerate(m_records))
     {
-        StreamTally& tally = tallies[containerIndex];
+        const auto index = static_cast<std::size_t>(recordIndex);
+        const auto chunks = std::span(m_chunkList).subspan(m_recordChunks[index], m_recordChunks[index + 1] - m_recordChunks[index]);
+        StreamTally& tally = tallies[record.container];
         tally.records++;
-        if (live)
+        if (liveMaps != nullptr ? liveMaps->contains(record.hash) : !record.bitmapDeleted && !deadHashes.contains(record.hash))
         {
-            collect(record, liveOffsets, liveIds);
-            return;
+            for (const std::uint32_t chunk : chunks) flags[chunk] |= Live;
+
+            // A hash stored twice is one map, counted once
+            if (m_mapRecord[record.map] != NoRecord) continue;
+            m_mapRecord[record.map] = static_cast<std::uint32_t>(index);
+            for (const std::uint32_t chunk : chunks) m_refs[chunk]++;
+            continue;
         }
         garbage += record.size;
-        if (m_deadHashes.contains(record.hash))
+        if (deadHashes.contains(record.hash))
         {
-            collect(record, pendingOffsets, pendingIds);
+            for (const std::uint32_t chunk : chunks) flags[chunk] |= Deleted;
             tally.logged++;
             tally.loggedBytes += record.size;
         }
-    })) return false;
-    ULONGLONG regularGarbage = 0;
+    }
     for (const StreamTally& tally : tallies)
     {
         if (tally.logged > 0 && 100 * (tally.records - tally.logged) / tally.records <= StreamMinOccupancyPercent)
             regularGarbage += tally.loggedBytes;
     }
-    SortUnique(liveOffsets);
-    SortUnique(liveIds);
-    SortUnique(pendingOffsets);
-    SortUnique(pendingIds);
-
-    // Every data record that no live map reaches is garbage awaiting collection
-    std::vector<std::byte> indexBytes;
-    std::vector<std::uint32_t> offsets;
-    std::array<std::byte, DataRecordHeaderSize> header{};
-    for (const auto& [id, container] : data)
+    for (const auto [refs, size] : std::views::zip(m_refs, m_chunkSize))
     {
-        if (cancelled && cancelled()) return false;
-        if (container.indexPath.empty() || !ReadFileBytes(container.indexPath, indexBytes, 256ull * wds::Mi) ||
-            !ParseIndex(indexBytes, offsets) || offsets.empty()) continue;
+        if (refs != 0) m_space.liveChunkBytes += size;
+    }
 
-        const SmartPointer handle(CloseHandle, CreateFileW(container.dataPath.c_str(), GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr));
-        if (handle == INVALID_HANDLE_VALUE) continue;
-        const auto readHeader = [&](const std::uint32_t offset)
+    // Chunks a garbage collection already found dead ('Dlog': container id at
+    // 0x08, then 8-byte entries starting with the local id)
+    for (const auto& log : snapshot.dataDeleteLogs)
+    {
+        if (!ReadFileBytes(log, bytes, 256ull * wds::Mi) || bytes.size() < 0x10 || !HasMagic(bytes, 0, "Dlog")) continue;
+        const DataContainer* container = FindDataContainer(ReadAt<std::uint32_t>(bytes, 0x08));
+        if (container == nullptr) continue;
+        for (std::size_t offset = 0x10; offset + 8 <= bytes.size(); offset += 8)
         {
-            OVERLAPPED position{};
-            position.Offset = offset;
-            DWORD read = 0;
-            return ReadFile(handle, header.data(), static_cast<DWORD>(header.size()), &read, &position) &&
-                read == header.size() && HasMagic(header, 0, "Ckhr");
-        };
-
-        std::ranges::sort(offsets);
-        std::size_t deleted = 0;           // dead chunks a regular collection knows about
-        ULONGLONG deletedBytes = 0;
-        for (std::size_t i = 0; i < offsets.size(); i++)
-        {
-            const std::uint32_t offset = offsets[i];
-            const std::uint64_t offsetKey = (static_cast<std::uint64_t>(id) << 32) | offset;
-            if (std::ranges::binary_search(liveOffsets, offsetKey)) continue;
-            if (!readHeader(offset)) continue;
-            const std::uint64_t idKey = (static_cast<std::uint64_t>(id) << 32) | ReadAt<std::uint32_t>(header, 0x08);
-            if (std::ranges::binary_search(liveIds, idKey)) continue;
-
-            // Records are 8-byte aligned; the last one is sized from its header
-            const ULONGLONG span = i + 1 < offsets.size() ? offsets[i + 1] - offset :
-                (DataRecordHeaderSize + ReadAt<std::uint32_t>(header, 0x0c) + 7ull) & ~7ull;
-            garbage += span;
-            if (std::ranges::binary_search(loggedIds, idKey) || std::ranges::binary_search(pendingOffsets, offsetKey) ||
-                std::ranges::binary_search(pendingIds, idKey))
-            {
-                deleted++;
-                deletedBytes += span;
-            }
+            if (const std::uint32_t record = FindRecord(*container, ReadAt<std::uint32_t>(bytes, offset)); record != NoRecord)
+                flags[record] |= Deleted;
         }
+    }
 
-        // A regular collection compacts a container only once at most 95% of
-        // its chunks stay; a full one compacts every container with garbage
-        if (deleted > 0 && 100 * (offsets.size() - deleted) / offsets.size() <= DataMinOccupancyPercent)
+    // Every data record that no live map reaches is garbage awaiting collection.
+    // A regular collection compacts a container only once at most 95% of its
+    // chunks stay; a full one compacts every container with garbage.
+    for (const DataContainer& container : m_data)
+    {
+        // Moved records of a container without local ids were counted as unresolved chunks, so
+        // its unreached records may be live; they stay in the overhead
+        if (!container.idsKnown) continue;
+        std::size_t deleted = 0;
+        ULONGLONG deletedBytes = 0;
+        for (std::uint32_t record = container.first; record < container.first + container.count; record++)
+        {
+            if ((flags[record] & Live) != 0) continue;
+            garbage += m_span[record];
+            if ((flags[record] & Deleted) == 0) continue;
+            deleted++;
+            deletedBytes += m_span[record];
+        }
+        if (deleted > 0 && 100 * (container.count - deleted) / container.count <= DataMinOccupancyPercent)
             regularGarbage += deletedBytes;
     }
 
@@ -772,5 +892,13 @@ bool CDedupStore::ComputeSpaceUsage(const CancelCheck& cancelled)
     m_space.overheadBytes = m_space.storeBytes > accounted ? m_space.storeBytes - accounted : 0;
     VTRACE(L"Dedup store space: store {} live {} garbage {} (regular {}) overhead {}",
         m_space.storeBytes, m_space.liveChunkBytes, m_space.garbageBytes, m_space.regularGarbageBytes, m_space.overheadBytes);
-    return true;
+}
+
+std::span<const std::uint32_t> CDedupStore::GetMapChunks(const Hash16& hash) const noexcept
+{
+    const auto map = m_maps.find(hash);
+    if (map == m_maps.end() || map->second >= m_mapRecord.size()) return {};
+    const std::uint32_t record = m_mapRecord[map->second];
+    if (record == NoRecord) return {};
+    return std::span(m_chunkList).subspan(m_recordChunks[record], m_recordChunks[record + 1] - m_recordChunks[record]);
 }

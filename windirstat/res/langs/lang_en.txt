@@ -71,6 +71,7 @@ IDS_DEDUP_ITEM_SHARED=<Shared Deduplicated Data>
 IDS_DEDUP_METRICS=Shared data shown once,Effective,Exclusive,Logical,Allocated
 IDS_DEDUP_NO_ACCESS=the deduplication chunk store could not be opened; run WinDirStat as administrator
 IDS_DEDUP_OUT_OF_MEMORY=not enough memory to read the deduplication chunk store
+IDS_DEDUP_PROGRESS=Reading deduplication data
 IDS_DEDUP_SHARING_ITEMS={} selected items
 IDS_DEDUP_SHARING_NOT_ACCOUNTED=The selection contains no deduplicated files accounted for in this scan.
 IDS_DEDUP_SHARING_OUTSIDE=- {} also used by files outside of the scan

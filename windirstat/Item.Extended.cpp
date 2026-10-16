@@ -1141,7 +1141,9 @@ ULONGLONG CItem::GetProgressRangeDrive() const
 
     total -= free;
 
-    return total;
+    // A chunk store kept out of the scan by a filter is in use but never reached
+    const ULONGLONG excluded = CDedupAccounting::Get().GetExcludedStoreBytes(this);
+    return total > excluded ? total - excluded : 0;
 }
 
 COLORREF CItem::GetGraphColor() const

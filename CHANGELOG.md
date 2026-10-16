@@ -6,6 +6,7 @@ Enhancements
 - Added Freed If Deleted and Shared columns for files and folders on deduplicated volumes
 - Added a Shared Blocks tab listing the files that share deduplicated data with a selection
 - Added highlighting of files sharing deduplicated data with the selected file in the visualizations
+- Added progress for reading deduplication data and kept it in memory, so refreshes and deletions recompute in seconds
 - Improved NTFS direct volume scanning performance
 - Reduced memory usage in File Watcher
 - Reduced memory allocations during file enumeration and path filtering

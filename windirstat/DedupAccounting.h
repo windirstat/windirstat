@@ -72,6 +72,9 @@ public:
     // Forgets everything without touching sizes (the tree is being destroyed)
     void Clear();
 
+    // Drops the stores kept for later scans; scan thread, while the accounting is turned off
+    void ReleaseCaches();
+
     // Drops the entries of an item that is being destroyed
     void Unregister(const CItem* item);
 
@@ -109,6 +112,15 @@ public:
     // Volumes that could not be accounted, with the reason; cleared by the call
     std::vector<std::wstring> TakeFailures();
 
+    // Progress of the running post-scan in permille, -1 when none runs
+    int GetProgress() const noexcept { return m_progress.load(std::memory_order_relaxed); }
+
+    // Bytes of chunk stores a filter keeps out of the scan, so the progress range
+    // of their drives covers only what the scan can find. Scan thread, before the
+    // drives are enumerated.
+    void MeasureExcludedStores(const std::vector<CItem*>& scanRoots);
+    ULONGLONG GetExcludedStoreBytes(const CItem* volumeRoot) const;
+
 private:
 
     // Shared chunks of one volume as two compressed adjacency lists
@@ -126,9 +138,22 @@ private:
         std::vector<const CItem*> chunkOwner;    // pseudo item holding the chunk
     };
 
+    // Parsed store and reparse data of one volume, kept across scans while the
+    // store files stay unchanged, so a refresh rereads neither
+    struct VolumeCache
+    {
+        std::mutex lock; // held while the volume is processed
+        std::wstring storePath;
+        std::uint64_t signature = 0;         // store snapshot the data below belongs to
+        bool filesValid = false;
+        CDedupStore::FileMaps files;
+        std::unique_ptr<CDedupStore> store;
+    };
+
     CDedupAccounting() = default;
 
-    void ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& files, const CDedupStore::CancelCheck& cancelled);
+    void ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& files, const CDedupStore::CancelCheck& cancelled,
+        const std::function<void(int permille)>& progress);
     static std::wstring GetVolumePath(const CItem* volumeRoot);
     static CItem* AddPseudoItem(CItem* parent, DEDUPITEMKIND kind, ULONGLONG bytes);
     void AddFailure(const std::wstring& volume, const std::wstring& reason);
@@ -148,4 +173,10 @@ private:
     std::unordered_set<const CItem*> m_chunkStores;         // chunk store folders in the tree
     std::unordered_set<std::wstring> m_dedupVolumes;        // volume paths holding optimized files
     std::unordered_map<std::wstring, bool> m_storeProbes;   // volume path -> chunk store found
+    std::unordered_map<std::wstring, ULONGLONG> m_excludedStores; // volume path -> filtered out store bytes
+    std::atomic<int> m_progress = -1;
+
+    // Survives Clear(); the nodes stay in place, so entries are used without m_cacheLock
+    std::mutex m_cacheLock;
+    std::unordered_map<std::wstring, VolumeCache> m_caches; // volume path -> cache
 };

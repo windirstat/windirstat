@@ -6,6 +6,7 @@
 
 #include "pch.h"
 #include "DedupAccounting.h"
+#include "Filtering.h"
 
 CDedupAccounting& CDedupAccounting::Get()
 {
@@ -54,6 +55,55 @@ std::vector<std::wstring> CDedupAccounting::TakeFailures()
     return std::exchange(m_failures, {});
 }
 
+void CDedupAccounting::MeasureExcludedStores(const std::vector<CItem*>& scanRoots)
+{
+    // Only drives have a progress range. The scan skips a store below a folder that a filter or the
+    // hidden and protected folder options leave out, as ScanItems decides it.
+    const bool byAttributes = COptions::ExcludeHiddenDirectory || COptions::ExcludeProtectedDirectory;
+    const auto skipped = [byAttributes](const std::wstring& folder)
+    {
+        if (CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(folder)) return true;
+        const DWORD attributes = byAttributes ? GetFileAttributesW(folder.c_str()) : INVALID_FILE_ATTRIBUTES;
+        if (attributes == INVALID_FILE_ATTRIBUTES) return false;
+        constexpr DWORD hiddenSystem = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+        return COptions::ExcludeHiddenDirectory && (attributes & FILE_ATTRIBUTE_HIDDEN) != 0 ||
+            COptions::ExcludeProtectedDirectory && (attributes & hiddenSystem) == hiddenSystem;
+    };
+    std::unordered_map<std::wstring, ULONGLONG> excluded;
+    if (CFiltering::IsFilterActive() || byAttributes)
+    {
+        for (const CItem* root : scanRoots)
+        {
+            if (!root->IsTypeOrFlag(IT_DRIVE) || root->IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) continue;
+            const std::wstring volumePath = GetVolumePath(root);
+            const std::wstring storePath = CDedupStore::FindStore(volumePath);
+            if (storePath.empty()) continue;
+
+            // Check each folder below the drive root down to the store
+            const std::wstring storeDirectory = storePath.substr(storePath.starts_with(L"\\\\?\\") ? 4 : 0);
+            for (std::size_t end = storeDirectory.find(L'\\', storeDirectory.find(L'\\') + 1);; end = storeDirectory.find(L'\\', end + 1))
+            {
+                if (skipped(storeDirectory.substr(0, end)))
+                {
+                    excluded[volumePath] = CDedupStore::DirectorySize(storePath);
+                    break;
+                }
+                if (end == std::wstring::npos) break;
+            }
+        }
+    }
+    std::unique_lock lock(m_lock);
+    m_excludedStores = std::move(excluded);
+}
+
+ULONGLONG CDedupAccounting::GetExcludedStoreBytes(const CItem* volumeRoot) const
+{
+    std::shared_lock lock(m_lock);
+    if (m_excludedStores.empty()) return 0;
+    const auto it = m_excludedStores.find(GetVolumePath(volumeRoot));
+    return it != m_excludedStores.end() ? it->second : 0;
+}
+
 void CDedupAccounting::RunPostScan(const std::vector<CItem*>& scanRoots, const CDedupStore::CancelCheck& cancelled)
 {
     // Collect candidates per volume; files below a mount belong to that volume's own chunk store
@@ -87,16 +137,74 @@ void CDedupAccounting::RunPostScan(const std::vector<CItem*>& scanRoots, const C
             }
         }
     }
-    if (perVolume.empty()) return;
 
+    // Volumes with optimized files or a store show this pass. They stay undone while it runs, so the
+    // scan can still be stopped and its progress shown; the progress is the mean over these volumes
+    // and never goes backwards. Reparse points of other tags (WOF, app links) are only told apart by
+    // reading them, so a volume with nothing else is checked quietly, and only when it has a dedup
+    // folder: its existence is visible without access to System Volume Information, unlike its content.
     std::vector<std::pair<CItem*, std::vector<CItem*>*>> volumes;
-    for (auto& [volumeRoot, files] : perVolume) volumes.emplace_back(volumeRoot, &files);
+    std::vector<std::uint8_t> shown;
+    std::unordered_set<std::wstring> keptCaches;
+    for (auto& [volumeRoot, files] : perVolume)
+    {
+        std::wstring volumePath = GetVolumePath(volumeRoot);
+        if (volumePath.empty()) continue;
+        const bool dedup = std::ranges::any_of(files, [](const CItem* file) { return file->IsTypeOrFlag(ITRP_DEDUP); }) ||
+            !CDedupStore::FindStore(volumePath).empty();
+        if (!dedup)
+        {
+            if (!volumePath.ends_with(L'\\')) volumePath += L'\\';
+            if (GetFileAttributesW((volumePath + L"System Volume Information\\Dedup").c_str()) == INVALID_FILE_ATTRIBUTES &&
+                (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)) continue;
+        }
+        volumes.emplace_back(volumeRoot, &files);
+        shown.push_back(dedup ? 1 : 0);
+        keptCaches.insert(GetVolumePath(volumeRoot));
+    }
+    const auto shownCount = static_cast<std::size_t>(std::ranges::count(shown, 1));
+    VTRACE(L"Dedup post-scan of {} volumes, {} with deduplication", volumes.size(), shownCount);
+
+    // Cached stores of volumes that are neither processed now nor still accounted in the tree are released
+    {
+        std::shared_lock lock(m_lock);
+        for (const CItem* volumeRoot : m_indexes | std::views::keys) keptCaches.insert(GetVolumePath(volumeRoot));
+    }
+    {
+        std::scoped_lock lock(m_cacheLock);
+        std::erase_if(m_caches, [&](const auto& cache) { return !keptCaches.contains(cache.first); });
+    }
+    if (volumes.empty()) return;
+
+    if (shownCount != 0) m_progress.store(0, std::memory_order_relaxed);
+    for (const auto [index, volume] : std::views::enumerate(volumes))
+    {
+        if (shown[static_cast<std::size_t>(index)] != 0) volume.first->UpwardSetUndone();
+    }
+
+    std::vector<std::atomic<int>> volumeProgress(volumes.size());
+    const auto raise = [](std::atomic<int>& value, const int to)
+    {
+        for (int current = value.load(std::memory_order_relaxed);
+            to > current && !value.compare_exchange_weak(current, to, std::memory_order_relaxed);) {}
+    };
+    const auto report = [&](const std::size_t volume, const int permille)
+    {
+        if (shown[volume] == 0) return;
+        raise(volumeProgress[volume], permille);
+        int total = 0;
+        for (const auto& value : volumeProgress) total += value.load(std::memory_order_relaxed);
+        raise(m_progress, std::min(total / static_cast<int>(shownCount), 999));
+    };
+
     std::for_each(std::execution::par, volumes.begin(), volumes.end(), [&](auto& volume)
     {
+        const auto index = static_cast<std::size_t>(&volume - volumes.data());
+
         // An exception would terminate the parallel loop; very large stores can exhaust memory
         try
         {
-            ProcessVolume(volume.first, *volume.second, cancelled);
+            ProcessVolume(volume.first, *volume.second, cancelled, [&](const int permille) { report(index, permille); });
         }
         catch (const std::bad_alloc&)
         {
@@ -106,15 +214,43 @@ void CDedupAccounting::RunPostScan(const std::vector<CItem*>& scanRoots, const C
         {
             AddFailure(volume.first->GetPath(), Localization::Lookup(IDS_DEDUP_OUT_OF_MEMORY));
         }
+        report(index, 1000);
     });
+    m_progress.store(-1, std::memory_order_relaxed);
 }
 
-void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& files, const CDedupStore::CancelCheck& cancelled)
+void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& files, const CDedupStore::CancelCheck& cancelled,
+    const std::function<void(int permille)>& progress)
 {
     const std::wstring volumePath = GetVolumePath(volumeRoot);
     if (volumePath.empty()) return;
+    const auto isCancelled = [&] { return cancelled && cancelled(); };
 
-    // Resolve each candidate's stream map digests from its reparse data
+    VolumeCache* cache = nullptr;
+    {
+        std::scoped_lock lock(m_cacheLock);
+        cache = &m_caches[volumePath];
+    }
+    std::scoped_lock cacheLock(cache->lock);
+
+    // Optimized files of the whole volume by file reference. Their stream maps only change when
+    // a file is optimized again, which changes the store as well, so while the store files stay
+    // unchanged only new files are read. The reparse point index needs the rights the store needs.
+    const std::wstring storePath = CDedupStore::FindStore(volumePath);
+    const auto snapshot = storePath.empty() ? std::nullopt : CDedupStore::TakeSnapshot(storePath);
+    if (!snapshot.has_value() || cache->storePath != storePath || cache->signature != snapshot->signature)
+    {
+        cache->store.reset();
+        cache->filesValid = false;
+    }
+    cache->storePath = storePath;
+    cache->signature = snapshot.has_value() ? snapshot->signature : 0;
+    cache->filesValid = snapshot.has_value() && CDedupStore::EnumerateVolumeFiles(volumePath, cache->files, cache->filesValid,
+        cancelled, [&](const double done) { progress(static_cast<int>(done * 300)); });
+    if (isCancelled()) return;
+    progress(300);
+
+    // Resolve each candidate's stream map digests, by its file reference when the volume was enumerated
     struct Entry
     {
         CItem* item = nullptr;
@@ -125,48 +261,73 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
     };
     std::vector<Entry> entries(files.size());
     CDedupStore::CancelLatch latch(cancelled);
-    std::for_each(std::execution::par, entries.begin(), entries.end(), [&](Entry& entry)
+    const auto viaLink = [volumeRoot](const CItem* item)
+    {
+        // A followed junction or symbolic link may lead to another volume, where file references mean other files
+        for (const CItem* parent = item->GetParent(); parent != nullptr && parent != volumeRoot; parent = parent->GetParent())
+        {
+            if (parent->IsTypeOrFlag(ITRP_JUNCTION, ITRP_SYMLINK)) return true;
+        }
+        return false;
+    };
+    CDedupStore::ParallelForEach(entries, [&](Entry& entry)
     {
         entry.item = files[static_cast<std::size_t>(&entry - entries.data())];
         if (latch()) return;
-        if (auto info = CDedupStore::ReadReparseData(entry.item->GetPathLong()); info.has_value())
+        if (cache->filesValid && !viaLink(entry.item))
         {
-            entry.maps = std::move(info->maps);
-
-            // Each item is handled by exactly one thread, so the flag update is not shared
-            entry.item->SetReparseTag(IO_REPARSE_TAG_DEDUP);
+            // The enumeration has every optimized file, so other reparse points are not
+            if (const auto known = cache->files.find(entry.item->GetIndex()); known != cache->files.end()) entry.maps = known->second;
+            else if (!entry.item->IsTypeOrFlag(ITRP_DEDUP)) return;
         }
+        if (entry.maps.empty())
+        {
+            if (auto info = CDedupStore::ReadReparseData(entry.item->GetPathLong()); info.has_value()) entry.maps = std::move(info->maps);
+        }
+
+        // Each item is handled by exactly one thread, so the flag update is not shared
+        if (!entry.maps.empty()) entry.item->SetReparseTag(IO_REPARSE_TAG_DEDUP);
     });
     std::erase_if(entries, [](const Entry& entry) { return entry.maps.empty(); });
-    if (entries.empty() || latch() || (cancelled && cancelled())) return;
+    if (entries.empty() || latch() || isCancelled()) return;
 
-    // Undone volumes are re-sorted and marked done again by the scan finalization
-    volumeRoot->UpwardSetUndone();
     {
         std::unique_lock lock(m_lock);
         m_dedupVolumes.insert(volumePath);
     }
-
-    const std::wstring storePath = CDedupStore::FindStore(volumePath);
-    if (storePath.empty())
+    if (!snapshot.has_value())
     {
         AddFailure(volumePath, Localization::Lookup(IDS_DEDUP_NO_ACCESS));
         return;
     }
 
-    // Live maps come from existing files; the store only learns of deletions at garbage collection
-    const auto liveMaps = CDedupStore::EnumerateVolumeMaps(volumePath, cancelled);
-    if (cancelled && cancelled()) return;
-    CDedupStore store;
-    if (!store.Load(storePath, liveMaps.has_value() ? &*liveMaps : nullptr, cancelled))
+    if (cache->store == nullptr)
     {
-        if (!(cancelled && cancelled())) AddFailure(volumePath, store.GetError());
-        return;
+        auto store = std::make_unique<CDedupStore>();
+        if (!store->Load(storePath, cancelled, [&](const double done) { progress(300 + static_cast<int>(done * 550)); }))
+        {
+            if (!isCancelled()) AddFailure(volumePath, store->GetError());
+            return;
+        }
+        cache->store = std::move(store);
     }
+    CDedupStore& store = *cache->store;
+    progress(850);
+
+    // Live maps come from existing files; the store only learns of deletions at garbage collection
+    std::optional<CDedupStore::MapSet> liveMaps;
+    if (cache->filesValid)
+    {
+        liveMaps.emplace();
+        for (const auto& maps : cache->files | std::views::values) liveMaps->insert(maps.begin(), maps.end());
+    }
+    store.Evaluate(liveMaps.has_value() ? &*liveMaps : nullptr, *snapshot);
+    liveMaps.reset();
+    if (isCancelled()) return;
+    progress(900);
 
     // A scanned chunk store is replaced by the attributed data. Its garbage and metadata take
-    // space on the volume either way, also when a filter keeps the store out of the scan;
-    // nothing has changed yet if that split fails
+    // space on the volume either way, also when a filter keeps the store out of the scan.
     const auto metric = static_cast<DEDUPMETRIC>(COptions::DedupPhysicalMetric.Obj());
     std::wstring storeDirectory = storePath;
     if (storeDirectory.starts_with(L"\\\\?\\")) storeDirectory.erase(0, 4);
@@ -174,11 +335,6 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
     CItem* const storeItem = volumeRoot->FindItemByPath(storeDirectory);
     CItem* const chunkStore = metric != DEDUP_ALLOCATION ? storeItem : nullptr; // neutralized below
     const bool withSpaceItems = metric != DEDUP_ALLOCATION && (chunkStore != nullptr || volumeRoot->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT));
-    if (withSpaceItems && !store.ComputeSpaceUsage(cancelled))
-    {
-        if (!(cancelled && cancelled())) AddFailure(volumePath, store.GetError());
-        return;
-    }
 
     // Each stream map is resolved once and remembers every entry (hardlinks too) using it
     std::vector<std::pair<CDedupStore::Hash16, std::uint32_t>> mapEntries;
@@ -206,25 +362,26 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
     // Chunks of one map of one file are exclusive; the others are recorded as (chunk, map)
     // visits. Hardlinks count as distinct files, since deleting one link frees nothing.
     std::vector<std::pair<std::uint32_t, std::uint32_t>> visits;
-    const bool resolved = store.Resolve(requests, [&](const std::size_t request, const std::uint32_t chunkIndex,
-        const CDedupStore::ChunkInfo& chunk)
+    for (std::uint32_t request = 0; request < requests.size(); request++)
     {
         const std::uint32_t first = mapUserOffsets[request];
         const std::uint32_t last = mapUserOffsets[request + 1];
-        for (std::uint32_t i = first; i < last; i++)
-            entries[mapUsers[i]].effective += static_cast<double>(chunk.diskSize) / std::max(chunk.refs, 1u);
-        if (chunk.refs <= 1 && last - first == 1)
+        for (const std::uint32_t chunk : store.GetMapChunks(requests[request]))
         {
-            entries[mapUsers[first]].onDisk += chunk.diskSize;
-            entries[mapUsers[first]].exclusive += chunk.diskSize;
+            const std::uint32_t size = store.GetChunkSize(chunk);
+            const std::uint32_t refs = store.GetChunkRefs(chunk);
+            for (std::uint32_t i = first; i < last; i++)
+                entries[mapUsers[i]].effective += static_cast<double>(size) / std::max(refs, 1u);
+            if (refs <= 1 && last - first == 1)
+            {
+                entries[mapUsers[first]].onDisk += size;
+                entries[mapUsers[first]].exclusive += size;
+            }
+            else visits.emplace_back(chunk, request);
         }
-        else visits.emplace_back(chunkIndex, static_cast<std::uint32_t>(request));
-    }, cancelled);
-    if (!resolved || (cancelled && cancelled()))
-    {
-        if (!(cancelled && cancelled())) AddFailure(volumePath, store.GetError());
-        return;
     }
+    if (isCancelled()) return;
+    progress(950);
 
     // Per chunk: its distinct users, whether unscanned files use it too, and their common folder
     std::ranges::sort(visits);
@@ -252,14 +409,14 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
         const std::size_t mapVisits = end - begin; // distinct maps, as each is resolved once
         begin = end;
 
-        const CDedupStore::ChunkInfo& chunk = store.GetChunk(chunkIndex);
-        const bool external = mapVisits < chunk.refs;
-        for (const std::uint32_t user : chunkUsers) entries[user].onDisk += chunk.diskSize;
+        const std::uint32_t chunkSize = store.GetChunkSize(chunkIndex);
+        const bool external = mapVisits < store.GetChunkRefs(chunkIndex);
+        for (const std::uint32_t user : chunkUsers) entries[user].onDisk += chunkSize;
 
         // Several stream maps of one file (one per GB) still make it exclusive
         if (!external && chunkUsers.size() == 1)
         {
-            entries[chunkUsers.front()].exclusive += chunk.diskSize;
+            entries[chunkUsers.front()].exclusive += chunkSize;
             continue;
         }
 
@@ -270,9 +427,9 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
             lca = entries[chunkUsers.front()].item->GetParent();
             for (const std::uint32_t user : chunkUsers)
                 while (!lca->IsAncestorOf(entries[user].item)) lca = lca->GetParent();
-            owned[lca] += chunk.diskSize;
+            owned[lca] += chunkSize;
         }
-        else externalBytes += chunk.diskSize;
+        else externalBytes += chunkSize;
 
         // Folders between a user and the common folder (or the volume root) hold data used elsewhere too
         const auto stamp = static_cast<std::uint32_t>(chunkLca.size() + 1);
@@ -283,14 +440,14 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
                 auto& mark = stamps[parent];
                 if (mark == stamp) break;
                 mark = stamp;
-                folders[parent].shared += chunk.diskSize;
+                folders[parent].shared += chunkSize;
                 if (parent == volumeRoot) break;
             }
         }
 
         index.chunkFiles.insert(index.chunkFiles.end(), chunkUsers.begin(), chunkUsers.end());
         index.chunkOffsets.push_back(static_cast<std::uint32_t>(index.chunkFiles.size()));
-        index.chunkBytes.push_back(chunk.diskSize);
+        index.chunkBytes.push_back(chunkSize);
         index.chunkExternal.push_back(external ? 1 : 0);
         chunkLca.push_back(lca);
     }
@@ -348,6 +505,7 @@ void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& fil
     for (const auto& [node, bytes] : owned) folders[node].owned += bytes;
 
     // Finalization re-sorts only the folders that are marked undone
+    volumeRoot->UpwardSetUndone();
     std::unordered_set<CItem*> touchedParents;
     for (const auto [slot, entry] : std::views::enumerate(entries))
     {
@@ -525,6 +683,12 @@ void CDedupAccounting::Clear()
     m_chunkStores.clear();
     m_dedupVolumes.clear();
     m_storeProbes.clear();
+}
+
+void CDedupAccounting::ReleaseCaches()
+{
+    std::scoped_lock lock(m_cacheLock);
+    m_caches.clear();
 }
 
 void CDedupAccounting::Unregister(const CItem* item)
