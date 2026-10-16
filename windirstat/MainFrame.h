@@ -37,6 +37,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_PERMSLIST,
     LF_EXTLIST,
     LF_STORAGEANALYTICS,
+    LF_DEDUPSHARELIST = 10, // even so the bitwise focus test does not match LF_FILETREE
 };
 
 //
@@ -177,6 +178,7 @@ public:
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
+    CFileDedupShareView* GetFileDedupShareView() const { return m_fileTabbedView->GetFileDedupShareView(); }
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }

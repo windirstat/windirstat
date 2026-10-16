@@ -8,6 +8,7 @@
 #include "CsvLoader.h"
 #include "FinderMtp.h"
 #include "StorageSource.h"
+#include "DedupAccounting.h"
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -124,6 +125,8 @@ enum : std::uint8_t
     FIELD_OWNER,
     FIELD_SCAN_OUTCOME,
     FIELD_SCAN_ERROR,
+    FIELD_DEDUP_FREED,
+    FIELD_DEDUP_SHARED,
     FIELD_COUNT
 };
 
@@ -144,7 +147,9 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
         { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER },
         { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
+        { L"ScanError", FIELD_SCAN_ERROR },
+        { Localization::Lookup(IDS_COL_DEDUP_FREED), FIELD_DEDUP_FREED },
+        { Localization::Lookup(IDS_COL_DEDUP_SHARED), FIELD_DEDUP_SHARED }
     };
 
     for (const auto [c, name] : std::views::enumerate(header))
@@ -217,7 +222,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
     const std::wstring_view folders, CItem*& newroot,
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap,
-    const std::wstring_view scanOutcome = {}, const std::wstring_view scanError = {})
+    const std::wstring_view scanOutcome = {}, const std::wstring_view scanError = {},
+    const std::wstring_view dedupFreed = {}, const std::wstring_view dedupShared = {})
 {
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
     const bool isMtp = (type & ITF_MTP) != 0;
@@ -227,7 +233,7 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     const auto itType = IT_MASK & type;
     if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
-        itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN) return nullptr;
+        itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN && itType != IT_DEDUP) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
 
     std::wstring_view displayName = namePath;
@@ -312,6 +318,16 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     assert(newitem->IsMtpRoot() == isMtpRoot);
 
+    // Restore saved dedup values; ordinary files derive theirs, free and unknown space have none
+    if (newitem->IsTypeOrFlag(IT_DEDUP)) CDedupAccounting::Get().SetLoaded(newitem, 0, 0);
+    else if ((!dedupFreed.empty() || !dedupShared.empty()) &&
+        newitem->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE, IT_MYCOMPUTER, ITRP_DEDUP))
+    {
+        const ULONGLONG freed = dedupFreed.empty() ? 0 : wcstoull(dedupFreed.data(), nullptr, 10);
+        const ULONGLONG shared = dedupShared.empty() ? 0 : wcstoull(dedupShared.data(), nullptr, 10);
+        CDedupAccounting::Get().SetLoaded(newitem, freed, shared);
+    }
+
     if (!newitem->TmiIsLeaf() && (isRemote || newitem->GetItemsCount() > 0))
     {
         parentMap[namePath] = newitem;
@@ -390,14 +406,20 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         // Skip malformed rows that do not cover all required columns
         if (fields.size() <= maxRequiredField) continue;
 
+        // Optional columns are present only when the header listed them and the row reaches them
+        const auto optionalField = [&](const std::size_t field) -> std::wstring_view
+        {
+            return orderMap[field] != UCHAR_MAX && orderMap[field] < fields.size() ? fields[orderMap[field]] : std::wstring_view{};
+        };
+
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
         BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
-            orderMap[FIELD_SCAN_OUTCOME] < fields.size() ? fields[orderMap[FIELD_SCAN_OUTCOME]] : std::wstring_view{},
-            orderMap[FIELD_SCAN_ERROR] < fields.size() ? fields[orderMap[FIELD_SCAN_ERROR]] : std::wstring_view{});
+            optionalField(FIELD_SCAN_OUTCOME), optionalField(FIELD_SCAN_ERROR),
+            optionalField(FIELD_DEDUP_FREED), optionalField(FIELD_DEDUP_SHARED));
     }
 
     FinalizeImportedResults(newroot);
@@ -423,7 +445,9 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         { Localization::Lookup(IDS_COL_INDEX),         FIELD_INDEX         },
         { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         },
         { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
+        { L"ScanError", FIELD_SCAN_ERROR },
+        { Localization::Lookup(IDS_COL_DEDUP_FREED),   FIELD_DEDUP_FREED   },
+        { Localization::Lookup(IDS_COL_DEDUP_SHARED),  FIELD_DEDUP_SHARED  }
     };
 
     CItem* newroot = nullptr;
@@ -457,7 +481,8 @@ static CItem* LoadResultsJson(std::ifstream& reader)
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
             fieldValues[FIELD_FOLDERS], newroot, parentMap,
-            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR]);
+            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR],
+            fieldValues[FIELD_DEDUP_FREED], fieldValues[FIELD_DEDUP_SHARED]);
     }
 
     FinalizeImportedResults(newroot);
@@ -479,6 +504,8 @@ CItem* LoadResults(const std::wstring& path)
         reader.seekg(0);
     }
 
+    // Drop dedup values staged by an earlier failed load; OpenLoadedScan commits these
+    CDedupAccounting::Get().DiscardLoaded();
     return IsJsonPath(path) ? LoadResultsJson(reader) : LoadResultsCsv(reader);
 }
 
@@ -536,7 +563,7 @@ static std::unordered_map<const CItem*, LONGLONG>
 
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
-    const bool includeOwner)
+    const bool includeOwner, const bool includeDedup)
 {
     // Header
     for (const auto [i, col] : std::views::enumerate(cols))
@@ -565,6 +592,12 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const auto& result = item->GetScanResult();
         outf << "," << QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]) << "," <<
             QuoteAndConvert(StorageSource::EscapeName(result.error, true));
+        if (includeDedup)
+        {
+            const auto& accounting = CDedupAccounting::Get();
+            std::format_to(std::ostreambuf_iterator(outf), ",{},{}",
+                accounting.GetFreed(item).value_or(0), accounting.GetShared(item).value_or(0));
+        }
     }
     outf.flush();
     return outf.good();
@@ -596,7 +629,7 @@ static bool SaveResultsJson(std::ofstream& outf,
     const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols,
     const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
-    const bool includeOwner)
+    const bool includeOwner, const bool includeDedup)
 {
     return SaveJson(outf, cols, items, [&](const CItem* item, const auto& keys)
     {
@@ -623,10 +656,18 @@ static bool SaveResultsJson(std::ofstream& outf,
             keys[FIELD_INDEX], index);
         if (includeOwner)
             outf << ",\r\n  " << keys[FIELD_OWNER] << ": " << JsonQuoteW(item->GetOwner(true));
+        // The scan result keys come last, followed by the dedup keys when present
         const auto& result = item->GetScanResult();
-        outf << ",\r\n  " << keys[keys.size() - 2] << ": " <<
+        const std::size_t scanKey = keys.size() - (includeDedup ? 4 : 2);
+        outf << ",\r\n  " << keys[scanKey] << ": " <<
             JsonQuoteW(scanOutcomes[static_cast<size_t>(result.outcome)]);
-        outf << ",\r\n  " << keys.back() << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
+        outf << ",\r\n  " << keys[scanKey + 1] << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
+        if (includeDedup)
+        {
+            const auto& accounting = CDedupAccounting::Get();
+            outf << ",\r\n  " << keys[keys.size() - 2] << ": " << accounting.GetFreed(item).value_or(0);
+            outf << ",\r\n  " << keys.back() << ": " << accounting.GetShared(item).value_or(0);
+        }
         outf << "\r\n}";
     });
 }
@@ -653,12 +694,20 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     cols.emplace_back(L"ScanOutcome");
     cols.emplace_back(L"ScanError");
 
+    // Dedup columns only when there is dedup data, so other reports stay unchanged
+    const bool includeDedup = CDedupAccounting::Get().HasData();
+    if (includeDedup)
+    {
+        cols.push_back(Localization::Lookup(IDS_COL_DEDUP_FREED));
+        cols.push_back(Localization::Lookup(IDS_COL_DEDUP_SHARED));
+    }
+
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
     return IsJsonPath(path)
-        ? SaveResultsJson(outf, items, cols, adjustedSizes, includeOwner)
-        : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner);
+        ? SaveResultsJson(outf, items, cols, adjustedSizes, includeOwner, includeDedup)
+        : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner, includeDedup);
 }
 
 static std::vector<std::tuple<std::wstring, const CItem*, bool>>

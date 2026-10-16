@@ -30,6 +30,8 @@
 #define IDC_DARK_MODE_DISABLED          1024
 #define IDC_DARK_MODE_ENABLED           1025
 #define IDC_DARK_MODE_USE_WINDOWS       1026
+#define IDC_DEDUP_ACCOUNTING            1204
+#define IDC_DEDUP_METRIC                1205
 #define IDC_DELETION_BIN_WARNING        1027
 #define IDC_DELETION_WARNING            1028
 #define IDC_DOWN                        1029
@@ -246,6 +248,7 @@
 #define ID_COMPRESS_LZX                 32800
 #define ID_COMPUTE_HASH                 32801
 #define ID_CONFIGURE                    32802
+#define ID_DEDUP_SHOW_SHARING           32970
 #define ID_EDIT_COPY_CLIPBOARD          32803
 #define ID_EXTLIST_SEARCH_EXTENSION     32804
 #define ID_FILE_SELECT                  32805
@@ -374,8 +377,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        124
-#define _APS_NEXT_COMMAND_VALUE         32970
-#define _APS_NEXT_CONTROL_VALUE         1204
+#define _APS_NEXT_COMMAND_VALUE         32971
+#define _APS_NEXT_CONTROL_VALUE         1206
 #define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

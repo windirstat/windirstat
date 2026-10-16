@@ -306,6 +306,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_DUPELIST: GetFileDupeView()->SetFocus(); break;
         case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
         case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
+        case LF_DEDUPSHARELIST: GetFileDedupShareView()->SetFocus(); break;
         case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
         case LF_PERMSLIST: GetFilePermsView()->SetFocus(); break;
         case LF_STORAGEANALYTICS:

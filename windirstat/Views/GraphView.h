@@ -41,6 +41,7 @@ protected:
     virtual void DrawSelection(CDC* pDC) = 0;
     virtual void DrawHover(CDC* pDC) = 0;
     virtual void DrawHighlightExtension(CDC* pDC) = 0;
+    virtual void DrawRelated(CDC* pDC) = 0;
     virtual CItem* FindItemAtPoint(CPoint point) = 0;
     virtual bool HasValidLayout() const { return IsDrawn(); }
 
@@ -71,7 +72,10 @@ protected:
     void ClearHover();
     static bool IsExtensionHighlighted(const CItem* item);
     static const CItem* GetDisplayItem(const CItem* item);
-    static void RenderHighlightRectangle(CDC* pDC, CRect rect, bool hover = false);
+    static void RenderHighlightRectangle(CDC* pDC, CRect rect, bool hover = false, COLORREF outline = CLR_INVALID);
+
+    // Outline of the items sharing deduplicated data with the selection
+    static constexpr COLORREF RelatedColor = RGB(255, 140, 0);
 
 private:
     void PaintEmptyView(CDC* pDC);

@@ -874,6 +874,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     }
 
     CWinDirStatModel::Get()->RunPendingHeapCleanup();
+    if (::IsWindowEnabled(m_hWnd)) CWinDirStatModel::Get()->ShowPendingDedupFailures();
 
     CFrameWnd::OnTimer(nIDEvent);
 }

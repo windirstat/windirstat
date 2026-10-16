@@ -11,6 +11,7 @@
 #include "FinderMtp.h"
 #include "FinderRemote.h"
 #include "FinderNtfs.h"
+#include "DedupAccounting.h"
 
 class CItem::ScanBatch final
 {
@@ -220,6 +221,8 @@ CItem::~CItem()
     }
     // Release any MTP shell metadata registered to this item
     if (IsTypeOrFlag(ITF_MTP)) FinderMtp::UnregisterPath(m_index);
+    // Drop any deduplication accounting attached to this item
+    if (IsTypeOrFlag(ITRP_DEDUP, IT_DEDUP)) CDedupAccounting::Get().Unregister(this);
 }
 
 // --- Hierarchy ---
@@ -650,6 +653,7 @@ DWORD CItem::GetReparseTag() const noexcept
     if (IsTypeOrFlag(ITRP_MOUNT)) return IO_REPARSE_TAG_MOUNT_POINT;
     if (IsTypeOrFlag(ITRP_JUNCTION)) return IO_REPARSE_TAG_JUNCTION_POINT;
     if (IsTypeOrFlag(ITRP_CLOUD)) return IO_REPARSE_TAG_CLOUD_MASK;
+    if (IsTypeOrFlag(ITRP_DEDUP)) return IO_REPARSE_TAG_DEDUP;
     return 0;
 }
 
@@ -659,6 +663,7 @@ void CItem::SetReparseTag(const DWORD reparseType) noexcept
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetReparseType(ITRP_MOUNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetReparseType(ITRP_JUNCTION);
     else if ((reparseType & ~IO_REPARSE_TAG_CLOUD_MASK) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
+    else if (reparseType == IO_REPARSE_TAG_DEDUP) SetReparseType(ITRP_DEDUP);
 }
 
 std::wstring CItem::GetOwner(const bool force) const

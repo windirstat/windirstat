@@ -2,6 +2,10 @@
 # WinDirStat 2.9.3
 
 Enhancements
+- Added Windows Data Deduplication accounting that reads the chunk store to show the real size of optimized files
+- Added Freed If Deleted and Shared columns for files and folders on deduplicated volumes
+- Added a Shared Blocks tab listing the files that share deduplicated data with a selection
+- Added highlighting of files sharing deduplicated data with the selected file in the visualizations
 - Improved NTFS direct volume scanning performance
 - Reduced memory usage in File Watcher
 - Reduced memory allocations during file enumeration and path filtering

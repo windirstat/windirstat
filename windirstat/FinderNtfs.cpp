@@ -352,6 +352,21 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+
+                        // Deduplicated files keep their $REPARSE_POINT non-resident, so the tag is
+                        // only reachable through the duplicated information of the file name
+                        if ((fn->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 && baseRecord.ReparsePointTag == 0)
+                        {
+                            ULONG reparseTag;
+                            std::memcpy(&reparseTag, &fn->PackedEaSize, sizeof(reparseTag));
+                            if (reparseTag == IO_REPARSE_TAG_DEDUP)
+                            {
+                                baseRecord.ReparsePointTag = reparseTag;
+                                baseRecord.Attributes |= FILE_ATTRIBUTE_REPARSE_POINT |
+                                    (fn->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE);
+                            }
+                        }
+
                         // FileName is not null-terminated so compare by length and characters
                         if (fn->IsShortNameRecord() ||
                             (fn->FileNameLength == 1 && fn->FileName[0] == L'.') ||
