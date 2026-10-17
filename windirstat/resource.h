@@ -179,6 +179,29 @@
 #define IDC_WORKSFORDRIVES              1173
 #define IDC_WORKSFORFILES               1174
 #define IDC_WORKSFORUNCPATHS            1175
+#define IDC_STORAGE_PAGE                1176
+#define IDC_S3_BUCKET                   1177
+#define IDC_S3_ACCESS                   1179
+#define IDC_S3_REGION                   1180
+#define IDC_REMOTE_ENDPOINT             1183
+#define IDC_REMOTE_ACCOUNT              1184
+#define IDC_REMOTE_CONTAINER            1185
+#define IDC_REMOTE_PREFIX               1186
+#define IDC_REMOTE_SECRET               1187
+#define IDC_REMOTE_REMEMBER             1188
+#define IDC_S3_TOKEN                    1190
+#define IDC_REMOTE_RECENT               1191
+#define IDC_REMOTE_RECENT_LABEL         1192
+#define IDC_REMOTE_PROVIDER             1193
+#define IDC_REMOTE_PROVIDER_LABEL       1194
+#define IDC_REMOTE_NEW                  1195
+#define IDC_REMOTE_EDIT                 1196
+#define IDC_REMOTE_REMOVE               1197
+#define IDC_REMOTE_STATUS               1199
+#define IDC_REMOTE_CREDENTIALS          1200
+#define IDC_REMOTE_CHANGE               1201
+#define IDC_S3_TOKEN_TOGGLE             1202
+#define IDC_REMOTE_TARGET               1203
 
 #define IDD_ABOUTBOX                    100
 #define IDD_MESSAGEBOX                  101
@@ -200,6 +223,11 @@
 #define IDR_MAINFRAME                   116
 #define IDR_POPUP_MAP                   117
 #define IDR_POPUP_TREE                  118
+#define IDD_S3_CONNECTION               119
+#define IDD_WEBDAV_CONNECTION           120
+#define IDD_AZURE_CONNECTION            121
+#define IDD_SELECTCLOUD                 122
+#define IDD_CLOUD_CONNECTION            123
 
 #define IDS_APP_TITLE                   57344
 #define IDS_AUTHOR_EMAIL                57345
@@ -266,12 +294,12 @@
 #define ID_SCAN_STOP                    32820
 #define ID_SCAN_SUSPEND                 32821
 #define ID_SEARCH                       32822
-#define ID_TOOLS_CHKDSK_BASE            32823
-#define ID_TOOLS_DEFRAG_BASE            32849
+#define ID_TOOLS_CHKDSK_BASE            32823 // 32823 - 32848 reserved for A: through Z:
+#define ID_TOOLS_DEFRAG_BASE            32849 // 32849 - 32874 reserved for A: through Z:
 #define ID_TOOLS_PERMISSIONS            32875
 #define ID_TOOLS_RECOVERY               32876
 #define ID_TOOLS_SET_DATES              32877
-#define ID_TOOLS_SHADOW_COPY_BASE       32878
+#define ID_TOOLS_SHADOW_COPY_BASE       32878 // 32878 - 32903 reserved for A: through Z:
 #define ID_TOOLS_STORAGE_ANALYTICS      32904
 #define ID_TOOLS_WATCHER                32905
 #define ID_TREEMAP_LOGICAL_SIZE         32906
@@ -337,37 +365,7 @@
 #define ID_WATCHER_PAUSE                32966
 #define ID_WATCHER_START                32967
 #define ID_WDS_CONTROL                  32968
-#define ID_FILE_SELECT_CLOUD           32969
-#define IDD_SELECTCLOUD                 122
-#define IDD_CLOUD_CONNECTION            123
-#define IDD_S3_CONNECTION               119
-#define IDC_STORAGE_PAGE                1176
-#define IDC_S3_BUCKET                   1177
-#define IDC_S3_ACCESS                   1179
-#define IDC_S3_REGION                   1180
-#define IDD_WEBDAV_CONNECTION           120
-#define IDD_AZURE_CONNECTION            121
-#define IDC_REMOTE_ENDPOINT             1183
-#define IDC_REMOTE_ACCOUNT              1184
-#define IDC_REMOTE_CONTAINER            1185
-#define IDC_REMOTE_PREFIX               1186
-#define IDC_REMOTE_SECRET               1187
-#define IDC_REMOTE_REMEMBER             1188
-#define IDC_S3_TOKEN                    1190
-#define IDC_REMOTE_RECENT               1191
-
-#define IDC_REMOTE_RECENT_LABEL         1192
-#define IDC_REMOTE_PROVIDER             1193
-#define IDC_REMOTE_PROVIDER_LABEL       1194
-#define IDC_REMOTE_NEW                  1195
-#define IDC_REMOTE_EDIT                 1196
-#define IDC_REMOTE_REMOVE               1197
-#define IDC_REMOTE_STATUS               1199
-#define IDC_REMOTE_CREDENTIALS          1200
-#define IDC_REMOTE_CHANGE               1201
-#define IDC_S3_TOKEN_TOGGLE             1202
-
-#define IDC_REMOTE_TARGET               1203
+#define ID_FILE_SELECT_CLOUD            32969
 
 // Next default values for new objects
 //
