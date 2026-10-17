@@ -17,6 +17,7 @@
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
 #include "Filtering.h"
+#include "DedupAccounting.h"
 
 static std::optional<std::wstring> ChooseReportPath(const CDialog::FilePickerMode mode)
 {
@@ -74,7 +75,8 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         return i != nullptr && i->SupportsFilesystemApis() && !i->IsRootItem() && IsLocalDrive(i->GetPath());
     };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() &&
+        !CMainFrame::Get()->IsScanSuspended() && !CDedupAccounting::Get().IsProcessing(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone(); };
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
@@ -88,6 +90,10 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
             (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx"));
     };
     static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*) { return IsStorageSenseAvailable(); };
+    static bool (*hasDedupData)(CItem*) = [](CItem* i)
+    {
+        return i != nullptr && CDedupAccounting::Get().HasSharingIndex(i);
+    };
     static constexpr ITEMTYPE shellTypes = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE;
 
     // Map each command to its selection rules and shell or filesystem capability requirements.
@@ -125,6 +131,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
         { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
         { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     IT_FILE, hasShellIdentity } },
+        { ID_DEDUP_SHOW_SHARING,      { false, true,  false, LF_NONE,     IT_FILE | IT_DIRECTORY | IT_DRIVE | IT_DEDUP, hasDedupData } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     ITF_ANY } },
         { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     ITF_ANY, isDriveOrDirOrFile } },
@@ -178,6 +185,14 @@ void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 {
     // Defer to standard update handler for initial value
     OnUpdateCentralHandler(pCmdUI);
+
+    // Deduplicated volumes keep their data compressed in the chunk store
+    if (std::ranges::any_of(GetSelectedItemsView(), [](const CItem* item)
+        { return CDedupAccounting::Get().BlocksCompression(item); }))
+    {
+        pCmdUI->Enable(false);
+        return;
+    }
     if (pCmdUI->m_menu == nullptr) return;
 
     // See if each path supports available compression options
@@ -853,6 +868,12 @@ void CWinDirStatModel::OnComputeHash()
     }
 }
 
+void CWinDirStatModel::OnDedupShowSharing()
+{
+    const auto selected = GetAllSelected();
+    if (!selected.empty()) CFileDedupShareControl::Get()->ProcessSharing(selected);
+}
+
 CompressionAlgorithm CWinDirStatModel::CompressionIdToAlg(const UINT id)
 {
     switch (id)
@@ -950,6 +971,9 @@ void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
     for (auto& queue : m_queues | std::views::values)
         queue.CancelThreadIo();
 
+    // The post-scan dedup pass runs after the queues finished, so it watches this flag
+    if (m_thread.joinable()) m_postScanStop.store(std::max(m_postScanStop.load(), stopReason));
+
     // Request for all threads to stop processing
     for (auto& queue : m_queues | std::views::values)
         CWinApp::RunTaskWithUiUpdates([&queue] { queue.SuspendExecution(); });
@@ -1006,6 +1030,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Stop any previous executions
     CWaitCursor wc;
     StopScanningEngine();
+    m_postScanStop = Default;
 
     // Watcher entries are detached snapshots; refresh the matching scan item or its nearest scanned ancestor.
     if (!HasRootItem()) return;
@@ -1021,6 +1046,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     {
         return item != nullptr && item->IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX);
     });
+
+    // Derived rows refresh their folder; imported projections need a complete rescan.
+    CDedupAccounting::Get().ExpandRefresh(items);
     std::unordered_set<CItem*> uniqueItems;
     std::erase_if(items, [&](CItem* item) { return !uniqueItems.insert(item).second; });
 
@@ -1062,6 +1090,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     {
         items.front()->ResetScanStartTime();
         items = items.front()->GetChildren();
+        std::erase_if(items, [](const CItem* item) { return item->IsTypeOrFlag(IT_DEDUP); });
     }
 
     const auto selectedItems = GetAllSelected();
@@ -1072,6 +1101,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     auto* searchRoot = CFileSearchControl::Get()->GetRootItem();
     searchRoot->SetTotalsPending(true);
     if (!items.empty()) searchRoot->SetLimitExceeded(true);
+
+    // Drop derived bindings before either filesystem nodes or hardlink groups can be removed.
+    if (!items.empty())
+    {
+        if (GetZoomItem()->IsTypeOrFlag(IT_DEDUP)) SetZoomItem(GetZoomItem()->GetParent());
+        ClearRelatedItems();
+        CFileDedupShareControl::Get()->RemoveVolumes({ GetRootItem() });
+        CDedupAccounting::Get().Invalidate(items);
+    }
 
     // Hardlink results are a derived snapshot and cannot outlive mutations to their target drive.
     std::unordered_set<CItem*> affectedDrives;
@@ -1172,6 +1210,17 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Lambda captures assume the model exists for the duration of the scan.
     m_thread = std::jthread([this,items, visualInfo] () mutable
     {
+        const auto finishAborted = []
+        {
+            CMainFrame::Get()->InvokeInMessageThread([]
+            {
+                CMainFrame::Get()->SetProgressComplete();
+                // Preserve the current layout. A replacement scan expands All Files
+                // before aborting this worker and must remain expanded.
+                CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
+            });
+        };
+
         std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
 
         // Add items to processing queue
@@ -1250,15 +1299,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // If new scan or closing, complete scan UI cleanup before the old
         // tree is torn down.
-        if (stopReason == Abort)
+        if (stopReason == Abort || m_postScanStop == Abort)
         {
-            CMainFrame::Get()->InvokeInMessageThread([]
-            {
-                CMainFrame::Get()->SetProgressComplete();
-                // Preserve the current layout. A replacement scan expands All Files
-                // before aborting this worker and must remain expanded.
-                CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
-            });
+            finishAborted();
             return;
         }
 
@@ -1294,6 +1337,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 drive->RemoveHardlinksItem();
             }
         });
+        // Publish dedup display values after the raw allocation groups are complete.
+        CDedupAccounting::Get().RunPostScan([this] { return m_postScanStop.load() != Default; });
+        if (m_postScanStop == Abort)
+        {
+            finishAborted();
+            return;
+        }
+
         // After hardlink adjustment GetProgressPos() holds the corrected scan-based size.
         // Resync the progress range to this value so position and range share exactly the
         // same calculation basis — they will converge to 100%, not drop to 99%.
@@ -1371,6 +1422,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         CMainFrame::Get()->InvokeInMessageThread([]
         {
             CFileSearchControl::Get()->RestoreItems();
+            CFileDedupShareControl::Get()->RestoreItems();
         });
         const auto searchTotals = CFileSearchControl::Get()->GetRootItem()->CalculateTotals();
 

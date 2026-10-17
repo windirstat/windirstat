@@ -58,6 +58,7 @@ bool CTreeMapView::CreateRenderBitmap(CDC* pDC, const CSize size)
 
 void CTreeMapView::RenderVisualization(CDC* pDC, CRect rect)
 {
+    m_relatedRectsValid = false;
     if (CWinDirStatModel::Get()->IsZoomed()) DrawZoomFrame(pDC, rect);
     m_treeMap.DrawTreeMap(pDC->Handle(), rect,
         CWinDirStatModel::Get()->GetZoomItem(), &COptions::TreeMapOptions);
@@ -119,6 +120,28 @@ void CTreeMapView::DrawSelection(CDC* pdc)
     }
 }
 
+void CTreeMapView::DrawRelated(CDC* pdc)
+{
+    auto* model = CWinDirStatModel::Get();
+    const auto& related = model->GetRelatedItems();
+
+    // Hover repaints are frequent, so the rectangles are looked up once per layout
+    if (!m_relatedRectsValid || m_relatedRectsGeneration != model->GetRelatedGeneration())
+    {
+        m_relatedRects.clear();
+        const CPoint offset = model->IsZoomed() ? CPoint(ZoomFrameWidth, ZoomFrameWidth) : CPoint();
+        for (const CItem* item : related)
+        {
+            if (CRect rc; m_treeMap.TryGetItemRectangle(item, rc) && !rc.IsEmpty())
+                m_relatedRects.push_back(rc + offset);
+        }
+        m_relatedRectsGeneration = model->GetRelatedGeneration();
+        m_relatedRectsValid = true;
+    }
+
+    for (const CRect& rc : m_relatedRects) RenderHighlightRectangle(pdc, rc, false, RelatedColor);
+}
+
 // Draws the highlight rectangle of item. If single, the rectangle is slightly
 // bigger than the item rect; otherwise, it fits inside.
 //
@@ -178,11 +201,15 @@ bool CTreeMapView::HasValidLayout() const
 
 void CTreeMapView::ClearVisualizationLayout()
 {
+    m_relatedRectsValid = false;
+    m_relatedRects.clear();
     m_treeMap.ClearLayout();
 }
 
 void CTreeMapView::OnRenderCacheTrimmed()
 {
+    m_relatedRectsValid = false;
+    m_relatedRects.clear();
     m_treeMap.TrimMemory();
 }
 

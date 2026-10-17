@@ -177,6 +177,25 @@ void CFlameGraphView::DrawHighlightExtension(CDC* pdc)
     });
 }
 
+void CFlameGraphView::DrawRelated(CDC* pdc)
+{
+    const auto& related = CWinDirStatModel::Get()->GetRelatedItems();
+
+    const CRect client = GetClientRect();
+    const ScopedDcState dcState(pdc);
+    pdc->IntersectClipRect(CRect(0, m_flameGraph.GetBreadcrumbHeight(),
+        client.Width(), client.Height()));
+
+    // Only the tiles on screen are visited, so no cache is needed
+    const auto clipBox = pdc->GetClipBox();
+    const CRect rcClip = clipBox ? *clipBox : client;
+    m_flameGraph.VisitItemsIntersecting(rcClip, CPoint(0, -m_scrollPos),
+        [&](const CItem* item, const CRect& itemRectangle)
+    {
+        if (related.contains(item)) RenderHighlightRectangle(pdc, itemRectangle, false, RelatedColor);
+    });
+}
+
 void CFlameGraphView::DrawHover(CDC* pdc)
 {
     HighlightSelectedItem(pdc, GetDisplayItem(m_hoverItem), false, true);

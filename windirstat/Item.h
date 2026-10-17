@@ -29,7 +29,9 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_FOLDERS,
     COL_LAST_CHANGE,
     COL_ATTRIBUTES,
-    COL_OWNER
+    COL_OWNER,
+    COL_DEDUP_FREED,
+    COL_DEDUP_SHARED
 };
 
 // Item types - all values are bitmasks for efficient type checking
@@ -46,8 +48,11 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_SET  = 1u << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
+    IT_DEDUP       = 1u << 10, // Pseudo File for deduplicated storage (kind stored in index)
     IT_CONTAINER   = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_HLINKS | IT_HLINKS_SET | IT_HLINKS_IDX,
-    IT_MASK        = 0x00003FFF,
+    IT_MASK        = 0x000007FF,
+    ITF_SINGLE_LINK = 1u << 11, // Scan metadata proves that this file has exactly one directory entry
+    ITF_ACCOUNTED  = 1u << 12, // A published accounting result supplies display values
 
     ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
     ITF_REMOTE     = 1u << 15, // Indicates a remote file, object, or directory
@@ -60,11 +65,12 @@ enum ITEMTYPE : std::uint32_t
     ITHASH_MASK    = 0x000F0000,
 
     ITRP_NONE      = 0u,       // Indicates no reparse data
+    ITRP_DEDUP     = 1u << 13, // Indicates a file optimized by Data Deduplication
     ITRP_SYMLINK   = 1u << 20, // Indicates a reparse point that is a symlink
     ITRP_MOUNT     = 1u << 21, // Indicates a reparse point that is a mount point
     ITRP_JUNCTION  = 1u << 22, // Indicates a reparse point that is a junction
     ITRP_CLOUD     = 1u << 23, // Indicates a reparse point that is a cloud link
-    ITRP_MASK      = 0x00F00000,
+    ITRP_MASK      = 0x00F02000,
 
     ITF_NONE       = 0u,       // No flags
     ITF_RESERVED   = 1u << 24, // Indicates special reserved file
@@ -75,7 +81,7 @@ enum ITEMTYPE : std::uint32_t
     ITF_DONE       = 1u << 29, // Indicates done processing
     ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
     ITF_MTP        = 1u << 31, // Indicates MTP item
-    ITF_MASK       = 0xFF00C000,
+    ITF_MASK       = 0xFF00D800,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
@@ -162,6 +168,7 @@ public:
 
     // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
+    ULONGLONG GetSizePhysicalDisplay() const noexcept;
     bool HasSizePhysical() const noexcept;
     ULONGLONG GetSizeLogical() const noexcept { return m_sizeLogical; }
     ULONGLONG GetSizePhysicalRaw() const noexcept { return m_sizePhysical; }
@@ -345,6 +352,7 @@ private:
     inline static std::atomic<ULONGLONG> scanClockState = 0;
     static ULONG GetScanTickCount() noexcept;
     class ScanBatch;
+    friend class CDedupAccounting;
     bool MutateHiddenChildren(const std::function<void()>& mutation) const;
     CItem* AddDirectory(const Finder& finder, ScanBatch& batch);
     CItem* AddFile(const Finder& finder, ScanBatch& batch);

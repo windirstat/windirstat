@@ -35,6 +35,7 @@ public:
     void DrawHighlightExtension(CDC* pdc) override;
     void DrawSelection(CDC* pdc) override;
     void DrawHover(CDC* pdc) override;
+    void DrawRelated(CDC* pdc) override;
 
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single, bool hover = false) const;
     CItem* FindItemAtPoint(CPoint point) override;
@@ -47,5 +48,10 @@ public:
     static constexpr int ZoomFrameWidth = 4;
 
     CTreeMap m_treeMap;               // Treemap generator
+
+    // Rectangles of the items sharing deduplicated data with the selection
+    std::vector<CRect> m_relatedRects;
+    std::uint32_t m_relatedRectsGeneration = 0;
+    bool m_relatedRectsValid = false;
 
 };

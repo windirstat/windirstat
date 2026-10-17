@@ -8,6 +8,7 @@
 #include "CsvLoader.h"
 #include "FinderMtp.h"
 #include "StorageSource.h"
+#include "DedupAccounting.h"
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -124,6 +125,9 @@ enum : std::uint8_t
     FIELD_OWNER,
     FIELD_SCAN_OUTCOME,
     FIELD_SCAN_ERROR,
+    FIELD_DEDUP_FREED,
+    FIELD_DEDUP_SHARED,
+    FIELD_ALLOCATED,
     FIELD_COUNT
 };
 
@@ -144,7 +148,10 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
         { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER },
         { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
+        { L"ScanError", FIELD_SCAN_ERROR },
+        { Localization::Lookup(IDS_COL_DEDUP_FREED), FIELD_DEDUP_FREED },
+        { Localization::Lookup(IDS_COL_DEDUP_SHARED), FIELD_DEDUP_SHARED },
+        { L"AllocatedBytes", FIELD_ALLOCATED }
     };
 
     for (const auto [c, name] : std::views::enumerate(header))
@@ -217,9 +224,12 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const std::wstring_view index, const std::wstring_view attributes, const std::wstring_view files,
     const std::wstring_view folders, CItem*& newroot,
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap,
-    const std::wstring_view scanOutcome = {}, const std::wstring_view scanError = {})
+    const std::wstring_view scanOutcome = {}, const std::wstring_view scanError = {},
+    std::wstring_view dedupFreed = {}, std::wstring_view dedupShared = {}, std::wstring_view allocated = {})
 {
-    const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
+    const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16)) &
+        ~(ITF_ACCOUNTED | ITF_SINGLE_LINK);
+    if (allocated == L"null") allocated = {};
     const bool isMtp = (type & ITF_MTP) != 0;
     const bool isRemote = (type & ITF_REMOTE) != 0;
     if (isRemote && !StorageSource::Parse(namePath)) return nullptr;
@@ -227,7 +237,7 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     const auto itType = IT_MASK & type;
     if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
-        itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN) return nullptr;
+        itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN && itType != IT_DEDUP) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
 
     std::wstring_view displayName = namePath;
@@ -276,7 +286,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const bool isMultiRoot = parent == nullptr && newroot != nullptr &&
         newroot->IsTypeOrFlag(IT_MYCOMPUTER);
     const bool isMtpRoot = isMtp && (isRoot || isMultiRoot);
-    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot && itType == IT_DIRECTORY;
+    const bool isInRoot = itType == IT_DRIVE || isMtpRoot ||
+        isMultiRoot && (itType == IT_DIRECTORY || itType == IT_DEDUP);
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
@@ -287,7 +298,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     if (isMtpRoot) mtpName = FinderMtp::GetDisplayName(mtpPath);
     CItem* newitem = CItem::Create(type, mtpName.empty() ? displayName : std::wstring_view(mtpName),
         FromTimeString(lastChange),
-        wcstoull((isRemote ? sizeLogical : sizePhysical).data(), nullptr, 10),
+        itType == IT_DEDUP ? 0 :
+            wcstoull((isRemote ? sizeLogical : allocated.empty() ? sizePhysical : allocated).data(), nullptr, 10),
         wcstoull(sizeLogical.data(), nullptr, 10),
         wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
         wcstoul(folders.data(), nullptr, 10));
@@ -311,6 +323,22 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     else parent->AddChild(newitem, true);
 
     assert(newitem->IsMtpRoot() == isMtpRoot);
+
+    // Reports retain allocations separately from their display projection.
+    if (dedupFreed == L"null") dedupFreed = {};
+    if (dedupShared == L"null") dedupShared = {};
+    if (!allocated.empty() || !dedupFreed.empty() || !dedupShared.empty() || newitem->IsTypeOrFlag(IT_DEDUP))
+    {
+        const auto physical = sizePhysical.empty() || sizePhysical == L"null" ? std::nullopt :
+            std::optional(wcstoull(sizePhysical.data(), nullptr, 10));
+        const auto freed = dedupFreed.empty() ? std::nullopt : std::optional(wcstoull(dedupFreed.data(), nullptr, 10));
+        const auto shared = dedupShared.empty() ? std::nullopt : std::optional(wcstoull(dedupShared.data(), nullptr, 10));
+        if (itType == IT_DEDUP && allocated.empty() && physical)
+            for (CItem* ancestor = newitem->GetParent(); ancestor != nullptr; ancestor = ancestor->GetParent())
+                ancestor->SetSizePhysical(ancestor->GetSizePhysicalRaw() -
+                    std::min(ancestor->GetSizePhysicalRaw(), *physical));
+        CDedupAccounting::Get().SetLoaded(newitem, physical, freed, shared);
+    }
 
     if (!newitem->TmiIsLeaf() && (isRemote || newitem->GetItemsCount() > 0))
     {
@@ -390,14 +418,20 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         // Skip malformed rows that do not cover all required columns
         if (fields.size() <= maxRequiredField) continue;
 
+        // Optional columns are present only when the header listed them and the row reaches them
+        const auto optionalField = [&](const std::size_t field) -> std::wstring_view
+        {
+            return orderMap[field] != UCHAR_MAX && orderMap[field] < fields.size() ? fields[orderMap[field]] : std::wstring_view{};
+        };
+
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
         BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
-            orderMap[FIELD_SCAN_OUTCOME] < fields.size() ? fields[orderMap[FIELD_SCAN_OUTCOME]] : std::wstring_view{},
-            orderMap[FIELD_SCAN_ERROR] < fields.size() ? fields[orderMap[FIELD_SCAN_ERROR]] : std::wstring_view{});
+            optionalField(FIELD_SCAN_OUTCOME), optionalField(FIELD_SCAN_ERROR),
+            optionalField(FIELD_DEDUP_FREED), optionalField(FIELD_DEDUP_SHARED), optionalField(FIELD_ALLOCATED));
     }
 
     FinalizeImportedResults(newroot);
@@ -423,7 +457,10 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         { Localization::Lookup(IDS_COL_INDEX),         FIELD_INDEX         },
         { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         },
         { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
+        { L"ScanError", FIELD_SCAN_ERROR },
+        { Localization::Lookup(IDS_COL_DEDUP_FREED),   FIELD_DEDUP_FREED   },
+        { Localization::Lookup(IDS_COL_DEDUP_SHARED),  FIELD_DEDUP_SHARED  },
+        { L"AllocatedBytes", FIELD_ALLOCATED }
     };
 
     CItem* newroot = nullptr;
@@ -457,7 +494,8 @@ static CItem* LoadResultsJson(std::ifstream& reader)
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
             fieldValues[FIELD_FOLDERS], newroot, parentMap,
-            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR]);
+            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR],
+            fieldValues[FIELD_DEDUP_FREED], fieldValues[FIELD_DEDUP_SHARED], fieldValues[FIELD_ALLOCATED]);
     }
 
     FinalizeImportedResults(newroot);
@@ -479,6 +517,8 @@ CItem* LoadResults(const std::wstring& path)
         reader.seekg(0);
     }
 
+    // Drop dedup values staged by an earlier failed load; OpenLoadedScan commits these
+    CDedupAccounting::Get().DiscardLoaded();
     return IsJsonPath(path) ? LoadResultsJson(reader) : LoadResultsCsv(reader);
 }
 
@@ -512,23 +552,25 @@ static std::vector<const CItem*> CollectItems(CItem* rootItem)
 
 // Compute adjusted physical sizes (undoes hardlink accounting)
 static std::unordered_map<const CItem*, LONGLONG>
-    ComputeAdjustedSizes(const std::vector<const CItem*>& items)
+    ComputeAdjustedSizes(const std::vector<const CItem*>& items, const bool display)
 {
+    const auto size = [display](const CItem* item)
+    { return display ? item->GetSizePhysicalDisplay() : item->GetSizePhysicalRaw(); };
     std::unordered_map<const CItem*, LONGLONG> adjustedSizes;
     for (const auto* item : items) [[msvc::forceinline_calls]]
     {
         if (item->IsTypeOrFlag(IT_DRIVE))
             if (const auto hlinks = item->FindHardlinksItem(); hlinks != nullptr)
             {
-                adjustedSizes[item] -= hlinks->GetSizePhysicalRaw();
+                adjustedSizes[item] -= size(hlinks);
                 if (const auto root = item->GetParent(); root != nullptr)
-                    adjustedSizes[root] -= hlinks->GetSizePhysicalRaw();
+                    adjustedSizes[root] -= size(hlinks);
             }
 
         if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
         for (const CItem* p = item->GetParent(); p != nullptr; p = p->GetParent())
         {
-            adjustedSizes[p] += item->GetSizePhysicalRaw();
+            adjustedSizes[p] += size(item);
         }
     }
     return adjustedSizes;
@@ -536,7 +578,8 @@ static std::unordered_map<const CItem*, LONGLONG>
 
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
-    const bool includeOwner)
+    const std::unordered_map<const CItem*, LONGLONG>& allocatedAdjustments,
+    const bool includeOwner, const bool includeDedup)
 {
     // Header
     for (const auto [i, col] : std::views::enumerate(cols))
@@ -546,7 +589,8 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
     for (const auto* item : items)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
+        const ITEMTYPE itemType = item->GetRawType() &
+            ~(ITF_HARDLINK | ITHASH_MASK | ITF_EXTDATA | ITF_SINGLE_LINK | ITF_ACCOUNTED);
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
@@ -556,7 +600,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             item->GetFilesCount(),
             item->GetFoldersCount(),
             item->GetSizeLogical(),
-            item->HasSizePhysical() ? std::to_string(item->GetSizePhysicalRaw() + adjustedSize) : std::string{},
+            item->HasSizePhysical() ? std::to_string(item->GetSizePhysicalDisplay() + adjustedSize) : std::string{},
             QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
             std::to_underlying(itemType),
@@ -565,6 +609,18 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const auto& result = item->GetScanResult();
         outf << "," << QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]) << "," <<
             QuoteAndConvert(StorageSource::EscapeName(result.error, true));
+        if (includeDedup)
+        {
+            const auto& accounting = CDedupAccounting::Get();
+            const auto freed = accounting.GetFreed(item);
+            const auto shared = accounting.GetShared(item);
+            const auto adjustment = allocatedAdjustments.find(item);
+            const auto allocated = item->IsTypeOrFlag(IT_DEDUP) ? 0 : item->GetSizePhysicalRaw() +
+                (adjustment == allocatedAdjustments.end() ? 0 : adjustment->second);
+            std::format_to(std::ostreambuf_iterator(outf), ",{},{},{}",
+                freed ? std::to_string(*freed) : "", shared ? std::to_string(*shared) : "",
+                item->HasSizePhysical() ? std::to_string(allocated) : "");
+        }
     }
     outf.flush();
     return outf.good();
@@ -596,12 +652,14 @@ static bool SaveResultsJson(std::ofstream& outf,
     const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols,
     const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
-    const bool includeOwner)
+    const std::unordered_map<const CItem*, LONGLONG>& allocatedAdjustments,
+    const bool includeOwner, const bool includeDedup)
 {
     return SaveJson(outf, cols, items, [&](const CItem* item, const auto& keys)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
+        const ITEMTYPE itemType = item->GetRawType() &
+            ~(ITF_HARDLINK | ITHASH_MASK | ITF_EXTDATA | ITF_SINGLE_LINK | ITF_ACCOUNTED);
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
@@ -614,7 +672,7 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << keys[FIELD_FOLDERS]        << ": " << item->GetFoldersCount()                                     << ",\r\n";
         outf << "  " << keys[FIELD_SIZE_LOGICAL]   << ": " << item->GetSizeLogical()                                      << ",\r\n";
         const auto physical = item->HasSizePhysical() ?
-            std::to_string(item->GetSizePhysicalRaw() + adjustedSize) : "null";
+            std::to_string(item->GetSizePhysicalDisplay() + adjustedSize) : "null";
         outf << "  " << keys[FIELD_SIZE_PHYSICAL]  << ": " << physical << ",\r\n";
         outf << "  " << keys[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
         outf << "  " << keys[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
@@ -623,10 +681,25 @@ static bool SaveResultsJson(std::ofstream& outf,
             keys[FIELD_INDEX], index);
         if (includeOwner)
             outf << ",\r\n  " << keys[FIELD_OWNER] << ": " << JsonQuoteW(item->GetOwner(true));
+        // The scan result keys come last, followed by the dedup keys when present
         const auto& result = item->GetScanResult();
-        outf << ",\r\n  " << keys[keys.size() - 2] << ": " <<
+        const std::size_t scanKey = keys.size() - (includeDedup ? 5 : 2);
+        outf << ",\r\n  " << keys[scanKey] << ": " <<
             JsonQuoteW(scanOutcomes[static_cast<size_t>(result.outcome)]);
-        outf << ",\r\n  " << keys.back() << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
+        outf << ",\r\n  " << keys[scanKey + 1] << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
+        if (includeDedup)
+        {
+            const auto& accounting = CDedupAccounting::Get();
+            const auto freed = accounting.GetFreed(item);
+            const auto shared = accounting.GetShared(item);
+            outf << ",\r\n  " << keys[keys.size() - 3] << ": " << (freed ? std::to_string(*freed) : "null");
+            outf << ",\r\n  " << keys[keys.size() - 2] << ": " << (shared ? std::to_string(*shared) : "null");
+            const auto adjustment = allocatedAdjustments.find(item);
+            const auto allocated = item->IsTypeOrFlag(IT_DEDUP) ? 0 : item->GetSizePhysicalRaw() +
+                (adjustment == allocatedAdjustments.end() ? 0 : adjustment->second);
+            outf << ",\r\n  " << keys.back() << ": " <<
+                (item->HasSizePhysical() ? std::to_string(allocated) : "null");
+        }
         outf << "\r\n}";
     });
 }
@@ -634,7 +707,10 @@ static bool SaveResultsJson(std::ofstream& outf,
 bool SaveResults(const std::wstring& path, CItem* rootItem)
 {
     const std::vector<const CItem*> items       = CollectItems(rootItem);
-    const auto                      adjustedSizes = ComputeAdjustedSizes(items);
+    const auto                      adjustedSizes = ComputeAdjustedSizes(items, true);
+    const bool includeDedup = CDedupAccounting::Get().HasData();
+    const auto allocatedAdjustments = includeDedup ? ComputeAdjustedSizes(items, false) :
+        std::unordered_map<const CItem*, LONGLONG>{};
     const bool includeOwner = COptions::IsColumnVisible(COptions::FileTreeColumnVisibility.Obj(), COL_OWNER);
 
     std::vector cols =
@@ -653,12 +729,20 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     cols.emplace_back(L"ScanOutcome");
     cols.emplace_back(L"ScanError");
 
+    // Include the projection and its source allocations when accounting is available.
+    if (includeDedup)
+    {
+        cols.push_back(Localization::Lookup(IDS_COL_DEDUP_FREED));
+        cols.push_back(Localization::Lookup(IDS_COL_DEDUP_SHARED));
+        cols.emplace_back(L"AllocatedBytes");
+    }
+
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
     return IsJsonPath(path)
-        ? SaveResultsJson(outf, items, cols, adjustedSizes, includeOwner)
-        : SaveResultsCsv (outf, items, cols, adjustedSizes, includeOwner);
+        ? SaveResultsJson(outf, items, cols, adjustedSizes, allocatedAdjustments, includeOwner, includeDedup)
+        : SaveResultsCsv (outf, items, cols, adjustedSizes, allocatedAdjustments, includeOwner, includeDedup);
 }
 
 static std::vector<std::tuple<std::wstring, const CItem*, bool>>
@@ -696,7 +780,7 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),
-            linkedItem->GetSizePhysicalRaw(),
+            linkedItem->GetSizePhysicalDisplay(),
             ToTimePoint(linkedItem->GetLastChange()),
             QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())),
             sampled);
@@ -718,7 +802,7 @@ static bool SaveDuplicatesJson(std::ofstream& outf,
         outf << "  " << keys[0] << ": " << JsonQuoteW(hash) << ",\r\n";
         outf << "  " << keys[1] << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
         outf << "  " << keys[2] << ": " << item->GetSizeLogical() << ",\r\n";
-        outf << "  " << keys[3] << ": " << item->GetSizePhysicalRaw() << ",\r\n";
+        outf << "  " << keys[3] << ": " << item->GetSizePhysicalDisplay() << ",\r\n";
         outf << "  " << keys[4] << ": " << JsonQuote(ToTimePoint(item->GetLastChange())) << ",\r\n";
         outf << "  " << keys[5] << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << ",\r\n";
         outf << "  " << keys[6] << ": " << (sampled ? "true" : "false") << "\r\n";

@@ -189,6 +189,9 @@ void CGraphView::DrawHighlights(CDC* pDC)
     case LF_TOPLIST:
     case LF_FILETREE:
     case LF_SEARCHLIST:
+    case LF_DEDUPSHARELIST:
+        // Files sharing deduplicated data with the selection stay below its outline
+        if (!CWinDirStatModel::Get()->GetRelatedItems().empty()) DrawRelated(pDC);
         DrawSelection(pDC);
         break;
     case LF_EXTLIST:
@@ -218,11 +221,12 @@ const CItem* CGraphView::GetDisplayItem(const CItem* item)
     return item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
 }
 
-void CGraphView::RenderHighlightRectangle(CDC* pDC, CRect rect, const bool hover)
+void CGraphView::RenderHighlightRectangle(CDC* pDC, CRect rect, const bool hover, const COLORREF outline)
 {
     if (rect.IsEmpty()) return;
 
-    const COLORREF color = hover ? DarkMode::SystemColor(COLOR_WINDOWTEXT) : COptions::TreeMapHighlightColor;
+    const COLORREF color = hover ? DarkMode::SystemColor(COLOR_WINDOWTEXT) :
+        outline != CLR_INVALID ? outline : COptions::TreeMapHighlightColor;
     const int scale = std::max(1, MulDiv(pDC->GetDeviceCaps(LOGPIXELSX), GetFontSizePercent(),
         USER_DEFAULT_SCREEN_DPI * 100));
     if (!hover && std::min(rect.Width(), rect.Height()) <= 2 * scale)
@@ -281,7 +285,7 @@ void CGraphView::DrillDown(CItem* item)
     CWinDirStatModel* model = CWinDirStatModel::Get();
     CItem* target = item == model->GetZoomItem()
         ? model->GetRootItem()
-        : (item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item);
+        : (item->IsTypeOrFlag(IT_FILE, IT_DEDUP) ? item->GetParent() : item);
 
     if (target != nullptr && target != model->GetZoomItem()) model->SetZoomItem(target);
 }
