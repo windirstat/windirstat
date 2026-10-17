@@ -221,8 +221,6 @@ CItem::~CItem()
     }
     // Release any MTP shell metadata registered to this item
     if (IsTypeOrFlag(ITF_MTP)) FinderMtp::UnregisterPath(m_index);
-    // Drop any deduplication accounting attached to this item
-    if (IsTypeOrFlag(ITRP_DEDUP, IT_DEDUP)) CDedupAccounting::Get().Unregister(this);
 }
 
 // --- Hierarchy ---
@@ -383,6 +381,7 @@ CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
         child->SetIndex(FinderMtp::RegisterPath({}, finder.GetShellPath(), finder.GetShellPidl()));
+    child->SetFlag(ITF_SINGLE_LINK, !finder.IsSingleLink());
     child->SetSizePhysical(finder.GetFileSizePhysical());
     child->SetSizeLogical(finder.GetFileSizeLogical());
     child->SetLastChange(finder.GetLastWriteTime());
@@ -443,7 +442,14 @@ void CItem::ReconcileScanResults(CItem* root, const bool cancelled)
 
 ULONGLONG CItem::GetSizePhysical() const noexcept
 {
-    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
+    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : GetSizePhysicalDisplay();
+}
+
+ULONGLONG CItem::GetSizePhysicalDisplay() const noexcept
+{
+    if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetSizePhysicalDisplay();
+    const ULONGLONG allocation = m_sizePhysical.load(std::memory_order_relaxed);
+    return IsTypeOrFlag(ITF_ACCOUNTED) ? CDedupAccounting::Get().GetPhysical(this, allocation) : allocation;
 }
 
 bool CItem::HasSizePhysical() const noexcept
@@ -1183,6 +1189,7 @@ void CItem::UpdateStatsFromDisk()
                 UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
                 SetIndex(finder.GetIndex());
+                SetFlag(ITF_SINGLE_LINK, true);
                 ExtensionDataAdd();
             }
         }

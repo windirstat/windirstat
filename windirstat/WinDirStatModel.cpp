@@ -17,7 +17,7 @@
 #include "ProgressDlg.h"
 #include "DedupAccounting.h"
 
-CWinDirStatModel::CWinDirStatModel()
+CWinDirStatModel::CWinDirStatModel() : m_dedupAccounting(std::make_unique<CDedupAccounting>())
 {
     assert(nullptr == s_singleton);
     s_singleton = this;
@@ -184,7 +184,8 @@ bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
     if (loadedRoot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
-        std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
+        std::ranges::transform(loadedRoot->GetChildren() | std::views::filter(
+            [](const CItem* item) { return !item->IsTypeOrFlag(IT_DEDUP); }), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring
             {
                 // GetPath() already yields the registered MTP path or the stored folder path
@@ -328,7 +329,7 @@ void CWinDirStatModel::ShowPendingDedupFailures()
     const auto failures = CDedupAccounting::Get().TakeFailures();
     if (failures.empty() || !COptions::DedupShowFailures) return;
 
-    // Deduplicated files of these volumes still show an allocation of zero
+    // Keep the filesystem allocation when a volume cannot be accounted for.
     if (const auto [nID, isChecked] = CMessageBoxDlg::Show(Localization::Lookup(IDS_DEDUP_FAILURES), failures,
         Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_OK | MB_ICONWARNING, GetMainWindow(), { 600, 300 }); isChecked)
     {

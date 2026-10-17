@@ -9,6 +9,7 @@
 #include "pch.h"
 #include "TreeListControl.h"
 
+class CDedupAccounting;
 class CItem;
 class CItemDupe;
 class CItemTop;
@@ -76,6 +77,8 @@ public:
     static CWinDirStatModel* Get() { return s_singleton; }
     CWinDirStatModel();
     ~CWinDirStatModel() override;
+
+    CDedupAccounting& GetDedupAccounting() const { return *m_dedupAccounting; }
 
     void ClearScanState();
     bool ResetScan();
@@ -169,6 +172,7 @@ private:
     std::wstring m_scanPathSpec;
     std::wstring m_scanTitle;
 
+    std::unique_ptr<CDedupAccounting> m_dedupAccounting;
     CItem* m_rootItem = nullptr; // The very root item
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
     std::wstring m_highlightExtension; // Currently highlighted extension

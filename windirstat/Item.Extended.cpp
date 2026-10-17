@@ -175,7 +175,7 @@ std::wstring CItem::GetText(const int subitem) const
         if (!HasSizePhysical()) return {};
         if (IsTypeOrFlag(ITF_HARDLINK))
         {
-            return L"⧉ " + FormatBytes(GetSizePhysicalRaw());
+            return L"⧉ " + FormatBytes(GetSizePhysicalDisplay());
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
@@ -1130,7 +1130,7 @@ ULONGLONG CItem::GetProgressRangeMyComputer() const
     ULONGLONG range = 0;
     for (const auto& child : GetChildren())
     {
-        range += child->GetProgressRange();
+        if (!child->IsTypeOrFlag(IT_DEDUP)) range += child->GetProgressRange();
     }
     return range;
 }
@@ -1141,9 +1141,7 @@ ULONGLONG CItem::GetProgressRangeDrive() const
 
     total -= free;
 
-    // A chunk store kept out of the scan by a filter is in use but never reached
-    const ULONGLONG excluded = CDedupAccounting::Get().GetExcludedStoreBytes(this);
-    return total > excluded ? total - excluded : 0;
+    return total;
 }
 
 COLORREF CItem::GetGraphColor() const

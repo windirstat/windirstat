@@ -77,25 +77,24 @@ void CFileDedupShareControl::RemoveVolumes(const std::unordered_set<CItem*>& vol
     {
         return std::ranges::any_of(volumes, [item](const CItem* volume) { return volume == item || volume->IsAncestorOf(item); });
     };
-    const auto rows = m_rootItem->GetShareChildren();
+    const auto& rows = m_rootItem->GetShareChildren();
     if (!std::ranges::any_of(m_queried, inScope) &&
         !std::ranges::any_of(rows, [&](CItemDedupShare* row) { return inScope(row->GetLinkedItem()); })) return;
 
     // Remember the query by path since the items may be replaced by the refresh
-    m_pendingPaths.clear();
-    m_pendingSelection.clear();
-    for (const CItem* item : m_queried) m_pendingPaths.push_back(item->GetPath());
+    std::vector<std::wstring> paths;
+    std::unordered_set<std::wstring> selection;
+    for (const CItem* item : m_queried) paths.push_back(item->GetPath());
     for (auto* row : GetAllSelected<CItemDedupShare>(true))
     {
-        if (const CItem* item = row->GetLinkedItem(); item != nullptr) m_pendingSelection.insert(item->GetPath());
+        if (const CItem* item = row->GetLinkedItem(); item != nullptr) selection.insert(item->GetPath());
     }
 
-    // Collapsing first removes the visible rows in one pass
+    // Reset the whole result tree in one pass instead of erasing each row from its vector.
     const ScopedRedrawPause lock(this);
-    CollapseItem(0);
-    for (auto* row : rows) m_rootItem->RemoveShareItemChild(row);
-    m_rootItem->SetSummary({}, 0, 0, 0);
-    m_queried.clear();
+    SetRootItem();
+    m_pendingPaths = std::move(paths);
+    m_pendingSelection = std::move(selection);
 }
 
 void CFileDedupShareControl::RestoreItems()

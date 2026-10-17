@@ -334,6 +334,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 const bool isPrimary = !isExtensionRecord && currentRecord < m_baseFileRecords.size();
                 FileRecordBase& baseRecord = isPrimary ? m_baseFileRecords[currentRecord] : localRecord;
                 baseRecord.IsPresent = true;
+                if (isPrimary) baseRecord.SingleLink = fileRecord->LinkCount == 1;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())

@@ -371,15 +371,20 @@ void CMainFrame::UpdateProgress()
     m_progressPos = m_workingItem->GetProgressPos();
     m_pacman.Drive();
 
-    // The dedup post-scan runs once all files are found and shows a progress of its own;
-    // it stays below 100% (indeterminate taskbar state) until the pass is finished
-    std::wstring phase;
-    if (const int permille = CDedupAccounting::Get().GetProgress(); permille >= 0)
+    // Dedup accounting has no byte-based scan range; keep its activity visible until publication finishes.
+    const bool dedup = CDedupAccounting::Get().IsProcessing();
+    if (m_progress.m_hWnd != nullptr && dedup != ((m_progress.GetStyle() & PBS_MARQUEE) != 0))
     {
+        m_progress.ModifyStyle(dedup ? 0 : PBS_MARQUEE, dedup ? PBS_MARQUEE : 0);
+        m_progress.SetMarquee(dedup, 30);
+    }
+    if (dedup)
+    {
+        if (m_taskbarList && m_taskbarButtonState != TBPF_INDETERMINATE)
+            m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_INDETERMINATE);
         static const std::wstring dedupString = Localization::Lookup(IDS_DEDUP_PROGRESS);
-        phase = dedupString;
-        if (m_progressRange > 0) m_progressPos = std::min(m_progressRange * static_cast<ULONGLONG>(permille) / 1000,
-            permille < 1000 ? m_progressRange - 1 : m_progressRange);
+        CWinDirStatModel::Get()->SetScanTitlePrefix(dedupString);
+        return;
     }
 
     std::wstring titlePrefix;
@@ -398,7 +403,7 @@ void CMainFrame::UpdateProgress()
         const int pos = std::min(static_cast<int>((m_progressPos * 100ull) / m_progressRange), 100);
         m_progress.SetPos(pos);
 
-        titlePrefix = std::to_wstring(pos) + L"% " + (phase.empty() ? suspended : phase + L" " + suspended);
+        titlePrefix = std::to_wstring(pos) + L"% " + suspended;
         if (m_taskbarList && m_taskbarButtonState != TBPF_PAUSED)
         {
             if (pos == 100)
@@ -415,7 +420,7 @@ void CMainFrame::UpdateProgress()
     else
     {
         static const std::wstring scanningString = Localization::Lookup(IDS_SCANNING);
-        titlePrefix = (phase.empty() ? scanningString : phase) + L" " + suspended;
+        titlePrefix = scanningString + L" " + suspended;
     }
 
     TrimString(titlePrefix);

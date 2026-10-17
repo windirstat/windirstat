@@ -101,19 +101,3 @@ void CItemDedupShare::AddShareItemChild(CItemDedupShare* child)
         CFileDedupShareControl::Get()->OnChildAdded(this, child);
     }
 }
-
-void CItemDedupShare::RemoveShareItemChild(CItemDedupShare* child)
-{
-    if (IsVisible())
-    {
-        CFileDedupShareControl::Get()->OnChildRemoved(this, child);
-    }
-
-    std::scoped_lock guard(m_protect);
-    if (const auto it = std::ranges::find(m_children, child); it != m_children.end())
-    {
-        m_children.erase(it);
-    }
-
-    delete child;
-}

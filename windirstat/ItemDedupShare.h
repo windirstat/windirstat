@@ -54,6 +54,5 @@ public:
 
     void SetSummary(const std::wstring& title, ULONGLONG queriedBytes, ULONGLONG sharedBytes, ULONGLONG outsideBytes);
     void AddShareItemChild(CItemDedupShare* child);
-    void RemoveShareItemChild(CItemDedupShare* child);
-    std::vector<CItemDedupShare*> GetShareChildren() const { return m_children; }
+    const std::vector<CItemDedupShare*>& GetShareChildren() const { return m_children; }
 };

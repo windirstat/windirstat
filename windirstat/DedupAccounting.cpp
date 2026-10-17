@@ -6,881 +6,799 @@
 
 #include "pch.h"
 #include "DedupAccounting.h"
-#include "Filtering.h"
 
 CDedupAccounting& CDedupAccounting::Get()
 {
-    // Never destroyed: items unregister during static destruction, after a local static would be gone
-    static auto* instance = new CDedupAccounting;
-    return *instance;
+    return CWinDirStatModel::Get()->GetDedupAccounting();
 }
 
-std::wstring CDedupAccounting::GetVolumePath(const CItem* volumeRoot)
+std::wstring CDedupAccounting::GetVolumePath(const CItem* item)
 {
-    // Folder roots and mount points are resolved so "D:\Mount" maps to its own volume
-    std::wstring path = volumeRoot->GetPathLong();
-    if (volumeRoot->IsTypeOrFlag(IT_DRIVE)) return path;
-    if (path.empty()) return {};
-
-    std::wstring volume(path.size() + 2, L'\0');
-    if (!GetVolumePathNameW(path.c_str(), volume.data(), static_cast<DWORD>(volume.size()))) return {};
-    volume.resize(wcslen(volume.c_str()));
-    return volume;
-}
-
-CItem* CDedupAccounting::AddPseudoItem(CItem* parent, const DEDUPITEMKIND kind, const ULONGLONG bytes)
-{
-    static constexpr std::array names{ IDS_DEDUP_ITEM_SHARED, IDS_DEDUP_ITEM_EXTERNAL, IDS_DEDUP_ITEM_GARBAGE,
-        IDS_DEDUP_ITEM_OVERHEAD, IDS_DEDUP_ITEM_GARBAGE_FULL };
-
-    // Like free space items: undone parent, finished child, then the insertion that propagates the size
-    parent->UpwardSetUndone();
-    CItem* item = CItem::Create(IT_DEDUP, Localization::Lookup(names[kind]));
-    item->SetIndex(kind);
-    item->SetSizePhysical(bytes);
-    item->SetDone();
-    parent->AddChild(item);
-    return item;
-}
-
-void CDedupAccounting::AddFailure(const std::wstring& volume, const std::wstring& reason)
-{
-    std::unique_lock lock(m_lock);
-    m_failures.push_back(std::format(L"{}: {}", volume, reason));
-}
-
-std::vector<std::wstring> CDedupAccounting::TakeFailures()
-{
-    std::unique_lock lock(m_lock);
-    return std::exchange(m_failures, {});
-}
-
-void CDedupAccounting::MeasureExcludedStores(const std::vector<CItem*>& scanRoots)
-{
-    // Only drives have a progress range. The scan skips a store below a folder that a filter or the
-    // hidden and protected folder options leave out, as ScanItems decides it.
-    const bool byAttributes = COptions::ExcludeHiddenDirectory || COptions::ExcludeProtectedDirectory;
-    const auto skipped = [byAttributes](const std::wstring& folder)
+    if (!item->SupportsFilesystemApis()) return {};
+    const SmartPointer handle(CloseHandle, CreateFileW(item->GetPathLong().c_str(), 0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    if (handle == INVALID_HANDLE_VALUE) return {};
+    std::wstring path(MAX_PATH, L'\0');
+    DWORD size = GetFinalPathNameByHandleW(handle, path.data(), static_cast<DWORD>(path.size()), VOLUME_NAME_GUID);
+    if (size >= path.size())
     {
-        if (CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(folder)) return true;
-        const DWORD attributes = byAttributes ? GetFileAttributesW(folder.c_str()) : INVALID_FILE_ATTRIBUTES;
-        if (attributes == INVALID_FILE_ATTRIBUTES) return false;
-        constexpr DWORD hiddenSystem = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-        return COptions::ExcludeHiddenDirectory && (attributes & FILE_ATTRIBUTE_HIDDEN) != 0 ||
-            COptions::ExcludeProtectedDirectory && (attributes & hiddenSystem) == hiddenSystem;
+        path.resize(static_cast<std::size_t>(size) + 1);
+        size = GetFinalPathNameByHandleW(handle, path.data(), static_cast<DWORD>(path.size()), VOLUME_NAME_GUID);
+    }
+    if (size == 0 || size >= path.size()) return {};
+    path.resize(size);
+    const auto end = path.find(L"}\\");
+    if (!path.starts_with(L"\\\\?\\Volume{") || end == std::wstring::npos) return {};
+    path.resize(end + 2);
+    return path;
+}
+
+static bool IsVolumeBoundary(const CItem* item)
+{
+    return !item->IsTypeOrFlag(IT_MYCOMPUTER) &&
+        (item->IsScanRoot() || item->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT, ITRP_JUNCTION, ITRP_SYMLINK));
+}
+
+static CItem* CommonParent(CItem* parent, const CItem* item)
+{
+    while (parent != nullptr && !parent->IsAncestorOf(item)) parent = parent->GetParent();
+    return parent;
+}
+
+std::expected<std::shared_ptr<const CDedupAccounting::Volume>, std::wstring> CDedupAccounting::BuildVolume(
+    const std::wstring& path, const std::vector<CItem*>& roots, const CDedupStore::CancelCheck& cancelled)
+{
+    auto volume = std::make_shared<Volume>();
+    volume->path = path;
+    volume->roots = roots;
+    CDedupStore::CancelLatch latch(cancelled);
+    const auto error = [](const DWORD code) { return std::unexpected(TranslateError(code)); };
+
+    // Enumeration roots and mount aliases share one file-identity namespace.
+    std::vector<CItem*> files;
+    for (CItem* root : roots)
+    {
+        for (std::vector<CItem*> pending{ root }; !pending.empty();)
+        {
+            CItem* item = pending.back(); pending.pop_back();
+            if (item->IsTypeOrFlag(IT_FILE)) files.push_back(item);
+            else if (!item->IsLeaf() && !item->IsTypeOrFlag(IT_HLINKS) &&
+                (item == root || !IsVolumeBoundary(item))) pending.append_range(item->GetChildren());
+        }
+    }
+    const auto candidate = [](const CItem* item)
+    {
+        const DWORD attributes = item->GetAttributes();
+        return item->IsTypeOrFlag(ITRP_DEDUP) ||
+            attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
+            (item->GetRawType() & ITRP_MASK) == ITRP_NONE;
     };
-    std::unordered_map<std::wstring, ULONGLONG> excluded;
-    if (CFiltering::IsFilterActive() || byAttributes)
+    const auto metric = static_cast<DEDUPMETRIC>(COptions::DedupPhysicalMetric.Obj());
+    const bool wholeVolume = std::ranges::any_of(roots,
+        [](const CItem* root) { return root->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT); });
+    if (files.size() >= None) return error(ERROR_NOT_ENOUGH_MEMORY);
+    if ((!wholeVolume || metric == DEDUP_ALLOCATION) && !std::ranges::any_of(files, candidate))
+        return std::shared_ptr<const Volume>{};
+    const std::wstring storePath = CDedupStore::FindStore(path);
+    if (storePath.empty())
     {
-        for (const CItem* root : scanRoots)
-        {
-            if (!root->IsTypeOrFlag(IT_DRIVE) || root->IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) continue;
-            const std::wstring volumePath = GetVolumePath(root);
-            const std::wstring storePath = CDedupStore::FindStore(volumePath);
-            if (storePath.empty()) continue;
-
-            // Check each folder below the drive root down to the store
-            const std::wstring storeDirectory = storePath.substr(storePath.starts_with(L"\\\\?\\") ? 4 : 0);
-            for (std::size_t end = storeDirectory.find(L'\\', storeDirectory.find(L'\\') + 1);; end = storeDirectory.find(L'\\', end + 1))
-            {
-                if (skipped(storeDirectory.substr(0, end)))
-                {
-                    excluded[volumePath] = CDedupStore::DirectorySize(storePath);
-                    break;
-                }
-                if (end == std::wstring::npos) break;
-            }
-        }
+        if (std::ranges::any_of(files, [](const CItem* item) { return item->IsTypeOrFlag(ITRP_DEDUP); }))
+            return error(ERROR_ACCESS_DENIED);
+        return std::shared_ptr<const Volume>{};
     }
-    std::unique_lock lock(m_lock);
-    m_excludedStores = std::move(excluded);
-}
+    const auto candidates = std::ranges::partition(files, [&](const CItem* item)
+    { return candidate(item) || !item->IsTypeOrFlag(ITF_SINGLE_LINK) && item->GetSizePhysicalRaw() != 0; });
+    const auto count = static_cast<std::size_t>(candidates.begin() - files.begin());
+    std::ranges::sort(files.begin(), candidates.begin(), {}, &CItem::GetIndex);
 
-ULONGLONG CDedupAccounting::GetExcludedStoreBytes(const CItem* volumeRoot) const
-{
-    std::shared_lock lock(m_lock);
-    if (m_excludedStores.empty()) return 0;
-    const auto it = m_excludedStores.find(GetVolumePath(volumeRoot));
-    return it != m_excludedStores.end() ? it->second : 0;
-}
-
-void CDedupAccounting::RunPostScan(const std::vector<CItem*>& scanRoots, const CDedupStore::CancelCheck& cancelled)
-{
-    // Collect candidates per volume; files below a mount belong to that volume's own chunk store
-    if (cancelled && cancelled()) return;
-    std::unordered_map<CItem*, std::vector<CItem*>> perVolume;
-    std::unordered_set<const CItem*> visitedRoots;
-    std::unordered_set<const CItem*> collected; // a mounted volume is also reached through its outer volume
+    struct File
     {
-        std::shared_lock lock(m_lock);
-        for (CItem* root : scanRoots)
-        {
-            if (root->IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) continue;
-            CItem* volumeRoot = root->GetVolumeRoot();
-            if (!visitedRoots.insert(volumeRoot).second) continue;
-            if (m_indexes.contains(volumeRoot) || m_loadedVolumes.contains(volumeRoot)) continue;
-
-            // The MFT engine cannot see the tag of a non-resident reparse attribute, so reparse points
-            // with an unknown tag are verified too; partially optimized files are not sparse
-            for (CItem* file : CItem::GetItemsRecursive({ volumeRoot }, [](const CItem* item)
-                {
-                    if (!item->IsTypeOrFlag(IT_FILE) || item->IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) return false;
-                    if (item->IsTypeOrFlag(ITRP_DEDUP)) return true;
-                    const DWORD attributes = item->GetAttributes();
-                    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
-                        (item->GetRawType() & ITRP_MASK) == ITRP_NONE;
-                }))
-            {
-                CItem* fileVolume = file->GetVolumeRoot();
-                if (m_indexes.contains(fileVolume) || m_loadedVolumes.contains(fileVolume) || !collected.insert(file).second) continue;
-                perVolume[fileVolume].push_back(file);
-            }
-        }
-    }
-
-    // Volumes with optimized files or a store show this pass. They stay undone while it runs, so the
-    // scan can still be stopped and its progress shown; the progress is the mean over these volumes
-    // and never goes backwards. Reparse points of other tags (WOF, app links) are only told apart by
-    // reading them, so a volume with nothing else is checked quietly, and only when it has a dedup
-    // folder: its existence is visible without access to System Volume Information, unlike its content.
-    std::vector<std::pair<CItem*, std::vector<CItem*>*>> volumes;
-    std::vector<std::uint8_t> shown;
-    std::unordered_set<std::wstring> keptCaches;
-    for (auto& [volumeRoot, files] : perVolume)
-    {
-        std::wstring volumePath = GetVolumePath(volumeRoot);
-        if (volumePath.empty()) continue;
-        const bool dedup = std::ranges::any_of(files, [](const CItem* file) { return file->IsTypeOrFlag(ITRP_DEDUP); }) ||
-            !CDedupStore::FindStore(volumePath).empty();
-        if (!dedup)
-        {
-            if (!volumePath.ends_with(L'\\')) volumePath += L'\\';
-            if (GetFileAttributesW((volumePath + L"System Volume Information\\Dedup").c_str()) == INVALID_FILE_ATTRIBUTES &&
-                (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)) continue;
-        }
-        volumes.emplace_back(volumeRoot, &files);
-        shown.push_back(dedup ? 1 : 0);
-        keptCaches.insert(GetVolumePath(volumeRoot));
-    }
-    const auto shownCount = static_cast<std::size_t>(std::ranges::count(shown, 1));
-    VTRACE(L"Dedup post-scan of {} volumes, {} with deduplication", volumes.size(), shownCount);
-
-    // Cached stores of volumes that are neither processed now nor still accounted in the tree are released
-    {
-        std::shared_lock lock(m_lock);
-        for (const CItem* volumeRoot : m_indexes | std::views::keys) keptCaches.insert(GetVolumePath(volumeRoot));
-    }
-    {
-        std::scoped_lock lock(m_cacheLock);
-        std::erase_if(m_caches, [&](const auto& cache) { return !keptCaches.contains(cache.first); });
-    }
-    if (volumes.empty()) return;
-
-    if (shownCount != 0) m_progress.store(0, std::memory_order_relaxed);
-    for (const auto [index, volume] : std::views::enumerate(volumes))
-    {
-        if (shown[static_cast<std::size_t>(index)] != 0) volume.first->UpwardSetUndone();
-    }
-
-    std::vector<std::atomic<int>> volumeProgress(volumes.size());
-    const auto raise = [](std::atomic<int>& value, const int to)
-    {
-        for (int current = value.load(std::memory_order_relaxed);
-            to > current && !value.compare_exchange_weak(current, to, std::memory_order_relaxed);) {}
-    };
-    const auto report = [&](const std::size_t volume, const int permille)
-    {
-        if (shown[volume] == 0) return;
-        raise(volumeProgress[volume], permille);
-        int total = 0;
-        for (const auto& value : volumeProgress) total += value.load(std::memory_order_relaxed);
-        raise(m_progress, std::min(total / static_cast<int>(shownCount), 999));
-    };
-
-    std::for_each(std::execution::par, volumes.begin(), volumes.end(), [&](auto& volume)
-    {
-        const auto index = static_cast<std::size_t>(&volume - volumes.data());
-
-        // An exception would terminate the parallel loop; very large stores can exhaust memory
-        try
-        {
-            ProcessVolume(volume.first, *volume.second, cancelled, [&](const int permille) { report(index, permille); });
-        }
-        catch (const std::bad_alloc&)
-        {
-            AddFailure(volume.first->GetPath(), Localization::Lookup(IDS_DEDUP_OUT_OF_MEMORY));
-        }
-        catch (const std::length_error&)
-        {
-            AddFailure(volume.first->GetPath(), Localization::Lookup(IDS_DEDUP_OUT_OF_MEMORY));
-        }
-        report(index, 1000);
-    });
-    m_progress.store(-1, std::memory_order_relaxed);
-}
-
-void CDedupAccounting::ProcessVolume(CItem* volumeRoot, std::vector<CItem*>& files, const CDedupStore::CancelCheck& cancelled,
-    const std::function<void(int permille)>& progress)
-{
-    const std::wstring volumePath = GetVolumePath(volumeRoot);
-    if (volumePath.empty()) return;
-    const auto isCancelled = [&] { return cancelled && cancelled(); };
-
-    VolumeCache* cache = nullptr;
-    {
-        std::scoped_lock lock(m_cacheLock);
-        cache = &m_caches[volumePath];
-    }
-    std::scoped_lock cacheLock(cache->lock);
-
-    // Optimized files of the whole volume by file reference. Their stream maps only change when
-    // a file is optimized again, which changes the store as well, so while the store files stay
-    // unchanged only new files are read. The reparse point index needs the rights the store needs.
-    const std::wstring storePath = CDedupStore::FindStore(volumePath);
-    const auto snapshot = storePath.empty() ? std::nullopt : CDedupStore::TakeSnapshot(storePath);
-    if (!snapshot.has_value() || cache->storePath != storePath || cache->signature != snapshot->signature)
-    {
-        cache->store.reset();
-        cache->filesValid = false;
-    }
-    cache->storePath = storePath;
-    cache->signature = snapshot.has_value() ? snapshot->signature : 0;
-    cache->filesValid = snapshot.has_value() && CDedupStore::EnumerateVolumeFiles(volumePath, cache->files, cache->filesValid,
-        cancelled, [&](const double done) { progress(static_cast<int>(done * 300)); });
-    if (isCancelled()) return;
-    progress(300);
-
-    // Resolve each candidate's stream map digests, by its file reference when the volume was enumerated
-    struct Entry
-    {
-        CItem* item = nullptr;
+        std::size_t first, last;
+        DWORD links = 0;
         std::vector<CDedupStore::Hash16> maps;
-        ULONGLONG onDisk = 0;
-        ULONGLONG exclusive = 0;
+        ULONGLONG onDisk = 0, exclusive = 0;
         double effective = 0;
     };
-    std::vector<Entry> entries(files.size());
-    CDedupStore::CancelLatch latch(cancelled);
-    const auto viaLink = [volumeRoot](const CItem* item)
+    std::vector<File> records;
+    for (std::size_t first = 0; first < count;)
     {
-        // A followed junction or symbolic link may lead to another volume, where file references mean other files
-        for (const CItem* parent = item->GetParent(); parent != nullptr && parent != volumeRoot; parent = parent->GetParent())
-        {
-            if (parent->IsTypeOrFlag(ITRP_JUNCTION, ITRP_SYMLINK)) return true;
-        }
-        return false;
-    };
-    CDedupStore::ParallelForEach(entries, [&](Entry& entry)
-    {
-        entry.item = files[static_cast<std::size_t>(&entry - entries.data())];
-        if (latch()) return;
-        if (cache->filesValid && !viaLink(entry.item))
-        {
-            // The enumeration has every optimized file, so other reparse points are not
-            if (const auto known = cache->files.find(entry.item->GetIndex()); known != cache->files.end()) entry.maps = known->second;
-            else if (!entry.item->IsTypeOrFlag(ITRP_DEDUP)) return;
-        }
-        if (entry.maps.empty())
-        {
-            if (auto info = CDedupStore::ReadReparseData(entry.item->GetPathLong()); info.has_value()) entry.maps = std::move(info->maps);
-        }
+        std::size_t last = first + 1;
+        if (files[first]->GetIndex() != 0)
+            while (last < count && files[last]->GetIndex() == files[first]->GetIndex()) last++;
+        records.push_back({ first, last });
+        first = last;
+    }
 
-        // Each item is handled by exactly one thread, so the flag update is not shared
-        if (!entry.maps.empty()) entry.item->SetReparseTag(IO_REPARSE_TAG_DEDUP);
+    // Reuse the authoritative volume enumeration for selected files, including their hardlink counts.
+    const auto liveMaps = CDedupStore::EnumerateVolumeMaps(path, cancelled,
+        [&](const ULONGLONG id, const DWORD links, std::vector<CDedupStore::Hash16>&& maps)
+    {
+        const auto file = std::ranges::lower_bound(records, id, {},
+            [&](const File& record) { return files[record.first]->GetIndex(); });
+        if (file == records.end() || files[file->first]->GetIndex() != id) return;
+        file->links = links;
+        file->maps = std::move(maps);
     });
-    std::erase_if(entries, [](const Entry& entry) { return entry.maps.empty(); });
-    if (entries.empty() || latch() || isCancelled()) return;
+    if (!liveMaps) return error(ERROR_READ_FAULT);
 
+    // Only ordinary hardlinks and files without an identity need another metadata read.
+    std::exception_ptr failure;
+    std::mutex failureLock;
+    std::for_each(std::execution::par, records.begin(), records.end(), [&](File& file)
     {
-        std::unique_lock lock(m_lock);
-        m_dedupVolumes.insert(volumePath);
-    }
-    if (!snapshot.has_value())
-    {
-        AddFailure(volumePath, Localization::Lookup(IDS_DEDUP_NO_ACCESS));
-        return;
-    }
-
-    if (cache->store == nullptr)
-    {
-        auto store = std::make_unique<CDedupStore>();
-        if (!store->Load(storePath, cancelled, [&](const double done) { progress(300 + static_cast<int>(done * 550)); }))
+        try
         {
-            if (!isCancelled()) AddFailure(volumePath, store->GetError());
-            return;
+            if (latch() || !file.maps.empty()) return;
+            CItem* item = files[file.first];
+            if (candidate(item) && item->GetIndex() == 0)
+            {
+                if (auto info = CDedupStore::ReadReparseData(item->GetPathLong())) file.maps = std::move(info->maps);
+            }
+            if (file.maps.empty() && file.last - file.first == 1 && item->IsTypeOrFlag(ITF_SINGLE_LINK))
+                file.links = 1;
+            else if (item->GetSizePhysicalRaw() != 0 || !file.maps.empty() || file.last - file.first > 1)
+            {
+                const SmartPointer handle(CloseHandle, CreateFileW(item->GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+                BY_HANDLE_FILE_INFORMATION info{};
+                if (handle != INVALID_HANDLE_VALUE && GetFileInformationByHandle(handle, &info) &&
+                    (item->GetIndex() == 0 || item->GetIndex() ==
+                        (static_cast<ULONGLONG>(info.nFileIndexHigh) << 32 | info.nFileIndexLow)))
+                    file.links = info.nNumberOfLinks;
+            }
+            else file.links = 1;
+            std::ranges::sort(file.maps);
+            file.maps.erase(std::ranges::unique(file.maps).begin(), file.maps.end());
         }
-        cache->store = std::move(store);
-    }
-    CDedupStore& store = *cache->store;
-    progress(850);
+        catch (...)
+        {
+            std::lock_guard lock(failureLock);
+            failure = std::current_exception();
+        }
+    });
+    if (failure) std::rethrow_exception(failure);
+    if (cancelled && cancelled()) return error(ERROR_CANCELLED);
 
-    // Live maps come from existing files; the store only learns of deletions at garbage collection
-    std::optional<CDedupStore::MapSet> liveMaps;
-    if (cache->filesValid)
+    // Direct file contributions and ownership below a folder are kept compact between refreshes.
+    std::unordered_map<const CItem*, Values> values;
+    const auto own = [&](const CItem* item, const ULONGLONG bytes)
     {
-        liveMaps.emplace();
-        for (const auto& maps : cache->files | std::views::values) liveMaps->insert(maps.begin(), maps.end());
+        auto& value = values[item].freed;
+        value = (value == Unknown ? 0 : value) + bytes;
+    };
+    std::unordered_map<CItem*, std::uint32_t> sharedItems;
+    const auto pseudo = [&](CItem* parent, const DEDUPITEMKIND kind, const ULONGLONG bytes)
+    {
+        if (bytes == 0) return None;
+        if (kind == DEDUPITEM_SHARED)
+        {
+            const auto [entry, inserted] = sharedItems.try_emplace(parent,
+                static_cast<std::uint32_t>(volume->pseudo.size()));
+            if (!inserted) { volume->pseudo[entry->second].bytes += bytes; return entry->second; }
+        }
+        volume->pseudo.push_back({ parent, bytes, kind });
+        return static_cast<std::uint32_t>(volume->pseudo.size() - 1);
+    };
+    CItem* displayRoot = roots.front();
+    for (CItem* root : roots) displayRoot = CommonParent(displayRoot, root);
+
+    // A hardlink allocation belongs to the smallest folder containing every surviving directory entry.
+    for (const File& file : records)
+    {
+        CItem* item = files[file.first];
+        if (item->IsTypeOrFlag(ITRP_DEDUP) && file.maps.empty()) return error(ERROR_READ_FAULT);
+        if (!file.maps.empty() && file.links == 0) return error(ERROR_READ_FAULT);
+        CItem* owner = item->GetParent();
+        for (std::size_t i = file.first; i < file.last; i++) owner = CommonParent(owner, files[i]);
+        const ULONGLONG bytes = item->GetSizePhysicalRaw();
+        if (file.links != 1 || file.last - file.first != 1)
+        {
+            for (std::size_t i = file.first; i < file.last; i++)
+                values[files[i]].freed = file.links == 0 ? Unknown : 0;
+            if (file.links != 0 && file.links == file.last - file.first && owner != nullptr) own(owner, bytes);
+        }
+        if (file.links != 0 && file.links < file.last - file.first) return error(ERROR_INVALID_DATA);
     }
-    store.Evaluate(liveMaps.has_value() ? &*liveMaps : nullptr, *snapshot);
-    liveMaps.reset();
-    if (isCancelled()) return;
-    progress(900);
+    std::erase_if(records, [](const File& file) { return file.maps.empty(); });
+    if (records.empty() && (!wholeVolume || metric == DEDUP_ALLOCATION)) return std::shared_ptr<const Volume>{};
 
-    // A scanned chunk store is replaced by the attributed data. Its garbage and metadata take
-    // space on the volume either way, also when a filter keeps the store out of the scan.
-    const auto metric = static_cast<DEDUPMETRIC>(COptions::DedupPhysicalMetric.Obj());
-    std::wstring storeDirectory = storePath;
-    if (storeDirectory.starts_with(L"\\\\?\\")) storeDirectory.erase(0, 4);
-    if (const auto separator = storeDirectory.rfind(L'\\'); separator != std::wstring::npos) storeDirectory.resize(separator);
-    CItem* const storeItem = volumeRoot->FindItemByPath(storeDirectory);
-    CItem* const chunkStore = metric != DEDUP_ALLOCATION ? storeItem : nullptr; // neutralized below
-    const bool withSpaceItems = metric != DEDUP_ALLOCATION && (chunkStore != nullptr || volumeRoot->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT));
+    CDedupStore store;
+    if (!store.Load(storePath, *liveMaps, cancelled)) return std::unexpected(store.GetError());
 
-    // Each stream map is resolved once and remembers every entry (hardlinks too) using it
+    // Find the store by file identity so drive letters, selected folders and mount paths agree.
+    ULONGLONG storeId = 0;
+    const SmartPointer storeHandle(CloseHandle, CreateFileW(storePath.c_str(), 0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    BY_HANDLE_FILE_INFORMATION storeInfo{};
+    if (storeHandle != INVALID_HANDLE_VALUE && GetFileInformationByHandle(storeHandle, &storeInfo))
+        storeId = static_cast<ULONGLONG>(storeInfo.nFileIndexHigh) << 32 | storeInfo.nFileIndexLow;
+    std::unordered_set<const CItem*> stores;
+    if (storeId != 0) for (const CItem* file : files)
+    {
+        for (const CItem* parent = file->GetParent(); parent != nullptr; parent = parent->GetParent())
+        {
+            if (parent->GetIndex() == storeId) { stores.insert(parent); break; }
+            if (IsVolumeBoundary(parent)) break;
+        }
+    }
+    const bool replaceStore = !stores.empty() && metric != DEDUP_ALLOCATION;
+    const bool withSpaceItems = metric != DEDUP_ALLOCATION && (wholeVolume || replaceStore);
+    if (withSpaceItems && !store.ComputeSpaceUsage(cancelled)) return std::unexpected(store.GetError());
+    if (replaceStore) for (const CItem* storeItem : stores)
+        if (storeItem->GetSizePhysicalRaw() != store.GetSpaceUsage().storeBytes) return error(ERROR_INVALID_DATA);
+
+    // Resolve each map once; map users are physical files, with directory-entry counts kept separately.
     std::vector<std::pair<CDedupStore::Hash16, std::uint32_t>> mapEntries;
-    for (const auto [index, entry] : std::views::enumerate(entries))
-    {
-        for (const auto& hash : entry.maps) mapEntries.emplace_back(hash, static_cast<std::uint32_t>(index));
-    }
+    for (const auto [file, record] : std::views::enumerate(records))
+        for (const auto& map : record.maps) mapEntries.emplace_back(map, static_cast<std::uint32_t>(file));
     std::ranges::sort(mapEntries);
-    mapEntries.erase(std::ranges::unique(mapEntries).begin(), mapEntries.end());
     std::vector<CDedupStore::Hash16> requests;
-    std::vector<std::uint32_t> mapUserOffsets;
-    std::vector<std::uint32_t> mapUsers;
-    for (const auto& [hash, entry] : mapEntries)
+    std::vector<std::uint32_t> mapOffsets, mapUsers;
+    for (const auto& [hash, file] : mapEntries)
     {
         if (requests.empty() || requests.back() != hash)
         {
             requests.push_back(hash);
-            mapUserOffsets.push_back(static_cast<std::uint32_t>(mapUsers.size()));
+            mapOffsets.push_back(static_cast<std::uint32_t>(mapUsers.size()));
         }
-        mapUsers.push_back(entry);
+        mapUsers.push_back(file);
     }
-    mapUserOffsets.push_back(static_cast<std::uint32_t>(mapUsers.size()));
-    mapEntries = {};
-
-    // Chunks of one map of one file are exclusive; the others are recorded as (chunk, map)
-    // visits. Hardlinks count as distinct files, since deleting one link frees nothing.
-    std::vector<std::pair<std::uint32_t, std::uint32_t>> visits;
-    for (std::uint32_t request = 0; request < requests.size(); request++)
+    mapOffsets.push_back(static_cast<std::uint32_t>(mapUsers.size()));
+    decltype(mapEntries){}.swap(mapEntries);
+    std::vector<bool> mapExternal(requests.size());
+    for (std::size_t map = 0; map < requests.size(); map++)
     {
-        const std::uint32_t first = mapUserOffsets[request];
-        const std::uint32_t last = mapUserOffsets[request + 1];
-        for (const std::uint32_t chunk : store.GetMapChunks(requests[request]))
-        {
-            const std::uint32_t size = store.GetChunkSize(chunk);
-            const std::uint32_t refs = store.GetChunkRefs(chunk);
-            for (std::uint32_t i = first; i < last; i++)
-                entries[mapUsers[i]].effective += static_cast<double>(size) / std::max(refs, 1u);
-            if (refs <= 1 && last - first == 1)
-            {
-                entries[mapUsers[first]].onDisk += size;
-                entries[mapUsers[first]].exclusive += size;
-            }
-            else visits.emplace_back(chunk, request);
-        }
+        const auto live = liveMaps->find(requests[map]);
+        ULONGLONG selected = 0;
+        for (auto i = mapOffsets[map]; i < mapOffsets[map + 1]; i++)
+            selected += records[mapUsers[i]].last - records[mapUsers[i]].first;
+        if (live == liveMaps->end() || live->second < selected) return error(ERROR_INVALID_DATA);
+        mapExternal[map] = live->second > selected;
     }
-    if (isCancelled()) return;
-    progress(950);
+    for (auto& record : records) decltype(record.maps){}.swap(record.maps);
 
-    // Per chunk: its distinct users, whether unscanned files use it too, and their common folder
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> visits;
+    if (!store.Resolve(requests, [&](const std::size_t map, const std::uint32_t chunk,
+        const CDedupStore::ChunkInfo& info)
+    {
+        const double share = static_cast<double>(info.diskSize) / info.refs / liveMaps->at(requests[map]);
+        for (auto i = mapOffsets[map]; i < mapOffsets[map + 1]; i++)
+            records[mapUsers[i]].effective += share;
+        const auto first = mapOffsets[map], last = mapOffsets[map + 1];
+        File& file = records[mapUsers[first]];
+        if (info.refs == 1 && last - first == 1 && file.links == 1 && !mapExternal[map])
+        {
+            file.onDisk += info.diskSize;
+            file.exclusive += info.diskSize;
+        }
+        else visits.emplace_back(chunk, static_cast<std::uint32_t>(map));
+    }, cancelled)) return std::unexpected(store.GetError());
+
+    // Chunks are counted once across every root. Shared ownership also includes all hardlink names.
     std::ranges::sort(visits);
-    VolumeIndex index;
-    index.files.resize(entries.size());
-    std::unordered_map<CItem*, ULONGLONG> owned;    // folder -> chunk bytes freed only with it
-    std::unordered_map<CItem*, FolderInfo> folders; // shared bytes per folder
-    std::unordered_map<CItem*, std::uint32_t> stamps;
-    std::vector<CItem*> chunkLca;
-    ULONGLONG externalBytes = 0;
-    std::vector<std::uint32_t> chunkUsers;
-    index.chunkOffsets.push_back(0);
+    std::unordered_map<const CItem*, std::uint32_t> stamps;
+    ULONGLONG externalBytes = 0, attributed = 0;
+    std::vector<std::uint32_t> users;
+    volume->chunkOffsets.push_back(0);
     for (std::size_t begin = 0; begin < visits.size();)
     {
-        const std::uint32_t chunkIndex = visits[begin].first;
+        if (latch()) return error(ERROR_CANCELLED);
+        const auto chunk = visits[begin].first;
         std::size_t end = begin;
-        chunkUsers.clear();
-        for (; end < visits.size() && visits[end].first == chunkIndex; end++)
+        users.clear();
+        bool external = false;
+        for (; end < visits.size() && visits[end].first == chunk; end++)
         {
-            const std::uint32_t map = visits[end].second;
-            chunkUsers.insert(chunkUsers.end(), mapUsers.begin() + mapUserOffsets[map], mapUsers.begin() + mapUserOffsets[map + 1]);
+            const auto map = visits[end].second;
+            external = external || mapExternal[map];
+            users.insert(users.end(), mapUsers.begin() + mapOffsets[map], mapUsers.begin() + mapOffsets[map + 1]);
         }
-        std::ranges::sort(chunkUsers);
-        chunkUsers.erase(std::ranges::unique(chunkUsers).begin(), chunkUsers.end());
-        const std::size_t mapVisits = end - begin; // distinct maps, as each is resolved once
+        std::ranges::sort(users);
+        users.erase(std::ranges::unique(users).begin(), users.end());
+        const auto& info = store.GetChunk(chunk);
+        external = external || end - begin < info.refs;
         begin = end;
-
-        const std::uint32_t chunkSize = store.GetChunkSize(chunkIndex);
-        const bool external = mapVisits < store.GetChunkRefs(chunkIndex);
-        for (const std::uint32_t user : chunkUsers) entries[user].onDisk += chunkSize;
-
-        // Several stream maps of one file (one per GB) still make it exclusive
-        if (!external && chunkUsers.size() == 1)
+        for (const auto user : users) records[user].onDisk += info.diskSize;
+        File& first = records[users.front()];
+        if (!external && users.size() == 1 && first.links == 1)
         {
-            entries[chunkUsers.front()].exclusive += chunkSize;
+            first.exclusive += info.diskSize;
             continue;
         }
-
-        // The users are distinct files, so their common folder is above the first one
-        CItem* lca = nullptr;
-        if (!external)
+        attributed += info.diskSize;
+        CItem* owner = external ? nullptr : files[first.first]->GetParent();
+        if (owner != nullptr) for (const auto user : users)
+            for (std::size_t i = records[user].first; i < records[user].last; i++)
+                owner = CommonParent(owner, files[i]);
+        std::uint32_t pseudoIndex = None;
+        if (owner != nullptr)
         {
-            lca = entries[chunkUsers.front()].item->GetParent();
-            for (const std::uint32_t user : chunkUsers)
-                while (!lca->IsAncestorOf(entries[user].item)) lca = lca->GetParent();
-            owned[lca] += chunkSize;
+            own(owner, info.diskSize);
+            if (metric == DEDUP_SHARED_ONCE) pseudoIndex = pseudo(owner, DEDUPITEM_SHARED, info.diskSize);
         }
-        else externalBytes += chunkSize;
-
-        // Folders between a user and the common folder (or the volume root) hold data used elsewhere too
-        const auto stamp = static_cast<std::uint32_t>(chunkLca.size() + 1);
-        for (const std::uint32_t user : chunkUsers)
+        else externalBytes += info.diskSize;
+        const auto stamp = static_cast<std::uint32_t>(volume->chunkBytes.size() + 1);
+        for (const auto user : users) for (std::size_t i = records[user].first; i < records[user].last; i++)
         {
-            for (CItem* parent = entries[user].item->GetParent(); parent != nullptr && parent != lca; parent = parent->GetParent())
+            for (CItem* parent = files[i]->GetParent(); parent != nullptr && parent != owner;
+                parent = parent->GetParent())
             {
-                auto& mark = stamps[parent];
-                if (mark == stamp) break;
-                mark = stamp;
-                folders[parent].shared += chunkSize;
-                if (parent == volumeRoot) break;
+                if (stamps[parent] == stamp) break;
+                stamps[parent] = stamp;
+                auto& shared = values[parent].shared;
+                shared = (shared == Unknown ? 0 : shared) + info.diskSize;
             }
         }
-
-        index.chunkFiles.insert(index.chunkFiles.end(), chunkUsers.begin(), chunkUsers.end());
-        index.chunkOffsets.push_back(static_cast<std::uint32_t>(index.chunkFiles.size()));
-        index.chunkBytes.push_back(chunkSize);
-        index.chunkExternal.push_back(external ? 1 : 0);
-        chunkLca.push_back(lca);
+        volume->chunkFiles.insert(volume->chunkFiles.end(), users.begin(), users.end());
+        volume->chunkOffsets.push_back(static_cast<std::uint32_t>(volume->chunkFiles.size()));
+        volume->chunkBytes.push_back(info.diskSize);
+        volume->chunkOwner.push_back(pseudoIndex);
+        volume->chunkExternal.push_back(external);
     }
-    visits = {};
-    stamps = {};
+    decltype(visits){}.swap(visits);
+    decltype(stamps){}.swap(stamps);
 
-    // Invert into file -> shared chunks
-    index.fileOffsets.assign(entries.size() + 1, 0);
-    for (const std::uint32_t user : index.chunkFiles) index.fileOffsets[user + 1]++;
-    for (std::size_t i = 1; i < index.fileOffsets.size(); i++) index.fileOffsets[i] += index.fileOffsets[i - 1];
-    index.fileChunks.resize(index.chunkFiles.size());
+    // The physical allocations remain in CItem; the projection contains only differences and metrics.
+    std::size_t entryCount = 0;
+    for (const auto& file : records) entryCount += file.last - file.first;
+    volume->entries.reserve(entryCount);
+    volume->entryOffsets.reserve(records.size() + 1);
+    volume->fileBytes.reserve(records.size());
+    volume->fileExclusive.reserve(records.size());
+    for (const auto [fileIndex, file] : std::views::enumerate(records))
     {
-        std::vector<std::uint32_t> cursor(index.fileOffsets.begin(), index.fileOffsets.end() - 1);
-        for (std::uint32_t chunk = 0; chunk + 1 < index.chunkOffsets.size(); chunk++)
+        volume->entryOffsets.push_back(static_cast<std::uint32_t>(volume->entries.size()));
+        volume->fileBytes.push_back(file.onDisk);
+        volume->fileExclusive.push_back(file.exclusive);
+        for (std::size_t i = file.first; i < file.last; i++)
         {
-            for (std::uint32_t i = index.chunkOffsets[chunk]; i < index.chunkOffsets[chunk + 1]; i++)
+            CItem* item = files[i];
+            const ULONGLONG raw = item->GetSizePhysicalRaw();
+            Values& value = values[item];
+            value.file = static_cast<std::uint32_t>(fileIndex);
+            value.freed = file.links == 1 ? raw + file.exclusive : 0;
+            value.shared = file.onDisk - file.exclusive;
+            switch (metric)
             {
-                index.fileChunks[cursor[index.chunkFiles[i]]++] = chunk;
+            case DEDUP_SHARED_ONCE:
+            case DEDUP_EXCLUSIVE: value.delta = file.exclusive; break;
+            case DEDUP_EFFECTIVE: value.delta = static_cast<LONGLONG>(std::llround(file.effective)); break;
+            case DEDUP_LOGICAL: value.delta = std::max(raw, item->GetSizeLogical()) - raw; break;
+            default: break;
             }
+            volume->entries.push_back(item);
         }
     }
+    volume->entryOffsets.push_back(static_cast<std::uint32_t>(volume->entries.size()));
+    for (const auto& file : records) attributed += file.exclusive;
 
-    // Per-file values and the size each one contributes under the metric
-    std::vector<FileInfo> infos(entries.size());
-    for (const auto [slot, entry] : std::views::enumerate(entries))
+    for (const CItem* file : files)
     {
-        FileInfo& info = infos[static_cast<std::size_t>(slot)];
-        info.onDisk = entry.onDisk;
-        info.exclusive = entry.exclusive;
-
-        // The metric is added to what the file system still allocates (e.g. ranges recalled after optimization)
-        const ULONGLONG raw = entry.item->GetSizePhysicalRaw();
-        const ULONGLONG logical = entry.item->GetSizeLogical();
-        switch (metric)
+        for (const CItem* parent = file->GetParent(); parent != nullptr; parent = parent->GetParent())
         {
-        case DEDUP_SHARED_ONCE:
-        case DEDUP_EXCLUSIVE: info.applied = info.exclusive; break;
-        case DEDUP_EFFECTIVE: info.applied = static_cast<ULONGLONG>(std::llround(entry.effective)); break;
-        case DEDUP_LOGICAL: info.applied = logical > raw ? logical - raw : 0; break;
-        default: info.applied = 0; break;
+            if (stores.contains(parent))
+            {
+                auto& value = values[file];
+                value.freed = 0;
+                if (replaceStore) value.delta = -static_cast<LONGLONG>(file->GetSizePhysicalRaw());
+                break;
+            }
+            if (IsVolumeBoundary(parent)) break;
         }
-
-        index.files[static_cast<std::size_t>(slot)] = entry.item;
-        index.fileOnDisk.push_back(info.onDisk);
-        index.fileExclusive.push_back(info.exclusive);
-
-        // Every folder holding an optimized file gets a Shared value, if only 0
-        for (CItem* parent = entry.item->GetParent(); parent != nullptr; parent = parent->GetParent())
-        {
-            folders.try_emplace(parent);
-            if (parent == volumeRoot) break;
-        }
-    }
-    // ComputeTotals adds the chunks shared only below a folder to that folder
-    for (const auto& [node, bytes] : owned) folders[node].owned += bytes;
-
-    // Finalization re-sorts only the folders that are marked undone
-    volumeRoot->UpwardSetUndone();
-    std::unordered_set<CItem*> touchedParents;
-    for (const auto [slot, entry] : std::views::enumerate(entries))
-    {
-        entry.item->UpwardAddSizePhysical(infos[static_cast<std::size_t>(slot)].applied);
-        touchedParents.insert(entry.item->GetParent());
-    }
-
-    // The chunk store holds the bytes now attributed to files and pseudo items
-    std::vector<std::pair<CItem*, ULONGLONG>> neutralized;
-    if (chunkStore != nullptr)
-    {
-        for (CItem* file : CItem::GetItemsRecursive({ chunkStore }, [](const CItem* item)
-            { return item->IsTypeOrFlag(IT_FILE) && item->GetSizePhysicalRaw() > 0; }))
-        {
-            const ULONGLONG bytes = file->GetSizePhysicalRaw();
-            file->UpwardSubtractSizePhysical(bytes);
-            neutralized.emplace_back(file, bytes);
-            touchedParents.insert(file->GetParent());
-        }
-    }
-
-    // Pseudo items are added without m_lock: insertion may wait for the UI thread, which reads the maps
-    std::vector<std::pair<CItem*, ULONGLONG>> pseudo;
-    std::unordered_map<CItem*, CItem*> sharedItems; // common folder -> its pseudo item
-    if (metric == DEDUP_SHARED_ONCE)
-    {
-        for (const auto& [node, bytes] : owned)
-        {
-            if (bytes == 0) continue;
-            CItem* item = AddPseudoItem(node, DEDUPITEM_SHARED, bytes);
-            sharedItems.emplace(node, item);
-            pseudo.emplace_back(item, bytes);
-        }
-        if (externalBytes != 0) pseudo.emplace_back(AddPseudoItem(volumeRoot, DEDUPITEM_EXTERNAL, externalBytes), externalBytes);
     }
     if (withSpaceItems)
     {
-        // Garbage a regular garbage collection leaves alone needs a full one
         const auto& space = store.GetSpaceUsage();
-        const ULONGLONG fullOnly = space.garbageBytes - space.regularGarbageBytes;
-        if (space.regularGarbageBytes != 0)
-            pseudo.emplace_back(AddPseudoItem(volumeRoot, DEDUPITEM_GARBAGE, space.regularGarbageBytes), space.regularGarbageBytes);
-        if (fullOnly != 0) pseudo.emplace_back(AddPseudoItem(volumeRoot, DEDUPITEM_GARBAGE_FULL, fullOnly), fullOnly);
-        if (space.overheadBytes != 0)
-            pseudo.emplace_back(AddPseudoItem(volumeRoot, DEDUPITEM_OVERHEAD, space.overheadBytes), space.overheadBytes);
+        if (attributed > space.liveChunkBytes) return error(ERROR_INVALID_DATA);
+        externalBytes += space.liveChunkBytes - attributed;
+        pseudo(displayRoot, DEDUPITEM_GARBAGE, space.regularGarbageBytes);
+        pseudo(displayRoot, DEDUPITEM_GARBAGE_FULL, space.garbageBytes - space.regularGarbageBytes);
+        pseudo(displayRoot, DEDUPITEM_OVERHEAD, space.overheadBytes);
     }
-    index.chunkOwner.resize(chunkLca.size(), nullptr);
-    for (std::size_t chunk = 0; chunk < chunkLca.size(); chunk++)
-    {
-        if (const auto it = sharedItems.find(chunkLca[chunk]); it != sharedItems.end()) index.chunkOwner[chunk] = it->second;
-    }
+    if (metric == DEDUP_SHARED_ONCE) pseudo(displayRoot, DEDUPITEM_EXTERNAL, externalBytes);
 
-    {
-        std::unique_lock lock(m_lock);
-        for (const auto [slot, entry] : std::views::enumerate(entries))
-        {
-            m_files[entry.item] = infos[static_cast<std::size_t>(slot)];
-            m_slots[entry.item] = { volumeRoot, static_cast<std::uint32_t>(slot) };
-        }
-        for (auto& [folder, info] : folders) m_folders[folder] = info;
-        for (const auto& [item, bytes] : neutralized) m_neutralized[item] = bytes;
-        for (const auto& [item, bytes] : pseudo) m_pseudo[item] = bytes;
-        if (storeItem != nullptr) m_chunkStores.insert(storeItem);
-        m_indexes[volumeRoot] = std::move(index);
-    }
-
-    for (CItem* parent : touchedParents)
-    {
-        if (parent != nullptr) parent->UpwardSetUndone();
-    }
-
-    VTRACE(L"Dedup accounting for {}: {} files, {} maps, {} shared chunks, {} external bytes",
-        volumePath, entries.size(), requests.size(), chunkLca.size(), externalBytes);
+    // Invert the shared chunk adjacency once for selection and highlighting queries.
+    volume->fileOffsets.assign(records.size() + 1, 0);
+    for (const auto user : volume->chunkFiles) volume->fileOffsets[user + 1]++;
+    for (std::size_t i = 1; i < volume->fileOffsets.size(); i++) volume->fileOffsets[i] += volume->fileOffsets[i - 1];
+    volume->fileChunks.resize(volume->chunkFiles.size());
+    auto cursor = volume->fileOffsets;
+    for (std::uint32_t chunk = 0; chunk < volume->chunkBytes.size(); chunk++)
+        for (auto i = volume->chunkOffsets[chunk]; i < volume->chunkOffsets[chunk + 1]; i++)
+            volume->fileChunks[cursor[volume->chunkFiles[i]]++] = chunk;
+    volume->values.reserve(values.size());
+    for (const auto& entry : values) volume->values.push_back(entry);
+    return volume;
 }
 
-void CDedupAccounting::Revert(const CItem* volumeRoot)
+void CDedupAccounting::RunPostScan(const CDedupStore::CancelCheck& cancelled)
 {
-    // Collect under the lock, then change sizes and remove pseudo items without
-    // it: removal deletes items on the UI thread, whose destructor unregisters
-    const auto inScope = [volumeRoot](const CItem* item) { return volumeRoot->IsAncestorOf(item); };
-    std::vector<std::pair<CItem*, ULONGLONG>> applied;
-    std::vector<std::pair<CItem*, ULONGLONG>> neutralized;
-    std::vector<CItem*> pseudo;
+    if (m_snapshot || cancelled && cancelled()) return;
+    const SmartPointer resetProcessing([](CDedupAccounting* accounting) { accounting->m_processing = false; }, this);
+    try
+    {
+        if (m_imported)
+        {
+            Publish({});
+            return;
+        }
+        if (!COptions::DedupAccounting) return;
+
+        // Keep cancellation available and show activity while the filesystem scan is being accounted for.
+        CItem* root = CWinDirStatModel::Get()->GetRootItem();
+        if (root == nullptr) return;
+        m_processing = true;
+        root->UpwardSetUndone();
+        CMainFrame::Get()->InvokeInMessageThread([]
+        {
+            CMainFrame::Get()->UpdateProgress();
+            CDirStatApp::Get()->OnIdle(0);
+        });
+
+        // Resolve each boundary once, including selected folders and followed mount paths.
+        std::map<std::wstring, std::vector<CItem*>> groups;
+        for (std::vector<CItem*> pending{ CWinDirStatModel::Get()->GetRootItem() }; !pending.empty();)
+        {
+            CItem* item = pending.back(); pending.pop_back();
+            if (item == nullptr || item->IsLeaf() || item->IsTypeOrFlag(IT_HLINKS, ITF_MTP, ITF_REMOTE)) continue;
+            if (!item->HasChildren() && !item->IsScanRoot()) continue;
+            if (IsVolumeBoundary(item))
+                if (auto path = GetVolumePath(item); !path.empty()) groups[std::move(path)].push_back(item);
+            for (CItem* child : item->GetChildren()) if (!child->IsLeaf()) pending.push_back(child);
+        }
+        auto volumes = m_volumes;
+        for (const auto& [path, roots] : groups)
+        {
+            if (cancelled && cancelled()) return;
+            if (std::ranges::any_of(volumes, [&](const auto& volume) { return volume->path == path; })) continue;
+            auto result = BuildVolume(path, roots, cancelled);
+            if (cancelled && cancelled()) return;
+            if (result && *result) volumes.push_back(std::move(*result));
+            else if (!result)
+            {
+                std::unique_lock lock(m_lock);
+                m_failures.push_back(std::format(L"{}: {}", roots.front()->GetPath(), result.error()));
+            }
+        }
+        if (!volumes.empty()) Publish(std::move(volumes));
+    }
+    catch (const std::exception&)
     {
         std::unique_lock lock(m_lock);
-        std::erase_if(m_files, [&](const auto& entry)
-        {
-            if (!inScope(entry.first)) return false;
-            if (entry.second.applied != 0) applied.emplace_back(const_cast<CItem*>(entry.first), entry.second.applied);
-            m_slots.erase(entry.first);
-            return true;
-        });
-        std::erase_if(m_neutralized, [&](const auto& entry)
-        {
-            if (!inScope(entry.first)) return false;
-            neutralized.emplace_back(const_cast<CItem*>(entry.first), entry.second);
-            return true;
-        });
-        std::erase_if(m_pseudo, [&](const auto& entry)
-        {
-            if (!inScope(entry.first)) return false;
-            pseudo.push_back(const_cast<CItem*>(entry.first));
-            return true;
-        });
-        std::erase_if(m_folders, [&](const auto& entry) { return inScope(entry.first); });
-        std::erase_if(m_indexes, [&](const auto& entry) { return inScope(entry.first); });
-        std::erase_if(m_loadedVolumes, inScope);
-        std::erase_if(m_chunkStores, inScope);
+        m_failures.push_back(TranslateError(ERROR_NOT_ENOUGH_MEMORY));
+    }
+}
 
-        // Values a loaded report stored for the enclosing folders include the volume
-        for (const CItem* parent = volumeRoot->GetParent(); parent != nullptr; parent = parent->GetParent())
+void CDedupAccounting::Publish(std::vector<std::shared_ptr<const Volume>> volumes)
+{
+    auto snapshot = std::make_unique<Snapshot>();
+    snapshot->volumes = volumes;
+    snapshot->owners.resize(volumes.size());
+    auto& values = snapshot->values;
+    std::unordered_map<const CItem*, std::uint32_t> boundaries;
+    std::vector<std::unique_ptr<CItem>> created;
+    std::map<std::pair<CItem*, DEDUPITEMKIND>, CItem*> pseudoItems;
+    static constexpr std::array names{ IDS_DEDUP_ITEM_SHARED, IDS_DEDUP_ITEM_EXTERNAL, IDS_DEDUP_ITEM_GARBAGE,
+        IDS_DEDUP_ITEM_OVERHEAD, IDS_DEDUP_ITEM_GARBAGE_FULL };
+
+    // Prepare all bindings and rows before exposing any result to the tree.
+    for (const auto [index, volume] : std::views::enumerate(volumes))
+    {
+        for (CItem* root : volume->roots) boundaries[root] = static_cast<std::uint32_t>(index);
+        for (const auto& [item, source] : volume->values)
         {
-            if (const auto folder = m_folders.find(parent); folder != m_folders.end() && folder->second.loaded)
-                m_folders.erase(folder);
+            auto& value = values[item];
+            value.delta += source.delta;
+            if (source.freed != Unknown) value.freed = (value.freed == Unknown ? 0 : value.freed) + source.freed;
+            if (source.shared != Unknown) value.shared = (value.shared == Unknown ? 0 : value.shared) + source.shared;
+            if (source.file != None) { value.volume = static_cast<std::uint32_t>(index); value.file = source.file; }
         }
-
-        // Sizes change below, so the totals are recomputed after the next scan
-        m_folderTotals.clear();
+        auto& owners = snapshot->owners[index];
+        owners.reserve(volume->pseudo.size());
+        for (const auto& pseudo : volume->pseudo)
+        {
+            auto& item = pseudoItems[{ pseudo.parent, pseudo.kind }];
+            if (item == nullptr)
+            {
+                auto child = std::unique_ptr<CItem>(CItem::Create(IT_DEDUP, Localization::Lookup(names[pseudo.kind])));
+                item = child.get();
+                item->SetIndex(pseudo.kind);
+                item->SetParent(pseudo.parent);
+                item->SetDone();
+                created.push_back(std::move(child));
+                snapshot->pseudo.push_back(item);
+            }
+            item->SetSizePhysical(item->GetSizePhysicalRaw() + pseudo.bytes);
+            owners.push_back(item);
+        }
     }
-
-    // Parents are re-sorted at finalization only if they are marked undone
-    std::unordered_set<CItem*> touchedParents;
-    for (const auto& [item, bytes] : applied)
+    for (const auto& [item, value] : m_loaded)
     {
-        item->UpwardSubtractSizePhysical(bytes);
-        touchedParents.insert(item->GetParent());
+        values[item] = value;
+        if (item->IsTypeOrFlag(IT_DEDUP)) snapshot->pseudo.push_back(const_cast<CItem*>(item));
     }
-    for (const auto& [item, bytes] : neutralized)
+
+    // Display differences follow the existing hardlink grouping, while allocations stay untouched.
+    std::unordered_map<const CItem*, CItem*> hardlinks;
+    for (CItem* drive : CWinDirStatModel::Get()->GetRootItem()->GetDriveItems())
+        if (CItem* links = drive->FindHardlinksItem(); links != nullptr)
+            for (CItem* set : links->GetChildren()) for (CItem* group : set->GetChildren())
+                for (CItem* entry : group->GetChildren()) hardlinks.emplace(entry->GetLinkedItem(), group);
+    std::unordered_map<CItem*, LONGLONG> groupDeltas;
+    std::vector<std::pair<const CItem*, LONGLONG>> deltas;
+    for (const auto& [item, value] : values) if (item->IsLeaf() && value.delta != 0)
+        deltas.emplace_back(item, value.delta);
+    const auto propagate = [&](const CItem* parent, const LONGLONG delta)
     {
-        item->UpwardAddSizePhysical(bytes);
-        touchedParents.insert(item->GetParent());
+        for (; parent != nullptr; parent = parent->GetParent()) values[parent].delta += delta;
+    };
+    for (const auto& [item, delta] : deltas)
+    {
+        if (const auto group = hardlinks.find(item); group != hardlinks.end()) groupDeltas[group->second] = delta;
+        else propagate(item->GetParent(), delta);
     }
-    for (CItem* item : pseudo)
+    for (const auto& [group, delta] : groupDeltas) propagate(group, delta);
+    for (const auto& child : created) propagate(child->GetParent(), static_cast<LONGLONG>(child->GetSizePhysicalRaw()));
+
+    // Each folder frees ordinary allocations plus contributions owned only by that whole subtree.
+    if (!m_imported)
+    {
+        struct Frame
+        {
+            const CItem* item;
+            std::size_t next = 0;
+            ULONGLONG total = 0;
+            std::uint32_t volume = None;
+            bool known = true;
+            bool accounted = false;
+        };
+        const auto frameFor = [&](const CItem* item, std::uint32_t volume)
+        {
+            if (IsVolumeBoundary(item))
+            {
+                const auto boundary = boundaries.find(item);
+                volume = boundary == boundaries.end() ? None : boundary->second;
+            }
+            const auto found = values.find(item);
+            const ULONGLONG owned = found == values.end() || found->second.freed == Unknown ? 0 : found->second.freed;
+            return Frame{ item, 0, owned, volume,
+                !item->IsTypeOrFlag(ITF_MTP, ITF_REMOTE) && item->GetScanResult().outcome == ScanOutcome::Complete,
+                volume != None };
+        };
+        std::vector<Frame> stack{ frameFor(CWinDirStatModel::Get()->GetRootItem(), None) };
+        while (!stack.empty())
+        {
+            Frame& frame = stack.back();
+            if (frame.next == frame.item->GetChildren().size())
+            {
+                const Frame done = frame;
+                stack.pop_back();
+                if (done.accounted || values.contains(done.item))
+                {
+                    auto& value = values[done.item];
+                    value.freed = done.known ? done.total : Unknown;
+                    if (done.known && value.shared == Unknown) value.shared = 0;
+                    value.volume = done.volume;
+                }
+                if (!stack.empty())
+                {
+                    stack.back().total += done.total;
+                    stack.back().known &= done.known;
+                    stack.back().accounted |= done.accounted;
+                }
+                continue;
+            }
+            const CItem* child = frame.item->GetChildren()[frame.next++];
+            if (child->IsTypeOrFlag(IT_FILE))
+            {
+                const auto found = values.find(child);
+                const ULONGLONG freed = found != values.end() ? found->second.freed :
+                    frame.volume == None ? Unknown : child->GetSizePhysicalRaw();
+                if (freed == Unknown) frame.known = false;
+                else frame.total += freed;
+            }
+            else if (!child->IsLeaf() && !child->IsTypeOrFlag(IT_HLINKS))
+                stack.push_back(frameFor(child, frame.volume));
+        }
+    }
+    std::unordered_map<CItem*, std::size_t> additions;
+    for (const auto& child : created) additions[child->GetParent()]++;
+    const auto publish = [&]
+    {
+        for (const auto& [parent, count] : additions)
+        {
+            auto& children = parent->GetFolderInfo()->m_children;
+            children.reserve(children.size() + count);
+        }
+        for (const auto& [item, value] : values)
+            if (value.delta != 0 && !item->IsLeaf()) const_cast<CItem*>(item)->UpwardSetUndone();
+        for (const auto& [parent, count] : additions) parent->UpwardSetUndone();
+        for (auto& child : created)
+        {
+            CItem* item = child.release();
+            item->GetParent()->GetFolderInfo()->m_children.push_back(item);
+        }
+        {
+            std::unique_lock lock(m_lock);
+            for (const auto& [item, value] : values)
+            {
+                if (value.delta != 0) const_cast<CItem*>(item)->SetFlag(ITF_ACCOUNTED);
+                if (value.file != None) const_cast<CItem*>(item)->SetReparseTag(IO_REPARSE_TAG_DEDUP);
+            }
+            m_snapshot = std::move(snapshot);
+            m_volumes = std::move(volumes);
+            decltype(m_loaded){}.swap(m_loaded);
+        }
+        for (const auto& [key, child] : pseudoItems)
+            if (key.first->IsExpanded()) CFileTreeControl::Get()->OnChildAdded(key.first, child);
+    };
+    CMainFrame::Get()->InvokeInMessageThread(publish);
+}
+
+void CDedupAccounting::ClearProjection()
+{
+    std::unique_ptr<const Snapshot> snapshot;
+    {
+        std::unique_lock lock(m_lock);
+        snapshot = std::move(m_snapshot);
+        if (!snapshot) return;
+        for (const auto& [item, value] : snapshot->values) const_cast<CItem*>(item)->SetFlag(ITF_ACCOUNTED, true);
+    }
+    for (const auto& [item, value] : snapshot->values)
+        if (value.delta != 0 && !item->IsLeaf()) const_cast<CItem*>(item)->UpwardSetUndone();
+    for (CItem* item : snapshot->pseudo)
     {
         CItem* parent = item->GetParent();
-        parent->UpwardSubtractSizePhysical(item->GetSizePhysical());
         parent->UpwardSetUndone();
         parent->RemoveChild(item);
     }
-    for (CItem* parent : touchedParents)
-    {
-        if (parent != nullptr) parent->UpwardSetUndone();
-    }
 }
 
-bool CDedupAccounting::HasLoadedData(const CItem* volumeRoot) const
+void CDedupAccounting::ExpandRefresh(std::vector<CItem*>& items) const
 {
-    std::shared_lock lock(m_lock);
-    return m_loadedVolumes.contains(volumeRoot);
+    for (auto*& item : items) if (item->IsTypeOrFlag(IT_DEDUP)) item = item->GetParent();
+    if (!items.empty() && m_imported) items = { CWinDirStatModel::Get()->GetRootItem() };
 }
 
-std::vector<CItem*> CDedupAccounting::GetLoadedVolumesBelow(const CItem* volumeRoot) const
+void CDedupAccounting::Invalidate(const std::vector<CItem*>& items)
 {
-    std::shared_lock lock(m_lock);
-    std::vector<CItem*> volumes;
-    for (const CItem* volume : m_loadedVolumes)
+    if (items.empty()) return;
+    std::unordered_set<std::wstring> paths;
+    for (const CItem* item : items)
+        if (auto path = GetVolumePath(item); !path.empty()) paths.insert(std::move(path));
+    ClearProjection();
+    std::unique_lock lock(m_lock);
+    std::erase_if(m_volumes, [&](const auto& volume)
     {
-        if (volume != volumeRoot && volumeRoot->IsAncestorOf(volume)) volumes.push_back(const_cast<CItem*>(volume));
-    }
-    return volumes;
+        return paths.contains(volume->path) || std::ranges::any_of(volume->roots, [&](const CItem* root)
+        {
+            return std::ranges::any_of(items, [&](const CItem* item)
+            { return item->IsAncestorOf(root) || root->IsAncestorOf(item); });
+        });
+    });
+    m_loaded.clear();
+    m_storeProbes.clear();
+    m_imported = false;
 }
 
 void CDedupAccounting::Clear()
 {
+    // The model destroys the tree immediately after releasing its accounting bindings.
     std::unique_lock lock(m_lock);
-    m_files.clear();
-    m_folders.clear();
-    m_pseudo.clear();
-    m_neutralized.clear();
-    m_indexes.clear();
-    m_slots.clear();
-    m_failures.clear();
-    m_loadedVolumes.clear();
-    m_folderTotals.clear();
-    m_chunkStores.clear();
-    m_dedupVolumes.clear();
+    m_snapshot.reset();
+    m_volumes.clear();
+    m_loaded.clear();
     m_storeProbes.clear();
+    m_failures.clear();
+    m_imported = false;
 }
 
-void CDedupAccounting::ReleaseCaches()
+void CDedupAccounting::SetLoaded(const CItem* item, const std::optional<ULONGLONG> physical,
+    const std::optional<ULONGLONG> freed, const std::optional<ULONGLONG> shared)
 {
-    std::scoped_lock lock(m_cacheLock);
-    m_caches.clear();
-}
-
-void CDedupAccounting::Unregister(const CItem* item)
-{
-    std::unique_lock lock(m_lock);
-    m_files.erase(item);
-    m_pseudo.erase(item);
-
-    // Keep the index free of dangling items; lookups skip empty slots
-    if (const auto slot = m_slots.find(item); slot != m_slots.end())
+    Values value;
+    if (item->IsLeaf() && physical) value.delta = static_cast<LONGLONG>(*physical - item->GetSizePhysicalRaw());
+    value.freed = freed.value_or(Unknown);
+    value.shared = shared.value_or(Unknown);
+    if (item->IsTypeOrFlag(IT_FILE) && value.delta == 0 && !shared)
     {
-        if (const auto index = m_indexes.find(slot->second.first); index != m_indexes.end())
-            index->second.files[slot->second.second] = nullptr;
-        m_slots.erase(slot);
+        const auto parent = m_staged.find(item->GetParent());
+        const bool known = parent != m_staged.end() && parent->second.freed != Unknown;
+        if (known && freed == item->GetSizePhysicalRaw() || !known && !freed) return;
     }
-}
-
-void CDedupAccounting::SetLoaded(const CItem* item, const ULONGLONG freed, const ULONGLONG shared)
-{
-    std::unique_lock lock(m_lock);
-    m_staged.emplace_back(item, freed, shared);
+    m_staged[item] = value;
 }
 
 void CDedupAccounting::CommitLoaded()
 {
     std::unique_lock lock(m_lock);
-    for (const auto& [item, freed, shared] : m_staged)
-    {
-        // Only optimized files (the only files staged) and pseudo items carry deduplicated bytes
-        if (item->IsTypeOrFlag(IT_FILE, IT_DEDUP) && m_loadedVolumes.insert(item->GetVolumeRoot()).second)
-        {
-            if (const auto volumePath = GetVolumePath(item->GetVolumeRoot()); !volumePath.empty()) m_dedupVolumes.insert(volumePath);
-        }
-        if (item->IsTypeOrFlag(IT_FILE))
-        {
-            FileInfo info;
-            info.exclusive = freed;
-            info.onDisk = freed + shared;
-            m_files[item] = info;
-        }
-        else if (item->IsTypeOrFlag(IT_DEDUP))
-        {
-            m_pseudo[item] = item->GetSizePhysicalRaw();
-        }
-        else if (item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE, IT_MYCOMPUTER))
-        {
-            FolderInfo info;
-            info.freed = freed;
-            info.loaded = true;
-            info.shared = shared;
-            m_folders[item] = info;
-        }
-    }
-    m_staged.clear();
+    m_loaded = std::move(m_staged);
+    m_imported = !m_loaded.empty();
 }
 
 void CDedupAccounting::DiscardLoaded()
 {
-    std::unique_lock lock(m_lock);
     m_staged.clear();
 }
 
-ULONGLONG CDedupAccounting::GetFileFreedLocked(const CItem* file, const bool checkChunkStore) const
+ULONGLONG CDedupAccounting::GetPhysical(const CItem* item, const ULONGLONG allocation) const noexcept
 {
-    // Another link keeps the data of a hardlinked file
-    if (file->IsTypeOrFlag(ITF_HARDLINK)) return 0;
-
-    // Chunk store files hold the data already counted for the optimized files
-    if (checkChunkStore && !m_chunkStores.empty())
-    {
-        for (const CItem* parent = file->GetParent(); parent != nullptr; parent = parent->GetParent())
-            if (m_chunkStores.contains(parent)) return 0;
-    }
-
-    const ULONGLONG size = file->GetSizePhysicalRaw();
-    const auto info = m_files.find(file);
-    if (info == m_files.end()) return size;
-
-    // A loaded report stores the complete value; otherwise the clusters the
-    // file system still allocates add to the exclusive chunks
-    if (!m_loadedVolumes.empty() && m_loadedVolumes.contains(file->GetVolumeRoot())) return info->second.exclusive;
-    return size - std::min(size, info->second.applied) + info->second.exclusive;
+    std::shared_lock lock(m_lock);
+    if (m_snapshot)
+        if (const auto value = m_snapshot->values.find(item); value != m_snapshot->values.end())
+            return allocation + value->second.delta;
+    return allocation;
 }
 
 std::optional<ULONGLONG> CDedupAccounting::GetFreed(const CItem* item) const
 {
+    if (item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
     std::shared_lock lock(m_lock);
-    if (item->IsTypeOrFlag(IT_FILE))
-    {
-        if (m_folderTotals.empty() && !m_files.contains(item)) return std::nullopt;
-        return GetFileFreedLocked(item);
-    }
+    if (!m_snapshot) return std::nullopt;
     if (item->IsTypeOrFlag(IT_DEDUP))
     {
-        // Garbage is freed by the next garbage collection
-        const auto pseudo = m_pseudo.find(item);
-        if (pseudo == m_pseudo.end() || (item->GetIndex() != DEDUPITEM_GARBAGE && item->GetIndex() != DEDUPITEM_GARBAGE_FULL))
-            return std::nullopt;
-        return pseudo->second;
+        if (item->GetIndex() != DEDUPITEM_GARBAGE && item->GetIndex() != DEDUPITEM_GARBAGE_FULL) return std::nullopt;
+        const auto value = m_snapshot->values.find(item);
+        return item->GetSizePhysicalRaw() + (value == m_snapshot->values.end() ? 0 : value->second.delta);
     }
-    if (const auto folder = m_folders.find(item); folder != m_folders.end() && folder->second.loaded) return folder->second.freed;
-    if (const auto total = m_folderTotals.find(item); total != m_folderTotals.end()) return total->second;
+    if (const auto found = m_snapshot->values.find(item); found != m_snapshot->values.end())
+        return found->second.freed == Unknown ? std::nullopt : std::optional(found->second.freed);
+    if (item->IsTypeOrFlag(IT_FILE) && item->GetParent() != nullptr)
+        if (const auto parent = m_snapshot->values.find(item->GetParent());
+            parent != m_snapshot->values.end() &&
+            (parent->second.volume != None || m_imported && parent->second.freed != Unknown))
+            return item->GetSizePhysicalRaw();
     return std::nullopt;
-}
-
-void CDedupAccounting::ComputeTotals(const CItem* root)
-{
-    if (root == nullptr) return;
-
-    // Post-order walk: a folder frees its children plus the chunks shared only below it;
-    // pseudo items, free and unknown space and the hardlink index free nothing
-    std::unordered_map<const CItem*, ULONGLONG> totals;
-    {
-        std::shared_lock lock(m_lock);
-        struct Frame
-        {
-            const CItem* folder;
-            std::size_t next;
-            ULONGLONG sum;
-            bool inChunkStore;
-        };
-        const auto ownFreed = [this](const CItem* folder)
-        {
-            const auto info = m_folders.find(folder);
-            return info == m_folders.end() ? 0 : info->second.owned;
-        };
-        std::vector<Frame> stack{ { root, 0, ownFreed(root), m_chunkStores.contains(root) } };
-        while (!stack.empty())
-        {
-            Frame& frame = stack.back();
-            const auto& children = frame.folder->GetChildren();
-            if (frame.next == children.size())
-            {
-                const Frame done = frame;
-                stack.pop_back();
-                totals.emplace(done.folder, done.sum);
-                if (!stack.empty()) stack.back().sum += done.sum;
-                continue;
-            }
-
-            const CItem* child = children[frame.next++];
-            if (child->IsTypeOrFlag(IT_FILE)) frame.sum += frame.inChunkStore ? 0 : GetFileFreedLocked(child, false);
-            else if (child->IsLeaf() || child->IsTypeOrFlag(IT_HLINKS)) continue;
-            else if (const auto loaded = m_folders.find(child); loaded != m_folders.end() && loaded->second.loaded)
-                frame.sum += loaded->second.freed;
-            else stack.push_back({ child, 0, ownFreed(child), frame.inChunkStore || m_chunkStores.contains(child) });
-        }
-    }
-
-    std::unique_lock lock(m_lock);
-    m_folderTotals = std::move(totals);
 }
 
 std::optional<ULONGLONG> CDedupAccounting::GetShared(const CItem* item) const
 {
+    if (item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
     std::shared_lock lock(m_lock);
-    if (const auto file = m_files.find(item); file != m_files.end())
-        return file->second.onDisk > file->second.exclusive ? file->second.onDisk - file->second.exclusive : 0;
-    if (const auto folder = m_folders.find(item); folder != m_folders.end()) return folder->second.shared;
+    if (!m_snapshot) return std::nullopt;
+    if (const auto value = m_snapshot->values.find(item); value != m_snapshot->values.end())
+        return value->second.shared == Unknown ? std::nullopt : std::optional(value->second.shared);
     return std::nullopt;
 }
 
 bool CDedupAccounting::HasData() const
 {
     std::shared_lock lock(m_lock);
-    return !m_files.empty() || !m_folders.empty() || !m_pseudo.empty();
+    return m_snapshot != nullptr;
 }
 
 bool CDedupAccounting::HasSharingIndex(const CItem* item) const
 {
     std::shared_lock lock(m_lock);
-    // Pseudo items restored from a saved report have no index behind them
-    if (item->IsTypeOrFlag(IT_DEDUP))
-        return item->GetIndex() == DEDUPITEM_SHARED && m_pseudo.contains(item) && m_indexes.contains(item->GetVolumeRoot());
-    if (item->IsTypeOrFlag(IT_FILE)) return m_slots.contains(item);
-    return m_indexes.contains(item->GetVolumeRoot());
+    if (!m_snapshot) return false;
+    if (const auto value = m_snapshot->values.find(item); value != m_snapshot->values.end())
+        if (value->second.volume != None) return true;
+    if (item->IsTypeOrFlag(IT_DEDUP) && item->GetIndex() != DEDUPITEM_SHARED) return false;
+    return std::ranges::any_of(m_snapshot->volumes, [&](const auto& volume)
+    {
+        if (item->IsTypeOrFlag(IT_DEDUP))
+            return std::ranges::any_of(volume->pseudo, [&](const Pseudo& pseudo)
+            { return pseudo.kind == DEDUPITEM_SHARED && pseudo.parent == item->GetParent(); });
+        return !item->IsLeaf() && std::ranges::any_of(volume->roots,
+            [&](const CItem* root) { return item->IsAncestorOf(root); });
+    });
 }
 
 bool CDedupAccounting::IsDedupVolume(const CItem* item)
 {
-    const std::wstring volumePath = GetVolumePath(item->GetVolumeRoot());
-    if (volumePath.empty()) return false;
+    const CItem* root = item;
+    while (root->GetParent() != nullptr && !IsVolumeBoundary(root)) root = root->GetParent();
     {
         std::shared_lock lock(m_lock);
-        if (m_dedupVolumes.contains(volumePath)) return true;
-        if (const auto probe = m_storeProbes.find(volumePath); probe != m_storeProbes.end()) return probe->second;
+        if (const auto found = m_storeProbes.find(root); found != m_storeProbes.end()) return found->second;
     }
-
-    // Finding the chunk store needs administrator rights; optimized files still block on their own
-    const bool hasStore = !CDedupStore::FindStore(volumePath).empty();
+    const auto path = GetVolumePath(root);
+    const bool hasStore = !path.empty() && !CDedupStore::FindStore(path).empty();
     std::unique_lock lock(m_lock);
-    m_storeProbes[volumePath] = hasStore;
+    m_storeProbes[root] = hasStore;
     return hasStore;
 }
 
@@ -896,134 +814,142 @@ bool CDedupAccounting::BlocksCompression(const CItem* item)
     return item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE) && IsDedupVolume(item);
 }
 
+std::vector<std::wstring> CDedupAccounting::TakeFailures()
+{
+    std::unique_lock lock(m_lock);
+    return std::exchange(m_failures, {});
+}
+
 CDedupAccounting::SharingResult CDedupAccounting::QuerySharing(const std::vector<CItem*>& items) const
 {
     SharingResult result;
     std::shared_lock lock(m_lock);
-
-    // Queried chunks: those of the optimized files below the selection, or those a shared pseudo item holds
-    std::unordered_map<const VolumeIndex*, std::vector<std::uint32_t>> queriedSlots;
-    std::unordered_map<const VolumeIndex*, std::vector<std::uint32_t>> ownedChunks;
-    for (CItem* item : items)
-    {
-        if (item->IsTypeOrFlag(IT_DEDUP))
-        {
-            if (item->GetIndex() != DEDUPITEM_SHARED || !m_pseudo.contains(item)) continue;
-            const auto index = m_indexes.find(item->GetVolumeRoot());
-            if (index == m_indexes.end()) continue;
-            auto& chunks = ownedChunks[&index->second];
-            for (std::uint32_t chunk = 0; chunk < index->second.chunkOwner.size(); chunk++)
-            {
-                if (index->second.chunkOwner[chunk] == item) chunks.push_back(chunk);
-            }
-            continue;
-        }
-        for (const CItem* file : CItem::GetItemsRecursive({ item }, [](const CItem* leaf) { return leaf->IsTypeOrFlag(ITRP_DEDUP); }))
-        {
-            const auto slot = m_slots.find(file);
-            if (slot == m_slots.end()) continue;
-            if (const auto index = m_indexes.find(slot->second.first); index != m_indexes.end())
-                queriedSlots[&index->second].push_back(slot->second.second);
-        }
-    }
-    if (queriedSlots.empty() && ownedChunks.empty())
+    if (!m_snapshot)
     {
         result.error = Localization::Lookup(IDS_DEDUP_SHARING_NOT_ACCOUNTED);
         return result;
     }
-
-    std::unordered_map<CItem*, std::pair<ULONGLONG, ULONGLONG>> overlap; // item -> (shared, item bytes)
-    const auto visit = [&](const VolumeIndex& index, const std::vector<std::uint32_t>& chunks,
-        const std::vector<std::uint8_t>* queried)
+    std::unordered_set<const CItem*> selected, selectedOwners;
+    std::vector<std::vector<std::uint32_t>> files(m_snapshot->volumes.size());
+    std::unordered_set<CItem*> roots;
+    for (CItem* item : items) roots.insert(item->IsTypeOrFlag(IT_HLINKS_FILE) ? item->GetLinkedItem() : item);
+    std::vector<CItem*> pending(roots.begin(), roots.end());
+    std::erase_if(pending, [&](const CItem* item)
     {
-        for (const std::uint32_t chunk : chunks)
+        for (const CItem* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
+            if (roots.contains(const_cast<CItem*>(parent))) return true;
+        return false;
+    });
+    while (!pending.empty())
+    {
+        CItem* item = pending.back(); pending.pop_back();
+        if (item->IsTypeOrFlag(IT_DEDUP))
         {
-            const ULONGLONG bytes = index.chunkBytes[chunk];
-            result.queriedBytes += queried != nullptr ? 0 : bytes;
-            if (index.chunkExternal[chunk] != 0) result.outsideBytes += bytes;
+            if (item->GetIndex() == DEDUPITEM_SHARED) selectedOwners.insert(item);
+        }
+        else if (item->IsTypeOrFlag(IT_FILE))
+        {
+            if (const auto value = m_snapshot->values.find(item);
+                value != m_snapshot->values.end() && value->second.file != None && selected.insert(item).second)
+                files[value->second.volume].push_back(value->second.file);
+        }
+        else if (!item->IsLeaf() && !item->IsTypeOrFlag(IT_HLINKS)) pending.append_range(item->GetChildren());
+    }
+
+    // The union includes each physical chunk once, even for overlapping folders and pseudo rows.
+    std::unordered_map<CItem*, std::pair<ULONGLONG, ULONGLONG>> overlap;
+    for (const auto [index, volume] : std::views::enumerate(m_snapshot->volumes))
+    {
+        auto& requested = files[index];
+        std::ranges::sort(requested);
+        requested.erase(std::ranges::unique(requested).begin(), requested.end());
+        if (requested.empty() && selectedOwners.empty()) continue;
+        std::vector<bool> seen(volume->chunkBytes.size());
+        std::vector<std::uint32_t> chunks;
+        const auto add = [&](const std::uint32_t chunk)
+        {
+            if (seen[chunk]) return;
+            seen[chunk] = true;
+            chunks.push_back(chunk);
+        };
+        for (const auto file : requested)
+        {
+            result.success = true;
+            result.queriedBytes += volume->fileExclusive[file];
+            for (auto i = volume->fileOffsets[file]; i < volume->fileOffsets[file + 1]; i++)
+                add(volume->fileChunks[i]);
+        }
+        if (!selectedOwners.empty()) for (std::uint32_t chunk = 0; chunk < volume->chunkOwner.size(); chunk++)
+        {
+            const auto owner = volume->chunkOwner[chunk];
+            if (owner != None && selectedOwners.contains(m_snapshot->owners[index][owner])) add(chunk);
+        }
+        for (const auto chunk : chunks)
+        {
+            result.success = true;
+            const auto bytes = volume->chunkBytes[chunk];
+            result.queriedBytes += bytes;
+            if (volume->chunkExternal[chunk]) result.outsideBytes += bytes;
             bool listed = false;
-            for (std::uint32_t i = index.chunkOffsets[chunk]; i < index.chunkOffsets[chunk + 1]; i++)
+            for (auto i = volume->chunkOffsets[chunk]; i < volume->chunkOffsets[chunk + 1]; i++)
             {
-                const std::uint32_t user = index.chunkFiles[i];
-                if ((queried != nullptr && (*queried)[user] != 0) || index.files[user] == nullptr) continue;
-                auto& row = overlap[index.files[user]];
-                row.first += bytes;
-                row.second = index.fileOnDisk[user];
-                listed = true;
+                const auto file = volume->chunkFiles[i];
+                for (auto j = volume->entryOffsets[file]; j < volume->entryOffsets[file + 1]; j++)
+                {
+                    CItem* entry = volume->entries[j];
+                    if (selected.contains(entry)) continue;
+                    auto& row = overlap[entry];
+                    row.first += bytes;
+                    row.second = volume->fileBytes[file];
+                    listed = true;
+                }
             }
             if (listed) result.sharedBytes += bytes;
         }
-    };
-
-    for (const auto& [index, slots] : queriedSlots)
-    {
-        // Union of the shared chunks of the queried files, plus their exclusive bytes
-        std::vector<std::uint8_t> queried(index->files.size(), 0);
-        std::vector<std::uint8_t> seen(index->chunkBytes.size(), 0);
-        std::vector<std::uint32_t> chunks;
-        for (const std::uint32_t slot : slots)
-        {
-            if (queried[slot] != 0) continue;
-            queried[slot] = 1;
-            result.queriedBytes += index->fileExclusive[slot];
-            for (std::uint32_t i = index->fileOffsets[slot]; i < index->fileOffsets[slot + 1]; i++)
-            {
-                const std::uint32_t chunk = index->fileChunks[i];
-                if (seen[chunk] != 0) continue;
-                seen[chunk] = 1;
-                chunks.push_back(chunk);
-                result.queriedBytes += index->chunkBytes[chunk];
-            }
-        }
-        visit(*index, chunks, &queried);
     }
-    for (const auto& [index, chunks] : ownedChunks) visit(*index, chunks, nullptr);
-
-    for (const auto& [item, values] : overlap) result.rows.push_back({ item, values.first, values.second });
+    for (const auto& [item, bytes] : overlap) result.rows.push_back({ item, bytes.first, bytes.second });
     std::ranges::sort(result.rows, std::greater{}, &SharingRow::sharedBytes);
-    result.success = true;
+    if (!result.success) result.error = Localization::Lookup(IDS_DEDUP_SHARING_NOT_ACCOUNTED);
     return result;
 }
 
-void CDedupAccounting::CollectRelated(const CItem* item, std::unordered_set<const CItem*>& related, const std::size_t limit) const
+void CDedupAccounting::CollectRelated(const CItem* item,
+    std::unordered_set<const CItem*>& related, const std::size_t limit) const
 {
+    if (item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
     std::shared_lock lock(m_lock);
-    if (item->IsTypeOrFlag(IT_DEDUP))
+    if (!m_snapshot) return;
+    const auto visit = [&](const std::size_t index, const std::uint32_t chunk)
     {
-        // A shared pseudo item relates to the files using the chunks it holds
-        if (item->GetIndex() != DEDUPITEM_SHARED || !m_pseudo.contains(item)) return;
-        const auto index = m_indexes.find(item->GetVolumeRoot());
-        if (index == m_indexes.end()) return;
-        const VolumeIndex& volume = index->second;
-        for (std::uint32_t chunk = 0; chunk < volume.chunkOwner.size(); chunk++)
+        const auto& volume = *m_snapshot->volumes[index];
+        const auto owner = volume.chunkOwner[chunk];
+        if (owner != None && related.size() < limit && m_snapshot->owners[index][owner] != item)
+            related.insert(m_snapshot->owners[index][owner]);
+        for (auto i = volume.chunkOffsets[chunk]; i < volume.chunkOffsets[chunk + 1]; i++)
         {
-            if (volume.chunkOwner[chunk] != item) continue;
-            for (std::uint32_t i = volume.chunkOffsets[chunk]; i < volume.chunkOffsets[chunk + 1]; i++)
+            const auto file = volume.chunkFiles[i];
+            for (auto j = volume.entryOffsets[file]; j < volume.entryOffsets[file + 1]; j++)
             {
                 if (related.size() >= limit) return;
-                if (const CItem* user = volume.files[volume.chunkFiles[i]]; user != nullptr) related.insert(user);
+                if (volume.entries[j] != item) related.insert(volume.entries[j]);
             }
         }
+    };
+    if (item->IsTypeOrFlag(IT_DEDUP) && item->GetIndex() == DEDUPITEM_SHARED)
+    {
+        for (const auto [index, volume] : std::views::enumerate(m_snapshot->volumes))
+            for (std::uint32_t chunk = 0; chunk < volume->chunkOwner.size(); chunk++)
+            {
+                if (related.size() >= limit) return;
+                const auto owner = volume->chunkOwner[chunk];
+                if (owner != None && m_snapshot->owners[index][owner] == item) visit(index, chunk);
+            }
         return;
     }
-
-    // A file relates to the other users of its shared chunks and to the pseudo items holding them
-    const auto slot = m_slots.find(item);
-    if (slot == m_slots.end()) return;
-    const auto index = m_indexes.find(slot->second.first);
-    if (index == m_indexes.end()) return;
-    const VolumeIndex& volume = index->second;
-    const std::uint32_t self = slot->second.second;
-    for (std::uint32_t i = volume.fileOffsets[self]; i < volume.fileOffsets[self + 1]; i++)
-    {
-        const std::uint32_t chunk = volume.fileChunks[i];
-        if (const CItem* owner = volume.chunkOwner[chunk]; owner != nullptr && m_pseudo.contains(owner)) related.insert(owner);
-        for (std::uint32_t j = volume.chunkOffsets[chunk]; j < volume.chunkOffsets[chunk + 1]; j++)
-        {
-            // A chunk such as all zeros can be used by a large part of the volume
-            if (related.size() >= limit) return;
-            const std::uint32_t user = volume.chunkFiles[j];
-            if (user != self && volume.files[user] != nullptr) related.insert(volume.files[user]);
-        }
-    }
+    const auto value = m_snapshot->values.find(item);
+    if (value == m_snapshot->values.end() || value->second.file == None) return;
+    const auto& volume = *m_snapshot->volumes[value->second.volume];
+    const auto file = value->second.file;
+    for (auto i = volume.fileOffsets[file]; i < volume.fileOffsets[file + 1] && related.size() < limit; i++)
+        visit(value->second.volume, volume.fileChunks[i]);
 }

@@ -50,7 +50,9 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
     IT_DEDUP       = 1u << 10, // Pseudo File for deduplicated storage (kind stored in index)
     IT_CONTAINER   = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_HLINKS | IT_HLINKS_SET | IT_HLINKS_IDX,
-    IT_MASK        = 0x00001FFF,
+    IT_MASK        = 0x000007FF,
+    ITF_SINGLE_LINK = 1u << 11, // Scan metadata proves that this file has exactly one directory entry
+    ITF_ACCOUNTED  = 1u << 12, // A published accounting result supplies display values
 
     ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
     ITF_REMOTE     = 1u << 15, // Indicates a remote file, object, or directory
@@ -79,7 +81,7 @@ enum ITEMTYPE : std::uint32_t
     ITF_DONE       = 1u << 29, // Indicates done processing
     ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
     ITF_MTP        = 1u << 31, // Indicates MTP item
-    ITF_MASK       = 0xFF00C000,
+    ITF_MASK       = 0xFF00D800,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
@@ -166,6 +168,7 @@ public:
 
     // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
+    ULONGLONG GetSizePhysicalDisplay() const noexcept;
     bool HasSizePhysical() const noexcept;
     ULONGLONG GetSizeLogical() const noexcept { return m_sizeLogical; }
     ULONGLONG GetSizePhysicalRaw() const noexcept { return m_sizePhysical; }
@@ -349,6 +352,7 @@ private:
     inline static std::atomic<ULONGLONG> scanClockState = 0;
     static ULONG GetScanTickCount() noexcept;
     class ScanBatch;
+    friend class CDedupAccounting;
     bool MutateHiddenChildren(const std::function<void()>& mutation) const;
     CItem* AddDirectory(const Finder& finder, ScanBatch& batch);
     CItem* AddFile(const Finder& finder, ScanBatch& batch);

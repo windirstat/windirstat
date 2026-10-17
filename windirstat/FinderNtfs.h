@@ -25,6 +25,7 @@ class FinderNtfsContext final
         bool HasData = false;
         bool HasStandardInfo = false;
         bool IsPresent = false;
+        bool SingleLink = false;
     };
 
     using FileRecordName = struct FileRecordName
@@ -91,5 +92,6 @@ public:
     std::wstring GetFilePath() const override;
     bool IsReserved() const override { return m_index < FinderNtfsContext::NtfsReservedMax; }
     bool HasIgnoredStream() const override { return m_currentRecord->HasIgnoredStream; }
+    bool IsSingleLink() const noexcept override { return m_currentRecord->SingleLink; }
     const ScanResult& GetResult() const noexcept override { return m_result; }
 };
