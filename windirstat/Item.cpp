@@ -1344,6 +1344,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 continue;
             }
             finderRemote.UseFlatListing(false);
+            const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(item);
             ScanBatch batch(item, queue);
             for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
@@ -1366,13 +1367,17 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 }
                 else
                 {
+                    // The descendant regex suffix does not match line terminators in filenames.
+                    const bool reuseDirectoryMatch = directoryIncluded &&
+                        finder->GetFileName().find_first_of(L"\r\n\u2028\u2029") == std::wstring_view::npos;
                     if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
                         COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
                         COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFileName(),
-                            CFiltering::IncludeDirsRegex.empty() ? std::wstring() : finder->GetFilePath(),
-                            finder->GetFileSizeLogical(), finder->GetLastWriteTime()))
+                            reuseDirectoryMatch || CFiltering::IncludeDirsRegex.empty() ?
+                                std::wstring() : finder->GetFilePath(),
+                            finder->GetFileSizeLogical(), finder->GetLastWriteTime(), reuseDirectoryMatch))
                     {
                         continue;
                     }
