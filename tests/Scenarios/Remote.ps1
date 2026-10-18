@@ -93,13 +93,16 @@ function Test-RemoteFiltering {
         Assert-True ($files.Count -gt 1000) 'Unrelated remote directories are retained'
     }
     if ($protocol -eq 'azure') {
-        $runner = New-RemoteRunner @{ DriveSelect = @{
-            FilteringIncludeDirs = 'azure://windirstat/objects/prefix-only/'
-        } } -Protocol $protocol
-        $rows = Invoke-ScanReport $runner @((Get-RemoteTarget $protocol 'prefix-on')) 'partial-prefix-filter'
-        $files = @(Get-ReportFiles $rows)
-        Assert-Equal $files.Count 1 'Directory filters traverse roots ending within an object-key component'
-        Assert-Equal ([long]$files[0].'Logical Size') 13 'Only the included descendant is retained'
+        foreach ($regex in 0, 1) {
+            $path = 'azure://windirstat/objects/prefix-only/'
+            $pattern = if ($regex) { '^' + [regex]::Escape($path) + '$' } else { $path }
+            $runner = New-RemoteRunner @{ Options = @{ FilteringUseRegex = $regex }
+                DriveSelect = @{ FilteringIncludeDirs = $pattern } } -Protocol $protocol
+            $rows = Invoke-ScanReport $runner @((Get-RemoteTarget $protocol 'prefix-on')) "partial-prefix-filter-$regex"
+            $files = @(Get-ReportFiles $rows)
+            Assert-Equal $files.Count 1 'Directory filters traverse roots ending within an object-key component'
+            Assert-Equal ([long]$files[0].'Logical Size') 13 'Only the included descendant is retained'
+        }
     }
 }
 

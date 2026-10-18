@@ -169,6 +169,79 @@ function Test-RegexDirectoryFilters {
     }
 }
 
+function Test-DirectoryFilterMatching {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $included = Join-Path $root 'included'
+    $inside = New-TestFile (Join-Path $included 'inside.bin') 101
+    $ignored = New-TestFile (Join-Path $included 'ignored.tmp') 103
+    $deep = New-TestFile (Join-Path $included 'nested\deep.bin') 107
+    $sibling = New-TestFile (Join-Path $root 'included-other\sibling.bin') 109
+    $outside = New-TestFile (Join-Path $root 'outside.bin') 113
+    $line = New-TestFile (Join-Path $included "line$([char]0x2028)break.bin") 127
+    $punctuated = New-TestFile (Join-Path $root 'punct-\file.bin') 131
+    $escaped = [regex]::Escape($included)
+    $extended = '\\?\' + $included
+    $cases = @(
+        @{ Id = 'glob'; Pattern = $included; Regex = 0; Files = @($inside, $ignored, $deep) },
+        @{ Id = 'glob-case-slash'; Pattern = $included.ToUpperInvariant() + '\'; Regex = 0
+            Files = @($inside, $ignored, $deep) },
+        @{ Id = 'glob-wildcard'; Pattern = (Join-Path $root 'include*'); Regex = 0
+            Files = @($inside, $ignored, $deep, $sibling) },
+        @{ Id = 'regex'; Pattern = '^' + $escaped + '$'; Regex = 1; Files = @($inside, $ignored, $deep) },
+        @{ Id = 'noncapturing-group'; Pattern = '^(?:' + $escaped + ')$'; Regex = 1
+            Files = @($inside, $ignored, $deep) },
+        @{ Id = 'multiple'; Pattern = $included + [char]0x1E + (Join-Path $root 'included-other'); Regex = 0
+            Files = @($inside, $ignored, $deep, $sibling) },
+        @{ Id = 'regex-file'; Pattern = '^' + $escaped + '\\inside\.bin$'; Regex = 1; Files = @($inside) },
+        @{ Id = 'end-assertion'; Pattern = '^' + $escaped + '(?=$)'; Regex = 1; Files = @() },
+        @{ Id = 'negative-lookahead'; Pattern = '^' + $escaped + '(?!\\ignored\.tmp$)'; Regex = 1
+            Files = @($inside, $deep) },
+        @{ Id = 'positive-lookahead'; Pattern = '^' + $escaped + '(?=\\inside\.bin$|$)'; Regex = 1
+            Files = @($inside) },
+        @{ Id = 'interior-anchor'; Pattern = '^' + $escaped + '$|^' + $escaped + '\\inside\.bin'; Regex = 1
+            Files = @($inside) },
+        @{ Id = 'word-boundary'; Pattern = '^' + $escaped + '\b$'; Regex = 1
+            Files = @($inside, $ignored, $deep) },
+        @{ Id = 'non-word-boundary'; Pattern = '^' + [regex]::Escape((Join-Path $root 'punct-')) + '\B$'; Regex = 1
+            Files = @($punctuated) },
+        @{ Id = 'remote-alternative'; Pattern = 's3://unused|' + $escaped; Regex = 1; Files = @() },
+        @{ Id = 'anchored-remote-alternative'; Pattern = '^s3://unused|^' + $escaped; Regex = 1; Files = @() },
+        @{ Id = 'mixed'; Pattern = '^' + [regex]::Escape($outside) + '$' + [char]0x1E + '^' + $escaped + '(?=$)'
+            Regex = 1; Files = @($outside) },
+        @{ Id = 'line-terminator'; Pattern = '^' + [regex]::Escape($line) + '$'; Regex = 1; Files = @($line) },
+        @{ Id = 'extended-glob'; Root = $extended; Pattern = $extended; Regex = 0; Files = @() },
+        @{ Id = 'extended-regex'; Root = $extended; Pattern = '^' + [regex]::Escape($extended) + '$'
+            Regex = 1; Files = @() },
+        @{ Id = 'extended-shared-pattern'; Root = $extended; Pattern = '.*\\included'; Regex = 1
+            Files = @($inside, $ignored, $deep | ForEach-Object { '\\?\' + $_ }) }
+    )
+    $runner = New-TestRunner @{ Options = @{ ScanningThreads = $Case.Threads } }
+    foreach ($entry in $cases) {
+        Set-TestSettings $runner @{
+            Options = @{ FilteringUseRegex = $entry.Regex; ScanningThreads = $Case.Threads }
+            DriveSelect = @{ FilteringIncludeDirs = $entry.Pattern }
+        }
+        foreach ($format in 'csv', 'json') {
+            $scanRoot = if ($entry.ContainsKey('Root')) { $entry.Root } else { $root }
+            $rows = Invoke-ScanReport $runner @($scanRoot) "$($entry.Id)-$format" -Format $format
+            Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
+                @($entry.Files | Sort-Object) 'Directory matching preserves exact file membership'
+            $bytes = 0L
+            foreach ($path in $entry.Files) { $bytes += (Get-Item -LiteralPath $path).Length }
+            Assert-Equal ([long]$rows[0].'Logical Size') $bytes 'Filtered directory totals include only matching files'
+        }
+    }
+    Set-TestSettings $runner @{
+        Options = @{ FilteringUseRegex = 0; FilteringSizeMinimum = 102; FilteringSizeUnits = 0
+            FilteringSizeComparison = 0; ScanningThreads = $Case.Threads }
+        DriveSelect = @{ FilteringIncludeDirs = $included; FilteringExcludeFiles = '*.tmp'
+            FilteringExcludeDirs = (Join-Path $included 'nested') }
+    }
+    Assert-Equal @(Get-ReportFiles (Invoke-ScanReport $runner @($root) 'combined')).Count 0 `
+        'Matched directories still enforce size, filename, and child-directory exclusions'
+}
+
 function Test-EmptyScan {
     param($Context, $Case)
     $runner = New-TestRunner
@@ -381,6 +454,10 @@ Register-Scenario fs.filters.basic Filesystem 'Nested include anchors across exc
     Test-FilterTraversal -Tags Filesystem
 Register-Scenario fs.regex.basic Filesystem 'Regex escapes and backreferences in directory filters' `
     Test-RegexDirectoryFilters -Tags Filesystem
+foreach ($threads in 1, 8) {
+    Register-Scenario "fs.filters.matching.$threads" Filesystem 'Directory matches, regex assertions, and results' `
+        Test-DirectoryFilterMatching -Tags Filesystem -Data @{ Threads = $threads }
+}
 Register-Scenario fs.symlinks Filesystem 'File and directory symlinks share targets without losing their paths' `
     Test-SymbolicLinks -Tags Filesystem -Requires Windows,Ntfs
 Register-Scenario fs.access-denied Filesystem 'Access-denied enumeration preserves visible siblings' `
