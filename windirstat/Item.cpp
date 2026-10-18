@@ -17,6 +17,7 @@ class CItem::ScanBatch final
     CItem* m_parent;
     BlockingQueue<CItem*>* m_queue;
     std::vector<CItem*> m_children;
+    std::vector<CItem*> m_duplicates;
     std::unordered_map<std::wstring, std::pair<ULONGLONG, ULONGLONG>> m_extensions;
     ULONGLONG m_physical = 0, m_logical = 0, m_lastFlush = GetTickCount64();
     FILETIME m_lastChange{};
@@ -26,6 +27,7 @@ public:
     ScanBatch(CItem* parent, BlockingQueue<CItem*>* queue) : m_parent(parent), m_queue(queue)
     {
         m_children.reserve(128);
+        if (COptions::ScanForDuplicates) m_duplicates.reserve(128);
     }
     ~ScanBatch() { Flush(); }
 
@@ -40,6 +42,7 @@ public:
         m_lastChange = std::max(m_lastChange, child->GetLastChange());
         if (!child->IsTypeOrFlag(IT_FILE)) { ++m_folders; return; }
 
+        if (COptions::ScanForDuplicates && !child->IsTypeOrFlag(ITF_REMOTE)) m_duplicates.push_back(child);
         ++m_files;
         auto& [files, bytes] = m_extensions[child->GetExtension()];
         ++files;
@@ -49,7 +52,12 @@ public:
 
     void FlushIfNeeded(const bool force = false)
     {
-        if (force || m_children.size() >= 128 || GetTickCount64() - m_lastFlush >= 100) Flush();
+        if (!force && m_children.size() < 128 && GetTickCount64() - m_lastFlush < 100) return;
+
+        // Publish the batch before hashing; cancellation cleanup only publishes remaining children.
+        Flush();
+        for (CItem* child : m_duplicates) CFileDupeControl::Get()->ProcessDuplicate(child, m_queue);
+        m_duplicates.clear();
     }
 
     void Flush()
@@ -1341,7 +1349,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             {
                 if (queue->IsPauseOrCancelRequested())
                 {
-                    batch.Flush();
+                    batch.FlushIfNeeded(true);
                     queue->WaitIfSuspended();
                 }
                 if (finder->IsDirectory())
@@ -1369,15 +1377,14 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
-                    CItem* newitem = item->AddFile(*finder, batch);
-                    batch.FlushIfNeeded(COptions::ScanForDuplicates);
-                    CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);
+                    item->AddFile(*finder, batch);
                 }
 
                 // Update pacman position
                 batch.FlushIfNeeded(queue->IsPauseOrCancelRequested());
                 queue->WaitIfSuspended();
             }
+            batch.FlushIfNeeded(true);
             if (item->IsTypeOrFlag(ITF_REMOTE))
                 item->UpwardUpdateLastChange(finderRemote.GetDirectoryTime());
 
