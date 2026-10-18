@@ -21,8 +21,10 @@ class BlockingQueue final
     unsigned int m_workersWaiting = 0;
     unsigned int m_stopReason = 0;
     bool m_started = false;
-    bool m_suspended = false;
-    bool m_cancelled = false;
+
+    // State changes stay under m_mutex; workers can poll without taking it.
+    std::atomic<bool> m_suspended = false;
+    std::atomic<bool> m_cancelled = false;
     bool m_exitOnAllIdle = true;
 
     bool AllThreadsIdling() const noexcept
@@ -116,14 +118,15 @@ public:
         return i;
     }
 
-    bool IsPauseOrCancelRequested()
+    bool IsPauseOrCancelRequested() const noexcept
     {
-        std::scoped_lock lock(m_mutex);
-        return m_suspended || m_cancelled;
+        return m_suspended.load(std::memory_order_relaxed) || m_cancelled.load(std::memory_order_relaxed);
     }
 
     void WaitIfSuspended()
     {
+        if (!IsPauseOrCancelRequested()) return;
+
         // wait until not suspended or it's cancelled
         std::unique_lock lock(m_mutex);
         if (!m_suspended && !m_cancelled) return;
