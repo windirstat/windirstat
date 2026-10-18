@@ -54,6 +54,44 @@ function Test-DuplicateContent {
     Assert-Sequence @($after.Hash) @($before.Hash) 'Duplicate scanning preserves every source payload'
 }
 
+function Test-DuplicateBatchBoundaries {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($count in 1, 127, 128, 129, 257) {
+        for ($index = 0; $index -lt $count; ++$index) {
+            New-TestFile (Join-Path $root ('files-{0:d3}\member-{1:d3}.bin' -f $count, $index)) `
+                8193 (77 + $index % 5) | Out-Null
+        }
+    }
+    foreach ($index in 1..7) { New-TestFile (Join-Path $root "unique-$index.bin") 8193 (4000 + $index) | Out-Null }
+    $before = @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path)
+    $groups = @($before | Group-Object Hash | Where-Object Count -GT 1)
+    $expected = @($groups.Group.Path | Sort-Object)
+    $runner = New-TestRunner @{ Options = @{
+        ScanningThreads = $Case.Threads; FileHashAlgorithm = 2; SampleLargeFiles = 0
+    } }
+    foreach ($format in 'csv', 'json') {
+        $rows = Invoke-ScanReport $runner @($root) "batch-boundaries-$format" -Kind Duplicates -Format $format
+        Assert-Sequence @($rows.Name | Sort-Object) $expected `
+            'Full and partial batches retain every matching file across directory and worker boundaries'
+        foreach ($group in $groups) {
+            $members = @($rows | Where-Object Name -In $group.Group.Path)
+            Assert-Equal $members.Count $group.Count 'Each duplicate group contains every independently verified member'
+            $hashes = @($members.'Hash Prefix' | ForEach-Object { $_.ToUpperInvariant() } | Sort-Object -Unique)
+            Assert-Sequence $hashes @($group.Name.Substring(0, 32)) `
+                'Each staged hash agrees with the independently computed SHA-256 digest'
+        }
+    }
+    $rows = Invoke-ScanReport $runner @($root) 'batch-scan-results'
+    Assert-Sequence @((Get-ReportFiles $rows).Name | Sort-Object) @($before.Path | Sort-Object) `
+        'Batch publication includes each duplicate and unique file exactly once'
+    Assert-Equal ([long]$rows[0].'Logical Size') ([long]$before.Count * 8193) `
+        'Batch publication preserves recursive byte totals'
+    Assert-Equal ([long]$rows[0].Folders) 5 'Batch publication preserves every directory'
+    Assert-Sequence @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path |
+        ForEach-Object Hash) @($before.Hash) 'Duplicate batching preserves every source payload'
+}
+
 function Test-SampledDuplicates {
     param($Context, $Case)
     $root = $Context.Fixture
@@ -261,6 +299,11 @@ foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Va
     Register-Scenario "reports.duplicates.$($algorithm.Name)" `
         Reports 'Full-file duplicate verification across staged hashing' `
         Test-DuplicateContent -Tags Filesystem -Data @{ Algorithm = $algorithm.Value }
+}
+foreach ($mode in @(@{ Name = 'serial'; Threads = 1 }, @{ Name = 'parallel'; Threads = 8 })) {
+    Register-Scenario "reports.duplicates.batch-boundaries.$($mode.Name)" Reports `
+        'Duplicate hashing and scan totals across full and partial publication batches' `
+        Test-DuplicateBatchBoundaries -Tags Filesystem,Race -Data @{ Threads = $mode.Threads }
 }
 Register-Scenario reports.duplicates.sampling Reports 'Sampled matches remain distinguishable from whole-file duplicates' `
     Test-SampledDuplicates -Tags Filesystem
