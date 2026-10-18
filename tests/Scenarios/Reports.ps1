@@ -90,6 +90,44 @@ function Test-SampledDuplicates {
         @($hashes.Hash) 'Both duplicate scan modes preserve every payload'
 }
 
+function Test-ReportSerialization {
+    param($Context, $Case)
+    $root = New-TestTree
+    for ($index = 0; $index -lt 1025; ++$index) {
+        $path = Join-Path $root ('unicode-雪-é-😀\branch-{0}\file-{1:d4},日本語.bin' -f ($index % 8), $index)
+        New-TestFile $path ($index + 1) $index | Out-Null
+    }
+    $snapshot = Get-DiskSnapshot $root
+    $fields = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change',
+        'WinDirStat Attributes', 'Index', 'ScanOutcome', 'ScanError')
+    foreach ($owner in 0, 1) {
+        $runner = New-TestRunner @{ FileTreeView = @{ ColumnVisibility = "1,1,1,1,1,1,1,1,1,1,$owner" } }
+        $reports = @{}
+        foreach ($format in 'csv', 'json') {
+            $name = "serialization-$owner-$format"
+            $rows = Invoke-ScanReport $runner @($root) $name -Format $format
+            Assert-ScanSnapshot $rows $snapshot $root -Physical
+            $reports[$format] = $rows
+            $path = Join-Path $Context.Root "$name.$format"
+            $bytes = [IO.File]::ReadAllBytes($path)
+            Assert-True ($bytes.Length -gt 128KB) 'The report exercises multiple buffered writes'
+            $text = [Text.UTF8Encoding]::new($false, $true).GetString($bytes)
+            Assert-True ($text.Contains('雪-é-😀') -and $text.Contains(',日本語.bin')) `
+                'UTF-8 reports preserve Unicode and comma-containing paths'
+            if ($owner) {
+                Assert-Equal @($rows | Where-Object { [string]::IsNullOrEmpty($_.Owner) }).Count 0 `
+                    'Owner columns remain populated throughout a large report'
+            }
+            Invoke-ScanReport $runner @($root) "$name-repeat" -Format $format | Out-Null
+            Assert-Equal (Get-FileHash -LiteralPath (Join-Path $Context.Root "$name-repeat.$format")).Hash `
+                (Get-FileHash -LiteralPath $path).Hash 'Repeated exports preserve every output byte'
+        }
+        $columns = if ($owner) { $fields + 'Owner' } else { $fields }
+        Assert-Sequence (Get-ReportSignature $reports.csv $columns) (Get-ReportSignature $reports.json $columns) `
+            'Large CSV and JSON exports preserve the same metadata, ordering-independent'
+    }
+}
+
 function Test-ReportRoundTrip {
     param($Context, $Case)
     $root = New-TestTree
@@ -226,6 +264,8 @@ foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Va
 }
 Register-Scenario reports.duplicates.sampling Reports 'Sampled matches remain distinguishable from whole-file duplicates' `
     Test-SampledDuplicates -Tags Filesystem
+Register-Scenario reports.serialization Reports 'Large Unicode reports preserve metadata, owners, and output bytes' `
+    Test-ReportSerialization -Tags Filesystem
 foreach ($format in 'csv', 'json') {
     Register-Scenario "reports.roundtrip.$format" Reports `
         'Saved models survive external changes and refresh to current disk state' `
