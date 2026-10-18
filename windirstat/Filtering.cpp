@@ -299,18 +299,13 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName, const bool sca
     });
 }
 
-bool CFiltering::CanReuseDirectoryMatch(const CItem* directory)
+bool CFiltering::CanReuseDirectoryMatch(const std::wstring_view childPrefix)
 {
-    // Remote prefixes and device paths retain their full-path matching rules.
-    if (IncludeDirsRegex.empty() || !IncludeDirsMatchDescendants || directory->IsTypeOrFlag(ITF_REMOTE, ITF_MTP))
-        return false;
-
-    // Finders normalize extended paths before matching individual files.
-    const auto path = directory->GetPath();
-    if (path.starts_with(L"\\\\?\\") || path.starts_with(L"\\??\\")) return false;
+    // Only children filtered by this prefix plus their names can share the directory match.
+    if (childPrefix.empty() || IncludeDirsRegex.empty() || !IncludeDirsMatchDescendants) return false;
 
     // Appending a separator to the trimmed path preserves word-boundary assertions.
-    return MatchesAnyPath(std::wstring(WithoutTrailingBackslashes(path)), IncludeDirsRegex);
+    return MatchesAnyPath(std::wstring(WithoutTrailingBackslashes(childPrefix)), IncludeDirsRegex);
 }
 
 bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstring& filePath,

@@ -182,6 +182,7 @@ function Test-DirectoryFilterMatching {
     $punctuated = New-TestFile (Join-Path $root 'punct-\file.bin') 131
     $escaped = [regex]::Escape($included)
     $extended = '\\?\' + $included
+    $extendedFiles = @($inside, $ignored, $deep | ForEach-Object { '\\?\' + $_ })
     $cases = @(
         @{ Id = 'glob'; Pattern = $included; Regex = 0; Files = @($inside, $ignored, $deep) },
         @{ Id = 'glob-case-slash'; Pattern = $included.ToUpperInvariant() + '\'; Regex = 0
@@ -210,11 +211,11 @@ function Test-DirectoryFilterMatching {
         @{ Id = 'mixed'; Pattern = '^' + [regex]::Escape($outside) + '$' + [char]0x1E + '^' + $escaped + '(?=$)'
             Regex = 1; Files = @($outside) },
         @{ Id = 'line-terminator'; Pattern = '^' + [regex]::Escape($line) + '$'; Regex = 1; Files = @($line) },
-        @{ Id = 'extended-glob'; Root = $extended; Pattern = $extended; Regex = 0; Files = @() },
+        @{ Id = 'extended-glob'; Root = $extended; Pattern = $extended; Regex = 0; Files = $extendedFiles },
         @{ Id = 'extended-regex'; Root = $extended; Pattern = '^' + [regex]::Escape($extended) + '$'
-            Regex = 1; Files = @() },
+            Regex = 1; Files = $extendedFiles },
         @{ Id = 'extended-shared-pattern'; Root = $extended; Pattern = '.*\\included'; Regex = 1
-            Files = @($inside, $ignored, $deep | ForEach-Object { '\\?\' + $_ }) }
+            Files = $extendedFiles }
     )
     $runner = New-TestRunner @{ Options = @{ ScanningThreads = $Case.Threads } }
     foreach ($entry in $cases) {
@@ -240,6 +241,13 @@ function Test-DirectoryFilterMatching {
     }
     Assert-Equal @(Get-ReportFiles (Invoke-ScanReport $runner @($root) 'combined')).Count 0 `
         'Matched directories still enforce size, filename, and child-directory exclusions'
+    Set-TestSettings $runner @{
+        Options = @{ ScanningThreads = $Case.Threads }; DriveSelect = @{ FilteringExcludeDirs = $extended + '\nested' }
+    }
+    $rows = Invoke-ScanReport $runner @($extended) 'extended-exclude'
+    Assert-Equal ([long]$rows[0].Folders) 0 'Extended roots exclude child directories by the paths their items report'
+    Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
+        @($inside, $ignored, $line | ForEach-Object { '\\?\' + $_ } | Sort-Object) 'Extended roots retain unexcluded files'
 }
 
 function Test-EmptyScan {

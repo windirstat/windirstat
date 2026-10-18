@@ -1344,7 +1344,16 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 continue;
             }
             finderRemote.UseFlatListing(false);
-            const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(item);
+
+            // Filter filesystem children by the same paths their items report.
+            const std::wstring childPrefix = CFiltering::IsFilterActive() && item->SupportsFilesystemApis() ?
+                item->GetPathWithoutSlash() + L'\\' : std::wstring();
+            const auto childPath = [&]
+            {
+                return childPrefix.empty() ? finder->GetFilePath() :
+                    std::wstring(childPrefix).append(finder->GetFileName());
+            };
+            const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(childPrefix);
             ScanBatch batch(item, queue);
             for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
@@ -1358,7 +1367,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
                         COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem() ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
-                        CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFilePath()))
+                        CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(childPath()))
                     {
                         continue;
                     }
@@ -1375,8 +1384,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFileName(),
-                            reuseDirectoryMatch || CFiltering::IncludeDirsRegex.empty() ?
-                                std::wstring() : finder->GetFilePath(),
+                            reuseDirectoryMatch || CFiltering::IncludeDirsRegex.empty() ? std::wstring() : childPath(),
                             finder->GetFileSizeLogical(), finder->GetLastWriteTime(), reuseDirectoryMatch))
                     {
                         continue;
