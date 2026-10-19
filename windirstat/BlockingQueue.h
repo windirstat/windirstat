@@ -18,11 +18,12 @@ class BlockingQueue final
     std::condition_variable m_pushed;
     std::condition_variable m_waiting;
     unsigned int m_totalWorkerThreads = 1;
+
     unsigned int m_workersWaiting = 0;
+    unsigned int m_workersSuspended = 0;
     unsigned int m_stopReason = 0;
     bool m_started = false;
 
-    // State changes stay under m_mutex; workers can poll without taking it.
     std::atomic<bool> m_suspended = false;
     std::atomic<bool> m_cancelled = false;
     bool m_exitOnAllIdle = true;
@@ -130,13 +131,13 @@ public:
         // wait until not suspended or it's cancelled
         std::unique_lock lock(m_mutex);
         if (!m_suspended && !m_cancelled) return;
-        m_workersWaiting++;
+        m_workersSuspended++;
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]
         {
             return !m_suspended || m_cancelled;
         });
-        m_workersWaiting--;
+        m_workersSuspended--;
 
         // if cancelled then throw to terminate current task
         if (m_cancelled)
@@ -204,7 +205,7 @@ public:
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]
         {
-            return AllThreadsIdling();
+            return m_workersWaiting + m_workersSuspended == m_totalWorkerThreads;
         });
         if (clearQueue) m_queue.clear();
     }
@@ -221,6 +222,7 @@ public:
     {
         std::scoped_lock lock(m_threadMutex, m_mutex);
         m_workersWaiting = 0;
+        m_workersSuspended = 0;
         m_suspended = false;
         m_started = false;
         m_cancelled = false;
