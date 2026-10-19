@@ -2,48 +2,35 @@
 
 # Normalize module path issues
 $env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsPowerShell\v1.0\Modules'
-
-# Combine all language files into lang_combined.txt
-Write-Host "Compiling language resource"
 $Encoding = [System.Text.UTF8Encoding]::new($false)
-$Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
-$CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
-    Where-Object Name -match '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$' | ForEach-Object `
-{
-    $Content = $_ | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { $_ }
-    [System.IO.File]::WriteAllLines($_.FullName, $Content, $Encoding)
 
-    $LangCode = $Matches[1]
-    $Content | Where-Object { $_ -notmatch '^MSI_' } | ForEach-Object { "${LangCode}:$_" }
-    $Files = @($Files | Where-Object FullName -ne $_.FullName)
-}
-if ($CombinedLines) {
-    $OutFile = Join-Path $Path 'lang_combined.txt'
-    [System.IO.File]::WriteAllLines($OutFile, $CombinedLines, $Encoding)
-    $Files += @(Get-Item $OutFile)
+# Write files only when content changes so timestamps stay stable for incremental builds
+function Write-Lines($File, $Lines) {
+    $Text = ($Lines -join "`r`n") + "`r`n"
+    if ((Test-Path -LiteralPath $File) -and [System.IO.File]::ReadAllText($File, $Encoding) -ceq $Text) { return }
+    [System.IO.File]::WriteAllText($File, $Text, $Encoding)
 }
 
-# Sort lines for normalization / comparison
-Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object {
-    [System.IO.File]::WriteAllLines($_.FullName, ($_ | Get-Content -Encoding UTF8 | Sort-Object -Unique), $Encoding)
+# Normalize language files and combine them into one [language] section per file
+Write-Host "Compiling language resource"
+$Combined = foreach ($File in Get-ChildItem -Path "$Path\langs\lang_*.txt") {
+    if ($File.Name -notmatch '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$') { continue }
+    $Lines = @([System.IO.File]::ReadAllLines($File.FullName, $Encoding) -ne '' | Sort-Object -Unique)
+    Write-Lines $File.FullName $Lines
+    "[$($Matches[1])]"
+    $Lines -notmatch '^MSI_'
 }
+Write-Lines "$Path\lang_combined.txt" $Combined
 
 # Write out language header file
 Write-Host "Generating language header file"
-$TempHeader = (New-TemporaryFile).FullName
-@(
-    '#pragma once'
-    ($CombinedLines | ForEach-Object { $_ -replace '=.*','' -replace '^.*?:','' } | Sort-Object -Unique | ForEach-Object { "constexpr std::wstring_view $_ = L""$_"";" })
-) | Out-File $TempHeader -Encoding utf8 -Force
-if (!(Test-Path "$Path\LangStrings.h") -or
-    (Get-FileHash "$Path\LangStrings.h").Hash -ne (Get-FileHash $TempHeader).Hash) {
-    Copy-Item -LiteralPath $TempHeader "$Path\LangStrings.h" -Force
-}
-Remove-Item -LiteralPath $TempHeader -Force
+$Keys = $Combined -notmatch '^\[' -replace '=.*' | Sort-Object -Unique
+Write-Lines "$Path\LangStrings.h" (@('#pragma once') + ($Keys -replace '.+', 'constexpr std::wstring_view $0 = L"$0";'))
 
-# Compress file data
+# Compress text resources whose cabinet is older than its source
 Write-Host "Generating language resource"
-foreach ($File in $Files) {
-    makecab /D CompressionType=LZX /D CompressionMemory=21 $File.FullName ($File.FullName -replace '\.txt$', '.bin') | Out-Null
-    if ($File.Name -eq 'lang_combined.txt') { Remove-Item $File.FullName -Force }
+foreach ($Source in "$Path\license.txt", "$Path\lang_combined.txt") {
+    $Target = [System.IO.Path]::ChangeExtension($Source, '.bin')
+    if ([System.IO.File]::GetLastWriteTime($Target) -ge [System.IO.File]::GetLastWriteTime($Source)) { continue }
+    makecab /D CompressionType=LZX /D CompressionMemory=21 $Source $Target | Out-Null
 }

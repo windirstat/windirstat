@@ -616,76 +616,50 @@ std::wstring GetAppFolder()
 }
 
 // Resources
-std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
+std::wstring GetTextResource(const UINT id)
 {
-    const HGLOBAL resourceData = LoadResource(nullptr, resource);
-    if (!resourceData) return {};
+    // Locate the LZX cabinet embedded as a text resource
+    const HRSRC resource = ::FindResource(nullptr, MAKEINTRESOURCE(id), L"TEXT");
+    const auto data = resource != nullptr ?
+        static_cast<const BYTE*>(LockResource(LoadResource(nullptr, resource))) : nullptr;
+    if (data == nullptr) return {};
 
-    const LPVOID binaryData = LockResource(resourceData);
-    if (!binaryData) return {};
+    // FDI callbacks take no context and FDI opens the cabinet more than once, so
+    // per-thread state holds the cabinet, a read position per handle, and the output
+    thread_local std::span<const BYTE> cabinet;
+    thread_local std::vector<size_t> positions;
+    thread_local std::string output;
+    cabinet = { data, SizeofResource(nullptr, resource) };
+    positions.clear();
+    output.clear();
 
-    // Set up global structure for cabinet callbacks
-    struct ExtractContext {
-        std::span<BYTE> cabData;
-        std::vector<BYTE> output;
-        int nextHandle = 1;
-        std::map<INT_PTR, size_t> handles;
-    } ctx{ { static_cast<BYTE*>(binaryData), SizeofResource(nullptr, resource) } };
-
-    static ExtractContext* g_ctx = nullptr;
-    g_ctx = &ctx;
-
-    // Use the cabinet function to decompress the resource
+    // Decompress the single file in the cabinet into the output buffer
     ERF erf{};
     const SmartPointer hfdi(FDIDestroy, FDICreate(
         +[](const ULONG cb) -> void* { return malloc(cb); },
         +[](void* pv) { free(pv); },
-        +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },
+        +[](char*, int, int) -> INT_PTR { positions.push_back(0); return static_cast<INT_PTR>(positions.size()); },
         +[](const INT_PTR hf, void* pv, const UINT cb) -> UINT {
-            size_t& pos = g_ctx->handles[hf];
-            const size_t toRead = std::min(cb, static_cast<UINT>(g_ctx->cabData.size() - pos));
-            memcpy(pv, g_ctx->cabData.data() + pos, toRead);
-            pos += toRead;
-            return static_cast<UINT>(toRead);
+            size_t& pos = positions[hf - 1];
+            const size_t read = std::min<size_t>(cb, cabinet.size() - pos);
+            memcpy(pv, cabinet.data() + pos, read);
+            pos += read;
+            return static_cast<UINT>(read);
         },
-        +[](INT_PTR, void* pv, const UINT cb) -> UINT {
-            const char* p = static_cast<const char*>(pv);
-            g_ctx->output.insert(g_ctx->output.end(), p, p + cb);
-            return cb;
-        },
-        +[](const INT_PTR hf) -> int { g_ctx->handles.erase(hf); return 0; },
+        +[](INT_PTR, void* pv, const UINT cb) -> UINT { output.append(static_cast<const char*>(pv), cb); return cb; },
+        +[](INT_PTR) { return 0; },
         +[](const INT_PTR hf, const long dist, const int seektype) -> long {
-            size_t& pos = g_ctx->handles[hf];
-            if (seektype == SEEK_SET) pos = dist;
-            else if (seektype == SEEK_CUR) pos += dist;
-            else pos = g_ctx->cabData.size() + dist;
+            size_t& pos = positions[hf - 1];
+            pos = (seektype == SEEK_SET ? 0 : seektype == SEEK_CUR ? pos : cabinet.size()) + dist;
             return static_cast<long>(pos);
         },
         cpu80386, &erf));
-
-    if (!hfdi) return {};
-
-    FDICopy(hfdi, std::string().data(), std::string().data(), 0,
+    if (!hfdi || !FDICopy(hfdi, std::string().data(), std::string().data(), 0,
         +[](const FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION) -> INT_PTR {
-            return (fdint == fdintCOPY_FILE) ? 1 : (fdint == fdintCLOSE_FILE_INFO);
-        }, nullptr, &ctx);
+            return fdint == fdintCOPY_FILE || fdint == fdintCLOSE_FILE_INFO;
+        }, nullptr, nullptr)) return {};
 
-    return ctx.output;
-}
-
-// Retrieve the GPL text from our resources
-std::wstring GetTextResource(const UINT id)
-{
-    // Fetch the resource
-    const HRSRC hrsrc = ::FindResource(nullptr, MAKEINTRESOURCE(id), L"TEXT");
-    if (nullptr == hrsrc) return {};
-
-    // Decompress the resource
-    const auto resourceData = GetCompressedResource(hrsrc);
-    if (resourceData.empty()) return {};
-
-    return Localization::ConvertToWideString(
-        { reinterpret_cast<const char*>(resourceData.data()), resourceData.size()});
+    return Localization::ConvertToWideString(std::exchange(output, {}));
 }
 
 std::wstring GetAcceleratorString(const UINT commandID)

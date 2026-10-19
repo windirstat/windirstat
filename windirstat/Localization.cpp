@@ -33,54 +33,42 @@ void Localization::SearchReplace(std::wstring& input, const std::wstring_view& s
     }
 }
 
-bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix)
+const std::wstring& Localization::GetResourceData()
 {
-    const bool hasPrefix = !sPrefix.empty();
-    const std::wstring prefix = sPrefix + wds::chrColon;
+    // Decompress the combined language resource once; the leading newline
+    // lets every "[language]" section header be found by searching for "\n["
+    static const std::wstring data = L"\n" + GetTextResource(IDR_LANGS);
+    return data;
+}
 
-    // Read the file line by line
-    std::wstring line;
-    std::wistringstream stream(sFileData);
-
-    // Look for the language prefix and return false if not found
-    if (hasPrefix && !sFileData.contains(prefix)) return false;
-
-    while (std::getline(stream, line))
+bool Localization::CrackStrings(const std::wstring_view data)
+{
+    // Read the data line by line
+    bool loaded = false;
+    for (const auto range : std::views::split(data, L'\n'))
     {
-        // Filter out unwanted languages
-        if (hasPrefix && !line.starts_with(prefix)) continue;
-
         // Parse the string after the first equals
+        std::wstring line(std::from_range, range);
         SearchReplace(line, L"\r", wds::strEmpty);
         SearchReplace(line, L"\\n", L"\n");
         SearchReplace(line, L"\\t", L"\t");
         if (const auto e = line.find_first_of(wds::chrEqual); e != wds::szNpos)
         {
-            // Strip the prefix if any and add to map
-            const size_t startPos = hasPrefix ? line.find_first_of(wds::chrColon) + 1 : 0;
-            m_map[line.substr(startPos, e - startPos)] = line.substr(e + 1);
+            m_map[line.substr(0, e)] = line.substr(e + 1);
+            loaded = true;
         }
     }
-    return !m_map.empty();
+    return loaded;
 }
 
 std::set<LANGID> Localization::GetLanguageList()
 {
-    // Decompress the resource
-    const auto resourceData = GetTextResource(IDR_LANGS);
-    if (resourceData.empty()) return {};
-
-    // Read the combined language line by line
-    std::wstring line;
-    std::wistringstream is(resourceData);
+    // Collect the section names from the combined language resource
     std::set<std::wstring> uniqueLangs;
-    while (std::getline(is, line))
+    const std::wstring& data = GetResourceData();
+    for (size_t pos = data.find(L"\n["); pos != std::wstring::npos; pos = data.find(L"\n[", pos + 1))
     {
-        // Convert to wide strings
-        SearchReplace(line, L"\r", wds::strEmpty);
-        auto linePos = line.find_first_of(wds::chrColon);
-        if (linePos == std::wstring::npos) continue;
-        uniqueLangs.emplace(line.substr(0, linePos));
+        uniqueLangs.emplace(data.substr(pos + 2, data.find(L']', pos) - pos - 2));
     }
 
     // Also check for external language files
@@ -109,10 +97,19 @@ std::set<LANGID> Localization::GetLanguageList()
 bool Localization::LoadResource(const LANGID language)
 {
     const LCID lcid = MAKELCID(language, SORT_DEFAULT);
-    const std::wstring sResourceData = GetTextResource(IDR_LANGS);
+
+    // Parse a "[language]" section of the combined resource up to the next section
+    const auto crackSection = [](const std::wstring& name)
+    {
+        const std::wstring_view data = GetResourceData();
+        const std::wstring header = L"\n[" + name + L"]";
+        const size_t start = data.find(header);
+        return start != std::wstring_view::npos &&
+            CrackStrings(data.substr(0, data.find(L"\n[", start + 1)).substr(start + header.size()));
+    };
 
     // Load English strings first as a baseline fallback
-    CrackStrings(sResourceData, L"en");
+    crackSection(L"en");
     m_rightToLeft = false;
 
     if (GetLocaleInfo(lcid, LOCALE_SLANGUAGE, nullptr, 0) == 0) return true;
@@ -121,8 +118,8 @@ bool Localization::LoadResource(const LANGID language)
     const bool loaded =
         LoadExternalLanguage(LOCALE_SNAME, language) ||                                 // External BCP 47 language file
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||                       // External ISO 639-1 language file
-        CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||         // Built-in BCP 47 resource
-        CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)); // Built-in ISO 639-1 resource
+        crackSection(GetLocaleString(LOCALE_SNAME, language)) ||                        // Built-in BCP 47 resource
+        crackSection(GetLocaleString(LOCALE_SISO639LANGNAME, language));                // Built-in ISO 639-1 resource
     m_rightToLeft = loaded && GetLocaleString(LOCALE_IREADINGLAYOUT, lcid) == L"1";
     return loaded;
 }

@@ -111,7 +111,6 @@ std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 
 // Resources
-std::vector<BYTE> GetCompressedResource(HRSRC resource) noexcept;
 std::wstring GetTextResource(UINT id);
 std::wstring GetAcceleratorString(UINT commandID);
 
