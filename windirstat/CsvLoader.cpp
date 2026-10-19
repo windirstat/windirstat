@@ -534,10 +534,12 @@ static std::unordered_map<const CItem*, LONGLONG>
     return adjustedSizes;
 }
 
+static constexpr size_t ReportBufferSize = 64 * 1024;
+
 // Write complete rows in chunks while retaining the buffer for the next rows.
 static bool FlushReportBuffer(std::ofstream& outf, std::string& buffer, const bool finish = false)
 {
-    if (buffer.size() < 64 * 1024 && !finish) return true;
+    if (buffer.size() < ReportBufferSize && !finish) return true;
     outf.write(buffer.data(), static_cast<std::streamsize>(buffer.size()));
     buffer.clear();
     if (finish) outf.flush();
@@ -554,7 +556,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
 
     // Rows
     std::string buffer;
-    buffer.reserve(64 * 1024);
+    buffer.reserve(ReportBufferSize);
     for (const auto* item : items)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
@@ -573,12 +575,11 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             ToTimePoint(item->GetLastChange()),
             std::to_underlying(itemType),
             index);
-        if (includeOwner) { buffer += ','; buffer += QuoteAndConvert(item->GetOwner(true)); }
+        if (includeOwner) std::format_to(std::back_inserter(buffer), ",{}", QuoteAndConvert(item->GetOwner(true)));
         const auto& result = item->GetScanResult();
-        buffer += ',';
-        buffer += QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]);
-        buffer += ',';
-        buffer += QuoteAndConvert(StorageSource::EscapeName(result.error, true));
+        std::format_to(std::back_inserter(buffer), ",{},{}",
+            QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]),
+            QuoteAndConvert(StorageSource::EscapeName(result.error, true)));
         if (!FlushReportBuffer(outf, buffer)) return false;
     }
     return FlushReportBuffer(outf, buffer, true);
@@ -594,7 +595,7 @@ static bool SaveJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
     for (const auto& col : cols) keys.push_back(JsonQuoteW(col));
 
     std::string buffer = "[\r\n";
-    buffer.reserve(64 * 1024);
+    buffer.reserve(ReportBufferSize);
     bool first = true;
     for (const auto& item : items)
     {
@@ -708,7 +709,7 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
 
     // Rows
     std::string buffer;
-    buffer.reserve(64 * 1024);
+    buffer.reserve(ReportBufferSize);
     for (const auto& [hash, linkedItem, sampled] : dupeItems)
     {
         std::format_to(std::back_inserter(buffer), "{},{},{},{},{},{},{}\r\n",
@@ -783,7 +784,7 @@ static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstri
 
     // Rows
     std::string buffer;
-    buffer.reserve(64 * 1024);
+    buffer.reserve(ReportBufferSize);
     for (const auto* item : items)
     {
         std::format_to(std::back_inserter(buffer), "{},{},{},{},{},0x{:08X},{}\r\n",
