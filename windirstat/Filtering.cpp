@@ -139,13 +139,13 @@ std::wregex CFiltering::CompilePattern(const std::wstring& pattern, const bool u
     // users can type V:\Folder without having to escape the path separators.
     const std::wstring normalized = useRegex && pathFilter ? NormalizePathRegex(pattern) : pattern;
 
-    // Directory filters apply to the directory itself and everything below it.
+    // Directory filters apply to the directory itself and everything below it, whatever characters names contain.
     const bool remote = IsRemotePattern(pattern);
     std::wstring expression = useRegex ? normalized : GlobToRegex(normalized, false);
     if (pathFilter)
     {
         if (HasUnescapedTrailingDollar(expression)) expression.pop_back();
-        expression = L"(?:" + expression + (remote ? L")(?:/.*)?" : L")(?:\\\\.*)?");
+        expression = L"(?:" + expression + (remote ? L")(?:/[\\s\\S]*)?" : L")(?:\\\\[\\s\\S]*)?");
     }
     return std::wregex(expression, std::regex_constants::optimize |
         (remote ? std::regex_constants::ECMAScript : std::regex_constants::icase));

@@ -182,28 +182,25 @@ function Test-DirectoryFilterMatching {
     $punctuated = New-TestFile (Join-Path $root 'punct-\file.bin') 131
     $escaped = [regex]::Escape($included)
     $extended = '\\?\' + $included
-    $extendedFiles = @($inside, $ignored, $deep | ForEach-Object { '\\?\' + $_ })
+    $members = @($inside, $ignored, $deep, $line)
+    $extendedFiles = @($members | ForEach-Object { '\\?\' + $_ })
     $cases = @(
-        @{ Id = 'glob'; Pattern = $included; Regex = 0; Files = @($inside, $ignored, $deep) },
-        @{ Id = 'glob-case-slash'; Pattern = $included.ToUpperInvariant() + '\'; Regex = 0
-            Files = @($inside, $ignored, $deep) },
-        @{ Id = 'glob-wildcard'; Pattern = (Join-Path $root 'include*'); Regex = 0
-            Files = @($inside, $ignored, $deep, $sibling) },
-        @{ Id = 'regex'; Pattern = '^' + $escaped + '$'; Regex = 1; Files = @($inside, $ignored, $deep) },
-        @{ Id = 'noncapturing-group'; Pattern = '^(?:' + $escaped + ')$'; Regex = 1
-            Files = @($inside, $ignored, $deep) },
+        @{ Id = 'glob'; Pattern = $included; Regex = 0; Files = $members },
+        @{ Id = 'glob-case-slash'; Pattern = $included.ToUpperInvariant() + '\'; Regex = 0; Files = $members },
+        @{ Id = 'glob-wildcard'; Pattern = (Join-Path $root 'include*'); Regex = 0; Files = $members + $sibling },
+        @{ Id = 'regex'; Pattern = '^' + $escaped + '$'; Regex = 1; Files = $members },
+        @{ Id = 'noncapturing-group'; Pattern = '^(?:' + $escaped + ')$'; Regex = 1; Files = $members },
         @{ Id = 'multiple'; Pattern = $included + [char]0x1E + (Join-Path $root 'included-other'); Regex = 0
-            Files = @($inside, $ignored, $deep, $sibling) },
+            Files = $members + $sibling },
         @{ Id = 'regex-file'; Pattern = '^' + $escaped + '\\inside\.bin$'; Regex = 1; Files = @($inside) },
         @{ Id = 'end-assertion'; Pattern = '^' + $escaped + '(?=$)'; Regex = 1; Files = @() },
         @{ Id = 'negative-lookahead'; Pattern = '^' + $escaped + '(?!\\ignored\.tmp$)'; Regex = 1
-            Files = @($inside, $deep) },
+            Files = @($inside, $deep, $line) },
         @{ Id = 'positive-lookahead'; Pattern = '^' + $escaped + '(?=\\inside\.bin$|$)'; Regex = 1
             Files = @($inside) },
         @{ Id = 'interior-anchor'; Pattern = '^' + $escaped + '$|^' + $escaped + '\\inside\.bin'; Regex = 1
             Files = @($inside) },
-        @{ Id = 'word-boundary'; Pattern = '^' + $escaped + '\b$'; Regex = 1
-            Files = @($inside, $ignored, $deep) },
+        @{ Id = 'word-boundary'; Pattern = '^' + $escaped + '\b$'; Regex = 1; Files = $members },
         @{ Id = 'non-word-boundary'; Pattern = '^' + [regex]::Escape((Join-Path $root 'punct-')) + '\B$'; Regex = 1
             Files = @($punctuated) },
         @{ Id = 'remote-alternative'; Pattern = 's3://unused|' + $escaped; Regex = 1; Files = @() },
@@ -239,7 +236,8 @@ function Test-DirectoryFilterMatching {
         DriveSelect = @{ FilteringIncludeDirs = $included; FilteringExcludeFiles = '*.tmp'
             FilteringExcludeDirs = (Join-Path $included 'nested') }
     }
-    Assert-Equal @(Get-ReportFiles (Invoke-ScanReport $runner @($root) 'combined')).Count 0 `
+    $rows = Invoke-ScanReport $runner @($root) 'combined'
+    Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name) @($line) `
         'Matched directories still enforce size, filename, and child-directory exclusions'
     Set-TestSettings $runner @{
         Options = @{ ScanningThreads = $Case.Threads }; DriveSelect = @{ FilteringExcludeDirs = $extended + '\nested' }
@@ -247,7 +245,8 @@ function Test-DirectoryFilterMatching {
     $rows = Invoke-ScanReport $runner @($extended) 'extended-exclude'
     Assert-Equal ([long]$rows[0].Folders) 0 'Extended roots exclude child directories by the paths their items report'
     Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
-        @($inside, $ignored, $line | ForEach-Object { '\\?\' + $_ } | Sort-Object) 'Extended roots retain unexcluded files'
+        @($inside, $ignored, $line | ForEach-Object { '\\?\' + $_ } | Sort-Object) `
+        'Extended roots retain unexcluded files'
 }
 
 function Test-EmptyScan {

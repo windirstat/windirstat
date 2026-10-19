@@ -1376,16 +1376,13 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 }
                 else
                 {
-                    // The descendant regex suffix does not match line terminators in filenames.
-                    const bool reuseDirectoryMatch = directoryIncluded &&
-                        finder->GetFileName().find_first_of(L"\r\n\u2028\u2029") == std::wstring_view::npos;
                     if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
                         COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
                         COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFileName(),
-                            reuseDirectoryMatch || CFiltering::IncludeDirsRegex.empty() ? std::wstring() : childPath(),
-                            finder->GetFileSizeLogical(), finder->GetLastWriteTime(), reuseDirectoryMatch))
+                            directoryIncluded || CFiltering::IncludeDirsRegex.empty() ? std::wstring() : childPath(),
+                            finder->GetFileSizeLogical(), finder->GetLastWriteTime(), directoryIncluded))
                     {
                         continue;
                     }
