@@ -56,8 +56,12 @@ public:
 
         // Publish the batch before hashing; cancellation cleanup only publishes remaining children.
         Flush();
+        if (m_duplicates.empty()) return;
         for (CItem* child : m_duplicates) CFileDupeControl::Get()->ProcessDuplicate(child, m_queue);
         m_duplicates.clear();
+
+        // Time the next batch from the end of hashing so slow hashes do not force single-item batches.
+        m_lastFlush = GetTickCount64();
     }
 
     void Flush()
