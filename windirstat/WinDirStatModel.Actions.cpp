@@ -24,128 +24,124 @@ static std::optional<std::wstring> ChooseReportPath(const CDialog::FilePickerMod
         std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
         Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES)));
 }
+
 void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct commandFilter
     {
-        bool allowNone = false; // allow display when nothing is selected
-        bool allowMany = false; // allow display when multiple items are selected
+        bool allowNone  = false; // allow display when nothing is selected
+        bool allowMany  = false; // allow display when multiple items are selected
         bool allowEarly = false; // allow display before processing is finished
-        LOGICAL_FOCUS focus = LF_NONE; // restrict which views support this selection
-        ITEMTYPE typesAllow = ITF_ANY; // only display if these types are allowed (bitmask)
-        bool (*extra)(CItem*) = nullptr; // extra checks
+        LOGICAL_FOCUS focus    = LF_NONE; // restrict which views support this selection
+        ITEMTYPE typesAllow    = ITF_ANY; // only display if these types are allowed (bitmask)
+        bool (*extra)(CItem*)  = nullptr; // extra checks
     };
 
-    // special conditions
+    // Foundation lambdas for accessing the model and its items
     static auto model = this;
-    static bool (*isZoomed)(CItem*) = [](CItem*) { return Get()->IsZoomed(); };
-    static bool (*canZoomIn)(CItem*) = [](CItem* i) { return i != nullptr && (i = i->IsLeaf() ? i->GetParent() : i) != nullptr && i != model->GetZoomItem() && i->TmiGetSize() > 0; };
-    static bool (*canZoomOut)(CItem*) = [](CItem*) { return model->GetZoomItem() != model->GetRootItem(); };
-    static bool (*parentNotNull)(CItem*) = [](CItem* i) { return i != nullptr && i->GetParent() != nullptr; };
-    static bool (*reselectAvail)(CItem*) = [](CItem*) { return model->IsReselectChildAvailable(); };
+    static auto getRootItem     = [] { return model->GetRootItem(); };
+    static auto getZoomItem     = [] { return model->GetZoomItem(); };
+    static auto hasRootItem     = [] { return model->HasRootItem(); };
+    static auto isReselectAvail = [] { return model->IsReselectChildAvailable(); };
+    static auto isRootDone      = [] { return model->IsRootDone(); };
+
+    // Foundation lambdas for common item checks
+    static bool (*notNull)(CItem*)    = [](CItem* i) { return i != nullptr; };
+    static bool (*isFile)(CItem*)     = [](CItem* i) { return notNull(i) && i->IsTypeOrFlag(IT_FILE); };
+    static bool (*isMtp)(CItem*)      = [](CItem* i) { return notNull(i) && i->IsTypeOrFlag(ITF_MTP); };
+    static bool (*isRemote)(CItem*)   = [](CItem* i) { return notNull(i) && i->IsTypeOrFlag(ITF_REMOTE); };
+    static bool (*isRoot)(CItem*)     = [](CItem* i) { return notNull(i) && i->IsRootItem(); };
+    static bool (*isMtpRoot)(CItem*)  = [](CItem* i) { return notNull(i) && i->IsMtpRoot(); };
+    static bool (*isScanRoot)(CItem*) = [](CItem* i) { return notNull(i) && i->IsScanRoot(); };
+
+    // Special conditions
+    static bool (*canZoomIn)(CItem*)     = [](CItem* i) { return notNull(i) && notNull(i = i->IsLeaf() ? i->GetParent() : i) && i != getZoomItem() && i->TmiGetSize() > 0; };
+    static bool (*canZoomOut)(CItem*)    = [](CItem*)   { return getZoomItem() != getRootItem(); };
+    static bool (*isZoomed)(CItem*)      = [](CItem*)   { return Get()->IsZoomed(); };
+    static bool (*parentNotNull)(CItem*) = [](CItem* i) { return notNull(i) && notNull(i->GetParent()); };
+    static bool (*reselectAvail)(CItem*) = [](CItem*)   { return isReselectAvail(); };
 
     // Define item capability checks for shell and filesystem-specific commands.
-    static bool (*isShellChild)(CItem*) = [](CItem* item)
-    {
-        return item != nullptr && !item->IsRootItem() && !item->IsMtpRoot() && item->HasShellIdentity();
-    };
-    static bool (*isDeletable)(CItem*) = [](CItem* item)
-    {
-        if (item != nullptr && item->IsTypeOrFlag(ITF_REMOTE)) return !item->IsScanRoot();
-        return isShellChild(item);
-    };
-    static bool (*hasShellIdentity)(CItem*) = [](CItem* item)
-    {
-        return item != nullptr && item->HasShellIdentity();
-    };
-    static bool (*filesystemOnly)(CItem*) = [](CItem* item)
-    {
-        if (item == nullptr) item = model->GetRootItem();
-        return item != nullptr && item->SupportsFilesystemApis();
-    };
-    static bool (*isRefreshable)(CItem*) = [](CItem* item)
-    {
-        if (item != nullptr && item->IsTypeOrFlag(ITF_REMOTE)) return !item->IsTypeOrFlag(IT_FILE);
-        return item != nullptr && (!item->IsTypeOrFlag(ITF_MTP) ||
-            (item->HasShellIdentity() && !item->IsTypeOrFlag(IT_FILE)));
-    };
-    static bool (*hasRecycleBin)(CItem*) = [](CItem* i)
-    {
-        return i != nullptr && i->SupportsFilesystemApis() && !i->IsRootItem() && IsLocalDrive(i->GetPath());
-    };
-    static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isSuspendable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isStoppable)(CItem*) = [](CItem*) { return model->HasRootItem() && !model->IsRootDone(); };
-    static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
-    static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
-    static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
-    static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
-    static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
-    static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
-    static bool (*isVhdFile)(CItem*) = [](CItem* i)
-    {
-        return i != nullptr && i->SupportsFilesystemApis() && IsElevationActive() &&
-            (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx"));
-    };
-    static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*) { return IsStorageSenseAvailable(); };
-    static constexpr ITEMTYPE shellTypes = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE;
+    static bool (*filesystemOnly)(CItem*)          = [](CItem* i) { auto* item = i ? i : getRootItem(); return notNull(item) && item->SupportsFilesystemApis(); };
+    static bool (*hasRecycleBin)(CItem*)           = [](CItem* i) { return notNull(i) && i->SupportsFilesystemApis() && !isRoot(i) && IsLocalDrive(i->GetPath()); };
+    static bool (*hasShellIdentity)(CItem*)        = [](CItem* i) { return notNull(i) && i->HasShellIdentity(); };
+    static bool (*isShellChild)(CItem*)            = [](CItem* i) { return !isRoot(i) && !isMtpRoot(i) && hasShellIdentity(i); };
+    static bool (*isDeletable)(CItem*)             = [](CItem* i) { return isRemote(i) ? !isScanRoot(i) : isShellChild(i); };
+    static bool (*isDriveOrDirOrFile)(CItem*)      = [](CItem* i) { return notNull(i) && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
+    static bool (*isDupeTabVisible)(CItem*)        = [](CItem*)   { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
+    static bool (*isElevated)(CItem*)              = [](CItem*)   { return IsElevationActive(); };
+    static bool (*isElevationPossible)(CItem*)     = [](CItem*)   { return IsElevationPossible(); };
+    static bool (*isHibernate)(CItem*)             = [](CItem*)   { return IsElevationActive() && IsHibernateEnabled(); };
+    static bool (*isPermsTabVisible)(CItem*)       = [](CItem*)   { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
+    static bool (*isRefreshable)(CItem*)           = [](CItem* i) { return isRemote(i) ? !isFile(i) : (notNull(i) && (!isMtp(i) || (hasShellIdentity(i) && !isFile(i)))); };
+    static bool (*isResumable)(CItem*)             = [](CItem*)   { return CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isStoppable)(CItem*)             = [](CItem*)   { return hasRootItem() && !isRootDone(); };
+    static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*)   { return IsStorageSenseAvailable(); };
+    static bool (*isSuspendable)(CItem*)           = [](CItem*)   { return hasRootItem() && !isRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isVhdFile)(CItem*)               = [](CItem* i) { return notNull(i) && i->SupportsFilesystemApis() && IsElevationActive() && (!isFile(i) || i->HasExtension(L".vhdx")); };
+
+    // Define item type combinations for shell and filesystem-specific commands.
+    static constexpr ITEMTYPE shellTypesDirFile  = IT_DIRECTORY | IT_FILE;
+    static constexpr ITEMTYPE shellTypesDriveDir = IT_DRIVE | IT_DIRECTORY;
+    static constexpr ITEMTYPE shellTypesFullPath = IT_DRIVE | IT_DIRECTORY | IT_FILE;
+    static constexpr ITEMTYPE shellTypesAll      = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE;
 
     // Map each command to its selection rules and shell or filesystem capability requirements.
     static std::unordered_map<UINT, const commandFilter> filters
     {
-        // ID                           none   many   early  focus        types
-        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isDeletable } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, hasRecycleBin } },
-        { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
-        { ID_CLEANUP_STORAGE_SENSE,   { true,  true,  false, LF_NONE,     ITF_ANY, isStorageSenseAvailable } },
-        { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, isShellChild } },
-        { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,     ITF_ANY, isElevationPossible } },
-        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
-        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
-        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isDeletable } },
-        { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
-        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE, hasShellIdentity } },
-        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     ITF_ANY, isHibernate } },
-        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     shellTypes, hasShellIdentity } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     shellTypes, hasShellIdentity } },
-        { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, isVhdFile } },
-        { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
-        { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_CLEANUP_SPARSIFY_FILE,   { false, true,  false, LF_NONE,     IT_FILE, filesystemOnly } },
-        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
-        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     ITF_ANY, isElevated } },
-        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, filesystemOnly } },
-        { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     IT_FILE, hasShellIdentity } },
-        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_FILTER,                  { true,  true,  true,  LF_NONE,     ITF_ANY } },
-        { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     ITF_ANY, isDriveOrDirOrFile } },
-        { ID_POPUP_CANCEL,            { true,  true,  true,  LF_NONE,     ITF_ANY } },
-        { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     shellTypes, isRefreshable } },
-        { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     ITF_ANY, isDupeTabVisible } },
-        { ID_SAVE_PERMISSIONS,        { true,  true,  false, LF_NONE,     ITF_ANY, isPermsTabVisible } },
-        { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     ITF_ANY, isResumable } },
-        { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
-        { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
-        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE, ITF_ANY, reselectAvail } },
-        { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE, ITF_ANY, parentNotNull } },
-        { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE, ITF_ANY, isZoomed } },
-        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE, canZoomIn } },
-        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, ITF_ANY, canZoomOut } },
-        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     ITF_ANY } }
+        // ID                           none   many   early  focus                types               conditions
+        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,             shellTypesDirFile,  isDeletable             } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,             shellTypesDirFile,  hasRecycleBin           } },
+        { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, LF_NONE,             ITF_ANY,            isElevationPossible     } },
+        { ID_CLEANUP_STORAGE_SENSE,   { true,  true,  false, LF_NONE,             ITF_ANY,            isStorageSenseAvailable } },
+        { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,             shellTypesDirFile,  isShellChild            } },
+        { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,             ITF_ANY,            isElevationPossible     } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,             ITF_ANY,            isElevationPossible     } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,             ITF_ANY,            isElevationPossible     } },
+        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,             IT_DIRECTORY,       isDeletable             } },
+        { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE,         shellTypesDriveDir, filesystemOnly          } },
+        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,             shellTypesDirFile,  hasShellIdentity        } },
+        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,             ITF_ANY,            isHibernate             } },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,             shellTypesFullPath, filesystemOnly          } },
+        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,             shellTypesFullPath, filesystemOnly          } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,             shellTypesAll,      hasShellIdentity        } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,             shellTypesAll,      hasShellIdentity        } },
+        { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,             shellTypesFullPath, isVhdFile               } },
+        { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,             ITF_ANY,            isElevated              } },
+        { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,             shellTypesFullPath, filesystemOnly          } },
+        { ID_CLEANUP_SPARSIFY_FILE,   { false, true,  false, LF_NONE,             IT_FILE,            filesystemOnly          } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,             ITF_ANY,            isElevated              } },
+        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,             ITF_ANY,            isElevated              } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,             shellTypesDirFile,  filesystemOnly          } },
+        { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,             IT_FILE,            hasShellIdentity        } },
+        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,             shellTypesFullPath                          } },
+        { ID_FILTER,                  { true,  true,  true,  LF_NONE,             ITF_ANY                                     } },
+        { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,             ITF_ANY,            isDriveOrDirOrFile      } },
+        { ID_POPUP_CANCEL,            { true,  true,  true,  LF_NONE,             ITF_ANY                                     } },
+        { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,             shellTypesAll,      isRefreshable           } },
+        { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,             ITF_ANY,            isDupeTabVisible        } },
+        { ID_SAVE_PERMISSIONS,        { true,  true,  false, LF_NONE,             ITF_ANY,            isPermsTabVisible       } },
+        { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,             ITF_ANY,            isResumable             } },
+        { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,             ITF_ANY,            isStoppable             } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,             ITF_ANY,            isSuspendable           } },
+        { ID_SEARCH,                  { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE,         shellTypesDriveDir, filesystemOnly          } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE,         ITF_ANY,            reselectAvail           } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE,         ITF_ANY,            parentNotNull           } },
+        { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE,         ITF_ANY,            isZoomed                } },
+        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE,         shellTypesAll,      canZoomIn               } },
+        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE,         ITF_ANY,            canZoomOut              } },
+        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,             ITF_ANY                                     } },
+        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,             ITF_ANY                                     } }
     };
 
     const auto it = filters.find(pCmdUI->m_nID);
