@@ -4,8 +4,10 @@
 		<GitWorkTreeRootDir>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\main'))</GitWorkTreeRootDir>
 		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\master'))</GitWorkTreeRootDir>
 		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\HEAD'))</GitWorkTreeRootDir>
+		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git'))</GitWorkTreeRootDir>
 		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' != '' and !HasTrailingSlash('$(GitWorkTreeRootDir)')">$(GitWorkTreeRootDir)\</GitWorkTreeRootDir>
 		<GitDirSentinelFile Condition="Exists('$(GitWorkTreeRootDir).git\HEAD')">$(GitWorkTreeRootDir).git\HEAD</GitDirSentinelFile>
+		<GitDirSentinelFile Condition="'$(GitDirSentinelFile)' == '' and '$(GitWorkTreeRootDir)' != '' and Exists('$(GitWorkTreeRootDir).git')">$(GitWorkTreeRootDir).git</GitDirSentinelFile>
 	</PropertyGroup>
 	<Target Name="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
 		<PropertyGroup>
