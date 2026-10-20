@@ -340,6 +340,7 @@ public:
     void UpdateFrameTitleForScan(std::wstring_view scanName = {});
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item) const;
     void RebuildToolBar(bool rebuildButtons = true);
+    void SetSearchToolBarButtons(bool visible, bool updateLayout = true);
     void SetWatcherToolBarButtons(bool visible, bool updateLayout = true);
     void RebuildLayout(bool resetPositions = false);
     bool CreateFromResource(UINT nIDResource) override;
