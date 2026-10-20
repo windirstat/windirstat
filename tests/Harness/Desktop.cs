@@ -356,7 +356,7 @@ public static class TestDesktop
             if (c == '~') key = 0x0D;
             else if (c == '{')
             {
-                int end = keys.IndexOf('}', i + 2);
+                int end = i + 2 <= keys.Length ? keys.IndexOf('}', i + 2) : -1;
                 if (end < 0) throw new ArgumentException("Unclosed key name in: " + keys);
                 string name = keys.Substring(i + 1, end - i - 1);
                 i = end;
