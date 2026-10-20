@@ -50,6 +50,13 @@ bool SearchCriteria::MatchesSize(const CItem* item) const
 
 bool SearchCriteria::Matches(const CItem* item, const std::wregex& termRegex) const
 {
+    // Results of an empty-folder search that are restored after a refresh are checked again
+    if (emptyFoldersOnly)
+    {
+        std::unordered_map<std::wstring, bool> checkedFolders;
+        return FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders);
+    }
+
     // Apply the size range before the name match, since it is the cheaper test.
     const bool typeWanted = (includeFiles && item->IsTypeOrFlag(IT_FILE)) ||
         (includeFolders && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
@@ -161,37 +168,31 @@ void CFileSearchControl::PopulateSearchResults(const std::vector<CItem*>& matche
 
 void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
 {
-    // Update tab visibility to show search tab if results exist
+    // A command can still be posted during a scan, and the walk below reads the tree it changes
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
+
+    // Show the search tab, which holds the results
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 
-    // Drop items that are descendants of another selected item, so a nested pair can't
-    // end up as two overlapping topmost matches - no duplicate-tracking set is needed below.
-    std::vector<CItem*> stack;
-    stack.reserve(items.size());
+    // Remove previous results
+    SetRootItem();
+    m_criteria = { .emptyFoldersOnly = true };
+    m_rootItem->SetLimitExceeded(false);
+
+    // Walk from the same starting points the removal uses
+    std::vector<CItem*> stack = CWinDirStatModel::GetEmptyFolderRoots(items);
     ULONGLONG totalItems = 0;
-    for (CItem* item : items)
-    {
-        const bool hasSelectedAncestor = std::ranges::any_of(items, [&](const CItem* other)
-        {
-            return other != item && other->IsAncestorOf(item);
-        });
-        if (!hasSelectedAncestor)
-        {
-            totalItems += item->GetItemsCount();
-            stack.push_back(item);
-        }
-    }
+    for (const CItem* item : stack) totalItems += item->GetItemsCount();
 
-    // Only the topmost directory of each empty branch is kept - removing it (via Delete /
-    // Delete to Recycle Bin) takes the whole branch with it, so descendants don't need entries.
+    // Every empty directory of a branch is listed, not only its topmost one. Deleting the top
+    // does take the whole branch with it, but the choice of how much of a branch to remove
+    // belongs to the user, so each nested empty directory gets its own selectable entry.
     std::vector<CItem*> results;
+    bool limitExceeded = false;
     std::optional<CItemSearch::SizeTotals> totals;
-    CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
+    const auto result = CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(),
+        [&](CProgressDlg* pdlg)
     {
-        // Remove previous results
-        SetRootItem();
-        m_rootItem->SetLimitExceeded(false);
-
         std::unordered_map<std::wstring, bool> checkedFolders;
 
         while (!stack.empty() && !pdlg->IsCancelled())
@@ -206,14 +207,16 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
                 // scan itself once hit instead of collecting everything first.
                 if (results.size() >= COptions::SearchMaxResults)
                 {
-                    m_rootItem->SetLimitExceeded(true);
+                    limitExceeded = true;
                     break;
                 }
                 results.push_back(item);
-                continue;
             }
-            // Don't descend into followed links: their children live outside the selected
-            // physical tree, so an empty folder found there isn't one the user asked about.
+
+            // Descend into a directory that was just listed as well, so the empty directories
+            // nested inside it get their own entries. Followed links stay the exception: their
+            // children live outside the selected physical tree, so an empty folder found there
+            // isn't one the user asked about.
             if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
             {
                 stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
@@ -221,10 +224,19 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
         }
         totals = CItemSearch::CalculateTotals(results, [pdlg] { return pdlg->IsCancelled(); });
     }).ShowModal();
+    m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface - a snapshot, like every other scan result: a folder
-    // listed here can still gain a file before the user gets around to deleting it.
+    // listed here can still gain a file before the user gets around to deleting it, which is
+    // why its removal only takes folders that are still empty.
     PopulateSearchResults(results, totals);
+}
+
+std::vector<CItem*> CFileSearchControl::GetEmptyFolderResults() const
+{
+    if (!m_criteria.emptyFoldersOnly) return {};
+    auto items = m_itemTracker | std::views::keys;
+    return { items.begin(), items.end() };
 }
 
 void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
@@ -236,7 +248,8 @@ void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
         m_criteria.physicalMinimum || m_criteria.physicalMaximum;
     const std::unordered_set<CItem*> refreshed(items.begin(), items.end());
     std::unordered_set<CItem*> ancestors;
-    if (sizeFilterActive) for (auto* item : items)
+    // Sizes and emptiness depend on descendants, so such results are rechecked for ancestors too
+    if (sizeFilterActive || m_criteria.emptyFoldersOnly) for (auto* item : items)
         for (auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
             if (!ancestors.insert(parent).second) break;
 
