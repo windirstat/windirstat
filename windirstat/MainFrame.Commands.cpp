@@ -726,6 +726,7 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
         { ID_SEPARATOR,               {},{}},
         { ID_CLEANUP_DELETE_BIN,      IDS_CLEANUP_DELETE_BIN,      Icons::PaintDeleteBin},
         { ID_CLEANUP_DELETE,          IDS_CLEANUP_DELETE,          Icons::PaintDelete},
+        { ID_CLEANUP_REMOVE_EMPTY,    IDS_MENU_REMOVE_EMPTY,       Icons::PaintDelete},
         { ID_SEPARATOR,               {},{}},
         { ID_TREEMAP_ZOOMIN,          IDS_TREEMAP_ZOOMIN,          [](auto& g) { Icons::PaintMagnifier(g, true);}},
         { ID_TREEMAP_ZOOMOUT,         IDS_TREEMAP_ZOOMOUT,         [](auto& g){ Icons::PaintMagnifier(g, false);}},
@@ -777,12 +778,25 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
             text.empty() ? std::wstring{} : Localization::Lookup(text)));
     }
 
-    // The watcher buttons are contextual and only shown while its tab is active
+    // The search and watcher buttons are contextual and only shown while their tab is active
+    SetSearchToolBarButtons(m_fileTabbedView != nullptr &&
+        m_fileTabbedView->IsFileSearchViewTabActive(), false);
     SetWatcherToolBarButtons(m_fileTabbedView != nullptr &&
         m_fileTabbedView->IsFileWatcherViewTabActive(), false);
 
     m_wndToolBar.UpdateLayout();
     LayoutWatcherFilter();
+}
+
+void CMainFrame::SetSearchToolBarButtons(const bool visible, const bool updateLayout)
+{
+    if (m_wndToolBar.Handle() == nullptr) return;
+
+    // Removing empty folders only applies to the results of an empty-folder search
+    const int index = m_wndToolBar.GetButtonIndex(ID_CLEANUP_REMOVE_EMPTY);
+    if (index < 0) return;
+
+    if (m_wndToolBar.SetButtonVisible(index, visible) && updateLayout) m_wndToolBar.UpdateLayout();
 }
 
 void CMainFrame::SetWatcherToolBarButtons(const bool visible, const bool updateLayout)

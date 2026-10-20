@@ -31,6 +31,7 @@ void CPagePrompts::InitializePage()
         PromptControl{ IDC_PROMPT_DISM_NORMAL,       IDS_MENU_DISM,               L"/StartComponentCleanup" },
         PromptControl{ IDC_PROMPT_DISM_RESET,        IDS_MENU_DISM,               L"/StartComponentCleanup /ResetBase" },
         PromptControl{ IDC_PROMPT_SET_DATES,         IDS_MENU_SET_DATES,         {} },
+        PromptControl{ IDC_PROMPT_REMOVE_EMPTY,      IDS_MENU_REMOVE_EMPTY,      {} },
     };
 
     for (const auto& [controlId, operationId, detail] : promptControls)
