@@ -28,15 +28,15 @@ class CVisualizationPane;
 //
 enum LOGICAL_FOCUS : uint8_t
 {
-    LF_NONE = 0,
-    LF_FILETREE,
-    LF_DUPELIST,
-    LF_TOPLIST,
-    LF_SEARCHLIST,
-    LF_WATCHERLIST,
-    LF_PERMSLIST,
-    LF_EXTLIST,
-    LF_STORAGEANALYTICS,
+    LF_NONE             = 0,
+    LF_FILETREE         = 1 << 0,
+    LF_DUPELIST         = 1 << 1,
+    LF_TOPLIST          = 1 << 2,
+    LF_SEARCHLIST       = 1 << 3,
+    LF_WATCHERLIST      = 1 << 4,
+    LF_PERMSLIST        = 1 << 5,
+    LF_EXTLIST          = 1 << 6,
+    LF_STORAGEANALYTICS = 1 << 7,
 };
 
 //
