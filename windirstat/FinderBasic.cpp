@@ -354,3 +354,56 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
         p.parent_path().wstring(),
         p.filename().wstring());
 }
+
+// Rules out what the caller would otherwise have to check itself: not a directory, a reparse
+// point (symlink/junction/mount/cloud - following it could walk outside the selected tree),
+// the search root, or a directory the model already knows holds files. GetFilesCount() can
+// still undercount (excluded hidden/protected files, filter rules), so whatever survives is
+// verified against the real filesystem: empty only if its entire subtree holds no files, no
+// directory symlinks and no folder the scan left out - removal works from the scanned tree, so
+// a parent holding such a folder could never be removed. Results are cached so that within one
+// search a chain of N nested empty directories costs O(N) rather than O(N^2).
+bool FinderBasic::IsEmptyFolderOnDisk(const CItem* item, std::unordered_map<std::wstring, bool>& checkedFolders)
+{
+    if (item == nullptr || !item->IsTypeOrFlag(IT_DIRECTORY) || item->IsTypeOrFlag(ITRP_MASK)
+        || item->IsRootItem() || item->GetFilesCount() != 0) return false;
+
+    const auto isEmptySubtree = [&](auto& self, const CItem* folder) -> bool
+    {
+        const std::wstring path = folder->GetPathLong();
+        if (const auto found = checkedFolders.find(path); found != checkedFolders.end()) return found->second;
+
+        // The scanned flags are not enough: a folder replaced by a reparse point after the
+        // scan must not be followed either, so read the folder itself back from the disk
+        const DWORD attributes = GetFileAttributes(path.c_str());
+        if (attributes == INVALID_FILE_ATTRIBUTES || (attributes &
+            (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != FILE_ATTRIBUTE_DIRECTORY)
+            return checkedFolders.emplace(path, false).first->second;
+
+        // Every scanned subfolder has to be empty on the disk as well, which also proves that
+        // each of them is still there as a plain folder
+        const auto& children = folder->GetChildren();
+        for (const CItem* child : children)
+        {
+            if (!child->IsTypeOrFlag(IT_DIRECTORY) || !self(self, child))
+                return checkedFolders.emplace(path, false).first->second;
+        }
+
+        // So any further entry on the disk is content: a file, a link or a folder the scan left out.
+        // increment(ec) rather than ++it: a failure mid-iteration reports through ec
+        // instead of throwing, so a directory vanishing under us cannot escape here.
+        std::error_code ec;
+        std::filesystem::directory_iterator it(path, ec);
+        if (ec) return checkedFolders.emplace(path, false).first->second;
+
+        size_t entries = 0;
+        for (; it != std::filesystem::directory_iterator(); it.increment(ec))
+        {
+            if (ec || ++entries > children.size()) return checkedFolders.emplace(path, false).first->second;
+        }
+
+        return checkedFolders.emplace(path, !ec && entries == children.size()).first->second;
+    };
+
+    return isEmptySubtree(isEmptySubtree, item);
+}

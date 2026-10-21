@@ -23,6 +23,7 @@ struct SearchCriteria
     std::optional<ULONGLONG> physicalMinimum;
     std::optional<ULONGLONG> physicalMaximum;
     std::wstring owner;
+    bool emptyFoldersOnly = false;
 
     bool MatchesSize(const CItem* item) const;
     bool Matches(const CItem* item, const std::wregex& termRegex) const;
@@ -38,6 +39,11 @@ public:
     CItemSearch* GetRootItem() const { return m_rootItem; }
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
+    void SearchEmptyFolders(const std::vector<CItem*>& items);
+    bool HasEmptyFolderResults() const { return m_criteria.emptyFoldersOnly && !m_itemTracker.empty(); }
+    std::vector<CItem*> GetEmptyFolderResults() const;
+    void PopulateSearchResults(const std::vector<CItem*>& matchedItems,
+        const std::optional<CItemSearch::SizeTotals>& totals = std::nullopt);
     void RemoveItem(CItem* item);
     void RestoreItems();
     void AfterDeleteAllItems() override;

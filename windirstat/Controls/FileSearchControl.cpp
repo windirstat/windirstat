@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "ItemSearch.h"
 #include "FileTreeView.h"
+#include "FinderBasic.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr(), COptions::SearchViewColumnVisibility.Ptr(), LF_SEARCHLIST, false)
 {
@@ -49,6 +50,13 @@ bool SearchCriteria::MatchesSize(const CItem* item) const
 
 bool SearchCriteria::Matches(const CItem* item, const std::wregex& termRegex) const
 {
+    // Results of an empty-folder search that are restored after a refresh are checked again
+    if (emptyFoldersOnly)
+    {
+        std::unordered_map<std::wstring, bool> checkedFolders;
+        return FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders);
+    }
+
     // Apply the size range before the name match, since it is the cheaper test.
     const bool typeWanted = (includeFiles && item->IsTypeOrFlag(IT_FILE)) ||
         (includeFolders && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
@@ -135,6 +143,12 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface
+    PopulateSearchResults(matchedItems, totals);
+}
+
+void CFileSearchControl::PopulateSearchResults(const std::vector<CItem*>& matchedItems,
+    const std::optional<CItemSearch::SizeTotals>& totals)
+{
     CWaitCursor wait;
     CollapseItem(0);
 
@@ -153,6 +167,79 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     ExpandItem(0);
 }
 
+void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
+{
+    // A command can still be posted during a scan, and the walk below reads the tree it changes
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
+
+    // Show the search tab, which holds the results
+    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
+
+    // Remove previous results
+    SetRootItem();
+    m_criteria = { .emptyFoldersOnly = true };
+    m_rootItem->SetLimitExceeded(false);
+
+    // Walk from the same starting points the removal uses
+    std::vector<CItem*> stack = CWinDirStatModel::GetEmptyFolderRoots(items);
+    ULONGLONG totalItems = 0;
+    for (const CItem* item : stack) totalItems += item->GetItemsCount();
+
+    // Every empty directory of a branch is listed, not only its topmost one. Deleting the top
+    // does take the whole branch with it, but the choice of how much of a branch to remove
+    // belongs to the user, so each nested empty directory gets its own selectable entry.
+    std::vector<CItem*> results;
+    bool limitExceeded = false;
+    std::optional<CItemSearch::SizeTotals> totals;
+    const auto result = CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(),
+        [&](CProgressDlg* pdlg)
+    {
+        std::unordered_map<std::wstring, bool> checkedFolders;
+
+        while (!stack.empty() && !pdlg->IsCancelled())
+        {
+            pdlg->Increment();
+            CItem* item = stack.back();
+            stack.pop_back();
+            if (FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders))
+            {
+                // Cap like the existing text search, so a drive full of leftover empty
+                // folders doesn't dump everything into the result view at once; stop the
+                // scan itself once hit instead of collecting everything first.
+                if (results.size() >= COptions::SearchMaxResults)
+                {
+                    limitExceeded = true;
+                    break;
+                }
+                results.push_back(item);
+            }
+
+            // Descend into a directory that was just listed as well, so the empty directories
+            // nested inside it get their own entries. Followed links stay the exception: their
+            // children live outside the selected physical tree, so an empty folder found there
+            // isn't one the user asked about.
+            if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
+            {
+                stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+            }
+        }
+        totals = CItemSearch::CalculateTotals(results, [pdlg] { return pdlg->IsCancelled(); });
+    }).ShowModal();
+    m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
+
+    // Add found items to the interface - a snapshot, like every other scan result: a folder
+    // listed here can still gain a file before the user gets around to deleting it, which is
+    // why its removal only takes folders that are still empty.
+    PopulateSearchResults(results, totals);
+}
+
+std::vector<CItem*> CFileSearchControl::GetEmptyFolderResults() const
+{
+    if (!m_criteria.emptyFoldersOnly) return {};
+    auto items = m_itemTracker | std::views::keys;
+    return { items.begin(), items.end() };
+}
+
 void CFileSearchControl::RemoveItem(CItem* item)
 {
     const ScopedRedrawPause lock(this);
@@ -160,8 +247,10 @@ void CFileSearchControl::RemoveItem(CItem* item)
         m_criteria.physicalMinimum || m_criteria.physicalMaximum;
     std::erase_if(m_itemTracker, [&](const auto& pair)
     {
+        // Sizes and emptiness depend on descendants, so such results are rechecked for ancestors too
         const bool insideRefresh = pair.first == item || item->IsAncestorOf(pair.first);
-        if (!insideRefresh && !(sizeFilterActive && pair.first->IsAncestorOf(item))) return false;
+        if (!insideRefresh && !((sizeFilterActive || m_criteria.emptyFoldersOnly) &&
+            pair.first->IsAncestorOf(item))) return false;
 
         // Preserve untouched ancestors and distinguish directories from marker objects at the same URI.
         m_removedItems.push_back({ pair.first->GetPath(), pair.first->GetRawType() & IT_MASK,
