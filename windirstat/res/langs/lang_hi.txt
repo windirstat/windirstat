@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=अनुमति दें,अस्वीकार करे�
 IDS_POLICY_NOREFRESH=रीफ़्रेश न करें
 IDS_POLICY_REFRESH_ENTRY=यह प्रविष्टि रीफ़्रेश करें
 IDS_POLICY_REFRESH_PARENT=इस प्रविष्टि का पैरेंट रीफ़्रेश करें
+IDS_PORTABLE=पोर्टेबल
 IDS_PRIORITY_LEVELS=कम,सामान्य,उच्च
 IDS_PROBABLE_DUPLICATES=संभावित डुप्लिकेट
 IDS_PROCESS_FAILEDss=प्रक्रिया '{}' शुरू नहीं की जा सकी।\nत्रुटि: {}

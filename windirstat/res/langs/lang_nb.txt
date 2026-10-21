@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Tillat,Nekt
 IDS_POLICY_NOREFRESH=Ingen oppdatering
 IDS_POLICY_REFRESH_ENTRY=Oppdater dette elementet
 IDS_POLICY_REFRESH_PARENT=Oppdater overordnet element
+IDS_PORTABLE=Portabel
 IDS_PRIORITY_LEVELS=Lav,Normal,Høy
 IDS_PROBABLE_DUPLICATES=Sannsynlige duplikater
 IDS_PROCESS_FAILEDss=CreateProcess({}) mislyktes: {}

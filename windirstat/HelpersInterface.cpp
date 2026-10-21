@@ -591,8 +591,13 @@ CComPtr<IContextMenu> GetContextMenu(const std::vector<CItem*>& items)
 // Application info
 std::wstring GetAppTitle()
 {
-    return std::format(L"{} {}{}.{}.{}", Localization::LookupNeutral(IDS_APP_TITLE),
-        PRODUCTION == 0 ? L"Beta " : L"", PRD_MAJVER, PRD_MINVER, PRD_PATCH);
+    auto formatTag = [](const bool condition, const std::wstring_view text) -> std::wstring {
+        return condition ? std::format(L" {}", text) : L"";
+    };
+
+    return std::format(L"{}{}{} {}.{}.{}", Localization::LookupNeutral(IDS_APP_TITLE),
+        formatTag(CDirStatApp::InPortableMode(), Localization::Lookup(IDS_PORTABLE)),
+        formatTag(PRODUCTION == 0, L"Beta"), PRD_MAJVER, PRD_MINVER, PRD_PATCH);
 }
 
 std::wstring GetAppFileName(const std::wstring& ext)
