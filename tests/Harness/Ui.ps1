@@ -244,6 +244,12 @@ function Expand-AppGroups {
     } 'Expanding duplicate groups exposes each requested file path' | Out-Null
 }
 
+function Set-TestCursor {
+    param([int] $X, [int] $Y)
+    [TestDesktop]::MoveCursor($X, $Y)
+    Assert-Sequence ([TestDesktop]::CursorPosition()) @($X, $Y) 'The real cursor reaches the requested point'
+}
+
 function Invoke-AppKeys {
     param([object] $App, [string] $Keys, [IntPtr] $Window = $App.Window)
     [TestDesktop]::Activate($Window)
