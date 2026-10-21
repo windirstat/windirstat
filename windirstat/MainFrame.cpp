@@ -318,6 +318,10 @@ void CMainFrame::SetProgressComplete()
     // Disable any potential suspend state
     SuspendState(false);
 
+    CFileTreeControl::Get()->SortItems();
+    CFileDupeControl::Get()->SortItems();
+    CFileTopControl::Get()->SortItems();
+
     if (m_taskbarList)
     {
         m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_NOPROGRESS);
@@ -325,9 +329,6 @@ void CMainFrame::SetProgressComplete()
 
     DestroyProgress();
     CWinDirStatModel::Get()->SetScanTitlePrefix(wds::strEmpty);
-    CFileTreeControl::Get()->SortItems();
-    CFileDupeControl::Get()->SortItems();
-    CFileTopControl::Get()->SortItems();
 
     // Completion arrives as a sent message, so refresh toolbar commands without waiting for input
     CDirStatApp::Get()->OnIdle(0);

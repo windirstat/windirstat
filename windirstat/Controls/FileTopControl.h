@@ -20,7 +20,7 @@ public:
     CItemTop* GetRootItem() const { return m_rootItem; }
     void ProcessTop(CItem* item);
     void ClearPendingItems() { m_queuedSet.clear(); }
-    void RemoveItem(CItem* item);
+    void RemoveItems(std::span<CItem* const> items);
     void SortItems() override;
     void AfterDeleteAllItems() override;
 

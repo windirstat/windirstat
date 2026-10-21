@@ -40,32 +40,29 @@ HICON CItemTop::GetIcon()
     return GetWrapperIcon(GetIconHandler()->GetLargestImage());
 }
 
-void CItemTop::AddTopItemChild(CItemTop* child)
+void CItemTop::AddTopItemChildren(std::span<CItemTop* const> children)
 {
-    child->SetParent(this);
-
     std::scoped_lock guard(m_protect);
-    m_children.push_back(child);
+    for (auto* child : children) child->SetParent(this);
+    m_children.append_range(children);
 
     if (IsVisible() && IsExpanded())
     {
-        CFileTopControl::Get()->OnChildAdded(this, child);
+        const std::vector<CTreeListItem*> rows(children.begin(), children.end());
+        CFileTopControl::Get()->OnChildrenAdded(this, rows);
     }
 }
 
-void CItemTop::RemoveTopItemChild(CItemTop* child)
+void CItemTop::RemoveTopItemChildren(const std::unordered_set<const CTreeListItem*>& children)
 {
-    if (IsVisible())
-    {
-        CFileTopControl::Get()->OnChildRemoved(this, child);
-    }
+    if (children.empty()) return;
+    CFileTopControl::Get()->OnItemsRemoved(children);
 
     std::scoped_lock guard(m_protect);
-    auto& children = m_children;
-    if (const auto it = std::ranges::find(children, child); it != children.end())
+    std::erase_if(m_children, [&](CItemTop* child)
     {
-        children.erase(it);
-    }
-
-    delete child;
+        if (!children.contains(child)) return false;
+        delete child;
+        return true;
+    });
 }

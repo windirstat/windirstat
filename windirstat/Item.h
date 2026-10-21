@@ -215,7 +215,10 @@ public:
     std::wstring GetFolderPath() const;
     std::wstring GetIconPath() const;
     bool HasUncPath() const;
-    CItem* FindItemByPath(const std::wstring& path, bool findAncestor = false, ITEMTYPE kind = IT_NONE) const;
+    // Batch lookups may share this index while the scanned tree remains unchanged.
+    using ChildNameIndex = std::unordered_map<const CItem*, std::unordered_multimap<std::wstring_view, CItem*>>;
+    CItem* FindItemByPath(const std::wstring& path, bool findAncestor = false,
+        ITEMTYPE kind = IT_NONE, ChildNameIndex* childNames = nullptr) const;
 
     // Scanning & Done State
     void SetDone();

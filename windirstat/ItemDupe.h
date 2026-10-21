@@ -47,5 +47,5 @@ public:
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const { return m_children; }
     void AddDupeItemChildren(std::span<CItemDupe* const> children);
-    void RemoveDupeItemChild(CItemDupe* child);
+    void RemoveDupeItemChildren(const std::unordered_set<const CTreeListItem*>& children);
 };

@@ -915,8 +915,37 @@ bool CItem::HasUncPath() const
     return GetPath().starts_with(L"\\\\");
 }
 
-CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, const ITEMTYPE kind) const
+CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor,
+    const ITEMTYPE kind, ChildNameIndex* childNames) const
 {
+    // Index each visited folder once during a batch, retaining exact names and remote marker kinds.
+    const auto findChild = [&](CItem* parent, const std::wstring_view name,
+        const std::optional<bool> leaf = std::nullopt) -> CItem*
+    {
+        if (parent->IsLeaf()) return nullptr;
+        const auto matches = [&](const CItem* child)
+        {
+            return child->GetNameView() == name && (!leaf || child->IsLeaf() == *leaf);
+        };
+        if (childNames == nullptr)
+        {
+            const auto& children = parent->GetChildren();
+            const auto found = std::ranges::find_if(children, matches);
+            return found == children.end() ? nullptr : *found;
+        }
+
+        auto [folder, inserted] = childNames->try_emplace(parent);
+        if (inserted)
+        {
+            folder->second.reserve(parent->GetChildren().size());
+            for (auto* child : parent->GetChildren()) folder->second.emplace(child->GetNameView(), child);
+        }
+        const auto [first, last] = folder->second.equal_range(name);
+        for (auto it = first; it != last; ++it)
+            if (matches(it->second)) return it->second;
+        return nullptr;
+    };
+
     CItem* root = GetEnumRoot();
     const auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
         std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
@@ -929,23 +958,16 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, 
             const auto [rootAddress, rootOptions] = StorageSource::SplitOptions(item->GetNameView());
             if (!item->IsTypeOrFlag(ITF_REMOTE) || rootOptions != options || !address.starts_with(rootAddress))
                 continue;
-            const auto child = [&item](const std::wstring_view name, const bool leaf) -> CItem*
-            {
-                const auto& children = item->GetChildren();
-                const auto found = std::ranges::find_if(children,
-                    [&](const CItem* entry) { return entry->IsLeaf() == leaf && entry->GetNameView() == name; });
-                return found == children.end() ? nullptr : *found;
-            };
             auto names = address.substr(rootAddress.size());
             for (auto slash = names.find(L'/'); slash != names.npos; slash = names.find(L'/'))
             {
-                CItem* directory = child(names.substr(0, slash), false);
+                CItem* directory = findChild(item, names.substr(0, slash), false);
                 if (directory == nullptr) return findAncestor ? item : nullptr;
                 item = directory;
                 names.remove_prefix(slash + 1);
             }
             if (names.empty() && kind != IT_FILE) return item;
-            CItem* file = kind == IT_DIRECTORY ? nullptr : child(names, true);
+            CItem* file = kind == IT_DIRECTORY ? nullptr : findChild(item, names, true);
             return file != nullptr || !findAncestor ? file : item;
         }
         return nullptr;
@@ -973,11 +995,9 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, 
         if (component.empty()) continue;
         if (current->IsLeaf()) return findAncestor ? current : nullptr;
 
-        // Find the matching child using GetNameView for comparison
-        auto it = std::ranges::find_if(current->GetChildren(),
-            [&](const CItem* child) { return child->GetNameView() == component; });
-        if (it == current->GetChildren().end()) return findAncestor ? current : nullptr;
-        current = *it;
+        CItem* child = findChild(current, component);
+        if (child == nullptr) return findAncestor ? current : nullptr;
+        current = child;
     }
 
     return current;

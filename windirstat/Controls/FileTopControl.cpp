@@ -80,7 +80,9 @@ void CFileTopControl::SortItems()
         return;
     }
 
-    // Update visual item removals
+    // Collect visual additions and removals before changing the list.
+    const ScopedRedrawPause lock(this);
+    std::vector<CItemTop*> added;
     auto itemTrackerCopy = std::unordered_map(m_itemTracker);
     for (const auto& largeItem : m_topItems)
     {
@@ -91,23 +93,27 @@ void CFileTopControl::SortItems()
         }
 
         const auto itemTop = new CItemTop(largeItem);
-        m_rootItem->AddTopItemChild(itemTop);
+        added.push_back(itemTop);
         m_itemTracker[largeItem] = itemTop;
     }
 
-    // Handle visual item additions
-    const ScopedRedrawPause lock(this);
+    // Apply each batch once so surviving rows only need one index update.
+    std::unordered_set<const CTreeListItem*> removed;
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
         m_itemTracker.erase(itemTop->GetLinkedItem());
-        m_rootItem->RemoveTopItemChild(itemTop);
+        removed.insert(itemTop);
     }
+    m_rootItem->RemoveTopItemChildren(removed);
+    m_rootItem->AddTopItemChildren(added);
 
     CTreeListControl::SortItems();
 }
 
-void CFileTopControl::RemoveItem(CItem* item)
+void CFileTopControl::RemoveItems(std::span<CItem* const> items)
 {
+    if (items.empty()) return;
+
     // Fold pending scan results into the tracked list before calculating
     // removals so queued descendants do not get re-added by SortItems().
     CItem* newItem = nullptr;
@@ -118,7 +124,7 @@ void CFileTopControl::RemoveItem(CItem* item)
 
     // Create list of all items to remove
     std::unordered_set<CItem*> toRemove;
-    std::vector queue{ item };
+    std::vector queue(items.begin(), items.end());
     while (!queue.empty())
     {
         const auto qitem = queue.back();

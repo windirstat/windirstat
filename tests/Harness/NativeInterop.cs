@@ -663,17 +663,23 @@ public static class NativeListViewHelper
     {
         if (address == IntPtr.Zero) return String.Empty;
         var result = new StringBuilder();
-        var bytes = new byte[2];
-        for (int index = 0; index < maxCharacters; ++index)
+        int pageSize = Environment.SystemPageSize;
+        for (int index = 0; index < maxCharacters;)
         {
-            UIntPtr bytesRead;
+            // Read a page at a time without crossing into potentially unreadable memory after the terminator.
             IntPtr current = new IntPtr(address.ToInt64() + index * 2L);
-            if (!ReadProcessMemory(process, current, bytes, (UIntPtr)2, out bytesRead) ||
-                bytesRead.ToUInt64() != 2)
+            int length = Math.Min((maxCharacters - index) * 2, pageSize - (int)(current.ToInt64() & (pageSize - 1)));
+            var bytes = new byte[length];
+            if (!ReadProcessMemory(process, current, bytes, (UIntPtr)length, out UIntPtr bytesRead) ||
+                bytesRead.ToUInt64() != (ulong)length)
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not read list-view text.");
-            char character = (char)(bytes[0] | (bytes[1] << 8));
-            if (character == '\0') break;
-            result.Append(character);
+            for (int offset = 0; offset < length; offset += 2)
+            {
+                char character = (char)(bytes[offset] | (bytes[offset + 1] << 8));
+                if (character == '\0') return result.ToString();
+                result.Append(character);
+                ++index;
+            }
         }
         return result.ToString();
     }

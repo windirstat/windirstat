@@ -103,6 +103,7 @@ public:
     void InsertSortedListItems(std::span<CWdsListItem* const> items);
     void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
+    void RemoveListItems(const std::function<bool(CWdsListItem*)>& shouldRemove);
 
     // Shadow CListCtrl methods for Owner Data management.
     // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
