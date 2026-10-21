@@ -35,6 +35,6 @@ public:
     HICON GetIcon() override;
     CTreeListItem* GetAncestorCheckItem() override { return m_item; }
 
-    void AddTopItemChild(CItemTop* child);
-    void RemoveTopItemChild(CItemTop* child);
+    void AddTopItemChildren(std::span<CItemTop* const> children);
+    void RemoveTopItemChildren(const std::unordered_set<const CTreeListItem*>& children);
 };

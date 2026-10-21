@@ -1072,6 +1072,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     for (auto* item : items)
         if (item->IsDone()) doneItems.insert(item);
 
+    // Paint scan feedback before pruning results and keep it visible through final sorting.
+    if (!items.empty())
+    {
+        GetRootItem()->UpwardSetUndone();
+        CMainFrame::Get()->UpdateProgress();
+        CMainFrame::Get()->RedrawWindow(RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+    }
+
     auto* searchRoot = CFileSearchControl::Get()->GetRootItem();
     searchRoot->SetTotalsPending(true);
     if (!items.empty()) searchRoot->SetLimitExceeded(true);
@@ -1088,15 +1096,15 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     }
 
     // Remove items in UI thread so we do not conflict with the timer updates
+    CFileDupeControl::Get()->RemoveItems(items);
+    CFileTopControl::Get()->RemoveItems(items);
+    CFileSearchControl::Get()->RemoveItems(items);
+
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
+    std::unordered_set<CItem*> timestampParents;
     for (auto item : std::vector(items))
     {
-        // Clear items from duplicates and top list
-        CFileDupeControl::Get()->RemoveItem(item);
-        CFileTopControl::Get()->RemoveItem(item);
-        CFileSearchControl::Get()->RemoveItem(item);
-
         // Record current visual arrangement to reapply afterward
         if (item->IsVisible())
         {
@@ -1109,7 +1117,11 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Remove item from tree
         item->ExtensionDataProcessChildren(true);
-        if (!item->IsTypeOrFlag(ITF_REMOTE)) item->UpwardRecalcLastChange();
+
+        // Recalculate each local parent's timestamp once until its children change.
+        if (!item->IsTypeOrFlag(ITF_REMOTE) && timestampParents.insert(item->GetParent()).second)
+            item->UpwardRecalcLastChange();
+
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
         item->UpwardSubtractFiles(item->GetFilesCount());
@@ -1157,6 +1169,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             }
             parent->RemoveChild(item);
+            timestampParents.erase(parent);
         }
     }
     InvalidateSelectionCache();

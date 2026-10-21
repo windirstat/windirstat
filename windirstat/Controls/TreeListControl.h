@@ -97,6 +97,7 @@ public:
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildrenAdded(const CTreeListItem* parent, std::span<CTreeListItem* const> children);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
+    void OnItemsRemoved(const std::unordered_set<const CTreeListItem*>& items);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(const int i) const { return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i)); }
     bool IsItemSelected(const CTreeListItem* item) const;

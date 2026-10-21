@@ -153,22 +153,39 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     ExpandItem(0);
 }
 
-void CFileSearchControl::RemoveItem(CItem* item)
+void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
 {
+    if (items.empty() || m_itemTracker.empty()) return;
+
     const ScopedRedrawPause lock(this);
     const bool sizeFilterActive = m_criteria.sizeMinimum || m_criteria.sizeMaximum ||
         m_criteria.physicalMinimum || m_criteria.physicalMaximum;
+    const std::unordered_set<CItem*> refreshed(items.begin(), items.end());
+    std::unordered_set<CItem*> ancestors;
+    if (sizeFilterActive) for (auto* item : items)
+        for (auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
+            if (!ancestors.insert(parent).second) break;
+
+    // Check each result against the entire refresh selection before detaching any rows.
+    std::unordered_set<const CTreeListItem*> removed;
     std::erase_if(m_itemTracker, [&](const auto& pair)
     {
-        const bool insideRefresh = pair.first == item || item->IsAncestorOf(pair.first);
-        if (!insideRefresh && !(sizeFilterActive && pair.first->IsAncestorOf(item))) return false;
+        bool insideRefresh = false;
+        for (auto* parent = pair.first; parent != nullptr; parent = parent->GetParent())
+        {
+            if (!refreshed.contains(parent)) continue;
+            insideRefresh = true;
+            break;
+        }
+        if (!insideRefresh && !ancestors.contains(pair.first)) return false;
 
         // Preserve untouched ancestors and distinguish directories from marker objects at the same URI.
         m_removedItems.push_back({ pair.first->GetPath(), pair.first->GetRawType() & IT_MASK,
             IsItemSelected(pair.second), insideRefresh ? nullptr : pair.first });
-        m_rootItem->RemoveSearchItemChild(pair.second);
+        removed.insert(pair.second);
         return true;
     });
+    m_rootItem->RemoveSearchItemChildren(removed);
 }
 
 void CFileSearchControl::RestoreItems()
@@ -182,10 +199,11 @@ void CFileSearchControl::RestoreItems()
     const bool expanded = m_rootItem->IsExpanded();
     CollapseItem(0);
     CItem* root = CWinDirStatModel::Get()->GetRootItem();
+    CItem::ChildNameIndex childNames;
     for (const auto& removed : m_removedItems)
     {
         CItem* item = removed.item;
-        if (item == nullptr) item = root->FindItemByPath(removed.path, false, removed.type);
+        if (item == nullptr) item = root->FindItemByPath(removed.path, false, removed.type, &childNames);
         if (item == nullptr || !m_criteria.Matches(item, termRegex)) continue;
         const auto [iter, inserted] = m_itemTracker.try_emplace(item, nullptr);
         if (inserted)

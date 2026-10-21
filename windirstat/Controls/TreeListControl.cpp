@@ -778,6 +778,46 @@ void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeLi
     RedrawItems(p, p);
 }
 
+void CTreeListControl::OnItemsRemoved(const std::unordered_set<const CTreeListItem*>& items)
+{
+    if (items.empty()) return;
+
+    const auto* focused = GetItem(GetNextItem(-1, LVNI_FOCUSED));
+    const CTreeListItem* focusParent = nullptr;
+    const CTreeListItem* focusAfterDelete = nullptr;
+    int removedIndent = -1;
+
+    // Visible descendants follow their parent, so whole branches can be detached in one pass.
+    RemoveListItems([&](CWdsListItem* row)
+    {
+        auto* item = static_cast<CTreeListItem*>(row);
+        const int indent = item->GetIndent();
+        if (removedIndent >= 0 && indent <= removedIndent) removedIndent = -1;
+        if (removedIndent == -1 && items.contains(item)) removedIndent = indent;
+        if (removedIndent == -1)
+        {
+            if (focusParent != nullptr && focusAfterDelete == nullptr && item->GetParent() == focusParent)
+                focusAfterDelete = item;
+            return false;
+        }
+
+        if (item == focused)
+        {
+            focusParent = item->GetParent();
+            while (focusParent != nullptr && !focusParent->IsVisible()) focusParent = focusParent->GetParent();
+        }
+        item->SetVisible(this, false);
+        return true;
+    });
+
+    // Keep keyboard navigation on the next surviving sibling or its parent.
+    if (const int target = FindTreeItem(focusAfterDelete != nullptr ? focusAfterDelete : focusParent); target != -1)
+    {
+        SetItemState(target, LVIS_FOCUSED, LVIS_FOCUSED);
+        SetSelectionMark(target);
+    }
+}
+
 void CTreeListControl::OnRemovingAllChildren(const CTreeListItem* parent)
 {
     if (!parent->IsVisible())

@@ -22,6 +22,31 @@
     Assert-ScanSnapshot (Save-AppReport $app 'whole-refresh') (Get-DiskSnapshot $root) $root -Physical
 }
 
+function Test-RefreshTimestamps {
+    param($Context, $Case)
+    $folder = Join-Path $Context.Fixture 'changed'
+    $paths = @(foreach ($index in 0..3) {
+        $path = New-TestFile (Join-Path $folder "file-$index.bin") (16384 -shr $index)
+        [IO.File]::SetLastWriteTimeUtc($path, [datetime]::new(2030 - $index, 1, 1, 0, 0, 0, [DateTimeKind]::Utc))
+        $path
+    })
+    $app = Start-TestApp @($Context.Fixture)
+    $list = Get-AppList $app -AllFiles
+    Expand-AppDirectory $app $list 'changed' 'file-0.bin'
+    Select-AppRows $app $list @($paths[0], $paths[1], $paths[2])
+    [IO.File]::Delete($paths[0])
+    [IO.File]::Delete($paths[1])
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    $rows = Save-AppReport $app 'refreshed-timestamps'
+    Assert-Sequence @((Get-ReportFiles $rows).Name | Sort-Object) @($paths[2], $paths[3] | Sort-Object) `
+        'Refreshing deleted siblings preserves only the surviving files'
+    foreach ($path in $Context.Fixture, $folder) {
+        Assert-Equal @($rows | Where-Object Name -eq $path)[0].'Last Change' '2028-01-01T00:00:00Z' `
+            'Removing consecutive newest children updates the folder and ancestor timestamps'
+    }
+}
+
 function Test-RemovedRootRefresh {
     param($Context, $Case)
     $root = New-TestTree
@@ -294,6 +319,20 @@ function Test-SearchRefresh {
     $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
     Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
         'Refreshing a deleted search result removes only results that no longer match'
+
+    Select-AppRows $app $list @([NativeListViewHelper]::GetItemTexts($list)[0])
+    [void] [TestDesktop]::Message($list, 0x0100, 0x25)
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($folder)
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Invoke-AppCommand $app 'ID_VIEW_SEARCH_RESULTS'
+    Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 1 'Refreshing keeps the search root collapsed'
+    [void] [NativeListViewHelper]::PostRight($list)
+    Wait-Until { [NativeListViewHelper]::GetItemCount($list) -gt 1 } 'The refreshed search expands' | Out-Null
+    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
+        'Collapsed search results are restored without stale rows'
 }
 
 function Test-SearchRefreshCaseSensitive {
@@ -329,6 +368,95 @@ function Test-SearchRefreshCaseSensitive {
     $sizes = [NativeListViewHelper]::GetItemTexts($list, 2)
     Assert-Equal ([long]($sizes[[Array]::IndexOf($names, $second)] -replace '\D', '')) 173 `
         'The restored result references the file with the exact original name'
+}
+
+function Test-SearchRefreshLarge {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $folder = Join-Path $root 'big'
+    $count = [Math]::Max(50000, $script:ExtendedStressFileCount)
+    $expected = @(for ($index = 0; $index -lt $count; ++$index) {
+        $path = Join-Path $folder "d$index"
+        [IO.Directory]::CreateDirectory($path) | Out-Null
+        $path
+    })
+    $untouched = Join-Path $root 'd-untouched'
+    [IO.Directory]::CreateDirectory($untouched) | Out-Null
+    $app = Start-TestApp @($root) -Settings @{ SearchView = @{ SearchMaxResults = 1000000 } }
+    Get-AppList $app -AllFiles | Out-Null
+    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^d')
+    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
+    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
+    Close-AppDialog $dialog 1
+    $list = Get-AppList $app -TabName 'Search Results'
+    Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) ($count + 2) 'Every folder appears in the search'
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $indices = [int[]]@([Array]::IndexOf($names, $expected[1]), [Array]::IndexOf($names, $untouched))
+    Assert-True ([NativeListViewHelper]::SelectItems($list, $indices)) `
+        'Select results inside and outside the refreshed folder'
+    [IO.Directory]::Delete($expected[0])
+    $expected = @($expected | Select-Object -Skip 1) + @($untouched)
+    [IO.Directory]::CreateDirectory((Join-Path $folder 'd-new')) | Out-Null
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($folder)
+
+    $timing = @{ LastResponse = 0L; Longest = 0L }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-Until {
+        try { [void] [TestDesktop]::Message($app.Window, 0) }
+        catch [System.TimeoutException] { return $false }
+        $now = $watch.ElapsedMilliseconds
+        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
+        $timing.LastResponse = $now
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
+            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
+    } 'Large folder refresh finishes' -StableMilliseconds 500 | Out-Null
+    $watch.Stop()
+    Write-TestNote ("Refresh $count results: {0} ms total; {1} ms longest response" -f
+        $watch.ElapsedMilliseconds, $timing.Longest)
+
+    Invoke-AppCommand $app 'ID_VIEW_SEARCH_RESULTS'
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $paths = @($names | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $expectedSet = [Collections.Generic.HashSet[string]]::new([string[]]$expected, [StringComparer]::Ordinal)
+    Assert-True ($paths.Count -eq $expected.Count -and $expectedSet.SetEquals([string[]]$paths)) `
+        'Bulk refresh restores surviving results without adding new matches'
+    Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) 2 `
+        'Refreshed and untouched search results retain their selection'
+    foreach ($path in $expected[0], $untouched) {
+        Assert-Equal ([TestDesktop]::Message($list, 0x102C, [Array]::IndexOf($names, $path), 2).ToInt32()) 2 `
+            'Selection remains attached to the same search result after compaction'
+    }
+    Assert-True ($timing.Longest -lt 3000) 'Refreshing a large search does not block the UI for three seconds'
+
+    $selected = @($expected | Select-Object -First 1000)
+    $indices = [int[]]@($selected | ForEach-Object { [Array]::IndexOf($names, $_) })
+    Assert-True ([NativeListViewHelper]::SelectItems($list, $indices)) 'Select a large batch of search results'
+    [IO.Directory]::Delete($selected[0])
+    $expected = @($expected | Select-Object -Skip 1)
+    $timing = @{ LastResponse = 0L; Longest = 0L }
+    $watch.Restart()
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-Until {
+        try { [void] [TestDesktop]::Message($app.Window, 0) }
+        catch [System.TimeoutException] { return $false }
+        $now = $watch.ElapsedMilliseconds
+        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
+        $timing.LastResponse = $now
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
+            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
+    } 'Refreshing a large selection drops the deleted result' -StableMilliseconds 500 | Out-Null
+    $watch.Stop()
+    Write-TestNote ("Refresh 1000 selected results: {0} ms total; {1} ms longest response" -f
+        $watch.ElapsedMilliseconds, $timing.Longest)
+    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    [void]$expectedSet.Remove($selected[0])
+    Assert-True ($paths.Count -eq $expected.Count -and $expectedSet.SetEquals([string[]]$paths)) `
+        'Batch selection refresh preserves exact paths'
+    Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) 999 'Only surviving refreshed results stay selected'
+    Assert-True ($timing.Longest -lt 3000) 'Refreshing many selected results does not block the UI for three seconds'
 }
 
 function Preserve-TestClipboard {
@@ -549,6 +677,61 @@ function Test-DuplicateBatchUpdates {
     Expand-AppGroups $app $list $expected
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 14 `
         'Expanding all groups reveals every duplicate exactly once'
+
+    Select-AppRows $app $list @($stable + @($added[-1]))
+    if ($Case.Collapsed) {
+        Select-AppRows $app $list @([NativeListViewHelper]::GetItemTexts($list)[0])
+        [void] [TestDesktop]::Message($list, 0x0100, 0x25)
+    }
+    foreach ($path in $added | Select-Object -SkipLast 1) { [IO.File]::Delete($path) }
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($incoming)
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Invoke-AppCommand $app 'ID_VIEW_DUPLICATE_FILES'
+    Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) $(if ($Case.Collapsed) { 1 } else { 7 }) `
+        'Removing duplicate children and singleton groups preserves expansion'
+    Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $(if ($Case.Collapsed) { 1 } else { 4 }) `
+        'Batch removal preserves selection on surviving duplicate rows'
+    Assert-True ([TestDesktop]::Message($list, 0x100C, -1, 1).ToInt32() -ge 0) `
+        'Removing the focused duplicate group leaves a surviving row focused'
+    $rows = Save-AppReport $app 'pruned-duplicates' -Command 'ID_SAVE_DUPLICATES'
+    Assert-Sequence @($rows.Name | Sort-Object) @($stable | Sort-Object) `
+        'Pruned duplicate exports retain only the surviving pairs'
+    Expand-AppGroups $app $list $stable
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $sizes = [NativeListViewHelper]::GetItemTexts($list, 3)
+    for ($index = 1; $index -lt $names.Count; ++$index) {
+        if ([IO.Path]::IsPathFullyQualified($names[$index])) { continue }
+        Assert-Equal ([long]($sizes[$index] -replace '\D', '')) 65536 `
+            'Surviving duplicate groups subtract the removed file sizes'
+    }
+}
+
+function Test-LargestRefresh {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $first = New-TestFile (Join-Path $root 'changed\first.bin') 65536
+    $second = New-TestFile (Join-Path $root 'changed\second.bin') 32768
+    $stable = New-TestFile (Join-Path $root 'stable.bin') 49152
+    $replacement = New-TestFile (Join-Path $root 'replacement.bin') 16384
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ LargeFileCount = 3 } }
+    Get-AppList $app -AllFiles | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+    $list = Get-AppList $app -TabName 'Largest Files'
+    Select-AppRows $app $list @($stable)
+    [IO.File]::Delete($first)
+    [IO.File]::Delete($second)
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @((Join-Path $root 'changed'))
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($paths | Sort-Object) @($stable, $replacement | Sort-Object) `
+        'Largest files replaces removed rows with the next surviving candidate'
+    Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $stable), 2).ToInt32()) 2 `
+        'The surviving largest file keeps its selection across removal and insertion'
 }
 
 function Test-CleanupReparseReplacement {
@@ -735,6 +918,9 @@ Register-Scenario interaction.cloud-keyboard Interaction `
 Register-Scenario interaction.scoped-refresh Interaction `
     'Selected refresh reconciles mutations without rescanning sibling branches' `
     Test-ScopedRefresh -Tags Desktop,External -Requires Windows,Desktop
+Register-Scenario interaction.refresh-timestamps Interaction `
+    'Batch refresh updates ancestor timestamps after deleting the newest siblings' `
+    Test-RefreshTimestamps -Tags Desktop,External -Requires Windows,Desktop
 Register-Scenario interaction.removed-root Interaction `
     'Refreshing a vanished multi-root selection preserves surviving roots' `
     Test-RemovedRootRefresh -Tags Desktop,External,Race -Requires Windows,Desktop
@@ -766,6 +952,9 @@ foreach ($search in @(
 Register-Scenario interaction.search-refresh.case-sensitive Interaction `
     'Search refresh distinguishes separate files whose names differ only in case' `
     Test-SearchRefreshCaseSensitive -Tags Desktop,External,Filesystem -Requires Windows,Desktop,Ntfs
+Register-Scenario interaction.search-refresh.large Interaction `
+    'Large search refresh remains responsive and preserves surviving results and selections' `
+    Test-SearchRefreshLarge -Tags Desktop,External,Extended -Requires Windows,Desktop
 Register-Scenario interaction.context-selection Interaction `
     'Keyboard popup cancellation preserves selection and command targeting' `
     Test-ContextSelection -Tags Desktop -Requires Windows,Desktop
@@ -793,6 +982,9 @@ foreach ($collapsed in $false, $true) {
         'Batched duplicate additions preserve tree expansion, selection, counts, and export contents' `
         Test-DuplicateBatchUpdates -Tags Desktop,External -Requires Windows,Desktop -Data @{ Collapsed = $collapsed }
 }
+Register-Scenario interaction.largest-refresh Interaction `
+    'Largest-file refresh refills removed candidates and preserves surviving selection' `
+    Test-LargestRefresh -Tags Desktop,External -Requires Windows,Desktop
 foreach ($microsoft in 0, 1) {
     Register-Scenario "interaction.delete.$microsoft" Interaction `
         'Permanent deletion reconciles selected folders and files without changing surviving payloads' `

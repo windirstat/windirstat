@@ -1178,6 +1178,25 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     }
 }
 
+void CWdsListControl::RemoveListItems(const std::function<bool(CWdsListItem*)>& shouldRemove)
+{
+    std::vector<std::unique_ptr<CWdsListItem>> removedItems;
+    SelectionPreserver preserve(this);
+
+    // Compact rows once, keeping removed objects alive until selection has been restored.
+    std::erase_if(m_items, [&](CWdsListItem* item)
+    {
+        if (!shouldRemove(item)) return false;
+        GetIconHandler()->ForgetAsyncShellInfoLookup(item);
+        m_itemMap.erase(item);
+        if (m_ownsItems) removedItems.emplace_back(item);
+        return true;
+    });
+    for (const auto [i, item] : std::views::enumerate(m_items)) m_itemMap[item] = static_cast<int>(i);
+    SetItemCountEx(GetItemCount(), LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+    Invalidate();
+}
+
 bool CWdsListControl::DeleteItem(const int i)
 {
     RemoveListItem(i);
