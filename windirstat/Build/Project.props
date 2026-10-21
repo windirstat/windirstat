@@ -19,7 +19,7 @@
 			<AdditionalOptions>/release %(AdditionalOptions)</AdditionalOptions>
 		</Link>
 	</ItemDefinitionGroup>
-	<ImportGroup Condition="'$(GitDirSentinelFile)' == ''">
+	<ImportGroup Condition="'$(_GitRevisionTargetsImported)' != 'true'">
 		<Import Condition="Exists('$(MSBuildThisFileDirectory)GitRevision.targets')" Project="$(MSBuildThisFileDirectory)GitRevision.targets" />
 	</ImportGroup>
 </Project>
