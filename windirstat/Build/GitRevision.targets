@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" InitialTargets="GetGitRevision;GetGitDate;GetGitCount" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
-		<GitWorkTreeRootDir>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\main'))</GitWorkTreeRootDir>
-		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\master'))</GitWorkTreeRootDir>
-		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\HEAD'))</GitWorkTreeRootDir>
-		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' != '' and !HasTrailingSlash('$(GitWorkTreeRootDir)')">$(GitWorkTreeRootDir)\</GitWorkTreeRootDir>
-		<GitDirSentinelFile Condition="Exists('$(GitWorkTreeRootDir).git\HEAD')">$(GitWorkTreeRootDir).git\HEAD</GitDirSentinelFile>
+		<_GitRevisionTargetsImported>true</_GitRevisionTargetsImported>
 	</PropertyGroup>
-	<Target Name="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
+	<Target Name="FindGitExecutablePath">
 		<PropertyGroup>
 			<_GitExecutableToFind>git.exe</_GitExecutableToFind>
 		</PropertyGroup>
@@ -22,10 +18,17 @@
 		</PropertyGroup>
 	</Target>
 	<Target Name="GetGitRevision" DependsOnTargets="FindGitExecutablePath">
-		<Message Importance="high" Text="Detecting Git revision, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />
-		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; rev-parse HEAD" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
+		<!-- Query from the source directory so Git selects the nearest checkout or worktree. -->
+		<Exec Command="&quot;$(GitExecutableFullPath)&quot; rev-parse --verify HEAD"
+			WorkingDirectory="$(MSBuildThisFileDirectory)" EchoOff="true" ConsoleToMsBuild="true"
+			IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" StandardErrorImportance="Low"
+			Condition="'$(GitExecutableFullPath)' != ''">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitRevision" />
+			<Output TaskParameter="ExitCode" PropertyName="_GitRevisionExitCode" />
 		</Exec>
+		<PropertyGroup>
+			<GitRevision Condition="'$(_GitRevisionExitCode)' != '0'"></GitRevision>
+		</PropertyGroup>
 		<Message Importance="high" Text="Retrieved for HEAD %24(GitRevision) = '$(GitRevision)'." Condition="'$(GitRevision)' != ''" />
 		<ItemGroup Condition="'$(GitRevision)' != ''">
 			<ClCompile>
@@ -44,9 +47,10 @@
 			</ResourceCompile>
 		</ItemGroup>		
 	</Target>
-	<Target Name="GetGitDate" DependsOnTargets="FindGitExecutablePath">
-		<Message Importance="high" Text="Detecting Git commit date, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />	
-		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; log -1 --format=%%25cd --date=format:&quot;%%25Y-%%25m-%%25d&quot;" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
+	<Target Name="GetGitDate" DependsOnTargets="GetGitRevision">
+		<Exec Command="&quot;$(GitExecutableFullPath)&quot; log -1 --format=%%25cd --date=format:&quot;%%25Y-%%25m-%%25d&quot;"
+			WorkingDirectory="$(MSBuildThisFileDirectory)" EchoOff="true" ConsoleToMsBuild="true"
+			Condition="'$(GitExecutableFullPath)' != '' and '$(GitRevision)' != ''">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitDate" />
 		</Exec>
 		<Message Importance="high" Text="Retrieved date for last commit %24(GitDate) = '$(GitDate)'." Condition="'$(GitDate)' != ''" />
@@ -67,9 +71,10 @@
 			</ResourceCompile>
 		</ItemGroup>		
 	</Target>
-	<Target Name="GetGitCount" DependsOnTargets="FindGitExecutablePath">
-		<Message Importance="high" Text="Detecting Git commit count, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />
-		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; rev-list --count --all" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
+	<Target Name="GetGitCount" DependsOnTargets="GetGitRevision">
+		<Exec Command="&quot;$(GitExecutableFullPath)&quot; rev-list --count --all"
+			WorkingDirectory="$(MSBuildThisFileDirectory)" EchoOff="true" ConsoleToMsBuild="true"
+			Condition="'$(GitExecutableFullPath)' != '' and '$(GitRevision)' != ''">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitCount" />
 		</Exec>
 		<Message Importance="high" Text="Retrieved for %24(GitCount) = '$(GitCount)'." Condition="'$(GitCount)' != ''" />
