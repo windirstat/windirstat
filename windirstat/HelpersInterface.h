@@ -100,6 +100,9 @@ PIDLIST_ABSOLUTE CreateShellPidl(const std::wstring& path);
 PIDLIST_ABSOLUTE CreateShellPidl(const CItem* item);
 CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, bool allOrNothing = false);
 
+// Shell file operation
+HRESULT PerformCancellableOperations(IFileOperation* operation, DWORD flags, const std::function<bool()>& isCancelled);
+
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul; // Application commands begin at 0x8000.

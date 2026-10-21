@@ -576,6 +576,84 @@ CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, 
     return psia;
 }
 
+// Shell file operation
+namespace
+{
+    // Stops a shell file operation once the caller reports a cancel request
+    class CFileOperationCancelSink final : public IFileOperationProgressSink
+    {
+        std::function<bool()> m_isCancelled;
+        std::atomic<ULONG> m_refs = 1;
+
+        HRESULT CancelIfRequested() const
+        {
+            return m_isCancelled() ? HRESULT_FROM_WIN32(ERROR_CANCELLED) : S_OK;
+        }
+
+    public:
+        explicit CFileOperationCancelSink(std::function<bool()> isCancelled) : m_isCancelled(std::move(isCancelled)) {}
+
+        STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override
+        {
+            if (ppv == nullptr) return E_POINTER;
+            if (riid != IID_IUnknown && riid != __uuidof(IFileOperationProgressSink))
+            {
+                *ppv = nullptr;
+                return E_NOINTERFACE;
+            }
+            *ppv = static_cast<IFileOperationProgressSink*>(this);
+            AddRef();
+            return S_OK;
+        }
+        STDMETHODIMP_(ULONG) AddRef() override { return ++m_refs; }
+        STDMETHODIMP_(ULONG) Release() override
+        {
+            const ULONG refs = --m_refs;
+            if (refs == 0) delete this;
+            return refs;
+        }
+
+        // Failing before an item cancels it and every operation still pending
+        STDMETHODIMP PreRenameItem(DWORD, IShellItem*, LPCWSTR) override { return CancelIfRequested(); }
+        STDMETHODIMP PreMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR) override { return CancelIfRequested(); }
+        STDMETHODIMP PreCopyItem(DWORD, IShellItem*, IShellItem*, LPCWSTR) override { return CancelIfRequested(); }
+        STDMETHODIMP PreDeleteItem(DWORD, IShellItem*) override { return CancelIfRequested(); }
+        STDMETHODIMP PreNewItem(DWORD, IShellItem*, LPCWSTR) override { return CancelIfRequested(); }
+
+        // The shell walks the whole selection before its first item and only reports progress meanwhile
+        STDMETHODIMP UpdateProgress(UINT, UINT) override { return CancelIfRequested(); }
+
+        STDMETHODIMP StartOperations() override { return S_OK; }
+        STDMETHODIMP FinishOperations(HRESULT) override { return S_OK; }
+        STDMETHODIMP PostRenameItem(DWORD, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+        STDMETHODIMP PostMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+        STDMETHODIMP PostCopyItem(DWORD, IShellItem*, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+        STDMETHODIMP PostDeleteItem(DWORD, IShellItem*, HRESULT, IShellItem*) override { return S_OK; }
+        STDMETHODIMP PostNewItem(DWORD, IShellItem*, LPCWSTR, LPCWSTR, DWORD, HRESULT, IShellItem*) override { return S_OK; }
+        STDMETHODIMP ResetTimer() override { return S_OK; }
+        STDMETHODIMP PauseTimer() override { return S_OK; }
+        STDMETHODIMP ResumeTimer() override { return S_OK; }
+    };
+}
+
+HRESULT PerformCancellableOperations(IFileOperation* operation, const DWORD flags, const std::function<bool()>& isCancelled)
+{
+    // Without its own UI the shell operation can only be stopped through a progress sink
+    DWORD cookie = 0;
+    CComPtr<IFileOperationProgressSink> sink;
+    sink.Attach(new CFileOperationCancelSink(isCancelled));
+    if (FAILED(operation->Advise(sink, &cookie)))
+    {
+        // Let the shell show its own cancellable progress rather than run an operation nobody can stop
+        cookie = 0;
+        if ((flags & FOF_SILENT) != 0) operation->SetOperationFlags(flags & ~FOF_SILENT);
+    }
+
+    const HRESULT result = operation->PerformOperations();
+    if (cookie != 0) operation->Unadvise(cookie);
+    return result;
+}
+
 // Context menu
 CComPtr<IContextMenu> GetContextMenu(const std::vector<CItem*>& items)
 {
