@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=İzin Ver,Reddet
 IDS_POLICY_NOREFRESH=Yenileme yok
 IDS_POLICY_REFRESH_ENTRY=Bu öğeyi yenile
 IDS_POLICY_REFRESH_PARENT=Bu girdinin üst öğesini yenile
+IDS_PORTABLE=Taşınabilir
 IDS_PRIORITY_LEVELS=Düşük,Normal,Yüksek
 IDS_PROBABLE_DUPLICATES=Olası kopyalar
 IDS_PROCESS_FAILEDss=CreateProcess({}) başarısız oldu: {}

@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Luba,Keela
 IDS_POLICY_NOREFRESH=Ei Värskenda
 IDS_POLICY_REFRESH_ENTRY=Värskenda seda sisestust
 IDS_POLICY_REFRESH_PARENT=Värskenda nende sisestuste vanemaid
+IDS_PORTABLE=Kaasaskantav
 IDS_PRIORITY_LEVELS=Madal,Tavaline,Kõrge
 IDS_PROBABLE_DUPLICATES=Tõenäolised duplikaadid
 IDS_PROCESS_FAILEDss=Loomis Protsess({}) failed: {}

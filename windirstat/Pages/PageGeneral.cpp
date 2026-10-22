@@ -71,6 +71,11 @@ void CPageGeneral::InitializePage()
 
     SetChecked(IDC_PORTABLE_MODE, CDirStatApp::InPortableMode());
 
+    if (auto pWnd = GetDlgItem(IDC_PORTABLE_MODE); pWnd != nullptr && CDirStatApp::IsForcedPortableMode())
+    {
+        pWnd.EnableWindow(false);
+    }
+
     // Query checkbox status and then gray out if a system-level entry
     // exists that cannot be changed without elevation
     const bool contextMenuIntegration = IsContextMenuRegistered(HKEY_LOCAL_MACHINE) ||

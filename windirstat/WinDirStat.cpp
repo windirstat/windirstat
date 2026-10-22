@@ -54,8 +54,11 @@ void CDirStatApp::RestartApplication(const bool resetPreferences)
     // Clear preferences if requested
     if (resetPreferences)
     {
-        // Clean up registry preferences
-        RegDeleteTree(HKEY_CURRENT_USER, L"Software\\WinDirStat");
+        // Only clean up registry preferences if not in portable mode
+        if (!InPortableMode())
+        {
+            RegDeleteTree(HKEY_CURRENT_USER, L"Software\\WinDirStat");
+        }
 
         // Enable portable mode by creating the file
         if (InPortableMode())
@@ -155,6 +158,16 @@ std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
     return Localization::Format(IDS_RAMUSAGEs, FormatBytes(pmc.WorkingSetSize));
 }
 
+bool CDirStatApp::IsForcedPortableMode()
+{
+    static const bool isForced = [] {
+        const std::wstring name = std::filesystem::path(GetAppFileName()).filename().wstring();
+        constexpr std::wstring_view suffix = L"-portable.exe";
+        return std::ranges::ends_with(name, suffix, [](wchar_t a, wchar_t b)
+            { return std::towlower(a) == std::towlower(b); });
+        }();
+    return isForced;
+}
 bool CDirStatApp::InPortableMode()
 {
     return GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
@@ -369,8 +382,8 @@ bool CDirStatApp::InitInstance()
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 
-    // If a local config file is available, use that for settings
-    SetPortableMode(true, true);
+    // Enable portable mode if the executable name ends with "-portable.exe" and the user has not already chosen a preference.
+    SetPortableMode(true, !IsForcedPortableMode());
 
     COptions::LoadAppSettings();
     SetProcessPriority(COptions::ProcessPriority);

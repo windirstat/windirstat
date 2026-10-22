@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Dovoli,Zavrni
 IDS_POLICY_NOREFRESH=Brez osveževanja
 IDS_POLICY_REFRESH_ENTRY=Osveži ta vnos
 IDS_POLICY_REFRESH_PARENT=Osveži nadrejenega tega vnosa
+IDS_PORTABLE=Prenosna različica
 IDS_PRIORITY_LEVELS=Nizka,Običajna,Visoka
 IDS_PROBABLE_DUPLICATES=Verjetni dvojniki
 IDS_PROCESS_FAILEDss=CreateProcess({}) ni uspelo: {}

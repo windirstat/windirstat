@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Zezwalaj,Odmów
 IDS_POLICY_NOREFRESH=Bez odświeżania
 IDS_POLICY_REFRESH_ENTRY=Odśwież ten element
 IDS_POLICY_REFRESH_PARENT=Odśwież poziom wyżej dla elementu
+IDS_PORTABLE=Wersja przenośna
 IDS_PRIORITY_LEVELS=Niski,Normalny,Wysoki
 IDS_PROBABLE_DUPLICATES=Prawdopodobne duplikaty
 IDS_PROCESS_FAILEDss=Tworzenie procesu({}) nie powiodło się: {}

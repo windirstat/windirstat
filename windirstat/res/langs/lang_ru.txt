@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Разрешить,Запретить
 IDS_POLICY_NOREFRESH=Не обновлять
 IDS_POLICY_REFRESH_ENTRY=Обновить выбранный элемент
 IDS_POLICY_REFRESH_PARENT=Обновить родительский элемент
+IDS_PORTABLE=Портативная версия
 IDS_PRIORITY_LEVELS=Низкий,Обычный,Высокий
 IDS_PROBABLE_DUPLICATES=Вероятные дубликаты
 IDS_PROCESS_FAILEDss=Создание процесса ({}) неуспешно: {}

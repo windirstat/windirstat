@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Consenti,Nega
 IDS_POLICY_NOREFRESH=Nessun aggiornamento
 IDS_POLICY_REFRESH_ENTRY=Aggiorna questa voce
 IDS_POLICY_REFRESH_PARENT=Aggiorna primario di questa voce
+IDS_PORTABLE=Portatile
 IDS_PRIORITY_LEVELS=Bassa,Normale,Alta
 IDS_PROBABLE_DUPLICATES=Probabili duplicati
 IDS_PROCESS_FAILEDss=CreateProcess({}) fallito: {}

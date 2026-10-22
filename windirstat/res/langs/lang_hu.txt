@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Engedélyezés,Tiltás
 IDS_POLICY_NOREFRESH=Nem frissít
 IDS_POLICY_REFRESH_ENTRY=Bejegyzés frissítése
 IDS_POLICY_REFRESH_PARENT=Szülő bejegyzés frissítése
+IDS_PORTABLE=Hordozható
 IDS_PRIORITY_LEVELS=Alacsony,Normál,Magas
 IDS_PROBABLE_DUPLICATES=Valószínű másolatok
 IDS_PROCESS_FAILEDss=A(z) ({}) folyamat sikertelen: {}
