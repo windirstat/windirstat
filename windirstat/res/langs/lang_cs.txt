@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Povolit,Odepřít
 IDS_POLICY_NOREFRESH=Žádné obnovení
 IDS_POLICY_REFRESH_ENTRY=Obnovit tuto položku
 IDS_POLICY_REFRESH_PARENT=Obnovit nadřazenou položku
+IDS_PORTABLE=Přenosná verze
 IDS_PRIORITY_LEVELS=Nízká,Normální,Vysoká
 IDS_PROBABLE_DUPLICATES=Pravděpodobné duplicity
 IDS_PROCESS_FAILEDss=Vytvoření procesu ({}) selhalo: {}

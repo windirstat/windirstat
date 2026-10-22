@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Autoriser,Refuser
 IDS_POLICY_NOREFRESH=Pas de rafraîchissement
 IDS_POLICY_REFRESH_ENTRY=Rafraichir cette entrée
 IDS_POLICY_REFRESH_PARENT=Rafraichir le dossier parent de cette entrée
+IDS_PORTABLE=Portable
 IDS_PRIORITY_LEVELS=Basse,Normale,Haute
 IDS_PROBABLE_DUPLICATES=Doublons probables
 IDS_PROCESS_FAILEDss=CreateProcess({}) échec : {}

@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Tillad,Nægt
 IDS_POLICY_NOREFRESH=Ingen opdatering
 IDS_POLICY_REFRESH_ENTRY=Opdater denne post
 IDS_POLICY_REFRESH_PARENT=Opdater denne posts overordnede
+IDS_PORTABLE=Bærbar
 IDS_PRIORITY_LEVELS=Lav,Normal,Høj
 IDS_PROBABLE_DUPLICATES=Sandsynlige dubletter
 IDS_PROCESS_FAILEDss=CreateProcess({}) mislykkedes: {}

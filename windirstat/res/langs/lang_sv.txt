@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Tillåt,Neka
 IDS_POLICY_NOREFRESH=Ingen uppdatering
 IDS_POLICY_REFRESH_ENTRY=Uppdatera den här posten
 IDS_POLICY_REFRESH_PARENT=Uppdatera den här postens överordnade
+IDS_PORTABLE=Portabel
 IDS_PRIORITY_LEVELS=Låg,Normal,Hög
 IDS_PROBABLE_DUPLICATES=Troliga dubbletter
 IDS_PROCESS_FAILEDss=CreateProcess({}) misslyckades: {}

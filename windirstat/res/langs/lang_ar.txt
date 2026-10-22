@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=سماح,رفض
 IDS_POLICY_NOREFRESH=عدم التحديث
 IDS_POLICY_REFRESH_ENTRY=تحديث هذا الإدخال
 IDS_POLICY_REFRESH_PARENT=تحديث المجلد الأصلي لهذا الإدخال
+IDS_PORTABLE=محمول
 IDS_PRIORITY_LEVELS=منخفضة,عادية,عالية
 IDS_PROBABLE_DUPLICATES=تكرارات محتملة
 IDS_PROCESS_FAILEDss=فشل CreateProcess({}) : {}

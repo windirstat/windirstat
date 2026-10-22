@@ -32,6 +32,7 @@ public:
     bool IsIdleMessage(const MSG* pMsg) const noexcept override;
 
     static bool InPortableMode();
+    static bool IsForcedPortableMode();
     DWORD SetPortableMode(bool enable, bool onlyOpen = false);
 
     bool IsFollowingAllowed(DWORD reparseTag = 0) const;

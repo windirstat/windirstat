@@ -297,6 +297,7 @@ IDS_PERMS_TYPES=Salli,Estä
 IDS_POLICY_NOREFRESH=Ei päivitystä
 IDS_POLICY_REFRESH_ENTRY=Päivitä vain tämä kohde
 IDS_POLICY_REFRESH_PARENT=Päivitä yläkohde
+IDS_PORTABLE=Kannettava
 IDS_PRIORITY_LEVELS=Matala,Normaali,Korkea
 IDS_PROBABLE_DUPLICATES=Todennäköiset kaksoiskappaleet
 IDS_PROCESS_FAILEDss=CreateProcess({}) epäonnistui: {}
