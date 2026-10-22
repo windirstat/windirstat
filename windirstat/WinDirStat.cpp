@@ -54,8 +54,8 @@ void CDirStatApp::RestartApplication(const bool resetPreferences)
     // Clear preferences if requested
     if (resetPreferences)
     {
-        // Only clean up registry preferences if not in forced portable mode
-        if (!IsForcedPortableMode())
+        // Only clean up registry preferences if not in portable mode
+        if (!InPortableMode())
         {
             RegDeleteTree(HKEY_CURRENT_USER, L"Software\\WinDirStat");
         }
