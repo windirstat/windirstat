@@ -336,6 +336,7 @@ protected:
     bool OnEraseBkgnd(CDC* dc);
 public:
     static CMainFrame* Get() { return s_Singleton; }
+    static std::wstring GetFullBaseTitle();
     void UpdateFrameTitleForScan(std::wstring_view scanName = {});
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item) const;
     void RebuildToolBar(bool rebuildButtons = true);

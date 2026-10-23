@@ -165,7 +165,7 @@ bool CDirStatApp::IsForcedPortableMode()
         constexpr std::wstring_view suffix = L"-portable.exe";
         return std::ranges::ends_with(name, suffix, [](wchar_t a, wchar_t b)
             { return std::towlower(a) == std::towlower(b); });
-        }();
+    }();
     return isForced;
 }
 bool CDirStatApp::InPortableMode()

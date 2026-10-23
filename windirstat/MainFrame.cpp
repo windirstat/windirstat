@@ -634,11 +634,16 @@ void CMainFrame::UpdateFrameTitleForScan(const std::wstring_view scanName)
     SetDocumentTitle(scanName);
 }
 
+std::wstring CMainFrame::GetFullBaseTitle()
+{
+    return std::format(L"{}{}", GetAppTitle(),
+        IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : wds::strEmpty);
+}
+
 bool CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
     // seed initial Title bar text
-    static std::wstring title = std::format(L"{}{}", GetAppTitle(),
-        IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : wds::strEmpty);
+    static std::wstring title = GetFullBaseTitle();
     cs.lpszName = title.c_str();
     cs.style |= WS_CLIPCHILDREN;
 
