@@ -353,6 +353,7 @@ public:
         if (m_hWnd) SetWindowTextW(m_hWnd, t.c_str());
     }
 
+    void SetBaseTitle(std::wstring title) { m_strTitle = std::move(title); }
     void SetTopBar(CWnd* bar) { m_topBar = bar; UpdateLayout(); }
     void SetBottomBar(CWnd* bar) { m_bottomBar = bar; UpdateLayout(); }
     void UpdateMenuCommands(MenuRef menu, bool bSysMenu = false);
