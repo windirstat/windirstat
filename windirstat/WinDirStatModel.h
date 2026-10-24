@@ -118,10 +118,11 @@ public:
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
     void RunUserDefinedCleanup(size_t index);
-    void StartScanningEngine(std::vector<CItem*> items);
+    // A removal (deletion, recycling) lets deduplication results be updated instead of read again.
+    void StartScanningEngine(std::vector<CItem*> items, bool removal = false);
     enum StopReason : uint8_t { Default, Stop, Abort };
     void StopScanningEngine(StopReason stopReason = Stop);
-    void RefreshItem(const std::vector<CItem*>& item) const;
+    void RefreshItem(const std::vector<CItem*>& item, bool removal = false) const;
     void RefreshItem(CItem* item) const { RefreshItem(std::vector{ item }); }
 
     static void OpenItem(const CItem* item, const std::wstring& verb = {});

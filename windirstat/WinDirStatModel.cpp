@@ -720,7 +720,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             itemsToRefresh.push_back(refresh);
     }
     itemsToRefresh.append_range(recyclers);
-    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh);
+    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh, true);
 }
 
 void CWinDirStatModel::SetZoomItem(CItem* item)
@@ -738,9 +738,9 @@ void CWinDirStatModel::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item) const
+void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item, const bool removal) const
 {
-    Get()->StartScanningEngine(item);
+    Get()->StartScanningEngine(item, removal);
 }
 
 bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,

@@ -43,7 +43,8 @@ public:
     void RunPostScan(const CDedupStore::CancelCheck& cancelled);
     bool IsProcessing() const noexcept { return m_processing.load(std::memory_order_relaxed); }
     void ExpandRefresh(std::vector<CItem*>& items) const;
-    void Invalidate(const std::vector<CItem*>& items);
+    // A removal (deletion, recycling) updates the previous volume results instead of reading the store again.
+    void Invalidate(const std::vector<CItem*>& items, bool removal = false);
     void Clear();
 
     // Imported values are staged separately while the old scan is still visible.
@@ -99,6 +100,37 @@ private:
         std::vector<std::uint32_t> chunkBytes;
         std::vector<std::uint32_t> chunkOwner;        // local pseudo item, or None
         std::vector<bool> chunkExternal;
+
+        // Physical files by identity: optimized files (indexed above) first, then ordinary hardlinks.
+        std::vector<ULONGLONG> fileIds;
+        std::vector<DWORD> fileLinks;
+        std::vector<std::uint32_t> fileEntries;       // directory entries in the scan
+        std::vector<double> fileEffective;
+        CDedupStore::SpaceUsage space;
+        ULONGLONG storeId = 0;
+        DEDUPMETRIC metric = DEDUP_SHARED_ONCE;
+        bool wholeVolume = false;
+        bool withSpaceItems = false;
+        bool replaceStore = false;
+    };
+
+    // Physical files and the chunks they share, without tree bindings; shared chunks may still fold into one file.
+    struct Model
+    {
+        std::vector<ULONGLONG> ids;                   // optimized files first, then ordinary hardlinks
+        std::vector<DWORD> links;
+        std::vector<ULONGLONG> exclusive;             // one per optimized file
+        std::vector<double> effective;
+        std::vector<std::uint32_t> chunkOffsets{ 0 };
+        std::vector<std::uint32_t> chunkFiles;
+        std::vector<std::uint32_t> chunkBytes;
+        std::vector<bool> chunkExternal;
+        CDedupStore::SpaceUsage space;
+        ULONGLONG storeId = 0;
+        DEDUPMETRIC metric = DEDUP_SHARED_ONCE;
+        bool wholeVolume = false;
+        bool withSpaceItems = false;
+        bool replaceStore = false;
     };
 
     struct Snapshot
@@ -112,12 +144,18 @@ private:
     static std::wstring GetVolumePath(const CItem* item);
     std::expected<std::shared_ptr<const Volume>, std::wstring> BuildVolume(const std::wstring& path,
         const std::vector<CItem*>& roots, const CDedupStore::CancelCheck& cancelled);
+    std::optional<std::shared_ptr<const Volume>> UpdateVolume(const Volume& previous,
+        const std::vector<CItem*>& roots, const CDedupStore::CancelCheck& cancelled);
+    std::expected<std::shared_ptr<const Volume>, std::wstring> Project(const std::wstring& path,
+        const std::vector<CItem*>& roots, const std::vector<CItem*>& files, const std::vector<CItem*>& entries,
+        const std::vector<std::uint32_t>& entryOffsets, Model&& model, const CDedupStore::CancelCheck& cancelled);
     void Publish(std::vector<std::shared_ptr<const Volume>> volumes);
     void ClearProjection();
 
     mutable std::shared_mutex m_lock;
     std::unique_ptr<const Snapshot> m_snapshot;
     std::vector<std::shared_ptr<const Volume>> m_volumes;
+    std::vector<std::shared_ptr<const Volume>> m_removed;  // results to update after a removal; tree bindings are stale
     std::unordered_map<const CItem*, Values> m_staged;
     std::unordered_map<const CItem*, Values> m_loaded;
     std::unordered_map<const CItem*, bool> m_storeProbes;

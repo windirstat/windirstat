@@ -354,7 +354,7 @@ void CWinDirStatModel::OnCleanupEmptyRecycleBin() const
     }
 
     // refresh recyclers
-    if (!toRefresh.empty()) Get()->StartScanningEngine(toRefresh);
+    if (!toRefresh.empty()) Get()->StartScanningEngine(toRefresh, true);
 }
 
 void CWinDirStatModel::OnRemoveShadowCopies() const
@@ -1026,7 +1026,7 @@ void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
     contextMenu->InvokeCommand(reinterpret_cast<LPCMINVOKECOMMANDINFO>(&info));
 }
 
-void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
+void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items, const bool removal)
 {
     // Stop any previous executions
     CWaitCursor wc;
@@ -1117,7 +1117,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         if (GetZoomItem()->IsTypeOrFlag(IT_DEDUP)) SetZoomItem(GetZoomItem()->GetParent());
         ClearRelatedItems();
         CFileDedupShareControl::Get()->RemoveVolumes({ GetRootItem() });
-        CDedupAccounting::Get().Invalidate(items);
+        CDedupAccounting::Get().Invalidate(items, removal);
     }
 
     // Hardlink results are a derived snapshot and cannot outlive mutations to their target drive.
