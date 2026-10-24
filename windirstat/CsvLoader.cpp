@@ -229,6 +229,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
         itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
+    if (isRoot && (newroot != nullptr || (itType & IT_CONTAINER) == 0) ||
+        !isRoot && itType == IT_MYCOMPUTER) return nullptr;
 
     std::wstring_view displayName = namePath;
     CItem* parent = nullptr;
@@ -276,8 +278,9 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const bool isMultiRoot = parent == nullptr && newroot != nullptr &&
         newroot->IsTypeOrFlag(IT_MYCOMPUTER);
     const bool isMtpRoot = isMtp && (isRoot || isMultiRoot);
-    const bool isInRoot = itType == IT_DRIVE || isMtpRoot || isMultiRoot && itType == IT_DIRECTORY;
+    const bool isInRoot = isMultiRoot && (itType == IT_DRIVE || itType == IT_DIRECTORY);
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
+    if (parent != nullptr && parent->IsLeaf()) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
@@ -312,7 +315,7 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
     assert(newitem->IsMtpRoot() == isMtpRoot);
 
-    if (!newitem->TmiIsLeaf() && (isRemote || newitem->GetItemsCount() > 0))
+    if (!newitem->IsLeaf())
     {
         parentMap[namePath] = newitem;
 
@@ -387,17 +390,21 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             continue;
         }
 
-        // Skip malformed rows that do not cover all required columns
-        if (fields.size() <= maxRequiredField) continue;
+        // Reject incomplete rows instead of publishing a partial imported tree.
+        if (fields.size() <= maxRequiredField) { delete newroot; return nullptr; }
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
-        BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
+        if (!BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
             orderMap[FIELD_SCAN_OUTCOME] < fields.size() ? fields[orderMap[FIELD_SCAN_OUTCOME]] : std::wstring_view{},
-            orderMap[FIELD_SCAN_ERROR] < fields.size() ? fields[orderMap[FIELD_SCAN_ERROR]] : std::wstring_view{});
+            orderMap[FIELD_SCAN_ERROR] < fields.size() ? fields[orderMap[FIELD_SCAN_ERROR]] : std::wstring_view{}))
+        {
+            delete newroot;
+            return nullptr;
+        }
     }
 
     FinalizeImportedResults(newroot);
@@ -450,14 +457,18 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         }
 
         // Validate minimum required fields
-        if (fieldValues[FIELD_NAME].empty()) continue;
+        if (fieldValues[FIELD_NAME].empty()) { delete newroot; return nullptr; }
 
-        BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
+        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
             fieldValues[FIELD_LAST_CHANGE], fieldValues[FIELD_SIZE_PHYSICAL],
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
             fieldValues[FIELD_FOLDERS], newroot, parentMap,
-            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR]);
+            fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR]))
+        {
+            delete newroot;
+            return nullptr;
+        }
     }
 
     FinalizeImportedResults(newroot);
