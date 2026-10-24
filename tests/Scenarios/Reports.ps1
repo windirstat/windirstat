@@ -222,17 +222,21 @@ function Test-MalformedReportType {
     $root = New-TestTree
     $runner = New-TestRunner
     $source = Invoke-ScanReport $runner @($root) 'valid' -Format $Case.Format
-    foreach ($type in '0x30000200', '0x30000204') {
+    foreach ($type in '0x30000200', '0x30000204', '0x30000008', '0x30000010', '0x30000020') {
         $row = $source[0].PSObject.Copy()
         $row.'WinDirStat Attributes' = $type
         $row.Index = '0x0000000000000001'
+        $drive = $source[0].PSObject.Copy()
+        $drive.Name = 'V:\'
+        $drive.'WinDirStat Attributes' = '0x20000002'
+        $rows = @($row, $drive)
         $path = Join-Path $Context.Root "malformed-$type.$($Case.Format)"
         if ($Case.Format -eq 'json') {
-            [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject @($row)))
-        } else { $row | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
+            [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject $rows))
+        } else { $rows | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
         $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
         Assert-True (-not (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled) `
-            'A report cannot create pointer-backed hardlink nodes, including mixed type masks'
+            'A report rejects pointer-backed nodes, mixed types, and children attached to leaf roots'
         Stop-TestApp $app
     }
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)")) `
