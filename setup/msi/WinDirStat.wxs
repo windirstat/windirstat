@@ -96,6 +96,8 @@
             <ShortcutProperty Key="System.AppUserModel.ID" Value="WinDirStat"/>
           </Shortcut>
         </File>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\WinDirStat.exe"
+                       Value="[#File_Main]" Type="string"/>
       </Component>
       <Component Id="Component_AddToPath" Guid="{D5A7D5D0-3D45-4A41-8F4F-6F8E6C2A9F13}" Condition="ADD_TO_PATH">
         <Environment Id="Env_AddWinDirStatToPath" Name="PATH" Value="[INSTALLFOLDER]" Permanent="no" Part="last" Action="set" System="yes"/>

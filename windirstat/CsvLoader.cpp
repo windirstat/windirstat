@@ -239,6 +239,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
         itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN && itType != IT_DEDUP) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
+    if (isRoot && (newroot != nullptr || (itType & IT_CONTAINER) == 0) ||
+        !isRoot && itType == IT_MYCOMPUTER) return nullptr;
 
     std::wstring_view displayName = namePath;
     CItem* parent = nullptr;
@@ -286,9 +288,9 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const bool isMultiRoot = parent == nullptr && newroot != nullptr &&
         newroot->IsTypeOrFlag(IT_MYCOMPUTER);
     const bool isMtpRoot = isMtp && (isRoot || isMultiRoot);
-    const bool isInRoot = itType == IT_DRIVE || isMtpRoot ||
-        isMultiRoot && (itType == IT_DIRECTORY || itType == IT_DEDUP);
+    const bool isInRoot = isMultiRoot && (itType == IT_DRIVE || itType == IT_DIRECTORY || itType == IT_DEDUP);
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
+    if (parent != nullptr && parent->IsLeaf()) return nullptr;
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
@@ -340,7 +342,7 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
         CDedupAccounting::Get().SetLoaded(newitem, physical, freed, shared);
     }
 
-    if (!newitem->TmiIsLeaf() && (isRemote || newitem->GetItemsCount() > 0))
+    if (!newitem->IsLeaf())
     {
         parentMap[namePath] = newitem;
 
@@ -415,8 +417,8 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             continue;
         }
 
-        // Skip malformed rows that do not cover all required columns
-        if (fields.size() <= maxRequiredField) continue;
+        // Reject incomplete rows instead of publishing a partial imported tree.
+        if (fields.size() <= maxRequiredField) { delete newroot; return nullptr; }
 
         // Optional columns are present only when the header listed them and the row reaches them
         const auto optionalField = [&](const std::size_t field) -> std::wstring_view
@@ -425,13 +427,17 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         };
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
-        BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
+        if (!BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
             optionalField(FIELD_SCAN_OUTCOME), optionalField(FIELD_SCAN_ERROR),
-            optionalField(FIELD_DEDUP_FREED), optionalField(FIELD_DEDUP_SHARED), optionalField(FIELD_ALLOCATED));
+            optionalField(FIELD_DEDUP_FREED), optionalField(FIELD_DEDUP_SHARED), optionalField(FIELD_ALLOCATED)))
+        {
+            delete newroot;
+            return nullptr;
+        }
     }
 
     FinalizeImportedResults(newroot);
@@ -487,15 +493,19 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         }
 
         // Validate minimum required fields
-        if (fieldValues[FIELD_NAME].empty()) continue;
+        if (fieldValues[FIELD_NAME].empty()) { delete newroot; return nullptr; }
 
-        BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
+        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
             fieldValues[FIELD_LAST_CHANGE], fieldValues[FIELD_SIZE_PHYSICAL],
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
             fieldValues[FIELD_FOLDERS], newroot, parentMap,
             fieldValues[FIELD_SCAN_OUTCOME], fieldValues[FIELD_SCAN_ERROR],
-            fieldValues[FIELD_DEDUP_FREED], fieldValues[FIELD_DEDUP_SHARED], fieldValues[FIELD_ALLOCATED]);
+            fieldValues[FIELD_DEDUP_FREED], fieldValues[FIELD_DEDUP_SHARED], fieldValues[FIELD_ALLOCATED]))
+        {
+            delete newroot;
+            return nullptr;
+        }
     }
 
     FinalizeImportedResults(newroot);
@@ -576,6 +586,18 @@ static std::unordered_map<const CItem*, LONGLONG>
     return adjustedSizes;
 }
 
+static constexpr size_t ReportBufferSize = 64 * 1024;
+
+// Write complete rows in chunks while retaining the buffer for the next rows.
+static bool FlushReportBuffer(std::ofstream& outf, std::string& buffer, const bool finish = false)
+{
+    if (buffer.size() < ReportBufferSize && !finish) return true;
+    outf.write(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+    buffer.clear();
+    if (finish) outf.flush();
+    return outf.good();
+}
+
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
     const std::unordered_map<const CItem*, LONGLONG>& allocatedAdjustments,
@@ -586,6 +608,8 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
 
     // Rows
+    std::string buffer;
+    buffer.reserve(ReportBufferSize);
     for (const auto* item : items)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
@@ -595,7 +619,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
         const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
-        std::format_to(std::ostreambuf_iterator(outf), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
+        std::format_to(std::back_inserter(buffer), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -605,10 +629,11 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             ToTimePoint(item->GetLastChange()),
             std::to_underlying(itemType),
             index);
-        if (includeOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
+        if (includeOwner) std::format_to(std::back_inserter(buffer), ",{}", QuoteAndConvert(item->GetOwner(true)));
         const auto& result = item->GetScanResult();
-        outf << "," << QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]) << "," <<
-            QuoteAndConvert(StorageSource::EscapeName(result.error, true));
+        std::format_to(std::back_inserter(buffer), ",{},{}",
+            QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]),
+            QuoteAndConvert(StorageSource::EscapeName(result.error, true)));
         if (includeDedup)
         {
             const auto& accounting = CDedupAccounting::Get();
@@ -617,13 +642,13 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
             const auto adjustment = allocatedAdjustments.find(item);
             const auto allocated = item->IsTypeOrFlag(IT_DEDUP) ? 0 : item->GetSizePhysicalRaw() +
                 (adjustment == allocatedAdjustments.end() ? 0 : adjustment->second);
-            std::format_to(std::ostreambuf_iterator(outf), ",{},{},{}",
+            std::format_to(std::back_inserter(buffer), ",{},{},{}",
                 freed ? std::to_string(*freed) : "", shared ? std::to_string(*shared) : "",
                 item->HasSizePhysical() ? std::to_string(allocated) : "");
         }
+        if (!FlushReportBuffer(outf, buffer)) return false;
     }
-    outf.flush();
-    return outf.good();
+    return FlushReportBuffer(outf, buffer, true);
 }
 
 // ── JSON save ─────────────────────────────────────────────────────────────────
@@ -635,17 +660,18 @@ static bool SaveJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
     std::vector<std::string> keys;
     for (const auto& col : cols) keys.push_back(JsonQuoteW(col));
 
-    outf << "[\r\n";
+    std::string buffer = "[\r\n";
+    buffer.reserve(ReportBufferSize);
     bool first = true;
     for (const auto& item : items)
     {
-        if (!first) outf << ",\r\n";
+        if (!first) buffer += ",\r\n";
         first = false;
-        writeItem(item, keys);
+        writeItem(item, keys, buffer);
+        if (!FlushReportBuffer(outf, buffer)) return false;
     }
-    outf << "\r\n]\r\n";
-    outf.flush();
-    return outf.good();
+    buffer += "\r\n]\r\n";
+    return FlushReportBuffer(outf, buffer, true);
 }
 
 static bool SaveResultsJson(std::ofstream& outf,
@@ -655,7 +681,7 @@ static bool SaveResultsJson(std::ofstream& outf,
     const std::unordered_map<const CItem*, LONGLONG>& allocatedAdjustments,
     const bool includeOwner, const bool includeDedup)
 {
-    return SaveJson(outf, cols, items, [&](const CItem* item, const auto& keys)
+    return SaveJson(outf, cols, items, [&](const CItem* item, const auto& keys, std::string& buffer)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
         const ITEMTYPE itemType = item->GetRawType() &
@@ -666,41 +692,43 @@ static bool SaveResultsJson(std::ofstream& outf,
         const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
 
         // Write one JSON object per item
-        outf << "{\r\n";
-        outf << "  " << keys[FIELD_NAME]           << ": " << JsonQuoteW(nonPathItem ? item->GetName() : item->GetPath()) << ",\r\n";
-        outf << "  " << keys[FIELD_FILES]          << ": " << item->GetFilesCount()                                       << ",\r\n";
-        outf << "  " << keys[FIELD_FOLDERS]        << ": " << item->GetFoldersCount()                                     << ",\r\n";
-        outf << "  " << keys[FIELD_SIZE_LOGICAL]   << ": " << item->GetSizeLogical()                                      << ",\r\n";
         const auto physical = item->HasSizePhysical() ?
             std::to_string(item->GetSizePhysicalDisplay() + adjustedSize) : "null";
-        outf << "  " << keys[FIELD_SIZE_PHYSICAL]  << ": " << physical << ",\r\n";
-        outf << "  " << keys[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
-        outf << "  " << keys[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
-        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
+        std::format_to(std::back_inserter(buffer),
+            "{{\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n"
+            "  {}: {},\r\n  {}: {},\r\n  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
+            keys[FIELD_NAME], JsonQuoteW(nonPathItem ? item->GetName() : item->GetPath()),
+            keys[FIELD_FILES], item->GetFilesCount(),
+            keys[FIELD_FOLDERS], item->GetFoldersCount(),
+            keys[FIELD_SIZE_LOGICAL], item->GetSizeLogical(),
+            keys[FIELD_SIZE_PHYSICAL], physical,
+            keys[FIELD_ATTRIBUTES], JsonQuoteW(FormatAttributes(item->GetAttributes())),
+            keys[FIELD_LAST_CHANGE], JsonQuote(ToTimePoint(item->GetLastChange())),
             keys[FIELD_ATTRIBUTES_WDS], std::to_underlying(itemType),
             keys[FIELD_INDEX], index);
         if (includeOwner)
-            outf << ",\r\n  " << keys[FIELD_OWNER] << ": " << JsonQuoteW(item->GetOwner(true));
+            std::format_to(std::back_inserter(buffer), ",\r\n  {}: {}",
+                keys[FIELD_OWNER], JsonQuoteW(item->GetOwner(true)));
         // The scan result keys come last, followed by the dedup keys when present
         const auto& result = item->GetScanResult();
         const std::size_t scanKey = keys.size() - (includeDedup ? 5 : 2);
-        outf << ",\r\n  " << keys[scanKey] << ": " <<
-            JsonQuoteW(scanOutcomes[static_cast<size_t>(result.outcome)]);
-        outf << ",\r\n  " << keys[scanKey + 1] << ": " << JsonQuoteW(StorageSource::EscapeName(result.error, true));
+        std::format_to(std::back_inserter(buffer), ",\r\n  {}: {},\r\n  {}: {}",
+            keys[scanKey], JsonQuoteW(scanOutcomes[static_cast<size_t>(result.outcome)]),
+            keys[scanKey + 1], JsonQuoteW(StorageSource::EscapeName(result.error, true)));
         if (includeDedup)
         {
             const auto& accounting = CDedupAccounting::Get();
             const auto freed = accounting.GetFreed(item);
             const auto shared = accounting.GetShared(item);
-            outf << ",\r\n  " << keys[keys.size() - 3] << ": " << (freed ? std::to_string(*freed) : "null");
-            outf << ",\r\n  " << keys[keys.size() - 2] << ": " << (shared ? std::to_string(*shared) : "null");
             const auto adjustment = allocatedAdjustments.find(item);
             const auto allocated = item->IsTypeOrFlag(IT_DEDUP) ? 0 : item->GetSizePhysicalRaw() +
                 (adjustment == allocatedAdjustments.end() ? 0 : adjustment->second);
-            outf << ",\r\n  " << keys.back() << ": " <<
-                (item->HasSizePhysical() ? std::to_string(allocated) : "null");
+            std::format_to(std::back_inserter(buffer), ",\r\n  {}: {},\r\n  {}: {},\r\n  {}: {}",
+                keys[keys.size() - 3], freed ? std::to_string(*freed) : "null",
+                keys[keys.size() - 2], shared ? std::to_string(*shared) : "null",
+                keys.back(), item->HasSizePhysical() ? std::to_string(allocated) : "null");
         }
-        outf << "\r\n}";
+        buffer += "\r\n}";
     });
 }
 
@@ -774,9 +802,12 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
         outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
     outf << "\r\n";
 
+    // Rows
+    std::string buffer;
+    buffer.reserve(ReportBufferSize);
     for (const auto& [hash, linkedItem, sampled] : dupeItems)
     {
-        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},{},{}\r\n",
+        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},{},{}\r\n",
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),
@@ -784,8 +815,9 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
             ToTimePoint(linkedItem->GetLastChange()),
             QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())),
             sampled);
+        if (!FlushReportBuffer(outf, buffer)) return false;
     }
-    return outf.good();
+    return FlushReportBuffer(outf, buffer, true);
 }
 
 // ── JSON dupe save ─────────────────────────────────────────────────────────────
@@ -795,18 +827,19 @@ static bool SaveDuplicatesJson(std::ofstream& outf,
     const std::vector<std::tuple<std::wstring, const CItem*, bool>>& dupeItems)
 {
     // cols order: HASH, NAME, SIZE_LOGICAL, SIZE_PHYSICAL, LAST_CHANGE, ATTRIBUTES, SAMPLED_HASH
-    return SaveJson(outf, cols, dupeItems, [&](const auto& dupe, const auto& keys)
+    return SaveJson(outf, cols, dupeItems, [&](const auto& dupe, const auto& keys, std::string& buffer)
     {
         const auto& [hash, item, sampled] = dupe;
-        outf << "{\r\n";
-        outf << "  " << keys[0] << ": " << JsonQuoteW(hash) << ",\r\n";
-        outf << "  " << keys[1] << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
-        outf << "  " << keys[2] << ": " << item->GetSizeLogical() << ",\r\n";
-        outf << "  " << keys[3] << ": " << item->GetSizePhysicalDisplay() << ",\r\n";
-        outf << "  " << keys[4] << ": " << JsonQuote(ToTimePoint(item->GetLastChange())) << ",\r\n";
-        outf << "  " << keys[5] << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes())) << ",\r\n";
-        outf << "  " << keys[6] << ": " << (sampled ? "true" : "false") << "\r\n";
-        outf << "}";
+        std::format_to(std::back_inserter(buffer),
+            "{{\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n"
+            "  {}: {},\r\n  {}: {},\r\n  {}: {}\r\n}}",
+            keys[0], JsonQuoteW(hash),
+            keys[1], JsonQuoteW(item->GetPath()),
+            keys[2], item->GetSizeLogical(),
+            keys[3], item->GetSizePhysicalDisplay(),
+            keys[4], JsonQuote(ToTimePoint(item->GetLastChange())),
+            keys[5], JsonQuoteW(FormatAttributes(item->GetAttributes())),
+            keys[6], sampled);
     });
 }
 
@@ -844,9 +877,12 @@ static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstri
         outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
     outf << "\r\n";
 
+    // Rows
+    std::string buffer;
+    buffer.reserve(ReportBufferSize);
     for (const auto* item : items)
     {
-        std::format_to(std::ostreambuf_iterator(outf), "{},{},{},{},{},0x{:08X},{}\r\n",
+        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},0x{:08X},{}\r\n",
             QuoteAndConvert(item->GetPath()),
             QuoteAndConvert(item->GetAccount()),
             QuoteAndConvert(CItemPerm::GetAccessTypeName(item->IsDeny())),
@@ -854,26 +890,27 @@ static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstri
             QuoteAndConvert(item->GetAppliesText()),
             item->GetAccessMask(),
             QuoteAndConvert(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())));
+        if (!FlushReportBuffer(outf, buffer)) return false;
     }
-    outf.flush();
-    return outf.good();
+    return FlushReportBuffer(outf, buffer, true);
 }
 
 static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
     const std::vector<const CItemPerm*>& items)
 {
     // cols order: NAME, ACCOUNT, ACCESS, RIGHTS, APPLIES_TO, MASK, INHERITED
-    return SaveJson(outf, cols, items, [&](const CItemPerm* item, const auto& keys)
+    return SaveJson(outf, cols, items, [&](const CItemPerm* item, const auto& keys, std::string& buffer)
     {
-        outf << "{\r\n";
-        outf << "  " << keys[0] << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
-        outf << "  " << keys[1] << ": " << JsonQuoteW(item->GetAccount()) << ",\r\n";
-        outf << "  " << keys[2] << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
-        outf << "  " << keys[3] << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
-        outf << "  " << keys[4] << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
-        std::format_to(std::ostreambuf_iterator(outf), "  {}: \"0x{:08X}\",\r\n", keys[5], item->GetAccessMask());
-        outf << "  " << keys[6] << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
-        outf << "}";
+        std::format_to(std::back_inserter(buffer),
+            "{{\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n  {}: {},\r\n"
+            "  {}: {},\r\n  {}: \"0x{:08X}\",\r\n  {}: {}\r\n}}",
+            keys[0], JsonQuoteW(item->GetPath()),
+            keys[1], JsonQuoteW(item->GetAccount()),
+            keys[2], JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())),
+            keys[3], JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))),
+            keys[4], JsonQuoteW(item->GetAppliesText()),
+            keys[5], item->GetAccessMask(),
+            keys[6], JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())));
     });
 }
 

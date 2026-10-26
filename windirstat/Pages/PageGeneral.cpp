@@ -71,6 +71,11 @@ void CPageGeneral::InitializePage()
 
     SetChecked(IDC_PORTABLE_MODE, CDirStatApp::InPortableMode());
 
+    if (auto pWnd = GetDlgItem(IDC_PORTABLE_MODE); pWnd != nullptr && CDirStatApp::IsForcedPortableMode())
+    {
+        pWnd.EnableWindow(false);
+    }
+
     // Query checkbox status and then gray out if a system-level entry
     // exists that cannot be changed without elevation
     const bool contextMenuIntegration = IsContextMenuRegistered(HKEY_LOCAL_MACHINE) ||
@@ -127,6 +132,14 @@ std::optional<CPropertyPage::ValidationError> CPageGeneral::PrepareSettings()
         {
             DisplayError(TranslateError(error));
         }
+
+        // Update the main window title to reflect portable mode and elevation status
+        CMainFrame::Get()->SetBaseTitle(CMainFrame::GetFullBaseTitle());
+
+        // Re-apply the current scan state to update the progress bar and title bar text
+        CWinDirStatModel::Get()->IsScanRunning() ?
+            CMainFrame::Get()->UpdateProgress() :
+            CWinDirStatModel::Get()->SetScanTitlePrefix(wds::strEmpty);
 
         // Update context menu registration; non-elevated instances may only
         // manage the per-user entry when no system-level entry exists

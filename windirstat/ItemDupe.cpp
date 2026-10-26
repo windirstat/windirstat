@@ -130,26 +130,20 @@ void CItemDupe::AddDupeItemChildren(std::span<CItemDupe* const> children)
     CFileDupeControl::Get()->OnChildrenAdded(this, rows);
 }
 
-void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
+void CItemDupe::RemoveDupeItemChildren(const std::unordered_set<const CTreeListItem*>& children)
 {
-    if (IsVisible())
-    {
-        CFileDupeControl::Get()->OnChildRemoved(this, child);
-    }
-
-    // Adjust parent item sizes
+    // The control detaches all affected rows before pruning groups and their children.
     std::scoped_lock guard(m_protect);
-    if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
+    std::erase_if(m_children, [&](CItemDupe* child)
     {
-        m_sizeLogical -= childItem->GetSizeLogical();
-        m_sizePhysical -= childItem->GetSizePhysical();
-    }
-
-    auto& children = m_children;
-    if (const auto it = std::ranges::find(children, child); it != children.end())
-    {
-        children.erase(it);
+        if (!children.contains(child)) return false;
+        if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
+        {
+            m_sizeLogical -= childItem->GetSizeLogical();
+            m_sizePhysical -= childItem->GetSizePhysical();
+        }
+        delete child;
         m_captionDirty = true;
-    }
-    delete child;
+        return true;
+    });
 }

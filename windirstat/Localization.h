@@ -16,7 +16,8 @@ struct string_hash {
 class Localization final
 {
     static bool m_rightToLeft;
-    static bool CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix = {});
+    static const std::wstring& GetResourceData();
+    static bool CrackStrings(std::wstring_view data);
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
     static void UpdateWindowText(WindowRef wnd);
     static std::wstring FormatImpl(std::wstring_view format, std::wformat_args args);

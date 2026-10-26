@@ -26,18 +26,18 @@ class CVisualizationPane;
 // Although these windows can lose the real focus, for instance
 // when a dialog box is opened, the logical focus will not be lost.
 //
-enum LOGICAL_FOCUS : uint8_t
+enum LOGICAL_FOCUS : uint16_t
 {
-    LF_NONE = 0,
-    LF_FILETREE,
-    LF_DUPELIST,
-    LF_TOPLIST,
-    LF_SEARCHLIST,
-    LF_WATCHERLIST,
-    LF_PERMSLIST,
-    LF_EXTLIST,
-    LF_STORAGEANALYTICS,
-    LF_DEDUPSHARELIST = 10, // even so the bitwise focus test does not match LF_FILETREE
+    LF_NONE             = 0,
+    LF_FILETREE         = 1 << 0,
+    LF_DUPELIST         = 1 << 1,
+    LF_TOPLIST          = 1 << 2,
+    LF_SEARCHLIST       = 1 << 3,
+    LF_WATCHERLIST      = 1 << 4,
+    LF_PERMSLIST        = 1 << 5,
+    LF_EXTLIST          = 1 << 6,
+    LF_STORAGEANALYTICS = 1 << 7,
+    LF_DEDUPSHARELIST   = 1 << 8,
 };
 
 //
@@ -338,6 +338,7 @@ protected:
     bool OnEraseBkgnd(CDC* dc);
 public:
     static CMainFrame* Get() { return s_Singleton; }
+    static std::wstring GetFullBaseTitle();
     void UpdateFrameTitleForScan(std::wstring_view scanName = {});
     void UpdateAllPanes(CWnd* sender, MODEL_CHANGE change, CItem* item) const;
     void RebuildToolBar(bool rebuildButtons = true);

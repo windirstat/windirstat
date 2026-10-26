@@ -41,7 +41,7 @@ public:
     CTreeListItem* GetAncestorCheckItem() override { return m_item; }
 
     void AddSearchItemChild(CItemSearch* child);
-    void RemoveSearchItemChild(CItemSearch* child);
+    void RemoveSearchItemChildren(const std::unordered_set<const CTreeListItem*>& children);
     struct SizeTotals { ULONGLONG logical = 0, physical = 0; bool physicalKnown = true; };
     static std::optional<SizeTotals> CalculateTotals(std::span<CItem* const> items,
         const std::function<bool()>& isCancelled = {});

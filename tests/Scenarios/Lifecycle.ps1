@@ -80,8 +80,12 @@ function Test-WatcherPauseFilter {
 function Test-PauseResumeScan {
     param($Context, $Case)
     $root = New-StressTree
+    $first = Get-ChildItem -LiteralPath $root -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
+    $duplicates = @($first, (Join-Path $root 'duplicate-a.bin'), (Join-Path $root 'duplicate-b.bin'))
+    Copy-Item -LiteralPath $first -Destination $duplicates[1]
+    Copy-Item -LiteralPath $first -Destination $duplicates[2]
     $app = Start-TestApp @($root) -Settings @{
-        Options = @{ UseFastScanEngine = 0; ScanningThreads = 1 }; DupeView = @{ ScanForDuplicates = 1 }
+        Options = @{ UseFastScanEngine = 0; ScanningThreads = $Case.Threads }; DupeView = @{ ScanForDuplicates = 1 }
     } -DuringScan
     Wait-AppScanning $app
     Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
@@ -111,9 +115,14 @@ function Test-PauseResumeScan {
         Save-Frame ([TestDesktop]::Capture($app.Window)) (Join-Path $Context.Root 'completed-stop-enabled.png')
     }
     $rows = Save-AppReport $app 'resumed'
-    Assert-Equal @(Get-ReportFiles $rows).Count $StressFileCount 'Resume completes every file exactly once'
-    Assert-Equal ([long]$rows[0].'Logical Size') ([long]$StressFileCount * 65536) `
+    Assert-Equal @(Get-ReportFiles $rows).Count ($StressFileCount + 2) 'Resume completes every file exactly once'
+    Assert-Equal ([long]$rows[0].'Logical Size') (([long]$StressFileCount + 2) * 65536) `
         'Resume preserves recursive byte totals'
+    $dupeRows = Save-AppReport $app 'resumed-duplicates' -Command 'ID_SAVE_DUPLICATES'
+    Assert-Sequence @($dupeRows.Name | Sort-Object) @($duplicates | Sort-Object) `
+        'Resume completes pending duplicate hashes and publishes each matching file once'
+    Assert-Equal @($dupeRows.'Hash Prefix' | Sort-Object -Unique).Count 1 `
+        'Resumed matching files belong to the same duplicate group'
     Assert-GraphRendered $app | Out-Null
     Assert-True $stopDisabled 'Completing the resumed scan disables Stop without an additional user action'
 }
@@ -121,9 +130,15 @@ function Test-PauseResumeScan {
 function Test-StopAndRescan {
     param($Context, $Case)
     $root = New-StressTree
-    $app = Start-TestApp @($root) -Settings @{ Options = @{ ScanningThreads = 1 }; DupeView = @{ ScanForDuplicates = 1 } } `
-        -DuringScan
+    $app = Start-TestApp @($root) -Settings @{
+        Options = @{ ScanningThreads = $Case.Threads }; DupeView = @{ ScanForDuplicates = 1 }
+    } -DuringScan
     Wait-AppScanning $app
+    if ($Case.Suspended) {
+        Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
+        Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } `
+            'All workers suspend before cancellation' | Out-Null
+    }
     Invoke-AppCommand $app 'ID_SCAN_STOP'
     Wait-AppIdle $app
     Assert-True (-not (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled) `
@@ -241,11 +256,17 @@ Register-Scenario lifecycle.watcher-events Lifecycle `
     Test-WatcherTransitions -Tags Desktop,External,Race -Requires Windows,Desktop
 Register-Scenario lifecycle.watcher-filter Lifecycle 'Watcher pause/restart and invalid live filters preserve history' `
     Test-WatcherPauseFilter -Tags Desktop,External,Race -Requires Windows,Desktop
-Register-Scenario lifecycle.pause-resume Lifecycle `
-    'Suspended enumeration stops updating and resumes without omissions' `
-    Test-PauseResumeScan -Tags Desktop,Race -Requires Windows,Desktop
-Register-Scenario lifecycle.stop-rescan Lifecycle 'Cancellation followed by a clean rescan replaces partial models' `
-    Test-StopAndRescan -Tags Desktop,Race -Requires Windows,Desktop
+foreach ($mode in @(@{ Suffix = ''; Threads = 1 }, @{ Suffix = '.parallel'; Threads = 8 })) {
+    Register-Scenario "lifecycle.pause-resume$($mode.Suffix)" Lifecycle `
+        'Suspended enumeration stops updating and resumes without omissions' `
+        Test-PauseResumeScan -Tags Desktop,Race -Requires Windows,Desktop -Data @{ Threads = $mode.Threads }
+    Register-Scenario "lifecycle.stop-rescan$($mode.Suffix)" Lifecycle `
+        'Cancellation followed by a clean rescan replaces partial models' `
+        Test-StopAndRescan -Tags Desktop,Race -Requires Windows,Desktop `
+        -Data @{ Threads = $mode.Threads; Suspended = $false }
+}
+Register-Scenario lifecycle.stop-suspended Lifecycle 'Cancellation of suspended workers permits a clean rescan' `
+    Test-StopAndRescan -Tags Desktop,Race -Requires Windows,Desktop -Data @{ Threads = 8; Suspended = $true }
 Register-Scenario lifecycle.resize-overlap Lifecycle `
     'Live resize and scan suspension overlap without stranding rendering' `
     Test-ScanResizeOverlap -Tags Desktop,Race,Rendering -Requires Windows,Desktop

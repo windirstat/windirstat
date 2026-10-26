@@ -427,6 +427,9 @@ static void DrawScaledButton(const HWND window, const HDC dc)
     {
         const GdiObjectSelection selectBitmap(&memory, &bitmap);
         CRect nativeRect(0, 0, glyphWidth, glyphHeight);
+
+        // Preserve the parent's background color when it supplies the per-DC stock brush.
+        memory.SetDCBrushColor(GetDCBrushColor(dc));
         FillRect(memory, &nativeRect, background);
         // Use geometry to avoid stretching theme bitmaps; keep native high-contrast rendering.
         HIGHCONTRASTW contrast{ .cbSize = sizeof(contrast) };

@@ -147,17 +147,17 @@ void CFileDupeControl::SortItems()
     CTreeListControl::SortItems();
 }
 
-void CFileDupeControl::RemoveItem(CItem* item)
+void CFileDupeControl::RemoveItems(std::span<CItem* const> items)
 {
     // Exit immediately if duplicate detection is disabled
-    if (!COptions::ScanForDuplicates) return;
+    if (!COptions::ScanForDuplicates || items.empty()) return;
 
     // Publish queued nodes before pruning references to items that will be refreshed.
     SortItems();
 
     // Enumerate child items and mark all as unhashed
     std::unordered_set<CItem*> removedItems;
-    std::vector queue({ item });
+    std::vector queue(items.begin(), items.end());
     while (!queue.empty())
     {
         const auto qitem = queue.back();
@@ -165,7 +165,6 @@ void CFileDupeControl::RemoveItem(CItem* item)
         if (qitem->IsTypeOrFlag(IT_FILE))
         {
             // Mark all files as not being hashed anymore
-            std::erase(m_sizeTracker[qitem->GetSizeLogical()], qitem);
             qitem->SetHashType(ITHASH_NONE, false);
             removedItems.insert(qitem);
         }
@@ -174,6 +173,8 @@ void CFileDupeControl::RemoveItem(CItem* item)
             std::ranges::copy(qitem->GetChildren(), std::back_inserter(queue));
         }
     }
+    for (auto& sizeSet : m_sizeTracker | std::views::values)
+        std::erase_if(sizeSet, [&](CItem* file) { return removedItems.contains(file); });
     std::erase_if(m_sizeTracker, [](const auto& pair)
     {
         return pair.second.empty();
@@ -202,62 +203,32 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
     // Clean up any empty visual nodes in the list
     const ScopedRedrawPause lock(this);
+    std::unordered_set<const CTreeListItem*> removed;
     for (auto nodeIter = m_nodeTracker.begin(); nodeIter != m_nodeTracker.end(); )
     {
         auto& [dupeParentKey, dupeParent] = *nodeIter;
 
         // Remove from child tracker
         auto& childItems = m_childTracker[dupeParent];
-        for (auto childItem = childItems.begin(); childItem != childItems.end(); )
+        std::erase_if(childItems, [](CItem* child) { return !child->IsTypeOrFlag(ITHASH_MASK); });
+        if (childItems.size() <= 1)
         {
-            // Nothing to do if still marked as hashed
-            if ((*childItem)->IsTypeOrFlag(ITHASH_MASK))
-            {
-                ++childItem;
-                continue;
-            }
-
-            // Remove from child tracker and visual tree
-            const auto& children = dupeParent->GetChildren();
-            const auto visualIter = std::ranges::find_if(children, [&](CItemDupe* visualChild) {
-                return visualChild->GetLinkedItem() == *childItem;
-            });
-            const bool foundVisualChild = visualIter != children.end();
-            if (foundVisualChild)
-            {
-                dupeParent->RemoveDupeItemChild(*visualIter);
-            }
-
-            // Only erase from tracker when the visual child was actually removed;
-            // if no visual match exists (pending add not yet flushed), leave the
-            // tracker entry intact so it stays in sync with the visual tree.
-            if (foundVisualChild)
-                childItem = childItems.erase(childItem);
-            else
-                ++childItem;
-        }
-
-        // When only one child left, remove child item
-        if (dupeParent->GetChildren().size() == 1)
-        {
-            dupeParent->RemoveDupeItemChild(dupeParent->GetChildren().front());
-        }
-
-        // When no children left, remove parent item
-        if (dupeParent->GetChildren().empty())
-        {
-            m_rootItem->RemoveDupeItemChild(dupeParent);
+            removed.insert(dupeParent);
+            m_childTracker.erase(dupeParent);
             nodeIter = m_nodeTracker.erase(nodeIter);
         }
         else
         {
+            for (auto* child : dupeParent->GetChildren())
+                if (!childItems.contains(child->GetLinkedItem())) removed.insert(child);
             ++nodeIter;
         }
     }
-    std::erase_if(m_childTracker, [](const auto& pair)
-    {
-        return pair.second.size() <= 1;
-    });
+
+    // Detach visible rows once, then compact each surviving group's children and the root.
+    OnItemsRemoved(removed);
+    for (auto* parent : m_nodeTracker | std::views::values) parent->RemoveDupeItemChildren(removed);
+    m_rootItem->RemoveDupeItemChildren(removed);
 }
 
 void CFileDupeControl::AfterDeleteAllItems()

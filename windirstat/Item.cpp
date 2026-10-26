@@ -18,6 +18,7 @@ class CItem::ScanBatch final
     CItem* m_parent;
     BlockingQueue<CItem*>* m_queue;
     std::vector<CItem*> m_children;
+    std::vector<CItem*> m_duplicates;
     std::unordered_map<std::wstring, std::pair<ULONGLONG, ULONGLONG>> m_extensions;
     ULONGLONG m_physical = 0, m_logical = 0, m_lastFlush = GetTickCount64();
     FILETIME m_lastChange{};
@@ -27,6 +28,7 @@ public:
     ScanBatch(CItem* parent, BlockingQueue<CItem*>* queue) : m_parent(parent), m_queue(queue)
     {
         m_children.reserve(128);
+        if (COptions::ScanForDuplicates) m_duplicates.reserve(128);
     }
     ~ScanBatch() { Flush(); }
 
@@ -41,6 +43,7 @@ public:
         m_lastChange = std::max(m_lastChange, child->GetLastChange());
         if (!child->IsTypeOrFlag(IT_FILE)) { ++m_folders; return; }
 
+        if (COptions::ScanForDuplicates && !child->IsTypeOrFlag(ITF_REMOTE)) m_duplicates.push_back(child);
         ++m_files;
         auto& [files, bytes] = m_extensions[child->GetExtension()];
         ++files;
@@ -50,7 +53,16 @@ public:
 
     void FlushIfNeeded(const bool force = false)
     {
-        if (force || m_children.size() >= 128 || GetTickCount64() - m_lastFlush >= 100) Flush();
+        if (!force && m_children.size() < 128 && GetTickCount64() - m_lastFlush < 100) return;
+
+        // Publish the batch before hashing; cancellation cleanup only publishes remaining children.
+        Flush();
+        if (m_duplicates.empty()) return;
+        for (CItem* child : m_duplicates) CFileDupeControl::Get()->ProcessDuplicate(child, m_queue);
+        m_duplicates.clear();
+
+        // Time the next batch from the end of hashing so slow hashes do not force single-item batches.
+        m_lastFlush = GetTickCount64();
     }
 
     void Flush()
@@ -914,8 +926,37 @@ bool CItem::HasUncPath() const
     return GetPath().starts_with(L"\\\\");
 }
 
-CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, const ITEMTYPE kind) const
+CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor,
+    const ITEMTYPE kind, ChildNameIndex* childNames) const
 {
+    // Index each visited folder once during a batch, retaining exact names and remote marker kinds.
+    const auto findChild = [&](CItem* parent, const std::wstring_view name,
+        const std::optional<bool> leaf = std::nullopt) -> CItem*
+    {
+        if (parent->IsLeaf()) return nullptr;
+        const auto matches = [&](const CItem* child)
+        {
+            return child->GetNameView() == name && (!leaf || child->IsLeaf() == *leaf);
+        };
+        if (childNames == nullptr)
+        {
+            const auto& children = parent->GetChildren();
+            const auto found = std::ranges::find_if(children, matches);
+            return found == children.end() ? nullptr : *found;
+        }
+
+        auto [folder, inserted] = childNames->try_emplace(parent);
+        if (inserted)
+        {
+            folder->second.reserve(parent->GetChildren().size());
+            for (auto* child : parent->GetChildren()) folder->second.emplace(child->GetNameView(), child);
+        }
+        const auto [first, last] = folder->second.equal_range(name);
+        for (auto it = first; it != last; ++it)
+            if (matches(it->second)) return it->second;
+        return nullptr;
+    };
+
     CItem* root = GetEnumRoot();
     const auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
         std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
@@ -928,23 +969,16 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, 
             const auto [rootAddress, rootOptions] = StorageSource::SplitOptions(item->GetNameView());
             if (!item->IsTypeOrFlag(ITF_REMOTE) || rootOptions != options || !address.starts_with(rootAddress))
                 continue;
-            const auto child = [&item](const std::wstring_view name, const bool leaf) -> CItem*
-            {
-                const auto& children = item->GetChildren();
-                const auto found = std::ranges::find_if(children,
-                    [&](const CItem* entry) { return entry->IsLeaf() == leaf && entry->GetNameView() == name; });
-                return found == children.end() ? nullptr : *found;
-            };
             auto names = address.substr(rootAddress.size());
             for (auto slash = names.find(L'/'); slash != names.npos; slash = names.find(L'/'))
             {
-                CItem* directory = child(names.substr(0, slash), false);
+                CItem* directory = findChild(item, names.substr(0, slash), false);
                 if (directory == nullptr) return findAncestor ? item : nullptr;
                 item = directory;
                 names.remove_prefix(slash + 1);
             }
             if (names.empty() && kind != IT_FILE) return item;
-            CItem* file = kind == IT_DIRECTORY ? nullptr : child(names, true);
+            CItem* file = kind == IT_DIRECTORY ? nullptr : findChild(item, names, true);
             return file != nullptr || !findAncestor ? file : item;
         }
         return nullptr;
@@ -972,11 +1006,9 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor, 
         if (component.empty()) continue;
         if (current->IsLeaf()) return findAncestor ? current : nullptr;
 
-        // Find the matching child using GetNameView for comparison
-        auto it = std::ranges::find_if(current->GetChildren(),
-            [&](const CItem* child) { return child->GetNameView() == component; });
-        if (it == current->GetChildren().end()) return findAncestor ? current : nullptr;
-        current = *it;
+        CItem* child = findChild(current, component);
+        if (child == nullptr) return findAncestor ? current : nullptr;
+        current = child;
     }
 
     return current;
@@ -1348,12 +1380,22 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 continue;
             }
             finderRemote.UseFlatListing(false);
+
+            // Filter filesystem children by the same paths their items report.
+            const std::wstring childPrefix = CFiltering::IsFilterActive() && item->SupportsFilesystemApis() ?
+                item->GetPathWithoutSlash() + L'\\' : std::wstring();
+            const auto childPath = [&]
+            {
+                return childPrefix.empty() ? finder->GetFilePath() :
+                    std::wstring(childPrefix).append(finder->GetFileName());
+            };
+            const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(childPrefix);
             ScanBatch batch(item, queue);
             for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
                 if (queue->IsPauseOrCancelRequested())
                 {
-                    batch.Flush();
+                    batch.FlushIfNeeded(true);
                     queue->WaitIfSuspended();
                 }
                 if (finder->IsDirectory())
@@ -1361,7 +1403,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
                         COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem() ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
-                        CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFilePath()))
+                        CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(childPath()))
                     {
                         continue;
                     }
@@ -1375,21 +1417,20 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
                         COptions::ExcludeDropboxIgnored && finder->HasIgnoredStream() ||
                         CFiltering::IsFilterActive() && CFiltering::IsFilteredOut(finder->GetFileName(),
-                            CFiltering::IncludeDirsRegex.empty() ? std::wstring() : finder->GetFilePath(),
-                            finder->GetFileSizeLogical(), finder->GetLastWriteTime()))
+                            directoryIncluded || CFiltering::IncludeDirsRegex.empty() ? std::wstring() : childPath(),
+                            finder->GetFileSizeLogical(), finder->GetLastWriteTime(), directoryIncluded))
                     {
                         continue;
                     }
 
-                    CItem* newitem = item->AddFile(*finder, batch);
-                    batch.FlushIfNeeded(COptions::ScanForDuplicates);
-                    CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);
+                    item->AddFile(*finder, batch);
                 }
 
                 // Update pacman position
                 batch.FlushIfNeeded(queue->IsPauseOrCancelRequested());
                 queue->WaitIfSuspended();
             }
+            batch.FlushIfNeeded(true);
             if (item->IsTypeOrFlag(ITF_REMOTE))
                 item->UpwardUpdateLastChange(finderRemote.GetDirectoryTime());
 

@@ -54,6 +54,44 @@ function Test-DuplicateContent {
     Assert-Sequence @($after.Hash) @($before.Hash) 'Duplicate scanning preserves every source payload'
 }
 
+function Test-DuplicateBatchBoundaries {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($count in 1, 127, 128, 129, 257) {
+        for ($index = 0; $index -lt $count; ++$index) {
+            New-TestFile (Join-Path $root ('files-{0:d3}\member-{1:d3}.bin' -f $count, $index)) `
+                8193 (77 + $index % 5) | Out-Null
+        }
+    }
+    foreach ($index in 1..7) { New-TestFile (Join-Path $root "unique-$index.bin") 8193 (4000 + $index) | Out-Null }
+    $before = @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path)
+    $groups = @($before | Group-Object Hash | Where-Object Count -GT 1)
+    $expected = @($groups.Group.Path | Sort-Object)
+    $runner = New-TestRunner @{ Options = @{
+        ScanningThreads = $Case.Threads; FileHashAlgorithm = 2; SampleLargeFiles = 0
+    } }
+    foreach ($format in 'csv', 'json') {
+        $rows = Invoke-ScanReport $runner @($root) "batch-boundaries-$format" -Kind Duplicates -Format $format
+        Assert-Sequence @($rows.Name | Sort-Object) $expected `
+            'Full and partial batches retain every matching file across directory and worker boundaries'
+        foreach ($group in $groups) {
+            $members = @($rows | Where-Object Name -In $group.Group.Path)
+            Assert-Equal $members.Count $group.Count 'Each duplicate group contains every independently verified member'
+            $hashes = @($members.'Hash Prefix' | ForEach-Object { $_.ToUpperInvariant() } | Sort-Object -Unique)
+            Assert-Sequence $hashes @($group.Name.Substring(0, 32)) `
+                'Each staged hash agrees with the independently computed SHA-256 digest'
+        }
+    }
+    $rows = Invoke-ScanReport $runner @($root) 'batch-scan-results'
+    Assert-Sequence @((Get-ReportFiles $rows).Name | Sort-Object) @($before.Path | Sort-Object) `
+        'Batch publication includes each duplicate and unique file exactly once'
+    Assert-Equal ([long]$rows[0].'Logical Size') ([long]$before.Count * 8193) `
+        'Batch publication preserves recursive byte totals'
+    Assert-Equal ([long]$rows[0].Folders) 5 'Batch publication preserves every directory'
+    Assert-Sequence @(Get-ChildItem -LiteralPath $root -File -Recurse | Get-FileHash | Sort-Object Path |
+        ForEach-Object Hash) @($before.Hash) 'Duplicate batching preserves every source payload'
+}
+
 function Test-SampledDuplicates {
     param($Context, $Case)
     $root = $Context.Fixture
@@ -88,6 +126,44 @@ function Test-SampledDuplicates {
         'Whole-file matches carry no sampled-match warning'
     Assert-Sequence @(Get-ChildItem -LiteralPath $root -File | Get-FileHash | Sort-Object Path | ForEach-Object Hash) `
         @($hashes.Hash) 'Both duplicate scan modes preserve every payload'
+}
+
+function Test-ReportSerialization {
+    param($Context, $Case)
+    $root = New-TestTree
+    for ($index = 0; $index -lt 1025; ++$index) {
+        $path = Join-Path $root ('unicode-雪-é-😀\branch-{0}\file-{1:d4},日本語.bin' -f ($index % 8), $index)
+        New-TestFile $path ($index + 1) $index | Out-Null
+    }
+    $snapshot = Get-DiskSnapshot $root
+    $fields = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change',
+        'WinDirStat Attributes', 'Index', 'ScanOutcome', 'ScanError')
+    foreach ($owner in 0, 1) {
+        $runner = New-TestRunner @{ FileTreeView = @{ ColumnVisibility = "1,1,1,1,1,1,1,1,1,1,$owner" } }
+        $reports = @{}
+        foreach ($format in 'csv', 'json') {
+            $name = "serialization-$owner-$format"
+            $rows = Invoke-ScanReport $runner @($root) $name -Format $format
+            Assert-ScanSnapshot $rows $snapshot $root -Physical
+            $reports[$format] = $rows
+            $path = Join-Path $Context.Root "$name.$format"
+            $bytes = [IO.File]::ReadAllBytes($path)
+            Assert-True ($bytes.Length -gt 128KB) 'The report exercises multiple buffered writes'
+            $text = [Text.UTF8Encoding]::new($false, $true).GetString($bytes)
+            Assert-True ($text.Contains('雪-é-😀') -and $text.Contains(',日本語.bin')) `
+                'UTF-8 reports preserve Unicode and comma-containing paths'
+            if ($owner) {
+                Assert-Equal @($rows | Where-Object { [string]::IsNullOrEmpty($_.Owner) }).Count 0 `
+                    'Owner columns remain populated throughout a large report'
+            }
+            Invoke-ScanReport $runner @($root) "$name-repeat" -Format $format | Out-Null
+            Assert-Equal (Get-FileHash -LiteralPath (Join-Path $Context.Root "$name-repeat.$format")).Hash `
+                (Get-FileHash -LiteralPath $path).Hash 'Repeated exports preserve every output byte'
+        }
+        $columns = if ($owner) { $fields + 'Owner' } else { $fields }
+        Assert-Sequence (Get-ReportSignature $reports.csv $columns) (Get-ReportSignature $reports.json $columns) `
+            'Large CSV and JSON exports preserve the same metadata, ordering-independent'
+    }
 }
 
 function Test-ReportRoundTrip {
@@ -202,17 +278,21 @@ function Test-MalformedReportType {
     $root = New-TestTree
     $runner = New-TestRunner
     $source = Invoke-ScanReport $runner @($root) 'valid' -Format $Case.Format
-    foreach ($type in '0x30000200', '0x30000204') {
+    foreach ($type in '0x30000200', '0x30000204', '0x30000008', '0x30000010', '0x30000020') {
         $row = $source[0].PSObject.Copy()
         $row.'WinDirStat Attributes' = $type
         $row.Index = '0x0000000000000001'
+        $drive = $source[0].PSObject.Copy()
+        $drive.Name = 'V:\'
+        $drive.'WinDirStat Attributes' = '0x20000002'
+        $rows = @($row, $drive)
         $path = Join-Path $Context.Root "malformed-$type.$($Case.Format)"
         if ($Case.Format -eq 'json') {
-            [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject @($row)))
-        } else { $row | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
+            [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject $rows))
+        } else { $rows | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
         $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
         Assert-True (-not (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled) `
-            'A report cannot create pointer-backed hardlink nodes, including mixed type masks'
+            'A report rejects pointer-backed nodes, mixed types, and children attached to leaf roots'
         Stop-TestApp $app
     }
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)")) `
@@ -280,8 +360,15 @@ foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Va
         Reports 'Full-file duplicate verification across staged hashing' `
         Test-DuplicateContent -Tags Filesystem -Data @{ Algorithm = $algorithm.Value }
 }
+foreach ($mode in @(@{ Name = 'serial'; Threads = 1 }, @{ Name = 'parallel'; Threads = 8 })) {
+    Register-Scenario "reports.duplicates.batch-boundaries.$($mode.Name)" Reports `
+        'Duplicate hashing and scan totals across full and partial publication batches' `
+        Test-DuplicateBatchBoundaries -Tags Filesystem,Race -Data @{ Threads = $mode.Threads }
+}
 Register-Scenario reports.duplicates.sampling Reports 'Sampled matches remain distinguishable from whole-file duplicates' `
     Test-SampledDuplicates -Tags Filesystem
+Register-Scenario reports.serialization Reports 'Large Unicode reports preserve metadata, owners, and output bytes' `
+    Test-ReportSerialization -Tags Filesystem
 foreach ($format in 'csv', 'json') {
     Register-Scenario "reports.roundtrip.$format" Reports `
         'Saved models survive external changes and refresh to current disk state' `

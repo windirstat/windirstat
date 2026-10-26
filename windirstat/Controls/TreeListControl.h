@@ -16,7 +16,7 @@ class CTreeListControl;
 class CItem;
 
 // Forward declaration for LOGICAL_FOCUS enum from MainFrame.h
-enum LOGICAL_FOCUS : uint8_t;
+enum LOGICAL_FOCUS : uint16_t;
 
 //
 // VIEWSTATE. Data needed to display the item.
@@ -97,6 +97,7 @@ public:
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildrenAdded(const CTreeListItem* parent, std::span<CTreeListItem* const> children);
     void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
+    void OnItemsRemoved(const std::unordered_set<const CTreeListItem*>& items);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(const int i) const { return reinterpret_cast<CTreeListItem*>(CWdsListControl::GetItem(i)); }
     bool IsItemSelected(const CTreeListItem* item) const;

@@ -17,6 +17,7 @@ std::vector<std::wregex> CFiltering::ExcludeFilesRegex;
 std::vector<std::wregex> CFiltering::IncludeDirsRegex;
 std::vector<std::wregex> CFiltering::IncludeFilesRegex;
 std::vector<std::wstring> CFiltering::IncludeDirsAnchors;
+bool CFiltering::IncludeDirsMatchDescendants = true;
 ULONGLONG CFiltering::SizeMinimumCalculated = 0;
 FILETIME  CFiltering::MaxAgeFileTimeCutoff  = {};
 bool      CFiltering::FilterActive          = false;
@@ -33,6 +34,11 @@ static bool HasUnescapedTrailingDollar(const std::wstring_view pattern)
         ++slashCount;
     }
     return slashCount % 2 == 0;
+}
+
+static bool IsRemotePattern(const std::wstring_view pattern)
+{
+    return StorageSource::IsPath(pattern) || pattern.starts_with(L'^') && StorageSource::IsPath(pattern.substr(1));
 }
 
 static bool CompareThreshold(const ULONGLONG value, const ULONGLONG threshold, const int comparison)
@@ -133,14 +139,13 @@ std::wregex CFiltering::CompilePattern(const std::wstring& pattern, const bool u
     // users can type V:\Folder without having to escape the path separators.
     const std::wstring normalized = useRegex && pathFilter ? NormalizePathRegex(pattern) : pattern;
 
-    // Directory filters apply to the directory itself and everything below it.
-    const bool remote = StorageSource::IsPath(pattern) ||
-        pattern.starts_with(L'^') && StorageSource::IsPath(std::wstring_view(pattern).substr(1));
+    // Directory filters apply to the directory itself and everything below it, whatever characters names contain.
+    const bool remote = IsRemotePattern(pattern);
     std::wstring expression = useRegex ? normalized : GlobToRegex(normalized, false);
     if (pathFilter)
     {
         if (HasUnescapedTrailingDollar(expression)) expression.pop_back();
-        expression = L"(?:" + expression + (remote ? L")(?:/.*)?" : L")(?:\\\\.*)?");
+        expression = L"(?:" + expression + (remote ? L")(?:/[\\s\\S]*)?" : L")(?:\\\\[\\s\\S]*)?");
     }
     return std::wregex(expression, std::regex_constants::optimize |
         (remote ? std::regex_constants::ECMAScript : std::regex_constants::icase));
@@ -166,6 +171,7 @@ void CFiltering::CompileFilters()
     IncludeDirsRegex.clear();
     IncludeFilesRegex.clear();
     IncludeDirsAnchors.clear();
+    IncludeDirsMatchDescendants = true;
 
     for (const auto& [optionString, optionRegex] : {
         std::pair{COptions::FilteringExcludeDirs.Obj(), std::ref(ExcludeDirsRegex)},
@@ -187,6 +193,14 @@ void CFiltering::CompileFilters()
 
                 if (isIncludeDirs)
                 {
+                    // Remote separators and end or lookahead assertions can depend on the appended filename.
+                    if (COptions::FilteringUseRegex)
+                    {
+                        std::wstring_view expression(token);
+                        if (HasUnescapedTrailingDollar(expression)) expression.remove_suffix(1);
+                        IncludeDirsMatchDescendants &= !IsRemotePattern(expression) && !expression.contains(L'$') &&
+                            !expression.contains(L"(?=") && !expression.contains(L"(?!");
+                    }
                     IncludeDirsAnchors.emplace_back(ExtractIncludeAnchor(COptions::FilteringUseRegex
                         ? NormalizePathRegex(token) : token, COptions::FilteringUseRegex));
                 }
@@ -287,8 +301,17 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName, const bool sca
     });
 }
 
+bool CFiltering::CanReuseDirectoryMatch(const std::wstring_view childPrefix)
+{
+    // Only children filtered by this prefix plus their names can share the directory match.
+    if (childPrefix.empty() || IncludeDirsRegex.empty() || !IncludeDirsMatchDescendants) return false;
+
+    // Appending a separator to the trimmed path preserves word-boundary assertions.
+    return MatchesAnyPath(std::wstring(WithoutTrailingBackslashes(childPrefix)), IncludeDirsRegex);
+}
+
 bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstring& filePath,
-    const ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
+    const ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime, const bool directoryIncluded)
 {
     if (!FilterActive) return false;
 
@@ -314,7 +337,7 @@ bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstr
     }
 
     // Include only files whose path matches the include directory filter
-    if (!IncludeDirsRegex.empty() && !MatchesAnyPath(filePath, IncludeDirsRegex))
+    if (!directoryIncluded && !IncludeDirsRegex.empty() && !MatchesAnyPath(filePath, IncludeDirsRegex))
     {
         return true;
     }

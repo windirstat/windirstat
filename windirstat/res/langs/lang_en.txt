@@ -318,6 +318,7 @@ IDS_PERMS_TYPES=Allow,Deny
 IDS_POLICY_NOREFRESH=No refresh
 IDS_POLICY_REFRESH_ENTRY=Refresh this entry
 IDS_POLICY_REFRESH_PARENT=Refresh this entry's parent
+IDS_PORTABLE=Portable
 IDS_PRIORITY_LEVELS=Low,Normal,High
 IDS_PROBABLE_DUPLICATES=Probable duplicates
 IDS_PROCESS_FAILEDss=Could not create process '{}'.\nError: {}

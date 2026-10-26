@@ -118,7 +118,7 @@ function Test-S3Filtering {
     foreach ($regex in 0, 1) {
         $patterns = @('s3://windirstat-test/unicode', 's3://windirstat-test/unicode/')
         $uri = Get-S3Target -Prefix 'unicode/'
-        if ($regex) { $patterns += @('.*/unicode$', '.*/unicode/$', ([regex]::Escape($uri) + '$')) }
+        if ($regex) { $patterns += @('.*/unicode$', '.*/unicode/$', '.*/unicode(?=$)', ([regex]::Escape($uri) + '$')) }
         else { $patterns += @('s3://*/unicode', 's3://*/unicode/', $uri) }
         $runner = New-S3Runner
         for ($index = 0; $index -lt $patterns.Count; ++$index) {
@@ -148,9 +148,14 @@ function Test-S3Filtering {
     } }
     Assert-Equal @(Get-ReportFiles (Invoke-ScanReport $runner @((Get-S3Target)) 'exclude')).Count 0 `
         'Filename exclusions still apply inside included S3 prefixes'
-    $runner = New-S3Runner @{ DriveSelect = @{ FilteringIncludeDirs = 's3://windirstat-test/same/' } }
-    $rows = Invoke-ScanReport $runner @((Get-S3Target -Prefix 'sa')) 'partial-prefix-filter'
-    Assert-S3Objects $rows 'same/'
+    foreach ($regex in 0, 1) {
+        $path = 's3://windirstat-test/same/'
+        $pattern = if ($regex) { '^' + [regex]::Escape($path) + '$' } else { $path }
+        $runner = New-S3Runner @{ Options = @{ FilteringUseRegex = $regex }
+            DriveSelect = @{ FilteringIncludeDirs = $pattern } }
+        $rows = Invoke-ScanReport $runner @((Get-S3Target -Prefix 'sa')) "partial-prefix-filter-$regex"
+        Assert-S3Objects $rows 'same/'
+    }
 }
 
 function Test-S3SearchRefresh {

@@ -15,7 +15,7 @@ class CItemDupe;
 class CItemTop;
 class CItemSearch;
 class CWinDirStatPane;
-enum LOGICAL_FOCUS : uint8_t;
+enum LOGICAL_FOCUS : uint16_t;
 
 //
 // Data stored for each extension.
