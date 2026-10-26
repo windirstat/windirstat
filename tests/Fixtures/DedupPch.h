@@ -55,6 +55,7 @@ namespace wds
     constexpr std::size_t Ki = 1024;
     constexpr std::size_t Mi = 1024 * Ki;
     constexpr ULONGLONG Gi = 1024ull * Mi;
+    inline constexpr std::wstring_view strSystemVolumeInformation{ L"System Volume Information" };
 }
 
 template <typename T>

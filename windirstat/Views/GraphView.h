@@ -74,9 +74,6 @@ protected:
     static const CItem* GetDisplayItem(const CItem* item);
     static void RenderHighlightRectangle(CDC* pDC, CRect rect, bool hover = false, COLORREF outline = CLR_INVALID);
 
-    // Outline of the items sharing deduplicated data with the selection
-    static constexpr COLORREF RelatedColor = RGB(255, 140, 0);
-
 private:
     void PaintEmptyView(CDC* pDC);
     bool DrawDimmedView(CDC* pDC);

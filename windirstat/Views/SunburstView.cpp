@@ -98,7 +98,7 @@ void CSunburstView::DrawRelated(CDC* pDC)
         m_relatedOutlineItemsValid = true;
     }
 
-    m_sunburst.DrawOutlineItems(pDC, m_relatedOutlineItems, RelatedColor, 1.5f);
+    m_sunburst.DrawOutlineItems(pDC, m_relatedOutlineItems, COptions::TreeMapRelatedColor, 1.5f);
 }
 
 void CSunburstView::DrawHover(CDC* pDC)

@@ -1041,10 +1041,13 @@ const std::unordered_set<const CItem*>& CWinDirStatModel::GetRelatedItems()
 
     m_relatedSource = source;
     m_relatedItems.clear();
+    m_relatedTruncated = false;
     if (source != nullptr && source->IsTypeOrFlag(IT_FILE, IT_DEDUP))
     {
-        constexpr std::size_t limit = 50000;
-        CDedupAccounting::Get().CollectRelated(source, m_relatedItems, limit);
+        // One item past the limit tells a cut-off highlight from one that has exactly the limit
+        CDedupAccounting::Get().CollectRelated(source, m_relatedItems, RelatedLimit + 1);
+        m_relatedTruncated = m_relatedItems.size() > RelatedLimit;
+        if (m_relatedTruncated) m_relatedItems.erase(m_relatedItems.begin());
 
         // Visualizations draw hardlinked files through their index item
         std::vector<const CItem*> indexItems;
@@ -1064,5 +1067,6 @@ void CWinDirStatModel::ClearRelatedItems()
     m_relatedItems.clear();
     m_relatedSource = nullptr;
     m_relatedValid = false;
+    m_relatedTruncated = false;
     m_relatedGeneration++;
 }

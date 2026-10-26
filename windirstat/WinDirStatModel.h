@@ -153,8 +153,10 @@ public:
     void InvalidateSelectionCache() { m_selectionCacheValid = false; m_relatedValid = false; }
 
     // Items sharing deduplicated data with the single selected item (UI thread)
+    static constexpr std::size_t RelatedLimit = 50000;
     const std::unordered_set<const CItem*>& GetRelatedItems();
     std::uint32_t GetRelatedGeneration() const noexcept { return m_relatedGeneration; }
+    bool IsRelatedTruncated() const noexcept { return m_relatedTruncated; }
     void ClearRelatedItems();
     static CTreeListControl* GetFocusControl();
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
@@ -200,6 +202,7 @@ private:
     const CItem* m_relatedSource = nullptr;          // Selection the related items belong to
     std::uint32_t m_relatedGeneration = 0;           // Changes whenever the related items change
     bool m_relatedValid = false;
+    bool m_relatedTruncated = false;                 // Related items stopped at RelatedLimit
 
 public:
     static std::span<const RouteEntry> Routes();

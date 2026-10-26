@@ -334,7 +334,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 const bool isPrimary = !isExtensionRecord && currentRecord < m_baseFileRecords.size();
                 FileRecordBase& baseRecord = isPrimary ? m_baseFileRecords[currentRecord] : localRecord;
                 baseRecord.IsPresent = true;
-                if (isPrimary) baseRecord.SingleLink = fileRecord->LinkCount == 1;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
@@ -355,7 +354,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
 
                         // Deduplicated files keep their $REPARSE_POINT non-resident, so the tag is
-                        // only reachable through the duplicated information of the file name
+                        // only reachable through the duplicated information of the file name. This relies on
+                        // an undocumented layout (Microsoft lists these bytes as reserved): for a reparse point
+                        // the four bytes at PackedEaSize hold its tag. Only the dedup tag is accepted, so a
+                        // misread just leaves a file unrecognized.
                         if ((fn->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 && baseRecord.ReparsePointTag == 0)
                         {
                             ULONG reparseTag;
@@ -367,6 +369,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                                     (fn->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE);
                             }
                         }
+
+                        // The record header's link count also counts a separate 8.3 name, so count the hard links here
+                        if (!fn->IsShortNameRecord() && baseRecord.LinkNames < UCHAR_MAX) ++baseRecord.LinkNames;
 
                         // FileName is not null-terminated so compare by length and characters
                         if (fn->IsShortNameRecord() ||
@@ -494,6 +499,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
             merged.HasWofData |= record.HasWofData;
             merged.HasData |= record.HasData;
             merged.HasStandardInfo |= record.HasStandardInfo;
+            merged.LinkNames = static_cast<UCHAR>(std::min(merged.LinkNames + record.LinkNames, UCHAR_MAX));
             merged.IsPresent = true;
         }
 

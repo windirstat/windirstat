@@ -45,6 +45,7 @@ namespace wds
     inline constexpr auto chrAttributeDedup        = L'D'; /*IO_REPARSE_TAG_DEDUP*/
 
     inline constexpr auto strWinDirStat = L"WinDirStat";
+    inline constexpr std::wstring_view strSystemVolumeInformation{ L"System Volume Information" };
     inline constexpr std::wstring_view strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
     inline constexpr int alphaSize = std::ssize(strAlpha);
 

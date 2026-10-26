@@ -25,7 +25,7 @@ class FinderNtfsContext final
         bool HasData = false;
         bool HasStandardInfo = false;
         bool IsPresent = false;
-        bool SingleLink = false;
+        UCHAR LinkNames = 0; // file names other than separate 8.3 names, so one per hard link
     };
 
     using FileRecordName = struct FileRecordName
@@ -92,6 +92,6 @@ public:
     std::wstring GetFilePath() const override;
     bool IsReserved() const override { return m_index < FinderNtfsContext::NtfsReservedMax; }
     bool HasIgnoredStream() const override { return m_currentRecord->HasIgnoredStream; }
-    bool IsSingleLink() const noexcept override { return m_currentRecord->SingleLink; }
+    bool IsSingleLink() const noexcept override { return m_currentRecord->LinkNames == 1; }
     const ScanResult& GetResult() const noexcept override { return m_result; }
 };

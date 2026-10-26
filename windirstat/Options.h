@@ -285,6 +285,7 @@ public:
     };
     inline static Setting<COLORREF> TreeMapGridColor{ OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor };
     inline static Setting<COLORREF> TreeMapHighlightColor{ OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255) };
+    inline static Setting<COLORREF> TreeMapRelatedColor{ OptionsTreeMap, L"TreeMapRelatedColor", RGB(255, 140, 0) };
     inline static Setting<std::wstring> PermsColorAccount[PERMSRULECOUNT] =
     {
         { OptionsPerms, L"ColorAccount0", L"" },

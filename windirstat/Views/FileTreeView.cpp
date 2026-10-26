@@ -28,10 +28,7 @@ void CFileTreeView::InitializeColumns()
     control.SetSorting(COL_SIZE_PROPORTION, control.GetAscendingDefault(COL_SIZE_PROPORTION));
 
     // The deduplication columns sit next to the size columns unless an order was saved
-    static constexpr std::array<int, 13> order{ COL_NAME, COL_SIZE_PROPORTION, COL_PERCENTAGE, COL_SIZE_PHYSICAL,
-        COL_SIZE_LOGICAL, COL_DEDUP_FREED, COL_DEDUP_SHARED, COL_ITEMS, COL_FILES, COL_FOLDERS, COL_LAST_CHANGE,
-        COL_ATTRIBUTES, COL_OWNER };
-    control.SetColumnOrder(order);
+    control.MoveColumnsAfter(COL_SIZE_LOGICAL, { COL_DEDUP_FREED, COL_DEDUP_SHARED });
     control.OnColumnsInserted(
         { COL_NAME, COL_SIZE_PROPORTION },
         { COL_ITEMS, COL_FOLDERS, COL_ATTRIBUTES, COL_OWNER });
@@ -89,9 +86,7 @@ void CFileTopView::InitializeColumns()
     control.SetSorting(COL_ITEMTOP_SIZE_PHYSICAL, false);
 
     // The deduplication columns sit next to the size columns unless an order was saved
-    static constexpr std::array<int, 6> order{ COL_ITEMTOP_NAME, COL_ITEMTOP_SIZE_PHYSICAL, COL_ITEMTOP_SIZE_LOGICAL,
-        COL_ITEMTOP_DEDUP_FREED, COL_ITEMTOP_DEDUP_SHARED, COL_ITEMTOP_LAST_CHANGE };
-    control.SetColumnOrder(order);
+    control.MoveColumnsAfter(COL_ITEMTOP_SIZE_LOGICAL, { COL_ITEMTOP_DEDUP_FREED, COL_ITEMTOP_DEDUP_SHARED });
     control.OnColumnsInserted();
 }
 

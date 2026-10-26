@@ -186,9 +186,10 @@ void CWinDirStatModel::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
     // Defer to standard update handler for initial value
     OnUpdateCentralHandler(pCmdUI);
 
-    // Deduplicated volumes keep their data compressed in the chunk store
+    // Compressing on a volume with Data Deduplication would recall optimized files in full and
+    // could reach its chunk store, so it stays unavailable there; other volumes are unaffected
     if (std::ranges::any_of(GetSelectedItemsView(), [](const CItem* item)
-        { return CDedupAccounting::Get().BlocksCompression(item); }))
+        { return CDedupAccounting::Get().IsDedupVolume(item); }))
     {
         pCmdUI->Enable(false);
         return;

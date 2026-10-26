@@ -192,7 +192,7 @@ void CFlameGraphView::DrawRelated(CDC* pdc)
     m_flameGraph.VisitItemsIntersecting(rcClip, CPoint(0, -m_scrollPos),
         [&](const CItem* item, const CRect& itemRectangle)
     {
-        if (related.contains(item)) RenderHighlightRectangle(pdc, itemRectangle, false, RelatedColor);
+        if (related.contains(item)) RenderHighlightRectangle(pdc, itemRectangle, false, COptions::TreeMapRelatedColor);
     });
 }
 

@@ -306,7 +306,7 @@ void CWdsListControl::OnColumnsInserted(
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
     ModifyStyle(0, LVS_OWNERDATA);
-    LoadPersistentAttributes();
+    LoadPersistentAttributes(previousSize);
     for (const int column : std::views::iota(0, m_columnCount))
     {
         ApplyColumnVisibility(column);
@@ -661,25 +661,55 @@ int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem, CDC*
 /////////////////////////////////////////////////////////////////////////////
 // Sorting functionality (merged from CSortingListControl)
 
-void CWdsListControl::LoadPersistentAttributes()
+// Places columns appended at the end next to an earlier one in the default order
+void CWdsListControl::MoveColumnsAfter(const int anchor, const std::initializer_list<int> columns)
+{
+    std::vector<int> order(GetHeader().GetItemCount());
+    GetColumnOrder(order);
+    std::erase_if(order, [&](const int column) { return std::ranges::contains(columns, column); });
+    order.insert(std::ranges::find(order, anchor) + 1, columns);
+    SetColumnOrder(order);
+}
+
+void CWdsListControl::LoadPersistentAttributes(const size_t savedCount)
 {
     // Fetch cast column count to avoid signed comparison warnings
     const auto columnCount = static_cast<size_t>(m_columnCount);
 
+    // The saved visibility has an entry for each column the layout was saved with,
+    // so a layout of that size only lacks the columns appended since
+    const bool columnsAppended = savedCount < columnCount;
+
     // Load default column order values from resource
     if (m_columnOrder->size() != columnCount)
     {
-        m_columnOrder->resize(columnCount);
-        GetColumnOrder(*m_columnOrder);
+        std::vector<int> defaultOrder(columnCount);
+        GetColumnOrder(defaultOrder);
+
+        // Keep the saved order and put appended columns at their default position
+        const int savedColumns = static_cast<int>(savedCount);
+        if (columnsAppended && m_columnOrder->size() == savedCount &&
+            std::ranges::is_permutation(*m_columnOrder, std::views::iota(0, savedColumns)))
+        {
+            for (const auto [i, column] : std::views::enumerate(defaultOrder))
+            {
+                if (column >= savedColumns) m_columnOrder->insert(m_columnOrder->begin() + i, column);
+            }
+        }
+        else
+        {
+            *m_columnOrder = std::move(defaultOrder);
+        }
     }
 
     // Load default column width values from resource
     if (m_columnWidths->size() != columnCount)
     {
-        m_columnWidths->resize(columnCount, 0);
-        for (const auto [i, width] : std::views::enumerate(*m_columnWidths))
+        // Keep the saved widths and add defaults for appended columns
+        if (!columnsAppended || m_columnWidths->size() != savedCount) m_columnWidths->clear();
+        for (const int column : std::views::iota(static_cast<int>(m_columnWidths->size()), m_columnCount))
         {
-            width = GetColumnWidth(static_cast<int>(i));
+            m_columnWidths->push_back(GetColumnWidth(column));
         }
     }
 

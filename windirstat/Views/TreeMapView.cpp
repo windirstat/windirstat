@@ -139,7 +139,7 @@ void CTreeMapView::DrawRelated(CDC* pdc)
         m_relatedRectsValid = true;
     }
 
-    for (const CRect& rc : m_relatedRects) RenderHighlightRectangle(pdc, rc, false, RelatedColor);
+    for (const CRect& rc : m_relatedRects) RenderHighlightRectangle(pdc, rc, false, COptions::TreeMapRelatedColor);
 }
 
 // Draws the highlight rectangle of item. If single, the rectangle is slightly

@@ -795,23 +795,15 @@ bool CDedupAccounting::IsDedupVolume(const CItem* item)
         std::shared_lock lock(m_lock);
         if (const auto found = m_storeProbes.find(root); found != m_storeProbes.end()) return found->second;
     }
+    // Only a volume with Data Deduplication has its folder in System Volume Information. Without administrator
+    // rights the folder cannot be opened, but the access error still shows that it exists.
     const auto path = GetVolumePath(root);
-    const bool hasStore = !path.empty() && !CDedupStore::FindStore(path).empty();
+    const std::wstring folder = path + std::wstring(wds::strSystemVolumeInformation) + L"\\Dedup";
+    const bool hasDedupFolder = !path.empty() &&
+        (GetFileAttributesW(folder.c_str()) != INVALID_FILE_ATTRIBUTES || GetLastError() == ERROR_ACCESS_DENIED);
     std::unique_lock lock(m_lock);
-    m_storeProbes[root] = hasStore;
-    return hasStore;
-}
-
-bool CDedupAccounting::BlocksCompression(const CItem* item)
-{
-    if (item->IsTypeOrFlag(IT_FILE))
-    {
-        if (item->IsTypeOrFlag(ITRP_DEDUP)) return true;
-        const std::wstring path = item->GetPath();
-        return FindStringOrdinal(FIND_FROMSTART, path.c_str(), static_cast<int>(path.size()),
-            L"\\System Volume Information\\", -1, TRUE) >= 0 && IsDedupVolume(item);
-    }
-    return item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE) && IsDedupVolume(item);
+    m_storeProbes[root] = hasDedupFolder;
+    return hasDedupFolder;
 }
 
 std::vector<std::wstring> CDedupAccounting::TakeFailures()

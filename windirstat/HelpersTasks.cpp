@@ -521,21 +521,6 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     USHORT numericAlgorithm = static_cast<USHORT>(algorithm) & ~FILE_PROVIDER_COMPRESSION_MODERN;
     const bool modernAlgorithm = static_cast<USHORT>(algorithm) != numericAlgorithm;
 
-    // Never compress volume metadata (the dedup chunk store) or a deduplicated file
-    if (FindStringOrdinal(FIND_FROMSTART, filePath.c_str(), static_cast<int>(filePath.size()),
-        L"\\System Volume Information", -1, TRUE) >= 0) return false;
-    if (const DWORD attributes = GetFileAttributes(filePath.c_str());
-        attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0)
-    {
-        const SmartPointer probe(CloseHandle, CreateFile(filePath.c_str(), FILE_READ_ATTRIBUTES,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
-        FILE_ATTRIBUTE_TAG_INFO tag{};
-        if (probe == INVALID_HANDLE_VALUE ||
-            !GetFileInformationByHandleEx(probe, FileAttributeTagInfo, &tag, sizeof(tag)) ||
-            tag.ReparseTag == IO_REPARSE_TAG_DEDUP) return false;
-    }
-
     const SmartPointer handle(CloseHandle, CreateFile(filePath.c_str(),
         GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     if (handle == INVALID_HANDLE_VALUE)

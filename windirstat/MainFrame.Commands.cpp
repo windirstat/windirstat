@@ -357,6 +357,17 @@ void CMainFrame::UpdatePaneText()
                 // If single item selected, show full path
                 const auto path = items.front()->GetPath();
                 if (!path.empty()) fileSelectionText = path;
+
+                // Say when not every file sharing its deduplicated data is highlighted;
+                // the visualization draws that highlight only for these focuses
+                const auto model = CWinDirStatModel::Get();
+                constexpr auto relatedFocus = LF_FILETREE | LF_DUPELIST | LF_TOPLIST | LF_SEARCHLIST | LF_DEDUPSHARELIST;
+                if (IsVisualizationShown() && (focus & relatedFocus) != 0 &&
+                    !model->GetRelatedItems().empty() && model->IsRelatedTruncated())
+                {
+                    fileSelectionText += L" | " + Localization::Format(IDS_DEDUP_RELATED_LIMIT,
+                        FormatCount(CWinDirStatModel::RelatedLimit));
+                }
             }
             else if (items.size() > 1)
             {

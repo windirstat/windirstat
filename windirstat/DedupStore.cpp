@@ -198,7 +198,7 @@ std::wstring CDedupStore::FindStore(const std::wstring& volumeRoot)
     if (root.empty()) return {};
     if (root.back() != L'\\') root += L'\\';
 
-    const std::wstring chunkStore = root + L"System Volume Information\\Dedup\\ChunkStore";
+    const std::wstring chunkStore = root + std::wstring(wds::strSystemVolumeInformation) + L"\\Dedup\\ChunkStore";
     std::wstring found;
     EnumerateDirectory(chunkStore, [&](const std::wstring_view name, const DWORD attributes, ULONGLONG)
     {
