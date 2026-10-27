@@ -1120,6 +1120,76 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     // Volume details do not change during one refresh, so the lookups below share them per volume
     std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
+    const auto volumeContext = [&](const CItem* item)
+    {
+        const CItem* volumeRoot = item->GetVolumeRoot();
+        return &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second;
+    };
+
+    // Listing a folder once is cheaper than looking up many of its items one by one, but only when enough of
+    // them are refreshed; the listing then keeps only the names of those items, not the whole folder
+    constexpr size_t listingRatio = 20;
+    struct FolderCheck
+    {
+        std::unordered_set<std::wstring> wanted, foldedWanted, found, foldedFound;
+        bool listed = false, complete = false;
+    };
+    const auto fold = [](const std::wstring_view name) -> std::optional<std::wstring>
+    {
+        std::wstring folded(name);
+        if (LCMapStringEx(LOCALE_NAME_INVARIANT, LCMAP_UPPERCASE, name.data(), static_cast<int>(name.size()),
+            folded.data(), static_cast<int>(folded.size()), nullptr, nullptr, 0) == 0) return std::nullopt;
+        return folded;
+    };
+    std::unordered_map<const CItem*, FolderCheck> folderChecks;
+    for (CItem* item : items)
+    {
+        const CItem* parent = item->GetParent();
+        if (!doneItems.contains(item) || parent == nullptr || parent->IsTypeOrFlag(IT_MYCOMPUTER) ||
+            !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || item->IsTypeOrFlag(ITF_REMOTE, ITF_MTP)) continue;
+        FolderCheck& check = folderChecks[parent];
+        check.wanted.emplace(item->GetNameView());
+        if (const auto folded = fold(item->GetNameView())) check.foldedWanted.emplace(*folded);
+    }
+    std::erase_if(folderChecks, [&](const auto& entry)
+    {
+        return entry.second.wanted.size() * listingRatio < entry.first->GetChildren().size();
+    });
+    const auto existsOnDisk = [&](const CItem* item)
+    {
+        if (const auto check = folderChecks.find(item->GetParent()); check != folderChecks.end())
+        {
+            FolderCheck& folder = check->second;
+            if (!folder.listed)
+            {
+                folder.listed = true;
+
+                // The model may show far fewer entries than the disk holds, so the listing stops where single
+                // lookups would have been cheaper; an entry that cannot be folded leaves the listing incomplete
+                const size_t limit = folder.wanted.size() * listingRatio;
+                size_t entries = 0;
+                bool foldable = true;
+                FinderBasic finder(volumeContext(item));
+                bool found = finder.FindFile(check->first->GetPath());
+                for (; found && entries < limit; found = finder.FindNext(), ++entries)
+                {
+                    if (const std::wstring name(finder.GetFileName()); folder.wanted.contains(name)) folder.found.insert(name);
+                    if (const auto folded = fold(finder.GetFileName()); !folded) foldable = false;
+                    else if (folder.foldedWanted.contains(*folded)) folder.foldedFound.insert(*folded);
+                }
+                folder.complete = !found && foldable && finder.GetResult().outcome == ScanOutcome::Complete;
+            }
+
+            // A name that only differs in case is left to the single lookup below
+            const auto folded = fold(item->GetNameView());
+            if (folder.complete && folder.found.contains(std::wstring(item->GetNameView()))) return true;
+            if (folder.complete && folded && !folder.foldedFound.contains(*folded)) return false;
+        }
+
+        // Retain inaccessible filesystem items so enumeration can report their failure.
+        FinderBasic finder(true, volumeContext(item));
+        return finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
+    };
     for (auto item : std::vector(items))
     {
         // Record current visual arrangement to reapply afterward
@@ -1151,14 +1221,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         bool exists = true;
         if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE))
         {
-            // Retain inaccessible filesystem items so enumeration can report their failure.
             if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
-            else
-            {
-                const CItem* volumeRoot = item->GetVolumeRoot();
-                FinderBasic finder(true, &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second);
-                exists = finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
-            }
+            else exists = existsOnDisk(item);
         }
         if (CFiltering::IsFilteredOut(item) || !exists)
         {
