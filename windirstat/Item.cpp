@@ -336,6 +336,35 @@ void CItem::RemoveChild(CItem* child) const
     else remove();
 }
 
+void CItem::RemoveChildren(const std::unordered_set<CItem*>& children)
+{
+    if (children.empty()) return;
+
+    const auto remove = [&children]
+    {
+        // Drop all shown rows in one pass; removing child by child preserves and
+        // restores the whole selection once for every removed row
+        std::unordered_set<const CTreeListItem*> rows;
+        std::unordered_map<const CItem*, std::unordered_set<const CItem*>> byParent;
+        for (CItem* child : children)
+        {
+            assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || child->GetParentDrive() == nullptr ||
+                child->FindHardlinksItem() == nullptr);
+            if (child->GetParent()->IsVisible()) rows.insert(child);
+            byParent[child->GetParent()].insert(child);
+        }
+        if (!rows.empty()) CFileTreeControl::Get()->OnItemsRemoved(rows);
+
+        for (const auto& [parent, removed] : byParent)
+        {
+            std::erase_if(parent->GetFolderInfo()->m_children, [&](const CItem* child) { return removed.contains(child); });
+        }
+        for (const CItem* child : children) delete child;
+    };
+    if (CMainFrame::Get() != nullptr) CMainFrame::Get()->InvokeInMessageThread(remove);
+    else remove();
+}
+
 void CItem::RemoveAllChildren() const
 {
     assert(!IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
@@ -707,9 +736,16 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 
 void CItem::UpwardRecalcLastChange()
 {
-    // ignore current object in recalculation
-    for (auto p = GetParent(); p != nullptr; p = p->GetParent())
+    // recalculate this folder from its remaining children, then its ancestors;
+    // a folder left without children only has its own timestamp on disk
+    for (auto p = this; p != nullptr; p = p->GetParent())
     {
+        if (p->GetChildren().empty())
+        {
+            if (FinderBasic finder(true); p->SupportsFilesystemApis() && finder.FindFile(p->GetPath()))
+                p->SetLastChange(finder.GetLastWriteTime());
+            continue;
+        }
         const auto newMax = (std::ranges::max)(
             p->GetChildren() | std::views::transform(&CItem::GetLastChange));
 

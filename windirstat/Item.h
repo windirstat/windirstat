@@ -158,6 +158,7 @@ public:
     bool HasShellIdentity() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child) const;
+    static void RemoveChildren(const std::unordered_set<CItem*>& children);
     void RemoveAllChildren() const;
 
     // Size & Statistics
