@@ -15,6 +15,7 @@ class COptions;
 constexpr size_t USERDEFINEDCLEANUPACCELERATORCOUNT = 10;
 constexpr auto TREELISTCOLORCOUNT = 8;
 constexpr auto PERMSRULECOUNT = 5;
+inline const int MAX_SCANNING_THREADS = std::max(16, static_cast<int>(std::thread::hardware_concurrency()));
 
 enum REFRESHPOLICY : std::uint8_t
 {
@@ -310,9 +311,8 @@ public:
     inline static Setting<int> LargeFileCount{ OptionsGeneral, L"LargeFileCount",
         50, 0, 10000, IntegerBind(IDC_LARGEST_FILE_COUNT) };
     inline static Setting<int> MinimizeViewThreshold{ OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000 };
-    inline static const int MaxScanningThreads = std::max(16, static_cast<int>(std::thread::hardware_concurrency()));
     inline static Setting<int> ScanningThreads{ OptionsGeneral,
-        L"ScanningThreads", 4, 1, MaxScanningThreads, SelectionBind(IDC_COMBO_THREADS, 1) };
+        L"ScanningThreads", 4, 1, MAX_SCANNING_THREADS, SelectionBind(IDC_COMBO_THREADS, 1) };
     inline static Setting<int> SelectCloudProvider{ OptionsDriveSelect, L"SelectCloudProvider", 0, 0, 2 };
     inline static Setting<int> SelectDrivesRadio{ OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2 };
     inline static Setting<int> SizeProportionIndent{ OptionsFileTree, L"SizeProportionIndent", 16, 0, 1000 };
