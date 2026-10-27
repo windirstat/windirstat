@@ -106,8 +106,8 @@ public static class TestDesktop
     [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(POINT point);
     [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint thread, uint other, bool attach);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
-    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
-    [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool GetCursorPos(out POINT point);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll", SetLastError = true)] private static extern uint SendInput(uint count,
         INPUT[] inputs, int size);
     [DllImport("user32.dll")] public static extern IntPtr SetCapture(IntPtr window);
@@ -170,7 +170,15 @@ public static class TestDesktop
             throw new Win32Exception(Marshal.GetLastWin32Error());
     }
 
-    public static void MoveCursor(int x, int y) => SetCursorPos(x, y);
+    public static void MoveCursor(int x, int y)
+    {
+        // A cursor that is clipped or moved by hand cannot be placed; say so instead of failing later elsewhere
+        if (!SetCursorPos(x, y)) throw new Win32Exception(Marshal.GetLastWin32Error());
+        int[] actual = CursorPosition();
+        if (actual[0] != x || actual[1] != y)
+            throw new InvalidOperationException("The real cursor did not reach " + x + "," + y + ", it is at " +
+                actual[0] + "," + actual[1] + ".");
+    }
 
     public static IntPtr TransferCapture(IntPtr currentOwner, IntPtr window)
     {
@@ -187,7 +195,7 @@ public static class TestDesktop
     public static void ParkCursor(IntPtr window)
     {
         int[] rect = Rectangle(window);
-        SetCursorPos(rect[0] + 20, rect[1] + 10);
+        MoveCursor(rect[0] + 20, rect[1] + 10);
     }
 
     public static bool HasInputDesktop()
