@@ -1044,6 +1044,32 @@ bool CDedupAccounting::IsDedupVolume(const CItem* item)
     return hasDedupFolder;
 }
 
+bool CDedupAccounting::IsInSystemVolumeInformation(const CItem* item)
+{
+    // The folder lies directly below the root of its volume, which the tree marks as a boundary, also behind a
+    // followed mount point or junction. A folder scan root can itself lie in the folder, so its path is checked too.
+    const std::wstring_view name = wds::strSystemVolumeInformation;
+    const auto startsWithFolder = [name](const std::wstring_view path)
+    {
+        return path.size() >= name.size() && (path.size() == name.size() || path[name.size()] == L'\\') &&
+            CompareStringOrdinal(path.data(), static_cast<int>(name.size()), name.data(), static_cast<int>(name.size()), TRUE) == CSTR_EQUAL;
+    };
+    const CItem* below = item;
+    const CItem* boundary = item->GetParent();
+    while (boundary != nullptr && !IsVolumeBoundary(boundary)) below = std::exchange(boundary, boundary->GetParent());
+    if (boundary == nullptr) return false;
+    if (startsWithFolder(below->GetNameView())) return true;
+    if (!boundary->IsScanRoot() || boundary->IsTypeOrFlag(IT_DRIVE, ITRP_MOUNT, ITRP_JUNCTION, ITRP_SYMLINK)) return false;
+
+    const std::wstring path = boundary->GetPath();
+    std::wstring volume(MAX_PATH, L'\0');
+    if (FindStringOrdinal(FIND_FROMSTART, path.c_str(), static_cast<int>(path.size()), name.data(), static_cast<int>(name.size()),
+        TRUE) < 0 || !GetVolumePathNameW(path.c_str(), volume.data(), static_cast<DWORD>(volume.size()))) return false;
+    const std::wstring_view root(volume.c_str());
+    return path.size() > root.size() && CompareStringOrdinal(path.c_str(), static_cast<int>(root.size()), root.data(),
+        static_cast<int>(root.size()), TRUE) == CSTR_EQUAL && startsWithFolder(std::wstring_view(path).substr(root.size()));
+}
+
 std::vector<std::wstring> CDedupAccounting::TakeFailures()
 {
     std::unique_lock lock(m_lock);

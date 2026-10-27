@@ -7,10 +7,11 @@ Enhancements
 - Added a Shared Blocks tab listing the files that share deduplicated data with a selection
 - Added highlighting of files sharing deduplicated data with the selected file in the visualizations, in a configurable color
 - Added progress while reading deduplication data
-- Changed compression to be unavailable on Data Deduplication volumes, where it would recall optimized files
+- Added a confirmation before compressing on Data Deduplication volumes that leaves optimized files and the chunk store alone
 
 Bug Fixes
 - Corrected saved list column widths and order being reset when a new version adds columns
+- Corrected the Russian and Ukrainian names of Sparsify File, which read as Compress File
 
 <a name="windirstat-2.9.3"></a>
 # WinDirStat 2.9.3

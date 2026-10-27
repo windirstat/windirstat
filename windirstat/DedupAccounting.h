@@ -59,6 +59,7 @@ public:
     bool HasData() const;
     bool HasSharingIndex(const CItem* item) const;
     bool IsDedupVolume(const CItem* item);
+    static bool IsInSystemVolumeInformation(const CItem* item);
     SharingResult QuerySharing(const std::vector<CItem*>& items) const;
     void CollectRelated(const CItem* item, std::unordered_set<const CItem*>& related, std::size_t limit) const;
     std::vector<std::wstring> TakeFailures();
