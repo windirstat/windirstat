@@ -1117,6 +1117,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange();
         recalcParents.clear();
     };
+
+    // Volume details do not change during one refresh, so the lookups below share them per volume
+    std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
     for (auto item : std::vector(items))
     {
         // Record current visual arrangement to reapply afterward
@@ -1152,7 +1155,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
             else
             {
-                FinderBasic finder(true);
+                const CItem* volumeRoot = item->GetVolumeRoot();
+                FinderBasic finder(true, &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second);
                 exists = finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
             }
         }
