@@ -1101,6 +1101,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
 
+    // Volume details do not change during one refresh, so the lookups below share them per volume
+    std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
+    const auto volumeContext = [&](const CItem* item)
+    {
+        const CItem* volumeRoot = item->GetVolumeRoot();
+        return &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second;
+    };
+
     // Vanished items are detached together; detaching them one by one
     // sends every removal through the whole file tree view
     std::unordered_set<CItem*> vanished;
@@ -1114,16 +1122,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Recalculate each affected folder once after the vanished items are gone;
         // recalculating per item scans all siblings again for every item
-        for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange();
+        for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange(volumeContext);
         recalcParents.clear();
-    };
-
-    // Volume details do not change during one refresh, so the lookups below share them per volume
-    std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
-    const auto volumeContext = [&](const CItem* item)
-    {
-        const CItem* volumeRoot = item->GetVolumeRoot();
-        return &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second;
     };
 
     // Listing a folder once is cheaper than looking up many of its items one by one, but only when enough of

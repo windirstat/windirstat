@@ -203,7 +203,7 @@ public:
     void SetReparseTag(DWORD reparseType) noexcept;
     std::wstring GetOwner(bool force = false) const;
     void UpwardUpdateLastChange(const FILETIME& t) noexcept;
-    void UpwardRecalcLastChange();
+    void UpwardRecalcLastChange(const std::function<FinderBasicContext*(const CItem*)>& volumeContext);
 
     // Paths & Names
     std::wstring GetName(bool stripDrivePrefix = false) const noexcept;

@@ -734,23 +734,27 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
     }
 }
 
-void CItem::UpwardRecalcLastChange()
+void CItem::UpwardRecalcLastChange(const std::function<FinderBasicContext*(const CItem*)>& volumeContext)
 {
-    // recalculate this folder from its remaining children, then its ancestors;
-    // a folder left without children only has its own timestamp on disk
+    // recalculate this folder from its own timestamp on disk and its remaining children, then its ancestors;
+    // removing an entry changes the timestamp of the folder that held it, as a new scan would show
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (p->GetChildren().empty())
+        std::optional<FILETIME> newMax;
+        if (p->SupportsFilesystemApis())
         {
-            if (FinderBasic finder(true); p->SupportsFilesystemApis() && finder.FindFile(p->GetPath()))
-                p->SetLastChange(finder.GetLastWriteTime());
-            continue;
+            if (FinderBasic finder(true, volumeContext(p)); finder.FindFile(p->GetPath())) newMax = finder.GetLastWriteTime();
         }
-        const auto newMax = (std::ranges::max)(
-            p->GetChildren() | std::views::transform(&CItem::GetLastChange));
+        if (!p->GetChildren().empty())
+        {
+            const auto childMax = (std::ranges::max)(
+                p->GetChildren() | std::views::transform(&CItem::GetLastChange));
+            if (!newMax || *newMax < childMax) newMax = childMax;
+        }
+        if (!newMax) continue;
 
-        if (p->GetLastChange() == newMax) break;
-        p->SetLastChange(newMax);
+        if (p->GetLastChange() == *newMax) break;
+        p->SetLastChange(*newMax);
     }
 }
 
