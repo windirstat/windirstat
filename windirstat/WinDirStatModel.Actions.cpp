@@ -1271,13 +1271,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
         }
 
-        // Create status progress bar once; no worker runs yet, so updating it
-        // per queued item would only wait for the message thread every time
-        if (!m_queues.empty()) CMainFrame::Get()->InvokeInMessageThread([]
-        {
-            CMainFrame::Get()->UpdateProgress();
-        });
-
         // Create subordinate threads if there is work to do
         std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
         std::unordered_map<std::wstring, FinderBasicContext> queueContextBasic;
