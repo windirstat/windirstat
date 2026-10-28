@@ -1064,7 +1064,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         items = items.front()->GetChildren();
     }
 
-    const auto selectedItems = GetAllSelected();
+    const std::unordered_set<CItem*> selectedItems(std::from_range, GetAllSelected());
     std::unordered_set<CItem*> doneItems;
     for (auto* item : items)
         if (item->IsDone()) doneItems.insert(item);
@@ -1099,13 +1099,79 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
-    std::unordered_set<CItem*> timestampParents;
+
+    // Volume details do not change during one refresh, so the lookups below share them per volume
+    std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
+    const auto volumeContext = [&](const CItem* item)
+    {
+        const CItem* volumeRoot = item->GetVolumeRoot();
+        return &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second;
+    };
+
+    // Listing a folder once is cheaper than looking up many of its refreshed items one by one; each listing maps
+    // the upper-cased names of those items to the first name on disk that upper-cases the same
+    constexpr size_t listingRatio = 20;
+    const auto fold = [](const std::wstring_view name)
+    {
+        std::wstring folded(name);
+        if (LCMapStringEx(LOCALE_NAME_INVARIANT, LCMAP_UPPERCASE, name.data(), static_cast<int>(name.size()),
+            folded.data(), static_cast<int>(folded.size()), nullptr, nullptr, 0) == 0) folded.clear();
+        return folded;
+    };
+    std::unordered_map<const CItem*, std::unordered_map<std::wstring, std::wstring>> listings;
+    for (CItem* item : items)
+    {
+        const CItem* parent = item->GetParent();
+        if (!doneItems.contains(item) || parent == nullptr || parent->IsTypeOrFlag(IT_MYCOMPUTER) ||
+            !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || item->IsTypeOrFlag(ITF_REMOTE, ITF_MTP)) continue;
+        if (std::wstring folded = fold(item->GetNameView()); !folded.empty())
+            listings[parent].try_emplace(std::move(folded));
+    }
+    std::erase_if(listings, [&](auto& listing)
+    {
+        // The disk may hold far more entries than the model shows, so a listing stops where single lookups
+        // would have been cheaper; an incomplete listing leaves its items to the single lookups
+        auto& [parent, names] = listing;
+        const size_t limit = names.size() * listingRatio;
+        if (limit < parent->GetChildren().size()) return true;
+
+        FinderBasic finder(volumeContext(parent));
+        bool found = finder.FindFile(parent->GetPath());
+        for (size_t entries = 0; found && entries < limit; found = finder.FindNext(), ++entries)
+        {
+            const std::wstring folded = fold(finder.GetFileName());
+            if (folded.empty()) return true;
+            if (const auto name = names.find(folded); name != names.end() && name->second.empty())
+                name->second = finder.GetFileName();
+        }
+        return found || finder.GetResult().outcome != ScanOutcome::Complete;
+    });
+    const auto existsOnDisk = [&](const CItem* item)
+    {
+        // A listing settles exact and missing names; a name found only in another case is looked up below
+        if (const auto listing = listings.find(item->GetParent()); listing != listings.end())
+        {
+            if (const auto name = listing->second.find(fold(item->GetNameView())); name != listing->second.end())
+            {
+                if (name->second == item->GetNameView()) return true;
+                if (name->second.empty()) return false;
+            }
+        }
+
+        // Retain inaccessible filesystem items so enumeration can report their failure.
+        FinderBasic finder(true, volumeContext(item));
+        return finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
+    };
+
+    // Vanished items are detached together after the loop
+    std::unordered_set<CItem*> vanished;
+    std::unordered_set<CItem*> recalcParents;
     for (auto item : std::vector(items))
     {
         // Record current visual arrangement to reapply afterward
         if (item->IsVisible())
         {
-            visualInfo[item].isSelected = std::ranges::contains(selectedItems, item);
+            visualInfo[item].isSelected = selectedItems.contains(item);
             visualInfo[item].wasExpanded = item->IsExpanded();
         }
 
@@ -1114,10 +1180,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Remove item from tree
         item->ExtensionDataProcessChildren(true);
-
-        // Recalculate each parent's timestamp once until its children change.
-        if (timestampParents.insert(item->GetParent()).second) item->UpwardRecalcLastChange();
-
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
         item->UpwardSubtractFiles(item->GetFilesCount());
@@ -1134,19 +1196,11 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         bool exists = true;
         if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE))
         {
-            // Retain inaccessible filesystem items so enumeration can report their failure.
             if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
-            else
-            {
-                FinderBasic finder(true);
-                exists = finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
-            }
+            else exists = existsOnDisk(item);
         }
         if (CFiltering::IsFilteredOut(item) || !exists)
         {
-            // Remove item from list so we do not rescan it
-            std::erase(items, item);
-
             if (item->IsRootItem())
             {
                 Get()->UnlinkRoot();
@@ -1164,10 +1218,17 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 parent->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
                 parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             }
-            parent->RemoveChild(item);
-            timestampParents.erase(parent);
+            visualInfo.erase(item);
+            vanished.insert(item);
+            recalcParents.insert(parent);
         }
     }
+
+    // Remove vanished items from the list so we do not rescan them, then recalculate
+    // each affected folder once after they are gone
+    std::erase_if(items, [&](CItem* item) { return vanished.contains(item); });
+    CItem::RemoveChildren(vanished);
+    for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange(volumeContext);
     InvalidateSelectionCache();
 
     // Refresh filter cutoffs immediately before scanning in case settings
@@ -1201,12 +1262,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
             item->UpwardAddReadJobs(1);
             item->UpwardSetUndone();
-
-            // Create status progress bar
-            CMainFrame::Get()->InvokeInMessageThread([]
-            {
-                CMainFrame::Get()->UpdateProgress();
-            });
 
             // Share a bounded worker pool for folder roots while keeping volume metadata separate.
             const CItem* volumeRoot = item->GetVolumeRoot();

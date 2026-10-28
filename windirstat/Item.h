@@ -158,6 +158,7 @@ public:
     bool HasShellIdentity() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child) const;
+    static void RemoveChildren(const std::unordered_set<CItem*>& children);
     void RemoveAllChildren() const;
 
     // Size & Statistics
@@ -202,7 +203,7 @@ public:
     void SetReparseTag(DWORD reparseType) noexcept;
     std::wstring GetOwner(bool force = false) const;
     void UpwardUpdateLastChange(const FILETIME& t) noexcept;
-    void UpwardRecalcLastChange();
+    void UpwardRecalcLastChange(const std::function<FinderBasicContext*(const CItem*)>& volumeContext);
 
     // Paths & Names
     std::wstring GetName(bool stripDrivePrefix = false) const noexcept;

@@ -336,6 +336,32 @@ void CItem::RemoveChild(CItem* child) const
     else remove();
 }
 
+void CItem::RemoveChildren(const std::unordered_set<CItem*>& children)
+{
+    if (children.empty()) return;
+
+    const auto remove = [&children]
+    {
+        // Detach all shown rows in one pass and compact each parent once
+        std::unordered_set<const CTreeListItem*> rows;
+        std::unordered_set<CItem*> parents;
+        for (CItem* child : children)
+        {
+            assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || child->GetParentDrive() == nullptr ||
+                child->FindHardlinksItem() == nullptr);
+            if (child->GetParent()->IsVisible()) rows.insert(child);
+            parents.insert(child->GetParent());
+        }
+        if (!rows.empty()) CFileTreeControl::Get()->OnItemsRemoved(rows);
+
+        for (CItem* parent : parents)
+            std::erase_if(parent->GetFolderInfo()->m_children, [&](CItem* child) { return children.contains(child); });
+        for (const CItem* child : children) delete child;
+    };
+    if (CMainFrame::Get() != nullptr) CMainFrame::Get()->InvokeInMessageThread(remove);
+    else remove();
+}
+
 void CItem::RemoveAllChildren() const
 {
     assert(!IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
@@ -705,14 +731,30 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
     }
 }
 
-void CItem::UpwardRecalcLastChange()
+void CItem::UpwardRecalcLastChange(const std::function<FinderBasicContext*(const CItem*)>& volumeContext)
 {
-    // ignore current object in recalculation
-    for (auto p = GetParent(); p != nullptr; p = p->GetParent())
+    // recalculate this folder and its ancestors from their own time on disk and their remaining children,
+    // read as a new scan does: a folder from the listing of its parent, a drive from its own handle
+    for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        const auto newMax = (std::ranges::max)(
-            p->GetChildren() | std::views::transform(&CItem::GetLastChange));
+        FILETIME newMax{};
+        if (p->SupportsFilesystemApis() && p->IsTypeOrFlag(IT_DIRECTORY))
+        {
+            if (FinderBasic finder(true, volumeContext(p)); finder.FindFile(p->GetPath())) newMax = finder.GetLastWriteTime();
+        }
+        else if (p->SupportsFilesystemApis() && p->IsTypeOrFlag(IT_DRIVE))
+        {
+            if (const SmartPointer handle(CloseHandle, CreateFile(p->GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr)); handle != INVALID_HANDLE_VALUE)
+            {
+                if (FILETIME lastChange{}; GetFileTime(handle, nullptr, nullptr, &lastChange)) newMax = lastChange;
+            }
+        }
+        for (const CItem* child : p->GetChildren()) newMax = (std::max)(newMax, child->GetLastChange());
 
+        // keep the previous time when neither the disk nor any child provides one
+        if (newMax == FILETIME{}) continue;
         if (p->GetLastChange() == newMax) break;
         p->SetLastChange(newMax);
     }

@@ -86,6 +86,7 @@ public:
     FinderBasic() = default;
     FinderBasic(const bool statMode) : m_statMode(statMode) {}
     FinderBasic(FinderBasicContext* context) : m_context(context) {}
+    FinderBasic(const bool statMode, FinderBasicContext* context) : m_context(context), m_statMode(statMode) {}
     ~FinderBasic() override = default;
 
     bool FindNext() override;
