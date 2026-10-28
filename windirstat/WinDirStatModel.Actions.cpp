@@ -1283,12 +1283,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             item->UpwardAddReadJobs(1);
             item->UpwardSetUndone();
 
-            // Create status progress bar
-            CMainFrame::Get()->InvokeInMessageThread([]
-            {
-                CMainFrame::Get()->UpdateProgress();
-            });
-
             // Share a bounded worker pool for folder roots while keeping volume metadata separate.
             const CItem* volumeRoot = item->GetVolumeRoot();
             const std::wstring volumePath = volumeRoot->GetPath();
@@ -1296,6 +1290,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             if (basicFolder) folderContexts.try_emplace(volumeRoot, volumePath);
             m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
         }
+
+        // Create status progress bar once; no worker runs yet, so updating it
+        // per queued item would only wait for the message thread every time
+        if (!m_queues.empty()) CMainFrame::Get()->InvokeInMessageThread([]
+        {
+            CMainFrame::Get()->UpdateProgress();
+        });
 
         // Create subordinate threads if there is work to do
         std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
