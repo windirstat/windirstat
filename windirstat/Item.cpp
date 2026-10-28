@@ -740,13 +740,11 @@ void CItem::UpwardRecalcLastChange(const std::function<FinderBasicContext*(const
     // removing an entry changes the timestamp of the folder that held it, as a new scan would show
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        // read the timestamp on disk the same way UpdateStatsFromDisk does for a new scan
+        // read the timestamp on disk as a new scan does: a folder from the listing of its parent, a drive from its own handle
         std::optional<FILETIME> newMax;
         if (p->SupportsFilesystemApis() && p->IsTypeOrFlag(IT_DIRECTORY))
         {
-            if (FinderBasic finder(true, volumeContext(p));
-                finder.FindFile(p->GetFolderPath(), p->IsScanRoot() ? std::wstring() : p->GetName(), p->GetAttributes()))
-                newMax = finder.GetLastWriteTime();
+            if (FinderBasic finder(true, volumeContext(p)); finder.FindFile(p->GetPath())) newMax = finder.GetLastWriteTime();
         }
         else if (p->SupportsFilesystemApis() && p->IsTypeOrFlag(IT_DRIVE))
         {
