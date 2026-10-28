@@ -1064,8 +1064,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         items = items.front()->GetChildren();
     }
 
-    const auto selected = GetAllSelected();
-    const std::unordered_set<CItem*> selectedItems(selected.begin(), selected.end());
+    const std::unordered_set<CItem*> selectedItems(std::from_range, GetAllSelected());
     std::unordered_set<CItem*> doneItems;
     for (auto* item : items)
         if (item->IsDone()) doneItems.insert(item);
@@ -1109,87 +1108,64 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         return &volumeContexts.try_emplace(volumeRoot, volumeRoot->GetPath()).first->second;
     };
 
-    // Vanished items are detached together; detaching them one by one
-    // sends every removal through the whole file tree view
-    std::unordered_set<CItem*> vanished;
-    std::unordered_set<CItem*> recalcParents;
-    const auto detachVanished = [&]
-    {
-        // Remove vanished items from the list so we do not rescan them
-        std::erase_if(items, [&](CItem* item) { return vanished.contains(item); });
-        CItem::RemoveChildren(vanished);
-        vanished.clear();
-
-        // Recalculate each affected folder once after the vanished items are gone;
-        // recalculating per item scans all siblings again for every item
-        for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange(volumeContext);
-        recalcParents.clear();
-    };
-
-    // Listing a folder once is cheaper than looking up many of its items one by one, but only when enough of
-    // them are refreshed; the listing then keeps only the names of those items, not the whole folder
+    // Listing a folder once is cheaper than looking up many of its refreshed items one by one; each listing maps
+    // the upper-cased names of those items to the first name on disk that upper-cases the same
     constexpr size_t listingRatio = 20;
-    struct FolderCheck
-    {
-        std::unordered_set<std::wstring> wanted, foldedWanted, found, foldedFound;
-        bool listed = false, complete = false;
-    };
-    const auto fold = [](const std::wstring_view name) -> std::optional<std::wstring>
+    const auto fold = [](const std::wstring_view name)
     {
         std::wstring folded(name);
         if (LCMapStringEx(LOCALE_NAME_INVARIANT, LCMAP_UPPERCASE, name.data(), static_cast<int>(name.size()),
-            folded.data(), static_cast<int>(folded.size()), nullptr, nullptr, 0) == 0) return std::nullopt;
+            folded.data(), static_cast<int>(folded.size()), nullptr, nullptr, 0) == 0) folded.clear();
         return folded;
     };
-    std::unordered_map<const CItem*, FolderCheck> folderChecks;
+    std::unordered_map<const CItem*, std::unordered_map<std::wstring, std::wstring>> listings;
     for (CItem* item : items)
     {
         const CItem* parent = item->GetParent();
         if (!doneItems.contains(item) || parent == nullptr || parent->IsTypeOrFlag(IT_MYCOMPUTER) ||
             !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || item->IsTypeOrFlag(ITF_REMOTE, ITF_MTP)) continue;
-        FolderCheck& check = folderChecks[parent];
-        check.wanted.emplace(item->GetNameView());
-        if (const auto folded = fold(item->GetNameView())) check.foldedWanted.emplace(*folded);
+        if (std::wstring folded = fold(item->GetNameView()); !folded.empty())
+            listings[parent].try_emplace(std::move(folded));
     }
-    std::erase_if(folderChecks, [&](const auto& entry)
+    std::erase_if(listings, [&](auto& listing)
     {
-        return entry.second.wanted.size() * listingRatio < entry.first->GetChildren().size();
+        // The disk may hold far more entries than the model shows, so a listing stops where single lookups
+        // would have been cheaper; an incomplete listing leaves its items to the single lookups
+        auto& [parent, names] = listing;
+        const size_t limit = names.size() * listingRatio;
+        if (limit < parent->GetChildren().size()) return true;
+
+        FinderBasic finder(volumeContext(parent));
+        bool found = finder.FindFile(parent->GetPath());
+        for (size_t entries = 0; found && entries < limit; found = finder.FindNext(), ++entries)
+        {
+            const std::wstring folded = fold(finder.GetFileName());
+            if (folded.empty()) return true;
+            if (const auto name = names.find(folded); name != names.end() && name->second.empty())
+                name->second = finder.GetFileName();
+        }
+        return found || finder.GetResult().outcome != ScanOutcome::Complete;
     });
     const auto existsOnDisk = [&](const CItem* item)
     {
-        if (const auto check = folderChecks.find(item->GetParent()); check != folderChecks.end())
+        // A listing settles exact and missing names; a name found only in another case is looked up below
+        if (const auto listing = listings.find(item->GetParent()); listing != listings.end())
         {
-            FolderCheck& folder = check->second;
-            if (!folder.listed)
+            if (const auto name = listing->second.find(fold(item->GetNameView())); name != listing->second.end())
             {
-                folder.listed = true;
-
-                // The model may show far fewer entries than the disk holds, so the listing stops where single
-                // lookups would have been cheaper; an entry that cannot be folded leaves the listing incomplete
-                const size_t limit = folder.wanted.size() * listingRatio;
-                size_t entries = 0;
-                bool foldable = true;
-                FinderBasic finder(volumeContext(item));
-                bool found = finder.FindFile(check->first->GetPath());
-                for (; found && entries < limit; found = finder.FindNext(), ++entries)
-                {
-                    if (const std::wstring name(finder.GetFileName()); folder.wanted.contains(name)) folder.found.insert(name);
-                    if (const auto folded = fold(finder.GetFileName()); !folded) foldable = false;
-                    else if (folder.foldedWanted.contains(*folded)) folder.foldedFound.insert(*folded);
-                }
-                folder.complete = !found && foldable && finder.GetResult().outcome == ScanOutcome::Complete;
+                if (name->second == item->GetNameView()) return true;
+                if (name->second.empty()) return false;
             }
-
-            // A name that only differs in case is left to the single lookup below
-            const auto folded = fold(item->GetNameView());
-            if (folder.complete && folder.found.contains(std::wstring(item->GetNameView()))) return true;
-            if (folder.complete && folded && !folder.foldedFound.contains(*folded)) return false;
         }
 
         // Retain inaccessible filesystem items so enumeration can report their failure.
         FinderBasic finder(true, volumeContext(item));
         return finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
     };
+
+    // Vanished items are detached together after the loop
+    std::unordered_set<CItem*> vanished;
+    std::unordered_set<CItem*> recalcParents;
     for (auto item : std::vector(items))
     {
         // Record current visual arrangement to reapply afterward
@@ -1228,7 +1204,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         {
             if (item->IsRootItem())
             {
-                detachVanished();
                 Get()->UnlinkRoot();
                 // No worker is launched to release this scan's suspension.
                 CMainFrame::Get()->GetVisualizationPane()->SuspendRecalculationDrawing(false);
@@ -1248,7 +1223,11 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         }
     }
 
-    detachVanished();
+    // Remove vanished items from the list so we do not rescan them, then recalculate
+    // each affected folder once after they are gone
+    std::erase_if(items, [&](CItem* item) { return vanished.contains(item); });
+    CItem::RemoveChildren(vanished);
+    for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange(volumeContext);
     InvalidateSelectionCache();
 
     // Refresh filter cutoffs immediately before scanning in case settings
