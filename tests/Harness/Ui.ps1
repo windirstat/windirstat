@@ -249,7 +249,7 @@ function Invoke-AppKeys {
     [TestDesktop]::Activate($Window)
     Wait-Until { [TestDesktop]::GetForegroundWindow() -eq $Window } 'The target window owns foreground keyboard input' |
         Out-Null
-    [System.Windows.Forms.SendKeys]::SendWait($Keys)
+    [TestDesktop]::TypeKeys($Keys)
 }
 
 function Select-SettingsPage {

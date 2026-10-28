@@ -55,6 +55,36 @@ public static class TestDesktop
         public uint ClrUsed, ClrImportant;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MOUSEINPUT
+    {
+        public int X, Y;
+        public uint Data, Flags, Time;
+        public IntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT
+    {
+        public ushort Key, Scan;
+        public uint Flags, Time;
+        public IntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    private struct INPUTDATA
+    {
+        [FieldOffset(0)] public MOUSEINPUT Mouse;
+        [FieldOffset(0)] public KEYBDINPUT Keyboard;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT
+    {
+        public uint Type;
+        public INPUTDATA Data;
+    }
+
     private delegate bool EnumProc(IntPtr window, IntPtr parameter);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc callback, IntPtr parameter);
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr root,
@@ -78,6 +108,8 @@ public static class TestDesktop
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
     [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll", SetLastError = true)] private static extern uint SendInput(uint count,
+        INPUT[] inputs, int size);
     [DllImport("user32.dll")] public static extern IntPtr SetCapture(IntPtr window);
     [DllImport("user32.dll")] public static extern bool ReleaseCapture();
     [DllImport("user32.dll")] private static extern uint GetGuiResources(IntPtr process, uint flags);
@@ -280,6 +312,82 @@ public static class TestDesktop
         bool attached = foreground != 0 && foreground != current && AttachThreadInput(current, foreground, true);
         try { SetForegroundWindow(window); }
         finally { if (attached) AttachThreadInput(current, foreground, false); }
+    }
+
+    private static readonly Dictionary<string, ushort> NamedKeys =
+        new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase)
+    {
+        { "BACKSPACE", 0x08 }, { "BS", 0x08 }, { "TAB", 0x09 }, { "ENTER", 0x0D }, { "ESC", 0x1B },
+        { "END", 0x23 }, { "HOME", 0x24 }, { "LEFT", 0x25 }, { "UP", 0x26 }, { "RIGHT", 0x27 },
+        { "DOWN", 0x28 }, { "DELETE", 0x2E }, { "DEL", 0x2E },
+        { "F1", 0x70 }, { "F2", 0x71 }, { "F3", 0x72 }, { "F4", 0x73 }, { "F5", 0x74 }, { "F6", 0x75 },
+        { "F7", 0x76 }, { "F8", 0x77 }, { "F9", 0x78 }, { "F10", 0x79 }, { "F11", 0x7A }, { "F12", 0x7B },
+    };
+
+    private static INPUT KeyInput(ushort key, char text, bool up)
+    {
+        // KEYEVENTF_UNICODE (4) sends the character itself, KEYEVENTF_KEYUP (2) releases the key, and
+        // KEYEVENTF_EXTENDEDKEY (1) marks the navigation keys the way SendKeys does
+        bool extended = key >= 0x21 && key <= 0x28 || key == 0x2D || key == 0x2E;
+        uint flags = (key == 0 ? 4u : 0u) | (up ? 2u : 0u) | (extended ? 1u : 0u);
+        return new INPUT { Type = 1, Data = new INPUTDATA { Keyboard = new KEYBDINPUT {
+            Key = key, Scan = key == 0 ? text : (ushort)0, Flags = flags } } };
+    }
+
+    // Type the SendKeys subset the scenarios use through SendInput. Printable characters go in as
+    // Unicode characters, so the active keyboard layout cannot turn them into other keys or chords
+    // (on a German layout '[' is AltGr+8); {NAMED} keys and ^ + % chords use virtual keys, which do
+    // not depend on the layout either. Anything outside that subset fails instead of typing wrongly.
+    // Like SendKeys, every event is injected on its own with a 1 ms pause after it.
+    public static void TypeKeys(string keys)
+    {
+        var inputs = new List<INPUT>();
+        var modifiers = new List<ushort>();
+        for (int i = 0; i < keys.Length; i++)
+        {
+            char c = keys[i];
+            if (c == '^') { modifiers.Add(0x11); continue; }
+            if (c == '+') { modifiers.Add(0x10); continue; }
+            if (c == '%') { modifiers.Add(0x12); continue; }
+            if (c == '(' || c == ')') throw new ArgumentException("Unsupported key group in: " + keys);
+
+            ushort key = 0;
+            char text = c;
+            if (c == '~') key = 0x0D;
+            else if (c == '{')
+            {
+                int end = i + 2 <= keys.Length ? keys.IndexOf('}', i + 2) : -1;
+                if (end < 0) throw new ArgumentException("Unclosed key name in: " + keys);
+                string name = keys.Substring(i + 1, end - i - 1);
+                i = end;
+                if (name.Length == 1) text = name[0];
+                else if (!NamedKeys.TryGetValue(name, out key))
+                    throw new ArgumentException("Unsupported key {" + name + "} in: " + keys);
+            }
+
+            if (key == 0 && modifiers.Count > 0)
+            {
+                // A chord needs the key itself, and only letters and digits have layout-free key codes
+                char upper = char.ToUpperInvariant(text);
+                if (!(upper >= 'A' && upper <= 'Z' || upper >= '0' && upper <= '9'))
+                    throw new ArgumentException("Unsupported chord key '" + text + "' in: " + keys);
+                key = upper;
+            }
+
+            foreach (ushort modifier in modifiers) inputs.Add(KeyInput(modifier, '\0', false));
+            inputs.Add(KeyInput(key, text, false));
+            inputs.Add(KeyInput(key, text, true));
+            for (int m = modifiers.Count - 1; m >= 0; m--) inputs.Add(KeyInput(modifiers[m], '\0', true));
+            modifiers.Clear();
+        }
+        if (modifiers.Count > 0) throw new ArgumentException("Modifier without a key in: " + keys);
+
+        foreach (INPUT input in inputs)
+        {
+            if (SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT))) != 1)
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            System.Threading.Thread.Sleep(1);
+        }
     }
 
     public static void Expose(IntPtr window)
