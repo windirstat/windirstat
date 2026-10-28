@@ -1218,6 +1218,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 parent->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
                 parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             }
+            visualInfo.erase(item);
             vanished.insert(item);
             recalcParents.insert(parent);
         }
