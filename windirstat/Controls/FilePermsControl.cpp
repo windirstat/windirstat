@@ -112,7 +112,7 @@ std::vector<CItemPerm*> CFilePermsControl::ScanItems(const std::vector<const CIt
         std::atomic<size_t> cursor = 0;
         std::mutex resultsMutex;
         std::vector<std::jthread> workers;
-        for (int t = 0, n = std::clamp<int>(COptions::ScanningThreads, 1, 16); t < n; t++)
+        for (int t = 0, n = std::clamp<int>(COptions::ScanningThreads, 1, MAX_SCANNING_THREADS); t < n; t++)
         {
             workers.emplace_back([&]
             {
