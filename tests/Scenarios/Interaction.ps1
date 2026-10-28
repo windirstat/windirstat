@@ -47,6 +47,54 @@ function Test-RefreshTimestamps {
     }
 }
 
+function Test-RefreshManyFiles {
+    param($Context, $Case)
+    $folder = Join-Path $Context.Fixture 'many'
+    $paths = @(foreach ($index in 0..2999) { New-TestFile (Join-Path $folder "file-$index.bin") 1 })
+    $app = Start-TestApp @($Context.Fixture)
+    $list = Get-AppList $app -AllFiles
+    Expand-AppDirectory $app $list 'many' 'file-0.bin'
+    $names = [NativeListViewHelper]::GetItemTexts($list)
+    $indices = [int[]]@(for ($index = 0; $index -lt $names.Count; ++$index) {
+        if ($names[$index] -like 'file-*') { $index }
+    })
+    [TestDesktop]::Activate($app.Window)
+    Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+        [NativeListViewHelper]::SelectItems($list, $indices)) 'Select every file in the folder'
+    for ($index = 0; $index -lt $paths.Count; $index += 2) { [IO.File]::Delete($paths[$index]) }
+    [IO.File]::Move($paths[1], (Join-Path $folder 'FILE-1.BIN'))
+
+    $timing = @{ LastResponse = 0L; Longest = 0L }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-Until {
+        try { [void] [TestDesktop]::Message($app.Window, 0) }
+        catch [System.TimeoutException] { return $false }
+        $now = $watch.ElapsedMilliseconds
+        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
+        $timing.LastResponse = $now
+        [NativeListViewHelper]::GetItemCount($list) -lt $names.Count -and
+            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
+    } 'Refreshing many deleted files finishes' -StableMilliseconds 500 | Out-Null
+    Write-TestNote ("Refresh $($paths.Count) files: {0} ms total; {1} ms longest response" -f
+        $watch.ElapsedMilliseconds, $timing.Longest)
+    Assert-True ($timing.Longest -lt 3000) 'Refreshing many deleted files does not block the UI for three seconds'
+
+    $rows = Save-AppReport $app 'many-refreshed'
+    $expected = [Collections.Generic.HashSet[string]]::new([string[]][IO.Directory]::GetFiles($folder),
+        [StringComparer]::OrdinalIgnoreCase)
+    $actual = [string[]]@((Get-ReportFiles $rows).Name)
+    Assert-True ($actual.Count -eq $expected.Count -and $expected.SetEquals($actual)) `
+        'Refreshing many files keeps exactly the surviving files, including one renamed only in case'
+    Invoke-AppCommand $app 'ID_REFRESH_ALL'
+    Wait-AppIdle $app
+    $fresh = Save-AppReport $app 'many-rescanned'
+    foreach ($path in $Context.Fixture, $folder) {
+        Assert-Equal @($rows | Where-Object Name -eq $path)[0].'Last Change' `
+            @($fresh | Where-Object Name -eq $path)[0].'Last Change' 'A folder that lost files matches a new scan'
+    }
+}
+
 function Test-RemovedRootRefresh {
     param($Context, $Case)
     $root = New-TestTree
@@ -921,6 +969,9 @@ Register-Scenario interaction.scoped-refresh Interaction `
 Register-Scenario interaction.refresh-timestamps Interaction `
     'Batch refresh updates ancestor timestamps after deleting the newest siblings' `
     Test-RefreshTimestamps -Tags Desktop,External -Requires Windows,Desktop
+Register-Scenario interaction.refresh-many-files Interaction `
+    'Refreshing many selected files removes deleted ones without blocking and keeps case-renamed survivors' `
+    Test-RefreshManyFiles -Tags Desktop,External -Requires Windows,Desktop
 Register-Scenario interaction.removed-root Interaction `
     'Refreshing a vanished multi-root selection preserves surviving roots' `
     Test-RemovedRootRefresh -Tags Desktop,External,Race -Requires Windows,Desktop
