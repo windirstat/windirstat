@@ -1180,7 +1180,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Remove item from tree
         item->ExtensionDataProcessChildren(true);
-        if (CItem* parent = item->GetParent(); parent != nullptr) recalcParents.insert(parent);
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
         item->UpwardSubtractFiles(item->GetFilesCount());
@@ -1220,6 +1219,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
                 parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             }
             vanished.insert(item);
+            recalcParents.insert(parent);
         }
     }
 
