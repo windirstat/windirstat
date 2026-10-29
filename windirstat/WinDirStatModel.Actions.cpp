@@ -348,7 +348,7 @@ void CWinDirStatModel::OnRemoveShadowCopies() const
     QueryShadowCopies(count, bytesUsed);
     if (count == 0 || !ConfirmOperation(IDS_MENU_REMOVE_SHADOW, COptions::ShowRemoveShadowCopiesPrompt)) return;
 
-    CProgressDlg(static_cast<size_t>(count), CProgressDlg::Flags::None, GetMainWindow(), [](CProgressDlg* pdlg)
+    CProgressDlg(count, CProgressDlg::Flags::None, GetMainWindow(), [](CProgressDlg* pdlg)
     {
         RemoveWmiInstances(L"Win32_ShadowCopy", pdlg);
     }).ShowModal();
@@ -839,7 +839,7 @@ void CWinDirStatModel::OnComputeHash()
     std::wstring hashResult;
     CItem* const item = GetAllSelected().front();
     const ULONGLONG logicalSize = item->GetSizeLogical();
-    const size_t totalBlocks = static_cast<size_t>(logicalSize / wds::Mi + (logicalSize % wds::Mi != 0));
+    const ULONGLONG totalBlocks = logicalSize / wds::Mi + (logicalSize % wds::Mi != 0);
     CProgressDlg(totalBlocks, CProgressDlg::Flags::PercentageOnly, GetMainWindow(), [&](CProgressDlg* pdlg)
     {
         hashResult = ComputeFileHashes(item, pdlg);
