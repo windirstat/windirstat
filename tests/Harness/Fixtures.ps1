@@ -126,7 +126,7 @@ function Set-TestSettings {
             ShowDeletePermanentlyWarning = 0; ShowCreateHardlinkPrompt = 0; ShowRemoveMotwPrompt = 0
             ShowRemoveEmptyFoldersPrompt = 0; ShowSetDatesPrompt = 0; FontSizePercent = 100; ToolBarSizePercent = 100
             ShowFileTypes = 1; ShowVisualization = 1; GroupUnregisteredTypes = 0
-            LayoutTopology = 0; LayoutPermutation = 0; UseSizeSuffixes = 0; UseWindowsLocale = 0
+            LayoutTopology = 0; LayoutPermutation = 0; UseSizeSuffixes = 0; UseWindowsLocaleSetting = 0
         }
         FileTreeView = [ordered]@{ ColumnVisibility = '1,1,1,1,1,1,1,1,1,1,0' }
         DupeView = [ordered]@{ ScanForDuplicates = 0 }
