@@ -332,7 +332,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem, BlockingQueue<CItem*>* queue)
                 // Primary records fill their own slot while extension records are merged after all runs finish
                 FileRecordBase localRecord{};
                 const bool isPrimary = !isExtensionRecord && currentRecord < m_baseFileRecords.size();
-                FileRecordBase& baseRecord = isPrimary ? m_baseFileRecords[currentRecord] : localRecord;
+                FileRecordBase& baseRecord = isPrimary ?
+                    m_baseFileRecords[static_cast<size_t>(currentRecord)] : localRecord;
                 baseRecord.IsPresent = true;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
