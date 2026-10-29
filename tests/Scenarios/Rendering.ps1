@@ -283,6 +283,7 @@ function Test-EmptyGraphTransitions {
     param($Context, $Case)
     $root = $Context.Fixture
     $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapUseLogicalSize = 1 } }
+    [TestDesktop]::ParkCursor($app.Window)
     $commands = @('ID_VIEW_TREEMAP_ROWS', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_TREEMAP_HILBERT',
         'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST')
     $empty = @{}
