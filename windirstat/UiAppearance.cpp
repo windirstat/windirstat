@@ -642,6 +642,12 @@ void InitializeDialogFontAndSize(const HWND dialog)
         SetWindowPos(dialog, nullptr, 0, 0, width, height,
             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
+        // The screen can limit the window, but the controls below still take their scaled positions,
+        // so the dialog layout needs the requested size to bring bottom-anchored controls back into view.
+        if (const CRect scaled(dialog); !childDialog && (scaled.Width() < width || scaled.Height() < height))
+            SetPropW(dialog, RequestedDialogSizeProperty, reinterpret_cast<HANDLE>(
+                static_cast<INT_PTR>(MAKELONG(width, height))));
+
         HDWP positions = BeginDeferWindowPos(static_cast<int>(controls.size()));
         for (const auto& [control, rect] : controls)
         {

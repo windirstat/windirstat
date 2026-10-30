@@ -873,21 +873,39 @@ function Test-CloudSelectionDialog {
     $field = Get-DialogControl $dialog 'IDC_REMOTE_ENDPOINT'
     Assert-Equal ([TestDesktop]::ControlText($field)) 'https://S3.example.invalid/' `
         'Each provider preserves unfinished input'
-    $remember = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_REMOTE_REMEMBER'))
+    $remember = Get-DialogControl $dialog 'IDC_REMOTE_REMEMBER'
+    $page = @([TestDesktop]::Children($dialog) | Where-Object {
+        [TestDesktop]::Class($_) -eq '#32770' -and [TestDesktop]::IsChild($_, $remember)
+    })[0]
     $confirm = [TestDesktop]::Rectangle([TestDesktop]::GetDlgItem($dialog, 1))
-    Assert-True ($remember[3] -lt $confirm[1]) 'The form fits above OK at the current text size'
+    Assert-True ([TestDesktop]::Rectangle($page)[3] -lt $confirm[1]) 'The form fits above OK at the current text size'
+    Assert-True ($confirm[3] -le [System.Windows.Forms.Screen]::FromHandle($dialog).WorkingArea.Bottom) `
+        'OK stays within the work area'
     $height = [TestDesktop]::ClientSize($dialog)[1]
+    $rememberTop = [TestDesktop]::Rectangle($remember)[1]
     Set-DialogCheck $dialog 'IDC_S3_TOKEN_TOGGLE' $true
-    Assert-True ([TestDesktop]::ClientSize($dialog)[1] -gt $height) 'Optional session-token input expands the form'
+    # A dialog already as tall as the screen keeps its height and scrolls the longer form instead
+    $bounds = [TestDesktop]::Rectangle($dialog)
+    $capped = $bounds[3] - $bounds[1] -ge [System.Windows.Forms.Screen]::FromHandle($dialog).WorkingArea.Height
+    Assert-True ([TestDesktop]::ClientSize($dialog)[1] -gt $height -or
+        ($capped -and [TestDesktop]::Rectangle($remember)[1] -gt $rememberTop)) 'Optional session-token input expands the form'
+    Assert-True ([TestDesktop]::Rectangle([TestDesktop]::GetDlgItem($dialog, 1))[3] -le
+        [System.Windows.Forms.Screen]::FromHandle($dialog).WorkingArea.Bottom) 'The expanded form keeps OK within the work area'
     [void](Get-DialogControl $dialog 'IDC_S3_TOKEN')
     $bounds = [TestDesktop]::Rectangle($dialog)
     $width = [TestDesktop]::ClientSize($field)[0]
+    $editorWidth = [TestDesktop]::ClientSize($dialog)[0]
     [TestDesktop]::Position($dialog, $bounds[0], $bounds[1],
         $bounds[2] - $bounds[0] + 160, $bounds[3] - $bounds[1] + 60)
-    Assert-Equal ([TestDesktop]::ClientSize($field)[0]) ($width + 160) 'Fields grow with the editor'
+    # A small screen limits how much wider the editor can get
+    $grown = [TestDesktop]::ClientSize($dialog)[0] - $editorWidth
+    Assert-True ($grown -gt 0) 'The editor can be widened'
+    Assert-Equal ([TestDesktop]::ClientSize($field)[0]) ($width + $grown) 'Fields grow with the editor'
     $bucket = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_S3_BUCKET'))
     $region = [TestDesktop]::Rectangle((Get-DialogControl $dialog 'IDC_S3_REGION'))
     Assert-True ($bucket[2] -lt $region[0]) 'Paired fields stay separated when resizing'
+    # The widened editor can reach past a small screen, which a screenshot cannot capture
+    [TestDesktop]::Position($dialog, $bounds[0], $bounds[1], $bounds[2] - $bounds[0], $bounds[3] - $bounds[1])
     [TestDesktop]::Expose($dialog)
     Save-Frame ([TestDesktop]::Capture($dialog)) (Join-Path $Context.Root 'cloud-editor.png')
     Close-AppDialog $dialog

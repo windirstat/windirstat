@@ -172,7 +172,9 @@ inline INT_PTR CALLBACK FrameworkDialogProc(HWND hWnd, const UINT msg, const WPA
         try
         {
             InitializeDialogFontAndSize(hWnd);
-            return pDlg->OnInitDialog();
+            const bool result = pDlg->OnInitDialog();
+            RemovePropW(hWnd, RequestedDialogSizeProperty);
+            return result;
         }
         catch (...)
         {

@@ -32,7 +32,7 @@ void CLayoutDialog::OnDestroy()
 // CLayout
 
 CLayout::CLayout(CWnd* dialog, RECT* placement)
-    : m_wp(placement), m_dialog(dialog), m_originalDialogSize(0, 0)
+    : m_wp(placement), m_dialog(dialog), m_originalDialogSize(0, 0), m_minimumDialogSize(0, 0)
 {
     assert(dialog != nullptr);
 }
@@ -54,6 +54,16 @@ void CLayout::OnInitDialog(const bool centerWindow)
 
     const CRect rcDialog = m_dialog->GetWindowRect();
     m_originalDialogSize = rcDialog.Size();
+    m_minimumDialogSize = rcDialog.Size();
+
+    // A dialog the screen limited while scaling keeps its controls at the requested size
+    const auto requested = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+        GetPropW(m_dialog->Handle(), RequestedDialogSizeProperty)));
+    if (requested != 0)
+    {
+        m_originalDialogSize.cx = std::max<int>(m_originalDialogSize.cx, LOWORD(requested));
+        m_originalDialogSize.cy = std::max<int>(m_originalDialogSize.cy, HIWORD(requested));
+    }
 
     for (auto& info : m_control)
     {
@@ -67,7 +77,10 @@ void CLayout::OnInitDialog(const bool centerWindow)
     m_sizeGripper.Create(m_dialog, sg);
 
     const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
+    const CSize limited = m_originalDialogSize - rcDialog.Size();
+    sg.Offset(limited.cx, limited.cy);
     m_control[i].originalRectangle = sg;
+    if (limited.cx != 0 || limited.cy != 0) OnSize();
 
     if (m_wp) m_dialog->MoveWindow(*m_wp);
     if (centerWindow)
@@ -93,8 +106,8 @@ void CLayout::OnSize()
         CRect rc = originalRectangle;
 
         rc.Offset(static_cast<int>(diff.cx * movex), static_cast<int>(diff.cy * movey));
-        rc.right += static_cast<int>(diff.cx * stretchx);
-        rc.bottom += static_cast<int>(diff.cy * stretchy);
+        rc.right = std::max(rc.left, rc.right + static_cast<int>(diff.cx * stretchx));
+        rc.bottom = std::max(rc.top, rc.bottom + static_cast<int>(diff.cy * stretchy));
 
         pos.SetWindowPos(control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
@@ -104,9 +117,9 @@ void CLayout::OnSize()
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 {
-    if (m_originalDialogSize.cx > 0) // Check if initialized
+    if (m_minimumDialogSize.cx > 0) // Check if initialized
     {
-        mmi->ptMinTrackSize = { m_originalDialogSize.cx, m_originalDialogSize.cy };
+        mmi->ptMinTrackSize = { m_minimumDialogSize.cx, m_minimumDialogSize.cy };
     }
 }
 
