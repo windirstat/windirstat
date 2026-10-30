@@ -87,6 +87,9 @@ void ApplyAppFont(HWND window, int oldPercent = 0);
 void ApplyMenuFont(HWND window);
 void InitializeDialogFontAndSize(HWND dialog);
 
+// Window property holding the scaled dialog size when the screen limited the window below it
+inline constexpr auto RequestedDialogSizeProperty = L"WdsRequestedDialogSize";
+
 inline bool IsKeyDown(const int virtualKey) noexcept
 {
     return (GetKeyState(virtualKey) & 0x8000) != 0;
