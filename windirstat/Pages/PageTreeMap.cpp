@@ -41,6 +41,7 @@ void CPageTreeMap::InitializePage()
     m_styleCombo.SubclassDlgItem(IDC_TREEMAPSTYLE, this);
     m_presetCombo.SubclassDlgItem(IDC_TREEMAPPRESET, this);
     m_highlightColor.SubclassDlgItem(IDC_TREEMAPHIGHLIGHTCOLOR, this);
+    m_relatedColor.SubclassDlgItem(IDC_TREEMAPRELATEDCOLOR, this);
     m_gridColor.SubclassDlgItem(IDC_TREEMAPGRIDCOLOR, this);
     m_brightness.SubclassDlgItem(IDC_BRIGHTNESS, this);
     m_cushionShading.SubclassDlgItem(IDC_CUSHIONSHADING, this);
@@ -58,6 +59,7 @@ void CPageTreeMap::InitializePage()
     m_options = COptions::TreeMapOptions;
     m_customOptions = COptions::GetCustomTreeMapPreset();
     m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
+    m_relatedColor.SetColor(COptions::TreeMapRelatedColor);
     for (const std::wstring& style : SplitString(
         Localization::Lookup(IDS_PAGE_GRAPHS_STYLES), L','))
     {
@@ -90,6 +92,7 @@ std::optional<CPropertyPage::ValidationError> CPageTreeMap::PrepareSettings()
         COptions::SetTreeMapOptions(options, false);
     });
     Stage(COptions::TreeMapHighlightColor, m_highlightColor.GetColor());
+    Stage(COptions::TreeMapRelatedColor, m_relatedColor.GetColor());
     StageEffect([]
     {
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
@@ -162,6 +165,12 @@ void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
 }
 
 void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
+{
+    *result = 0;
+    OnSomethingChanged();
+}
+
+void CPageTreeMap::OnColorChangedTreeMapRelated(NMHDR*, LRESULT* result)
 {
     *result = 0;
     OnSomethingChanged();

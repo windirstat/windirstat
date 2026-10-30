@@ -38,6 +38,17 @@ enum PROCESSPRIORITY : std::uint8_t
     HIGH   = 2
 };
 
+// How storage of files optimized by Data Deduplication is shown; persisted as
+// an integer, so values are fixed
+enum DEDUPMETRIC : std::uint8_t
+{
+    DEDUP_SHARED_ONCE = 0, // exclusive bytes per file, shared chunks once in their common folder
+    DEDUP_EFFECTIVE   = 1, // chunk sizes divided by the number of referencing files
+    DEDUP_EXCLUSIVE   = 2, // only chunks no other file references
+    DEDUP_LOGICAL     = 3, // the logical file size, as if not deduplicated
+    DEDUP_ALLOCATION  = 4  // leave the raw allocation reported by the file system
+};
+
 enum class GraphPane : std::uint8_t
 {
     TreeMap,
@@ -156,6 +167,7 @@ class COptions final
     inline static constexpr std::wstring_view OptionsExtView = L"ExtView";
     inline static constexpr std::wstring_view OptionsTopView = L"TopView";
     inline static constexpr std::wstring_view OptionsSearch = L"SearchView";
+    inline static constexpr std::wstring_view OptionsDedupShare = L"DedupShareView";
     inline static constexpr std::wstring_view OptionsWatcher = L"Watcher";
     inline static constexpr std::wstring_view OptionsPerms = L"PermissionsView";
     inline static constexpr std::wstring_view OptionsDriveSelect = L"DriveSelect";
@@ -256,6 +268,11 @@ public:
         L"ShowTimeSeconds", false, CheckboxBind(IDC_SHOW_TIME_SECONDS) };
     inline static Setting<bool> ProcessHardlinks{ OptionsGeneral,
         L"ProcessHardlinks", true, CheckboxBind(IDC_PROCESS_HARDLINKS) };
+    inline static Setting<bool> DedupAccounting{ OptionsGeneral,
+        L"DedupAccounting", true, CheckboxBind(IDC_DEDUP_ACCOUNTING) };
+    inline static Setting<int> DedupPhysicalMetric{ OptionsGeneral, L"DedupPhysicalMetric",
+        DEDUP_SHARED_ONCE, DEDUP_SHARED_ONCE, DEDUP_ALLOCATION, SelectionBind(IDC_DEDUP_METRIC) };
+    inline static Setting<bool> DedupShowFailures{ OptionsGeneral, L"DedupShowFailures", true };
     inline static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT] =
     {
         { OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140) },
@@ -269,6 +286,7 @@ public:
     };
     inline static Setting<COLORREF> TreeMapGridColor{ OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor };
     inline static Setting<COLORREF> TreeMapHighlightColor{ OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255) };
+    inline static Setting<COLORREF> TreeMapRelatedColor{ OptionsTreeMap, L"TreeMapRelatedColor", RGB(255, 140, 0) };
     inline static Setting<std::wstring> PermsColorAccount[PERMSRULECOUNT] =
     {
         { OptionsPerms, L"ColorAccount0", L"" },
@@ -360,6 +378,9 @@ public:
     inline static Setting<std::vector<int>> SearchViewColumnOrder{ OptionsSearch, L"ColumnOrder" };
     inline static Setting<std::vector<int>> SearchViewColumnWidths{ OptionsSearch, L"ColumnWidths" };
     inline static Setting<std::vector<int>> SearchViewColumnVisibility{ OptionsSearch, L"ColumnVisibility" };
+    inline static Setting<std::vector<int>> DedupShareViewColumnOrder{ OptionsDedupShare, L"ColumnOrder" };
+    inline static Setting<std::vector<int>> DedupShareViewColumnWidths{ OptionsDedupShare, L"ColumnWidths" };
+    inline static Setting<std::vector<int>> DedupShareViewColumnVisibility{ OptionsDedupShare, L"ColumnVisibility" };
     inline static Setting<bool> WatcherAutoScroll{ OptionsWatcher, L"AutoScroll", true };
     inline static Setting<std::vector<int>> WatcherColumnOrder{ OptionsWatcher, L"ColumnOrder" };
     inline static Setting<std::vector<int>> WatcherColumnWidths{ OptionsWatcher, L"ColumnWidths" };

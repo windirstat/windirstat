@@ -42,8 +42,10 @@ namespace wds
     inline constexpr auto chrAttributeOffline      = L'O'; /*FILE_ATTRIBUTE_OFFLINE*/
     inline constexpr auto chrAttributeEncrypted    = L'E'; /*FILE_ATTRIBUTE_ENCRYPTED*/
     inline constexpr auto chrAttributeSparse       = L'Z'; /*FILE_ATTRIBUTE_SPARSE*/
+    inline constexpr auto chrAttributeDedup        = L'D'; /*IO_REPARSE_TAG_DEDUP*/
 
     inline constexpr auto strWinDirStat = L"WinDirStat";
+    inline constexpr std::wstring_view strSystemVolumeInformation{ L"System Volume Information" };
     inline constexpr std::wstring_view strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
     inline constexpr int alphaSize = std::ssize(strAlpha);
 

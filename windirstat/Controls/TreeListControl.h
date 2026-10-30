@@ -16,7 +16,7 @@ class CTreeListControl;
 class CItem;
 
 // Forward declaration for LOGICAL_FOCUS enum from MainFrame.h
-enum LOGICAL_FOCUS : uint8_t;
+enum LOGICAL_FOCUS : uint16_t;
 
 //
 // VIEWSTATE. Data needed to display the item.

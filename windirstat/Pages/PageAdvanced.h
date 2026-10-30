@@ -39,12 +39,13 @@ protected:
         &COptions::ExcludeProtectedFile,
         &COptions::ProcessHardlinks,
         &COptions::SampleLargeFiles,
+        &COptions::DedupAccounting,
     };
 
     static constexpr std::array NumberBindings
     {
         &COptions::LargeFileCount, &COptions::FolderHistoryCount, &COptions::ProcessPriority,
-        &COptions::ScanningThreads, &COptions::FileHashAlgorithm,
+        &COptions::ScanningThreads, &COptions::FileHashAlgorithm, &COptions::DedupPhysicalMetric,
     };
 
 public:
@@ -52,6 +53,7 @@ public:
 
 protected:
     CComboBox m_priorityCombo;
+    CComboBox m_dedupMetricCombo;
 
     void OnBnClickedResetPreferences();
 };
@@ -68,6 +70,8 @@ inline std::span<const RouteEntry> CPageAdvanced::Routes()
         Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_PROCESS_PRIORITY),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_SKIP_CLOUD_LINKS),
         Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_PROCESS_HARDLINKS),
+        Route::Control<&OnSettingChanged>(BN_CLICKED, IDC_DEDUP_ACCOUNTING),
+        Route::Control<&OnSettingChanged>(CBN_SELENDOK, IDC_DEDUP_METRIC),
         Route::Control<&OnBnClickedResetPreferences>(BN_CLICKED, IDC_RESET_PREFERENCES),
         Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_LARGEST_FILE_COUNT),
         Route::Control<&OnSettingChanged>(EN_CHANGE, IDC_FOLDER_HISTORY_COUNT),

@@ -194,6 +194,62 @@ function Test-ReportRoundTrip {
     Assert-ScanSnapshot $refreshed (Get-DiskSnapshot $root) $root -Physical
 }
 
+function Test-DedupReportRoundTrip {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($name in 'optimized.bin', 'ordinary.bin', 'store.bin') {
+        New-TestFile (Join-Path $root $name) 8192 | Out-Null
+    }
+    $runner = New-TestRunner @{ Options = @{ DedupAccounting = 0 } }
+    $rows = Invoke-ScanReport $runner @($root) 'source'
+    foreach ($row in $rows) {
+        $row | Add-Member NoteProperty 'Freed If Deleted' $null
+        $row | Add-Member NoteProperty Shared $null
+        switch ([IO.Path]::GetFileName($row.Name.TrimEnd('\'))) {
+            'optimized.bin' {
+                $row.'WinDirStat Attributes' = '0x20002008'
+                $row.'Physical Size' = '100'
+                $row.'Freed If Deleted' = '100'
+                $row.Shared = '200'
+            }
+            'ordinary.bin' { $row.'Physical Size' = '300'; $row.'Freed If Deleted' = '300' }
+            'store.bin' { $row.'Physical Size' = '100'; $row.'Freed If Deleted' = '0' }
+            default { $row.'Physical Size' = '700'; $row.'Freed If Deleted' = '400'; $row.Shared = '0' }
+        }
+    }
+    $pseudo = ($rows | Where-Object Name -Like '*optimized.bin')[0].PSObject.Copy()
+    $pseudo.Name = Join-Path $root '<Shared Deduplicated Data>'
+    $pseudo.'WinDirStat Attributes' = '0x20000400'
+    $pseudo.Index = '0x0000000000000000'
+    $pseudo.'Logical Size' = '0'
+    $pseudo.'Physical Size' = '200'
+    $pseudo.'Freed If Deleted' = $null
+    $pseudo.Shared = $null
+    $rows += $pseudo
+    $path = Join-Path $Context.Root "dedup.$($Case.Format)"
+    if ($Case.Format -eq 'json') {
+        [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject $rows))
+    } else { $rows | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
+
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path)
+    $app.Roots = @($root)
+    $fields = @('Name', 'Physical Size', 'Freed If Deleted', 'Shared')
+    foreach ($format in 'csv', 'json') {
+        $loaded = Save-AppReport $app "dedup-loaded-$format" -Format $format
+        Assert-Sequence (Get-ReportSignature $loaded $fields) (Get-ReportSignature $rows $fields) `
+            'Dedup values, ordinary allocations, and unknown values survive loading with accounting disabled'
+    }
+    $list = Get-AppList $app -AllFiles
+    Expand-AppDirectory $app $list $root 'ordinary.bin'
+    Select-AppRows $app $list @('ordinary.bin')
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    $refreshed = Save-AppReport $app 'dedup-refreshed'
+    Assert-ScanSnapshot $refreshed (Get-DiskSnapshot $root) $root -Physical
+    Assert-Equal @($refreshed | Where-Object Name -Like '*<Shared Deduplicated Data>').Count 0 `
+        'Refreshing a loaded volume removes saved pseudo items and restores real allocations'
+}
+
 function Test-QuietFailure {
     param($Context, $Case)
     $root = New-TestTree
@@ -327,3 +383,9 @@ Register-Scenario reports.malformed-layout Reports 'Malformed persisted integer 
     Test-MalformedLayoutSettings -Tags Desktop,Persistence,External -Requires Windows,Desktop
 Register-Scenario reports.permissions Reports 'Real ACL inheritance agrees across CSV and JSON exports' `
     Test-PermissionExport -Tags Filesystem -Requires Windows,Ntfs
+
+foreach ($format in 'csv', 'json') {
+    Register-Scenario "reports.dedup.$format" Reports 'Dedup values survive report conversion and selected refresh' `
+        Test-DedupReportRoundTrip -Tags Desktop,Persistence,Filesystem -Requires Windows,Desktop `
+        -Data @{ Format = $format }
+}

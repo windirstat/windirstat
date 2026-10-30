@@ -15,8 +15,9 @@
 #include "FinderMtp.h"
 #include "FinderRemote.h"
 #include "ProgressDlg.h"
+#include "DedupAccounting.h"
 
-CWinDirStatModel::CWinDirStatModel()
+CWinDirStatModel::CWinDirStatModel() : m_dedupAccounting(std::make_unique<CDedupAccounting>())
 {
     assert(nullptr == s_singleton);
     s_singleton = this;
@@ -28,6 +29,7 @@ CWinDirStatModel::CWinDirStatModel()
 
 CWinDirStatModel::~CWinDirStatModel()
 {
+    CDedupAccounting::Get().Clear();
     delete m_rootItem;
     s_singleton = nullptr;
 }
@@ -59,10 +61,13 @@ void CWinDirStatModel::ClearScanState()
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
+    if (CFileDedupShareControl::Get() != nullptr) CFileDedupShareControl::Get()->DeleteAllItems();
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->ClearResults();
     if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->DeleteAllItems();
 
     // Clean up structures
+    ClearRelatedItems();
+    CDedupAccounting::Get().Clear();
     delete m_rootItem;
     m_rootItem = nullptr;
     m_zoomItem = nullptr;
@@ -171,6 +176,7 @@ bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
     CMainFrame::Get()->ExpandFileTabbedView();
 
     ClearScanState();
+    CDedupAccounting::Get().CommitLoaded();
 
     // Determine root spec string using GetNameView to avoid temporary allocations
     std::wstring spec(loadedRoot->GetNameView());
@@ -178,7 +184,8 @@ bool CWinDirStatModel::OpenLoadedScan(CItem* loadedRoot)
     if (loadedRoot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
-        std::ranges::transform(loadedRoot->GetChildren(), std::back_inserter(folders),
+        std::ranges::transform(loadedRoot->GetChildren() | std::views::filter(
+            [](const CItem* item) { return !item->IsTypeOrFlag(IT_DEDUP); }), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring
             {
                 // GetPath() already yields the registered MTP path or the stored folder path
@@ -313,6 +320,21 @@ void CWinDirStatModel::RunPendingHeapCleanup()
         ::SetProcessWorkingSetSize(::GetCurrentProcess(), static_cast<SIZE_T>(-1), static_cast<SIZE_T>(-1));
     });
     m_heapMinPending.store(false, std::memory_order_relaxed);
+}
+
+void CWinDirStatModel::ShowPendingDedupFailures()
+{
+    // Shown once the scan thread has exited, so the dialog never holds it up
+    if (IsScanRunning()) return;
+    const auto failures = CDedupAccounting::Get().TakeFailures();
+    if (failures.empty() || !COptions::DedupShowFailures) return;
+
+    // Keep the filesystem allocation when a volume cannot be accounted for.
+    if (const auto [nID, isChecked] = CMessageBoxDlg::Show(Localization::Lookup(IDS_DEDUP_FAILURES), failures,
+        Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_OK | MB_ICONWARNING, GetMainWindow(), { 600, 300 }); isChecked)
+    {
+        COptions::DedupShowFailures = false;
+    }
 }
 
 void CWinDirStatModel::SetHighlightExtension(const std::wstring & ext, const bool unregistered)
@@ -565,6 +587,9 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         auto childrenView = itemsToDelete | std::views::transform(&CItem::GetChildren) | std::views::join;
         itemsToDelete = std::vector<CItem*>(childrenView.begin(), childrenView.end());
     }
+
+    // Deduplication pseudo items have no file system counterpart
+    std::erase_if(itemsToDelete, [](const CItem* item) { return item->IsTypeOrFlag(IT_DEDUP); });
     // MTP items require shell deletion instead of direct filesystem calls
     const bool hasMtpItems = std::ranges::any_of(itemsToDelete,
         [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
@@ -584,6 +609,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             for (std::vector<CItem*> stack = itemsToDelete; !stack.empty();)
             {
                 const CItem* item = stack.back(); stack.pop_back();
+                if (item->IsTypeOrFlag(IT_DEDUP)) continue;
 
                 // Sort into files or directories
                 (item->IsTypeOrFlag(IT_DIRECTORY) ? directories : files).push_back(item);
@@ -694,7 +720,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             itemsToRefresh.push_back(refresh);
     }
     itemsToRefresh.append_range(recyclers);
-    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh);
+    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh, true);
 }
 
 void CWinDirStatModel::SetZoomItem(CItem* item)
@@ -712,9 +738,9 @@ void CWinDirStatModel::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item) const
+void CWinDirStatModel::RefreshItem(const std::vector<CItem*>& item, const bool removal) const
 {
-    Get()->StartScanningEngine(item);
+    Get()->StartScanningEngine(item, removal);
 }
 
 bool CWinDirStatModel::ConfirmOperation(const std::wstring_view operationId, Setting<bool>& prompt,
@@ -913,6 +939,11 @@ bool CWinDirStatModel::SearchListHasFocus()
     return LF_SEARCHLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CWinDirStatModel::DedupShareListHasFocus()
+{
+    return LF_DEDUPSHARELIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 bool CWinDirStatModel::WatcherListHasFocus()
 {
     return LF_WATCHERLIST == CMainFrame::Get()->GetLogicalFocus();
@@ -928,6 +959,7 @@ CTreeListControl* CWinDirStatModel::GetFocusControl()
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
     if (SearchListHasFocus()) return CFileSearchControl::Get();
+    if (DedupShareListHasFocus()) return CFileDedupShareControl::Get();
     if (WatcherListHasFocus()) return CFileWatcherControl::Get();
     if (PermsListHasFocus()) return CFilePermsControl::Get();
     return CFileTreeControl::Get();
@@ -989,4 +1021,52 @@ std::vector<CItem*> CWinDirStatModel::GetAllSelected()
 {
     const auto selection = GetSelectedItemsView();
     return { selection.begin(), selection.end() };
+}
+
+const std::unordered_set<const CItem*>& CWinDirStatModel::GetRelatedItems()
+{
+    if (m_relatedValid) return m_relatedItems;
+
+    // Do not cache an empty result while a scan still changes the tree
+    if (!HasRootItem() || !IsRootDone())
+    {
+        if (!m_relatedItems.empty() || m_relatedSource != nullptr) ClearRelatedItems();
+        return m_relatedItems;
+    }
+    m_relatedValid = true;
+
+    const auto selection = GetSelectedItemsView();
+    const CItem* source = selection.size() == 1 ? selection.front() : nullptr;
+    if (source == m_relatedSource) return m_relatedItems;
+
+    m_relatedSource = source;
+    m_relatedItems.clear();
+    m_relatedTruncated = false;
+    if (source != nullptr && source->IsTypeOrFlag(IT_FILE, IT_DEDUP))
+    {
+        // One item past the limit tells a cut-off highlight from one that has exactly the limit
+        CDedupAccounting::Get().CollectRelated(source, m_relatedItems, RelatedLimit + 1);
+        m_relatedTruncated = m_relatedItems.size() > RelatedLimit;
+        if (m_relatedTruncated) m_relatedItems.erase(m_relatedItems.begin());
+
+        // Visualizations draw hardlinked files through their index item
+        std::vector<const CItem*> indexItems;
+        for (const CItem* item : m_relatedItems)
+        {
+            if (item->IsTypeOrFlag(ITF_HARDLINK))
+                if (const CItem* index = item->FindHardlinksIndexItem(); index != nullptr) indexItems.push_back(index);
+        }
+        m_relatedItems.insert(indexItems.begin(), indexItems.end());
+    }
+    m_relatedGeneration++;
+    return m_relatedItems;
+}
+
+void CWinDirStatModel::ClearRelatedItems()
+{
+    m_relatedItems.clear();
+    m_relatedSource = nullptr;
+    m_relatedValid = false;
+    m_relatedTruncated = false;
+    m_relatedGeneration++;
 }

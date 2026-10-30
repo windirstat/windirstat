@@ -177,6 +177,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Controls\Sunburst.h" />
     <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Controls\FileSearchControl.h" />
+    <ClInclude Include="Controls\FileDedupShareControl.h" />
     <ClInclude Include="DarkMode.h" />
     <ClInclude Include="Dialogs\MessageBoxDlg.h" />
     <ClInclude Include="Dialogs\ProgressDlg.h" />
@@ -197,6 +198,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="RecoveryExFat.h" />
     <ClInclude Include="RecoveryFat.h" />
     <ClInclude Include="ItemSearch.h" />
+    <ClInclude Include="ItemDedupShare.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="ItemWrapperNode.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
@@ -210,6 +212,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Constants.h" />
     <ClInclude Include="BlockingQueue.h" />
     <ClInclude Include="CsvLoader.h" />
+    <ClInclude Include="DedupAccounting.h" />
+    <ClInclude Include="DedupStore.h" />
     <ClInclude Include="WinDirStatModel.h" />
     <ClInclude Include="FinderBasic.h" />
     <ClInclude Include="Item.h" />
@@ -267,6 +271,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\Sunburst.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
+    <ClCompile Include="DedupAccounting.cpp" />
+    <ClCompile Include="DedupStore.cpp" />
     <ClCompile Include="DarkMode.cpp" />
     <ClCompile Include="UiAppearance.cpp" />
     <ClCompile Include="UiControls.cpp" />
@@ -282,6 +288,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Pages\PagePrompts.cpp" />
     <ClCompile Include="Views\ControlView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
+    <ClCompile Include="Controls\FileDedupShareControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderMtp.cpp" />
     <ClCompile Include="FinderRemote.cpp" />
@@ -306,6 +313,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="ItemDupe.cpp" />
     <ClCompile Include="ItemPerm.cpp" />
     <ClCompile Include="ItemSearch.cpp" />
+    <ClCompile Include="ItemDedupShare.cpp" />
     <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
     </ClCompile>

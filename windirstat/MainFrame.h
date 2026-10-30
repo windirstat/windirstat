@@ -26,7 +26,7 @@ class CVisualizationPane;
 // Although these windows can lose the real focus, for instance
 // when a dialog box is opened, the logical focus will not be lost.
 //
-enum LOGICAL_FOCUS : uint8_t
+enum LOGICAL_FOCUS : uint16_t
 {
     LF_NONE             = 0,
     LF_FILETREE         = 1 << 0,
@@ -37,6 +37,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_PERMSLIST        = 1 << 5,
     LF_EXTLIST          = 1 << 6,
     LF_STORAGEANALYTICS = 1 << 7,
+    LF_DEDUPSHARELIST   = 1 << 8,
 };
 
 //
@@ -177,6 +178,7 @@ public:
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
+    CFileDedupShareView* GetFileDedupShareView() const { return m_fileTabbedView->GetFileDedupShareView(); }
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
