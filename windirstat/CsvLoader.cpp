@@ -290,6 +290,15 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
             if (const auto found = parentMap.find(std::wstring_view{}); found != parentMap.end())
                 parent = found->second;
         }
+
+        // Attach bare <Free Space> and <Unknown> entries from v2.0.1-v2.2.2 reports to the active drive
+        if (parent == nullptr && (itType == IT_FREESPACE || itType == IT_UNKNOWN) && newroot != nullptr)
+        {
+            if (newroot->IsTypeOrFlag(IT_DRIVE)) parent = newroot;
+            else if (newroot->IsTypeOrFlag(IT_MYCOMPUTER) && !newroot->GetChildren().empty() &&
+                newroot->GetChildren().back()->IsTypeOrFlag(IT_DRIVE))
+                parent = newroot->GetChildren().back();
+        }
     }
 
     // Rows are written parent-before-child, so a row under a multi-root container whose parent
@@ -301,7 +310,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     if (!isRoot && !isInRoot && parent == nullptr) return nullptr;
     if (parent != nullptr && parent->IsLeaf()) return nullptr;
 
-    DWORD attrs = ParseAttributes(attributes);
+    DWORD attrs = attributes.starts_with(L"0x") ?
+        wcstoul(attributes.data(), nullptr, 16) : ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
 
     // Refresh the device name and register its live shell path for later MTP operations
@@ -311,8 +321,8 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
         FromTimeString(lastChange),
         wcstoull((isRemote ? sizeLogical : sizePhysical).data(), nullptr, 10),
         wcstoull(sizeLogical.data(), nullptr, 10),
-        wcstoull(index.data(), nullptr, 16), attrs, wcstoul(files.data(),   nullptr, 10),
-        wcstoul(folders.data(), nullptr, 10));
+        index.empty() ? 0ull : wcstoull(index.data(), nullptr, 16), attrs,
+        wcstoul(files.data(), nullptr, 10), wcstoul(folders.data(), nullptr, 10));
     const auto outcome = std::ranges::find(scanOutcomes, scanOutcome);
     newitem->SetScanResult({ outcome != scanOutcomes.end() ?
         static_cast<ScanOutcome>(outcome - scanOutcomes.begin()) :
@@ -348,6 +358,102 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     return newitem;
 }
 
+// Legacy results compatibility functor
+struct LegacyResultsCompat
+{
+    enum class Format : std::uint8_t { Unknown, Current, LegacyV2_0, LegacyV2_5, LegacyV2_6 };
+    Format format = Format::Unknown;
+    wchar_t buffer[16]{};
+
+    // Obsolete bit positions used exclusively for legacy deserialization
+    enum LegacyBits : std::uint32_t
+    {
+        // v2.0.1 – v2.2.2 (16-bit ITEMTYPE)
+        V2_0_IT_MASK          = 0x0000003F,
+        V2_0_ITF_DONE         = 1u << 8,
+        V2_0_ITF_ROOTITEM     = 1u << 9,
+        V2_0_ROOT_SIG         = V2_0_ITF_DONE | V2_0_ITF_ROOTITEM,
+
+        // v2.5.0 (32-bit ITEMTYPE before ITF_EXTDATA)
+        V2_5_ITF_BASE_MASK    = 0x03000000,
+        V2_5_ITF_HARDLINK     = 1u << 26,
+        V2_5_ITF_ROOTITEM     = 1u << 27,
+        V2_5_ITF_DONE         = 1u << 28,
+        V2_5_ROOT_SIG         = V2_5_ITF_DONE | V2_5_ITF_ROOTITEM,
+
+        // v2.6.0 – v2.9.3 (32-bit ITEMTYPE)
+        LEGACY_IT_MASK        = 0x000007FF,
+        LEGACY_ITF_WSL        = 1u << 13,
+        LEGACY_ITF_SCANERROR  = 1u << 14,
+        LEGACY_ITF_REMOTE     = 1u << 15,
+        LEGACY_ITHASH_MASK    = 0x000F0000,
+        LEGACY_ITRP_MASK      = 0x00F00000,
+        LEGACY_ITF_BASE_MASK  = 0x1F000000,
+        LEGACY_ITF_ROOTITEM   = 1u << 28,
+        LEGACY_ITF_DONE       = 1u << 29,
+        LEGACY_ITF_UPPER_MASK = 0xC0000000,
+        V2_6_ROOT_SIG         = LEGACY_ITF_DONE | LEGACY_ITF_ROOTITEM,
+    };
+
+    using MatchFn = std::uint32_t(*)(std::uint32_t);
+
+    static constexpr MatchFn conditionsV2_0[] = {
+        [](std::uint32_t v) -> std::uint32_t { return (v & V2_0_IT_MASK); },
+        [](std::uint32_t v) -> std::uint32_t { return (v & V2_0_ITF_ROOTITEM) ? ITF_ROOTITEM : 0; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & V2_0_ITF_DONE) ? ITF_DONE : 0; },
+    };
+
+    static constexpr MatchFn conditionsV2_5[] = {
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_IT_MASK); },
+        [](std::uint32_t v) -> std::uint32_t { return (v & (LEGACY_ITHASH_MASK | LEGACY_ITRP_MASK)) >> 5; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & V2_5_ITF_BASE_MASK); },
+        [](std::uint32_t v) -> std::uint32_t { return (v & (V2_5_ITF_HARDLINK | V2_5_ITF_ROOTITEM)) << 1; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & V2_5_ITF_DONE) ? ITF_DONE : 0; },
+    };
+
+    static constexpr MatchFn conditionsV2_6[] = {
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_IT_MASK); },
+        [](std::uint32_t v) -> std::uint32_t { return (v & (LEGACY_ITHASH_MASK | LEGACY_ITRP_MASK)) >> 5; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_BASE_MASK); },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_UPPER_MASK) >> 1; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_DONE) ? ITF_DONE : 0; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_WSL) ? ITF_WSL : 0; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_SCANERROR) ? ITF_SCANERROR : 0; },
+        [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_REMOTE) ? ITF_REMOTE : 0; },
+    };
+
+    std::wstring_view operator()(const std::wstring_view attrStr)
+    {
+        if (format == Format::Current) return attrStr;
+
+        const auto rawValue = static_cast<std::uint32_t>(wcstoull(attrStr.data(), nullptr, 16));
+
+        // Detect legacy results format on the first row and warn the user
+        if (format == Format::Unknown)
+        {
+            if ((rawValue & V2_6_ROOT_SIG) == V2_6_ROOT_SIG) format = Format::LegacyV2_6;
+            else if ((rawValue & ITF_DONE) != 0) format = Format::Current;
+            else if ((rawValue & V2_5_ROOT_SIG) == V2_5_ROOT_SIG) format = Format::LegacyV2_5;
+            else if ((rawValue >> 16) == 0 && (rawValue & V2_0_ROOT_SIG) == V2_0_ROOT_SIG) format = Format::LegacyV2_0;
+            else format = Format::Current;
+
+            if (format != Format::Current) ShowMessageBox(Localization::Lookup(IDS_LEGACY_RESULTS_WARNING));
+            else return attrStr;
+        }
+
+        const std::span<const MatchFn> activeConditions =
+            format == Format::LegacyV2_6 ? std::span<const MatchFn>(conditionsV2_6) :
+            format == Format::LegacyV2_5 ? std::span<const MatchFn>(conditionsV2_5) :
+                                           std::span<const MatchFn>(conditionsV2_0);
+
+        std::uint32_t newValue = 0;
+        for (const auto match : activeConditions) newValue |= match(rawValue);
+        const auto result = std::format_to_n(buffer, std::size(buffer) - 1, L"0x{:08X}", newValue);
+        *result.out = wds::chrNull;
+        return std::wstring_view(buffer, result.out - buffer);
+    }
+};
+
 static CItem* LoadResultsCsv(std::ifstream& reader)
 {
     CItem* newroot = nullptr;
@@ -355,6 +461,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     std::wstring line;
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
+    LegacyResultsCompat handleLegacyResults;
     bool headerProcessed = false;
     std::array<size_t, FIELD_COUNT> orderMap{};
     size_t maxRequiredField = 0;
@@ -402,7 +509,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             // Validate all necessary fields are present
             for (const auto [i, order] : std::views::enumerate(orderMap))
             {
-                if (i >= FIELD_OWNER) continue;
+                if (i >= FIELD_INDEX) continue;
                 if (order == std::wstring::npos)
                 {
                     delete newroot;
@@ -417,9 +524,10 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         if (fields.size() <= maxRequiredField) { delete newroot; return nullptr; }
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
-        if (!BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
+        if (!BuildAndAttachItem(namePath, handleLegacyResults(fields[orderMap[FIELD_ATTRIBUTES_WDS]]),
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
-            fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
+            fields[orderMap[FIELD_SIZE_LOGICAL]],
+            orderMap[FIELD_INDEX] < fields.size() ? fields[orderMap[FIELD_INDEX]] : std::wstring_view{},
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
             fields[orderMap[FIELD_FOLDERS]], newroot, parentMap,
             orderMap[FIELD_SCAN_OUTCOME] < fields.size() ? fields[orderMap[FIELD_SCAN_OUTCOME]] : std::wstring_view{},
@@ -447,6 +555,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
     CItem* newroot = nullptr;
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
     std::unordered_map<std::wstring, std::wstring> obj;
+    LegacyResultsCompat handleLegacyResults;
 
     // Skip lines until '[' (start of JSON array)
     std::string linebuf;
@@ -470,7 +579,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         // Validate minimum required fields
         if (fieldValues[FIELD_NAME].empty()) { delete newroot; return nullptr; }
 
-        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
+        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], handleLegacyResults(fieldValues[FIELD_ATTRIBUTES_WDS]),
             fieldValues[FIELD_LAST_CHANGE], fieldValues[FIELD_SIZE_PHYSICAL],
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],
