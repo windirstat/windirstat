@@ -97,6 +97,8 @@ function Test-SplitterCapture {
             $point = @(20, 20)
             $point[$axis] = $before[$axis + 2] - $rect[$axis] + $offset - $(if ($first -eq $inner) { 2 } else { 0 })
             $packed = ($point[1] -shl 16) -bor ($point[0] -band 0xFFFF)
+            # Capture and window moves make Windows report the real cursor, so keep it on the synthetic point
+            [TestDesktop]::MoveCursor($rect[0] + $point[0], $rect[1] + $point[1])
             [void] [TestDesktop]::Message($splitter, 0x0201, 1, $packed)
             Assert-Equal ([TestDesktop]::CaptureOwner($app.Window)) $splitter `
                 'Dragging acquires capture on the intended splitter'
@@ -105,6 +107,7 @@ function Test-SplitterCapture {
                 'The first move retains the exact grab offset without jumping'
             $point[$axis] += 40
             $packed = ($point[1] -shl 16) -bor ($point[0] -band 0xFFFF)
+            [TestDesktop]::MoveCursor($rect[0] + $point[0], $rect[1] + $point[1])
             [void] [TestDesktop]::Message($splitter, 0x0200, 1, $packed)
             $during = [TestDesktop]::Rectangle($first)
             Assert-Equal ($during[$axis + 2] - $before[$axis + 2]) 40 'Pane geometry follows the drag before mouse-up'
@@ -280,6 +283,7 @@ function Test-EmptyGraphTransitions {
     param($Context, $Case)
     $root = $Context.Fixture
     $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapUseLogicalSize = 1 } }
+    [TestDesktop]::ParkCursor($app.Window)
     $commands = @('ID_VIEW_TREEMAP_ROWS', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_TREEMAP_HILBERT',
         'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST')
     $empty = @{}

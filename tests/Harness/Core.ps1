@@ -256,7 +256,10 @@ function Invoke-TestScenario {
             } catch { $status = 'FAIL'; $message += " Process cleanup: $($_.Exception.Message)" }
             finally { $process.Dispose() }
         }
-        if ($previousCursor) { [TestDesktop]::MoveCursor($previousCursor[0], $previousCursor[1]) }
+        if ($previousCursor) {
+            try { [TestDesktop]::MoveCursor($previousCursor[0], $previousCursor[1]) }
+            catch { $status = 'FAIL'; $message += " Cursor restore: $($_.Exception.Message)" }
+        }
         if ([TestDesktop]::IsWindow($previousForeground)) {
             [void] [TestDesktop]::SetForegroundWindow($previousForeground)
         }
