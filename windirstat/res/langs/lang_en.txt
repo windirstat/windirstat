@@ -96,6 +96,7 @@ IDS_IDLEMESSAGE=Ready
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} Items Selected | {} Files | {} Folders
 IDS_JUNCTIONS=Junctions
 IDS_LARGEST_FILES=Largest Files
+IDS_LEGACY_RESULTS_WARNING=This scan results file was saved in an older format and will be loaded with compatibility translation.\n\nPlease save a new copy of the scan results in the current format after a successful load.
 IDS_MENU_ABSOLUTE_PERCENTAGES=Show &Absolute Percentages
 IDS_MENU_CANCEL=C&ancel
 IDS_MENU_CHKDSK=Check Disk
