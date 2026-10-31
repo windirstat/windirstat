@@ -1024,9 +1024,9 @@ void CMainFrame::OnSysColorChange()
     }, 0);
 }
 
-void CMainFrame::OnSettingChange(const UINT flags, const LPCTSTR section)
+void CMainFrame::OnSettingChange(UINT /*flags*/, LPCTSTR /*section*/)
 {
-    CFrameWnd::OnSettingChange(flags, section);
+    CallDefaultHandler();
     OnSysColorChange();
     OnFontSizeChanged(0, 0);
 }
@@ -1045,14 +1045,14 @@ LRESULT CMainFrame::OnUahDrawMenu(const WPARAM wParam, const LPARAM lParam) cons
 void CMainFrame::OnNcPaint()
 {
     // Update the bottom of the menu bar that is not properly painted
-    CFrameWnd::OnNcPaint();
+    CallDefaultHandler();
     DarkMode::DrawMenuClientArea(*this);
 }
 
-bool CMainFrame::OnNcActivate(const bool bActive)
+bool CMainFrame::OnNcActivate(bool /*bActive*/)
 {
     // Update the bottom of the menu bar that is not properly painted
-    const auto ret = CFrameWnd::OnNcActivate(bActive);
+    const bool ret = CallDefaultHandler() != 0;
     DarkMode::DrawMenuClientArea(*this);
     return ret;
 }
@@ -1127,207 +1127,55 @@ void CMainFrame::OnViewWindowLayout()
     m_layoutPopup.ShowAtButton(btnRect);
 }
 
-void CMainFrame::ConfigureSplitterCallbacks(const int topo, const int perm)
+void CMainFrame::BuildSplitterLayout()
 {
+    // The splitters persist; a layout only changes their orientations and the nested splitter's slot.
+    const auto& layout = CLayoutPopup::CurrentLayout();
+    m_splitter.SetOrientation(layout.orientation);
+    m_subSplitter.SetOrientation(layout.subOrientation);
+    SetWindowLongPtrW(m_subSplitter.Handle(), GWLP_ID, m_splitter.PaneId(layout.subPane));
     m_splitter.ClearPaneTracking();
     m_subSplitter.ClearPaneTracking();
 
-    auto showVisualization = [this](const bool visible)
+    // Attach each stable view and its visibility action to the owning splitter.
+    const std::array<CWinDirStatPane*, 3> views{ GetFileTabbedView(), GetExtensionView(), GetVisualizationPane() };
+    for (const auto [slot, viewType] : std::views::enumerate(layout.views))
     {
-        ShowVisualization(visible);
-    };
-    auto showFileTypes = [this](const bool visible)
-    {
-        GetExtensionView()->ShowTypes(visible);
-        COptions::ShowFileTypes = visible;
-    };
-    auto applyVisibility = [this]
-    {
-        ApplyPaneVisibility();
-    };
+        auto& splitter = slot == 0 ? m_splitter : m_subSplitter;
+        const int pane = slot == 0 ? 1 - layout.subPane : static_cast<int>(slot) - 1;
+        const HWND window = views[viewType]->Handle();
+        SetParent(window, splitter.Handle());
+        SetWindowLongPtrW(window, GWLP_ID, splitter.PaneId(pane));
+        if (viewType == VT_ALLFILES) continue;
 
-    switch (topo)
-    {
-    case LT_ROWS_SUB_COLS:
-        m_splitter.TrackPane(perm == 0 ? 1 : 0, showVisualization, applyVisibility);
-        m_subSplitter.TrackPane(1, showFileTypes, applyVisibility);
-        break;
-
-    case LT_COLS_THREE:
-        switch (perm)
+        splitter.TrackPane(pane, [this, viewType](const bool visible)
         {
-        case 0: // [FTV|visualization] | ExtV
-            m_splitter.TrackPane(1, showFileTypes, applyVisibility);
-            m_subSplitter.TrackPane(1, showVisualization, applyVisibility);
-            break;
-        case 1: // [visualization|FTV] | ExtV
-            m_splitter.TrackPane(1, showFileTypes, applyVisibility);
-            m_subSplitter.TrackPane(0, showVisualization, applyVisibility);
-            break;
-        case 2: // FTV | [ExtV|visualization]
-            m_subSplitter.TrackPane(0, showFileTypes, applyVisibility);
-            m_subSplitter.TrackPane(1, showVisualization, applyVisibility);
-            break;
-        case 3: // visualization | [ExtV|FTV]
-            m_splitter.TrackPane(0, showVisualization, applyVisibility);
-            m_subSplitter.TrackPane(0, showFileTypes, applyVisibility);
-            break;
-        }
-        break;
-
-    case LT_COLS_SUB_ROWS:
-        m_splitter.TrackPane(1, showFileTypes, applyVisibility);
-        m_subSplitter.TrackPane(perm == 0 ? 0 : 1, showVisualization, applyVisibility);
-        break;
-
-    case LT_COLS_VISUALIZATION_FULL:
-    {
-        const int visualizationPane = (perm == 0 || perm == 1) ? 0 : 1;
-        const int extPane = (perm == 0 || perm == 2) ? 0 : 1;
-        m_splitter.TrackPane(visualizationPane, showVisualization, applyVisibility);
-        m_subSplitter.TrackPane(extPane, showFileTypes, applyVisibility);
-        break;
-    }
-    }
-}
-
-void CMainFrame::BuildSplitterLayout(const int topo, const int perm, const HWND hFTV, const HWND hExtV, const HWND hVisualization)
-{
-    auto AttachView = [](CWdsSplitterWnd& splitter, const int pane, const HWND hView)
-    {
-        SetParent(hView, splitter.Handle());
-        ::SetWindowLongPtr(hView, GWLP_ID, splitter.PaneId(pane));
-    };
-
-    switch (topo)
-    {
-    case LT_ROWS_SUB_COLS:
-        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Horizontal);
-        if (perm == 0) // top: [FTV|ExtV], bottom: visualization
-        {
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(0));
-            AttachView(m_subSplitter, 0, hFTV);
-            AttachView(m_subSplitter, 1, hExtV);
-            AttachView(m_splitter, 1, hVisualization);
-        }
-        else // perm == 1: visualization top, [FTV|ExtV] bottom
-        {
-            AttachView(m_splitter, 0, hVisualization);
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(1));
-            AttachView(m_subSplitter, 0, hFTV);
-            AttachView(m_subSplitter, 1, hExtV);
-        }
-        break;
-
-    case LT_COLS_THREE:
-        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
-        if (perm == 0) // [FTV|visualization] in col 0, ExtV in col 1
-        {
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(0));
-            AttachView(m_subSplitter, 0, hFTV);
-            AttachView(m_subSplitter, 1, hVisualization);
-            AttachView(m_splitter, 1, hExtV);
-        }
-        else if (perm == 1) // [visualization|FTV] in col 0, ExtV in col 1
-        {
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(0));
-            AttachView(m_subSplitter, 0, hVisualization);
-            AttachView(m_subSplitter, 1, hFTV);
-            AttachView(m_splitter, 1, hExtV);
-        }
-        else if (perm == 2) // FTV in col 0, [ExtV|visualization] in col 1
-        {
-            AttachView(m_splitter, 0, hFTV);
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(1));
-            AttachView(m_subSplitter, 0, hExtV);
-            AttachView(m_subSplitter, 1, hVisualization);
-        }
-        else // perm 3: visualization in col 0, [ExtV|FTV] in col 1
-        {
-            AttachView(m_splitter, 0, hVisualization);
-            m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-                m_splitter.PaneId(1));
-            AttachView(m_subSplitter, 0, hExtV);
-            AttachView(m_subSplitter, 1, hFTV);
-        }
-        break;
-
-    case LT_COLS_SUB_ROWS:
-        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
-        m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Horizontal,
-            m_splitter.PaneId(0));
-        if (perm == 0) // left: visualization/FTV; right: ExtV
-        {
-            AttachView(m_subSplitter, 0, hVisualization);
-            AttachView(m_subSplitter, 1, hFTV);
-        }
-        else // perm 1: left: FTV/visualization; right: ExtV
-        {
-            AttachView(m_subSplitter, 0, hFTV);
-            AttachView(m_subSplitter, 1, hVisualization);
-        }
-        AttachView(m_splitter, 1, hExtV);
-        break;
-
-    case LT_COLS_VISUALIZATION_FULL:
-    {
-        m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Vertical);
-        const int visualizationCol = (perm == 0 || perm == 1) ? 0 : 1;
-        const int extRow = (perm == 0 || perm == 2) ? 0 : 1; // ExtV on top (perm 0/2) or bottom (perm 1/3)
-        AttachView(m_splitter, visualizationCol, hVisualization);
-        m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Horizontal,
-            m_splitter.PaneId(1 - visualizationCol));
-        AttachView(m_subSplitter, extRow, hExtV);
-        AttachView(m_subSplitter, 1 - extRow, hFTV);
-        break;
-    }
+            if (viewType == VT_VISUALIZATION) ShowVisualization(visible);
+            else
+            {
+                GetExtensionView()->ShowTypes(visible);
+                COptions::ShowFileTypes = visible;
+            }
+        }, [this] { ApplyPaneVisibility(); });
     }
 }
 
 void CMainFrame::RebuildLayout(const bool resetPositions)
 {
-    int topo = COptions::LayoutTopology;
-    int perm = COptions::LayoutPermutation;
-    const bool isDefault = (topo == LT_ROWS_SUB_COLS && perm == 0);
-    if (topo == 1 || (!isDefault && CLayoutPopup::LayoutIndex(topo, perm) == 0))
-    {
-        topo = LT_ROWS_SUB_COLS;
-        perm = 0;
-        COptions::LayoutTopology = topo;
-        COptions::LayoutPermutation = perm;
-    }
-
-    // Reparent the stable pane windows to the frame so destroying the splitters does not destroy them.
-    const HWND hFTV = GetFileTabbedView()->Handle();
-    const HWND hExtV = GetExtensionView()->Handle();
-    const HWND hVisualization = GetVisualizationPane()->Handle();
-    const HWND hFrame = Handle();
-    SetParent(hFTV, hFrame);
-    SetParent(hExtV, hFrame);
-    SetParent(hVisualization, hFrame);
-
-    if (m_splitter.Handle())
-        m_splitter.DestroyWindow();
-
     if (resetPositions)
     {
         COptions::MainSplitterPos = -1.0;
         COptions::SubSplitterPos  = -1.0;
     }
 
-    BuildSplitterLayout(topo, perm, hFTV, hExtV, hVisualization);
-    ::ShowWindow(hVisualization, SW_SHOW);
-    ::ShowWindow(hExtV, SW_SHOW);
-
-    ConfigureSplitterCallbacks(topo, perm);
+    BuildSplitterLayout();
     m_splitter.SetStorage(COptions::MainSplitterPos.Ptr());
     m_subSplitter.SetStorage(COptions::SubSplitterPos.Ptr());
+
+    // The reused splitters may keep their size, so lay out their reassigned panes explicitly.
     UpdateLayout();
+    m_splitter.UpdateLayout();
+    m_subSplitter.UpdateLayout();
 
     ApplyPaneVisibility();
 

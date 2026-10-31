@@ -139,6 +139,16 @@ protected:
     void SavePersistentAttributes() const override;
     void ShowColumnContextMenu(CPoint point);
 
+    struct PaintContext
+    {
+        struct Column { int subitem; bool leftAlign; CRect rect; };
+        std::vector<Column> columns;
+        CDC dc;
+        CBitmap bitmap;
+        CSize size;
+    };
+    PaintContext* m_paintContext = nullptr;
+
     // Owner-drawn related members
     std::vector<CWdsListItem*> m_items;
     std::unordered_map<CWdsListItem*, int> m_itemMap;
@@ -171,6 +181,7 @@ public:
 
 protected:
     void OnContextMenu(WindowRef pWnd, CPoint point);
+    LRESULT OnPaint(WPARAM, LPARAM);
     bool OnEraseBkgnd(CDC* pDC) const;
     void OnHdnBeginTrack(NMHDR* pNMHDR, LRESULT* pResult);
     void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
@@ -199,6 +210,8 @@ inline std::span<const RouteEntry> CWdsListControl::Routes()
         Route::ReflectNotify<&OnLvnGetDispInfo>(LVN_GETDISPINFO),
         Route::Window<&OnContextMenu>(WM_CONTEXTMENU),
         Route::Window<&OnDestroy>(WM_DESTROY),
+        Route::Window<&OnPaint>(WM_PAINT),
+        Route::Window<&OnPaint>(WM_PRINTCLIENT),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
         Route::Window<&OnSettingChange>(WM_SETTINGCHANGE),
         Route::Window<&OnSetFont>(WM_SETFONT),

@@ -38,7 +38,7 @@ static std::span<const RouteEntry> Routes();
 
 protected:
     int OnCreate(LPCREATESTRUCT) { return 0; }
-    int OnMouseActivate(WindowRef pDesktopWnd, UINT nHitTest, UINT message) override;
+    int OnMouseActivate(WindowRef pDesktopWnd, UINT nHitTest, UINT message);
     void OnPaint();
     bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 

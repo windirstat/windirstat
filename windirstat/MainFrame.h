@@ -91,6 +91,7 @@ public:
 
 protected:
     bool PreCreateWindow(CREATESTRUCT& cs) override;
+    void OnTrackingChanged(bool tracking) override;
 
     struct PaneTracking
     {
@@ -163,24 +164,22 @@ public:
     void InvokeInMessageThread(std::function<void()> callback) const;
 
     void RestoreVisualizationPane(bool force = false);
-    void MinimizeVisualizationPane();
-    void MinimizeExtensionView();
     void ExpandFileTabbedView();
     void RestoreSplitterPositions();
     void ApplyPaneVisibility(bool restoreDuringScan = false);
 
-    // Used for storing and retrieving the main panes
-    CFileTabbedView* m_fileTabbedView = nullptr;
-    CExtensionView* m_extensionView = nullptr;
-    CVisualizationPane* m_visualizationPane = nullptr;
+    // The main panes; the splitters only arrange them
+    std::unique_ptr<CFileTabbedView> m_fileTabbedView;
+    std::unique_ptr<CExtensionView> m_extensionView;
+    std::unique_ptr<CVisualizationPane> m_visualizationPane;
     CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
-    CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
-    CExtensionView* GetExtensionView() const { return m_extensionView; }
+    CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView.get(); }
+    CExtensionView* GetExtensionView() const { return m_extensionView.get(); }
     GraphPane GetGraphPaneType() const;
     void SelectGraphPane(GraphPane pane);
     void ShowVisualization(bool show) const;
@@ -226,8 +225,8 @@ public:
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count when m_progressRange == 0)
     CItem* m_workingItem = nullptr;
 
-    CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Contains the two upper views
-    CWdsSplitterWnd m_splitter{ COptions::MainSplitterPos.Ptr() };    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CWdsSplitterWnd m_subSplitter{ COptions::SubSplitterPos.Ptr() }; // Nested splitter holding two of the panes
+    CWdsSplitterWnd m_splitter{ COptions::MainSplitterPos.Ptr() };    // Holds the nested splitter and the remaining pane
     CLayoutPopup m_layoutPopup;                                        // Floating layout-picker popup
 
     CStatusBar m_wndStatusBar; // Status bar
@@ -347,8 +346,7 @@ public:
 private:
     void LayoutWatcherFilter();
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
-    void BuildSplitterLayout(int topo, int perm, HWND hFTV, HWND hExtV, HWND hVisualization);
-    void ConfigureSplitterCallbacks(int topo, int perm);
+    void BuildSplitterLayout();
 };
 
 inline std::span<const RouteEntry> CSettingsSheet::Routes()

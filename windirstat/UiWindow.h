@@ -21,21 +21,16 @@ public:
 
         if (m_pfnSuper != nullptr)
         {
-            if (reinterpret_cast<WNDPROC>(GetWindowLongPtrW(hWnd, GWLP_WNDPROC)) == FrameworkWindowProc)
+            // Restore the native procedure unless a later subclass still chains through ours.
+            if (reinterpret_cast<WNDPROC>(GetWindowLongPtrW(hWnd, GWLP_WNDPROC)) == FrameworkWindowProc &&
+                SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(m_pfnSuper)) != 0)
             {
-                const auto previous = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(hWnd, GWLP_WNDPROC,
-                    reinterpret_cast<LONG_PTR>(m_pfnSuper)));
-                if (previous == FrameworkWindowProc)
-                {
-                    RemovePropW(hWnd, kSuperProp());
-                    m_pfnSuper = nullptr;
-                    Detach();
-                    return;
-                }
-                if (previous != nullptr)
-                    SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(previous));
+                Detach();
+                return;
             }
-            Detach();
+            const std::unique_lock lock(s_windowsLock);
+            if (const auto found = s_windows.find(hWnd); found != s_windows.end()) found->second.window = nullptr;
+            m_hWnd = nullptr;
             return;
         }
 
@@ -45,10 +40,12 @@ public:
 
     virtual bool IsSplitterWindow() const noexcept { return false; }
 
-    // ---- handle maps ----
+    // ---- handle map ----
     static CWnd* FindAttached(const HWND hWnd) noexcept
     {
-        return hWnd != nullptr ? static_cast<CWnd*>(GetPropW(hWnd, kProp())) : nullptr;
+        const std::shared_lock lock(s_windowsLock);
+        const auto found = s_windows.find(hWnd);
+        return found != s_windows.end() ? found->second.window : nullptr;
     }
     template<typename T>
         requires std::derived_from<T, CWnd>
@@ -58,8 +55,10 @@ public:
     {
         if (hWnd == nullptr) return false;
         if (m_hWnd != nullptr) return m_hWnd == hWnd && FindAttached(hWnd) == this;
-        if (const CWnd* pExisting = FindAttached(hWnd); pExisting != nullptr && pExisting != this) return false;
-        if (!SetPropW(hWnd, kProp(), this)) return false;
+        {
+            const std::unique_lock lock(s_windowsLock);
+            if (!s_windows.try_emplace(hWnd, AttachedWindow{ this, nullptr }).second) return false;
+        }
 
         m_hWnd = hWnd;
         m_ownerThreadId = GetWindowThreadProcessId(hWnd, nullptr);
@@ -67,10 +66,11 @@ public:
     }
     HWND Detach() noexcept
     {
-        const HWND h = m_hWnd;
-        if (h != nullptr && FindAttached(h) == this) RemovePropW(h, kProp());
-        m_hWnd = nullptr;
+        const HWND h = std::exchange(m_hWnd, nullptr);
         m_ownerThreadId = 0;
+        const std::unique_lock lock(s_windowsLock);
+        if (const auto found = s_windows.find(h); found != s_windows.end() && found->second.window == this)
+            s_windows.erase(found);
         return h;
     }
 
@@ -80,6 +80,7 @@ public:
     virtual bool PreprocessMessage(MSG*) { return false; }
     virtual void OnFontSizeChanged(int, int) {}
     virtual void OnAppearanceChanged() {}
+    virtual void OnIdleUpdateCmdUI() {}
     virtual void SavePersistentAttributes() const {}
 
     bool CreateEx(const DWORD dwExStyle, const LPCWSTR lpszClassName, const LPCWSTR lpszWindowName, const DWORD dwStyle,
@@ -106,15 +107,15 @@ public:
             PostNcDestroy();
             throw;
         }
-        const WindowCreationScope createScope(this);
+        Creation creation{ this };
         const HWND h = CreateWindowExW(cs.dwExStyle, cs.lpszClass, cs.lpszName, cs.style,
-            cs.x, cs.y, cs.cx, cs.cy, cs.hwndParent, cs.hMenu, cs.hInstance, cs.lpCreateParams);
+            cs.x, cs.y, cs.cx, cs.cy, cs.hwndParent, cs.hMenu, cs.hInstance, &creation);
         if (h == nullptr)
         {
-            if (!createScope.m_attached) PostNcDestroy();
+            if (!creation.attached) PostNcDestroy();
             return false;
         }
-        // If the window used our FrameworkWindowProc class, the creation hook already attached it.
+        // If the window used our FrameworkWindowProc class, it already attached at WM_NCCREATE.
         // Otherwise it is a system/common-control class — subclass it so our message dispatch runs
         // (this is how MFC routes WM_ERASEBKGND, custom-draw, etc. to control-derived classes).
         if (m_hWnd == nullptr)
@@ -163,37 +164,25 @@ public:
     {
         if (!IsWindow(hWnd)) return false;
         if (m_hWnd != nullptr) return m_hWnd == hWnd && FindAttached(hWnd) == this;
-        if (FindAttached(hWnd) != nullptr) return false;
-        if (GetPropW(hWnd, kSuperProp()) != nullptr) return false;
+        if (reinterpret_cast<WNDPROC>(GetWindowLongPtrW(hWnd, GWLP_WNDPROC)) == FrameworkWindowProc) return false;
 
-        SetLastError(ERROR_SUCCESS);
-        const auto old = reinterpret_cast<WNDPROC>(GetWindowLongPtrW(hWnd, GWLP_WNDPROC));
-        if (old == nullptr || old == FrameworkWindowProc) return false;
-
-        SetLastError(ERROR_SUCCESS);
+        // Publish the entry and procedure together so FrameworkWindowProc never sees a partial subclass.
+        const std::unique_lock lock(s_windowsLock);
+        const auto [entry, inserted] = s_windows.try_emplace(hWnd);
+        if (!inserted) return false;
         const auto previous = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(hWnd, GWLP_WNDPROC,
             reinterpret_cast<LONG_PTR>(FrameworkWindowProc)));
         if (previous == nullptr)
         {
-            if (GetWindowLongPtrW(hWnd, GWLP_WNDPROC) == reinterpret_cast<LONG_PTR>(FrameworkWindowProc))
-                SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(old));
+            s_windows.erase(entry);
             return false;
         }
 
-        if (!SetPropW(hWnd, kSuperProp(), reinterpret_cast<HANDLE>(previous)) ||
-            !SetPropW(hWnd, kProp(), this))
-        {
-            RemovePropW(hWnd, kProp());
-            RemovePropW(hWnd, kSuperProp());
-            SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(previous));
-            return false;
-        }
-
+        entry->second = { this, previous };
         m_hWnd = hWnd;
         m_ownerThreadId = GetWindowThreadProcessId(hWnd, nullptr);
         m_pfnSuper = previous;
         return true;
-
     }
 
     // ---- message dispatch ----
@@ -215,7 +204,6 @@ public:
 
         if (msg == WM_NCDESTROY)
         {
-            RemovePropW(m_hWnd, kSuperProp());
             Detach();
             m_pfnSuper = nullptr;
             try { PostNcDestroy(); }
@@ -253,33 +241,6 @@ public:
         return SendNativeMessage(msg, wParam, reinterpret_cast<LPARAM>(lParam));
     }
 
-    // ---- default message handlers (call CallDefaultHandler()) ----
-    int  OnCreate(LPCREATESTRUCT) { return static_cast<int>(CallDefaultHandler()); }
-    void OnDestroy() { CallDefaultHandler(); }
-    void OnPaint() { CallDefaultHandler(); }
-    void OnClose() { CallDefaultHandler(); }
-    void OnNcPaint() { CallDefaultHandler(); }
-    void OnSize(UINT, int, int) { CallDefaultHandler(); }
-    void OnLButtonDown(UINT, CPoint) { CallDefaultHandler(); }
-    void OnLButtonDblClk(UINT, CPoint) { CallDefaultHandler(); }
-    void OnMouseMove(UINT, CPoint) { CallDefaultHandler(); }
-    bool OnMouseWheel(UINT, short, CPoint) { return static_cast<bool>(CallDefaultHandler()); }
-    void OnKeyDown(UINT, UINT, UINT) { CallDefaultHandler(); }
-    void OnChar(UINT, UINT, UINT) { CallDefaultHandler(); }
-    void OnSetFocus(WindowRef) { CallDefaultHandler(); }
-    void OnKillFocus(WindowRef) { CallDefaultHandler(); }
-    void OnTimer(UINT_PTR) { CallDefaultHandler(); }
-    void OnSysColorChange() { CallDefaultHandler(); }
-    bool OnNcActivate(bool) { return static_cast<bool>(CallDefaultHandler()); }
-    HBRUSH OnCtlColor(CDC*, WindowRef, UINT) { return reinterpret_cast<HBRUSH>(CallDefaultHandler()); }
-    void OnGetMinMaxInfo(MINMAXINFO*) { CallDefaultHandler(); }
-    void OnEnable(bool) { CallDefaultHandler(); }
-    bool OnSetCursor(WindowRef, UINT, UINT) { return static_cast<bool>(CallDefaultHandler()); }
-    void OnSettingChange(UINT, LPCTSTR) { CallDefaultHandler(); }
-    void OnHScroll(UINT, UINT, WindowRef) { CallDefaultHandler(); }
-    void OnVScroll(UINT, UINT, WindowRef) { CallDefaultHandler(); }
-    void OnNcCalcSize(bool, NCCALCSIZE_PARAMS*) { CallDefaultHandler(); }
-    virtual int OnMouseActivate(WindowRef, UINT, UINT) { return static_cast<int>(CallDefaultHandler()); }
     bool IsTopParentActive() const noexcept
     {
         HWND hWnd = m_hWnd;
@@ -296,8 +257,15 @@ public:
 protected:
     WNDPROC m_pfnSuper = nullptr;
     DWORD   m_ownerThreadId = 0;
-    static LPCWSTR kProp() { return L"_WdsShimCWnd"; }
-    static LPCWSTR kSuperProp() { return L"_WdsShimSuperProc"; }
+
+private:
+    // Passed as lpCreateParams so framework-class windows attach at WM_NCCREATE.
+    struct Creation { CWnd* window; bool attached = false; };
+
+    // A null window keeps forwarding a subclassed control to its native procedure until WM_NCDESTROY.
+    struct AttachedWindow { CWnd* window; WNDPROC super; };
+    inline static std::unordered_map<HWND, AttachedWindow> s_windows;
+    inline static std::shared_mutex s_windowsLock;
     friend LRESULT CALLBACK FrameworkWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 };
 
@@ -587,18 +555,15 @@ namespace Route
 // -----------------------------------------------------------------------------
 inline bool CCmdTarget::RouteCommand(const UINT nID, const int nCode, void* pExtra, const bool execute)
 {
-    for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
+    for (const RouteEntry& entry : GetRoutes())
     {
-        for (const RouteEntry& entry : table->entries)
-        {
-            if (entry.message != WM_COMMAND) continue;
-            if (entry.firstId == ReflectedId) continue;
-            if (entry.code != static_cast<UINT>(nCode)) continue;
-            if (nID < entry.firstId || nID > entry.lastId) continue;
-            if (!execute) return true;
-            if (entry.invoke(*this, WM_COMMAND, static_cast<WPARAM>(nID),
-                reinterpret_cast<LPARAM>(pExtra))) return true;
-        }
+        if (entry.message != WM_COMMAND) continue;
+        if (entry.firstId == ReflectedId) continue;
+        if (entry.code != static_cast<UINT>(nCode)) continue;
+        if (nID < entry.firstId || nID > entry.lastId) continue;
+        if (!execute) return true;
+        if (entry.invoke(*this, WM_COMMAND, static_cast<WPARAM>(nID),
+            reinterpret_cast<LPARAM>(pExtra))) return true;
     }
     return false;
 }
@@ -623,12 +588,6 @@ inline MessageResult CWnd::RouteWindowMessage(const UINT msg, const WPARAM wPara
         if (auto* dis = reinterpret_cast<DRAWITEMSTRUCT*>(lParam); dis->CtlType != ODT_MENU && dis->hwndItem)
             if (CWnd* pChild = FindAttached(dis->hwndItem))
             {
-                // Publish item rect so GetItemRect/GetSubItemRect can avoid SendMessage.
-                DrawItemContext context{};
-                context.hWnd = dis->hwndItem;
-                context.item = static_cast<int>(dis->itemID);
-                context.rcItem = dis->rcItem;
-                const ScopedValue drawContext(g_drawItemCtx, context);
                 pChild->DrawItem(dis);
                 return TRUE;
             }
@@ -636,25 +595,23 @@ inline MessageResult CWnd::RouteWindowMessage(const UINT msg, const WPARAM wPara
 
     if (msg >= WM_CTLCOLORMSGBOX && msg <= WM_CTLCOLORSTATIC)
     {
-        for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
-            for (const RouteEntry& entry : table->entries)
-            {
-                if (entry.message != WM_CTLCOLOR) continue;
-                if (const auto result = entry.invoke(*this, msg, wParam, lParam)) return result;
-            }
-        return {};
-    }
-    for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
-        for (const RouteEntry& entry : table->entries)
+        for (const RouteEntry& entry : GetRoutes())
         {
-            bool match;
-            if (entry.registeredMessage) match = (*entry.registeredMessage != 0 && *entry.registeredMessage == msg);
-            else
-                match = entry.message == msg && entry.message != WM_COMMAND && entry.message != WM_NOTIFY &&
-                entry.message != WM_CTLCOLOR;
-            if (!match) continue;
+            if (entry.message != WM_CTLCOLOR) continue;
             if (const auto result = entry.invoke(*this, msg, wParam, lParam)) return result;
         }
+        return {};
+    }
+    for (const RouteEntry& entry : GetRoutes())
+    {
+        bool match;
+        if (entry.registeredMessage) match = (*entry.registeredMessage != 0 && *entry.registeredMessage == msg);
+        else
+            match = entry.message == msg && entry.message != WM_COMMAND && entry.message != WM_NOTIFY &&
+            entry.message != WM_CTLCOLOR;
+        if (!match) continue;
+        if (const auto result = entry.invoke(*this, msg, wParam, lParam)) return result;
+    }
     return {};
 }
 
@@ -696,12 +653,11 @@ inline bool CWnd::OnCommand(const WPARAM wParam, const LPARAM lParam)
 
 inline bool CWnd::RouteReflectedCommand(const int code)
 {
-    for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
-        for (const RouteEntry& entry : table->entries)
-            if (entry.message == WM_COMMAND && entry.firstId == ReflectedId && std::cmp_equal(entry.code, code))
-            {
-                if (entry.invoke(*this, WM_COMMAND, 0, 0)) return true;
-            }
+    for (const RouteEntry& entry : GetRoutes())
+        if (entry.message == WM_COMMAND && entry.firstId == ReflectedId && std::cmp_equal(entry.code, code))
+        {
+            if (entry.invoke(*this, WM_COMMAND, 0, 0)) return true;
+        }
     return false;
 }
 
@@ -714,50 +670,57 @@ inline MessageResult CWnd::OnNotify(WPARAM, const LPARAM lParam)
         if (CWnd* control = FindAttached(pNMHDR->hwndFrom); control != nullptr && control != this)
             if (const auto result = control->RouteReflectedNotification(pNMHDR)) return result;
     }
-    for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
-        for (const RouteEntry& entry : table->entries)
-        {
-            if (entry.message != WM_NOTIFY || entry.firstId == ReflectedId) continue;
-            if (entry.code != pNMHDR->code) continue;
-            const UINT idFrom = static_cast<UINT>(pNMHDR->idFrom);
-            if (idFrom < entry.firstId || idFrom > entry.lastId) continue;
-            if (const auto result = entry.invoke(*this, WM_NOTIFY, 0, lParam)) return result;
-        }
+    for (const RouteEntry& entry : GetRoutes())
+    {
+        if (entry.message != WM_NOTIFY || entry.firstId == ReflectedId) continue;
+        if (entry.code != pNMHDR->code) continue;
+        const UINT idFrom = static_cast<UINT>(pNMHDR->idFrom);
+        if (idFrom < entry.firstId || idFrom > entry.lastId) continue;
+        if (const auto result = entry.invoke(*this, WM_NOTIFY, 0, lParam)) return result;
+    }
     return {};
 }
 
 inline MessageResult CWnd::RouteReflectedNotification(NMHDR* pNMHDR)
 {
-    for (const RouteTable* table = GetRouteTable(); table != nullptr; table = table->base)
-        for (const RouteEntry& entry : table->entries)
-            if (entry.message == WM_NOTIFY && entry.firstId == ReflectedId && entry.code == pNMHDR->code)
-            {
-                if (const auto result = entry.invoke(*this, WM_NOTIFY, 0,
-                    reinterpret_cast<LPARAM>(pNMHDR))) return result;
-            }
+    for (const RouteEntry& entry : GetRoutes())
+        if (entry.message == WM_NOTIFY && entry.firstId == ReflectedId && entry.code == pNMHDR->code)
+        {
+            if (const auto result = entry.invoke(*this, WM_NOTIFY, 0,
+                reinterpret_cast<LPARAM>(pNMHDR))) return result;
+        }
     return {};
 }
 
 inline LRESULT CALLBACK FrameworkWindowProc(const HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
-    CWnd* pWnd = CWnd::FindAttached(hWnd);
-    if (pWnd == nullptr && msg == WM_NCCREATE && g_pWndInit != nullptr && !g_pWndInit->m_attached &&
-        g_pWndInit->m_pWnd->m_hWnd == nullptr)
+    CWnd::AttachedWindow attached{};
     {
-        pWnd = g_pWndInit->m_pWnd;
-        if (!pWnd->Attach(hWnd)) return false;
-        g_pWndInit->m_attached = true;
+        const std::shared_lock lock(CWnd::s_windowsLock);
+        if (const auto found = CWnd::s_windows.find(hWnd); found != CWnd::s_windows.end()) attached = found->second;
     }
-    if (pWnd == nullptr)
-    {
-        const auto super = reinterpret_cast<WNDPROC>(GetPropW(hWnd, CWnd::kSuperProp()));
-        if (super == nullptr) return DefWindowProcW(hWnd, msg, wParam, lParam);
+    if (attached.window != nullptr) return attached.window->DispatchWindowMessage(msg, wParam, lParam);
 
-        const LRESULT result = CallWindowProcW(super, hWnd, msg, wParam, lParam);
-        if (msg == WM_NCDESTROY) RemovePropW(hWnd, CWnd::kSuperProp());
+    // A subclass whose object is gone forwards to the native procedure until the window is destroyed.
+    if (attached.super != nullptr)
+    {
+        const LRESULT result = CallWindowProcW(attached.super, hWnd, msg, wParam, lParam);
+        if (msg == WM_NCDESTROY)
+        {
+            const std::unique_lock lock(CWnd::s_windowsLock);
+            CWnd::s_windows.erase(hWnd);
+        }
         return result;
     }
-    return pWnd->DispatchWindowMessage(msg, wParam, lParam);
+
+    if (msg == WM_NCCREATE)
+    {
+        auto* creation = static_cast<CWnd::Creation*>(reinterpret_cast<CREATESTRUCTW*>(lParam)->lpCreateParams);
+        if (creation == nullptr || !creation->window->Attach(hWnd)) return false;
+        creation->attached = true;
+        return creation->window->DispatchWindowMessage(msg, wParam, lParam);
+    }
+    return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
 inline bool CWnd::PreCreateWindow(CREATESTRUCT& cs)

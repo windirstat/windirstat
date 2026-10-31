@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "PageCleanups.h"
 
-CPageCleanups::CPageCleanups() : MessageTarget(IDD) {}
+CPageCleanups::CPageCleanups() : MessageTarget(IDD, L"IDS_PAGE_CLEANUPS_TITLE") {}
 
 void CPageCleanups::InitializePage()
 {

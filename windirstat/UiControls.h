@@ -235,40 +235,11 @@ public:
     bool EnsureVisible(const int i, const bool partial) { return static_cast<bool>(SendNativeMessage(LVM_ENSUREVISIBLE, static_cast<WPARAM>(i), (LPARAM)partial)); }
     bool GetItemRect(const int i, RECT& r, const UINT code = LVIR_BOUNDS) const
     {
-        if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd
-            && (code == LVIR_LABEL || code == LVIR_BOUNDS))
-        {
-            EnsureDrawColCache();
-            if (g_drawItemCtx.colCount > 0 && g_drawItemCtx.colValid[0])
-            {
-                r.top = g_drawItemCtx.rcItem.top;
-                r.bottom = g_drawItemCtx.rcItem.bottom;
-                r.left = (code == LVIR_LABEL) ? g_drawItemCtx.colLeft[0] : g_drawItemCtx.rcItem.left;
-                // LVIR_LABEL = column-0 width; LVIR_BOUNDS = full row
-                r.right = (code == LVIR_LABEL)
-                    ? g_drawItemCtx.colRight[0]
-                    : g_drawItemCtx.rcItem.right;
-                return true;
-            }
-        }
-        // Fallback: set r.left = code before sending per ListView_GetItemRect convention
         r.left = static_cast<LONG>(code);
         return static_cast<bool>(SendNativeMessage(LVM_GETITEMRECT, static_cast<WPARAM>(i), &r));
     }
     bool GetSubItemRect(const int i, const int sub, RECT& r) const
     {
-        if (i == g_drawItemCtx.item && m_hWnd == g_drawItemCtx.hWnd)
-        {
-            EnsureDrawColCache();
-            if (sub >= 0 && sub < g_drawItemCtx.colCount && g_drawItemCtx.colValid[sub])
-            {
-                r.top = g_drawItemCtx.rcItem.top;
-                r.bottom = g_drawItemCtx.rcItem.bottom;
-                r.left = g_drawItemCtx.colLeft[sub];
-                r.right = g_drawItemCtx.colRight[sub];
-                return true;
-            }
-        }
         // Request the label rectangle using the native subitem convention.
         r.left = LVIR_LABEL;
         r.top = sub;
@@ -323,36 +294,6 @@ public:
 
     int GetFirstSelectedIndex() const { return GetNextItem(-1, LVNI_SELECTED); }
     int GetNextSelectedIndex(const int index) const { return GetNextItem(index, LVNI_SELECTED); }
-
-protected:
-
-    // Cache visual header rectangles by logical subitem, using the painted row's
-    // origin because the header can move after the rows during horizontal scrolling.
-    // Called at most once per WM_DRAWITEM dispatch; subsequent calls are no-ops.
-    void EnsureDrawColCache() const
-    {
-        if (g_drawItemCtx.colCount != 0 || m_hWnd != g_drawItemCtx.hWnd) return;
-        const HWND hdr = GetHeader().m_hWnd;
-        if (hdr == nullptr) return;
-        const int n = static_cast<int>(::SendMessageW(hdr, HDM_GETITEMCOUNT, 0, 0));
-        constexpr int cap = static_cast<int>(std::size(g_drawItemCtx.colLeft));
-        const int cols = std::clamp(n, 0, cap);
-        for (const int c : std::views::iota(0, cols))
-        {
-            RECT columnRect{};
-            if (::SendMessageW(hdr, HDM_GETITEMRECT, static_cast<WPARAM>(c), reinterpret_cast<LPARAM>(&columnRect)) != 0)
-            {
-                g_drawItemCtx.colLeft[c] = g_drawItemCtx.rcItem.left + columnRect.left;
-                g_drawItemCtx.colRight[c] = g_drawItemCtx.rcItem.left + columnRect.right;
-                g_drawItemCtx.colValid[c] = true;
-            }
-            else
-            {
-                g_drawItemCtx.colValid[c] = false;
-            }
-        }
-        g_drawItemCtx.colCount = cols;
-    }
 
 };
 

@@ -961,7 +961,7 @@ void CSelectDrivesDlg::OnTimer(const UINT_PTR nIDEvent)
 {
     if (nIDEvent != QUERY_TIMER_ID)
     {
-        CLayoutDialog::OnTimer(nIDEvent);
+        CallDefaultHandler();
         return;
     }
 
@@ -982,7 +982,7 @@ void CSelectDrivesDlg::OnTimer(const UINT_PTR nIDEvent)
 
 void CSelectDrivesDlg::OnSysColorChange()
 {
-    CLayoutDialog::OnSysColorChange();
+    CallDefaultHandler();
     m_driveList.SysColorChanged();
 }
 

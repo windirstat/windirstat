@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "PageGeneral.h"
 
-CPageGeneral::CPageGeneral() : MessageTarget(IDD)
+CPageGeneral::CPageGeneral() : MessageTarget(IDD, L"IDS_PAGE_GENERAL_TITLE")
 {
 }
 

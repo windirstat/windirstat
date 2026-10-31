@@ -75,7 +75,7 @@ protected:
         });
     }
 
-    explicit CSettingsPage(UINT templateId);
+    CSettingsPage(UINT templateId, std::wstring_view title);
 
     bool IsInitialized() const { return m_initialized; }
     void SetModified(bool changed = true);

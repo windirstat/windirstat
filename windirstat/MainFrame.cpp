@@ -110,6 +110,13 @@ bool CWdsSplitterWnd::PreCreateWindow(CREATESTRUCT& cs)
     return CSplitterWnd::PreCreateWindow(cs);
 }
 
+void CWdsSplitterWnd::OnTrackingChanged(const bool tracking)
+{
+    // Keep the cached graph visible until a drag that resizes it finishes.
+    if (auto* pane = CMainFrame::Get()->GetVisualizationPane(); IsChild(pane->Handle()))
+        pane->SuspendRecalculationDrawing(tracking);
+}
+
 void CWdsSplitterWnd::StopTracking(const bool bAccept)
 {
     CSplitterWnd::StopTracking(bAccept);
@@ -204,9 +211,9 @@ void CPacmanControl::Stop()
     m_pacman.Stop();
 }
 
-int CPacmanControl::OnCreate(const LPCREATESTRUCT lpCreateStruct)
+int CPacmanControl::OnCreate(LPCREATESTRUCT /*lpCreateStruct*/)
 {
-    if (CWnd::OnCreate(lpCreateStruct) == -1)
+    if (CallDefaultHandler() == -1)
     {
         return -1;
     }
@@ -250,23 +257,23 @@ CMainFrame::~CMainFrame()
     s_Singleton = nullptr;
 }
 
-void CMainFrame::OnSetFocus(WindowRef pOldWnd)
+void CMainFrame::OnSetFocus(WindowRef /*pOldWnd*/)
 {
-    CFrameWnd::OnSetFocus(pOldWnd);
+    CallDefaultHandler();
     if (HasFocus() && GetLogicalFocus() != LF_NONE)
     {
         MoveFocus(GetLogicalFocus());
     }
 }
 
-void CMainFrame::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+void CMainFrame::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
     if (nChar == VK_TAB)
     {
         MoveFocus(LF_FILETREE);
         return;
     }
-    CFrameWnd::OnKeyDown(nChar, nRepCnt, nFlags);
+    CallDefaultHandler();
 }
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
@@ -545,7 +552,7 @@ void CMainFrame::OnClose()
     COptions::ShowToolBar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
     COptions::ShowStatusBar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
 
-    CFrameWnd::OnClose();
+    CallDefaultHandler();
 }
 
 void CMainFrame::OnDestroy()
@@ -592,21 +599,20 @@ void CMainFrame::PostNcDestroy()
 
 bool CMainFrame::OnCreateClient()
 {
-    if (!m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Horizontal)
-        || !m_splitter.CreateView<CVisualizationPane>(1, CSize(100, 100))
-        || !m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical,
-            m_splitter.PaneId(0))
-        || !m_subSplitter.CreateView<CFileTabbedView>(0, CSize(700, 500))
-        || !m_subSplitter.CreateView<CExtensionView>(1, CSize(100, 500)))
-    {
-        return false;
-    }
+    // The splitters and views persist; RebuildLayout arranges the views for the selected layout.
+    if (!m_splitter.CreateStatic(this, CSplitterWnd::Orientation::Horizontal) ||
+        !m_subSplitter.CreateStatic(&m_splitter, CSplitterWnd::Orientation::Vertical)) return false;
 
-    m_visualizationPane = m_splitter.GetPane<CVisualizationPane>(1);
-    m_fileTabbedView = m_subSplitter.GetPane<CFileTabbedView>(0);
-    m_extensionView = m_subSplitter.GetPane<CExtensionView>(1);
-    if (m_visualizationPane == nullptr || m_fileTabbedView == nullptr || m_extensionView == nullptr)
-        return false;
+    // Publish the views only once all of them exist.
+    auto visualizationPane = std::make_unique<CVisualizationPane>();
+    auto fileTabbedView = std::make_unique<CFileTabbedView>();
+    auto extensionView = std::make_unique<CExtensionView>();
+    for (CWnd* view : std::initializer_list<CWnd*>{ visualizationPane.get(), fileTabbedView.get(), extensionView.get() })
+        if (!view->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, CRect(), &m_splitter, 0))
+            return false;
+    m_visualizationPane = std::move(visualizationPane);
+    m_fileTabbedView = std::move(fileTabbedView);
+    m_extensionView = std::move(extensionView);
 
     GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
 
@@ -618,7 +624,7 @@ bool CMainFrame::OnCreateClient()
 void CMainFrame::UpdateAllPanes(CWnd* sender, const MODEL_CHANGE change, CItem* item) const
 {
     const std::array<CWinDirStatPane*, 3> panes{
-        m_fileTabbedView, m_extensionView, m_visualizationPane
+        m_fileTabbedView.get(), m_extensionView.get(), m_visualizationPane.get()
     };
     for (CWinDirStatPane* pane : panes)
     {
@@ -665,102 +671,23 @@ bool CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
     return true;
 }
 
-void CMainFrame::MinimizeExtensionView()
-{
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
-
-    // LT_COLS_THREE perm 2/3: ExtV is in m_subSplitter col 0 (first pane)
-    if (topo == LT_COLS_THREE && (perm == 2 || perm == 3))
-        m_subSplitter.SetSplitterPos(0.0);
-    // LT_COLS_THREE perm 0/1 and LT_COLS_SUB_ROWS: ExtV is in m_splitter col 1
-    else if (topo == LT_COLS_THREE || topo == LT_COLS_SUB_ROWS)
-        m_splitter.SetSplitterPos(1.0);
-    // LT_COLS_VISUALIZATION_FULL: ExtV is in sub-splitter row 0 (perm 0/2) or row 1 (perm 1/3)
-    else if (topo == LT_COLS_VISUALIZATION_FULL)
-        m_subSplitter.SetSplitterPos(perm == 0 || perm == 2 ? 0.0 : 1.0);
-    // LT_ROWS_SUB_COLS: ExtV is in m_subSplitter col 1
-    else
-        m_subSplitter.SetSplitterPos(1.0);
-}
-
 void CMainFrame::ExpandFileTabbedView()
 {
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
-
-    // Collapse whichever main-splitter pane doesn't contain FTV.
-    const bool ftvInPane1 = (topo == LT_ROWS_SUB_COLS && perm == 1) ||
-                             (topo == LT_COLS_THREE   && perm == 3) ||
-                             (topo == LT_COLS_VISUALIZATION_FULL && (perm == 0 || perm == 1));
-    m_splitter.SetSplitterPos(ftvInPane1 ? 0.0 : 1.0);
-
-    // LT_COLS_THREE perm 2: FTV is directly in main splitter, no sub-splitter needed.
-    if (topo == LT_COLS_THREE && perm == 2)
-        return;
-
-    // Collapse whichever sub-splitter pane doesn't contain FTV.
-    const bool ftvInSubPane1 = (topo == LT_COLS_THREE    && (perm == 1 || perm == 3)) ||
-                                (topo == LT_COLS_SUB_ROWS && perm == 0) ||
-                                (topo == LT_COLS_VISUALIZATION_FULL && (perm == 0 || perm == 2));
-    m_subSplitter.SetSplitterPos(ftvInSubPane1 ? 0.0 : 1.0);
-}
-
-void CMainFrame::MinimizeVisualizationPane()
-{
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
-
-    if (topo == LT_ROWS_SUB_COLS)
-        m_splitter.SetSplitterPos(perm == 0 ? 1.0 : 0.0);
-    else if (topo == LT_COLS_THREE && perm == 3)
-        m_splitter.SetSplitterPos(0.0);
-    else if (topo == LT_COLS_VISUALIZATION_FULL)
-        m_splitter.SetSplitterPos(perm == 0 || perm == 1 ? 0.0 : 1.0);
-    else
+    // Expand the file pane through its actual splitter ancestors.
+    CWnd* pane = GetFileTabbedView();
+    for (CWnd* parent = pane->GetParent<CWnd>(); parent != nullptr && parent->IsSplitterWindow();
+        pane = parent, parent = pane->GetParent<CWnd>())
     {
-        // Visualization in sub-splitter pane 0: LT_COLS_THREE perm 1, LT_COLS_SUB_ROWS perm 0
-        const bool visualizationInPane0 = (topo == LT_COLS_THREE && perm == 1)
-            || (topo == LT_COLS_SUB_ROWS && perm == 0);
-        m_subSplitter.SetSplitterPos(visualizationInPane0 ? 0.0 : 1.0);
+        static_cast<CWdsSplitterWnd*>(parent)->SetSplitterPos(
+            pane->GetDlgCtrlID() == CSplitterWnd::PaneId(0) ? 1.0 : 0.0);
     }
 }
 
 void CMainFrame::RestoreSplitterPositions()
 {
-    const int topo = COptions::LayoutTopology;
-    const int perm = COptions::LayoutPermutation;
-
-    switch (topo)
-    {
-    case LT_ROWS_SUB_COLS:
-        m_splitter.RestoreSplitterPos(0.5);
-        m_subSplitter.RestoreSplitterPos(0.75);
-        break;
-
-    case LT_COLS_THREE:
-        if (perm == 0 || perm == 1)
-        {
-            m_splitter.RestoreSplitterPos(0.80);
-            m_subSplitter.RestoreSplitterPos(0.50);
-        }
-        else
-        {
-            m_splitter.RestoreSplitterPos(0.40);
-            m_subSplitter.RestoreSplitterPos(1.0 / 3.0);
-        }
-        break;
-
-    case LT_COLS_SUB_ROWS:
-        m_splitter.RestoreSplitterPos(0.75);
-        m_subSplitter.RestoreSplitterPos(0.50);
-        break;
-
-    case LT_COLS_VISUALIZATION_FULL:
-        m_splitter.RestoreSplitterPos(0.5);
-        m_subSplitter.RestoreSplitterPos(0.50);
-        break;
-    }
+    const auto& layout = CLayoutPopup::CurrentLayout();
+    m_splitter.RestoreSplitterPos(layout.ratio);
+    m_subSplitter.RestoreSplitterPos(layout.subRatio);
 }
 
 void CMainFrame::ApplyPaneVisibility(const bool restoreDuringScan)
@@ -779,8 +706,14 @@ void CMainFrame::ApplyPaneVisibility(const bool restoreDuringScan)
         ExpandFileTabbedView();
         return;
     }
-    if (!showFileTypes) MinimizeExtensionView();
-    if (!showVisualization) MinimizeVisualizationPane();
+    // Collapse hidden panes in their owning splitter.
+    const auto collapse = [](const CWinDirStatPane* pane)
+    {
+        pane->GetParent<CWdsSplitterWnd>()->SetSplitterPos(
+            pane->GetDlgCtrlID() == CSplitterWnd::PaneId(0) ? 0.0 : 1.0);
+    };
+    if (!showFileTypes) collapse(GetExtensionView());
+    if (!showVisualization) collapse(GetVisualizationPane());
 }
 
 void CMainFrame::RestoreVisualizationPane(const bool force)
@@ -805,7 +738,7 @@ bool CMainFrame::IsVisualizationShown() const
 
 CWinDirStatPane* CMainFrame::GetVisualizationPane() const
 {
-    return m_visualizationPane;
+    return m_visualizationPane.get();
 }
 
 CWinDirStatPane* CMainFrame::GetActiveVisualization() const
@@ -881,7 +814,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 
     CWinDirStatModel::Get()->RunPendingHeapCleanup();
 
-    CFrameWnd::OnTimer(nIDEvent);
+    CallDefaultHandler();
 }
 
 LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)

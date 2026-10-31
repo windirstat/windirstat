@@ -431,7 +431,7 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, con
     rcRest.right = remainingRect.left + rowHeight;
 }
 
-void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
+void CTreeListControl::OnLButtonDown(UINT /*nFlags*/, const CPoint point)
 {
     m_lButtonDownItem = -1;
 
@@ -457,13 +457,13 @@ void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     else
     {
         m_lButtonDownOnPlusMinusRect = false;
-        CWdsListControl::OnLButtonDown(nFlags, point);
+        CallDefaultHandler();
     }
 }
 
-void CTreeListControl::OnLButtonDblClk(const UINT nFlags, const CPoint point)
+void CTreeListControl::OnLButtonDblClk(UINT /*nFlags*/, CPoint /*point*/)
 {
-    CWdsListControl::OnLButtonDblClk(nFlags, point);
+    CallDefaultHandler();
 
     if (m_lButtonDownItem == -1)
     {
@@ -618,7 +618,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
 }
 
-void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+void CTreeListControl::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
     // Handle common key navigation if logical focus is set
     if (m_logicalFocus != static_cast<LOGICAL_FOCUS>(0))
@@ -682,7 +682,7 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
         }
     }
 
-    CWdsListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+    CallDefaultHandler();
 }
 
 LRESULT CTreeListControl::OnSelectionChanged(const WPARAM wParam, const LPARAM lParam)
@@ -920,9 +920,9 @@ void CTreeListControl::OnItemContextMenu(const CPoint pt)
     sub.ShowPopup(TPM_LEFTALIGN | TPM_LEFTBUTTON, point, GetMainWindow(), &tp);
 }
 
-void CTreeListControl::OnSetFocus(WindowRef pOldWnd)
+void CTreeListControl::OnSetFocus(WindowRef /*pOldWnd*/)
 {
-    CWdsListControl::OnSetFocus(pOldWnd);
+    CallDefaultHandler();
     if (m_logicalFocus != static_cast<LOGICAL_FOCUS>(0) && CMainFrame::Get() != nullptr)
     {
         CMainFrame::Get()->SetLogicalFocus(m_logicalFocus);

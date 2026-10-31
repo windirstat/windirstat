@@ -9,7 +9,7 @@
 
 void CCenteredEdit::OnNcCalcSize(const bool bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 {
-    CEdit::OnNcCalcSize(bCalcValidRects, lpncsp);
+    CallDefaultHandler();
     if (bCalcValidRects)
     {
         const CRect rect(lpncsp->rgrc[0]);
@@ -28,11 +28,11 @@ void CCenteredEdit::OnNcCalcSize(const bool bCalcValidRects, NCCALCSIZE_PARAMS* 
     }
 }
 
-void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, UINT /*nFlags*/)
 {
     if (nChar < 32)
     {
-        CEdit::OnChar(nChar, nRepCnt, nFlags);
+        CallDefaultHandler();
         return;
     }
 
@@ -54,7 +54,7 @@ void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, const UINT nFla
 
     if (isValid)
     {
-        CEdit::OnChar(nChar, nRepCnt, nFlags);
+        CallDefaultHandler();
     }
     else
     {
@@ -64,9 +64,9 @@ void CCenteredEdit::OnChar(const UINT nChar, const UINT nRepCnt, const UINT nFla
 
 CStorageAnalyticsView::CStorageAnalyticsView() = default;
 
-void CStorageAnalyticsView::OnSetFocus(WindowRef pOldWnd)
+void CStorageAnalyticsView::OnSetFocus(WindowRef /*pOldWnd*/)
 {
-    CWinDirStatPane::OnSetFocus(pOldWnd);
+    CallDefaultHandler();
     CMainFrame::Get()->SetLogicalFocus(LF_STORAGEANALYTICS);
 }
 
@@ -223,7 +223,7 @@ void CStorageAnalyticsView::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
     Invalidate();
 }
 
-HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
+HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, WindowRef /*pWnd*/, const UINT nCtlColor)
 {
     if (nCtlColor == CTLCOLOR_STATIC)
     {
@@ -243,9 +243,9 @@ HBRUSH CStorageAnalyticsView::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nC
     if (DarkMode::IsDarkModeActive())
     {
         const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-        return brush ? brush : CWinDirStatPane::OnCtlColor(pDC, pWnd, nCtlColor);
+        return brush ? brush : reinterpret_cast<HBRUSH>(CallDefaultHandler());
     }
-    return CWinDirStatPane::OnCtlColor(pDC, pWnd, nCtlColor);
+    return reinterpret_cast<HBRUSH>(CallDefaultHandler());
 }
 
 void CStorageAnalyticsView::OnBtnRecalculate()

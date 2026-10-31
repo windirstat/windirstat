@@ -483,6 +483,14 @@ void CWdsListControl::InitializeColors()
         CColorSpace::MakeBrightColor(m_windowColor, b);
 }
 
+LRESULT CWdsListControl::OnPaint(WPARAM, LPARAM)
+{
+    // Share column geometry and a row buffer across the native control's draw callbacks.
+    PaintContext context;
+    const ScopedValue painting(m_paintContext, &context);
+    return CallDefaultHandler();
+}
+
 void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
 {
     auto* item = GetItem(static_cast<int>(pdis->itemID));
@@ -491,10 +499,35 @@ void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
     auto dc = CDC::Borrow(pdis->hDC);
     auto* pdc = &dc;
     const CRect rcItem(pdis->rcItem);
+    if (rcItem.IsEmpty()) return;
 
-    CDC dcMem(pdc);
-    const CBitmap bm(pdc, rcItem.Width(), rcItem.Height());
-    GdiObjectSelection sobm(&dcMem, &bm);
+    // Direct draw requests have their own context; nested painting cannot reuse an active row buffer.
+    PaintContext direct;
+    auto& paint = m_paintContext != nullptr ? *m_paintContext : direct;
+    const ScopedValue drawing(m_paintContext, static_cast<PaintContext*>(nullptr));
+    if (paint.columns.empty())
+    {
+        const auto header = GetHeader();
+        paint.columns.reserve(m_columnCount);
+        for (const int column : std::views::iota(0, m_columnCount))
+        {
+            LVCOLUMN info{ .mask = LVCF_SUBITEM | LVCF_FMT };
+            CRect rect;
+            if (GetColumn(column, &info) && IsColumnVisible(info.iSubItem) &&
+                header.SendMessage(HDM_GETITEMRECT, column, &rect) != 0)
+                paint.columns.push_back({ info.iSubItem, (info.fmt & LVCFMT_RIGHT) == 0, rect });
+        }
+    }
+    if (!paint.dc) paint.dc.Attach(CreateCompatibleDC(pdis->hDC));
+    if (paint.size != rcItem.Size())
+    {
+        if (!paint.bitmap.CreateCompatible(pdc, rcItem.Width(), rcItem.Height())) return;
+        paint.size = rcItem.Size();
+    }
+    if (!paint.dc || !paint.bitmap) return;
+    auto& dcMem = paint.dc;
+    const ScopedDcState restore(&dcMem);
+    GdiObjectSelection sobm(&dcMem, &paint.bitmap);
 
     const COLORREF backColor = GetItemBackgroundColor(static_cast<int>(pdis->itemID));
     dcMem.FillSolidRect(rcItem - rcItem.TopLeft(), backColor);
@@ -505,18 +538,9 @@ void CWdsListControl::DrawItem(const LPDRAWITEMSTRUCT pdis)
 
     int focusLeft = 0;
     CPen pen;
-    for (const int i : std::views::iota(0, m_columnCount))
+    for (const auto& [subitem, leftAlign, rect] : paint.columns)
     {
-        // The subitem tracks the identifier that maps to the column enum
-        LVCOLUMN colInfo{ .mask = LVCF_SUBITEM | LVCF_FMT };
-        GetColumn(i, &colInfo);
-        const int subitem = colInfo.iSubItem;
-        if (!IsColumnVisible(subitem)) continue;
-
-        const bool leftAlign = (colInfo.fmt & LVCFMT_RIGHT) == 0;
-
-        const CRect rc = GetWholeSubitemRect(pdis->itemID, i);
-        const CRect rcDraw = rc - rcItem.TopLeft();
+        const CRect rcDraw(rect.left, 0, rect.right, rcItem.Height());
 
         if (!item->DrawSubItem(subitem, &dcMem, rcDraw, pdis->itemState, nullptr, &focusLeft))
         {
@@ -621,10 +645,10 @@ LRESULT CWdsListControl::OnSetFont(WPARAM /*wParam*/, LPARAM /*lParam*/)
     return result;
 }
 
-void CWdsListControl::OnSettingChange(const UINT uFlags, const LPCTSTR lpszSection)
+void CWdsListControl::OnSettingChange(UINT /*uFlags*/, LPCTSTR /*lpszSection*/)
 {
     m_cachedFont = nullptr;
-    CListCtrl::OnSettingChange(uFlags, lpszSection);
+    CallDefaultHandler();
     m_cachedFont = nullptr;
     DrawTextCache::Get().ClearCache();
     CalculateRowHeight();
@@ -1119,7 +1143,7 @@ void CWdsListControl::OnDestroy()
 {
     for (const auto* item : m_items) GetIconHandler()->ForgetAsyncShellInfoLookup(item);
     SavePersistentAttributes();
-    CListCtrl::OnDestroy();
+    CallDefaultHandler();
 }
 
 LRESULT CWdsListControl::OnSelectionChanged(const WPARAM wParam, const LPARAM lParam)
