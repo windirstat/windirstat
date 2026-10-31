@@ -268,9 +268,9 @@ void CExtensionListControl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = 0;
 }
 
-void CExtensionListControl::OnSetFocus(WindowRef pOldWnd)
+void CExtensionListControl::OnSetFocus(WindowRef /*pOldWnd*/)
 {
-    CWdsListControl::OnSetFocus(pOldWnd);
+    CallDefaultHandler();
     CMainFrame::Get()->SetLogicalFocus(LF_EXTLIST);
 }
 
@@ -285,7 +285,7 @@ void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult) co
     *pResult = false;
 }
 
-void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+void CExtensionListControl::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
     if (nChar == VK_TAB)
     {
@@ -318,7 +318,7 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
         CMainFrame::Get()->MoveFocus(LF_NONE);
     }
 
-    CWdsListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+    CallDefaultHandler();
 }
 
 void CExtensionListControl::OnItemContextMenu(CPoint point)

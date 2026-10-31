@@ -9,7 +9,7 @@
 #include "PageFiltering.h"
 
 CPageFiltering::CPageFiltering(const bool refreshOnFilteringChange) :
-    MessageTarget(IDD),
+    MessageTarget(IDD, L"IDS_PAGE_FILTERING_TITLE"),
     m_refreshOnFilteringChange(refreshOnFilteringChange)
 {
 }

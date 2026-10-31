@@ -209,7 +209,6 @@ inline INT_PTR CALLBACK FrameworkDialogProc(HWND hWnd, const UINT msg, const WPA
 class CWinApp;
 
 inline CWinApp* g_pApp = nullptr;
-inline thread_local std::function<void()> g_idleCmdUiUpdate;   // set by the frame to refresh toolbar UI
 
 class CWinApp : public MessageTarget<CWinApp, CCmdTarget>
 {
@@ -228,7 +227,7 @@ public:
     bool OnIdle(const LONG lCount)
     {
         if (lCount != 0) return false;
-        if (g_idleCmdUiUpdate) g_idleCmdUiUpdate();
+        if (m_pMainWnd != nullptr) m_pMainWnd->OnIdleUpdateCmdUI();
         return true;
     }
     virtual bool IsIdleMessage(const MSG* pMsg) const noexcept
@@ -356,6 +355,10 @@ public:
     void SetBaseTitle(std::wstring title) { m_strTitle = std::move(title); }
     void SetTopBar(CWnd* bar) { m_topBar = bar; UpdateLayout(); }
     void SetBottomBar(CWnd* bar) { m_bottomBar = bar; UpdateLayout(); }
+    void OnIdleUpdateCmdUI() override
+    {
+        if (m_topBar != nullptr && IsWindow(m_topBar->m_hWnd)) m_topBar->OnIdleUpdateCmdUI();
+    }
     void UpdateMenuCommands(MenuRef menu, bool bSysMenu = false);
 
     static std::span<const RouteEntry> Routes();
@@ -371,15 +374,15 @@ protected:
     }
     bool PreprocessMessage(MSG* pMsg) override;
 
-    int OnCreate(const LPCREATESTRUCT lpcs)
+    int OnCreate(LPCREATESTRUCT)
     {
-        if (CWnd::OnCreate(lpcs) == -1) return -1;
+        if (CallDefaultHandler() == -1) return -1;
         return OnCreateClient() ? 0 : -1;
     }
-    void OnSize(const UINT nType, const int cx, const int cy) { UpdateLayout(); CWnd::OnSize(nType, cx, cy); }
+    void OnSize(UINT, int, int) { UpdateLayout(); CallDefaultHandler(); }
     void OnDestroy()
     {
-        CWnd::OnDestroy();
+        CallDefaultHandler();
         if (const CWinApp* pApp = g_pApp; pApp != nullptr && pApp->m_pMainWnd == this)
             PostQuitMessage(0);
     }

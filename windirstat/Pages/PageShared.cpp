@@ -8,7 +8,8 @@
 #include "PageShared.h"
 #include "MainFrame.h"
 
-CSettingsPage::CSettingsPage(const UINT templateId) : MessageTarget(templateId) {}
+CSettingsPage::CSettingsPage(const UINT templateId, const std::wstring_view title) :
+    MessageTarget(templateId, title) {}
 
 bool CSettingsPage::OnInitDialog()
 {

@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "PagePrompts.h"
 
-CPagePrompts::CPagePrompts() : MessageTarget(IDD) {}
+CPagePrompts::CPagePrompts() : MessageTarget(IDD, L"IDS_PAGE_PROMPTS_TITLE") {}
 
 void CPagePrompts::InitializePage()
 {

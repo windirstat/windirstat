@@ -13,7 +13,7 @@ namespace
 }
 
 CPageTreeMap::CPageTreeMap()
-    : MessageTarget(IDD)
+    : MessageTarget(IDD, L"IDS_PAGE_GRAPHS_TITLE")
 {
 }
 

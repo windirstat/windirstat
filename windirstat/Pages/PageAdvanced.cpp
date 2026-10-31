@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "PageAdvanced.h"
 
-CPageAdvanced::CPageAdvanced() : MessageTarget(IDD)
+CPageAdvanced::CPageAdvanced() : MessageTarget(IDD, L"IDS_PAGE_ADVANCED_TITLE")
 {
 }
 

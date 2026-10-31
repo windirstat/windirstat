@@ -71,20 +71,13 @@ constexpr int MaxPersistedGraphPane = 5;
 // Layout view types
 enum LAYOUT_VIEW_TYPE : char
 {
-    VT_ABSENT        = -1,
     VT_ALLFILES      = 0,
     VT_FILETYPES     = 1,
     VT_VISUALIZATION = 2
 };
 
-// Layout topology: the structural arrangement of the two splitters
-enum LAYOUT_TOPOLOGY : char
-{
-    LT_ROWS_SUB_COLS = 0, // Main = 2 rows; sub-splitter = 2 cols inside one row (default)
-    LT_COLS_THREE    = 2, // Main = 2 cols; sub-splitter = 2 cols in col 0 (three-column)
-    LT_COLS_SUB_ROWS = 3, // Main = 2 cols; sub-splitter = 2 rows in col 0
-    LT_COLS_VISUALIZATION_FULL = 4, // Main = 2 cols; visualization fills one col; sub-splitter occupies the other
-};
+// Window layouts offered by the layout popup; the persisted value is the card index.
+constexpr int LayoutCount = 12;
 
 struct USERDEFINEDCLEANUP
 {
@@ -336,8 +329,7 @@ public:
     inline static Setting<int> TreeMapMaxDepth{ OptionsTreeMap, L"TreeMapMaxDepth", 6, 1, 64 };
     inline static Setting<int> FolderHistoryCount{ OptionsDriveSelect,
         L"FolderHistoryCount", 10, 0, 100, IntegerBind(IDC_FOLDER_HISTORY_COUNT) };
-    inline static Setting<int> LayoutTopology{ OptionsGeneral, L"LayoutTopology", LT_ROWS_SUB_COLS, LT_ROWS_SUB_COLS, LT_COLS_VISUALIZATION_FULL };
-    inline static Setting<int> LayoutPermutation{ OptionsGeneral, L"LayoutPermutation", 0, 0, 3 };
+    inline static Setting<int> WindowLayout{ OptionsGeneral, L"WindowLayout", 0, 0, LayoutCount - 1 };
     inline static Setting<RECT> AboutWindowRect{ OptionsGeneral, L"AboutWindowRect" };
     inline static Setting<RECT> DriveSelectWindowRect{ OptionsDriveSelect, L"WindowRect" };
     inline static Setting<RECT> CloudSelectWindowRect{ OptionsDriveSelect, L"CloudConnectionsRect" };

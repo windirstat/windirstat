@@ -53,7 +53,7 @@ void CColorButton::OnPaint()
         ModifyStyle(0, WS_CLIPCHILDREN);
         SetTextOffset({ -4, 0 });
     }
-    CButton::OnPaint();
+    CallDefaultHandler();
 }
 
 void CColorButton::OnDestroy()
@@ -62,7 +62,7 @@ void CColorButton::OnDestroy()
     {
         m_preview.DestroyWindow();
     }
-    CButton::OnDestroy();
+    CallDefaultHandler();
 }
 
 void CColorButton::OnBnClicked()
@@ -80,11 +80,11 @@ void CColorButton::OnBnClicked()
     }
 }
 
-void CColorButton::OnEnable(const bool bEnable)
+void CColorButton::OnEnable(bool /*bEnable*/)
 {
     if (m_preview != nullptr)
     {
         m_preview.Invalidate();
     }
-    CButton::OnEnable(bEnable);
+    CallDefaultHandler();
 }

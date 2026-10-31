@@ -232,12 +232,6 @@ struct RouteEntry
     const UINT* registeredMessage;
 };
 
-struct RouteTable
-{
-    const RouteTable* base = nullptr;
-    std::span<const RouteEntry> entries;
-};
-
 constexpr bool HasSameRouteKey(const RouteEntry& left, const RouteEntry& right) noexcept
 {
     return left.message == right.message && left.code == right.code &&
@@ -273,12 +267,8 @@ public:
     CCmdTarget& operator=(const CCmdTarget&) = delete;
     virtual ~CCmdTarget() = default;
 
-    virtual const RouteTable* GetRouteTable() const { return GetStaticRouteTable(); }
-    static const RouteTable* GetStaticRouteTable()
-    {
-        static constexpr RouteTable table{};
-        return &table;
-    }
+    virtual std::span<const RouteEntry> GetRoutes() const { return {}; }
+    static std::span<const RouteEntry> GetStaticRoutes() { return {}; }
 
     virtual bool RouteCommand(UINT nID, int nCode, void* pExtra, bool execute = true);
 };
@@ -289,19 +279,23 @@ class MessageTarget : public Base
 public:
     using Base::Base;
 
-    static const RouteTable* GetStaticRouteTable()
+    static std::span<const RouteEntry> GetStaticRoutes()
     {
-        static const RouteTable table = []
+        // Derived entries precede inherited ones so derived handlers take precedence.
+        static const std::vector<RouteEntry> routes = []
         {
             const auto entries = Derived::Routes();
             ValidateRoutes(entries);
-            return RouteTable{ Base::GetStaticRouteTable(), entries };
+            const auto inherited = Base::GetStaticRoutes();
+            std::vector<RouteEntry> combined(entries.begin(), entries.end());
+            combined.insert(combined.end(), inherited.begin(), inherited.end());
+            return combined;
         }();
-        return &table;
+        return routes;
     }
 
 protected:
-    const RouteTable* GetRouteTable() const override { return GetStaticRouteTable(); }
+    std::span<const RouteEntry> GetRoutes() const override { return GetStaticRoutes(); }
 };
 
 // -----------------------------------------------------------------------------
@@ -733,8 +727,6 @@ LRESULT CALLBACK FrameworkWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 LPCWSTR RegisterWindowClass(UINT classStyle, HCURSOR hCursor = nullptr,
     HBRUSH hbrBackground = nullptr, HICON hIcon = nullptr);
 
-struct WindowCreationScope;
-inline thread_local WindowCreationScope* g_pWndInit = nullptr;
 inline thread_local MSG g_currentMsg{};
 inline thread_local bool g_waitCursorActive = false;
 
@@ -744,34 +736,6 @@ inline MSG MakeMessageSnapshot(const HWND window, const UINT message, const WPAR
     return { window, message, wParam, lParam, static_cast<DWORD>(GetMessageTime()),
         POINT{ GET_X_LPARAM(position), GET_Y_LPARAM(position) } };
 }
-
-struct WindowCreationScope final
-{
-    explicit WindowCreationScope(CWnd* pWnd) : m_pWnd(pWnd), m_pPrevious(g_pWndInit) { g_pWndInit = this; }
-    ~WindowCreationScope() { g_pWndInit = m_pPrevious; }
-
-    WindowCreationScope(const WindowCreationScope&) = delete;
-    WindowCreationScope& operator=(const WindowCreationScope&) = delete;
-
-    CWnd* m_pWnd;
-    WindowCreationScope* m_pPrevious;
-    bool m_attached = false;
-};
-
-// Set for the duration of each WM_DRAWITEM dispatch so CListCtrl::GetItemRect /
-// GetSubItemRect can compute column rects from the already-known item rect + header
-// widths without sending any messages back to the (subclassed) list control.
-struct DrawItemContext
-{
-    HWND hWnd{};
-    int  item = -1;
-    RECT rcItem{};
-    int  colLeft[16]{};
-    int  colRight[16]{};
-    bool colValid[16]{};
-    int  colCount = 0;
-};
-inline thread_local DrawItemContext g_drawItemCtx;
 
 class WindowRef
 {

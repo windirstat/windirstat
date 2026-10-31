@@ -251,8 +251,7 @@ function Invoke-StoreScreenshotCapture {
     )
 
     $sunburstLayout = $Views -contains "sunburst"
-    $topology = if ($sunburstLayout) { 4 } else { 0 }
-    $permutation = if ($sunburstLayout) { 3 } else { 0 }
+    $layout = if ($sunburstLayout) { 7 } else { 0 }
     $mainSplit = if ($sunburstLayout) { "0.50" } else { "0.58" }
     $subSplit = if ($sunburstLayout) { "0.54" } else { "0.72" }
     $graphStyle = if ($sunburstLayout) { 3 } else { 0 }
@@ -263,7 +262,7 @@ function Invoke-StoreScreenshotCapture {
         "ShowElevationPrompt=0", "AutoElevate=0", "UseFastScanEngine=0", "UseWindowsLocaleSetting=0",
         "ShowDupeDetectionCloudLinksWarning=0", "ShowFreeSpace=0", "ShowUnknown=0",
         "ShowStatusBar=1", "ShowToolBar=1", "ToolBarSizePercent=100", "FontSizePercent=100",
-        "LayoutTopology=$topology", "LayoutPermutation=$permutation",
+        "WindowLayout=$layout",
         "MainSplitterPos=$mainSplit", "SubSplitterPos=$subSplit", "LargeFileCount=50",
         "", "[FileTreeView]", "ColumnVisibility=$columns", "ShowTimeSpent=0",
         "", "[DupeView]", "ScanForDuplicates=1", "ColumnVisibility=1,1,0,1,1",

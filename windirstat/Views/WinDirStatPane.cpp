@@ -17,9 +17,9 @@ void CWinDirStatPane::OnDraw(CDC* /*pDC*/)
 {
 }
 
-int CWinDirStatPane::OnMouseActivate(WindowRef pDesktopWnd, const UINT nHitTest, const UINT message)
+int CWinDirStatPane::OnMouseActivate(WindowRef /*pDesktopWnd*/, UINT /*nHitTest*/, UINT /*message*/)
 {
-    const int result = CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
+    const int result = static_cast<int>(CallDefaultHandler());
     if (result != MA_NOACTIVATE && result != MA_NOACTIVATEANDEAT)
     {
         if (const HWND focus = ::GetFocus(); m_hWnd != focus && !IsChild(focus) && IsTopParentActive())
@@ -35,9 +35,9 @@ void CWinDirStatPane::OnUpdate(CWnd* /*sender*/, MODEL_CHANGE /*change*/, CItem*
     Invalidate();
 }
 
-bool CWinDirStatPane::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoint pt)
+bool CWinDirStatPane::OnMouseWheel(UINT /*nFlags*/, short /*zDelta*/, CPoint /*pt*/)
 {
-    return CWnd::OnMouseWheel(nFlags, zDelta, pt);
+    return CallDefaultHandler() != 0;
 }
 
 void CWinDirStatPane::NotifyOtherPanes(const MODEL_CHANGE change, CItem* item)

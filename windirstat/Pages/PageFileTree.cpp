@@ -8,7 +8,7 @@
 #include "PageFileTree.h"
 #include "FileTreeControl.h"
 
-CPageFileTree::CPageFileTree() : MessageTarget(IDD)
+CPageFileTree::CPageFileTree() : MessageTarget(IDD, L"IDS_PAGE_TREELIST_TITLE")
 {
 }
 
@@ -79,7 +79,7 @@ void CPageFileTree::EnableButtons()
     }
 }
 
-void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, const WindowRef scrollBar)
+void CPageFileTree::OnVScroll(UINT /*nSBCode*/, UINT /*nPos*/, const WindowRef scrollBar)
 {
     if (scrollBar.Handle() == m_slider.Handle())
     {
@@ -87,5 +87,5 @@ void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, const WindowR
         EnableButtons();
         SetModified();
     }
-    CSettingsPage::OnVScroll(nSBCode, nPos, scrollBar);
+    CallDefaultHandler();
 }

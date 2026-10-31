@@ -99,10 +99,10 @@ void CFileTreeControl::OnFontSizeChanged(const int oldPercent, const int newPerc
     m_toolTip.SetMaxTipWidth(ScaleForDpi(400));
 }
 
-void CFileTreeControl::OnHScroll(const UINT nSBCode, const UINT nPos, WindowRef pScrollBar)
+void CFileTreeControl::OnHScroll(UINT /*nSBCode*/, UINT /*nPos*/, WindowRef /*pScrollBar*/)
 {
     ClearPortionToolTip();
-    CTreeListControl::OnHScroll(nSBCode, nPos, pScrollBar);
+    CallDefaultHandler();
 }
 
 void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
@@ -166,9 +166,9 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     }
 }
 
-void CFileTreeControl::OnMouseMove(const UINT nFlags, const CPoint point)
+void CFileTreeControl::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
-    CTreeListControl::OnMouseMove(nFlags, point);
+    CallDefaultHandler();
 
     CRect rect;
     std::wstring text;
@@ -187,10 +187,10 @@ void CFileTreeControl::OnMouseMove(const UINT nFlags, const CPoint point)
     m_toolTip.RelayEvent(&message);
 }
 
-bool CFileTreeControl::OnMouseWheel(const UINT nFlags, const short zDelta, const CPoint point)
+bool CFileTreeControl::OnMouseWheel(UINT /*nFlags*/, short /*zDelta*/, CPoint /*point*/)
 {
     ClearPortionToolTip();
-    return CTreeListControl::OnMouseWheel(nFlags, zDelta, point);
+    return CallDefaultHandler() != 0;
 }
 
 void CFileTreeControl::OnTtnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
@@ -200,15 +200,15 @@ void CFileTreeControl::OnTtnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = 0;
 }
 
-void CFileTreeControl::OnVScroll(const UINT nSBCode, const UINT nPos, WindowRef pScrollBar)
+void CFileTreeControl::OnVScroll(UINT /*nSBCode*/, UINT /*nPos*/, WindowRef /*pScrollBar*/)
 {
     ClearPortionToolTip();
-    CTreeListControl::OnVScroll(nSBCode, nPos, pScrollBar);
+    CallDefaultHandler();
 }
 
-bool CFileTreeControl::OnSetCursor(WindowRef pWnd, const UINT nHitTest, const UINT message)
+bool CFileTreeControl::OnSetCursor(WindowRef /*pWnd*/, const UINT nHitTest, UINT /*message*/)
 {
-    auto defaultReturn = [&] { return CTreeListControl::OnSetCursor(pWnd, nHitTest, message); };
+    auto defaultReturn = [this] { return CallDefaultHandler() != 0; };
     if (nHitTest != HTCLIENT) return defaultReturn();
 
     const auto point = GetClientCursorPos();

@@ -10,22 +10,22 @@
 /////////////////////////////////////////////////////////////////////////////
 // CLayoutDialog
 
-void CLayoutDialog::OnSize(const UINT nType, const int cx, const int cy)
+void CLayoutDialog::OnSize(UINT /*nType*/, int /*cx*/, int /*cy*/)
 {
-    CDialog::OnSize(nType, cx, cy);
+    // Derived dialogs also call this directly to re-run the layout, so it does not forward the current message.
     m_layout.OnSize();
 }
 
 void CLayoutDialog::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
     m_layout.OnGetMinMaxInfo(lpMMI);
-    CDialog::OnGetMinMaxInfo(lpMMI);
+    CallDefaultHandler();
 }
 
 void CLayoutDialog::OnDestroy()
 {
     m_layout.OnDestroy();
-    CDialog::OnDestroy();
+    CallDefaultHandler();
 }
 
 /////////////////////////////////////////////////////////////////////////////

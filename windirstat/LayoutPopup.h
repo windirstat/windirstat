@@ -12,25 +12,27 @@
 class CLayoutPopup final : public MessageTarget<CLayoutPopup, CWnd>
 {
 public:
-    static constexpr int LAYOUT_COUNT = 12;
-
     struct Pane
     {
-        int   viewType; // 0=AllFiles, 1=FileTypes, 2=Visualization; -1=unused
+        LAYOUT_VIEW_TYPE viewType;
         float x, y, w, h;
     };
 
     struct LayoutDef
     {
-        Pane panes[3];
-        int  topology;
-        int  permutation;
+        CSplitterWnd::Orientation orientation;
+        CSplitterWnd::Orientation subOrientation;
+        int subPane;
+        std::array<LAYOUT_VIEW_TYPE, 3> views; // Standalone pane, then the two nested panes.
+        double ratio, subRatio;
+        float previewRatio, previewSubRatio;
+
+        std::array<Pane, 3> PreviewPanes() const;
     };
 
-    static const LayoutDef LAYOUTS[LAYOUT_COUNT];
+    static const std::array<LayoutDef, LayoutCount> LAYOUTS;
 
-    static int LayoutIndex(int topology, int permutation);
-    static int CurrentLayoutIndex();
+    static const LayoutDef& CurrentLayout() { return LAYOUTS[COptions::WindowLayout]; }
     bool Create(CWnd* parent);
     void ShowAtButton(const CRect& buttonScreenRect);
     void DismissPopup(bool cancel = false, bool resetPositions = false);

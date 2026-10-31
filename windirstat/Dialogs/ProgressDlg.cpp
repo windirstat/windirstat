@@ -78,7 +78,7 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
         if (m_total == 0)
         {
             m_progressCtrl.Invalidate(false);
-            CDialog::OnTimer(nIDEvent);
+            CallDefaultHandler();
             return;
         }
 
@@ -101,7 +101,7 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
             m_messageCtrl.RedrawWindow(RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
         }
     }
-    CDialog::OnTimer(nIDEvent);
+    CallDefaultHandler();
 }
 
 void CProgressDlg::OnCancel()

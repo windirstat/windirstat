@@ -259,15 +259,15 @@ void CXySlider::HighlightGripper(const bool on)
     RedrawWindow();
 }
 
-void CXySlider::OnSetFocus(WindowRef pOldWnd)
+void CXySlider::OnSetFocus(WindowRef /*pOldWnd*/)
 {
-    CStatic::OnSetFocus(pOldWnd);
+    CallDefaultHandler();
     Invalidate();
 }
 
-void CXySlider::OnKillFocus(WindowRef pNewWnd)
+void CXySlider::OnKillFocus(WindowRef /*pNewWnd*/)
 {
-    CStatic::OnKillFocus(pNewWnd);
+    CallDefaultHandler();
     Invalidate();
 }
 
@@ -282,7 +282,7 @@ void CXySlider::OnPaint()
     PaintGripper(&dc);
 }
 
-void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
+void CXySlider::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
     switch (nChar)
     {
@@ -290,7 +290,7 @@ void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlag
         case VK_RIGHT: DoMoveBy(1, 0);  break;
         case VK_UP:    DoMoveBy(0, -1); break;
         case VK_DOWN:  DoMoveBy(0, 1);  break;
-        default: CStatic::OnKeyDown(nChar, nRepCnt, nFlags);
+        default: CallDefaultHandler();
     }
 }
 

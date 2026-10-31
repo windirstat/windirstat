@@ -11,82 +11,63 @@
 
 #include <algorithm>
 
-// Coordinate definitions and view-type tokens used to render the visual layout preview cards.
-// Note: Spatial parameters (x, y, w, h) represent fractional ratios of the total card area.
-const CLayoutPopup::LayoutDef CLayoutPopup::LAYOUTS[LAYOUT_COUNT] =
+// Splitter structure, default positions, and proportions used by the preview cards.
+const std::array<CLayoutPopup::LayoutDef, LayoutCount> CLayoutPopup::LAYOUTS = []
 {
-    // 00: [AF|FT] top half / visualization bottom half
-    { { {VT_ALLFILES,  0.00f, 0.00f, 0.58f, 0.50f},
-        {VT_FILETYPES, 0.58f, 0.00f, 0.42f, 0.50f},
-        {VT_VISUALIZATION, 0.00f, 0.50f, 1.00f, 0.50f} }, LT_ROWS_SUB_COLS, 0 },
+    using enum CSplitterWnd::Orientation;
+    return std::to_array<LayoutDef>({
+        // [AF|FT] above visualization
+        { Horizontal, Vertical, 0, { VT_VISUALIZATION, VT_ALLFILES, VT_FILETYPES }, 0.5, 0.75, 0.5f, 0.58f },
+        // AF | [FT|visualization]
+        { Vertical, Vertical, 1, { VT_ALLFILES, VT_FILETYPES, VT_VISUALIZATION }, 0.4, 1.0 / 3.0, 0.4f, 1.0f / 3.0f },
+        // [visualization|AF] | FT
+        { Vertical, Vertical, 0, { VT_FILETYPES, VT_VISUALIZATION, VT_ALLFILES }, 0.8, 0.5, 0.8f, 0.5f },
+        // Visualization above [AF|FT]
+        { Horizontal, Vertical, 1, { VT_VISUALIZATION, VT_ALLFILES, VT_FILETYPES }, 0.5, 0.75, 0.5f, 0.58f },
+        // [AF|visualization] | FT
+        { Vertical, Vertical, 0, { VT_FILETYPES, VT_ALLFILES, VT_VISUALIZATION }, 0.8, 0.5, 0.8f, 0.5f },
+        // Visualization | [FT|AF]
+        { Vertical, Vertical, 1, { VT_VISUALIZATION, VT_FILETYPES, VT_ALLFILES }, 0.4, 1.0 / 3.0, 0.4f, 1.0f / 3.0f },
+        // [AF/visualization] | FT
+        { Vertical, Horizontal, 0, { VT_FILETYPES, VT_ALLFILES, VT_VISUALIZATION }, 0.75, 0.5, 0.6f, 0.5f },
+        // [AF/FT] | visualization
+        { Vertical, Horizontal, 0, { VT_VISUALIZATION, VT_ALLFILES, VT_FILETYPES }, 0.5, 0.5, 0.5f, 0.5f },
+        // Visualization | [AF/FT]
+        { Vertical, Horizontal, 1, { VT_VISUALIZATION, VT_ALLFILES, VT_FILETYPES }, 0.5, 0.5, 0.5f, 0.5f },
+        // [visualization/AF] | FT
+        { Vertical, Horizontal, 0, { VT_FILETYPES, VT_VISUALIZATION, VT_ALLFILES }, 0.75, 0.5, 0.6f, 0.5f },
+        // [FT/AF] | visualization
+        { Vertical, Horizontal, 0, { VT_VISUALIZATION, VT_FILETYPES, VT_ALLFILES }, 0.5, 0.5, 0.5f, 0.5f },
+        // Visualization | [FT/AF]
+        { Vertical, Horizontal, 1, { VT_VISUALIZATION, VT_FILETYPES, VT_ALLFILES }, 0.5, 0.5, 0.5f, 0.5f },
+    });
+}();
 
-    // 01: AF(40) | FT(20) | visualization(40) columns
-    { { {VT_ALLFILES,  0.00f, 0.00f, 0.40f, 1.00f},
-        {VT_FILETYPES, 0.40f, 0.00f, 0.20f, 1.00f},
-        {VT_VISUALIZATION, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE, 2 },
-
-    // 02: visualization(40) | AF(40) | FT(20) columns
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 0.40f, 1.00f},
-        {VT_ALLFILES,  0.40f, 0.00f, 0.40f, 1.00f},
-        {VT_FILETYPES, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE,    1 },
-
-    // 03: visualization top half / [AF|FT] bottom half
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 1.00f, 0.50f},
-        {VT_ALLFILES,  0.00f, 0.50f, 0.58f, 0.50f},
-        {VT_FILETYPES, 0.58f, 0.50f, 0.42f, 0.50f} }, LT_ROWS_SUB_COLS, 1 },
-
-    // 04: AF(40) | visualization(40) | FT(20) columns
-    { { {VT_ALLFILES,  0.00f, 0.00f, 0.40f, 1.00f},
-        {VT_VISUALIZATION, 0.40f, 0.00f, 0.40f, 1.00f},
-        {VT_FILETYPES, 0.80f, 0.00f, 0.20f, 1.00f} }, LT_COLS_THREE,    0 },
-
-    // 05: visualization(40) | FT(20) | AF(40) columns
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 0.40f, 1.00f},
-        {VT_FILETYPES, 0.40f, 0.00f, 0.20f, 1.00f},
-        {VT_ALLFILES,  0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_THREE,    3 },
-
-    // 06: left=[AF(top)/visualization(bot)], right=FT
-    { { {VT_ALLFILES,  0.00f, 0.00f, 0.60f, 0.50f},
-        {VT_VISUALIZATION, 0.00f, 0.50f, 0.60f, 0.50f},
-        {VT_FILETYPES, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 1 },
-
-    // 07: left=[AF(top)/FT(bot)], right=visualization
-    { { {VT_ALLFILES,  0.00f, 0.00f, 0.50f, 0.50f},
-        {VT_FILETYPES, 0.00f, 0.50f, 0.50f, 0.50f},
-        {VT_VISUALIZATION, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_VISUALIZATION_FULL, 3 },
-
-    // 08: left=visualization, right=[AF(top)/FT(bot)]
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 0.50f, 1.00f},
-        {VT_ALLFILES,  0.50f, 0.00f, 0.50f, 0.50f},
-        {VT_FILETYPES, 0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_VISUALIZATION_FULL, 1 },
-
-    // 09: left=[visualization(top)/AF(bot)], right=FT
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 0.60f, 0.50f},
-        {VT_ALLFILES,  0.00f, 0.50f, 0.60f, 0.50f},
-        {VT_FILETYPES, 0.60f, 0.00f, 0.40f, 1.00f} }, LT_COLS_SUB_ROWS, 0 },
-
-    // 10: left=[FT(top)/AF(bot)], right=visualization
-    { { {VT_FILETYPES, 0.00f, 0.00f, 0.50f, 0.50f},
-        {VT_ALLFILES,  0.00f, 0.50f, 0.50f, 0.50f},
-        {VT_VISUALIZATION, 0.50f, 0.00f, 0.50f, 1.00f} }, LT_COLS_VISUALIZATION_FULL, 2 },
-
-    // 11: left=visualization, right=[FT(top)/AF(bot)]
-    { { {VT_VISUALIZATION, 0.00f, 0.00f, 0.50f, 1.00f},
-        {VT_FILETYPES, 0.50f, 0.00f, 0.50f, 0.50f},
-        {VT_ALLFILES,  0.50f, 0.50f, 0.50f, 0.50f} }, LT_COLS_VISUALIZATION_FULL, 0 },
-};
-
-int CLayoutPopup::LayoutIndex(const int topology, const int permutation)
+std::array<CLayoutPopup::Pane, 3> CLayoutPopup::LayoutDef::PreviewPanes() const
 {
-    for (const auto [i, layout] : std::views::enumerate(LAYOUTS))
-        if (layout.topology == topology && layout.permutation == permutation)
-            return static_cast<int>(i);
-    return 0;
-}
-
-int CLayoutPopup::CurrentLayoutIndex()
-{
-    return LayoutIndex(COptions::LayoutTopology, COptions::LayoutPermutation);
+    // Split the preview with the same pane placement as the live windows.
+    const auto split = [](const Pane& bounds, const CSplitterWnd::Orientation axis, const float ratio)
+    {
+        std::array<Pane, 2> panes{ bounds, bounds };
+        if (axis == CSplitterWnd::Orientation::Vertical)
+        {
+            panes[0].w *= ratio;
+            panes[1].x += panes[0].w;
+            panes[1].w -= panes[0].w;
+        }
+        else
+        {
+            panes[0].h *= ratio;
+            panes[1].y += panes[0].h;
+            panes[1].h -= panes[0].h;
+        }
+        return panes;
+    };
+    auto main = split({ views[0], 0, 0, 1, 1 }, orientation, previewRatio);
+    auto sub = split(main[subPane], subOrientation, previewSubRatio);
+    sub[0].viewType = views[1];
+    sub[1].viewType = views[2];
+    return { main[1 - subPane], sub[0], sub[1] };
 }
 
 bool CLayoutPopup::Create(CWnd* parent)
@@ -119,7 +100,7 @@ bool CLayoutPopup::Create(CWnd* parent)
 
 void CLayoutPopup::ShowAtButton(const CRect& buttonScreenRect)
 {
-    m_selectedLayout = CurrentLayoutIndex();
+    m_selectedLayout = COptions::WindowLayout;
     m_hoveredLayout  = -1;
 
     const int cw = ScaleForDpi(CARD_W_BASE);
@@ -185,7 +166,7 @@ CRect CLayoutPopup::CardRect(const int idx) const
 
 int CLayoutPopup::CardAtPoint(const CPoint pt) const
 {
-    const auto range = std::views::iota(0, LAYOUT_COUNT);
+    const auto range = std::views::iota(0, LayoutCount);
     const auto it = std::ranges::find_if(range,
         [&](const int i) { return CardRect(i).Contains(pt); });
     return it != range.end() ? *it : -1;
@@ -400,10 +381,8 @@ void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
 
     const int pg = ScaleForDpi(4);  // gap inset applied to each pane edge
 
-    for (auto [viewType, x, y, w, h] : ld.panes)
+    for (auto [viewType, x, y, w, h] : ld.PreviewPanes())
     {
-        if (viewType < 0) continue;
-
         CRect pr(
             inner.left + static_cast<int>(inner.Width()  * x) + pg,
             inner.top  + static_cast<int>(inner.Height() * y) + pg,
@@ -454,7 +433,7 @@ bool CLayoutPopup::OnEraseBkgnd(CDC* pDC) const
 void CLayoutPopup::OnPaint()
 {
     CPaintDC dc(this);
-    for (const int i : std::views::iota(0, LAYOUT_COUNT))
+    for (const int i : std::views::iota(0, LayoutCount))
         PaintCard(dc, i);
 }
 
@@ -498,8 +477,7 @@ void CLayoutPopup::OnLButtonUp(UINT /*nFlags*/, const CPoint point)
     }
 
     m_selectedLayout = hit;
-    COptions::LayoutTopology    = LAYOUTS[hit].topology;
-    COptions::LayoutPermutation = LAYOUTS[hit].permutation;
+    COptions::WindowLayout = hit;
     DismissPopup(false, true);
 }
 

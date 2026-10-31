@@ -41,10 +41,10 @@ void CSplitterWnd::OnPaint()
     DrawBackground(dc, rect);
 }
 
-HBRUSH CToolBar::OnCtlColor(CDC* dc, WindowRef control, const UINT type)
+HBRUSH CToolBar::OnCtlColor(CDC* dc, WindowRef, const UINT type)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(dc, type);
-    return brush != nullptr ? brush : CWnd::OnCtlColor(dc, control, type);
+    return brush != nullptr ? brush : reinterpret_cast<HBRUSH>(CallDefaultHandler());
 }
 
 void CToolBar::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const

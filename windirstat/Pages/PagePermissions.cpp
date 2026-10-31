@@ -8,7 +8,7 @@
 #include "PagePermissions.h"
 #include "ItemPerm.h"
 
-CPagePermissions::CPagePermissions() : MessageTarget(IDD)
+CPagePermissions::CPagePermissions() : MessageTarget(IDD, L"IDS_PAGE_PERMS_TITLE")
 {
 }
 

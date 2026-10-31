@@ -44,8 +44,7 @@ function Test-PaneRecovery {
     $root = New-TestTree
     $position = [Convert]::ToHexString([BitConverter]::GetBytes([double]$Case.Position))
     $app = Start-TestApp @($root) -Settings @{ Options = @{
-        LayoutTopology = $Case.Topology; LayoutPermutation = $Case.Permutation
-        SubSplitterPos = $position; ShowFileTypes = $Case.Visible
+        WindowLayout = $Case.Layout; SubSplitterPos = $position; ShowFileTypes = $Case.Visible
     } }
     if (-not $Case.Visible) { Invoke-AppCommand $app 'ID_VIEW_SHOWFILETYPES' }
     Get-AppList $app -AllFiles | Out-Null
@@ -79,9 +78,11 @@ function Test-PaneRecovery {
 function Test-SplitterCapture {
     param($Context, $Case)
     $root = New-TestTree
-    $app = Start-TestApp @($root) -Settings @{ Options = @{ LayoutTopology = $Case.Topology; LayoutPermutation = $Case.Permutation } }
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ WindowLayout = $Case.Layout } }
     $outer = [TestDesktop]::GetDlgItem($app.Window, 0xE900)
     $inner = [TestDesktop]::GetDlgItem($outer, 0xE900)
+    $graph = Get-GraphWindow $app
+    [TestDesktop]::ParkCursor($app.Window)
     foreach ($splitter in $outer, $inner) {
         $first = [TestDesktop]::GetDlgItem($splitter, 0xE900)
         $second = [TestDesktop]::GetDlgItem($splitter, 0xE901)
@@ -97,9 +98,15 @@ function Test-SplitterCapture {
             $point = @(20, 20)
             $point[$axis] = $before[$axis + 2] - $rect[$axis] + $offset - $(if ($first -eq $inner) { 2 } else { 0 })
             $packed = ($point[1] -shl 16) -bor ($point[0] -band 0xFFFF)
+            $graphFrame = if ($offset -eq 0) { [TestDesktop]::Repaint($graph); Get-StableFrame $graph 'graph' }
             [void] [TestDesktop]::Message($splitter, 0x0201, 1, $packed)
             Assert-Equal ([TestDesktop]::CaptureOwner($app.Window)) $splitter `
                 'Dragging acquires capture on the intended splitter'
+            if ($graphFrame) {
+                [TestDesktop]::Repaint($graph)
+                Assert-FrameEqual $graphFrame (Get-StableFrame $graph 'graph') `
+                    'Pressing a splitter without dragging keeps the graph rendered' 'splitter-press'
+            }
             [void] [TestDesktop]::Message($splitter, 0x0200, 1, $packed)
             Assert-Sequence ([TestDesktop]::Rectangle($first)) $before `
                 'The first move retains the exact grab offset without jumping'
@@ -108,6 +115,11 @@ function Test-SplitterCapture {
             [void] [TestDesktop]::Message($splitter, 0x0200, 1, $packed)
             $during = [TestDesktop]::Rectangle($first)
             Assert-Equal ($during[$axis + 2] - $before[$axis + 2]) 40 'Pane geometry follows the drag before mouse-up'
+            if ($graphFrame -and -not [TestDesktop]::IsChild($splitter, $graph)) {
+                [TestDesktop]::Repaint($graph)
+                Assert-FrameEqual $graphFrame (Get-StableFrame $graph 'graph') `
+                    'Dragging a splitter beside the graph keeps the graph rendered' 'splitter-drag'
+            }
             if ($offset -eq 3) {
                 [void] [TestDesktop]::Message($splitter, 0x0202, 0, $packed)
                 Assert-Sequence ([TestDesktop]::Rectangle($first)) $during `
@@ -174,10 +186,77 @@ function Test-LayoutRoundTrip {
         [void]$layouts.Add($geometry -join ';')
         Assert-Equal ([NativeListViewHelper]::GetSelectedCount($tree)) 1 'Reparenting retains the file selection'
         Assert-GraphRendered $app | Out-Null
+        foreach ($command in 'ID_VIEW_SHOWFILETYPES', 'ID_VIEW_SHOWVISUALIZATION',
+            'ID_VIEW_SHOWFILETYPES', 'ID_VIEW_SHOWVISUALIZATION') {
+            Invoke-AppCommand $app $command
+            $pane = if ($command -eq 'ID_VIEW_SHOWFILETYPES') { $app.ExtensionList } else { $graph }
+            $shown = (Get-AppCommandState $app $command).Checked
+            Wait-Until {
+                $size = [TestDesktop]::ClientSize($pane)
+                if ($shown) { $size[0] -gt 40 -and $size[1] -gt 40 }
+                else { $size[0] -eq 0 -or $size[1] -eq 0 }
+            } 'Pane visibility follows its owning splitter in every layout' | Out-Null
+        }
+        $restored = @(foreach ($pane in $tree, $app.ExtensionList, $graph) {
+            [TestDesktop]::Rectangle($pane) -join ','
+        })
+        Assert-Sequence $restored $geometry 'Hiding and showing panes restores the configured layout'
     }
     Assert-Equal $layouts.Count 12 'Every layout choice produces its own arrangement'
     Assert-FrameEqual $baseline (Get-StableFrame $graph) 'Returning to the default layout restores the graph' 'layout'
     Save-Frame (Get-StableFrame $app.Window) (Join-Path $Context.Root 'layout.png')
+}
+
+function Test-ListPainting {
+    param($Context, $Case)
+    foreach ($index in 0..149) {
+        New-TestFile (Join-Path $Context.Fixture ('row-{0:d3}.bin' -f $index)) (4096 + $index) | Out-Null
+    }
+    $app = Start-TestApp @($Context.Fixture) -Settings @{
+        Options = @{ AutomaticallyResizeColumns = 0 }
+        FileTreeView = @{
+            ColumnOrder = '0,4,3,2,1,9,8,7,6,5,10'; ColumnVisibility = '1,1,1,1,1,0,1,1,1,1,0'
+            ColumnWidths = '220,100,110,120,130,80,90,100,140,90,180'
+        }
+    }
+    $list = Get-AppList $app -AllFiles
+    Select-AppRows $app $list @('row-050.bin')
+    $size = [TestDesktop]::ClientSize($list)
+    Assert-True ([TestDesktop]::Message($list, 0x101D, 0).ToInt32() -lt $size[0] / 2) `
+        'Several columns are visible during the paint checks'
+    [TestDesktop]::ParkCursor($app.Window)
+    $baseline = Get-StableFrame $list
+    Save-Frame $baseline (Join-Path $Context.Root 'list.png')
+    [TestDesktop]::Repaint($list, $true)
+    Assert-FrameEqual $baseline (Get-StableFrame $list) 'Partial list painting preserves reordered and hidden columns'
+
+    [void] [TestDesktop]::Message($list, 0x1014, 192)
+    $scrolled = Get-StableFrame $list
+    Assert-True ([TestDesktop]::Difference($baseline, $scrolled) -gt 0.01) `
+        'Horizontal scrolling moves the rendered columns'
+    [TestDesktop]::Repaint($list)
+    Assert-FrameEqual $scrolled (Get-StableFrame $list) 'A full repaint preserves horizontally scrolled column geometry'
+    [void] [TestDesktop]::Message($list, 0x1014, -192)
+    Assert-FrameEqual $baseline (Get-StableFrame $list) 'Scrolling back restores the original list painting'
+
+    $width = [TestDesktop]::Message($list, 0x101D, 2).ToInt32()
+    Assert-True ([NativeListViewHelper]::SetHeaderWidth($list, 2, $width + 40)) 'Resize a reordered column'
+    Get-StableFrame $list | Out-Null
+    Assert-True ([NativeListViewHelper]::SetHeaderWidth($list, 2, $width)) 'Restore the reordered column width'
+    Assert-FrameEqual $baseline (Get-StableFrame $list) 'Resizing a column round trip refreshes the painted geometry'
+
+    $gdi = [TestDesktop]::GdiObjects($app.Process.Handle)
+    $app.Process.Refresh()
+    $cpu = $app.Process.TotalProcessorTime
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    foreach ($iteration in 1..400) { [TestDesktop]::Repaint($list) }
+    $watch.Stop()
+    $app.Process.Refresh()
+    Write-TestNote ('400 list redraws: {0:n0} ms elapsed; {1:n0} ms application CPU' -f
+        $watch.Elapsed.TotalMilliseconds, ($app.Process.TotalProcessorTime - $cpu).TotalMilliseconds)
+    Assert-True ([TestDesktop]::GdiObjects($app.Process.Handle) -le $gdi + 4) `
+        'Repeated list painting releases temporary GDI resources'
+    Assert-FrameEqual $baseline (Get-StableFrame $list) 'Repeated redraws retain row contents and selection'
 }
 
 function Test-ToolbarScaling {
@@ -328,8 +407,8 @@ foreach ($graph in @(
             Test-RepaintContract -Tags Desktop,Rendering -Requires Windows,Desktop -Data @{ Command = $graph.Command; Dark = $dark }
     }
 }
-foreach ($layout in @(@{ Id = 'vertical'; Topology = 0; Permutation = 0; Position = 0.999 },
-    @{ Id = 'horizontal'; Topology = 4; Permutation = 2; Position = 0.001 })) {
+foreach ($layout in @(@{ Id = 'vertical'; Layout = 0; Position = 0.999 },
+    @{ Id = 'horizontal'; Layout = 10; Position = 0.001 })) {
     foreach ($visible in 0, 1) {
         $data = $layout.Clone()
         $data.Visible = $visible
@@ -355,6 +434,9 @@ foreach ($font in 100, 200) {
 Register-Scenario render.font-cache Rendering `
     'Runtime font changes invalidate and rebuild rendering caches consistently' `
     Test-FontCacheRoundTrip -Tags Desktop,Rendering -Requires Windows,Desktop
+Register-Scenario render.list-paint Rendering `
+    'List painting preserves column order, visibility, widths, and scrolling' `
+    Test-ListPainting -Tags Desktop,Rendering -Requires Windows,Desktop
 Register-Scenario render.resources Rendering 'Repeated renderer changes release obsolete GDI resources' `
     Test-GraphResourceCycles -Tags Desktop,Rendering,Extended -Requires Windows,Desktop
 Register-Scenario render.empty-transitions Rendering 'Empty and zero-byte models render, populate, and clear without stale pixels' `

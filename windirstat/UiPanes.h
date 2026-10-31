@@ -25,30 +25,21 @@ public:
 
     bool CreateStatic(CWnd* pParentWnd, const Orientation orientation, const UINT nID = WDS_PANE_ID_BASE)
     {
-        m_orientation = orientation;
-        m_paneSizes = { -1, -1 };
-        m_bTracking = false;
+        SetOrientation(orientation);
         const CRect rc(0, 0, 0, 0);
         const LPCWSTR cls = RegisterWindowClass(CS_DBLCLKS, LoadCursorW(nullptr, IDC_ARROW));
         return CreateEx(0, cls, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, rc, pParentWnd, nID);
     }
-    template<typename View>
-    bool CreateView(const int pane, const SIZE& sizeInit)
+    void SetOrientation(const Orientation orientation)
     {
-        static_assert(std::is_base_of_v<CWnd, View>);
-        if (pane < 0 || pane >= 2) return false;
-        auto view = std::make_unique<View>();
-        const CRect rc(0, 0, sizeInit.cx, sizeInit.cy);
-        if (!view->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, this, PaneId(pane)))
-            return false;
-        m_ownedPanes.push_back(std::move(view));
-        return true;
+        // A new arrangement starts evenly split until a stored position is applied.
+        m_orientation = orientation;
+        m_paneSizes = { -1, -1 };
     }
     CWnd* GetPane(const int pane) const
     {
         return pane >= 0 && pane < 2 ? FindAttached(::GetDlgItem(m_hWnd, PaneId(pane))) : nullptr;
     }
-    template<typename T> T* GetPane(const int pane) const { return static_cast<T*>(GetPane(pane)); }
     static constexpr int PaneId(const int pane) noexcept { return WDS_PANE_ID_BASE + pane; }
     bool IsVertical() const noexcept { return m_orientation == Orientation::Vertical; }
     int GetPaneSize(const int pane) const { return m_paneSizes[pane]; }
@@ -76,6 +67,7 @@ public:
 
 protected:
     virtual void StopTracking(bool bAccept);
+    virtual void OnTrackingChanged(bool) {}
 
     // message handlers
     void OnSize(UINT, int, int) { UpdateLayout(); }
@@ -90,7 +82,6 @@ protected:
     bool OnSetCursor(WindowRef pWnd, UINT nHitTest, UINT message);
 
 private:
-    std::vector<std::unique_ptr<CWnd>> m_ownedPanes;
     CRect WorkRect() const;
     CRect SplitterRect() const;
     void DrawBackground(CDC& dc, const CRect& rect) const;
@@ -99,6 +90,7 @@ private:
     Orientation m_orientation = Orientation::Horizontal;
     std::array<int, 2> m_paneSizes{ -1, -1 };
     bool m_bTracking = false;
+    bool m_bTrackMoved = false;
     int m_nTrackStart = 0;
     int m_nTrackOffset = 0;
 };
@@ -168,6 +160,7 @@ inline void CSplitterWnd::FinishTracking(const bool bAccept, const bool releaseC
     if (!bAccept) m_paneSizes[0] = m_nTrackStart;
 
     UpdateLayout();
+    if (std::exchange(m_bTrackMoved, false)) OnTrackingChanged(false);
 }
 
 inline void CSplitterWnd::StopTracking(const bool bAccept) { FinishTracking(bAccept, true); }
@@ -196,9 +189,10 @@ inline void CSplitterWnd::OnMouseMove(UINT, const CPoint pt)
     if (trackPos == m_paneSizes[0])
         return;
 
+    // Report tracking only once the drag moves, so plain clicks leave the panes untouched.
+    if (!std::exchange(m_bTrackMoved, true)) OnTrackingChanged(true);
     m_paneSizes[0] = trackPos;
     UpdateLayout();
-    ::RedrawWindow(m_hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 inline void CSplitterWnd::OnLButtonUp(UINT, CPoint) { if (m_bTracking) StopTracking(true); }
 inline void CSplitterWnd::OnCaptureChanged(WindowRef pWnd)
@@ -351,17 +345,10 @@ public:
         SendNativeMessage(TB_AUTOSIZE);
         auto* frame = GetParent<CFrameWnd>();
         frame->UpdateLayout();
-        const auto toolbar = this;
-        const HWND hWnd = m_hWnd;
-        g_idleCmdUiUpdate = [toolbar, hWnd]
-            {
-                if (FindAttached(hWnd) != toolbar) return;
-                toolbar->OnUpdateCmdUI(toolbar->GetParent<CFrameWnd>());
-
-            };
         OnUpdateCmdUI(frame);
         RedrawWindow(RDW_INVALIDATE | RDW_UPDATENOW);
     }
+    void OnIdleUpdateCmdUI() override { OnUpdateCmdUI(GetParent<CFrameWnd>()); }
     int GetButtonIndex(const UINT id) const { return static_cast<int>(SendNativeMessage(TB_COMMANDTOINDEX, id)); }
     bool GetButtonRect(const int index, RECT& rect) const
     {
@@ -619,7 +606,9 @@ class CPropertySheet;
 class CPropertyPage : public CDialog
 {
 public:
-    explicit CPropertyPage(const UINT templateId) : CDialog(templateId) {}
+    // The title is a localization key shown on the sheet's tab.
+    explicit CPropertyPage(const UINT templateId, const std::wstring_view title = {}) :
+        CDialog(templateId), m_title(title) {}
 
     bool Create(WindowRef parent);
 
@@ -634,6 +623,7 @@ public:
 
 private:
     friend class CPropertySheet;
+    std::wstring_view m_title;
     bool m_bModified = false;
 };
 

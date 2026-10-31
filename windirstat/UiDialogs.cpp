@@ -6,10 +6,10 @@
 
 #include "pch.h"
 
-HBRUSH CDialog::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
+HBRUSH CDialog::OnCtlColor(CDC* pDC, WindowRef, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : reinterpret_cast<HBRUSH>(CallDefaultHandler());
 }
 
 std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter, WindowRef parent)
@@ -271,51 +271,9 @@ bool CPropertySheet::OnInitDialog()
     const int btnGap = ::ScaleForDpi(8, m_hWnd);
     const int gap = ::ScaleForDpi(8, m_hWnd);
 
-    // Read tab labels from the dialog templates, then create only one page for
-    // initial sizing.  Initializing every property page here makes the settings
-    // dialog feel sluggish compared with MFC's lazy property-page creation.
+    // Create only one page for initial sizing; creating every property page here
+    // makes the settings dialog feel sluggish.
     int maxW = 100, maxH = 100;
-    std::vector<std::wstring> captions;
-    captions.reserve(m_pages.size());
-    for (const auto& page : m_pages)
-    {
-        captions.push_back([templateId = page->m_nIDTemplate]() -> std::wstring
-            {
-                const HINSTANCE instance = GetAppInstance();
-                const HRSRC resource = FindResourceW(instance, MAKEINTRESOURCEW(templateId), RT_DIALOG);
-                if (resource == nullptr) return {};
-
-                const DWORD resourceSize = SizeofResource(instance, resource);
-                const HGLOBAL global = LoadResource(instance, resource);
-                const auto* begin = global != nullptr ? static_cast<const WORD*>(LockResource(global)) : nullptr;
-                if (begin == nullptr || resourceSize < 2 * sizeof(WORD)) return {};
-
-                const size_t wordCount = resourceSize / sizeof(WORD);
-                const size_t headerWords = begin[0] == 1 && begin[1] == 0xFFFF ? 13 : 9;
-                if (wordCount < headerWords) return {};
-
-                const WORD* const end = begin + wordCount;
-                const auto skipResourceOrString = [end](const WORD* value)
-                    {
-                        if (value >= end) return static_cast<const WORD*>(nullptr);
-                        if (*value == 0) return value + 1;
-                        if (*value == 0xFFFF) return end - value >= 2 ? value + 2 : nullptr;
-                        while (value < end && *value != 0) ++value;
-                        return value < end ? value + 1 : nullptr;
-                    };
-
-                const WORD* value = skipResourceOrString(begin + headerWords); // menu
-                if (value == nullptr) return {};
-                value = skipResourceOrString(value); // window class
-                if (value == nullptr || value >= end || *value == 0 || *value == 0xFFFF) return {};
-
-                const WORD* const start = value;
-                while (value < end && *value != 0) ++value;
-                if (value >= end) return {};
-                return { reinterpret_cast<const wchar_t*>(start), static_cast<size_t>(value - start) };
-            }());
-    }
-
     for (const auto [i, page] : std::views::enumerate(m_pages))
     {
         if (!EnsurePageCreated(static_cast<int>(i))) continue;
@@ -338,7 +296,7 @@ bool CPropertySheet::OnInitDialog()
     // Tab strip (label-only)
     m_tab.SetLocation(CTabControl::Location::Top);
     m_tab.Create(CRect(margin, margin, margin + maxW, margin + tabH), this, 0xCAFE, true);
-    for (auto& cap : captions) m_tab.AddTab(nullptr, cap);
+    for (const auto& page : m_pages) m_tab.AddTab(nullptr, page->m_title);
 
     // Position pages
     const int pageY = margin + tabH + tabGap;
