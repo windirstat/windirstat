@@ -96,6 +96,7 @@ IDS_IDLEMESSAGE=就緒
 IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=已選取 {} 個項目 | {} 個檔案 | {} 個資料夾
 IDS_JUNCTIONS=連接點
 IDS_LARGEST_FILES=最大的檔案
+IDS_LEGACY_RESULTS_WARNING=此掃描結果檔案以舊版格式儲存，並將會透過兼容轉譯載入。\n\n請於成功載入後，另存新檔為現行格式。
 IDS_MENU_ABSOLUTE_PERCENTAGES=顯示絕對百分比(&A)
 IDS_MENU_CANCEL=取消(&A)
 IDS_MENU_CHKDSK=檢查磁碟

@@ -326,6 +326,66 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     return newitem;
 }
 
+// Legacy results compatibility functor
+struct LegacyResultsCompat
+{
+    std::optional<bool> isLegacy;
+    wchar_t buffer[16]{};
+
+    // Obsolete bit positions used exclusively for legacy deserialization
+    enum LegacyBits : std::uint32_t
+    {
+        LEGACY_IT_MASK        = 0x000007FF,
+        LEGACY_ITF_SCANERROR  = 1u << 14,
+        LEGACY_ITF_REMOTE     = 1u << 15,
+        LEGACY_ITHASH_MASK    = 0x000F0000,
+        LEGACY_ITRP_MASK      = 0x00F00000,
+        LEGACY_ITF_BASE_MASK  = 0x1F000000,
+        LEGACY_ITF_DONE       = 1u << 29,
+        LEGACY_ITF_UPPER_MASK = 0xC0000000,
+    };
+
+    // Translation conditions using explicit semantic names
+    static constexpr struct
+    {
+        std::uint32_t(*match)(std::uint32_t);
+    } conditions[] = {
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_IT_MASK); } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & (LEGACY_ITHASH_MASK | LEGACY_ITRP_MASK)) >> 5; } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_BASE_MASK); } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_UPPER_MASK) >> 1; } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_DONE) ? ITF_DONE : 0; } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_SCANERROR) ? ITF_SCANERROR : 0; } },
+        { [](std::uint32_t v) -> std::uint32_t { return (v & LEGACY_ITF_REMOTE) ? ITF_REMOTE : 0; } },
+    };
+
+    std::wstring_view operator()(const std::wstring_view attrStr)
+    {
+        if (isLegacy.has_value() && !isLegacy.value()) return attrStr;
+
+        const auto rawValue = static_cast<std::uint32_t>(wcstoull(attrStr.data(), nullptr, 16));
+
+        // Detect legacy results format and warn the user
+        if (!isLegacy.has_value())
+        {
+            isLegacy = (rawValue & LEGACY_ITF_DONE) != 0;
+            if (isLegacy.value()) ShowMessageBox(Localization::Lookup(IDS_LEGACY_RESULTS_WARNING));
+        }
+
+        // Convert legacy attributes to current format
+        if (isLegacy.value())
+        {
+            std::uint32_t newValue = 0;
+            for (const auto& condition : conditions) newValue |= condition.match(rawValue);
+            const auto result = std::format_to_n(buffer, std::size(buffer) - 1, L"0x{:08X}", newValue);
+            *result.out = wds::chrNull;
+            return std::wstring_view(buffer, result.out - buffer);
+        }
+
+        return attrStr;
+    }
+};
+
 static CItem* LoadResultsCsv(std::ifstream& reader)
 {
     CItem* newroot = nullptr;
@@ -333,6 +393,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     std::wstring line;
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
+    LegacyResultsCompat handleLegacyResults;
     bool headerProcessed = false;
     size_t maxRequiredField = 0;
     for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
@@ -394,7 +455,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         if (fields.size() <= maxRequiredField) { delete newroot; return nullptr; }
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
-        if (!BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
+        if (!BuildAndAttachItem(namePath, handleLegacyResults(fields[orderMap[FIELD_ATTRIBUTES_WDS]]),
             fields[orderMap[FIELD_LAST_CHANGE]], fields[orderMap[FIELD_SIZE_PHYSICAL]],
             fields[orderMap[FIELD_SIZE_LOGICAL]], fields[orderMap[FIELD_INDEX]],
             fields[orderMap[FIELD_ATTRIBUTES]], fields[orderMap[FIELD_FILES]],
@@ -436,6 +497,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
     CItem* newroot = nullptr;
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
     std::unordered_map<std::wstring, std::wstring> obj;
+    LegacyResultsCompat handleLegacyResults;
 
     // Skip lines until '[' (start of JSON array)
     std::string linebuf;
@@ -459,7 +521,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
         // Validate minimum required fields
         if (fieldValues[FIELD_NAME].empty()) { delete newroot; return nullptr; }
 
-        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], fieldValues[FIELD_ATTRIBUTES_WDS],
+        if (!BuildAndAttachItem(fieldValues[FIELD_NAME], handleLegacyResults(fieldValues[FIELD_ATTRIBUTES_WDS]),
             fieldValues[FIELD_LAST_CHANGE], fieldValues[FIELD_SIZE_PHYSICAL],
             fieldValues[FIELD_SIZE_LOGICAL], fieldValues[FIELD_INDEX],
             fieldValues[FIELD_ATTRIBUTES], fieldValues[FIELD_FILES],

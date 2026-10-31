@@ -47,35 +47,34 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
     IT_CONTAINER   = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_HLINKS | IT_HLINKS_SET | IT_HLINKS_IDX,
-    IT_MASK        = 0x00003FFF,
-
-    ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
-    ITF_REMOTE     = 1u << 15, // Indicates a remote file, object, or directory
+    IT_MASK        = 0x000007FF,
 
     ITHASH_NONE    = 0u,       // Indicates no hash
-    ITHASH_SKIP    = 1u << 16, // Indicates cannot be hashed (unreadable)
-    ITHASH_SMALL   = 1u << 17, // Indicates a small hash has been performed
-    ITHASH_MEDIUM  = 1u << 18, // Indicates a medium hash has been performed
-    ITHASH_LARGE   = 1u << 19, // Indicates a large hash has been performed
-    ITHASH_MASK    = 0x000F0000,
+    ITHASH_SKIP    = 1u << 11, // Indicates cannot be hashed (unreadable)
+    ITHASH_SMALL   = 1u << 12, // Indicates a small hash has been performed
+    ITHASH_MEDIUM  = 1u << 13, // Indicates a medium hash has been performed
+    ITHASH_LARGE   = 1u << 14, // Indicates a large hash has been performed
+    ITHASH_MASK    = 0x00007800,
 
     ITRP_NONE      = 0u,       // Indicates no reparse data
-    ITRP_SYMLINK   = 1u << 20, // Indicates a reparse point that is a symlink
-    ITRP_MOUNT     = 1u << 21, // Indicates a reparse point that is a mount point
-    ITRP_JUNCTION  = 1u << 22, // Indicates a reparse point that is a junction
-    ITRP_CLOUD     = 1u << 23, // Indicates a reparse point that is a cloud link
-    ITRP_MASK      = 0x00F00000,
+    ITRP_SYMLINK   = 1u << 15, // Indicates a reparse point that is a symlink
+    ITRP_MOUNT     = 1u << 16, // Indicates a reparse point that is a mount point
+    ITRP_JUNCTION  = 1u << 17, // Indicates a reparse point that is a junction
+    ITRP_CLOUD     = 1u << 18, // Indicates a reparse point that is a cloud link
+    ITRP_MASK      = 0x000F8000,
 
     ITF_NONE       = 0u,       // No flags
+    ITF_SCANERROR  = 1u << 22, // Indicates an incomplete scan
+    ITF_REMOTE     = 1u << 23, // Indicates a remote file, object, or directory
     ITF_RESERVED   = 1u << 24, // Indicates special reserved file
     ITF_BASIC      = 1u << 25, // Forces basic finder
     ITF_EXTDATA    = 1u << 26, // Notes extension data has been processed
     ITF_HARDLINK   = 1u << 27, // Indicates file is a hardlink
     ITF_ROOTITEM   = 1u << 28, // Indicates root item
-    ITF_DONE       = 1u << 29, // Indicates done processing
-    ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
-    ITF_MTP        = 1u << 31, // Indicates MTP item
-    ITF_MASK       = 0xFF00C000,
+    ITF_PREVIEW    = 1u << 29, // Indicates preview item (color stored in index)
+    ITF_MTP        = 1u << 30, // Indicates MTP item
+    ITF_DONE       = 1u << 31, // Indicates done processing
+    ITF_MASK       = 0xFFF00000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
