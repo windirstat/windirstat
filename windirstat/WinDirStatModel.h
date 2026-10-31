@@ -126,6 +126,8 @@ public:
     void RebuildExtensionData();
     void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
+    void RemoveEmptyFolders(const std::vector<CItem*>& roots) const;
+    static std::vector<CItem*> GetEmptyFolderRoots(const std::vector<CItem*>& items);
     void SetZoomItem(CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const;
@@ -233,6 +235,7 @@ protected:
     void OnCleanupOptimizeVhd();
     void OnCleanupSparsifyFile();
     void OnCleanupRemoveEmpty();
+    void OnCleanupSearchEmpty();
     void OnToolsSetDates();
     void OnScanSuspend();
     void OnScanResume();
@@ -291,6 +294,8 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_EMPTY_FOLDER),
         Route::Command<&OnCleanupRemoveEmpty>(ID_CLEANUP_REMOVE_EMPTY),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_EMPTY),
+        Route::Command<&OnCleanupSearchEmpty>(ID_CLEANUP_SEARCH_EMPTY),
+        Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_SEARCH_EMPTY),
         Route::Command<&OnRemoveShadowCopies>(ID_CLEANUP_REMOVE_SHADOW),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_SHADOW),
         Route::Command<&OnSearch>(ID_SEARCH),

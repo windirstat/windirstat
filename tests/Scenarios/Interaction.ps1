@@ -792,9 +792,11 @@ function Test-CleanupReparseReplacement {
     [IO.Directory]::CreateDirectory($target) | Out-Null
     $app = Start-TestApp @($root)
     $list = Get-AppList $app -AllFiles
+    Select-AppRows $app $list @($root)
+    Invoke-AppCommand $app 'ID_CLEANUP_SEARCH_EMPTY'
+    Wait-AppIdle $app
     [IO.Directory]::Delete($stale)
     New-TestJunction $stale ([IO.Path]::GetDirectoryName($target))
-    Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
