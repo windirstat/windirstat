@@ -419,6 +419,8 @@ function Test-DeniedDirectory {
     Assert-True ([NativeListViewHelper]::FocusListView($list) -and
         [NativeListViewHelper]::SelectItems($list, [int[]]@((Find-AppRow $list 'z-denied (Scan incomplete)')))) `
         'The inaccessible branch remains selectable'
+    Wait-Until { (Get-AppCommandState $app 'ID_REFRESH_SELECTED').Enabled } `
+        'The loaded branch is ready for refresh' | Out-Null
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
     Assert-True ('z-denied (Scan incomplete)' -in [NativeListViewHelper]::GetItemTexts($list)) `

@@ -41,6 +41,7 @@ public:
     static std::span<const RouteEntry> Routes();
 
 private:
+    int EditorHeight() const;
     void OnSourceChanged();
     void OnSize(UINT type, int width, int height);
     void OnGetMinMaxInfo(MINMAXINFO* info);
@@ -70,8 +71,14 @@ public:
         m_headingFont.Attach(CFont(GetDlgItem(IDC_REMOTE_CREDENTIALS).GetFont(), FW_BOLD).Detach());
         for (const int id : { IDC_REMOTE_TARGET, IDC_REMOTE_CREDENTIALS }) GetDlgItem(id).SetFont(m_headingFont);
         m_size = GetClientRect().Size();
+
+        // Rounded scaling can place the last row just beyond the original page height.
         for (HWND child = ::GetWindow(Handle(), GW_CHILD); child; child = ::GetWindow(child, GW_HWNDNEXT))
-            m_controls.emplace_back(child, GetChildWindowRect(child));
+        {
+            const CRect rect = GetChildWindowRect(child);
+            m_controls.emplace_back(child, rect);
+            m_size.cy = std::max<int>(m_size.cy, rect.bottom);
+        }
         m_credentialsTop = GetChildWindowRect(GetDlgItem(IDC_REMOTE_CREDENTIALS).Handle()).top;
         const CRect summary = GetChildWindowRect(GetDlgItem(IDC_REMOTE_STATUS).Handle());
         m_collapsedHeight = summary.bottom;
@@ -142,6 +149,21 @@ public:
             (m_target.protocol == RemoteProtocol::S3 && !IsChecked(IDC_S3_TOKEN_TOGGLE) ? m_tokenOffset : 0);
     }
 
+    void UpdateScroll()
+    {
+        // When the screen limits the editor height, the form scrolls instead of reaching under the buttons.
+        if (m_updatingScroll) return;
+        m_updatingScroll = true;
+        const int height = GetClientRect().Height();
+        const int content = ContentHeight();
+        m_scroll = std::clamp(m_scroll, 0, std::max(0, content - height));
+        SCROLLINFO info{ .fMask = SIF_PAGE | SIF_POS | SIF_RANGE, .nMax = content - 1,
+            .nPage = static_cast<UINT>(height), .nPos = m_scroll };
+        SetScrollInfo(SB_VERT, &info);
+        m_updatingScroll = false;
+        ArrangeControls();
+    }
+
     void FocusInput()
     {
         const int user = m_target.protocol == RemoteProtocol::S3 ? IDC_S3_ACCESS : IDC_REMOTE_ACCOUNT;
@@ -156,6 +178,11 @@ public:
     bool OnCommand(const WPARAM wParam, const LPARAM lParam) override
     {
         if (m_loading) return CPropertyPage::OnCommand(wParam, lParam);
+        if (lParam != 0 && (HIWORD(wParam) == EN_SETFOCUS || HIWORD(wParam) == BN_SETFOCUS))
+        {
+            ScrollIntoView(reinterpret_cast<HWND>(lParam));
+            return CPropertyPage::OnCommand(wParam, lParam);
+        }
         if (lParam != 0 && HIWORD(wParam) == EN_CHANGE)
         {
             // Hidden credentials belong only to the displayed connection, including the WebDAV folder.
@@ -190,7 +217,11 @@ public:
 
     static std::span<const RouteEntry> Routes()
     {
-        static constexpr std::array entries{ Route::Window<&OnSize>(WM_SIZE) };
+        static constexpr std::array entries{
+            Route::Window<&OnSize>(WM_SIZE),
+            Route::Window<&OnVScroll>(WM_VSCROLL),
+            Route::Window<&OnMouseWheel>(WM_MOUSEWHEEL)
+        };
         return entries;
     }
 
@@ -233,6 +264,7 @@ private:
             }
             rect.right = std::min(rect.right, GetClientRect().right);
             if (!token && id == IDC_REMOTE_REMEMBER) rect.Offset(0, -m_tokenOffset);
+            rect.Offset(0, -m_scroll);
             ::MoveWindow(window, rect.left, rect.top, rect.Width(), rect.Height(), true);
             const bool visible = id == IDC_REMOTE_CHANGE || id == IDC_REMOTE_STATUS ? !m_expanded :
                 (original.top <= m_credentialsTop || m_expanded) && (id != IDC_S3_TOKEN || token);
@@ -240,7 +272,48 @@ private:
         }
     }
 
-    void OnSize(UINT, int, int) { if (m_size.cx != 0) ArrangeControls(); }
+    void OnSize(UINT, int, int) { if (m_size.cx != 0) UpdateScroll(); }
+
+    void ScrollTo(const int position)
+    {
+        m_scroll = position;
+        UpdateScroll();
+    }
+
+    void ScrollIntoView(const HWND control)
+    {
+        const CRect rect = GetChildWindowRect(control);
+        if (rect.top < 0) ScrollTo(m_scroll + rect.top);
+        else if (rect.bottom > GetClientRect().bottom) ScrollTo(m_scroll + rect.bottom - GetClientRect().bottom);
+    }
+
+    void OnVScroll(const UINT code, UINT, WindowRef)
+    {
+        SCROLLINFO info{};
+        GetScrollInfo(SB_VERT, &info);
+        const int page = static_cast<int>(info.nPage);
+        switch (code)
+        {
+        case SB_LINEUP: ScrollTo(info.nPos - ScaleForDpi(16)); break;
+        case SB_LINEDOWN: ScrollTo(info.nPos + ScaleForDpi(16)); break;
+        case SB_PAGEUP: ScrollTo(info.nPos - page); break;
+        case SB_PAGEDOWN: ScrollTo(info.nPos + page); break;
+        case SB_THUMBTRACK: case SB_THUMBPOSITION: ScrollTo(info.nTrackPos); break;
+        case SB_TOP: ScrollTo(0); break;
+        case SB_BOTTOM: ScrollTo(info.nMax); break;
+        default: break;
+        }
+    }
+
+    bool OnMouseWheel(UINT, const short delta, CPoint)
+    {
+        // Keep fractional pixels across high-resolution wheel messages.
+        m_wheelRemainder += delta * ScaleForDpi(48);
+        const int distance = m_wheelRemainder / WHEEL_DELTA;
+        m_wheelRemainder %= WHEEL_DELTA;
+        if (distance != 0) ScrollTo(m_scroll - distance);
+        return true;
+    }
 
     CCloudConnectionDlg& m_owner;
     RemoteTarget m_target;
@@ -250,8 +323,11 @@ private:
     int m_credentialsTop = 0;
     int m_collapsedHeight = 0;
     int m_tokenOffset = 0;
+    int m_scroll = 0;
+    int m_wheelRemainder = 0;
     bool m_expanded = true;
     bool m_loading = false;
+    bool m_updatingScroll = false;
 };
 
 CCloudConnectionDlg::CCloudConnectionDlg(std::wstring path, CWnd* parent) :
@@ -292,11 +368,12 @@ bool CCloudConnectionDlg::OnInitDialog()
     m_minimumSize = GetWindowRect().Size();
     m_frameSize = m_minimumSize - GetClientRect().Size();
 
-    // Keep the native footer margin above and below the confirmation buttons.
-    const CRect confirm = GetChildWindowRect(GetDlgItem(IDOK).Handle());
-    m_footerSpace = confirm.Height() + 2 * (GetClientRect().Height() - confirm.bottom);
     for (const int id : { IDOK, IDCANCEL }) m_layout.AddControl(id, 1, 1, 0, 0);
     m_layout.OnInitDialog(false);
+
+    // Measure footer margins after layout brings the confirmation buttons into the visible window.
+    const CRect confirm = GetChildWindowRect(GetDlgItem(IDOK).Handle());
+    m_footerSpace = confirm.Height() + 2 * (GetClientRect().Height() - confirm.bottom);
     OnSourceChanged();
     CenterWindow();
     if (m_path.empty()) GetDlgItem(IDC_REMOTE_PROVIDER).SetFocus();
@@ -327,11 +404,21 @@ void CCloudConnectionDlg::OnSourceChanged()
     UpdateButtons();
 }
 
+int CCloudConnectionDlg::EditorHeight() const
+{
+    // The whole form, or the work area when the screen is too small and the form scrolls instead.
+    return std::min<int>(m_pageRect.top + ActivePage()->ContentHeight() + m_footerSpace + m_frameSize.cy,
+        GetWorkArea(Handle()).Height());
+}
+
 void CCloudConnectionDlg::FitEditor()
 {
     if (!ActivePage()) return;
-    const int height = m_pageRect.top + ActivePage()->ContentHeight() + m_footerSpace + m_frameSize.cy;
-    SetWindowPos(nullptr, 0, 0, GetWindowRect().Width(), height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    // A taller editor moves up rather than reaching below the work area.
+    const int height = EditorHeight();
+    const CRect window = GetWindowRect();
+    const int top = std::min<int>(window.top, GetWorkArea(Handle()).bottom - height);
+    SetWindowPos(nullptr, window.left, top, window.Width(), height, SWP_NOZORDER | SWP_NOACTIVATE);
     OnSize(0, 0, 0);
 }
 
@@ -347,8 +434,9 @@ void CCloudConnectionDlg::OnSize(const UINT type, const int width, const int hei
     if (!ActivePage()) return;
     CRect rect = m_pageRect;
     rect.right = GetClientRect().right - rect.left;
-    rect.bottom = rect.top + ActivePage()->ContentHeight();
+    rect.bottom = std::min(rect.top + ActivePage()->ContentHeight(), GetClientRect().bottom - m_footerSpace);
     ActivePage()->MoveWindow(rect);
+    ActivePage()->UpdateScroll();
 }
 
 void CCloudConnectionDlg::OnGetMinMaxInfo(MINMAXINFO* info)
@@ -356,7 +444,7 @@ void CCloudConnectionDlg::OnGetMinMaxInfo(MINMAXINFO* info)
     CLayoutDialog::OnGetMinMaxInfo(info);
     if (m_minimumSize.cx == 0 || !ActivePage()) return;
     info->ptMinTrackSize.x = m_minimumSize.cx;
-    info->ptMinTrackSize.y = m_pageRect.top + ActivePage()->ContentHeight() + m_footerSpace + m_frameSize.cy;
+    info->ptMinTrackSize.y = EditorHeight();
 }
 
 std::span<const RouteEntry> CCloudConnectionDlg::Routes()

@@ -7,7 +7,8 @@
 #include "pch.h"
 #include "ProgressDlg.h"
 
-CProgressDlg::CProgressDlg(const size_t total, const Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task)
+CProgressDlg::CProgressDlg(const ULONGLONG total, const Flags flags, CWnd* pParent,
+    std::function<void(CProgressDlg*)> task)
     : MessageTarget(IDD, pParent)
     , m_message(Localization::Lookup(IDS_PROGRESS))
     , m_task(std::move(task))
@@ -82,7 +83,7 @@ void CProgressDlg::OnTimer(const UINT_PTR nIDEvent)
             return;
         }
 
-        const size_t current = m_current.load();
+        const ULONGLONG current = m_current.load();
         const double percent = (static_cast<double>(current) * 100) / m_total;
 
         // Update progress bar position
