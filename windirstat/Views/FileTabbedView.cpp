@@ -44,12 +44,13 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_fileTopView = AddPane<CFileTopView>(m_fileTopViewIndex, IDS_LARGEST_FILES);
     m_fileDupeView = AddPane<CFileDupeView>(m_fileDupeViewIndex, IDS_DUPLICATE_FILES);
     m_fileSearchView = AddPane<CFileSearchView>(m_fileSearchViewIndex, IDS_SEARCH_RESULTS);
+    m_fileDedupShareView = AddPane<CFileDedupShareView>(m_fileDedupShareViewIndex, IDS_DEDUP_SHARING);
     m_fileWatcherView = AddPane<CFileWatcherView>(m_fileWatcherViewIndex, IDS_WATCHER);
     m_filePermsView = AddPane<CFilePermsView>(m_filePermsViewIndex, IDS_PERMISSIONS);
     m_storageAnalyticsView = AddPane<CStorageAnalyticsView>(m_storageAnalyticsViewIndex, IDS_STORAGE_ANALYTICS);
     if (m_fileTreeView == nullptr || m_fileTopView == nullptr || m_fileDupeView == nullptr
-        || m_fileSearchView == nullptr || m_fileWatcherView == nullptr || m_filePermsView == nullptr
-        || m_storageAnalyticsView == nullptr)
+        || m_fileSearchView == nullptr || m_fileDedupShareView == nullptr || m_fileWatcherView == nullptr
+        || m_filePermsView == nullptr || m_storageAnalyticsView == nullptr)
     {
         return -1;
     }
@@ -80,6 +81,7 @@ void CFileTabbedView::OnInitialUpdate()
 void CFileTabbedView::ResetOptionalTabVisibility()
 {
     SetSearchTabVisibility(false);
+    SetDedupShareTabVisibility(false);
     SetWatcherTabVisibility(false);
     SetPermsTabVisibility(false);
     SetStorageAnalyticsTabVisibility(false);
@@ -103,6 +105,11 @@ void CFileTabbedView::SetDupeTabVisibility(const bool show)
 void CFileTabbedView::SetSearchTabVisibility(const bool show)
 {
     GetTabControl().SetTabVisible(m_fileSearchViewIndex, show);
+}
+
+void CFileTabbedView::SetDedupShareTabVisibility(const bool show)
+{
+    GetTabControl().SetTabVisible(m_fileDedupShareViewIndex, show);
 }
 
 void CFileTabbedView::SetWatcherTabVisibility(const bool show)
@@ -176,6 +183,7 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
         static_cast<CWinDirStatPane*>(m_fileTopView),
         static_cast<CWinDirStatPane*>(m_fileDupeView),
         static_cast<CWinDirStatPane*>(m_fileSearchView),
+        static_cast<CWinDirStatPane*>(m_fileDedupShareView),
         static_cast<CWinDirStatPane*>(m_fileWatcherView),
         static_cast<CWinDirStatPane*>(m_filePermsView),
         static_cast<CWinDirStatPane*>(m_storageAnalyticsView) })
@@ -190,7 +198,8 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
 bool CFileTabbedView::CycleTab(const bool forward)
 {
     const auto allTabs = { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex,
-        m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex };
+        m_fileSearchViewIndex, m_fileDedupShareViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex,
+        m_storageAnalyticsViewIndex };
     std::vector<int> visibleTabs;
     for (const int tabIndex : allTabs)
     {

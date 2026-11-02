@@ -26,6 +26,7 @@ public:
     CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
     CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }
     CFileSearchView* GetFileSearchView() const { return m_fileSearchView; }
+    CFileDedupShareView* GetFileDedupShareView() const { return m_fileDedupShareView; }
     CFileWatcherView* GetFileWatcherView() const { return m_fileWatcherView; }
     CFilePermsView* GetFilePermsView() const { return m_filePermsView; }
     CStorageAnalyticsView* GetStorageAnalyticsView() const { return m_storageAnalyticsView; }
@@ -33,11 +34,13 @@ public:
     void SetActiveTopView() { SetActiveView(m_fileTopViewIndex); }
     void SetActiveDupeView() { SetActiveView(m_fileDupeViewIndex); }
     void SetActiveSearchView() { SetActiveView(m_fileSearchViewIndex); }
+    void SetActiveDedupShareView() { SetActiveView(m_fileDedupShareViewIndex); }
     void SetActiveWatcherView() { SetActiveView(m_fileWatcherViewIndex); }
     void SetActivePermsView() { SetActiveView(m_filePermsViewIndex); }
     void SetActiveStorageAnalyticsView() { SetActiveView(m_storageAnalyticsViewIndex); }
     void SetDupeTabVisibility(bool show = true);
     void SetSearchTabVisibility(bool show = true);
+    void SetDedupShareTabVisibility(bool show = true);
     void SetWatcherTabVisibility(bool show = true);
     void SetPermsTabVisibility(bool show = true);
     void SetStorageAnalyticsTabVisibility(bool show = true);
@@ -70,6 +73,8 @@ CFileTabbedView() = default;
     CFileTopView* m_fileTopView = nullptr;
     int m_fileSearchViewIndex = -1;
     CFileSearchView* m_fileSearchView = nullptr;
+    int m_fileDedupShareViewIndex = -1;
+    CFileDedupShareView* m_fileDedupShareView = nullptr;
     int m_fileWatcherViewIndex = -1;
     CFileWatcherView* m_fileWatcherView = nullptr;
     int m_filePermsViewIndex = -1;

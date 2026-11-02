@@ -12,6 +12,7 @@
 #include "FileTopControl.h"
 #include "FileDupeControl.h"
 #include "FileSearchControl.h"
+#include "FileDedupShareControl.h"
 #include "FileTreeControl.h"
 #include "ControlView.h"
 
@@ -50,6 +51,12 @@ protected:
 };
 
 class CFileSearchView final : public CControlViewT<CFileSearchControl>
+{
+protected:
+    void InitializeColumns() override;
+};
+
+class CFileDedupShareView final : public CControlViewT<CFileDedupShareControl>
 {
 protected:
     void InitializeColumns() override;

@@ -1,3 +1,18 @@
+<a name="windirstat-2.10.0"></a>
+# WinDirStat 2.10.0
+
+Enhancements
+- Added Windows Data Deduplication accounting that reads the chunk store to show the real size of optimized files
+- Added Freed If Deleted and Shared columns for files and folders on deduplicated volumes
+- Added a Shared Blocks tab listing the files that share deduplicated data with a selection
+- Added highlighting of files sharing deduplicated data with the selected file in the visualizations, in a configurable color
+- Added progress while reading deduplication data
+- Added a confirmation before compressing on Data Deduplication volumes that leaves optimized files and the chunk store alone
+
+Bug Fixes
+- Corrected saved list column widths and order being reset when a new version adds columns
+- Corrected the Russian and Ukrainian names of Sparsify File, which read as Compress File
+
 <a name="windirstat-2.9.3"></a>
 # WinDirStat 2.9.3
 

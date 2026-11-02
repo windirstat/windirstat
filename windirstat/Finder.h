@@ -44,6 +44,7 @@ public:
     virtual DWORD GetReparseTag() const = 0;
     virtual bool IsReserved() const = 0;
     virtual bool HasIgnoredStream() const = 0;
+    virtual bool IsSingleLink() const noexcept { return false; }
     virtual const ScanResult& GetResult() const noexcept
     {
         static const ScanResult complete{ ScanOutcome::Complete, {} };

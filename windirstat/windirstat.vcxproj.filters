@@ -218,6 +218,9 @@
     <ClInclude Include="Dialogs\RecoveryDlg.h">
       <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\FileDedupShareControl.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\FileSearchControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -252,6 +255,12 @@
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="CsvLoader.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DedupAccounting.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DedupStore.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="WinDirStatModel.h">
@@ -336,6 +345,9 @@
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
     <ClInclude Include="ItemPerm.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemDedupShare.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
     <ClInclude Include="ItemSearch.h">
@@ -490,6 +502,9 @@
     <ClCompile Include="Dialogs\RecoveryDlg.cpp">
       <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\FileDedupShareControl.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\FileSearchControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
@@ -529,6 +544,12 @@
     <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="DedupAccounting.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DedupStore.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
     <ClCompile Include="WinDirStatModel.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
@@ -551,6 +572,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemPerm.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemDedupShare.cpp">
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemSearch.cpp">

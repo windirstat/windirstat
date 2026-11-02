@@ -37,6 +37,8 @@ void CIconHandler::Initialize()
         m_largestImage = Icons::IconFromFontChar(L'⋙', DarkMode::SystemColor(COLOR_WINDOWTEXT));
         m_unknownImage = Icons::IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         m_scanErrorImage = LoadIconW(nullptr, IDI_WARNING);
+        m_dedupSharedImage = Icons::IconFromFontChar(L'◈', RGB(0x96, 0x6E, 0xDC), true);
+        m_dedupStoreImage = Icons::IconFromFontChar(L'◈', RGB(0x8C, 0x8C, 0x8C), true);
         m_defaultFileImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_NORMAL);
         m_defaultFolderImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_DIRECTORY);
 

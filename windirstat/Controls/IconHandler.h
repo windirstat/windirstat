@@ -65,6 +65,8 @@ public:
     HICON m_junctionProtected = nullptr; // For protected junctions
     HICON m_mountPointImage = nullptr;   // Mount point icon
     HICON m_myComputerImage = nullptr;   // My computer icon
+    HICON m_dedupSharedImage = nullptr;  // Shared deduplicated data
+    HICON m_dedupStoreImage = nullptr;   // Deduplication garbage and metadata
 
     // Trivial getters
     HICON GetMyComputerImage() const { return m_myComputerImage; }
@@ -80,6 +82,8 @@ public:
     HICON GetDupesImage() const { return m_dupesImage; }
     HICON GetSearchImage() const { return m_searchImage; }
     HICON GetLargestImage() const { return m_largestImage; }
+    HICON GetDedupSharedImage() const { return m_dedupSharedImage; }
+    HICON GetDedupStoreImage() const { return m_dedupStoreImage; }
 };
 
 namespace Icons

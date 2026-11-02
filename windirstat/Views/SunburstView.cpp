@@ -81,6 +81,26 @@ void CSunburstView::DrawHighlightExtension(CDC* pDC)
         COptions::TreeMapHighlightColor, 2.0f);
 }
 
+void CSunburstView::DrawRelated(CDC* pDC)
+{
+    auto* model = CWinDirStatModel::Get();
+    const auto& related = model->GetRelatedItems();
+
+    // Only laid out wedges qualify; looking up hidden items would outline their ancestors
+    if (!m_relatedOutlineItemsValid || m_relatedOutlineGeneration != model->GetRelatedGeneration())
+    {
+        m_relatedOutlineItems.clear();
+        m_sunburst.VisitItems([&](const CItem* item)
+        {
+            if (related.contains(item)) m_relatedOutlineItems.push_back(item);
+        });
+        m_relatedOutlineGeneration = model->GetRelatedGeneration();
+        m_relatedOutlineItemsValid = true;
+    }
+
+    m_sunburst.DrawOutlineItems(pDC, m_relatedOutlineItems, COptions::TreeMapRelatedColor, 1.5f);
+}
+
 void CSunburstView::DrawHover(CDC* pDC)
 {
     m_sunburst.DrawHoverItem(pDC, m_hoverItem, m_hoveringRemainder);
@@ -141,6 +161,8 @@ void CSunburstView::OnRenderCacheTrimmed()
     m_sunburst.TrimMemory();
     decltype(m_extensionOutlineItems){}.swap(m_extensionOutlineItems);
     decltype(m_selectionOutlineItems){}.swap(m_selectionOutlineItems);
+    decltype(m_relatedOutlineItems){}.swap(m_relatedOutlineItems);
+    m_relatedOutlineItemsValid = false;
     m_cachedHighlightExtension.clear();
     m_cachedHighlightExtension.shrink_to_fit();
     m_extensionOutlineItemsValid = false;
@@ -152,6 +174,8 @@ void CSunburstView::ClearExtensionHighlightCache()
     m_cachedHighlightExtension.clear();
     m_cachedHighlightUnregistered = false;
     m_extensionOutlineItemsValid = false;
+    m_relatedOutlineItems.clear();
+    m_relatedOutlineItemsValid = false;
 }
 
 void CSunburstView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item)

@@ -261,7 +261,7 @@ void COptions::RescaleFontDependentState(const int oldPercent, const int newPerc
 
     for (Setting<std::vector<int>>* setting : { &DriveListColumnWidths, &DupeViewColumnWidths,
         &FileTreeColumnWidths, &ExtViewColumnWidths, &TopViewColumnWidths, &SearchViewColumnWidths,
-        &WatcherColumnWidths, &PermsViewColumnWidths })
+        &DedupShareViewColumnWidths, &WatcherColumnWidths, &PermsViewColumnWidths })
     {
         for (int& width : setting->Obj()) width = MulDiv(width, newPercent, oldPercent);
     }

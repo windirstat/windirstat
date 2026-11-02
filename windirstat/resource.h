@@ -225,6 +225,9 @@
 #define IDC_REMOTE_CHANGE               1201
 #define IDC_S3_TOKEN_TOGGLE             1202
 #define IDC_REMOTE_TARGET               1203
+#define IDC_DEDUP_ACCOUNTING            1204
+#define IDC_DEDUP_METRIC                1205
+#define IDC_TREEMAPRELATEDCOLOR         1206
 #define ID_APP_ABOUT                    32768
 #define ID_APP_EXIT                     32769
 #define ID_CLEANUP_CREATE_HARDLINK      32770
@@ -427,6 +430,7 @@
 #define ID_WATCHER_START                32967
 #define ID_WDS_CONTROL                  32968
 #define ID_FILE_SELECT_CLOUD            32969
+#define ID_DEDUP_SHOW_SHARING           32970
 #define IDS_APP_TITLE                   57344
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_FILTER_EXAMPLE_DIRS         57346
@@ -442,8 +446,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        124
-#define _APS_NEXT_COMMAND_VALUE         32970
-#define _APS_NEXT_CONTROL_VALUE         1204
+#define _APS_NEXT_COMMAND_VALUE         32971
+#define _APS_NEXT_CONTROL_VALUE         1207
 #define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

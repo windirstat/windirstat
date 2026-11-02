@@ -27,6 +27,7 @@ protected:
     void DrawHighlightExtension(CDC* pDC) override;
     void DrawSelection(CDC* pDC) override;
     void DrawHover(CDC* pDC) override;
+    void DrawRelated(CDC* pDC) override;
     CItem* FindItemAtPoint(CPoint point) override;
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;
@@ -37,6 +38,9 @@ protected:
     CSunburst m_sunburst;
     std::vector<const CItem*> m_extensionOutlineItems;
     std::vector<const CItem*> m_selectionOutlineItems;
+    std::vector<const CItem*> m_relatedOutlineItems;
+    std::uint32_t m_relatedOutlineGeneration = 0;
+    bool m_relatedOutlineItemsValid = false;
     std::wstring m_cachedHighlightExtension;
     ULONGLONG m_hitRemainderSize = 0;
     bool m_hoveringRemainder = false;

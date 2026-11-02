@@ -23,6 +23,11 @@ void CPageAdvanced::InitializePage()
         for (const auto& priority : SplitString(Localization::Lookup(IDS_PRIORITY_LEVELS), L','))
             m_priorityCombo.AddString(priority);
 
+    // Combo items must exist before the bound selection is applied
+    if (m_dedupMetricCombo.SubclassDlgItem(IDC_DEDUP_METRIC, this))
+        for (const auto& metric : SplitString(Localization::Lookup(IDS_DEDUP_METRICS), L','))
+            m_dedupMetricCombo.AddString(metric);
+
     LoadBinds(CheckboxBindings);
 
     LoadBinds(NumberBindings);
@@ -32,14 +37,15 @@ std::optional<CPropertyPage::ValidationError> CPageAdvanced::PrepareSettings()
 {
     auto numbers = ReadBinds(NumberBindings);
     if (!numbers) return numbers.error();
-    const auto& [largeFileCount, folderHistoryCount, priority, threads, fileHashAlgorithm] = *numbers;
+    const auto& [largeFileCount, folderHistoryCount, priority, threads, fileHashAlgorithm, dedupMetric] = *numbers;
     const auto checkboxes = ReadBinds(CheckboxBindings).value();
 
     const bool refreshReparsepoints = BindsChanged(checkboxes, { &COptions::ExcludeJunctions,
         &COptions::ExcludeSymbolicLinksDirectory, &COptions::ExcludeVolumeMountPoints, &COptions::ExcludeSymbolicLinksFile });
     const bool refreshAll = BindsChanged(checkboxes, { &COptions::ExcludeHiddenDirectory,
         &COptions::ExcludeProtectedDirectory, &COptions::ExcludeDropboxIgnored,
-        &COptions::ExcludeHiddenFile, &COptions::ExcludeProtectedFile, &COptions::ProcessHardlinks }) ||
+        &COptions::ExcludeHiddenFile, &COptions::ExcludeProtectedFile, &COptions::ProcessHardlinks,
+        &COptions::DedupAccounting }) || dedupMetric.Changed() ||
         (COptions::ScanForDuplicates && (fileHashAlgorithm.Changed() ||
             BindsChanged(checkboxes, { &COptions::SampleLargeFiles })));
 

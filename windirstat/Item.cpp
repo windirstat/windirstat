@@ -11,6 +11,7 @@
 #include "FinderMtp.h"
 #include "FinderRemote.h"
 #include "FinderNtfs.h"
+#include "DedupAccounting.h"
 
 class CItem::ScanBatch final
 {
@@ -418,6 +419,7 @@ CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
     // Preserve MTP shell metadata under the child index for later access
     if (IsTypeOrFlag(ITF_MTP))
         child->SetIndex(FinderMtp::RegisterPath({}, finder.GetShellPath(), finder.GetShellPidl()));
+    child->SetFlag(ITF_SINGLE_LINK, !finder.IsSingleLink());
     child->SetSizePhysical(finder.GetFileSizePhysical());
     child->SetSizeLogical(finder.GetFileSizeLogical());
     child->SetLastChange(finder.GetLastWriteTime());
@@ -478,7 +480,14 @@ void CItem::ReconcileScanResults(CItem* root, const bool cancelled)
 
 ULONGLONG CItem::GetSizePhysical() const noexcept
 {
-    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
+    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : GetSizePhysicalDisplay();
+}
+
+ULONGLONG CItem::GetSizePhysicalDisplay() const noexcept
+{
+    if (IsTypeOrFlag(IT_HLINKS_FILE)) return GetLinkedItem()->GetSizePhysicalDisplay();
+    const ULONGLONG allocation = m_sizePhysical.load(std::memory_order_relaxed);
+    return IsTypeOrFlag(ITF_ACCOUNTED) ? CDedupAccounting::Get().GetPhysical(this, allocation) : allocation;
 }
 
 bool CItem::HasSizePhysical() const noexcept
@@ -688,6 +697,7 @@ DWORD CItem::GetReparseTag() const noexcept
     if (IsTypeOrFlag(ITRP_MOUNT)) return IO_REPARSE_TAG_MOUNT_POINT;
     if (IsTypeOrFlag(ITRP_JUNCTION)) return IO_REPARSE_TAG_JUNCTION_POINT;
     if (IsTypeOrFlag(ITRP_CLOUD)) return IO_REPARSE_TAG_CLOUD_MASK;
+    if (IsTypeOrFlag(ITRP_DEDUP)) return IO_REPARSE_TAG_DEDUP;
     return 0;
 }
 
@@ -697,6 +707,7 @@ void CItem::SetReparseTag(const DWORD reparseType) noexcept
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetReparseType(ITRP_MOUNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetReparseType(ITRP_JUNCTION);
     else if ((reparseType & ~IO_REPARSE_TAG_CLOUD_MASK) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
+    else if (reparseType == IO_REPARSE_TAG_DEDUP) SetReparseType(ITRP_DEDUP);
 }
 
 std::wstring CItem::GetOwner(const bool force) const
@@ -1252,6 +1263,7 @@ void CItem::UpdateStatsFromDisk()
                 UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
                 SetIndex(finder.GetIndex());
+                SetFlag(ITF_SINGLE_LINK, true);
                 ExtensionDataAdd();
             }
         }

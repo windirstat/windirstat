@@ -6,6 +6,7 @@
 
 #include "pch.h"
 #include "Item.h"
+#include "DedupAccounting.h"
 
 static constexpr wchar_t AsciiLower(const wchar_t value) noexcept
 {
@@ -174,7 +175,7 @@ std::wstring CItem::GetText(const int subitem) const
         if (!HasSizePhysical()) return {};
         if (IsTypeOrFlag(ITF_HARDLINK))
         {
-            return L"⧉ " + FormatBytes(GetSizePhysicalRaw());
+            return L"⧉ " + FormatBytes(GetSizePhysicalDisplay());
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
@@ -222,37 +223,54 @@ std::wstring CItem::GetText(const int subitem) const
         return FormatDouble((COptions::UseAbsolutePercentages ? GetAbsoluteFraction() : GetFraction()) * 100) + L"%";
 
     case COL_ITEMS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_DEDUP))
         {
             return FormatCount(GetItemsCount());
         }
         break;
 
     case COL_FILES:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_DEDUP))
         {
             return FormatCount(GetFilesCount());
         }
         break;
 
     case COL_FOLDERS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_DEDUP))
         {
             return FormatCount(GetFoldersCount());
         }
         break;
 
     case COL_LAST_CHANGE:
-        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_DEDUP))
         {
             return FormatFileTime(GetLastChange());
         }
         break;
 
     case COL_ATTRIBUTES:
-        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_MYCOMPUTER, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_MYCOMPUTER, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE, IT_DEDUP))
         {
-            return FormatAttributes(GetAttributes());
+            // Deduplicated files are marked in addition to their file system attributes
+            std::wstring attributes = FormatAttributes(GetAttributes());
+            if (IsTypeOrFlag(ITRP_DEDUP) && GetAttributes() != INVALID_FILE_ATTRIBUTES) attributes += wds::chrAttributeDedup;
+            return attributes;
+        }
+        break;
+
+    case COL_DEDUP_FREED:
+        if (IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE, IT_DEDUP))
+        {
+            if (const auto freed = CDedupAccounting::Get().GetFreed(this); freed.has_value()) return FormatBytes(*freed);
+        }
+        break;
+
+    case COL_DEDUP_SHARED:
+        if (IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE))
+        {
+            if (const auto shared = CDedupAccounting::Get().GetShared(this); shared.has_value()) return FormatBytes(*shared);
         }
         break;
 
@@ -377,6 +395,18 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         return signum(_wcsicmp(GetOwner().c_str(), other->GetOwner().c_str()));
     }
 
+    case COL_DEDUP_FREED:
+    {
+        const auto& accounting = CDedupAccounting::Get();
+        return usignum(accounting.GetFreed(this).value_or(0), accounting.GetFreed(other).value_or(0));
+    }
+
+    case COL_DEDUP_SHARED:
+    {
+        const auto& accounting = CDedupAccounting::Get();
+        return usignum(accounting.GetShared(this).value_or(0), accounting.GetShared(other).value_or(0));
+    }
+
     default:
     {
         return 0;
@@ -412,6 +442,12 @@ HICON CItem::GetIcon()
     // Hardlink snapshot rows must not enqueue callbacks that can outlive the snapshot.
     if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))    {
         viewState->icon = GetIconHandler()->GetHardlinksImage();
+        return viewState->icon;
+    }
+    // Deduplication pseudo items have no shell identity
+    if (IsTypeOrFlag(IT_DEDUP))    {
+        viewState->icon = GetIndex() <= DEDUPITEM_EXTERNAL ?
+            GetIconHandler()->GetDedupSharedImage() : GetIconHandler()->GetDedupStoreImage();
         return viewState->icon;
     }
     if (IsTypeOrFlag(ITRP_MOUNT))    {
@@ -1094,7 +1130,7 @@ ULONGLONG CItem::GetProgressRangeMyComputer() const
     ULONGLONG range = 0;
     for (const auto& child : GetChildren())
     {
-        range += child->GetProgressRange();
+        if (!child->IsTypeOrFlag(IT_DEDUP)) range += child->GetProgressRange();
     }
     return range;
 }
@@ -1128,6 +1164,14 @@ COLORREF CItem::GetGraphColor() const
     if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
     {
         return RGB(200, 150, 100) | CTreeMap::COLORFLAG_LIGHTER;
+    }
+
+    if (IsTypeOrFlag(IT_DEDUP))
+    {
+        if (GetIndex() == DEDUPITEM_GARBAGE) return RGB(170, 90, 60) | CTreeMap::COLORFLAG_DARKER;
+        if (GetIndex() == DEDUPITEM_GARBAGE_FULL) return RGB(120, 60, 45) | CTreeMap::COLORFLAG_DARKER;
+        if (GetIndex() == DEDUPITEM_OVERHEAD) return RGB(120, 120, 140) | CTreeMap::COLORFLAG_DARKER;
+        return RGB(150, 110, 220) | CTreeMap::COLORFLAG_LIGHTER;
     }
 
     if (IsTypeOrFlag(IT_FILE))

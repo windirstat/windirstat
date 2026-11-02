@@ -8,7 +8,8 @@
 #include "ItemTop.h"
 #include "FileTopControl.h"
 
-static constexpr std::array columns{ COL_NAME, COL_SIZE_PHYSICAL, COL_SIZE_LOGICAL, COL_LAST_CHANGE };
+static constexpr std::array columns{ COL_NAME, COL_SIZE_PHYSICAL, COL_SIZE_LOGICAL, COL_LAST_CHANGE,
+    COL_DEDUP_FREED, COL_DEDUP_SHARED };
 
 std::wstring CItemTop::GetText(const int subitem) const
 {

@@ -74,6 +74,7 @@ public:
     CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, std::vector<int>* columnVisibility);
     ~CWdsListControl() override = default;
     void OnColumnsInserted(std::initializer_list<int> requiredColumns = {}, std::initializer_list<int> defaultHiddenColumns = {});
+    void MoveColumnsAfter(int anchor, std::initializer_list<int> columns);
     void OnFontSizeChanged(int oldPercent, int newPercent) override;
     virtual void SysColorChanged();
     void OnAppearanceChanged() override { SysColorChanged(); }
@@ -98,7 +99,7 @@ public:
     int FindListItem(const CWdsListItem* item) const;
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
-    void LoadPersistentAttributes();
+    void LoadPersistentAttributes(size_t savedCount);
     void InsertListItem(int i, std::span<CWdsListItem* const> items);
     void InsertSortedListItems(std::span<CWdsListItem* const> items);
     void InsertListItem(const int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }

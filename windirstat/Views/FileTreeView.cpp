@@ -23,7 +23,12 @@ void CFileTreeView::InitializeColumns()
     InsertCol(IDS_COL_LAST_CHANGE, LVCFMT_LEFT, 120, COL_LAST_CHANGE);
     InsertCol(IDS_COL_ATTRIBUTES, LVCFMT_LEFT, 90, COL_ATTRIBUTES);
     InsertCol(IDS_COL_OWNER, LVCFMT_LEFT, 200, COL_OWNER);
+    InsertCol(IDS_COL_DEDUP_FREED, LVCFMT_RIGHT, 90, COL_DEDUP_FREED);
+    InsertCol(IDS_COL_DEDUP_SHARED, LVCFMT_RIGHT, 90, COL_DEDUP_SHARED);
     control.SetSorting(COL_SIZE_PROPORTION, control.GetAscendingDefault(COL_SIZE_PROPORTION));
+
+    // The deduplication columns sit next to the size columns unless an order was saved
+    control.MoveColumnsAfter(COL_SIZE_LOGICAL, { COL_DEDUP_FREED, COL_DEDUP_SHARED });
     control.OnColumnsInserted(
         { COL_NAME, COL_SIZE_PROPORTION },
         { COL_ITEMS, COL_FOLDERS, COL_ATTRIBUTES, COL_OWNER });
@@ -76,7 +81,12 @@ void CFileTopView::InitializeColumns()
     InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_PHYSICAL);
     InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_LOGICAL);
     InsertCol(IDS_COL_LAST_CHANGE, LVCFMT_LEFT, 120, COL_ITEMTOP_LAST_CHANGE);
+    InsertCol(IDS_COL_DEDUP_FREED, LVCFMT_RIGHT, 90, COL_ITEMTOP_DEDUP_FREED);
+    InsertCol(IDS_COL_DEDUP_SHARED, LVCFMT_RIGHT, 90, COL_ITEMTOP_DEDUP_SHARED);
     control.SetSorting(COL_ITEMTOP_SIZE_PHYSICAL, false);
+
+    // The deduplication columns sit next to the size columns unless an order was saved
+    control.MoveColumnsAfter(COL_ITEMTOP_SIZE_LOGICAL, { COL_ITEMTOP_DEDUP_FREED, COL_ITEMTOP_DEDUP_SHARED });
     control.OnColumnsInserted();
 }
 
@@ -105,5 +115,21 @@ void CFileSearchView::InitializeColumns()
     InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_ITEMSEARCH_SIZE_LOGICAL);
     InsertCol(IDS_COL_LAST_CHANGE, LVCFMT_LEFT, 120, COL_ITEMSEARCH_LAST_CHANGE);
     control.SetSorting(COL_ITEMSEARCH_SIZE_LOGICAL, false);
+    control.OnColumnsInserted();
+}
+
+void CFileDedupShareView::InitializeColumns()
+{
+    auto& control = GetControl();
+
+    // Columns should be in enumeration order so initial sort will work
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 500, COL_ITEMDEDUPSHARE_NAME);
+    InsertCol(IDS_COL_DEDUP_SHARED_BYTES, LVCFMT_RIGHT, 90, COL_ITEMDEDUPSHARE_SHARED);
+    InsertCol(IDS_COL_DEDUP_PCT_QUERIED, LVCFMT_RIGHT, 110, COL_ITEMDEDUPSHARE_PCT_QUERIED);
+    InsertCol(IDS_COL_DEDUP_PCT_FILE, LVCFMT_RIGHT, 110, COL_ITEMDEDUPSHARE_PCT_FILE);
+    InsertCol(IDS_COL_DEDUP_ON_DISK, LVCFMT_RIGHT, 90, COL_ITEMDEDUPSHARE_ON_DISK);
+    InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 90, COL_ITEMDEDUPSHARE_SIZE_PHYSICAL);
+    InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_ITEMDEDUPSHARE_SIZE_LOGICAL);
+    control.SetSorting(COL_ITEMDEDUPSHARE_SHARED, false);
     control.OnColumnsInserted();
 }

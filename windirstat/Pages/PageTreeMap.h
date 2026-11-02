@@ -42,6 +42,7 @@ protected:
     CComboBox m_styleCombo;
     CComboBox m_presetCombo;
     CColorButton m_highlightColor;
+    CColorButton m_relatedColor;
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;
@@ -56,6 +57,7 @@ public:
 protected:
     void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
     void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
+    void OnColorChangedTreeMapRelated(NMHDR*, LRESULT*);
     void OnHScroll(UINT nSBCode, UINT nPos, WindowRef scrollBar);
     void OnLightSourceChanged(NMHDR*, LRESULT*);
     void OnSetModified();
@@ -69,6 +71,7 @@ inline std::span<const RouteEntry> CPageTreeMap::Routes()
         Route::Window<&OnHScroll>(WM_HSCROLL),
         Route::Notify<&OnColorChangedTreeMapGrid>(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR),
         Route::Notify<&OnColorChangedTreeMapHighlight>(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR),
+        Route::Notify<&OnColorChangedTreeMapRelated>(COLBN_CHANGED, IDC_TREEMAPRELATEDCOLOR),
         Route::Control<&OnSetModified>(CBN_SELCHANGE, IDC_TREEMAPSTYLE),
         Route::Control<&OnSetModified>(BN_CLICKED, IDC_TREEMAPGRID),
         Route::Control<&OnPresetChanged>(CBN_SELCHANGE, IDC_TREEMAPPRESET),

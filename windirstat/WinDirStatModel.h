@@ -9,12 +9,13 @@
 #include "pch.h"
 #include "TreeListControl.h"
 
+class CDedupAccounting;
 class CItem;
 class CItemDupe;
 class CItemTop;
 class CItemSearch;
 class CWinDirStatPane;
-enum LOGICAL_FOCUS : uint8_t;
+enum LOGICAL_FOCUS : uint16_t;
 
 //
 // Data stored for each extension.
@@ -77,6 +78,8 @@ public:
     CWinDirStatModel();
     ~CWinDirStatModel() override;
 
+    CDedupAccounting& GetDedupAccounting() const { return *m_dedupAccounting; }
+
     void ClearScanState();
     bool ResetScan();
     bool StartScan(const std::wstring& pathSpec);
@@ -102,6 +105,7 @@ public:
     bool IsScanRunning() const;
     bool IsScanSettled() const;
     void RunPendingHeapCleanup();
+    void ShowPendingDedupFailures();
     CItem* GetRootItem() const { return m_rootItem; }
     CItem* GetZoomItem() const { return m_zoomItem; }
     bool IsZoomed() const { return GetZoomItem() != GetRootItem(); }
@@ -114,10 +118,11 @@ public:
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
     void RunUserDefinedCleanup(size_t index);
-    void StartScanningEngine(std::vector<CItem*> items);
+    // A removal (deletion, recycling) lets deduplication results be updated instead of read again.
+    void StartScanningEngine(std::vector<CItem*> items, bool removal = false);
     enum StopReason : uint8_t { Default, Stop, Abort };
     void StopScanningEngine(StopReason stopReason = Stop);
-    void RefreshItem(const std::vector<CItem*>& item) const;
+    void RefreshItem(const std::vector<CItem*>& item, bool removal = false) const;
     void RefreshItem(CItem* item) const { RefreshItem(std::vector{ item }); }
 
     static void OpenItem(const CItem* item, const std::wstring& verb = {});
@@ -141,11 +146,19 @@ public:
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
+    static bool DedupShareListHasFocus();
     static bool WatcherListHasFocus();
     static bool PermsListHasFocus();
     std::span<CItem* const> GetSelectedItemsView();
     std::vector<CItem*> GetAllSelected();
-    void InvalidateSelectionCache() { m_selectionCacheValid = false; }
+    void InvalidateSelectionCache() { m_selectionCacheValid = false; m_relatedValid = false; }
+
+    // Items sharing deduplicated data with the single selected item (UI thread)
+    static constexpr std::size_t RelatedLimit = 50000;
+    const std::unordered_set<const CItem*>& GetRelatedItems();
+    std::uint32_t GetRelatedGeneration() const noexcept { return m_relatedGeneration; }
+    bool IsRelatedTruncated() const noexcept { return m_relatedTruncated; }
+    void ClearRelatedItems();
     static CTreeListControl* GetFocusControl();
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
@@ -162,6 +175,7 @@ private:
     std::wstring m_scanPathSpec;
     std::wstring m_scanTitle;
 
+    std::unique_ptr<CDedupAccounting> m_dedupAccounting;
     CItem* m_rootItem = nullptr; // The very root item
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
     std::wstring m_highlightExtension; // Currently highlighted extension
@@ -176,6 +190,7 @@ private:
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
     std::atomic_bool m_heapMinPending = false;
+    std::atomic<StopReason> m_postScanStop = Default; // stop request seen by work after the queues finished
     std::future<void> m_heapMinTask; // Heap cleanup that does not extend scan state
     std::jthread m_thread; // Wrapper thread so we do not occupy the UI thread
 
@@ -184,6 +199,11 @@ private:
     LOGICAL_FOCUS m_cachedFocus{};
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
+    std::unordered_set<const CItem*> m_relatedItems; // Items highlighted with the selection
+    const CItem* m_relatedSource = nullptr;          // Selection the related items belong to
+    std::uint32_t m_relatedGeneration = 0;           // Changes whenever the related items change
+    bool m_relatedValid = false;
+    bool m_relatedTruncated = false;                 // Related items stopped at RelatedLimit
 
 public:
     static std::span<const RouteEntry> Routes();
@@ -229,6 +249,7 @@ protected:
     void OnCleanupOpenTarget();
     void OnCleanupProperties();
     void OnComputeHash();
+    void OnDedupShowSharing();
     void OnCleanupCompress(UINT id);
     void OnCleanupOptimizeVhd();
     void OnCleanupSparsifyFile();
@@ -329,6 +350,8 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_PROPERTIES),
         Route::Command<&OnComputeHash>(ID_COMPUTE_HASH),
         Route::Update<&OnUpdateCentralHandler>(ID_COMPUTE_HASH),
+        Route::Command<&OnDedupShowSharing>(ID_DEDUP_SHOW_SHARING),
+        Route::Update<&OnUpdateCentralHandler>(ID_DEDUP_SHOW_SHARING),
         Route::Update<&OnUpdateCompressionHandler>(ID_COMPRESS_NONE, ID_COMPRESS_LZX),
         Route::Command<&OnCleanupCompress>(ID_COMPRESS_NONE, ID_COMPRESS_LZX),
         Route::Command<&OnCleanupOptimizeVhd>(ID_CLEANUP_OPTIMIZE_VHD),
