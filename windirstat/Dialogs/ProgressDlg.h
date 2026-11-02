@@ -33,7 +33,7 @@ public:
         return static_cast<Flags>(std::to_underlying(lhs) | std::to_underlying(rhs));
     }
 
-    CProgressDlg(size_t total, Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task);
+    CProgressDlg(ULONGLONG total, Flags flags, CWnd* pParent, std::function<void(CProgressDlg*)> task);
     ~CProgressDlg() override = default;
 
     INT_PTR ShowModal() override;
@@ -41,9 +41,9 @@ public:
 
     // Methods for task lambda to interact with the dialog
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
-    size_t Increment() noexcept { return ++m_current; }
-    void SetProgress(const size_t current) noexcept { m_current = current; }
-    size_t GetTotal() const noexcept { return m_total; }
+    ULONGLONG Increment() noexcept { return ++m_current; }
+    void SetProgress(const ULONGLONG current) noexcept { m_current = current; }
+    ULONGLONG GetTotal() const noexcept { return m_total; }
     bool HasFlag(const Flags flag) const noexcept
     {
         return (std::to_underlying(m_flags) & std::to_underlying(flag)) != 0;
@@ -72,8 +72,8 @@ private:
     CButton m_cancelButton;
 
     std::atomic<bool> m_cancelRequested = false;
-    std::atomic<size_t> m_current = 0;
-    const size_t m_total = 0;
+    std::atomic<ULONGLONG> m_current = 0;
+    const ULONGLONG m_total = 0;
     const Flags m_flags = Flags::None;
 
     std::jthread m_workerThread;

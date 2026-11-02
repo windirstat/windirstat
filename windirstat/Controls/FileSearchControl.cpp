@@ -84,7 +84,7 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     std::vector<CItem*> matchedItems;
     bool limitExceeded = false;
     std::optional<CItemSearch::SizeTotals> totals;
-    const auto result = CProgressDlg(static_cast<size_t>(item->GetItemsCount()),
+    const auto result = CProgressDlg(item->GetItemsCount(),
         CProgressDlg::Flags::None, GetMainWindow(),
         [&](CProgressDlg* pdlg)
     {

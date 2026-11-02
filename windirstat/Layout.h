@@ -81,6 +81,7 @@ protected:
     RECT* m_wp;
     CWnd* m_dialog;
     CSize m_originalDialogSize;
+    CSize m_minimumDialogSize;
     std::vector<SControlInfo> m_control;
     CSizeGripper m_sizeGripper;
 };

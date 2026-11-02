@@ -87,6 +87,9 @@ void ApplyAppFont(HWND window, int oldPercent = 0);
 void ApplyMenuFont(HWND window);
 void InitializeDialogFontAndSize(HWND dialog);
 
+// Window property holding the width and height clipped from a scaled dialog.
+inline constexpr auto DialogSizeDeficitProperty = L"WdsDialogSizeDeficit";
+
 inline bool IsKeyDown(const int virtualKey) noexcept
 {
     return (GetKeyState(virtualKey) & 0x8000) != 0;
@@ -204,6 +207,13 @@ public:
     CRect operator+(const POINT p) const noexcept { CRect r(*this); OffsetRect(&r, p.x, p.y); return r; }
     CRect operator-(const POINT p) const noexcept { CRect r(*this); OffsetRect(&r, -p.x, -p.y); return r; }
 };
+
+inline CRect GetWorkArea(const HWND window) noexcept
+{
+    MONITORINFO monitor{ .cbSize = sizeof(monitor) };
+    GetMonitorInfoW(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &monitor);
+    return monitor.rcWork;
+}
 
 // -----------------------------------------------------------------------------
 //  Message-dispatch infrastructure

@@ -570,8 +570,8 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
 
     // Calculate total item count for progress tracking
-    const size_t totalItems = std::ranges::fold_left(itemsToDelete, size_t{ 0 },
-        [](const size_t total, const CItem* item) { return total + static_cast<size_t>(1 + item->GetItemsCount()); });
+    const ULONGLONG totalItems = std::ranges::fold_left(itemsToDelete, ULONGLONG{ 0 },
+        [](const ULONGLONG total, const CItem* item) { return total + 1 + item->GetItemsCount(); });
 
     // Use direct parallel deletion only for filesystem items without shell progress UI
     if (!cancelled && !itemsToDelete.empty() && !hasMtpItems && !toTrashBin &&

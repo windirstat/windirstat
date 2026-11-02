@@ -639,8 +639,14 @@ void InitializeDialogFontAndSize(const HWND dialog)
             windowRect.Width() + MulDiv(clientRect.Width(), percent, 100) - clientRect.Width();
         const int height = childDialog ? MulDiv(windowRect.Height(), percent, 100) :
             windowRect.Height() + MulDiv(clientRect.Height(), percent, 100) - clientRect.Height();
-        SetWindowPos(dialog, nullptr, 0, 0, width, height,
+
+        // A top-level dialog stays within the work area; its layout reads the clipped amount to fit the controls.
+        const CRect limit = childDialog ? CRect(0, 0, width, height) : GetWorkArea(dialog);
+        SetWindowPos(dialog, nullptr, 0, 0, std::min(width, limit.Width()), std::min(height, limit.Height()),
             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        if (const CRect scaled(dialog); scaled.Width() < width || scaled.Height() < height)
+            SetPropW(dialog, DialogSizeDeficitProperty, reinterpret_cast<HANDLE>(static_cast<INT_PTR>(
+                MAKELONG(std::max(0, width - scaled.Width()), std::max(0, height - scaled.Height())))));
 
         HDWP positions = BeginDeferWindowPos(static_cast<int>(controls.size()));
         for (const auto& [control, rect] : controls)

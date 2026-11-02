@@ -32,7 +32,7 @@ void CLayoutDialog::OnDestroy()
 // CLayout
 
 CLayout::CLayout(CWnd* dialog, RECT* placement)
-    : m_wp(placement), m_dialog(dialog), m_originalDialogSize(0, 0)
+    : m_wp(placement), m_dialog(dialog), m_originalDialogSize(0, 0), m_minimumDialogSize(0, 0)
 {
     assert(dialog != nullptr);
 }
@@ -52,8 +52,12 @@ void CLayout::OnInitDialog(const bool centerWindow)
 {
     m_dialog->SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
 
-    const CRect rcDialog = m_dialog->GetWindowRect();
-    m_originalDialogSize = rcDialog.Size();
+    // Controls keep their positions for the full scaled size, including any part the work area clipped.
+    const auto deficit = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+        GetPropW(m_dialog->Handle(), DialogSizeDeficitProperty)));
+    m_originalDialogSize = m_dialog->GetWindowRect().Size();
+    m_originalDialogSize.cx += LOWORD(deficit);
+    m_originalDialogSize.cy += HIWORD(deficit);
 
     for (auto& info : m_control)
     {
@@ -67,7 +71,15 @@ void CLayout::OnInitDialog(const bool centerWindow)
     m_sizeGripper.Create(m_dialog, sg);
 
     const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
+    sg.Offset(LOWORD(deficit), HIWORD(deficit));
     m_control[i].originalRectangle = sg;
+
+    // Fit the full size to the work area, regaining clipped space the dialog's own adjustments freed.
+    const CRect work = GetWorkArea(m_dialog->Handle());
+    m_dialog->SetWindowPos(nullptr, 0, 0, std::min<int>(m_originalDialogSize.cx, work.Width()),
+        std::min<int>(m_originalDialogSize.cy, work.Height()), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    m_minimumDialogSize = m_dialog->GetWindowRect().Size();
+    if (m_minimumDialogSize != m_originalDialogSize) OnSize();
 
     if (m_wp) m_dialog->MoveWindow(*m_wp);
     if (centerWindow)
@@ -93,8 +105,8 @@ void CLayout::OnSize()
         CRect rc = originalRectangle;
 
         rc.Offset(static_cast<int>(diff.cx * movex), static_cast<int>(diff.cy * movey));
-        rc.right += static_cast<int>(diff.cx * stretchx);
-        rc.bottom += static_cast<int>(diff.cy * stretchy);
+        rc.right = std::max(rc.left, rc.right + static_cast<int>(diff.cx * stretchx));
+        rc.bottom = std::max(rc.top, rc.bottom + static_cast<int>(diff.cy * stretchy));
 
         pos.SetWindowPos(control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
@@ -104,10 +116,9 @@ void CLayout::OnSize()
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 {
-    if (m_originalDialogSize.cx > 0) // Check if initialized
-    {
-        mmi->ptMinTrackSize = { m_originalDialogSize.cx, m_originalDialogSize.cy };
-    }
+    // A dialog still arranging itself is not limited by the screen until OnInitDialog fits it to the work area.
+    if (m_minimumDialogSize.cx == 0) mmi->ptMaxTrackSize = { SHRT_MAX, SHRT_MAX };
+    else mmi->ptMinTrackSize = { m_minimumDialogSize.cx, m_minimumDialogSize.cy };
 }
 
 /////////////////////////////////////////////////////////////////////////////
