@@ -52,18 +52,12 @@ void CLayout::OnInitDialog(const bool centerWindow)
 {
     m_dialog->SetIcon(LoadIconW(GetAppInstance(), MAKEINTRESOURCEW(IDR_MAINFRAME)), false);
 
-    const CRect rcDialog = m_dialog->GetWindowRect();
-    m_originalDialogSize = rcDialog.Size();
-    m_minimumDialogSize = rcDialog.Size();
-
-    // A dialog the screen limited while scaling keeps its controls at the requested size
-    const auto requested = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
-        GetPropW(m_dialog->Handle(), RequestedDialogSizeProperty)));
-    if (requested != 0)
-    {
-        m_originalDialogSize.cx = std::max<int>(m_originalDialogSize.cx, LOWORD(requested));
-        m_originalDialogSize.cy = std::max<int>(m_originalDialogSize.cy, HIWORD(requested));
-    }
+    // Controls keep their positions for the full scaled size, including any part the work area clipped.
+    const auto deficit = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+        GetPropW(m_dialog->Handle(), DialogSizeDeficitProperty)));
+    m_originalDialogSize = m_dialog->GetWindowRect().Size();
+    m_originalDialogSize.cx += LOWORD(deficit);
+    m_originalDialogSize.cy += HIWORD(deficit);
 
     for (auto& info : m_control)
     {
@@ -77,10 +71,15 @@ void CLayout::OnInitDialog(const bool centerWindow)
     m_sizeGripper.Create(m_dialog, sg);
 
     const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
-    const CSize limited = m_originalDialogSize - rcDialog.Size();
-    sg.Offset(limited.cx, limited.cy);
+    sg.Offset(LOWORD(deficit), HIWORD(deficit));
     m_control[i].originalRectangle = sg;
-    if (limited.cx != 0 || limited.cy != 0) OnSize();
+
+    // Fit the full size to the work area, regaining clipped space the dialog's own adjustments freed.
+    const CRect work = GetWorkArea(m_dialog->Handle());
+    m_dialog->SetWindowPos(nullptr, 0, 0, std::min<int>(m_originalDialogSize.cx, work.Width()),
+        std::min<int>(m_originalDialogSize.cy, work.Height()), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    m_minimumDialogSize = m_dialog->GetWindowRect().Size();
+    if (m_minimumDialogSize != m_originalDialogSize) OnSize();
 
     if (m_wp) m_dialog->MoveWindow(*m_wp);
     if (centerWindow)
@@ -117,10 +116,9 @@ void CLayout::OnSize()
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 {
-    if (m_minimumDialogSize.cx > 0) // Check if initialized
-    {
-        mmi->ptMinTrackSize = { m_minimumDialogSize.cx, m_minimumDialogSize.cy };
-    }
+    // A dialog still arranging itself is not limited by the screen until OnInitDialog fits it to the work area.
+    if (m_minimumDialogSize.cx == 0) mmi->ptMaxTrackSize = { SHRT_MAX, SHRT_MAX };
+    else mmi->ptMinTrackSize = { m_minimumDialogSize.cx, m_minimumDialogSize.cy };
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -241,8 +241,8 @@ function Test-MalformedReportType {
     }
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)")) `
         -Hidden
-    Assert-True (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled `
-        'A valid saved model remains loadable after rejected reports'
+    Wait-Until { (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled } `
+        'A valid saved model remains loadable after rejected reports' | Out-Null
     Assert-True ([TestDesktop]::Text($app.Window).Contains($root)) 'The valid report restores its scanned root'
     Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Report validation leaves the main window hidden'
 }

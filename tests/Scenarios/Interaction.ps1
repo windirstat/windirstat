@@ -949,6 +949,102 @@ function Test-CloudSelectionDialog {
     Wait-Until { -not [TestDesktop]::IsWindow($dialog) } 'The window close button cancels the entire selection' | Out-Null
 }
 
+function Test-CloudFormScrolling {
+    param($Context, $Case)
+    $app = Start-TestApp @((New-TestTree)) -Settings @{
+        Options = @{ FontSizePercent = $Case.Font; DarkMode = $Case.Dark }
+    }
+    $picker = Open-AppDialog $app 'ID_FILE_SELECT_CLOUD' 'IDC_REMOTE_RECENT'
+    $dialog = Open-CloudConnection $app $picker
+    foreach ($provider in 'S3', 'Azure Blob', 'WebDAV') {
+        Select-CloudProvider $dialog $provider
+        if ($provider -eq 'S3') { Set-DialogCheck $dialog 'IDC_S3_TOKEN_TOGGLE' $true }
+        $firstSymbol = if ($provider -eq 'S3') { 'IDC_S3_BUCKET' }
+            elseif ($provider -eq 'Azure Blob') { 'IDC_REMOTE_ACCOUNT' } else { 'IDC_REMOTE_ENDPOINT' }
+        $first = Get-DialogControl $dialog $firstSymbol
+        $last = Get-DialogControl $dialog 'IDC_REMOTE_REMEMBER'
+        $page = @([TestDesktop]::Children($dialog) | Where-Object {
+            [TestDesktop]::Class($_) -eq '#32770' -and [TestDesktop]::IsChild($_, $last)
+        })[0]
+
+        # Constrain the page so scrolling is exercised even on a large desktop.
+        $bounds = [TestDesktop]::Rectangle($page)
+        $width = $bounds[2] - $bounds[0]
+        $height = $bounds[3] - $bounds[1]
+        [TestDesktop]::Resize($page, $width, [int]($height / 2))
+        [void][TestDesktop]::Message($page, 0x0115, 6)
+        $top = [TestDesktop]::Rectangle($first)[1]
+        [void][TestDesktop]::Message($page, 0x020A, (-120 -shl 16))
+        $wheelTop = [TestDesktop]::Rectangle($first)[1]
+        Assert-True ($wheelTop -lt $top) "$provider wheel input scrolls an overflowing form"
+        [void][TestDesktop]::Message($page, 0x0115, 6)
+        for ($i = 0; $i -lt 120; ++$i) { [void][TestDesktop]::Message($page, 0x020A, (-1 -shl 16)) }
+        Assert-Equal ([TestDesktop]::Rectangle($first)[1]) $wheelTop `
+            "$provider preserves movement when a wheel tick arrives in small deltas"
+        [void][TestDesktop]::Message($page, 0x020A, (120 -shl 16))
+        Assert-Equal ([TestDesktop]::Rectangle($first)[1]) $top "$provider wheel input scrolls back to the top"
+        [void][TestDesktop]::Message($page, 0x0115, 3)
+        Assert-True ([TestDesktop]::Rectangle($first)[1] -lt $top) "$provider scrollbar pages down"
+        [void][TestDesktop]::Message($page, 0x0115, 2)
+        Assert-Equal ([TestDesktop]::Rectangle($first)[1]) $top "$provider scrollbar pages back up"
+        [void][TestDesktop]::Message($page, 0x0115, 7)
+        Assert-True ([TestDesktop]::Rectangle($last)[3] -le [TestDesktop]::ClientRectangle($page)[3]) `
+            "$provider scrollbar reveals the complete last row"
+        foreach ($symbol in $firstSymbol, 'IDC_REMOTE_SECRET', 'IDC_REMOTE_REMEMBER') {
+            $control = Get-DialogControl $dialog $symbol
+            Assert-Equal ([NativeListViewHelper]::FocusWindow($control)) $control "$provider focuses $symbol"
+            $bounds = [TestDesktop]::Rectangle($control)
+            $viewport = [TestDesktop]::ClientRectangle($page)
+            Assert-True ($bounds[1] -ge $viewport[1] -and $bounds[3] -le $viewport[3]) `
+                "$provider keeps the focused $symbol fully visible"
+        }
+        [void][TestDesktop]::Message($page, 0x0115, 6)
+        [TestDesktop]::Resize($page, $width, $height)
+        Save-Frame ([TestDesktop]::Capture($dialog)) (Join-Path $Context.Root ($provider.Replace(' ', '') + '.png'))
+    }
+    Close-AppDialog $dialog
+    Close-AppDialog $picker
+}
+
+function Test-ScaledDialogLayout {
+    param($Context, $Case)
+    $app = Start-TestApp @((New-TestTree)) -Settings @{ Options = @{ FontSizePercent = 200; DarkMode = 1 } }
+    $search = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    $client = [TestDesktop]::ClientRectangle($search)
+    foreach ($control in [TestDesktop]::Children($search)) {
+        if (-not [TestDesktop]::IsWindowVisible($control) -or
+            [TestDesktop]::Class($control) -notin 'Edit', 'Button', 'ComboBox') { continue }
+        $bounds = [TestDesktop]::Rectangle($control)
+        Assert-True ($bounds[0] -ge $client[0] -and $bounds[2] -le $client[2] -and
+            $bounds[1] -ge $client[1] -and $bounds[3] -le $client[3]) `
+            'Scaled search inputs remain inside the client area'
+    }
+    $leftOption = [TestDesktop]::Rectangle((Get-DialogControl $search 'IDC_SEARCH_REGEX'))
+    $rightOption = [TestDesktop]::Rectangle((Get-DialogControl $search 'IDC_SEARCH_FILES'))
+    Assert-True ($leftOption[2] -lt $rightOption[0]) 'Search option columns remain separated'
+    Save-Frame ([TestDesktop]::Capture($search)) (Join-Path $Context.Root 'search-200.png')
+    Close-AppDialog $search
+
+    $settings = Open-AppDialog $app 'ID_CONFIGURE'
+    Select-SettingsPage $settings 'Advanced'
+    [TestDesktop]::SetText((Get-DialogControl $settings 'IDC_LARGEST_FILE_COUNT'), '')
+    [void][TestDesktop]::PostMessage([TestDesktop]::GetDlgItem($settings, 1), 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero)
+    $warning = Get-ValidationDialog $app $settings
+    $client = [TestDesktop]::ClientRectangle($warning)
+    $button = [TestDesktop]::Rectangle((Get-DialogControl $warning 'IDC_MESSAGE_BUTTONRIGHT'))
+    $message = [TestDesktop]::Rectangle((Get-DialogControl $warning 'IDC_MESSAGE_TEXT'))
+    Assert-True ($button[0] -ge $client[0] -and $button[2] -le $client[2] -and
+        $button[1] -ge $client[1] -and $button[3] -le $client[3]) `
+        'A scaled validation warning keeps OK fully inside the window'
+    Assert-True ($message[3] -lt $button[1]) 'The warning text remains above OK'
+    $workArea = [System.Windows.Forms.Screen]::FromHandle($warning).WorkingArea
+    Assert-True ($button[2] -le $workArea.Right -and $button[3] -le $workArea.Bottom) `
+        'A scaled validation warning keeps OK within the work area'
+    Save-Frame ([TestDesktop]::Capture($warning)) (Join-Path $Context.Root 'validation-200.png')
+    Close-AppDialog $warning -ButtonName 'OK'
+    Close-AppDialog $settings
+}
+
 function Test-CloudSelectionKeyboard {
     param($Context, $Case)
     $app = Start-TestApp @((New-TestTree))
@@ -977,7 +1073,13 @@ foreach ($appearance in @(@{ Dark = 0; Font = 100 }, @{ Dark = 1; Font = 200 }))
     Register-Scenario "interaction.cloud-selection.$($appearance.Font)" Interaction `
         'Separate local and cloud selection preserve input, scans, and resizable layouts' `
         Test-CloudSelectionDialog -Tags Desktop -Requires Windows,Desktop -Data $appearance
+    Register-Scenario "interaction.cloud-scroll.$($appearance.Font)" Interaction `
+        'Cloud forms support scrolling, fine wheel input, and focus visibility' `
+        Test-CloudFormScrolling -Tags Desktop -Requires Windows,Desktop -Data $appearance
 }
+Register-Scenario interaction.scaled-dialogs Interaction `
+    'Scaled search and validation dialogs preserve control bounds and spacing' `
+    Test-ScaledDialogLayout -Tags Desktop -Requires Windows,Desktop
 Register-Scenario interaction.cloud-keyboard Interaction `
     'Cloud connection editing supports keyboard traversal and cancellation' `
     Test-CloudSelectionKeyboard -Tags Desktop -Requires Windows,Desktop

@@ -24,6 +24,14 @@ public sealed class TestWindow
 
 public static class TestDesktop
 {
+    // Read the level and lock state from the aligned WTSINFOEXW prefix.
+    [StructLayout(LayoutKind.Explicit)]
+    private struct WTSINFOEX
+    {
+        [FieldOffset(0)] public uint Level;
+        [FieldOffset(16)] public int SessionFlags;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
     {
@@ -122,6 +130,9 @@ public static class TestDesktop
     [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr window);
     [DllImport("user32.dll")] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
     [DllImport("user32.dll")] private static extern bool CloseDesktop(IntPtr desktop);
+    [DllImport("wtsapi32.dll", CharSet = CharSet.Unicode)] private static extern bool WTSQuerySessionInformation(
+        IntPtr server, int session, int informationClass, out IntPtr information, out int size);
+    [DllImport("wtsapi32.dll")] private static extern void WTSFreeMemory(IntPtr memory);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr window, uint message, IntPtr wp, IntPtr lp);
     [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SendMessageTimeout(IntPtr window,
         uint message, IntPtr wp, IntPtr lp, uint flags, uint timeout, out UIntPtr result);
@@ -202,8 +213,20 @@ public static class TestDesktop
     {
         IntPtr desktop = OpenInputDesktop(0, false, 1);
         if (desktop == IntPtr.Zero) return false;
-        CloseDesktop(desktop);
-        return true;
+        IntPtr information = IntPtr.Zero;
+        try
+        {
+            // A lock screen can share the input desktop, so require an unlocked session too.
+            if (!WTSQuerySessionInformation(IntPtr.Zero, -1, 25, out information, out int size) ||
+                size < Marshal.SizeOf<WTSINFOEX>()) return false;
+            var session = Marshal.PtrToStructure<WTSINFOEX>(information);
+            return session.Level == 1 && session.SessionFlags == 1;
+        }
+        finally
+        {
+            if (information != IntPtr.Zero) WTSFreeMemory(information);
+            CloseDesktop(desktop);
+        }
     }
 
     public static IntPtr Message(IntPtr window, uint message, long wp = 0, long lp = 0)
@@ -285,6 +308,14 @@ public static class TestDesktop
             throw new Win32Exception(Marshal.GetLastWin32Error());
     }
 
+    public static int[] ClientRectangle(IntPtr window)
+    {
+        var point = new POINT();
+        if (!GetClientRect(window, out RECT rect) || !ClientToScreen(window, ref point))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        return new[] { point.X, point.Y, point.X + rect.Right, point.Y + rect.Bottom };
+    }
+
     public static IntPtr Focus(IntPtr root)
     {
         uint thread = GetWindowThreadProcessId(root, out _);
@@ -302,6 +333,12 @@ public static class TestDesktop
     public static void Position(IntPtr window, int x, int y, int width, int height)
     {
         if (!SetWindowPos(window, IntPtr.Zero, x, y, width, height, 0x0004))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+    }
+
+    public static void Resize(IntPtr window, int width, int height)
+    {
+        if (!SetWindowPos(window, IntPtr.Zero, 0, 0, width, height, 0x0006))
             throw new Win32Exception(Marshal.GetLastWin32Error());
     }
 

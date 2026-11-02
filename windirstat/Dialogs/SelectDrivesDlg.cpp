@@ -38,11 +38,10 @@ public:
     void OnOK() override;
     void UpdateButtons();
     void FitEditor();
-    int EditorHeight() const;
-    CRect WorkArea() const;
     static std::span<const RouteEntry> Routes();
 
 private:
+    int EditorHeight() const;
     void OnSourceChanged();
     void OnSize(UINT type, int width, int height);
     void OnGetMinMaxInfo(MINMAXINFO* info);
@@ -72,8 +71,14 @@ public:
         m_headingFont.Attach(CFont(GetDlgItem(IDC_REMOTE_CREDENTIALS).GetFont(), FW_BOLD).Detach());
         for (const int id : { IDC_REMOTE_TARGET, IDC_REMOTE_CREDENTIALS }) GetDlgItem(id).SetFont(m_headingFont);
         m_size = GetClientRect().Size();
+
+        // Rounded scaling can place the last row just beyond the original page height.
         for (HWND child = ::GetWindow(Handle(), GW_CHILD); child; child = ::GetWindow(child, GW_HWNDNEXT))
-            m_controls.emplace_back(child, GetChildWindowRect(child));
+        {
+            const CRect rect = GetChildWindowRect(child);
+            m_controls.emplace_back(child, rect);
+            m_size.cy = std::max<int>(m_size.cy, rect.bottom);
+        }
         m_credentialsTop = GetChildWindowRect(GetDlgItem(IDC_REMOTE_CREDENTIALS).Handle()).top;
         const CRect summary = GetChildWindowRect(GetDlgItem(IDC_REMOTE_STATUS).Handle());
         m_collapsedHeight = summary.bottom;
@@ -144,6 +149,21 @@ public:
             (m_target.protocol == RemoteProtocol::S3 && !IsChecked(IDC_S3_TOKEN_TOGGLE) ? m_tokenOffset : 0);
     }
 
+    void UpdateScroll()
+    {
+        // When the screen limits the editor height, the form scrolls instead of reaching under the buttons.
+        if (m_updatingScroll) return;
+        m_updatingScroll = true;
+        const int height = GetClientRect().Height();
+        const int content = ContentHeight();
+        m_scroll = std::clamp(m_scroll, 0, std::max(0, content - height));
+        SCROLLINFO info{ .fMask = SIF_PAGE | SIF_POS | SIF_RANGE, .nMax = content - 1,
+            .nPage = static_cast<UINT>(height), .nPos = m_scroll };
+        SetScrollInfo(SB_VERT, &info);
+        m_updatingScroll = false;
+        ArrangeControls();
+    }
+
     void FocusInput()
     {
         const int user = m_target.protocol == RemoteProtocol::S3 ? IDC_S3_ACCESS : IDC_REMOTE_ACCOUNT;
@@ -184,7 +204,7 @@ public:
             m_owner.UpdateButtons();
             return true;
         }
-        if (lParam != 0 && (HIWORD(wParam) == BN_CLICKED || HIWORD(wParam) == BN_DOUBLECLICKED) &&
+        if (lParam != 0 && HIWORD(wParam) == BN_CLICKED &&
             (LOWORD(wParam) == IDC_REMOTE_CHANGE || LOWORD(wParam) == IDC_S3_TOKEN_TOGGLE))
         {
             m_expanded = true;
@@ -254,22 +274,6 @@ private:
 
     void OnSize(UINT, int, int) { if (m_size.cx != 0) UpdateScroll(); }
 
-public:
-    void UpdateScroll()
-    {
-        // When the screen limits the editor height, the form scrolls instead of reaching under the buttons.
-        if (m_updatingScroll) return;
-        m_updatingScroll = true;
-        const int height = GetClientRect().Height();
-        m_scroll = std::clamp(m_scroll, 0, std::max(0, ContentHeight() - height));
-        SCROLLINFO info{ .fMask = SIF_PAGE | SIF_POS | SIF_RANGE, .nMax = ContentHeight() - 1,
-            .nPage = static_cast<UINT>(height), .nPos = m_scroll };
-        SetScrollInfo(SB_VERT, &info);
-        m_updatingScroll = false;
-        ArrangeControls();
-    }
-
-private:
     void ScrollTo(const int position)
     {
         m_scroll = position;
@@ -303,7 +307,11 @@ private:
 
     bool OnMouseWheel(UINT, const short delta, CPoint)
     {
-        ScrollTo(m_scroll - delta * ScaleForDpi(48) / WHEEL_DELTA);
+        // Keep fractional pixels across high-resolution wheel messages.
+        m_wheelRemainder += delta * ScaleForDpi(48);
+        const int distance = m_wheelRemainder / WHEEL_DELTA;
+        m_wheelRemainder %= WHEEL_DELTA;
+        if (distance != 0) ScrollTo(m_scroll - distance);
         return true;
     }
 
@@ -316,6 +324,7 @@ private:
     int m_collapsedHeight = 0;
     int m_tokenOffset = 0;
     int m_scroll = 0;
+    int m_wheelRemainder = 0;
     bool m_expanded = true;
     bool m_loading = false;
     bool m_updatingScroll = false;
@@ -362,8 +371,7 @@ bool CCloudConnectionDlg::OnInitDialog()
     for (const int id : { IDOK, IDCANCEL }) m_layout.AddControl(id, 1, 1, 0, 0);
     m_layout.OnInitDialog(false);
 
-    // Keep the native footer margin above and below the confirmation buttons, measured after the
-    // layout has brought them into a window the screen may have limited.
+    // Measure footer margins after layout brings the confirmation buttons into the visible window.
     const CRect confirm = GetChildWindowRect(GetDlgItem(IDOK).Handle());
     m_footerSpace = confirm.Height() + 2 * (GetClientRect().Height() - confirm.bottom);
     OnSourceChanged();
@@ -396,18 +404,11 @@ void CCloudConnectionDlg::OnSourceChanged()
     UpdateButtons();
 }
 
-CRect CCloudConnectionDlg::WorkArea() const
-{
-    MONITORINFO monitor{ .cbSize = sizeof(monitor) };
-    GetMonitorInfoW(MonitorFromWindow(Handle(), MONITOR_DEFAULTTONEAREST), &monitor);
-    return monitor.rcWork;
-}
-
 int CCloudConnectionDlg::EditorHeight() const
 {
     // The whole form, or the work area when the screen is too small and the form scrolls instead.
     return std::min<int>(m_pageRect.top + ActivePage()->ContentHeight() + m_footerSpace + m_frameSize.cy,
-        WorkArea().Height());
+        GetWorkArea(Handle()).Height());
 }
 
 void CCloudConnectionDlg::FitEditor()
@@ -416,7 +417,7 @@ void CCloudConnectionDlg::FitEditor()
     // A taller editor moves up rather than reaching below the work area.
     const int height = EditorHeight();
     const CRect window = GetWindowRect();
-    const int top = std::min<int>(window.top, WorkArea().bottom - height);
+    const int top = std::min<int>(window.top, GetWorkArea(Handle()).bottom - height);
     SetWindowPos(nullptr, window.left, top, window.Width(), height, SWP_NOZORDER | SWP_NOACTIVATE);
     OnSize(0, 0, 0);
 }
