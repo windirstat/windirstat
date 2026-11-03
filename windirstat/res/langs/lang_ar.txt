@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=مطابقة حالة الأحرف
 IDS_SEARCH_LABEL=نص البحث:
 IDS_SEARCH_REGEX=استخدام التعبيرات النمطية (Regex)
 IDS_SEARCH_RESULTS=نتائج البحث
+IDS_SEARCH_SELECT_ALL=تحديد الكل
 IDS_SEARCH_TITLE=بحث
 IDS_SEARCH_WHOLE_PHRASE=البحث عن العبارة بالكامل
 IDS_SHADOW_COPY_FAILED=فشل إنشاء لقطة وحدة التخزين لـ {}

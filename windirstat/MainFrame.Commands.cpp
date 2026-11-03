@@ -713,7 +713,7 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
         { ID_SEPARATOR,               {},{}},
         { ID_CLEANUP_DELETE_BIN,      IDS_CLEANUP_DELETE_BIN,      Icons::PaintDeleteBin},
         { ID_CLEANUP_DELETE,          IDS_CLEANUP_DELETE,          Icons::PaintDelete},
-        { ID_CLEANUP_REMOVE_EMPTY,    IDS_MENU_REMOVE_EMPTY,       Icons::PaintDelete},
+        { ID_SEARCH_SELECT_ALL,       IDS_SEARCH_SELECT_ALL,       [](auto& g) { Icons::PaintCharacter(g, L'☑', Icons::NeutralRef()); }},
         { ID_SEPARATOR,               {},{}},
         { ID_TREEMAP_ZOOMIN,          IDS_TREEMAP_ZOOMIN,          [](auto& g) { Icons::PaintMagnifier(g, true);}},
         { ID_TREEMAP_ZOOMOUT,         IDS_TREEMAP_ZOOMOUT,         [](auto& g){ Icons::PaintMagnifier(g, false);}},
@@ -779,8 +779,8 @@ void CMainFrame::SetSearchToolBarButtons(const bool visible, const bool updateLa
 {
     if (m_wndToolBar.Handle() == nullptr) return;
 
-    // Removing empty folders only applies to the results of an empty-folder search
-    const int index = m_wndToolBar.GetButtonIndex(ID_CLEANUP_REMOVE_EMPTY);
+    // Selecting all results only applies to the search view
+    const int index = m_wndToolBar.GetButtonIndex(ID_SEARCH_SELECT_ALL);
     if (index < 0) return;
 
     if (m_wndToolBar.SetButtonVisible(index, visible) && updateLayout) m_wndToolBar.UpdateLayout();

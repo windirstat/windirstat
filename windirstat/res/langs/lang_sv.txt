@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Skiftlägeskänslig sökning
 IDS_SEARCH_LABEL=Sökterm:
 IDS_SEARCH_REGEX=Använd reguljära uttryck
 IDS_SEARCH_RESULTS=Sökresultat
+IDS_SEARCH_SELECT_ALL=Markera alla
 IDS_SEARCH_TITLE=Sök
 IDS_SEARCH_WHOLE_PHRASE=Sök hela frasen
 IDS_SHADOW_COPY_FAILED=Misslyckades med att skapa skuggkopia för {}

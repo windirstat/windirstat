@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Skill mellom store og små bokstaver
 IDS_SEARCH_LABEL=Søkeord:
 IDS_SEARCH_REGEX=Bruk regulære uttrykk
 IDS_SEARCH_RESULTS=Søkeresultater
+IDS_SEARCH_SELECT_ALL=Merk alt
 IDS_SEARCH_TITLE=Søk
 IDS_SEARCH_WHOLE_PHRASE=Søk etter hele uttrykket
 IDS_SHADOW_COPY_FAILED=Kunne ikke opprette skyggekopi for {}

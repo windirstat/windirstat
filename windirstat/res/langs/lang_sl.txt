@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Razlikuj velike in male črke
 IDS_SEARCH_LABEL=Iskalni niz:
 IDS_SEARCH_REGEX=Uporabi regularne izraze
 IDS_SEARCH_RESULTS=Rezultati iskanja
+IDS_SEARCH_SELECT_ALL=Izberi vse
 IDS_SEARCH_TITLE=Iskanje
 IDS_SEARCH_WHOLE_PHRASE=Išči celoten stavek
 IDS_SHADOW_COPY_FAILED=Ustvarjanje senčne kopije za {} ni uspelo

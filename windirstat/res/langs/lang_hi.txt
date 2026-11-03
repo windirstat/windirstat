@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=बड़े और छोटे अक्षरों में
 IDS_SEARCH_LABEL=खोज शब्द:
 IDS_SEARCH_REGEX=रेगुलर एक्सप्रेशन का उपयोग करें
 IDS_SEARCH_RESULTS=खोज के परिणाम
+IDS_SEARCH_SELECT_ALL=सभी चुनें
 IDS_SEARCH_TITLE=खोज
 IDS_SEARCH_WHOLE_PHRASE=पूरा वाक्यांश खोजें
 IDS_SHADOW_COPY_FAILED={} की शैडो कॉपी नहीं बनाई जा सकी

@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Ricerca sensibile alle maiuscole
 IDS_SEARCH_LABEL=Cerca termine:
 IDS_SEARCH_REGEX=Usa espressioni regolari
 IDS_SEARCH_RESULTS=Risultati ricerca
+IDS_SEARCH_SELECT_ALL=Seleziona tutto
 IDS_SEARCH_TITLE=Ricerca
 IDS_SEARCH_WHOLE_PHRASE=Cerca intera frase
 IDS_SHADOW_COPY_FAILED=Creazione copia shadow non riuscita per {}

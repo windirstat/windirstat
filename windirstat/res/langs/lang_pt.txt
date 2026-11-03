@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Distinguir maiúsculas de minúsculas
 IDS_SEARCH_LABEL=Termo de pesquisa:
 IDS_SEARCH_REGEX=Usar expressões regulares
 IDS_SEARCH_RESULTS=Resultados da pesquisa
+IDS_SEARCH_SELECT_ALL=Selecionar tudo
 IDS_SEARCH_TITLE=Pesquisa
 IDS_SEARCH_WHOLE_PHRASE=Pesquisar frase inteira
 IDS_SHADOW_COPY_FAILED=Falha ao criar cópia de sombra para {}

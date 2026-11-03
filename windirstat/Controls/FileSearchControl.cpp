@@ -232,11 +232,14 @@ void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
     PopulateSearchResults(results, totals);
 }
 
-std::vector<CItem*> CFileSearchControl::GetEmptyFolderResults() const
+void CFileSearchControl::SelectAllResults()
 {
-    if (!m_criteria.emptyFoldersOnly) return {};
-    auto items = m_itemTracker | std::views::keys;
-    return { items.begin(), items.end() };
+    // The results are only rows while the header above them is expanded
+    if (!m_rootItem->IsExpanded()) ExpandItem(0, false);
+
+    // The header row stands for no item of its own, so it is left out of the selection
+    SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
+    SetItemState(0, 0, LVIS_SELECTED);
 }
 
 void CFileSearchControl::RemoveItems(std::span<CItem* const> items)

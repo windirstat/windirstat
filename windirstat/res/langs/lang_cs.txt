@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Rozlišovat velká a malá písmena
 IDS_SEARCH_LABEL=Hledaný výraz:
 IDS_SEARCH_REGEX=Použít regulární výrazy
 IDS_SEARCH_RESULTS=Výsledky hledání
+IDS_SEARCH_SELECT_ALL=Vybrat vše
 IDS_SEARCH_TITLE=Hledání
 IDS_SEARCH_WHOLE_PHRASE=Hledat celou frázi
 IDS_SHADOW_COPY_FAILED=Nepodařilo se vytvořit stínovou kopii pro {}

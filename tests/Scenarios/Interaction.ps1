@@ -872,11 +872,9 @@ function Test-CleanupReparseReplacement {
     [IO.Directory]::CreateDirectory($target) | Out-Null
     $app = Start-TestApp @($root)
     $list = Get-AppList $app -AllFiles
-    Select-AppRows $app $list @($root)
-    Invoke-AppCommand $app 'ID_CLEANUP_SEARCH_EMPTY'
-    Wait-AppIdle $app
     [IO.Directory]::Delete($stale)
     New-TestJunction $stale ([IO.Path]::GetDirectoryName($target))
+    Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
@@ -885,6 +883,63 @@ function Test-CleanupReparseReplacement {
         'Cleanup does not traverse an ordinary directory replaced with a junction after scanning'
     Assert-True (([IO.File]::GetAttributes($stale) -band [IO.FileAttributes]::ReparsePoint) -ne 0) `
         'The replacement junction is preserved'
+}
+
+function Test-SearchEmptyRecycle {
+    param($Context, $Case)
+    $root = New-TestTree
+    $kept = Join-Path $root 'kept'
+    [IO.Directory]::CreateDirectory((Join-Path $kept 'inner')) | Out-Null
+    $app = Start-TestApp @($root)
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($root)
+    Invoke-AppCommand $app 'ID_CLEANUP_SEARCH_EMPTY'
+    Wait-AppIdle $app
+    $results = Get-AppList $app -TabName 'Search Results'
+    $expected = @('empty', 'empty\nested', 'kept', 'kept\inner' | ForEach-Object { Join-Path $root $_ })
+    Wait-Until { @($expected | Where-Object { $_ -notin [NativeListViewHelper]::GetItemTexts($results) }).Count -eq 0 } `
+        'The search lists every empty folder, nested ones included' | Out-Null
+
+    # The confirmation and the report share the title, so each is told apart by its button
+    $findDialog = {
+        param([string] $Button)
+        @([TestDesktop]::Windows($app.Process.Id) | Where-Object {
+            [TestDesktop]::Class($_) -eq '#32770' -and [TestDesktop]::IsWindowVisible($_) -and
+            @([TestDesktop]::Children($_) | Where-Object {
+                [TestDesktop]::Class($_) -eq 'Button' -and [TestDesktop]::IsWindowVisible($_) -and
+                [TestDesktop]::ControlText($_).Replace('&', '').Trim() -eq $Button
+            }).Count
+        } | Select-Object -First 1)
+    }
+
+    # Select All has to take the focus along, or Recycle would act on the root still selected in the tree
+    Assert-True ([NativeListViewHelper]::FocusListView($app.ExtensionList)) 'Another list holds the focus before Select All'
+    Invoke-AppCommand $app 'ID_SEARCH_SELECT_ALL'
+
+    # A selected folder stands for the results nested in it, so only the topmost ones stay selected
+    Wait-Until {
+        [NativeListViewHelper]::GetSelectedCount($results) -eq 2 -and
+        [TestDesktop]::Focus($app.Window) -eq $results -and (Get-AppCommandState $app 'ID_CLEANUP_DELETE_BIN').Enabled
+    } 'Select All selects every result, without the summary row, and focuses the results' -StableMilliseconds 150 | Out-Null
+    Invoke-AppCommand $app 'ID_CLEANUP_DELETE_BIN'
+
+    # The file only appears while the prompt is open, so only a check made after the prompt sees it
+    $prompt = Wait-Until { & $findDialog 'Yes' } 'Recycling asks for confirmation first' -Seconds 20
+    $added = New-TestFile (Join-Path $kept 'added-after-search.txt') 41
+    Close-AppDialog $prompt -ButtonName 'Yes'
+    $report = Wait-Until { & $findDialog 'OK' } 'A folder that gained a file while the prompt was open is reported' -Seconds 20
+    $reported = @([TestDesktop]::Children($report) | Where-Object { [TestDesktop]::Class($_) -eq 'SysListView32' } |
+        ForEach-Object { [NativeListViewHelper]::GetItemTexts($_) })
+    Assert-Equal @($reported | Where-Object { $_ -like "${kept}: *" }).Count 1 'The report names the folder that gained a file'
+    Assert-Equal $reported.Count 1 'The report names no folder that stayed empty'
+    Close-AppDialog $report -ButtonName 'OK'
+    Wait-AppIdle $app
+    Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
+        'An empty branch goes to the Recycle Bin along with the folder nested in it'
+    Assert-True (-not [IO.Directory]::Exists((Join-Path $kept 'inner'))) `
+        'A folder that stayed empty goes even when its parent stays'
+    Assert-True ([IO.File]::Exists($added)) 'A file put into a listed folder while the prompt was open stays'
+    Assert-True ([IO.File]::Exists((Join-Path $root 'beta\untouched.txt'))) 'Nothing outside the results is touched'
 }
 
 function Test-SelectedDeletion {
@@ -1233,6 +1288,9 @@ Register-Scenario interaction.dedup-groups Interaction `
 Register-Scenario interaction.cleanup-reparse Interaction `
     'Empty-folder cleanup rechecks reparse boundaries after external replacement' `
     Test-CleanupReparseReplacement -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
+Register-Scenario interaction.search-empty-recycle Interaction `
+    'Recycling selected empty-folder results only takes folders that are still empty' `
+    Test-SearchEmptyRecycle -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
 foreach ($collapsed in $false, $true) {
     $state = if ($collapsed) { 'collapsed' } else { 'expanded' }
     Register-Scenario "interaction.duplicate-batch.$state" Interaction `

@@ -494,7 +494,8 @@ void CWinDirStatModel::RebuildExtensionData()
     }
 }
 
-void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
+void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly,
+    const std::function<void(std::vector<CItem*>&)>& narrowItems) const
 {
     const bool hasRemoteItems = std::ranges::any_of(items,
         [](const CItem* item) { return item->IsTypeOrFlag(ITF_REMOTE); });
@@ -531,8 +532,9 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         Get()->InvalidateSelectionCache();
     }
 
-    // Build list of items to delete
+    // Build list of items to delete; a caller narrows it down only now, since the prompt can stay open for any length of time
     std::vector itemsToDelete{ items };
+    if (narrowItems) narrowItems(itemsToDelete);
     std::atomic<bool> cancelled = false;
     std::vector<CItem*> remoteItems;
     std::unordered_set<const CItem*> remoteChanged;

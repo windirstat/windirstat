@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Hoofdlettergevoelig zoeken
 IDS_SEARCH_LABEL=Zoekterm:
 IDS_SEARCH_REGEX=Reguliere expressies gebruiken
 IDS_SEARCH_RESULTS=Zoekresultaten
+IDS_SEARCH_SELECT_ALL=Alles selecteren
 IDS_SEARCH_TITLE=Zoeken
 IDS_SEARCH_WHOLE_PHRASE=Zoek hele zin
 IDS_SHADOW_COPY_FAILED=Kan geen schaduwkopie maken voor {}

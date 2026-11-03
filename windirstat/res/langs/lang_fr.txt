@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Recherche sensible à la casse
 IDS_SEARCH_LABEL=Terme de recherche :
 IDS_SEARCH_REGEX=Utiliser des expressions régulières
 IDS_SEARCH_RESULTS=Résultats de recherche
+IDS_SEARCH_SELECT_ALL=Tout sélectionner
 IDS_SEARCH_TITLE=Recherche
 IDS_SEARCH_WHOLE_PHRASE=Rechercher la phrase entière
 IDS_SHADOW_COPY_FAILED=Échec de la création du cliché instantané pour {}

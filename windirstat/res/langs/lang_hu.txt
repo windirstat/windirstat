@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Nagybetűérzékeny keresés
 IDS_SEARCH_LABEL=Keresési kifejezés:
 IDS_SEARCH_REGEX=Reguláris kifejezések használata
 IDS_SEARCH_RESULTS=Keresési eredmények
+IDS_SEARCH_SELECT_ALL=Összes kijelölése
 IDS_SEARCH_TITLE=Keresés
 IDS_SEARCH_WHOLE_PHRASE=Teljes kifejezés keresése
 IDS_SHADOW_COPY_FAILED=Az árnyékmásolat létrehozása sikertelen: {}

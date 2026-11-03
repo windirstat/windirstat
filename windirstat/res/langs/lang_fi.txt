@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Kirjainkoon huomioiva haku
 IDS_SEARCH_LABEL=Hakusana:
 IDS_SEARCH_REGEX=Käytä säännöllisiä lausekkeita
 IDS_SEARCH_RESULTS=Hakutulokset
+IDS_SEARCH_SELECT_ALL=Valitse kaikki
 IDS_SEARCH_TITLE=Haku
 IDS_SEARCH_WHOLE_PHRASE=Hae koko ilmaus
 IDS_SHADOW_COPY_FAILED=Varjokopion luonti epäonnistui kohteelle {}

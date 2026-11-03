@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Учитывать регистр
 IDS_SEARCH_LABEL=Поисковый запрос:
 IDS_SEARCH_REGEX=Регулярные выражения
 IDS_SEARCH_RESULTS=Результаты поиска
+IDS_SEARCH_SELECT_ALL=Выделить все
 IDS_SEARCH_TITLE=Поиск
 IDS_SEARCH_WHOLE_PHRASE=Искать всю фразу
 IDS_SHADOW_COPY_FAILED=Не удалось создать теневую копию для {}

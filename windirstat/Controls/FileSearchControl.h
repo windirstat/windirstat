@@ -41,7 +41,7 @@ public:
     void ProcessSearch(CItem* item, const SearchCriteria& criteria);
     void SearchEmptyFolders(const std::vector<CItem*>& items);
     bool HasEmptyFolderResults() const { return m_criteria.emptyFoldersOnly && !m_itemTracker.empty(); }
-    std::vector<CItem*> GetEmptyFolderResults() const;
+    void SelectAllResults();
     void PopulateSearchResults(const std::vector<CItem*>& matchedItems, const std::optional<CItemSearch::SizeTotals>& totals);
     void RemoveItems(std::span<CItem* const> items);
     void RestoreItems();

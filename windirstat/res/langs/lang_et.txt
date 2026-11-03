@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Tõstutundlik otsing
 IDS_SEARCH_LABEL=Otsingusõna:
 IDS_SEARCH_REGEX=Kasuta regulaaravaldisi
 IDS_SEARCH_RESULTS=Otsingutulemused
+IDS_SEARCH_SELECT_ALL=Vali kõik
 IDS_SEARCH_TITLE=Otsing
 IDS_SEARCH_WHOLE_PHRASE=Otsi tervet fraasi
 IDS_SHADOW_COPY_FAILED=Varukoopia loomine ebaõnnestus: {}

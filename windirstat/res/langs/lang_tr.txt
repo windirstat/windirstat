@@ -355,6 +355,7 @@ IDS_SEARCH_CASE=Büyük/Küçük Harfe Duyarlı Arama
 IDS_SEARCH_LABEL=Arama Terimi:
 IDS_SEARCH_REGEX=Regex Kullan
 IDS_SEARCH_RESULTS=Arama Sonuçları
+IDS_SEARCH_SELECT_ALL=Tümünü seç
 IDS_SEARCH_TITLE=Arama
 IDS_SEARCH_WHOLE_PHRASE=İfadenin tümünü ara
 IDS_SHADOW_COPY_FAILED={} için gölge kopya oluşturulamadı
