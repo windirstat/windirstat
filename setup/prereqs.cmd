@@ -12,11 +12,10 @@ SET "PF86=%ProgramFiles(x86)%"
 SET "VSWHERE=%PF86%\Microsoft Visual Studio\Installer\vswhere.exe"
 SET "VSSETUP=%PF86%\Microsoft Visual Studio\Installer\setup.exe"
 SET "VSPRODUCTS=Microsoft.VisualStudio.Product.Enterprise Microsoft.VisualStudio.Product.Professional Microsoft.VisualStudio.Product.Community"
-SET "V143BUILD=14.44.17.14"
 SET "WINGET_ARGS=--exact --silent --accept-package-agreements --accept-source-agreements"
 
 IF NOT EXIST "%VSWHERE%" (
-    ECHO vswhere.exe was not found. Install Visual Studio 2022 or later first.
+    ECHO vswhere.exe was not found. Install Visual Studio with the v145 toolset first.
     EXIT /B 1
 )
 IF NOT EXIST "%VSSETUP%" (
@@ -27,24 +26,22 @@ IF NOT EXIST "%VSSETUP%" (
 SET "VSPATH="
 SET "VSCHANNEL="
 PUSHD "%PF86%\Microsoft Visual Studio\Installer" >NUL
-FOR /F "DELIMS=" %%I IN ('vswhere.exe -latest -version "[17.0,)" -products %VSPRODUCTS% -property installationPath') DO SET "VSPATH=%%I"
-FOR /F "DELIMS=" %%I IN ('vswhere.exe -latest -version "[17.0,)" -products %VSPRODUCTS% -property channelId') DO SET "VSCHANNEL=%%I"
+FOR /F "DELIMS=" %%I IN ('vswhere.exe -latest -version "[18.0,)" -products %VSPRODUCTS% -property installationPath') DO SET "VSPATH=%%I"
+FOR /F "DELIMS=" %%I IN ('vswhere.exe -latest -version "[18.0,)" -products %VSPRODUCTS% -property channelId') DO SET "VSCHANNEL=%%I"
 POPD >NUL
 
 IF NOT DEFINED VSPATH (
-    ECHO Visual Studio 2022 or later was not found. Install Visual Studio first.
+    ECHO A compatible Visual Studio installation was not found. Install Visual Studio with the v145 toolset first.
     EXIT /B 1
 )
 
 ECHO Found Visual Studio:
 ECHO   %VSPATH%
 ECHO.
-ECHO Installing C++ workload, VS 2022 v143 platform toolset, ATL, ARM64 tools, and recommended Windows SDK...
+ECHO Installing C++ workload, MSVC v145 toolset, ATL, ARM64 tools, and recommended Windows SDK...
 
 START /WAIT "" "%VSSETUP%" modify --installPath "%VSPATH%" --channelId "%VSCHANNEL%" ^
     --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended ^
-    --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64 ^
-    --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.ATL --add Microsoft.VisualStudio.Component.VC.%V143BUILD%.ATL.ARM64 ^
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 ^
     --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.ATL.ARM64 ^
     --removeOos true --norestart --quiet
