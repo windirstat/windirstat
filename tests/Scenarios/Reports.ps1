@@ -244,21 +244,26 @@ function Test-MalformedReportType {
     $root = New-TestTree
     $runner = New-TestRunner
     $source = Invoke-ScanReport $runner @($root) 'valid' -Format $Case.Format
-    foreach ($type in '0x30000200', '0x30000204', '0x30000008', '0x30000010', '0x30000020') {
+    foreach ($type in '0x30000200', '0x30000204', '0x30000008', '0x30000010', '0x30000020',
+        '0x30008002', '0xB0008004', '0x30008001') {
         $row = $source[0].PSObject.Copy()
         $row.'WinDirStat Attributes' = $type
+        if ([Convert]::ToUInt32($type, 16) -band 0x8000) {
+            $row.Name = 's3://fixture/?region=us-east-1&endpoint=http%3A%2F%2F127.0.0.1%3A9'
+        }
         $row.Index = '0x0000000000000001'
         $drive = $source[0].PSObject.Copy()
         $drive.Name = 'V:\'
         $drive.'WinDirStat Attributes' = '0x20000002'
-        $rows = @($row, $drive)
+        $rows = if ([Convert]::ToUInt32($type, 16) -band 0x8000) { @($row) } else { @($row, $drive) }
         $path = Join-Path $Context.Root "malformed-$type.$($Case.Format)"
         if ($Case.Format -eq 'json') {
             [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject $rows))
         } else { $rows | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
         $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
-        Assert-True (-not (Get-AppCommandState $app 'ID_REFRESH_ALL').Enabled) `
-            'A report rejects pointer-backed nodes, mixed types, and children attached to leaf roots'
+        Assert-True ($app.Process.WaitForInputIdle(10000)) 'Report validation reaches the startup message loop'
+        Assert-True (-not (Get-AppCommandState $app 'ID_SAVE_RESULTS').Enabled) `
+            'A report rejects pointer-backed nodes, incompatible storage types, and children attached to leaf roots'
         Stop-TestApp $app
     }
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "valid.$($Case.Format)")) `
@@ -267,6 +272,27 @@ function Test-MalformedReportType {
         'A valid saved model remains loadable after rejected reports' | Out-Null
     Assert-True ([TestDesktop]::Text($app.Window).Contains($root)) 'The valid report restores its scanned root'
     Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Report validation leaves the main window hidden'
+    Stop-TestApp $app
+
+    $remoteRoot = $source[0].PSObject.Copy()
+    $remoteRoot.Name = 's3://fixture/?region=us-east-1&endpoint=http%3A%2F%2F127.0.0.1%3A9'
+    $remoteRoot.'WinDirStat Attributes' = '0x30008004'
+    $remoteRoot.Files = '1'
+    $remoteRoot.Folders = '0'
+    $remoteFile = (Get-ReportFiles $source)[0].PSObject.Copy()
+    $remoteFile.Name = $remoteRoot.Name.Replace('/?', '/file.txt?')
+    $remoteFile.'WinDirStat Attributes' = '0x20008008'
+    $remoteRoot.'Logical Size' = $remoteFile.'Logical Size'
+    $remoteRoot.'Physical Size' = $remoteFile.'Physical Size' = ''
+    $path = Join-Path $Context.Root "valid-remote.$($Case.Format)"
+    if ($Case.Format -eq 'json') {
+        [IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject @($remoteRoot, $remoteFile)))
+    } else { @($remoteRoot, $remoteFile) | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8 }
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
+    Wait-Until { (Get-AppCommandState $app 'ID_SAVE_RESULTS').Enabled } `
+        'Valid remote directories and files remain loadable' | Out-Null
+    Assert-True ([TestDesktop]::Text($app.Window).Contains('s3://fixture/')) 'The remote root retains its source URI'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Remote report validation leaves the window hidden'
 }
 
 function Test-MalformedLayoutSettings {

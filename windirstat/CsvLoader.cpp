@@ -228,10 +228,11 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
     const bool isMtp = (type & ITF_MTP) != 0;
     const bool isRemote = (type & ITF_REMOTE) != 0;
-    if (isRemote && !StorageSource::Parse(namePath)) return nullptr;
     const std::wstring mtpPath = FinderMtp::IsPath(namePath) ? namePath : std::wstring{};
 
     const auto itType = IT_MASK & type;
+    if (isRemote && (isMtp || (itType != IT_DIRECTORY && itType != IT_FILE) ||
+        !StorageSource::Parse(namePath))) return nullptr;
     if (itType != IT_MYCOMPUTER && itType != IT_DRIVE && itType != IT_DIRECTORY &&
         itType != IT_FILE && itType != IT_FREESPACE && itType != IT_UNKNOWN) return nullptr;
     const bool isRoot = (type & ITF_ROOTITEM) != 0;
