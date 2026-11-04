@@ -239,6 +239,29 @@ function Test-ReorderedReportColumns {
     Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Column checks leave the main window hidden'
 }
 
+function Test-ForcedPortableSettings {
+    param($Context, $Case)
+    $keep = New-TestFile (Join-Path $Context.Fixture 'keep.txt') 23
+    New-TestFile (Join-Path $Context.Fixture 'filtered.drop') 29 | Out-Null
+    $runner = New-TestRunner @{ DriveSelect = @{ FilteringExcludeFiles = '*.drop' } }
+    $portableExe = Join-Path $runner.Directory 'WinDirStat-PoRtAbLe.exe'
+    [IO.File]::Move($runner.Exe, $portableExe)
+    $portableIni = [IO.Path]::ChangeExtension($portableExe, 'ini')
+    [IO.File]::Move($runner.Ini, $portableIni)
+    $runner.Exe = $portableExe
+    $runner.Ini = $portableIni
+    [IO.File]::SetAttributes($portableIni, [IO.FileAttributes]::ReadOnly)
+    $rows = Invoke-ScanReport $runner @($Context.Fixture) 'readonly-portable'
+    Assert-Sequence @((Get-ReportFiles $rows).Name) @($keep) `
+        'A forced portable executable reads its read-only INI instead of registry settings'
+
+    [IO.File]::SetAttributes($portableIni, [IO.FileAttributes]::Normal)
+    [IO.File]::Delete($portableIni)
+    $rows = Invoke-ScanReport $runner @($Context.Fixture) 'new-portable'
+    Assert-Equal @(Get-ReportFiles $rows).Count 2 'A forced portable executable starts with fresh settings'
+    Assert-True ([IO.File]::Exists($portableIni)) 'A forced portable executable creates its missing INI'
+}
+
 function Test-MalformedReportType {
     param($Context, $Case)
     $root = New-TestTree
@@ -371,6 +394,8 @@ foreach ($format in 'csv', 'json') {
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `
     Test-QuietFailure -Tags External
+Register-Scenario reports.forced-portable Reports 'Forced portable settings remain local on read-only media' `
+    Test-ForcedPortableSettings -Tags Filesystem,Persistence
 Register-Scenario reports.reordered-columns Reports 'CSV imports resolve reordered fields beyond 255 extra columns' `
     Test-ReorderedReportColumns -Tags Persistence,External
 Register-Scenario reports.malformed-layout Reports 'Malformed persisted integer lists recover to usable defaults' `
