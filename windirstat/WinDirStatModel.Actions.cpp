@@ -1806,7 +1806,7 @@ void CWinDirStatModel::RemoveEmptyFolders(const std::vector<CItem*>& roots) cons
             const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
             if (typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
 
-            if (RemoveDirectory(path.c_str()))
+            if (RemoveDirectoryForce(path, attributes))
             {
                 deletedCount++;
                 deletedDirs.insert(item);

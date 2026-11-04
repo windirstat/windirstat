@@ -262,6 +262,29 @@ bool DeleteFileForce(const std::wstring& path, DWORD attributes)
         && GetLastError() == ERROR_FILE_NOT_FOUND;
 }
 
+bool RemoveDirectoryForce(const std::wstring& path, DWORD attributes)
+{
+    // Attempt removal
+    if (RemoveDirectory(path.c_str())) return true;
+
+    // A read-only directory cannot be removed until the attribute is cleared
+    const DWORD error = GetLastError();
+    if (attributes == INVALID_FILE_ATTRIBUTES) attributes = GetFileAttributes(path.c_str());
+    if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_READONLY) == 0 ||
+        !SetFileAttributes(path.c_str(), attributes & ~FILE_ATTRIBUTE_READONLY))
+    {
+        SetLastError(error);
+        return false;
+    }
+    if (RemoveDirectory(path.c_str())) return true;
+
+    // Leave a directory that still cannot be removed as it was, keeping the failure reason
+    const DWORD retryError = GetLastError();
+    SetFileAttributes(path.c_str(), attributes);
+    SetLastError(retryError);
+    return false;
+}
+
 // Path utilities
 std::wstring QueryDosDevicePath(const std::wstring& drive)
 {
