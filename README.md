@@ -94,7 +94,7 @@ For your safety, install WinDirStat only through the Microsoft Store link and pa
 
 ## Building
 
-WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat.sln`.
+Open `windirstat.sln` in Visual Studio with the C++ desktop workload, MSVC v145 toolset with C++23 support, ATL, and a Windows SDK. Install the compiler tools for each architecture you build: x64, Win32, or ARM64. Git and Windows PowerShell are required by the build scripts; the first build downloads xxHash if it is absent.
 
 ## Contributors
 
