@@ -942,6 +942,39 @@ function Test-SearchEmptyRecycle {
     Assert-True ([IO.File]::Exists((Join-Path $root 'beta\untouched.txt'))) 'Nothing outside the results is touched'
 }
 
+function Test-SearchSelectAll {
+    param($Context, $Case)
+    $root = New-TestTree
+    $hitDir = Join-Path $root 'hitdir'
+    New-TestFile (Join-Path $hitDir 'hitfile.txt') 17 | Out-Null
+    $many = Join-Path $root 'many'
+    [IO.Directory]::CreateDirectory($many) | Out-Null
+    # Stays below the default result cap, so every match is listed
+    $count = 9997
+    for ($index = 0; $index -lt $count; ++$index) { [IO.File]::WriteAllBytes((Join-Path $many "hit$index.txt"), [byte[]]@()) }
+    $app = Start-TestApp @($root)
+    Get-AppList $app -AllFiles | Out-Null
+    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), 'hit')
+    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $false
+    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
+    Close-AppDialog $dialog 1
+    $results = Get-AppList $app -TabName 'Search Results'
+    Wait-Until { [NativeListViewHelper]::GetItemCount($results) -eq ($count + 3) } `
+        'The text search lists the folder, the file inside it and every other match' | Out-Null
+    Assert-True ((Get-AppCommandState $app 'ID_SEARCH_SELECT_ALL').Enabled) 'Select All is available for a text search'
+
+    # The folder stands for the file inside it, so that file does not stay selected
+    Assert-True ([NativeListViewHelper]::FocusListView($app.ExtensionList)) 'Another list holds the focus before Select All'
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Invoke-AppCommand $app 'ID_SEARCH_SELECT_ALL'
+    Wait-Until {
+        [NativeListViewHelper]::GetSelectedCount($results) -eq ($count + 1) -and [TestDesktop]::Focus($app.Window) -eq $results
+    } 'Select All selects every text search result, without the summary row, and focuses the results' -StableMilliseconds 150 | Out-Null
+    $watch.Stop()
+    Write-TestNote ("Select All on {0} text search results: {1} ms" -f ($count + 2), $watch.ElapsedMilliseconds)
+}
+
 function Test-SelectedDeletion {
     param($Context, $Case)
     $root = New-TestTree
@@ -1291,6 +1324,9 @@ Register-Scenario interaction.cleanup-reparse Interaction `
 Register-Scenario interaction.search-empty-recycle Interaction `
     'Recycling selected empty-folder results only takes folders that are still empty' `
     Test-SearchEmptyRecycle -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
+Register-Scenario interaction.search-select-all Interaction `
+    'Select All selects every result of a text search' `
+    Test-SearchSelectAll -Tags Desktop,Filesystem -Requires Windows,Desktop
 foreach ($collapsed in $false, $true) {
     $state = if ($collapsed) { 'collapsed' } else { 'expanded' }
     Register-Scenario "interaction.duplicate-batch.$state" Interaction `

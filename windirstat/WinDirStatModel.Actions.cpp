@@ -81,7 +81,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
-    static bool (*hasEmptyFolderResults)(CItem*) = [](CItem*) { return CFileSearchControl::Get()->HasEmptyFolderResults(); };
+    static bool (*hasSearchResults)(CItem*) = [](CItem*) { return CFileSearchControl::Get()->HasResults(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i)
     {
@@ -140,7 +140,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_SEARCH_SELECT_ALL,       { true,  true,  false, LF_NONE,     ITF_ANY, hasEmptyFolderResults } },
+        { ID_SEARCH_SELECT_ALL,       { true,  true,  false, LF_NONE,     ITF_ANY, hasSearchResults } },
         { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE, ITF_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE, ITF_ANY, parentNotNull } },
@@ -1744,8 +1744,8 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
 
 void CWinDirStatModel::OnSearchSelectAll()
 {
-    // A command can still be posted while the button is disabled, so only an empty-folder search is selected
-    if (!CFileSearchControl::Get()->HasEmptyFolderResults()) return;
+    // A command can still be posted while the button is disabled, so an empty result list is left alone
+    if (!CFileSearchControl::Get()->HasResults()) return;
 
     // Delete and Recycle act on the list with the focus, which may still be another one
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
