@@ -170,7 +170,7 @@ bool CDirStatApp::IsForcedPortableMode()
 }
 bool CDirStatApp::InPortableMode()
 {
-    return GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
+    return IsForcedPortableMode() || GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
 DWORD CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
@@ -191,8 +191,9 @@ DWORD CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
 
         const DWORD error = GetLastError();
 
-        // Fall back to registry mode for any failures
-        PersistedSetting::UseRegistryStorage();
+        // Forced portable mode must keep using local settings even on read-only media.
+        if (IsForcedPortableMode()) PersistedSetting::UseIniStorage(ini);
+        else PersistedSetting::UseRegistryStorage();
         return error;
     }
 
@@ -382,7 +383,7 @@ bool CDirStatApp::InitInstance()
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 
-    // Enable portable mode if the executable name ends with "-portable.exe" and the user has not already chosen a preference.
+    // A portable executable creates its INI; other executables use an existing INI when available.
     SetPortableMode(true, !IsForcedPortableMode());
 
     COptions::LoadAppSettings();

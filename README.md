@@ -50,6 +50,8 @@ If you prefer a manual installer, need a portable archive, or want to browse old
 | [WinDirStat.zip](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat.zip) | Portable use, testing, or running without an installer | Zip archive containing the WinDirStat executables. Extract it first, then run the executable for your CPU type. |
 | [WinDirStat.7z](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat.7z) | Portable use when you already have 7-Zip installed | Same kind of portable executable archive as the zip file, usually with a smaller download size. |
 
+Running from an archive does not automatically enable portable settings. Enable **Options > Settings > General > Run in portable mode**, or rename the executable to `WinDirStat-portable.exe` to force local settings in a matching `.ini` file beside it. A forced portable executable keeps using that file on read-only media, but cannot save preference changes there. Remembered cloud credentials use Windows Credential Manager and do not travel with the INI file.
+
 ## Copyright / Licenses
 
 * Copyright © WinDirStat Team ([windirstat.net](https://windirstat.net/))
