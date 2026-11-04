@@ -20,35 +20,6 @@ static constexpr std::array<ACCESS_MASK, PERMSLEVEL_COUNT> levelMasks =
     0
 };
 
-namespace
-{
-std::wstring StripMnemonicMarkers(std::wstring text)
-{
-    // East Asian translations often append mnemonics like "(&Y)"; remove that block first.
-    if (const size_t open = text.rfind(L"(&"); open != std::wstring::npos && text.size() == open + 4 && text.back() == L')')
-    {
-        text.erase(open);
-    }
-
-    std::wstring stripped;
-    stripped.reserve(text.size());
-    for (size_t i = 0; i < text.size(); ++i)
-    {
-        if (text[i] == L'&')
-        {
-            if (i + 1 < text.size() && text[i + 1] == L'&')
-            {
-                stripped += L'&';
-                ++i;
-            }
-            continue;
-        }
-        stripped += text[i];
-    }
-    return stripped;
-}
-}
-
 CItemPerm::CItemPerm(std::shared_ptr<const Snapshot> snapshot, std::wstring account,
     const ACCESS_MASK mask, const bool deny, const BYTE aceFlags, const bool inheritanceDisabled) :
     m_snapshot(std::move(snapshot)), m_account(std::move(account)), m_mask(mask),
@@ -92,32 +63,7 @@ CItem* CItemPerm::GetLinkedItem() noexcept
     if (model == nullptr || !model->IsScanSettled()) return nullptr;
 
     // Keep permission rows as snapshots, but resolve actions to the current scan tree.
-    const std::wstring_view path = m_snapshot->path;
-    CItem* const root = model->GetRootItem();
-    const std::span<CItem* const> roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
-        std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
-    for (CItem* item : roots)
-    {
-        std::wstring rootPath = item->GetPath();
-        if (rootPath.ends_with(L'\\')) rootPath.pop_back();
-        if (!path.starts_with(rootPath) || path.size() > rootPath.size() && path[rootPath.size()] != L'\\') continue;
-
-        std::wstring_view remaining = path.substr(rootPath.size());
-        if (!remaining.empty()) remaining.remove_prefix(1);
-        while (item != nullptr && !remaining.empty())
-        {
-            if (item->IsLeaf()) { item = nullptr; break; }
-            const size_t separator = remaining.find(L'\\');
-            const std::wstring_view name = remaining.substr(0, separator);
-            const auto& children = item->GetChildren();
-            const auto child = std::ranges::find_if(children,
-                [name](const CItem* candidate) { return candidate->GetNameView() == name; });
-            item = child == children.end() ? nullptr : *child;
-            remaining = separator == std::wstring_view::npos ? std::wstring_view{} : remaining.substr(separator + 1);
-        }
-        if (item != nullptr) return item;
-    }
-    return nullptr;
+    return model->GetRootItem()->FindItemByPath(m_snapshot->path);
 }
 
 HICON CItemPerm::GetIcon()
@@ -202,8 +148,8 @@ std::wstring CItemPerm::GetAppliesName(const PERMSAPPLIES applies, const bool is
 std::wstring CItemPerm::GetInheritedName(const bool disabled)
 {
     // Reuse the shared yes/no strings, but strip button mnemonics before showing them in the grid/export.
-    static const std::wstring yes = StripMnemonicMarkers(Localization::Lookup(IDS_GENERIC_YES));
-    static const std::wstring no  = StripMnemonicMarkers(Localization::Lookup(IDS_GENERIC_NO));
+    static const std::wstring yes = GetLocalizedMenuText(IDS_GENERIC_YES);
+    static const std::wstring no  = GetLocalizedMenuText(IDS_GENERIC_NO);
     return disabled ? no : yes;
 }
 
