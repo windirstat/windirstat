@@ -217,6 +217,28 @@ function Test-QuietFailure {
     Assert-ScanSnapshot $rows (Get-DiskSnapshot $root) $root
 }
 
+function Test-ReorderedReportColumns {
+    param($Context, $Case)
+    $root = New-TestTree
+    $runner = New-TestRunner
+    $source = Invoke-ScanReport $runner @($root) 'columns-source'
+    $names = @($source[0].PSObject.Properties.Name)
+    [Array]::Reverse($names)
+    $rows = @(foreach ($row in $source) {
+        $fields = [ordered]@{}
+        foreach ($index in 0..299) { $fields["Extra-$index"] = 'ignored' }
+        foreach ($name in $names) { $fields[$name] = $row.$name }
+        [pscustomobject]$fields
+    })
+    $path = Join-Path $Context.Root 'reordered.csv'
+    $rows | Export-Csv -LiteralPath $path -NoTypeInformation -Encoding utf8
+    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $path) -Hidden
+    Wait-Until { (Get-AppCommandState $app 'ID_SAVE_RESULTS').Enabled } `
+        'CSV fields remain addressable after extra columns and reordering' | Out-Null
+    Assert-True ([TestDesktop]::Text($app.Window).Contains($root)) 'The reordered report restores its scan root'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Column checks leave the main window hidden'
+}
+
 function Test-MalformedReportType {
     param($Context, $Case)
     $root = New-TestTree
@@ -323,6 +345,8 @@ foreach ($format in 'csv', 'json') {
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `
     Test-QuietFailure -Tags External
+Register-Scenario reports.reordered-columns Reports 'CSV imports resolve reordered fields beyond 255 extra columns' `
+    Test-ReorderedReportColumns -Tags Persistence,External
 Register-Scenario reports.malformed-layout Reports 'Malformed persisted integer lists recover to usable defaults' `
     Test-MalformedLayoutSettings -Tags Desktop,Persistence,External -Requires Windows,Desktop
 Register-Scenario reports.permissions Reports 'Real ACL inheritance agrees across CSV and JSON exports' `

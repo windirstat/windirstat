@@ -127,31 +127,37 @@ enum : std::uint8_t
     FIELD_COUNT
 };
 
-static std::array<UCHAR, FIELD_COUNT> orderMap{};
-static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
+static std::vector<std::wstring> GetScanColumns()
 {
-    orderMap.fill(UCHAR_MAX);
-    std::unordered_map<std::wstring, DWORD, string_hash, std::equal_to<>> resMap =
+    // Keep localized field names and their order identical across import and export formats.
+    return
     {
-        { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
-        { Localization::Lookup(IDS_COL_FILES), FIELD_FILES },
-        { Localization::Lookup(IDS_COL_FOLDERS), FIELD_FOLDERS },
-        { Localization::Lookup(IDS_COL_SIZE_LOGICAL), FIELD_SIZE_LOGICAL },
-        { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
-        { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
-        { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
-        { (Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
-        { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
-        { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER },
-        { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_FILES),
+        Localization::Lookup(IDS_COL_FOLDERS),
+        Localization::Lookup(IDS_COL_SIZE_LOGICAL),
+        Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
+        Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::Lookup(IDS_COL_LAST_CHANGE),
+        Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::Lookup(IDS_COL_INDEX),
+        Localization::Lookup(IDS_COL_OWNER),
+        L"ScanOutcome",
+        L"ScanError"
     };
+}
 
+static std::array<size_t, FIELD_COUNT> ParseHeaderLine(const std::vector<std::wstring_view>& header)
+{
+    std::array<size_t, FIELD_COUNT> orderMap;
+    orderMap.fill(std::wstring::npos);
+    const auto columns = GetScanColumns();
     for (const auto [c, name] : std::views::enumerate(header))
     {
-        if (const auto it = resMap.find(name); it != resMap.end())
-            orderMap[it->second] = static_cast<BYTE>(c);
+        if (const auto it = std::ranges::find(columns, name); it != columns.end())
+            orderMap[it - columns.begin()] = static_cast<size_t>(c);
     }
+    return orderMap;
 }
 
 static std::string ToTimePoint(const FILETIME& fileTime)
@@ -334,6 +340,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
     bool headerProcessed = false;
+    std::array<size_t, FIELD_COUNT> orderMap{};
     size_t maxRequiredField = 0;
     for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
     {
@@ -373,14 +380,14 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
         // Process the header if not done already
         if (!headerProcessed)
         {
-            ParseHeaderLine(fields);
+            orderMap = ParseHeaderLine(fields);
             headerProcessed = true;
 
             // Validate all necessary fields are present
             for (const auto [i, order] : std::views::enumerate(orderMap))
             {
                 if (i >= FIELD_OWNER) continue;
-                if (order == UCHAR_MAX)
+                if (order == std::wstring::npos)
                 {
                     delete newroot;
                     return nullptr;
@@ -417,21 +424,9 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
 static CItem* LoadResultsJson(std::ifstream& reader)
 {
     // Build the same column-name → field-index mapping reused from CSV
-    const std::unordered_map<std::wstring, DWORD> keyToField =
-    {
-        { Localization::Lookup(IDS_COL_NAME),          FIELD_NAME          },
-        { Localization::Lookup(IDS_COL_FILES),         FIELD_FILES         },
-        { Localization::Lookup(IDS_COL_FOLDERS),       FIELD_FOLDERS       },
-        { Localization::Lookup(IDS_COL_SIZE_LOGICAL),  FIELD_SIZE_LOGICAL  },
-        { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
-        { Localization::Lookup(IDS_COL_ATTRIBUTES),    FIELD_ATTRIBUTES    },
-        { Localization::Lookup(IDS_COL_LAST_CHANGE),   FIELD_LAST_CHANGE   },
-        { Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES_WDS },
-        { Localization::Lookup(IDS_COL_INDEX),         FIELD_INDEX         },
-        { Localization::Lookup(IDS_COL_OWNER),         FIELD_OWNER         },
-        { L"ScanOutcome", FIELD_SCAN_OUTCOME },
-        { L"ScanError", FIELD_SCAN_ERROR }
-    };
+    std::unordered_map<std::wstring, size_t> keyToField;
+    for (auto [index, name] : std::views::enumerate(GetScanColumns()))
+        keyToField.emplace(std::move(name), static_cast<size_t>(index));
 
     CItem* newroot = nullptr;
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
@@ -665,21 +660,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     const auto                      adjustedSizes = ComputeAdjustedSizes(items);
     const bool includeOwner = COptions::IsColumnVisible(COptions::FileTreeColumnVisibility.Obj(), COL_OWNER);
 
-    std::vector cols =
-    {
-        Localization::Lookup(IDS_COL_NAME),
-        Localization::Lookup(IDS_COL_FILES),
-        Localization::Lookup(IDS_COL_FOLDERS),
-        Localization::Lookup(IDS_COL_SIZE_LOGICAL),
-        Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
-        Localization::Lookup(IDS_COL_ATTRIBUTES),
-        Localization::Lookup(IDS_COL_LAST_CHANGE),
-        Localization::LookupNeutral(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
-        Localization::Lookup(IDS_COL_INDEX)
-    };
-    if (includeOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
-    cols.emplace_back(L"ScanOutcome");
-    cols.emplace_back(L"ScanError");
+    auto cols = GetScanColumns();
+    if (!includeOwner) cols.erase(cols.begin() + FIELD_OWNER);
 
     std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
