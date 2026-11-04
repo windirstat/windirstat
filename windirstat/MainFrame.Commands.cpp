@@ -572,39 +572,26 @@ void CMainFrame::OnUpdateViewSunburst(CCmdUI* pCmdUI) const
 static void SortItemRecursive(CItem* item)
 {
     if (item == nullptr || item->IsLeaf()) return;
-    COptions::TreeMapUseLogical ? item->SortItemsBySizeLogical() : item->SortItemsBySizePhysical();
+    item->SortItemsBySize(COptions::TreeMapUseLogical);
     for (CItem* child : item->GetChildren())
     {
         SortItemRecursive(child);
     }
 }
 
-void CMainFrame::OnViewTreeMapUseLogical()
+void CMainFrame::OnViewTreeMapSize(const UINT commandId)
 {
-    if (!COptions::TreeMapUseLogical)
-    {
-        COptions::TreeMapUseLogical = true;
-        if (CItem* root = CWinDirStatModel::Get()->GetRootItem())
-        {
-            SortItemRecursive(root);
-            CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SIZE_MODE);
-        }
-        UpdatePaneText();
-    }
-}
+    const bool logical = commandId == ID_TREEMAP_LOGICAL_SIZE;
+    if (COptions::TreeMapUseLogical == logical) return;
 
-void CMainFrame::OnViewTreeMapUsePhysical()
-{
-    if (COptions::TreeMapUseLogical)
+    // Reorder the tree once when the visualization's size basis changes.
+    COptions::TreeMapUseLogical = logical;
+    if (CItem* root = CWinDirStatModel::Get()->GetRootItem())
     {
-        COptions::TreeMapUseLogical = false;
-        if (CItem* root = CWinDirStatModel::Get()->GetRootItem())
-        {
-            SortItemRecursive(root);
-            CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SIZE_MODE);
-        }
-        UpdatePaneText();
+        SortItemRecursive(root);
+        CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SIZE_MODE);
     }
+    UpdatePaneText();
 }
 
 void CMainFrame::OnViewAbsolutePercentages() const

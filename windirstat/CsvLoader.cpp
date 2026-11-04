@@ -212,7 +212,7 @@ static void FinalizeImportedResults(CItem* root)
             item->SetSizePhysical(physical);
         }
         if (!item->IsLeaf())
-            COptions::TreeMapUseLogical ? item->SortItemsBySizeLogical() : item->SortItemsBySizePhysical();
+            item->SortItemsBySize(COptions::TreeMapUseLogical);
     }
     CItem::ReconcileScanResults(root);
 }

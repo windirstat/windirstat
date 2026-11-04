@@ -285,8 +285,7 @@ protected:
     void OnUpdateViewFlameGraph(CCmdUI* pCmdUI) const;
     void OnViewSunburst();
     void OnUpdateViewSunburst(CCmdUI* pCmdUI) const;
-    void OnViewTreeMapUseLogical();
-    void OnViewTreeMapUsePhysical();
+    void OnViewTreeMapSize(UINT commandId);
     void OnViewAbsolutePercentages() const;
     void OnViewShowFileTypes();
     void OnViewGroupUnregisteredTypes() const;
@@ -402,8 +401,8 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Command<&OnViewGraphPreset>(ID_VIEW_GRAPH_PRESET_CLASSIC, ID_VIEW_GRAPH_PRESET_CUSTOM),
         Route::Command<&OnViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
         Route::Command<&OnViewSunburst>(ID_VIEW_SUNBURST),
-        Route::Command<&OnViewTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
-        Route::Command<&OnViewTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
+        Route::Command<&OnViewTreeMapSize>(ID_TREEMAP_LOGICAL_SIZE),
+        Route::Command<&OnViewTreeMapSize>(ID_TREEMAP_PHYSICAL_SIZE),
         Route::Command<&OnViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
         Route::Window<&OnEnterSizeMove>(WM_ENTERSIZEMOVE),
         Route::Window<&OnExitSizeMove>(WM_EXITSIZEMOVE),

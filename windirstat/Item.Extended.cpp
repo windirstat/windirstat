@@ -919,7 +919,7 @@ void CItem::DoHardlinkAdjustment()
 
         // Set the physical size on the Index folder - this is what tallies upward
         indexFolder->SetSizePhysical(itemSize);
-        if (itemSizeMin != itemSize) indexFolder->SortItemsBySizePhysical();
+        if (itemSizeMin != itemSize) indexFolder->SortItemsBySize(false);
         indexFolder->SetFlag(ITF_DONE);
 
         // Mark index set as undone so it will be re-sorted
@@ -942,12 +942,12 @@ void CItem::DoHardlinkAdjustment()
         if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
 
         // Sort Index folders within this Index Set by size
-        indexSet->SortItemsBySizePhysical();
+        indexSet->SortItemsBySize(false);
         indexSet->SetFlag(ITF_DONE);
     }
 
     // Sort Index Sets within Hardlinks by size and mark done
-    hardlinksItem->SortItemsBySizePhysical();
+    hardlinksItem->SortItemsBySize(false);
     hardlinksItem->UpwardSetUndone();
 }
 

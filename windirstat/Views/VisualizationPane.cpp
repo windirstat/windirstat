@@ -73,19 +73,7 @@ void CVisualizationPane::SelectPane(const GraphPane pane)
         m_activePane = pane;
     }
 
-    CGraphView* active = GetActiveView();
-    if (active == nullptr) return;
-
-    if (!m_showVisualization)
-    {
-        active->ShowWindow(SW_HIDE);
-        active->TrimRenderCache();
-        return;
-    }
-
-    active->MoveWindow(GetClientRect(), false);
-    active->ShowWindow(SW_SHOW);
-    active->Invalidate(false);
+    ShowVisualization(m_showVisualization);
 }
 
 void CVisualizationPane::ShowVisualization(const bool show)
