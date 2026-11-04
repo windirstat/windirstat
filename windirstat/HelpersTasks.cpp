@@ -267,8 +267,9 @@ bool RemoveDirectoryForce(const std::wstring& path, DWORD attributes)
     // Attempt removal
     if (RemoveDirectory(path.c_str())) return true;
 
-    // A read-only directory cannot be removed until the attribute is cleared
+    // A read-only directory is refused with access denied until the attribute is cleared
     const DWORD error = GetLastError();
+    if (error != ERROR_ACCESS_DENIED) return false;
     if (attributes == INVALID_FILE_ATTRIBUTES) attributes = GetFileAttributes(path.c_str());
     if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_READONLY) == 0 ||
         !SetFileAttributes(path.c_str(), attributes & ~FILE_ATTRIBUTE_READONLY))
