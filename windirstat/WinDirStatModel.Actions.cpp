@@ -81,6 +81,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
+    static bool (*hasSearchResults)(CItem*) = [](CItem*) { return CFileSearchControl::Get()->HasResults(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i)
     {
@@ -106,6 +107,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isDeletable } },
         { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
+        { ID_CLEANUP_SEARCH_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE, hasShellIdentity } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     ITF_ANY, isHibernate } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE, filesystemOnly } },
@@ -138,6 +140,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
+        { ID_SEARCH_SELECT_ALL,       { true,  true,  false, LF_NONE,     ITF_ANY, hasSearchResults } },
         { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  false, LF_FILETREE, ITF_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, false, LF_FILETREE, ITF_ANY, parentNotNull } },
@@ -552,13 +555,92 @@ void CWinDirStatModel::OnPowerShellHere()
     }
 }
 
+// A directory whose attributes could not be read, or that is a reparse point, cannot be walked
+// safely: its contents may not belong to the physical tree it appears to sit in
+static bool IsUnsafeDirectory(const CItem* item) noexcept
+{
+    if (!item->IsTypeOrFlag(IT_DIRECTORY)) return false;
+
+    const DWORD attributes = item->GetAttributes();
+    return attributes == INVALID_FILE_ATTRIBUTES ||
+        (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+}
+
+// Name what was left behind of an empty-folder removal, each with its own reason: the parent of a folder
+// in use fails as not empty, which must not hide why the folder inside it stayed
+static void ShowEmptyFolderFailures(const std::vector<std::pair<std::wstring, DWORD>>& failures)
+{
+    if (failures.empty()) return;
+
+    std::vector<std::wstring> lines;
+    lines.reserve(failures.size());
+    for (const auto& [failedPath, error] : failures)
+    {
+        std::wstring reason = TranslateError(static_cast<HRESULT>(error));
+        reason.resize(reason.find_last_not_of(L" \t\r\n") + 1);
+        lines.emplace_back(failedPath + L": " + reason);
+    }
+    CMessageBoxDlg::Show(GetLocalizedMenuText(IDS_MENU_REMOVE_EMPTY), lines, {}, false,
+        MB_OK | MB_ICONWARNING, GetMainWindow(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
+}
+
 void CWinDirStatModel::OnCleanupDeleteToBin()
 {
+    // Like Delete, the Recycle Bin only takes a folder listed by the empty-folder search while it is still
+    // empty; recycled the usual way, anything put into it since the search would go along with it
+    if (SearchListHasFocus() && CFileSearchControl::Get()->HasEmptyFolderResults())
+    {
+        std::vector<std::pair<std::wstring, DWORD>> failures;
+        DeletePhysicalItems(GetAllSelected(), true, false, [&](std::vector<CItem*>& items)
+        {
+            // Each topmost folder that is still empty goes as a whole. One that gained content stays, but
+            // the folders inside it that stayed empty go on their own, just as Delete removes them
+            std::unordered_map<std::wstring, bool> checkedFolders;
+            std::vector<CItem*> stack = GetEmptyFolderRoots(items);
+            items.clear();
+            while (!stack.empty())
+            {
+                CItem* item = stack.back();
+                stack.pop_back();
+                if (FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders))
+                {
+                    items.push_back(item);
+                    continue;
+                }
+
+                // A folder that is already gone needs no removal; any other is reported
+                const DWORD attributes = GetFileAttributes(item->GetPathLong().c_str());
+                if (attributes == INVALID_FILE_ATTRIBUTES)
+                {
+                    if (const DWORD error = GetLastError(); error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+                        failures.emplace_back(item->GetPath(), error);
+                    continue;
+                }
+                failures.emplace_back(item->GetPath(), ERROR_DIR_NOT_EMPTY);
+
+                // Only a plain folder is entered: one replaced by a link since the scan leads outside the tree
+                if ((attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != FILE_ATTRIBUTE_DIRECTORY) continue;
+                for (CItem* child : item->GetChildren())
+                    if (child->IsTypeOrFlag(IT_DIRECTORY) && !IsUnsafeDirectory(child)) stack.push_back(child);
+            }
+        });
+        ShowEmptyFolderFailures(failures);
+        return;
+    }
+
     DeletePhysicalItems(GetAllSelected(), true);
 }
 
 void CWinDirStatModel::OnCleanupDelete()
 {
+    // A folder listed by the empty-folder search is only removed while it is still empty; deleted
+    // the usual way, anything put into it since the search would be deleted along with it
+    if (SearchListHasFocus() && CFileSearchControl::Get()->HasEmptyFolderResults())
+    {
+        RemoveEmptyFolders(GetAllSelected());
+        return;
+    }
+
     DeletePhysicalItems(GetAllSelected(), false);
 }
 
@@ -1627,39 +1709,67 @@ void CWinDirStatModel::OnToolsSetDates()
     }).ShowModal();
 }
 
+std::vector<CItem*> CWinDirStatModel::GetEmptyFolderRoots(const std::vector<CItem*>& items)
+{
+    // Start only where the filesystem calls apply, so MTP devices are left out, and only where
+    // nothing on the way down from the scan root is a link the selection was reached through.
+    // An item inside another one is reached through that one: walked on its own as well, it
+    // would be listed twice and would come out above its parent in the bottom-up removal order.
+    const std::unordered_set<const CItem*> selected(items.begin(), items.end());
+    std::vector<CItem*> roots;
+    for (CItem* item : items)
+    {
+        if (!item->SupportsFilesystemApis() || IsUnsafeDirectory(item)) continue;
+
+        const CItem* ancestor = item->GetParent();
+        while (ancestor != nullptr && !IsUnsafeDirectory(ancestor) && !selected.contains(ancestor))
+            ancestor = ancestor->GetParent();
+        if (ancestor == nullptr) roots.push_back(item);
+    }
+    return roots;
+}
+
+void CWinDirStatModel::OnCleanupSearchEmpty()
+{
+    const auto& items = GetAllSelected();
+    if (items.empty()) return;
+    CFileSearchControl::Get()->SearchEmptyFolders(items);
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
+}
+
 void CWinDirStatModel::OnCleanupRemoveEmpty()
 {
-    const auto& roots = GetAllSelected();
-    if (roots.empty()) return;
+    RemoveEmptyFolders(GetAllSelected());
+}
 
-    const auto isUnsafeDirectory = [](const CItem* item) noexcept
-    {
-        if (!item->IsTypeOrFlag(IT_DIRECTORY)) return false;
+void CWinDirStatModel::OnSearchSelectAll()
+{
+    // A command can still be posted while the button is disabled, so an empty result list is left alone
+    if (!CFileSearchControl::Get()->HasResults()) return;
 
-        const DWORD attributes = item->GetAttributes();
-        return attributes == INVALID_FILE_ATTRIBUTES ||
-            (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-    };
+    // Delete and Recycle act on the list with the focus, which may still be another one
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
+    CMainFrame::Get()->MoveFocus(LF_SEARCHLIST);
+    CFileSearchControl::Get()->SelectAllResults();
+}
+
+void CWinDirStatModel::RemoveEmptyFolders(const std::vector<CItem*>& roots) const
+{
+    // A command can still be posted during a scan, and the walk below reads the tree it changes
+    if (roots.empty() || !IsScanSettled()) return;
 
     // Collect every filesystem directory whose entire subtree contains no files (GetFilesCount() == 0).
     // Do not enter reparse-point branches: excluded links have no modeled files, while followed
     // links expose directories outside the selected physical tree. Each item is recorded before
     // its children are pushed, so reversing the result yields the required bottom-up order.
     std::vector<CItem*> emptyDirs;
-    std::vector<CItem*> stack;
-    for (CItem* root : roots)
-    {
-        if (!root->SupportsFilesystemApis()) continue;
-        const CItem* ancestor = root;
-        while (ancestor != nullptr && !isUnsafeDirectory(ancestor)) ancestor = ancestor->GetParent();
-        if (ancestor == nullptr) stack.push_back(root);
-    }
+    std::vector<CItem*> stack = GetEmptyFolderRoots(roots);
     std::unordered_set<CItem*> visited;
     for (CWaitCursor wc; !stack.empty();)
     {
         CItem* item = stack.back();
         stack.pop_back();
-        if (!visited.insert(item).second || isUnsafeDirectory(item)) continue;
+        if (!visited.insert(item).second || IsUnsafeDirectory(item)) continue;
         if (item->IsTypeOrFlag(IT_DIRECTORY) && !item->IsRootItem() && item->GetFilesCount() == 0)
         {
             emptyDirs.push_back(item);
@@ -1674,6 +1784,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
     if (!ConfirmOperation(IDS_MENU_REMOVE_EMPTY, COptions::ShowRemoveEmptyFoldersPrompt, emptyDirs)) return;
 
     size_t deletedCount = 0;
+    std::vector<std::pair<std::wstring, DWORD>> failures;
     std::unordered_set<const CItem*> deletedDirs;
     std::unordered_set<CItem*> parentsToRefresh;
     std::ranges::reverse(emptyDirs);
@@ -1685,10 +1796,17 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
 
             const std::wstring path = item->GetPathLong();
             const DWORD attributes = GetFileAttributes(path.c_str());
+            if (attributes == INVALID_FILE_ATTRIBUTES)
+            {
+                // A folder that is already gone needs no removal; one that cannot be read is reported
+                if (const DWORD error = GetLastError(); error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+                    failures.emplace_back(item->GetPath(), error);
+                continue;
+            }
             const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
-            if (attributes == INVALID_FILE_ATTRIBUTES || typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
+            if (typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
 
-            if (RemoveDirectory(path.c_str()))
+            if (RemoveDirectoryForce(path, attributes))
             {
                 deletedCount++;
                 deletedDirs.insert(item);
@@ -1698,8 +1816,15 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
                 }
                 pdlg->Increment();
             }
+            else if (const DWORD error = GetLastError(); error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+            {
+                // A folder that gained content since the search, or that is in use, stays where it is
+                failures.emplace_back(item->GetPath(), error);
+            }
         }
     }).ShowModal();
+
+    ShowEmptyFolderFailures(failures);
 
     // Refresh parents of deleted items that were not themselves deleted
     std::erase_if(parentsToRefresh, [&](const CItem* parent) {
