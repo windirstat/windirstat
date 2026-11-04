@@ -1,7 +1,10 @@
 ﻿function Invoke-TestDiskPart {
     param([string[]] $Lines, [string] $Name)
     $path = Join-Path $script:Context.Root "$Name.diskpart"
-    [IO.File]::WriteAllLines($path, $Lines, [Text.Encoding]::Unicode)
+    # DiskPart reads scripts in the OEM code page; reject unrepresentable paths before attaching an image.
+    $encoding = [Text.Encoding]::GetEncoding([int][WdsNativeFs]::GetOEMCP(),
+        [Text.EncoderFallback]::ExceptionFallback, [Text.DecoderFallback]::ExceptionFallback)
+    [IO.File]::WriteAllLines($path, $Lines, $encoding)
     $runner = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\diskpart.exe'; Directory = $script:Context.Root }
     $result = Invoke-TestProcess $runner @('/s', $path)
     [IO.File]::WriteAllText((Join-Path $script:Context.Root "$Name.log"), $result.Stdout + $result.Stderr)

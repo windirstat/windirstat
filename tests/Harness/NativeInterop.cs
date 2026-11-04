@@ -43,6 +43,9 @@ public static class WdsNativeCredentials
 
 public static class WdsNativeFs
 {
+    [DllImport("kernel32.dll")]
+    public static extern uint GetOEMCP();
+
     // Normalize paths at the Win32 boundary, including long paths and UNC spellings.
     private static string NativePath(string path)
     {
