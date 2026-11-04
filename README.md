@@ -2,13 +2,14 @@
 
 ## Description
 
-WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows. Scan drives, folders, network shares, or connected MTP devices, then explore disk usage through sortable file lists, file-type statistics, and interactive treemaps, sunbursts, or flame graphs.
+WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows. Scan drives, folders, network shares, connected MTP devices, S3-compatible storage, Azure Blob Storage, or WebDAV collections, then explore usage through sortable file lists, file-type statistics, and interactive treemaps, sunbursts, or flame graphs.
 
 Find large or duplicate files, inspect permissions, estimate storage costs, export reports, and run cleanup or deleted-file recovery tools. See the [website](https://windirstat.net/) for an overview and the [user guide](https://github.com/windirstat/windirstat/wiki) for usage details.
 
 ### Major features
 
 * Scan multiple drives or folders together, with pause/resume, refresh, and accelerated local NTFS scanning when elevated
+* Inspect cloud storage through metadata listings, with saved connections, logical-size totals, and explicit incomplete-scan indicators
 * Explore largest files, file types, logical versus physical size, hardlinks, and free/unknown space with configurable visualizations
 * Search scanned results by name, size, file/folder type, or owner; filter scans by path, name, size, or age, with regular-expression support
 * Detect duplicates using configurable hashes and cloud-file safeguards; optional sparse hashing labels sampled matches as **Probable duplicates**
@@ -22,12 +23,14 @@ For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 ### Getting started
 
-1. Choose drives or **Individual Folders** in **Select Drives**. Use the add-folder button to scan several folders together. Connected MTP devices appear under **Individual Drives**.
-2. Enable **Scan for duplicate files** only when needed; hashing adds file reads. For accelerated full-drive NTFS scans, use **File > Run Elevated**.
+1. Choose drives or **Individual Folders** in **Select Drives**. Use the add-folder button to scan several folders together. Connected MTP devices appear under **Individual Drives**. For cloud storage, use **File > Select Cloud Storage** and add or select a connection.
+2. Enable **Scan for duplicate files** only when needed; hashing adds file reads. Direct cloud scans list metadata without downloading file contents and do not perform duplicate detection. For accelerated full-drive NTFS scans, use **File > Run Elevated**.
 3. Sort **All Files** or open **Largest Files**, select an item to locate it in the visualization, and use `Ctrl+F` to search. Right-click column headers to choose details and use **View** to switch graphs.
 4. Review items in Explorer before cleanup, then refresh affected results. Use **File > Save Results To CSV/JSON** to keep a scan snapshot.
 
 For scripting, use `/SaveTo`, `/SaveDupesTo`, or `/SavePermsTo` followed by an output filename and scan targets. Save modes write a report and exit; `/LoadFrom` reopens a saved scan. See [command-line examples and export formats](https://github.com/windirstat/windirstat/wiki/Command-Line-and-CSV).
+
+An incomplete scan retains the items already found and marks affected branches. Save modes return a nonzero exit code when scanning is incomplete, even if a report was written. Cloud physical allocation is unknown and appears blank; use logical size to compare cloud content.
 
 ### Installation
 
@@ -63,7 +66,7 @@ Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 ## Compatibility
 
-WinDirStat 2.x has been developed for and tested on the following operating systems. It may work on older or newer operating systems, but those systems are not supported.
+The desktop executable supports the following operating systems. Store/MSIX packages require Windows 10 version 1809 or later; choose an MSI installer or portable archive for older supported systems.
 
 * Windows 7
 * Windows 8
