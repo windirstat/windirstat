@@ -1178,6 +1178,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Skip pruning if it is a new element
         if (!doneItems.contains(item)) continue;
 
+        // Reconcile surviving local timestamps after enumeration, including changes to older times.
+        if (item->SupportsFilesystemApis())
+        {
+            if (!item->IsLeaf()) recalcParents.insert(item);
+            else if (auto* parent = item->GetParent(); parent != nullptr) recalcParents.insert(parent);
+        }
+
         // Remove item from tree
         item->ExtensionDataProcessChildren(true);
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
@@ -1220,15 +1227,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             }
             visualInfo.erase(item);
             vanished.insert(item);
+            recalcParents.erase(item);
             recalcParents.insert(parent);
         }
     }
 
-    // Remove vanished items from the list so we do not rescan them, then recalculate
-    // each affected folder once after they are gone
+    // Remove vanished items from the list so we do not rescan them.
     std::erase_if(items, [&](CItem* item) { return vanished.contains(item); });
     CItem::RemoveChildren(vanished);
-    for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange(volumeContext);
     InvalidateSelectionCache();
 
     // Refresh filter cutoffs immediately before scanning in case settings
@@ -1243,7 +1249,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop during inserts.
     // Lambda captures assume the model exists for the duration of the scan.
-    m_thread = std::jthread([this,items, visualInfo] () mutable
+    m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents)] () mutable
     {
         std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
 
@@ -1328,6 +1334,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             });
             return;
         }
+
+        // Recalculate each refreshed folder after workers have supplied the final child timestamps.
+        for (CItem* parent : recalcParents) parent->UpwardRecalcLastChange([&](const CItem* item)
+        {
+            const CItem* root = item->GetVolumeRoot();
+            return &folderContexts.try_emplace(root, root->GetPath()).first->second;
+        });
 
         // Restore unknown and freespace items
         for (const auto& item : items)
