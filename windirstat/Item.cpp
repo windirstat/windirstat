@@ -1104,7 +1104,7 @@ void CItem::SetDone()
     // Sort and set finish time
     if (!IsLeaf())
     {
-        COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
+        SortItemsBySize(COptions::TreeMapUseLogical);
         GetFolderInfo()->m_tfinish = GetScanTickCount();
     }
 
@@ -1201,28 +1201,17 @@ void CItem::ResumeScanClock() noexcept
     scanClockState.store(GetTickCount64() - activeMilliseconds, std::memory_order_relaxed);
 }
 
-void CItem::SortItemsBySizePhysical() const
+void CItem::SortItemsBySize(const bool logical) const
 {
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    const auto sort = [this]
+    const auto sort = [this, logical]
     {
-        GetFolderInfo()->m_children.shrink_to_fit();
-        std::ranges::sort(GetFolderInfo()->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
-    };
-    if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
-}
-
-void CItem::SortItemsBySizeLogical() const
-{
-    if (IsLeaf()) return;
-
-    // sort by size for proper treemap rendering
-    const auto sort = [this]
-    {
-        GetFolderInfo()->m_children.shrink_to_fit();
-        std::ranges::sort(GetFolderInfo()->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
+        auto& children = GetFolderInfo()->m_children;
+        children.shrink_to_fit();
+        if (logical) std::ranges::sort(children, std::ranges::greater{}, &CItem::GetSizeLogical);
+        else std::ranges::sort(children, std::ranges::greater{}, &CItem::GetSizePhysical);
     };
     if (!MutateHiddenChildren(sort)) CMainFrame::Get()->InvokeInMessageThread(sort);
 }

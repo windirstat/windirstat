@@ -233,8 +233,7 @@ public:
     void ResetScanStartTime() const noexcept;
     static void SuspendScanClock() noexcept;
     static void ResumeScanClock() noexcept;
-    void SortItemsBySizePhysical() const;
-    void SortItemsBySizeLogical() const;
+    void SortItemsBySize(bool logical) const;
     void UpdateStatsFromDisk();
     static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
         std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr,

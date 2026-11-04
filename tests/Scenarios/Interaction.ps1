@@ -22,6 +22,38 @@
     Assert-ScanSnapshot (Save-AppReport $app 'whole-refresh') (Get-DiskSnapshot $root) $root -Physical
 }
 
+function Test-VisualizationCommands {
+    param($Context, $Case)
+    $root = New-TestTree
+    $app = Start-TestApp @($root) -Hidden
+    foreach ($logical in $true, $false, $false, $true) {
+        $command = if ($logical) { 'ID_TREEMAP_LOGICAL_SIZE' } else { 'ID_TREEMAP_PHYSICAL_SIZE' }
+        Invoke-AppCommand $app $command
+        Wait-Until { (Get-AppCommandState $app $command).Checked } 'The selected size basis becomes active' | Out-Null
+        Assert-Equal (Get-AppCommandState $app 'ID_TREEMAP_LOGICAL_SIZE').Checked $logical `
+            'Logical size selection follows the requested mode'
+        Assert-Equal (Get-AppCommandState $app 'ID_TREEMAP_PHYSICAL_SIZE').Checked (-not $logical) `
+            'Physical size selection follows the requested mode'
+    }
+    foreach ($command in 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_SUNBURST') {
+        Invoke-AppCommand $app $command
+        Assert-True (Get-AppCommandState $app $command).Checked 'Switching graphs updates the selected view'
+        foreach ($shown in $false, $true) {
+            if ((Get-AppCommandState $app 'ID_VIEW_SHOWVISUALIZATION').Checked -ne $shown) {
+                Invoke-AppCommand $app 'ID_VIEW_SHOWVISUALIZATION'
+            }
+            Assert-Equal (Get-AppCommandState $app 'ID_VIEW_SHOWVISUALIZATION').Checked $shown `
+                'Each graph can be hidden and restored'
+        }
+    }
+    $runner = $app.Runner
+    Stop-TestApp $app
+    $app = Start-TestApp @($root) -Runner $runner -Hidden
+    Assert-True (Get-AppCommandState $app 'ID_TREEMAP_LOGICAL_SIZE').Checked 'Size mode survives a restart'
+    Assert-True (Get-AppCommandState $app 'ID_VIEW_SUNBURST').Checked 'Graph selection survives a restart'
+    Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'Graph command checks leave the window hidden'
+}
+
 function Test-RefreshTimestamps {
     param($Context, $Case)
     $folder = Join-Path $Context.Fixture 'changed'
@@ -1084,6 +1116,9 @@ Register-Scenario interaction.cloud-keyboard Interaction `
     'Cloud connection editing supports keyboard traversal and cancellation' `
     Test-CloudSelectionKeyboard -Tags Desktop -Requires Windows,Desktop
 
+Register-Scenario interaction.visualization-commands Interaction `
+    'Graph selection, visibility, and logical/physical size modes remain synchronized without desktop input' `
+    Test-VisualizationCommands -Tags Persistence,External
 Register-Scenario interaction.scoped-refresh Interaction `
     'Selected refresh reconciles mutations without rescanning sibling branches' `
     Test-ScopedRefresh -Tags Desktop,External -Requires Windows,Desktop
