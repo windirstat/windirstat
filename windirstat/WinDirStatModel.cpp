@@ -621,7 +621,12 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                     return;
                 }
 
-                RemoveDirectory(item->GetPathLong().c_str());
+                // RemoveDirectory rejects read-only directories even when empty.
+                const std::wstring path = item->GetPathLong();
+                if (item->GetAttributes() != INVALID_FILE_ATTRIBUTES &&
+                    (item->GetAttributes() & FILE_ATTRIBUTE_READONLY) != 0)
+                    SetFileAttributes(path.c_str(), item->GetAttributes() & ~FILE_ATTRIBUTE_READONLY);
+                RemoveDirectory(path.c_str());
                 pdlg->Increment();
             }
 

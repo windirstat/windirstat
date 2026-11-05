@@ -1688,6 +1688,9 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
             const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
             if (attributes == INVALID_FILE_ATTRIBUTES || typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
 
+            // RemoveDirectory rejects read-only directories even when empty.
+            if ((attributes & FILE_ATTRIBUTE_READONLY) != 0 &&
+                !SetFileAttributes(path.c_str(), attributes & ~FILE_ATTRIBUTE_READONLY)) continue;
             if (RemoveDirectory(path.c_str()))
             {
                 deletedCount++;
