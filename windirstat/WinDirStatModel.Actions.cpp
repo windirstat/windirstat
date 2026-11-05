@@ -1678,7 +1678,7 @@ void CWinDirStatModel::OnCleanupRemoveEmpty()
             const DWORD typeAttributes = attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT);
             if (attributes == INVALID_FILE_ATTRIBUTES || typeAttributes != FILE_ATTRIBUTE_DIRECTORY) continue;
 
-            if (RemoveDirectory(path.c_str()))
+            if (RemoveDirectoryForce(path))
             {
                 deletedCount++;
                 deletedDirs.insert(item);

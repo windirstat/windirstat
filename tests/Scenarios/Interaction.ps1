@@ -868,21 +868,31 @@ function Test-CleanupReparseReplacement {
     $root = New-TestTree
     $stale = Join-Path $root 'ordinary-before-scan'
     [IO.Directory]::CreateDirectory($stale) | Out-Null
+    $readOnly = [IO.Directory]::CreateDirectory((Join-Path $root 'read-only'))
+    $readOnly.Attributes = $readOnly.Attributes -bor [IO.FileAttributes]::ReadOnly
+    $empty = [IO.DirectoryInfo]::new((Join-Path $root 'empty'))
+    $empty.Attributes = $empty.Attributes -bor [IO.FileAttributes]::ReadOnly
     $target = Join-Path $Context.Root 'external-target\empty-sentinel'
     [IO.Directory]::CreateDirectory($target) | Out-Null
     $app = Start-TestApp @($root)
     $list = Get-AppList $app -AllFiles
+    [IO.File]::WriteAllText((Join-Path $readOnly.FullName 'new.txt'), 'keep')
     [IO.Directory]::Delete($stale)
     New-TestJunction $stale ([IO.Path]::GetDirectoryName($target))
     Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
-        'Ordinary empty directories are actually removed'
+        'Empty read-only directories are removed'
     Assert-True ([IO.Directory]::Exists($target)) `
         'Cleanup does not traverse an ordinary directory replaced with a junction after scanning'
     Assert-True (([IO.File]::GetAttributes($stale) -band [IO.FileAttributes]::ReparsePoint) -ne 0) `
         'The replacement junction is preserved'
+    $readOnly.Refresh()
+    try {
+        Assert-True (($readOnly.Attributes -band [IO.FileAttributes]::ReadOnly) -ne 0) `
+            'A directory that acquired a file keeps its read-only attribute'
+    } finally { $readOnly.Attributes = $readOnly.Attributes -band (-bnot [IO.FileAttributes]::ReadOnly) }
 }
 
 function Test-SelectedDeletion {

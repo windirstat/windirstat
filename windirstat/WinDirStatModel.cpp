@@ -618,7 +618,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                     return;
                 }
 
-                RemoveDirectory(item->GetPathLong().c_str());
+                RemoveDirectoryForce(item->GetPathLong());
                 pdlg->Increment();
             }
 

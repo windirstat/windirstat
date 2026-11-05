@@ -230,6 +230,22 @@ std::wstring GetVolumeName(const std::wstring& rootPath)
     return volumeName;
 }
 
+bool RemoveDirectoryForce(const std::wstring& path)
+{
+    if (RemoveDirectory(path.c_str())) return true;
+    if (GetLastError() != ERROR_ACCESS_DENIED) return false;
+
+    // Restore the original attributes if the directory cannot be removed.
+    const DWORD attributes = GetFileAttributes(path.c_str());
+    if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_READONLY) == 0 ||
+        !SetFileAttributes(path.c_str(), attributes & ~FILE_ATTRIBUTE_READONLY)) return false;
+    if (RemoveDirectory(path.c_str())) return true;
+    const DWORD error = GetLastError();
+    SetFileAttributes(path.c_str(), attributes);
+    SetLastError(error);
+    return false;
+}
+
 bool DeleteFileForce(const std::wstring& path, DWORD attributes)
 {
     // Attempt deletion
