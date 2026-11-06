@@ -1,4 +1,4 @@
-# AI-Assisted WinDirStat
+# AI-Assisted Disk Space Analysis and File Organisation Tool
 
 **AI-powered disk cleanup recommendations built on WinDirStat**  
 **Course:** Contemporary Methods in Software Engineering  
