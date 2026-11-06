@@ -494,6 +494,62 @@ void CWinDirStatModel::RebuildExtensionData()
     }
 }
 
+// Lets the progress dialog's Cancel button stop a shell deletion before its next item
+class CDeleteCancelSink final : public IFileOperationProgressSink
+{
+    const CProgressDlg* m_progress;
+    std::atomic<ULONG> m_refs = 1;
+
+public:
+    explicit CDeleteCancelSink(const CProgressDlg* progress) : m_progress(progress) {}
+
+    STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override
+    {
+        if (ppv == nullptr) return E_POINTER;
+        if (riid != IID_IUnknown && riid != __uuidof(IFileOperationProgressSink))
+        {
+            *ppv = nullptr;
+            return E_NOINTERFACE;
+        }
+        *ppv = static_cast<IFileOperationProgressSink*>(this);
+        AddRef();
+        return S_OK;
+    }
+    STDMETHODIMP_(ULONG) AddRef() override { return ++m_refs; }
+    STDMETHODIMP_(ULONG) Release() override
+    {
+        const ULONG refs = --m_refs;
+        if (refs == 0) delete this;
+        return refs;
+    }
+
+    HRESULT CancelIfRequested() const
+    {
+        return m_progress->IsCancelled() ? HRESULT_FROM_WIN32(ERROR_CANCELLED) : S_OK;
+    }
+
+    // Failing here cancels this item and every operation still pending
+    STDMETHODIMP PreDeleteItem(DWORD, IShellItem*) override { return CancelIfRequested(); }
+
+    // The shell walks the whole selection before its first PreDeleteItem and only reports progress meanwhile
+    STDMETHODIMP UpdateProgress(UINT, UINT) override { return CancelIfRequested(); }
+
+    STDMETHODIMP StartOperations() override { return S_OK; }
+    STDMETHODIMP FinishOperations(HRESULT) override { return S_OK; }
+    STDMETHODIMP PreRenameItem(DWORD, IShellItem*, LPCWSTR) override { return S_OK; }
+    STDMETHODIMP PostRenameItem(DWORD, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+    STDMETHODIMP PreMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR) override { return S_OK; }
+    STDMETHODIMP PostMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+    STDMETHODIMP PreCopyItem(DWORD, IShellItem*, IShellItem*, LPCWSTR) override { return S_OK; }
+    STDMETHODIMP PostCopyItem(DWORD, IShellItem*, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }
+    STDMETHODIMP PostDeleteItem(DWORD, IShellItem*, HRESULT, IShellItem*) override { return S_OK; }
+    STDMETHODIMP PreNewItem(DWORD, IShellItem*, LPCWSTR) override { return S_OK; }
+    STDMETHODIMP PostNewItem(DWORD, IShellItem*, LPCWSTR, LPCWSTR, DWORD, HRESULT, IShellItem*) override { return S_OK; }
+    STDMETHODIMP ResetTimer() override { return S_OK; }
+    STDMETHODIMP PauseTimer() override { return S_OK; }
+    STDMETHODIMP ResumeTimer() override { return S_OK; }
+};
+
 void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
     const bool hasRemoteItems = std::ranges::any_of(items,
@@ -647,7 +703,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         DWORD flags = FOFX_SHOWELEVATIONPROMPT | FOF_NOCONFIRMATION;
         if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
 
-        const auto doDelete = [&](const HWND hwnd, const DWORD opFlags)
+        const auto doDelete = [&](const HWND hwnd, const DWORD opFlags, const CProgressDlg* progress)
         {
             // Initialize COM on whichever thread executes the shell operation
             const ComApartmentScope com;
@@ -662,7 +718,17 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             // Queue the complete shell selection and execute it as one deletion
             const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete, true);
             if (psia == nullptr || FAILED(fileOperation->DeleteItems(psia))) return;
+
+            // Without its own UI the shell operation can only be stopped through a progress sink
+            DWORD cookie = 0;
+            CComPtr<IFileOperationProgressSink> sink;
+            if (progress != nullptr)
+            {
+                sink.Attach(new CDeleteCancelSink(progress));
+                if (FAILED(fileOperation->Advise(sink, &cookie))) cookie = 0;
+            }
             const HRESULT res = fileOperation->PerformOperations();
+            if (cookie != 0) fileOperation->Unadvise(cookie);
             if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
         };
 
@@ -671,12 +737,12 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             // The shell pumps messages while deleting, so block commands against the stale model until refreshed
             const HWND mainWindow = GetMainWindowHandle();
             EnableWindow(mainWindow, false);
-            doDelete(mainWindow, flags);
+            doDelete(mainWindow, flags, nullptr);
             EnableWindow(mainWindow, true);
         }
         else
             CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](const CProgressDlg* pdlg)
-                { doDelete(*pdlg, flags | FOF_NO_UI); }).ShowModal();
+                { doDelete(*pdlg, flags | FOF_NO_UI, pdlg); }).ShowModal();
     }
 
     // Create a set of recycler directories to refresh
