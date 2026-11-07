@@ -6,6 +6,7 @@
 
 #include "pch.h"
 #include "PageAdvanced.h"
+#include "FileTopControl.h"
 
 CPageAdvanced::CPageAdvanced() : MessageTarget(IDD, L"IDS_PAGE_ADVANCED_TITLE")
 {
@@ -50,7 +51,7 @@ std::optional<CPropertyPage::ValidationError> CPageAdvanced::PrepareSettings()
     auto history = COptions::SelectDrivesFolder.Obj();
     history.resize(std::min(static_cast<size_t>(folderHistoryCount.value), history.size()));
     Stage(COptions::SelectDrivesFolder, std::move(history));
-    StageEffect([priority = priority.value, refreshAll, refreshReparsepoints]
+    StageEffect([priority = priority.value, refreshAll, refreshReparsepoints, refreshTop = largeFileCount.Changed()]
     {
         SetProcessPriority(priority);
 
@@ -63,6 +64,7 @@ std::optional<CPropertyPage::ValidationError> CPageAdvanced::PrepareSettings()
         {
             CWinDirStatModel::Get()->RefreshReparsePointItems();
         }
+        if (refreshTop) CFileTopControl::Get()->SortItems();
 
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_LIST_STYLE);
     });
