@@ -848,6 +848,21 @@ function Test-LargestRefresh {
     Get-AppList $app -AllFiles | Out-Null
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
     $list = Get-AppList $app -TabName 'Largest Files'
+    foreach ($limit in @(1, 4, 0, 3)) {
+        $settings = Open-AppDialog $app 'ID_CONFIGURE'
+        Select-SettingsPage $settings 'Advanced'
+        [TestDesktop]::SetText((Get-DialogControl $settings 'IDC_LARGEST_FILE_COUNT'), "$limit")
+        Close-AppDialog $settings 1
+        Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+        Wait-Until {
+            @([NativeListViewHelper]::GetItemTexts($list) |
+                Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq $limit
+        } 'Largest files applies its new limit' | Out-Null
+        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $expected = @(@($first, $stable, $second, $replacement) | Select-Object -First $limit)
+        Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
+            "Largest files refills from the scan after its limit changes to $limit"
+    }
     Select-AppRows $app $list @($stable)
     [IO.File]::Delete($first)
     [IO.File]::Delete($second)
@@ -861,6 +876,82 @@ function Test-LargestRefresh {
         'Largest files replaces removed rows with the next surviving candidate'
     Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $stable), 2).ToInt32()) 2 `
         'The surviving largest file keeps its selection across removal and insertion'
+}
+
+function Test-LargestReserve {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $files = @(0..9 | ForEach-Object {
+        New-TestFile (Join-Path $root "rank-$_.bin") ((10 - $_) * 16384)
+    })
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ LargeFileCount = 3 } }
+    Get-AppList $app -AllFiles | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+    $list = Get-AppList $app -TabName 'Largest Files'
+    Select-AppRows $app $list @($files[0])
+    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($paths | Sort-Object) @($files[0..2] | Sort-Object) `
+        'Largest files displays only the configured count with a full reserve'
+
+    foreach ($change in @(
+        @{ Index = 5; Name = 'Removing a hidden spare' }
+        @{ Index = 1; Size = 1; Name = 'Shrinking a visible file below uncached files' }
+        @{ Index = 4; Name = 'Reducing the reserve to exactly the display count' }
+        @{ Index = 2; Name = 'Depleting the reserve below the display count' }
+        @{ Index = 9; Size = 196608; Name = 'Growing a smaller file into the displayed results' }
+        @{ Index = 9; Size = 0; Name = 'Shrinking the largest file to zero' }
+        @{ Index = 1, 3, 6, 7, 8, 9; Name = 'Leaving fewer files than the display count' }
+    )) {
+        $changed = @($change.Index | ForEach-Object { $files[$_] })
+        foreach ($path in $changed) {
+            if ($change.ContainsKey('Size')) { New-TestFile $path $change.Size | Out-Null }
+            else { [IO.File]::Delete($path) }
+        }
+        $tree = Get-AppList $app -AllFiles
+        Select-AppRows $app $tree $changed
+        Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+        Wait-AppIdle $app
+        Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+        $paths = @([NativeListViewHelper]::GetItemTexts($list) |
+            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $expected = @(Get-ChildItem -LiteralPath $root -File | Sort-Object Length -Descending |
+            Select-Object -First 3 -ExpandProperty FullName)
+        Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) $change.Name
+    }
+    Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $files[0]), 2).ToInt32()) 2 `
+        'The surviving largest file keeps its selection while the reserve is consumed and refilled'
+}
+
+function Test-LargestEqualSizes {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    $files = @(0..9 | ForEach-Object { New-TestFile (Join-Path $root "equal-$_.bin") 16384 })
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ LargeFileCount = 3 } }
+    Get-AppList $app -AllFiles | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+    $list = Get-AppList $app -TabName 'Largest Files'
+    Wait-Until {
+        @([NativeListViewHelper]::GetItemTexts($list) |
+            Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq 3
+    } 'The initial largest files are displayed' | Out-Null
+    Wait-AppIdle $app
+    $selected = @([NativeListViewHelper]::GetItemTexts($list) |
+        Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Select-AppRows $app $list $selected
+    foreach ($path in $files | Where-Object { $_ -notin $selected }) {
+        [IO.File]::Delete($path)
+        $tree = Get-AppList $app -AllFiles
+        Select-AppRows $app $tree @($path)
+        Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+        Wait-AppIdle $app
+        Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+        $remaining = @([NativeListViewHelper]::GetItemTexts($list) |
+            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        Assert-Sequence @($remaining | Sort-Object) @($selected | Sort-Object) `
+            'Removing an undisplayed equal-size file preserves the displayed candidates'
+        Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selected.Count `
+            'Removing an undisplayed equal-size file preserves every surviving selection'
+    }
 }
 
 function Test-CleanupReparseReplacement {
@@ -1238,8 +1329,14 @@ foreach ($collapsed in $false, $true) {
         Test-DuplicateBatchUpdates -Tags Desktop,External -Requires Windows,Desktop -Data @{ Collapsed = $collapsed }
 }
 Register-Scenario interaction.largest-refresh Interaction `
-    'Largest-file refresh refills removed candidates and preserves surviving selection' `
+    'Largest-file limit changes and refreshes refill candidates and preserve surviving selection' `
     Test-LargestRefresh -Tags Desktop,External -Requires Windows,Desktop
+Register-Scenario interaction.largest-reserve Interaction `
+    'Largest-file reserves preserve ranking through deletions, shrinking files, and replenishment' `
+    Test-LargestReserve -Tags Desktop,External -Requires Windows,Desktop
+Register-Scenario interaction.largest-equal-sizes Interaction `
+    'Equal-size largest files retain their selection while undisplayed candidates are removed' `
+    Test-LargestEqualSizes -Tags Desktop,External -Requires Windows,Desktop
 foreach ($microsoft in 0, 1) {
     Register-Scenario "interaction.delete.$microsoft" Interaction `
         'Permanent deletion reconciles selected folders and files without changing surviving payloads' `

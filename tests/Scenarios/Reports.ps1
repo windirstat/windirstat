@@ -188,6 +188,12 @@ function Test-ReportRoundTrip {
         'Converting a loaded report preserves metadata across CSV and JSON'
     Assert-Equal @($loaded | Where-Object Name -IEQ $sentinel).Count 0 `
         'Loading a report does not scan newly created files'
+    Get-AppList $app -AllFiles | Out-Null
+    Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
+    $largest = @([NativeListViewHelper]::GetItemTexts((Get-AppList $app -TabName 'Largest Files')) |
+        Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    Assert-Sequence @($largest | Sort-Object) @((Get-ReportFiles $source).Name | Sort-Object) `
+        'Loading a report lists its saved files as the largest files'
     Invoke-AppCommand $app 'ID_REFRESH_ALL'
     Wait-AppIdle $app
     $refreshed = Save-AppReport $app 'refreshed'

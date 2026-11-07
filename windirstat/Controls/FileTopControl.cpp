@@ -20,58 +20,92 @@ bool CFileTopControl::GetAscendingDefault(const int column)
 
 void CFileTopControl::ProcessTop(CItem * item)
 {
-    // Do not process if we are not tracking large files
-    if (COptions::LargeFileCount == 0) return;
+    // Keep a reserve of replacements without retaining every scanned file.
+    std::scoped_lock lock(m_topMutex);
+    const size_t capacity = 2 * m_topLimit;
 
-    m_queuedSet.push(item);
+    // Once any file is omitted, admit only files that outrank the smallest cached one.
+    if (m_hasUncachedItems || m_topItems.size() == capacity)
+    {
+        m_hasUncachedItems = true;
+        if (m_topItems.empty() || !CompareBySize(item, m_topItems.front())) return;
+    }
+    if (m_topItems.size() == capacity)
+    {
+        std::ranges::pop_heap(m_topItems, CompareBySize);
+        m_topItems.pop_back();
+    }
+    m_topItems.push_back(item);
+    std::ranges::push_heap(m_topItems, CompareBySize);
+    m_needsResort = true;
 }
 
 void CFileTopControl::SortItems()
 {
+    UpdateItems({}, !CWinDirStatModel::Get()->IsScanRunning());
+}
 
+void CFileTopControl::UpdateItems(std::span<CItem* const> excluded, const bool allowRefill)
+{
     // Verify at least root exists
     if (GetItemCount() == 0) return;
 
-    // Record size and complete resort if top N changed
-    const auto topN = static_cast<size_t>(COptions::LargeFileCount.Obj());
-    if (topN != m_previousTopN)
+    // Remove refreshed branches before their items are destroyed, including cached spare entries.
+    const std::unordered_set<CItem*> excludedRoots(std::from_range, excluded);
+    const auto isExcluded = [&](CItem* item)
     {
-        m_previousTopN = topN;
-        m_needsResort = true;
-    }
-
-    bool topChanged = m_needsResort;
-    const auto considerItem = [&](CItem* candidate)
-    {
-        if (topN == 0) return;
-        if (m_topItems.size() < topN)
-        {
-            m_topItems.push_back(candidate);
-            std::ranges::push_heap(m_topItems, CompareBySize);
-        }
-        else
-        {
-            if (!CompareBySize(candidate, m_topItems.front())) return;
-            std::ranges::pop_heap(m_topItems, CompareBySize);
-            m_topItems.back() = candidate;
-            std::ranges::push_heap(m_topItems, CompareBySize);
-        }
-        topChanged = true;
+        for (; item != nullptr; item = item->GetParent())
+            if (excludedRoots.contains(item)) return true;
+        return false;
     };
-
-    // Keep candidates for refilling the top list after deletions or a limit change.
-    CItem* newItem = nullptr;
-    while (m_queuedSet.pop(newItem))
+    CItem* root = CWinDirStatModel::Get()->GetRootItem();
+    const auto topN = static_cast<size_t>(COptions::LargeFileCount.Obj());
+    bool refill;
     {
-        m_sizeMap.push_back(newItem);
-        if (!m_needsResort) considerItem(newItem);
+        std::scoped_lock lock(m_topMutex);
+        if (!excludedRoots.empty() && std::erase_if(m_topItems, isExcluded) != 0)
+        {
+            std::ranges::make_heap(m_topItems, CompareBySize);
+            m_needsResort = true;
+        }
+        if (m_topLimit != topN) m_needsResort = true;
+        m_topLimit = topN;
+        while (m_topItems.size() > 2 * topN)
+        {
+            std::ranges::pop_heap(m_topItems, CompareBySize);
+            m_topItems.pop_back();
+            m_hasUncachedItems = true;
+        }
+
+        // Only stopped enumeration may refill; a fully cached small tree needs no repeat walk.
+        refill = allowRefill && root != nullptr && m_hasUncachedItems && m_topItems.size() < topN;
+        if (refill)
+        {
+            m_topItems.clear();
+            m_hasUncachedItems = false;
+            m_needsResort = true;
+        }
+    }
+    if (refill)
+    {
+        std::vector queue{ root };
+        while (!queue.empty())
+        {
+            CItem* item = queue.back();
+            queue.pop_back();
+            if (excludedRoots.contains(item)) continue;
+            if (item->IsTypeOrFlag(IT_FILE)) ProcessTop(item);
+            else if (!item->IsLeaf() && !item->IsTypeOrFlag(IT_HLINKS)) queue.append_range(item->GetChildren());
+        }
     }
 
-    if (m_needsResort)
+    // Release the worker lock before updating controls or dispatching UI messages.
+    std::vector<CItem*> topItems;
+    bool topChanged;
     {
-        m_topItems.clear();
-        for (auto* candidate : m_sizeMap) considerItem(candidate);
-        m_needsResort = false;
+        std::scoped_lock lock(m_topMutex);
+        topChanged = std::exchange(m_needsResort, false);
+        if (topChanged) topItems = m_topItems;
     }
 
     if (!topChanged)
@@ -80,11 +114,18 @@ void CFileTopControl::SortItems()
         return;
     }
 
+    // Display only the requested largest entries, regardless of the user's column sort order.
+    if (topItems.size() > topN)
+    {
+        std::ranges::nth_element(topItems, topItems.begin() + topN, CompareBySize);
+        topItems.resize(topN);
+    }
+
     // Collect visual additions and removals before changing the list.
     const ScopedRedrawPause lock(this);
     std::vector<CItemTop*> added;
     auto itemTrackerCopy = std::unordered_map(m_itemTracker);
-    for (const auto& largeItem : m_topItems)
+    for (const auto& largeItem : topItems)
     {
         if (m_itemTracker.contains(largeItem))
         {
@@ -110,57 +151,13 @@ void CFileTopControl::SortItems()
     CTreeListControl::SortItems();
 }
 
-void CFileTopControl::RemoveItems(std::span<CItem* const> items)
-{
-    if (items.empty()) return;
-
-    // Fold pending scan results into the tracked list before calculating
-    // removals so queued descendants do not get re-added by SortItems().
-    CItem* newItem = nullptr;
-    while (m_queuedSet.pop(newItem))
-    {
-        m_sizeMap.push_back(newItem);
-    }
-
-    // Create list of all items to remove
-    std::unordered_set<CItem*> toRemove;
-    std::vector queue(items.begin(), items.end());
-    while (!queue.empty())
-    {
-        const auto qitem = queue.back();
-        queue.pop_back();
-
-        if (qitem->IsTypeOrFlag(IT_FILE))
-        {
-            toRemove.emplace(qitem);
-        }
-        else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
-        {
-            if (child->IsTypeOrFlag(IT_FILE)) toRemove.emplace(child);
-            else queue.push_back(child);
-        }
-    }
-
-    // Remove items in bulk
-    m_needsResort = true;
-    std::erase_if(m_sizeMap, [&](const auto& itemToRemove)
-    {
-        return toRemove.contains(itemToRemove);
-    });
-
-    // Use the sort function to remove visual items
-    CMainFrame::Get()->InvokeInMessageThread([&]
-    {
-        SortItems();
-    });
-}
-
 void CFileTopControl::AfterDeleteAllItems()
 {
     // Reset trackers
-    m_sizeMap.clear();
     m_itemTracker.clear();
     m_topItems.clear();
+    m_hasUncachedItems = true;
+    m_topLimit = COptions::LargeFileCount;
     m_needsResort = true;
 
     // Delete and recreate root item

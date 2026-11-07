@@ -19,26 +19,29 @@ public:
     static CFileTopControl* Get() { return m_singleton; }
     CItemTop* GetRootItem() const { return m_rootItem; }
     void ProcessTop(CItem* item);
-    void ClearPendingItems() { m_queuedSet.clear(); }
-    void RemoveItems(std::span<CItem* const> items);
+    void UpdateItems(std::span<CItem* const> excluded = {}, bool allowRefill = true);
     void SortItems() override;
     void AfterDeleteAllItems() override;
 
 protected:
 
-    // Custom comparator to keep the list organized by size (largest first)
+    // Sort largest first, using item identity to keep equal-size candidates stable across cache updates.
     static constexpr auto CompareBySize = [](const CItem* lhs, const CItem* rhs)
     {
-        return lhs->GetSizeLogical() > rhs->GetSizeLogical();
+        const auto lhsSize = lhs->GetSizeLogical();
+        const auto rhsSize = rhs->GetSizeLogical();
+        return lhsSize != rhsSize ? lhsSize > rhsSize : std::less<const CItem*>{}(lhs, rhs);
     };
 
     inline static CFileTopControl* m_singleton = nullptr;
     CItemTop* m_rootItem = nullptr;
-    SingleConsumerQueue<CItem*> m_queuedSet;
-    std::vector<CItem*> m_sizeMap;
-    std::vector<CItem*> m_topItems;
-    bool m_needsResort = true;
     std::unordered_map<CItem*, CItemTop*> m_itemTracker;
-    size_t m_previousTopN = 0;
+
+    // Scan workers feed this cache, so access these fields under the mutex while enumeration can run.
+    std::mutex m_topMutex;
+    std::vector<CItem*> m_topItems;
+    size_t m_topLimit = COptions::LargeFileCount;
+    bool m_hasUncachedItems = true;
+    bool m_needsResort = true;
 
 };

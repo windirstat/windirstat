@@ -1094,7 +1094,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     // Remove items in UI thread so we do not conflict with the timer updates
     CFileDupeControl::Get()->RemoveItems(items);
-    CFileTopControl::Get()->RemoveItems(items);
+    CFileTopControl::Get()->UpdateItems(items);
     CFileSearchControl::Get()->RemoveItems(items);
 
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
