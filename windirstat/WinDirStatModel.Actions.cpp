@@ -603,7 +603,7 @@ void CWinDirStatModel::OnCleanupMoveTo()
         if (psia == nullptr || FAILED(fileOperation->MoveItems(psia, destShellItem))) return;
 
         // Do all moves
-        const HRESULT res = fileOperation->PerformOperations();
+        const HRESULT res = PerformCancellableOperations(fileOperation, flags, [pdlg] { return pdlg->IsCancelled(); });
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
     }).ShowModal();
 
