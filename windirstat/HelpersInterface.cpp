@@ -577,7 +577,7 @@ CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items, 
 }
 
 // Shell file operation
-namespace
+HRESULT PerformCancellableOperations(IFileOperation* operation, const DWORD flags, const std::function<bool()>& isCancelled)
 {
     // Stops a shell file operation once the caller reports a cancel request
     class CFileOperationCancelSink final : public IFileOperationProgressSink
@@ -634,10 +634,7 @@ namespace
         STDMETHODIMP PauseTimer() override { return S_OK; }
         STDMETHODIMP ResumeTimer() override { return S_OK; }
     };
-}
 
-HRESULT PerformCancellableOperations(IFileOperation* operation, const DWORD flags, const std::function<bool()>& isCancelled)
-{
     // Without its own UI the shell operation can only be stopped through a progress sink
     DWORD cookie = 0;
     CComPtr<IFileOperationProgressSink> sink;
@@ -646,7 +643,11 @@ HRESULT PerformCancellableOperations(IFileOperation* operation, const DWORD flag
     {
         // Let the shell show its own cancellable progress rather than run an operation nobody can stop
         cookie = 0;
-        if ((flags & FOF_SILENT) != 0) operation->SetOperationFlags(flags & ~FOF_SILENT);
+        if ((flags & FOF_SILENT) != 0)
+        {
+            const HRESULT result = operation->SetOperationFlags(flags & ~FOF_SILENT);
+            if (FAILED(result)) return result;
+        }
     }
 
     const HRESULT result = operation->PerformOperations();
