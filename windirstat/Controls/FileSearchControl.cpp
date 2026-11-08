@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "ItemSearch.h"
 #include "FileTreeView.h"
+#include "FinderBasic.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr(), COptions::SearchViewColumnVisibility.Ptr(), LF_SEARCHLIST, false)
 {
@@ -49,6 +50,13 @@ bool SearchCriteria::MatchesSize(const CItem* item) const
 
 bool SearchCriteria::Matches(const CItem* item, const std::wregex& termRegex) const
 {
+    // Recheck empty-folder results on disk
+    if (emptyFoldersOnly)
+    {
+        std::unordered_map<std::wstring, bool> checkedFolders;
+        return FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders);
+    }
+
     // Apply the size range before the name match, since it is the cheaper test.
     const bool typeWanted = (includeFiles && item->IsTypeOrFlag(IT_FILE)) ||
         (includeFolders && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
@@ -135,6 +143,11 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
 
     // Add found items to the interface
+    PopulateSearchResults(matchedItems, totals);
+}
+
+void CFileSearchControl::PopulateSearchResults(const std::vector<CItem*>& matchedItems, const std::optional<CItemSearch::SizeTotals>& totals)
+{
     CWaitCursor wait;
     CollapseItem(0);
 
@@ -153,6 +166,73 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     ExpandItem(0);
 }
 
+void CFileSearchControl::SearchEmptyFolders(const std::vector<CItem*>& items)
+{
+    // Skip while a scan is running
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
+
+    // Show the search tab
+    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
+
+    // Remove previous results
+    SetRootItem();
+    m_criteria = { .emptyFoldersOnly = true };
+    m_rootItem->SetLimitExceeded(false);
+
+    // Collect the start folders
+    std::vector<CItem*> stack = CWinDirStatModel::GetEmptyFolderRoots(items);
+    ULONGLONG totalItems = 0;
+    for (const CItem* item : stack) totalItems += item->GetItemsCount();
+
+    // Collect empty folders, nested ones included
+    std::vector<CItem*> results;
+    bool limitExceeded = false;
+    std::optional<CItemSearch::SizeTotals> totals;
+    const auto result = CProgressDlg(static_cast<size_t>(totalItems), CProgressDlg::Flags::None, GetMainWindow(),
+        [&](CProgressDlg* pdlg)
+    {
+        std::unordered_map<std::wstring, bool> checkedFolders;
+
+        while (!stack.empty() && !pdlg->IsCancelled())
+        {
+            pdlg->Increment();
+            CItem* item = stack.back();
+            stack.pop_back();
+            if (FinderBasic::IsEmptyFolderOnDisk(item, checkedFolders))
+            {
+                // Stop at the search result limit
+                if (results.size() >= COptions::SearchMaxResults)
+                {
+                    limitExceeded = true;
+                    break;
+                }
+                results.push_back(item);
+            }
+
+            // Do not descend into links
+            if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
+            {
+                stack.insert(stack.end(), item->GetChildren().begin(), item->GetChildren().end());
+            }
+        }
+        totals = CItemSearch::CalculateTotals(results, [pdlg] { return pdlg->IsCancelled(); });
+    }).ShowModal();
+    m_rootItem->SetLimitExceeded(limitExceeded || result == IDCANCEL);
+
+    // Add found items to the interface
+    PopulateSearchResults(results, totals);
+}
+
+void CFileSearchControl::SelectAllResults()
+{
+    // Expand the results header
+    if (!m_rootItem->IsExpanded()) ExpandItem(0, false);
+
+    // Select all rows except the header
+    SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
+    SetItemState(0, 0, LVIS_SELECTED);
+}
+
 void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
 {
     if (items.empty() || m_itemTracker.empty()) return;
@@ -162,7 +242,8 @@ void CFileSearchControl::RemoveItems(std::span<CItem* const> items)
         m_criteria.physicalMinimum || m_criteria.physicalMaximum;
     const std::unordered_set<CItem*> refreshed(items.begin(), items.end());
     std::unordered_set<CItem*> ancestors;
-    if (sizeFilterActive) for (auto* item : items)
+    // Recheck ancestors of refreshed items
+    if (sizeFilterActive || m_criteria.emptyFoldersOnly) for (auto* item : items)
         for (auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
             if (!ancestors.insert(parent).second) break;
 
