@@ -976,6 +976,96 @@ function Test-CleanupReparseReplacement {
         'The replacement junction is preserved'
 }
 
+function Test-SearchEmptyRecycle {
+    param($Context, $Case)
+    $root = New-TestTree
+    $kept = Join-Path $root 'kept'
+    [IO.Directory]::CreateDirectory((Join-Path $kept 'inner')) | Out-Null
+    $app = Start-TestApp @($root)
+    $tree = Get-AppList $app -AllFiles
+    Select-AppRows $app $tree @($root)
+    Invoke-AppCommand $app 'ID_CLEANUP_SEARCH_EMPTY'
+    Wait-AppIdle $app
+    $results = Get-AppList $app -TabName 'Search Results'
+    $expected = @('empty', 'empty\nested', 'kept', 'kept\inner' | ForEach-Object { Join-Path $root $_ })
+    Wait-Until { @($expected | Where-Object { $_ -notin [NativeListViewHelper]::GetItemTexts($results) }).Count -eq 0 } `
+        'The search lists every empty folder, nested ones included' | Out-Null
+
+    # The confirmation and the report share the title, so each is told apart by its button
+    $findDialog = {
+        param([string] $Button)
+        @([TestDesktop]::Windows($app.Process.Id) | Where-Object {
+            [TestDesktop]::Class($_) -eq '#32770' -and [TestDesktop]::IsWindowVisible($_) -and
+            @([TestDesktop]::Children($_) | Where-Object {
+                [TestDesktop]::Class($_) -eq 'Button' -and [TestDesktop]::IsWindowVisible($_) -and
+                [TestDesktop]::ControlText($_).Replace('&', '').Trim() -eq $Button
+            }).Count
+        } | Select-Object -First 1)
+    }
+
+    # Select All has to take the focus along, or Recycle would act on the root still selected in the tree
+    Assert-True ([NativeListViewHelper]::FocusListView($app.ExtensionList)) 'Another list holds the focus before Select All'
+    Invoke-AppCommand $app 'ID_SEARCH_SELECT_ALL'
+
+    # A selected folder stands for the results nested in it, so only the topmost ones stay selected
+    Wait-Until {
+        [NativeListViewHelper]::GetSelectedCount($results) -eq 2 -and
+        [TestDesktop]::Focus($app.Window) -eq $results -and (Get-AppCommandState $app 'ID_CLEANUP_DELETE_BIN').Enabled
+    } 'Select All selects every result, without the summary row, and focuses the results' -StableMilliseconds 150 | Out-Null
+    Invoke-AppCommand $app 'ID_CLEANUP_DELETE_BIN'
+
+    # The file only appears while the prompt is open, so only a check made after the prompt sees it
+    $prompt = Wait-Until { & $findDialog 'Yes' } 'Recycling asks for confirmation first' -Seconds 20
+    $added = New-TestFile (Join-Path $kept 'added-after-search.txt') 41
+    Close-AppDialog $prompt -ButtonName 'Yes'
+    $report = Wait-Until { & $findDialog 'OK' } 'A folder that gained a file while the prompt was open is reported' -Seconds 20
+    $reported = @([TestDesktop]::Children($report) | Where-Object { [TestDesktop]::Class($_) -eq 'SysListView32' } |
+        ForEach-Object { [NativeListViewHelper]::GetItemTexts($_) })
+    Assert-Equal @($reported | Where-Object { $_ -like "${kept}: *" }).Count 1 'The report names the folder that gained a file'
+    Assert-Equal $reported.Count 1 'The report names no folder that stayed empty'
+    Close-AppDialog $report -ButtonName 'OK'
+    Wait-AppIdle $app
+    Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
+        'An empty branch goes to the Recycle Bin along with the folder nested in it'
+    Assert-True (-not [IO.Directory]::Exists((Join-Path $kept 'inner'))) `
+        'A folder that stayed empty goes even when its parent stays'
+    Assert-True ([IO.File]::Exists($added)) 'A file put into a listed folder while the prompt was open stays'
+    Assert-True ([IO.File]::Exists((Join-Path $root 'beta\untouched.txt'))) 'Nothing outside the results is touched'
+}
+
+function Test-SearchSelectAll {
+    param($Context, $Case)
+    $root = New-TestTree
+    $hitDir = Join-Path $root 'hitdir'
+    New-TestFile (Join-Path $hitDir 'hitfile.txt') 17 | Out-Null
+    $many = Join-Path $root 'many'
+    [IO.Directory]::CreateDirectory($many) | Out-Null
+    # Stays below the default result cap, so every match is listed
+    $count = 9997
+    for ($index = 0; $index -lt $count; ++$index) { [IO.File]::WriteAllBytes((Join-Path $many "hit$index.txt"), [byte[]]@()) }
+    $app = Start-TestApp @($root)
+    Get-AppList $app -AllFiles | Out-Null
+    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), 'hit')
+    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $false
+    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
+    Close-AppDialog $dialog 1
+    $results = Get-AppList $app -TabName 'Search Results'
+    Wait-Until { [NativeListViewHelper]::GetItemCount($results) -eq ($count + 3) } `
+        'The text search lists the folder, the file inside it and every other match' | Out-Null
+    Assert-True ((Get-AppCommandState $app 'ID_SEARCH_SELECT_ALL').Enabled) 'Select All is available for a text search'
+
+    # The folder stands for the file inside it, so that file does not stay selected
+    Assert-True ([NativeListViewHelper]::FocusListView($app.ExtensionList)) 'Another list holds the focus before Select All'
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Invoke-AppCommand $app 'ID_SEARCH_SELECT_ALL'
+    Wait-Until {
+        [NativeListViewHelper]::GetSelectedCount($results) -eq ($count + 1) -and [TestDesktop]::Focus($app.Window) -eq $results
+    } 'Select All selects every text search result, without the summary row, and focuses the results' -StableMilliseconds 150 | Out-Null
+    $watch.Stop()
+    Write-TestNote ("Select All on {0} text search results: {1} ms" -f ($count + 2), $watch.ElapsedMilliseconds)
+}
+
 function Test-SelectedDeletion {
     param($Context, $Case)
     $root = New-TestTree
@@ -1322,6 +1412,12 @@ Register-Scenario interaction.dedup-groups Interaction `
 Register-Scenario interaction.cleanup-reparse Interaction `
     'Empty-folder cleanup rechecks reparse boundaries after external replacement' `
     Test-CleanupReparseReplacement -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
+Register-Scenario interaction.search-empty-recycle Interaction `
+    'Recycling selected empty-folder results only takes folders that are still empty' `
+    Test-SearchEmptyRecycle -Tags Desktop,Filesystem,External -Requires Windows,Desktop,Ntfs
+Register-Scenario interaction.search-select-all Interaction `
+    'Select All selects every result of a text search' `
+    Test-SearchSelectAll -Tags Desktop,Filesystem -Requires Windows,Desktop
 foreach ($collapsed in $false, $true) {
     $state = if ($collapsed) { 'collapsed' } else { 'expanded' }
     Register-Scenario "interaction.duplicate-batch.$state" Interaction `
