@@ -39,6 +39,7 @@ protected:
         &COptions::ExcludeProtectedFile,
         &COptions::ProcessHardlinks,
         &COptions::SampleLargeFiles,
+        &COptions::ScanWslDisks,
     };
 
     static constexpr std::array NumberBindings

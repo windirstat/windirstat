@@ -9,6 +9,7 @@
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
 #include "FinderMtp.h"
+#include "FinderWsl.h"
 #include "StorageSource.h"
 
 static void RememberCloudTarget(const std::wstring& path)
@@ -474,6 +475,15 @@ namespace
         // Query MTP devices through their Shell storage metadata
         if (FinderMtp::IsPath(path)) return FinderMtp::GetDriveInfo(path, name, total, freeBytes);
 
+        // Reading a stopped distribution's share would start it, so its sizes stay blank
+        if (FinderWsl::IsPath(path))
+        {
+            total = freeBytes = 0;
+            if (FinderWsl::IsDistroRunning(FinderWsl::GetDistroName(path)))
+                std::tie(total, freeBytes) = CDirStatApp::GetFreeDiskSpace(path);
+            return true;
+        }
+
         name = FormatVolumeNameOfRootPath(path);
         std::tie(total, freeBytes) = CDirStatApp::GetFreeDiskSpace(path);
         return total != 0;
@@ -486,10 +496,12 @@ CDriveItem::CDriveItem(CDrivesList* list, const std::wstring& pszPath, std::wstr
     : m_driveList(list)
     , m_path(pszPath)
     , m_mtp(FinderMtp::IsPath(m_path))
-    , m_icon(GetIconHandler()->FetchShellIcon(m_path))
-    , m_isRemote(!m_mtp && DRIVE_REMOTE == ::GetDriveType(m_path.c_str()))
-    , m_subst(!m_mtp && IsSUBSTedDrive(m_path))
-    , m_name(m_mtp && !name.empty() ? std::move(name) : m_path) {}
+    , m_wsl(FinderWsl::IsPath(m_path))
+    , m_icon(m_wsl ? GetIconHandler()->FetchShellIcon(m_path, SHGFI_USEFILEATTRIBUTES, FILE_ATTRIBUTE_DIRECTORY) :
+        GetIconHandler()->FetchShellIcon(m_path))
+    , m_isRemote(!m_mtp && !m_wsl && DRIVE_REMOTE == ::GetDriveType(m_path.c_str()))
+    , m_subst(!m_mtp && !m_wsl && IsSUBSTedDrive(m_path))
+    , m_name((m_mtp || m_wsl) && !name.empty() ? std::move(name) : m_path) {}
 
 void CDriveItem::StartQuery()
 {
@@ -539,6 +551,8 @@ bool CDriveItem::UpdateDriveInformation()
             if (!info.name.empty()) m_name = info.name;
             m_totalBytes = info.total;
             m_freeBytes = info.free;
+
+            if (m_wsl && m_totalBytes == 0) m_success = false;
 
             // guard against quotas where free may exceed total, or total is zero
             m_used = (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)
@@ -634,7 +648,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         {
             s = Localization::Lookup(IDS_QUERYING);
         }
-        else if (!m_success)
+        else if (!m_success && !m_wsl)
         {
             s = Localization::Lookup(IDS_NOTACCESSIBLE);
         }
@@ -656,7 +670,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
 
 std::wstring CDriveItem::GetDrive() const
 {
-    return m_mtp ? m_path : ::GetDrive(m_path);
+    return m_mtp || m_wsl ? m_path : ::GetDrive(m_path);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -816,6 +830,20 @@ bool CSelectDrivesDlg::OnInitDialog()
             }
         }
 
+        // Add WSL 2 distributions, which the share path scans through the helper inside each one
+        for (const auto& distro : FinderWsl::GetDistros())
+        {
+            const std::wstring path = FinderWsl::GetRootPath(distro.name) + L'\\';
+            const auto item = new CDriveItem(&m_driveList, path, distro.name + L" (WSL)");
+            item->StartQuery();
+            m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
+
+            if (std::ranges::contains(m_selectedDrives, path))
+            {
+                m_driveList.SelectItem(item);
+            }
+        }
+
         // Add shell-backed portable devices alongside the filesystem drive list
         for (const auto& device : FinderMtp::GetDevices())
         {
@@ -837,7 +865,7 @@ bool CSelectDrivesDlg::OnInitDialog()
     for (const int i : std::views::iota(0, m_driveList.GetItemCount()))
     {
         if (const CDriveItem* item = m_driveList.GetItem(i);
-            !item->IsMtp() && !item->IsRemote() && !item->IsSUBSTed())
+            !item->IsMtp() && !item->IsWsl() && !item->IsRemote() && !item->IsSUBSTed())
         {
             localDrives.emplace_back(item->GetDrive());
         }
@@ -912,7 +940,8 @@ bool CSelectDrivesDlg::SaveSelection()
 
         // m_drives is the set of paths actually handed to the scanner
         // Keep "All Local Drives" limited to direct filesystem volumes
-        if ((m_radio == RADIO_TARGET_DRIVES_ALL && !item->IsMtp() && !item->IsRemote() && !item->IsSUBSTed()) ||
+        if ((m_radio == RADIO_TARGET_DRIVES_ALL && !item->IsMtp() && !item->IsWsl() && !item->IsRemote() &&
+            !item->IsSUBSTed()) ||
             (m_radio == RADIO_TARGET_DRIVES_SUBSET && selected))
         {
             m_drives.emplace_back(item->GetDrive());

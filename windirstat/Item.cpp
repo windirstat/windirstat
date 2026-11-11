@@ -11,6 +11,7 @@
 #include "FinderMtp.h"
 #include "FinderRemote.h"
 #include "FinderNtfs.h"
+#include "FinderWsl.h"
 
 class CItem::ScanBatch final
 {
@@ -33,8 +34,8 @@ public:
 
     void Add(CItem* child)
     {
-        if (m_parent->IsTypeOrFlag(ITF_MTP, ITF_REMOTE))
-            child->SetFlag(m_parent->GetRawType() & (ITF_MTP | ITF_REMOTE));
+        if (m_parent->IsTypeOrFlag(ITF_MTP, ITF_REMOTE, ITF_WSL))
+            child->SetFlag(m_parent->GetRawType() & (ITF_MTP | ITF_REMOTE | ITF_WSL));
         child->SetParent(m_parent);
         m_children.push_back(child);
         m_physical += child->GetSizePhysical();
@@ -245,9 +246,10 @@ const std::vector<CItem*>& CItem::GetChildren() const noexcept
 CItem* CItem::GetEnumRoot() const noexcept
 {
     // Resolve the selected folder, drive, or MTP branch without crossing a multi-root container.
+    // A WSL tree inside a drive scan is its own branch: its paths and inodes are not the drive's.
     auto* item = const_cast<CItem*>(this);
     while (!item->IsTypeOrFlag(ITF_ROOTITEM) && item->GetParent() != nullptr &&
-        !item->GetParent()->IsTypeOrFlag(IT_MYCOMPUTER)) item = item->GetParent();
+        !item->GetParent()->IsTypeOrFlag(IT_MYCOMPUTER) && !item->IsWslRoot()) item = item->GetParent();
     return item;
 }
 
@@ -300,7 +302,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     assert(!child->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || GetParentDrive() == nullptr ||
         GetParentDrive()->GetReadJobs() > 0 || FindHardlinksItem() == nullptr);
 
-    if (IsTypeOrFlag(ITF_MTP, ITF_REMOTE)) child->SetFlag(GetRawType() & (ITF_MTP | ITF_REMOTE));
+    if (IsTypeOrFlag(ITF_MTP, ITF_REMOTE, ITF_WSL)) child->SetFlag(GetRawType() & (ITF_MTP | ITF_REMOTE | ITF_WSL));
 
     if (!addOnly)
     {
@@ -1056,9 +1058,11 @@ std::wstring CItem::GetPathWithoutSlash() const
     path.clear();
 
     // walk backwards to get a list of pointers to each part of the path
+    // A WSL root names its full \\wsl.localhost path, even inside a drive scan
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         pathParts.emplace_back(p);
+        if (p->IsWslRoot()) break;
     }
 
     // append the strings in reverse order
@@ -1338,11 +1342,12 @@ void CItem::ScanRemoteFlat(FinderRemote& finder, BlockingQueue<CItem*>* queue)
 }
 
 void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
-    std::unordered_map<const CItem*, FinderBasicContext>* folderContexts,
-    const std::shared_ptr<StorageSource>& remoteSource)
+    FinderWslContext& contextWsl, std::unordered_map<const CItem*, FinderBasicContext>* folderContexts,
+    const std::shared_ptr<StorageSource>& remoteSource, const std::vector<WslDistro>* wslDisks)
 {
     // Reuse storage finders throughout this worker.
     FinderNtfs finderNtfs(&contextNtfs);
+    FinderWsl finderWsl(&contextWsl);
     FinderMtp finderMtp;
     FinderRemote finderRemote(remoteSource, queue);
 
@@ -1382,10 +1387,15 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             }
             FinderBasic finderBasic(basicContext);
 
+            // WSL folders come from a tree the helper lists inside the distribution
+            const auto* wslTree = item->IsTypeOrFlag(ITF_WSL) && COptions::UseFastScanEngine ?
+                contextWsl.Resolve(item, queue) : nullptr;
+
             // Select the enumeration backend for the queued item
             Finder* finder = item->IsTypeOrFlag(ITF_REMOTE) ? static_cast<Finder*>(&finderRemote) :
                 item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
-                contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
+                wslTree != nullptr ? static_cast<Finder*>(&finderWsl) :
+                contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC, ITF_WSL) ?
                 static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
             const bool flat = item->IsTypeOrFlag(ITF_REMOTE) && remoteSource != nullptr &&
@@ -1410,7 +1420,9 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             };
             const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(childPrefix);
             ScanBatch batch(item, queue);
-            for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
+            std::wstring itemPath;
+            for (bool b = wslTree != nullptr ? finderWsl.FindFile(item, wslTree) : finder->FindFile(item); b;
+                b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
                 if (queue->IsPauseOrCancelRequested())
                 {
@@ -1440,6 +1452,23 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                             finder->GetFileSizeLogical(), finder->GetLastWriteTime(), directoryIncluded))
                     {
                         continue;
+                    }
+
+                    // Show a running distribution's virtual disk as the files it holds
+                    if (wslDisks != nullptr && !wslDisks->empty() && !item->IsTypeOrFlag(ITF_WSL) &&
+                        finder->GetFileName().size() > 5 && _wcsnicmp(finder->GetFileName().data() +
+                            finder->GetFileName().size() - 5, L".vhdx", 5) == 0)
+                    {
+                        if (itemPath.empty()) itemPath = item->GetPathWithoutSlash();
+                        const std::wstring path = itemPath + L'\\' + std::wstring(finder->GetFileName());
+                        if (const auto distro = std::ranges::find_if(*wslDisks, [&](const WslDistro& disk)
+                            { return _wcsicmp(disk.vhdPath.c_str(), path.c_str()) == 0; }); distro != wslDisks->end())
+                        {
+                            auto* const disk = CreateWslDiskItem(distro->name, finder->GetLastWriteTime());
+                            batch.Add(disk);
+                            disk->UpwardAddReadJobs(1);
+                            continue;
+                        }
                     }
 
                     item->AddFile(*finder, batch);

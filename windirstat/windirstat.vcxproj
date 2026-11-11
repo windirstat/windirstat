@@ -189,6 +189,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderMtp.h" />
     <ClInclude Include="FinderRemote.h" />
+    <ClInclude Include="FinderWsl.h" />
     <ClInclude Include="StorageSource.h" />
     <ClInclude Include="RemoteStorage.h" />
     <ClInclude Include="FinderNtfs.h" />
@@ -285,6 +286,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderMtp.cpp" />
     <ClCompile Include="FinderRemote.cpp" />
+    <ClCompile Include="FinderWsl.cpp" />
     <ClCompile Include="StorageSource.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="RecoveryExFat.cpp" />

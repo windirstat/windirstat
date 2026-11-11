@@ -6,6 +6,8 @@
 
 #include "pch.h"
 #include "Item.h"
+#include "FinderBasic.h"
+#include "FinderWsl.h"
 
 static constexpr wchar_t AsciiLower(const wchar_t value) noexcept
 {
@@ -723,6 +725,63 @@ void CItem::RemoveUnknownItem()
     }
 }
 
+CItem* CItem::CreateWslDiskItem(const std::wstring& distro, const FILETIME lastChange)
+{
+    // The folder takes the virtual disk's place and lists the distribution through its share path
+    auto* const item = Create(IT_DIRECTORY | ITF_WSL, FinderWsl::GetRootPath(distro));
+    item->SetLastChange(lastChange);
+    item->SetAttributes(FILE_ATTRIBUTE_DIRECTORY);
+    return item;
+}
+
+void CItem::UpdateWslDiskItem()
+{
+    assert(IsWslRoot() && GetParent() != nullptr);
+
+    // Rebaseline as if the unused space was not shown
+    const auto& children = GetChildren();
+    if (const auto it = std::ranges::find_if(children,
+        [](const CItem* child) { return child->IsTypeOrFlag(IT_UNKNOWN); }); it != children.end())
+    {
+        CItem* const unused = *it;
+        unused->UpwardSubtractSizePhysical(unused->GetSizePhysical());
+        RemoveChild(unused);
+    }
+
+    // The virtual disk keeps blocks the distribution has freed until it is compacted
+    const auto distro = FinderWsl::FindDistroByName(FinderWsl::GetDistroName(GetNameView()));
+    if (!distro) return;
+    const auto separator = distro->vhdPath.find_last_of(L'\\');
+    FinderBasic finder(true);
+    if (separator == std::wstring::npos ||
+        !finder.FindFile(distro->vhdPath.substr(0, separator + 1), distro->vhdPath.substr(separator + 1))) return;
+
+    const ULONGLONG disk = finder.GetFileSizePhysical();
+    const ULONGLONG tallied = GetSizePhysical();
+    auto* const unused = Create(IT_UNKNOWN, Localization::Lookup(IDS_WSL_UNUSED_ITEM));
+    unused->SetDone();
+    AddChild(unused);
+    unused->UpwardAddSizePhysical(disk > tallied ? disk - tallied : 0);
+}
+
+void CItem::UpdateWslDiskItems(CItem* root)
+{
+    if (root == nullptr) return;
+    for (std::vector stack{ root }; !stack.empty();)
+    {
+        CItem* item = stack.back();
+        stack.pop_back();
+        if (item->IsLeaf()) continue;
+        if (item->IsTypeOrFlag(ITF_WSL))
+        {
+            if (item->IsWslRoot() && item->GetParent() != nullptr &&
+                !item->GetParent()->IsTypeOrFlag(IT_MYCOMPUTER)) item->UpdateWslDiskItem();
+            continue;
+        }
+        stack.append_range(item->GetChildren());
+    }
+}
+
 void CItem::UpwardDrivePacman() const
 {
     if (!COptions::PacmanAnimation)
@@ -863,8 +922,9 @@ void CItem::DoHardlinkAdjustment()
                     else existing.emplace_back(child);
                 }
             }
-            // Do not descend into reparse points since indexes may be from other volumes
-            else if (!child->IsLeaf() && (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+            // Do not descend into reparse points or WSL trees since indexes may be from other volumes
+            else if (!child->IsLeaf() && (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0 &&
+                !child->IsTypeOrFlag(ITF_WSL))
             {
                 queue.push_back(child);
             }

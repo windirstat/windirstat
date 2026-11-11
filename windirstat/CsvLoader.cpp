@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "CsvLoader.h"
 #include "FinderMtp.h"
+#include "FinderWsl.h"
 #include "StorageSource.h"
 #include <fcntl.h>
 #include <io.h>
@@ -280,6 +281,27 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
                 displayName = std::wstring_view(namePath).substr(separator + 1);
             }
         }
+
+        // A WSL tree shown in place of its virtual disk belongs to the folder holding that disk; rows are
+        // written parent-before-child, so without the registration it belongs to the last folder read.
+        const std::wstring distroName = (type & ITF_WSL) != 0 && itType == IT_DIRECTORY ?
+            FinderWsl::GetDistroName(namePath) : std::wstring{};
+        if (parent == nullptr && !distroName.empty() &&
+            _wcsicmp(FinderWsl::GetRootPath(distroName).c_str(), namePath.c_str()) == 0)
+        {
+            if (const auto distro = FinderWsl::FindDistroByName(distroName); distro.has_value())
+            {
+                const std::wstring folder = distro->vhdPath.substr(0, distro->vhdPath.find_last_of(L'\\'));
+                const auto found = std::ranges::find_if(parentMap, [&](const auto& entry)
+                    { return _wcsicmp(entry.first.c_str(), folder.c_str()) == 0; });
+                if (found != parentMap.end()) parent = found->second;
+            }
+            else if (newroot != nullptr && !newroot->IsTypeOrFlag(IT_MYCOMPUTER))
+            {
+                if (const auto found = parentMap.find(std::wstring_view{}); found != parentMap.end())
+                    parent = found->second;
+            }
+        }
     }
 
     // Rows are written parent-before-child, so a row under a multi-root container whose parent
@@ -330,6 +352,9 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
         // Also map drive letter without trailing backslash
         if (newitem->IsTypeOrFlag(IT_DRIVE)) parentMap[namePath.substr(0, 2)] = newitem;
+
+        // Remember the last folder outside WSL for WSL trees whose disk folder cannot be resolved
+        if (!newitem->IsTypeOrFlag(ITF_WSL)) parentMap[std::wstring{}] = newitem;
     }
 
     return newitem;
