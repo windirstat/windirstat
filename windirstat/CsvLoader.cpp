@@ -8,6 +8,8 @@
 #include "CsvLoader.h"
 #include "FinderMtp.h"
 #include "StorageSource.h"
+#include <fcntl.h>
+#include <io.h>
 
 static bool IsJsonPath(const std::wstring& path)
 {
@@ -543,6 +545,15 @@ static std::unordered_map<const CItem*, LONGLONG>
 
 static constexpr size_t ReportBufferSize = 64 * 1024;
 
+// Open the report file, or standard output when the path is a dash.
+static std::ofstream OpenReport(const std::wstring& path)
+{
+    if (path != L"-") return std::ofstream(path, std::ios::binary);
+    const int fd = _fileno(stdout);
+    if (fd < 0 || _setmode(fd, _O_BINARY) == -1) return {};
+    return std::ofstream(stdout);
+}
+
 // Write complete rows in chunks while retaining the buffer for the next rows.
 static bool FlushReportBuffer(std::ofstream& outf, std::string& buffer, const bool finish = false)
 {
@@ -664,7 +675,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     auto cols = GetScanColumns();
     if (!includeOwner) cols.erase(cols.begin() + FIELD_OWNER);
 
-    std::ofstream outf(path, std::ios::binary);
+    std::ofstream outf = OpenReport(path);
     if (!outf.is_open()) return false;
 
     return IsJsonPath(path)
@@ -746,7 +757,7 @@ static bool SaveDuplicatesJson(std::ofstream& outf,
 
 bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
 {
-    std::ofstream outf(path, std::ios::binary);
+    std::ofstream outf = OpenReport(path);
     if (!outf.is_open()) return false;
 
     const std::vector cols =
@@ -815,7 +826,7 @@ static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstr
 
 bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm*>& items)
 {
-    std::ofstream outf(path, std::ios::binary);
+    std::ofstream outf = OpenReport(path);
     if (!outf.is_open()) return false;
 
     const std::vector cols =
