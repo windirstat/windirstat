@@ -238,7 +238,9 @@ public:
         for (const auto [i, rawParam] : std::views::enumerate(args.subspan(1)))
         {
             const wchar_t* param = rawParam;
-            const bool flag = param[0] == L'-' || param[0] == L'/';
+            const bool saveDash = (m_pendingFlag == saveToFlag || m_pendingFlag == saveDupesToFlag ||
+                m_pendingFlag == savePermsToFlag) && param[0] == L'-' && param[1] == L'\0';
+            const bool flag = !saveDash && (param[0] == L'-' || param[0] == L'/');
             if (flag) ++param;
             ParseParam(param, flag, std::cmp_equal(i + 1, args.size() - 1));
         }
@@ -409,7 +411,9 @@ bool CDirStatApp::InitInstance()
     const bool autoElevate = IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt;
 
     // Elevate non-interactive operations before rejecting protected paths or applying changes.
-    if (autoElevate && (hideApp || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
+    // A relaunch cannot inherit standard output, so a dash save continues without elevating.
+    const bool saveToStdout = m_saveToPath == L"-" || m_saveDupesToPath == L"-" || m_savePermsToPath == L"-";
+    if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
 
     if (cmdInfo.IsLegacyUninstallRequested())
     {

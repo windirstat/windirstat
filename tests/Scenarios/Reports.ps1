@@ -376,6 +376,25 @@ function Test-PermissionExport {
     Assert-Equal $entry.Access 'Allow' 'The permission export preserves the applied access type'
 }
 
+function Test-StdoutCsv {
+    param($Context, $Case)
+    $root = New-TestTree
+    $runner = New-TestRunner
+    Invoke-ScanReport $runner @($root) 'file' | Out-Null
+    $expected = [IO.File]::ReadAllBytes((Join-Path $Context.Root 'file.csv'))
+    $process = Start-TestProcess $runner @('/saveto', '-', $root) -Redirect
+    $stdout = [IO.MemoryStream]::new()
+    $copy = $process.StandardOutput.BaseStream.CopyToAsync($stdout)
+    Assert-True $process.WaitForExit($TimeoutSeconds * 1000) 'A dash save to a pipe terminates'
+    $null = $copy.GetAwaiter().GetResult()
+    Assert-Equal $process.ExitCode 0 'A dash save to a pipe exits successfully'
+    Assert-Sequence $stdout.ToArray() $expected 'Standard output carries the same bytes as the csv file'
+    $closed = Start-TestProcess $runner @('/saveto', '-', $root) -Redirect
+    $closed.StandardOutput.Close()
+    Assert-True $closed.WaitForExit($TimeoutSeconds * 1000) 'A dash save to a closed pipe terminates'
+    Assert-Equal $closed.ExitCode 1 'A closed pipe fails the save'
+}
+
 foreach ($algorithm in @(@{ Name = 'sha256'; Value = 2 }, @{ Name = 'xxhash'; Value = 5 })) {
     Register-Scenario "reports.duplicates.$($algorithm.Name)" `
         Reports 'Full-file duplicate verification across staged hashing' `
@@ -400,6 +419,9 @@ foreach ($format in 'csv', 'json') {
 Register-Scenario reports.quiet-failure Reports `
     'Invalid external CLI requests terminate and leave the next scan usable' `
     Test-QuietFailure -Tags External
+Register-Scenario reports.stdout-csv Reports `
+    'A dash save path writes the csv report to standard output' `
+    Test-StdoutCsv -Tags External
 Register-Scenario reports.forced-portable Reports 'Forced portable settings remain local on read-only media' `
     Test-ForcedPortableSettings -Tags Filesystem,Persistence
 Register-Scenario reports.reordered-columns Reports 'CSV imports resolve reordered fields beyond 255 extra columns' `
