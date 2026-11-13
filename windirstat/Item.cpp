@@ -991,8 +991,28 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor,
     };
 
     CItem* root = GetEnumRoot();
-    const auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
+    auto roots = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
         std::span(root->GetChildren()) : std::span<CItem* const>(&root, 1);
+
+    const std::wstring wslPath = FinderWsl::GetPathKey(path);
+    const std::wstring& lookupPath = wslPath.empty() ? path : wslPath;
+
+    // Virtual-disk trees have share paths outside their Windows parents; cache these roots once per lookup batch.
+    std::vector<CItem*> wslRoots;
+    if (!wslPath.empty() && !root->IsTypeOrFlag(ITF_WSL))
+    {
+        ChildNameIndex localNames;
+        auto [entry, inserted] = (childNames != nullptr ? *childNames : localNames).try_emplace(nullptr);
+        if (inserted) for (std::vector stack(roots.begin(), roots.end()); !stack.empty();)
+        {
+            CItem* item = stack.back();
+            stack.pop_back();
+            if (item->IsWslRoot()) entry->second.emplace(item->GetNameView(), item);
+            else if (!item->IsLeaf() && item->SupportsFilesystemApis()) stack.append_range(item->GetChildren());
+        }
+        for (CItem* item : entry->second | std::views::values) wslRoots.push_back(item);
+        roots = wslRoots;
+    }
     if (StorageSource::IsPath(path))
     {
         // Descend by exact names; a directory and its marker object share one URI and differ only in kind.
@@ -1023,17 +1043,19 @@ CItem* CItem::FindItemByPath(const std::wstring& path, const bool findAncestor,
     for (CItem* candidate : roots)
     {
         std::wstring rootPath = candidate->GetPath();
+        if (!wslPath.empty()) rootPath = FinderWsl::GetPathKey(rootPath);
         while (!rootPath.empty() && rootPath.back() == L'\\') rootPath.pop_back();
-        if (rootPath.size() <= rootLength || path.size() < rootPath.size() ||
-            _wcsnicmp(path.c_str(), rootPath.c_str(), rootPath.size()) != 0 ||
-            (path.size() > rootPath.size() && path[rootPath.size()] != L'\\')) continue;
+        if (rootPath.size() <= rootLength || lookupPath.size() < rootPath.size() ||
+            (wslPath.empty() ? _wcsnicmp(lookupPath.c_str(), rootPath.c_str(), rootPath.size()) != 0 :
+                !lookupPath.starts_with(rootPath)) ||
+            (lookupPath.size() > rootPath.size() && lookupPath[rootPath.size()] != L'\\')) continue;
         current = candidate;
         rootLength = rootPath.size();
     }
     if (current == nullptr) return nullptr;
 
     // Split the path into components, filtering out empty strings
-    for (const auto part : std::views::split(std::wstring_view(path).substr(rootLength), wds::chrBackslash))
+    for (const auto part : std::views::split(std::wstring_view(lookupPath).substr(rootLength), wds::chrBackslash))
     {
         const std::wstring_view component(part.begin(), part.end());
         if (component.empty()) continue;
@@ -1376,8 +1398,22 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))
         {
+            // WSL folders come from a tree the helper lists inside the distribution; one shown in place of its
+            // virtual disk has no share to fall back on, since the share also lists other filesystems
+            const bool wslHelper = item->IsTypeOrFlag(ITF_WSL) && (COptions::UseFastScanEngine ||
+                !item->GetEnumRoot()->IsScanRoot()) && finderWsl.Resolve(item, queue);
+
             auto* basicContext = &contextBasic;
-            if (folderContexts != nullptr)
+            if (item->IsTypeOrFlag(ITF_WSL))
+            {
+                // A WSL tree read through its share keeps details apart from the volume that holds its disk
+                if (!wslHelper)
+                {
+                    item->SetIndex(0);
+                    basicContext = contextWsl.GetShareContext(item->GetVolumeRoot());
+                }
+            }
+            else if (folderContexts != nullptr)
             {
                 // Descendants keep the context of the root initially assigned to this queue.
                 const CItem* root = item->GetVolumeRoot();
@@ -1387,14 +1423,10 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             }
             FinderBasic finderBasic(basicContext);
 
-            // WSL folders come from a tree the helper lists inside the distribution
-            const auto* wslTree = item->IsTypeOrFlag(ITF_WSL) && COptions::UseFastScanEngine ?
-                contextWsl.Resolve(item, queue) : nullptr;
-
             // Select the enumeration backend for the queued item
             Finder* finder = item->IsTypeOrFlag(ITF_REMOTE) ? static_cast<Finder*>(&finderRemote) :
                 item->IsTypeOrFlag(ITF_MTP) ? static_cast<Finder*>(&finderMtp) :
-                wslTree != nullptr ? static_cast<Finder*>(&finderWsl) :
+                wslHelper ? static_cast<Finder*>(&finderWsl) :
                 contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC, ITF_WSL) ?
                 static_cast<Finder*>(&finderNtfs) : static_cast<Finder*>(&finderBasic);
 
@@ -1421,8 +1453,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             const bool directoryIncluded = CFiltering::CanReuseDirectoryMatch(childPrefix);
             ScanBatch batch(item, queue);
             std::wstring itemPath;
-            for (bool b = wslTree != nullptr ? finderWsl.FindFile(item, wslTree) : finder->FindFile(item); b;
-                b = finder->FindNext()) [[msvc::forceinline_calls]]
+            for (bool b = finder->FindFile(item); b; b = finder->FindNext()) [[msvc::forceinline_calls]]
             {
                 if (queue->IsPauseOrCancelRequested())
                 {
@@ -1459,12 +1490,15 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         finder->GetFileName().size() > 5 && _wcsnicmp(finder->GetFileName().data() +
                             finder->GetFileName().size() - 5, L".vhdx", 5) == 0)
                     {
-                        if (itemPath.empty()) itemPath = item->GetPathWithoutSlash();
+                        if (itemPath.empty()) itemPath = FinderWsl::ExpandShortNames(item->GetPathWithoutSlash());
                         const std::wstring path = itemPath + L'\\' + std::wstring(finder->GetFileName());
                         if (const auto distro = std::ranges::find_if(*wslDisks, [&](const WslDistro& disk)
                             { return _wcsicmp(disk.vhdPath.c_str(), path.c_str()) == 0; }); distro != wslDisks->end())
                         {
-                            auto* const disk = CreateWslDiskItem(distro->name, finder->GetLastWriteTime());
+                            // The folder takes the disk's place and lists the distribution through its share path
+                            auto* const disk = Create(IT_DIRECTORY | ITF_WSL, FinderWsl::GetRootPath(distro->name));
+                            disk->SetLastChange(finder->GetLastWriteTime());
+                            disk->SetAttributes(FILE_ATTRIBUTE_DIRECTORY);
                             batch.Add(disk);
                             disk->UpwardAddReadJobs(1);
                             continue;

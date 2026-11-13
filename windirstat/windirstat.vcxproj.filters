@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="FinderWSLRunner.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
     <Filter Include="Header Files">
       <UniqueIdentifier>{48D5D65E-28F5-D53D-186F-23FD908A412F}</UniqueIdentifier>
     </Filter>
@@ -306,6 +311,9 @@
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="FinderWsl.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="FinderWSLProtocol.h">
       <Filter>Header Files\Core\Finders</Filter>
     </ClInclude>
     <ClInclude Include="StorageSource.h">

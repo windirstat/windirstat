@@ -725,60 +725,92 @@ void CItem::RemoveUnknownItem()
     }
 }
 
-CItem* CItem::CreateWslDiskItem(const std::wstring& distro, const FILETIME lastChange)
+void CItem::AdjustWslHardlinks(const bool restore, const std::vector<CItem*>& refreshed)
 {
-    // The folder takes the virtual disk's place and lists the distribution through its share path
-    auto* const item = Create(IT_DIRECTORY | ITF_WSL, FinderWsl::GetRootPath(distro));
-    item->SetLastChange(lastChange);
-    item->SetAttributes(FILE_ATTRIBUTE_DIRECTORY);
-    return item;
-}
+    assert(IsWslRoot());
 
-void CItem::UpdateWslDiskItem()
-{
-    assert(IsWslRoot() && GetParent() != nullptr);
-
-    // Rebaseline as if the unused space was not shown
-    const auto& children = GetChildren();
-    if (const auto it = std::ranges::find_if(children,
-        [](const CItem* child) { return child->IsTypeOrFlag(IT_UNKNOWN); }); it != children.end())
+    // Record the largest allocation that any link of each inode below a branch shows
+    const auto gather = [](CItem* branch, std::unordered_map<ULONGLONG, ULONGLONG>& sizes, std::vector<CItem*>* files)
     {
-        CItem* const unused = *it;
-        unused->UpwardSubtractSizePhysical(unused->GetSizePhysical());
-        RemoveChild(unused);
+        for (std::vector stack{ branch }; !stack.empty();)
+        {
+            CItem* item = stack.back();
+            stack.pop_back();
+            if (!item->IsLeaf()) stack.append_range(item->GetChildren());
+            else if (item->IsTypeOrFlag(IT_FILE) && item->GetIndex() != 0)
+            {
+                if (files != nullptr) files->push_back(item);
+                auto& size = sizes[item->GetIndex()];
+                size = std::max(size, item->GetSizePhysical());
+            }
+        }
+    };
+
+    // Preserve every link's allocation before removing a branch that may hold the counted link.
+    std::unordered_map<ULONGLONG, ULONGLONG> sizes;
+    std::vector<CItem*> files;
+    gather(this, sizes, &files);
+
+    // Fresh metadata wins over surviving links, including when a refreshed file shrinks or becomes sparse.
+    std::unordered_map<ULONGLONG, ULONGLONG> freshSizes;
+    if (!restore) for (CItem* branch : refreshed)
+        if (branch != this && branch->IsTypeOrFlag(ITF_WSL) && branch->GetEnumRoot() == this)
+            gather(branch, freshSizes, nullptr);
+    for (const auto& [index, size] : freshSizes) sizes[index] = size;
+
+    // Count only links retained by filtering, once across the whole WSL tree.
+    for (CItem* file : files)
+    {
+        const ULONGLONG size = restore ? sizes[file->GetIndex()] : std::exchange(sizes[file->GetIndex()], 0);
+        const ULONGLONG current = file->GetSizePhysical();
+        if (size == current) continue;
+        if (size > current) file->UpwardAddSizePhysical(size - current);
+        else file->UpwardSubtractSizePhysical(current - size);
+        file->GetParent()->UpwardSetUndone();
     }
-
-    // The virtual disk keeps blocks the distribution has freed until it is compacted
-    const auto distro = FinderWsl::FindDistroByName(FinderWsl::GetDistroName(GetNameView()));
-    if (!distro) return;
-    const auto separator = distro->vhdPath.find_last_of(L'\\');
-    FinderBasic finder(true);
-    if (separator == std::wstring::npos ||
-        !finder.FindFile(distro->vhdPath.substr(0, separator + 1), distro->vhdPath.substr(separator + 1))) return;
-
-    const ULONGLONG disk = finder.GetFileSizePhysical();
-    const ULONGLONG tallied = GetSizePhysical();
-    auto* const unused = Create(IT_UNKNOWN, Localization::Lookup(IDS_WSL_UNUSED_ITEM));
-    unused->SetDone();
-    AddChild(unused);
-    unused->UpwardAddSizePhysical(disk > tallied ? disk - tallied : 0);
 }
 
-void CItem::UpdateWslDiskItems(CItem* root)
+void CItem::UpdateWslDiskItems(const std::vector<CItem*>& items, std::unordered_set<CItem*> roots,
+    const bool disksShown)
 {
-    if (root == nullptr) return;
-    for (std::vector stack{ root }; !stack.empty();)
+    // A scanned folder inside a WSL tree changes its tree's tally; other scanned folders hold the disks shown
+    for (std::vector stack(items); !stack.empty();)
     {
         CItem* item = stack.back();
         stack.pop_back();
-        if (item->IsLeaf()) continue;
-        if (item->IsTypeOrFlag(ITF_WSL))
-        {
-            if (item->IsWslRoot() && item->GetParent() != nullptr &&
-                !item->GetParent()->IsTypeOrFlag(IT_MYCOMPUTER)) item->UpdateWslDiskItem();
+        if (item->IsTypeOrFlag(ITF_WSL)) roots.insert(item->GetEnumRoot());
+        else if (disksShown && !item->IsLeaf()) stack.append_range(item->GetChildren());
+    }
+
+    for (CItem* root : roots)
+    {
+        root->AdjustWslHardlinks(false, items);
+        if (root->IsScanRoot()) continue;
+
+        // The virtual disk keeps blocks the distribution has freed until it is compacted; a disk that cannot be
+        // read here, such as one from a report saved elsewhere, keeps the size already shown
+        const auto distro = FinderWsl::FindDistroByName(FinderWsl::GetDistroName(root->GetNameView()));
+        const auto separator = distro.has_value() ? distro->vhdPath.find_last_of(L'\\') : std::wstring::npos;
+        FinderBasic finder(true);
+        if (separator == std::wstring::npos ||
+            !finder.FindFile(distro->vhdPath.substr(0, separator + 1), distro->vhdPath.substr(separator + 1)))
             continue;
+
+        // Rebaseline the existing item as if the unused space was not shown; the ancestors' sort order and
+        // unknown space are settled again once the scan finishes
+        root->UpwardSetUndone();
+        CItem* unused = root->FindUnknownItem();
+        if (unused == nullptr)
+        {
+            unused = Create(IT_UNKNOWN, Localization::Lookup(IDS_WSL_UNUSED_ITEM));
+            unused->SetDone();
+            root->AddChild(unused);
         }
-        stack.append_range(item->GetChildren());
+        unused->UpwardSubtractSizePhysical(unused->GetSizePhysical());
+
+        const ULONGLONG disk = finder.GetFileSizePhysical();
+        const ULONGLONG tallied = root->GetSizePhysical();
+        unused->UpwardAddSizePhysical(disk > tallied ? disk - tallied : 0);
     }
 }
 

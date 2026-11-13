@@ -1009,9 +1009,9 @@ IDR_LANGS               TEXT                    "res\\lang_combined.bin"
 // RCDATA
 //
 
-IDR_WSLSCAN_X64         RCDATA                  "res\\wsl\\wds-wsl-scan-x86_64"
+IDR_WSLSCAN_X64         RCDATA                  "FinderWSLRunner-x86_64"
 
-IDR_WSLSCAN_ARM64       RCDATA                  "res\\wsl\\wds-wsl-scan-aarch64"
+IDR_WSLSCAN_ARM64       RCDATA                  "FinderWSLRunner-aarch64"
 
 
 /////////////////////////////////////////////////////////////////////////////

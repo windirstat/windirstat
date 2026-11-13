@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "Finder.h"
+#include "FinderBasic.h"
 
 // A registered WSL 2 distribution and the virtual disk that holds its root filesystem.
 struct WslDistro
@@ -47,15 +48,18 @@ class FinderWslContext final
 
     std::shared_mutex m_lock;
     std::unordered_map<const CItem*, std::unique_ptr<Tree>> m_trees;
-    std::atomic<bool> m_unavailable = false;
+    std::unordered_map<const CItem*, FinderBasicContext> m_shareContexts;
 
     static std::unique_ptr<Tree> Load(const std::wstring& path, BlockingQueue<CItem*>* queue, std::wstring& error);
 
 public:
 
     // Returns the tree listing this folder, loading one rooted at it when no loaded tree does;
-    // null means the helper cannot be used and the folder needs basic enumeration.
+    // null means the helper failed for a selected distribution, whose folders need basic enumeration.
     const Tree* Resolve(CItem* item, BlockingQueue<CItem*>* queue);
+
+    // Returns the share details of the WSL tree rooted at the item, apart from the volume that holds its disk.
+    FinderBasicContext* GetShareContext(const CItem* root);
 };
 
 class FinderWsl final : public Finder
@@ -75,9 +79,11 @@ public:
 
     explicit FinderWsl(FinderWslContext* master) : m_master(master) {}
 
-    // Lists the children of an item whose tree was resolved through the context.
+    // Finds the tree that lists this folder; false means the folder needs basic enumeration.
+    bool Resolve(CItem* item, BlockingQueue<CItem*>* queue);
+
+    // Lists the children of the folder last resolved.
     bool FindFile(const CItem* item) override;
-    bool FindFile(const CItem* item, const FinderWslContext::Tree* tree);
     bool FindNext() override;
     DWORD GetAttributes() const override;
     ULONGLONG GetFileSizePhysical() const override { return m_record->allocated; }
@@ -87,7 +93,7 @@ public:
     std::wstring_view GetFileName() const override
         { return { m_tree->names.data() + m_record->nameOffset, m_record->nameLength }; }
     ULONGLONG GetIndex() const override;
-    DWORD GetReparseTag() const override { return 0; }
+    DWORD GetReparseTag() const override;
     bool IsReserved() const override { return false; }
     bool HasIgnoredStream() const override { return false; }
     const ScanResult& GetResult() const noexcept override { return m_result; }
@@ -96,6 +102,8 @@ public:
     static bool IsPath(std::wstring_view path) noexcept;
     static std::wstring GetRootPath(std::wstring_view distro) { return L"\\\\wsl.localhost\\" + std::wstring(distro); }
     static std::wstring GetDistroName(std::wstring_view path);
+    static std::wstring GetPathKey(std::wstring_view path);
+    static std::wstring ExpandShortNames(std::wstring path);
     static std::vector<WslDistro> GetDistros();
     static std::optional<WslDistro> FindDistroByVhd(std::wstring_view path);
     static std::optional<WslDistro> FindDistroByName(std::wstring_view name);

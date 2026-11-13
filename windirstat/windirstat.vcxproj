@@ -190,6 +190,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="FinderMtp.h" />
     <ClInclude Include="FinderRemote.h" />
     <ClInclude Include="FinderWsl.h" />
+    <ClInclude Include="FinderWSLProtocol.h" />
     <ClInclude Include="StorageSource.h" />
     <ClInclude Include="RemoteStorage.h" />
     <ClInclude Include="FinderNtfs.h" />
@@ -412,5 +413,6 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <Import Project="$(ProjectDir)project.targets" Condition="exists('$(ProjectDir)project.targets') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/targets)" />
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="Build\FinderWSLRunner.targets" />
   </ImportGroup>
 </Project>

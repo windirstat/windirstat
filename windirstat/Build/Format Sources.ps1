@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$Path = $PSScriptRoot
+    [string]$Path = (Join-Path $PSScriptRoot '..')
 )
 
 Write-Host "Normalizing source files"
@@ -7,8 +7,9 @@ Write-Host "Normalizing source files"
 $Utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 
 # Find all .cpp and .h files recursively
-$ProjectRoot = (Get-Item "$PSScriptRoot\..\..").FullName
-$Files = @(Get-ChildItem -Path $ProjectRoot -Include *.cpp,*.h,*.ps1 -Recurse)
+$ProjectRoot = (Get-Item -LiteralPath $Path).FullName
+$Files = @(Get-ChildItem -LiteralPath $ProjectRoot -Recurse -File |
+    Where-Object Extension -In '.cpp', '.h', '.ps1')
 
 foreach ($File in $Files) {
     $FilePath = $File.FullName

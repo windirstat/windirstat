@@ -481,7 +481,7 @@ namespace
             total = freeBytes = 0;
             if (FinderWsl::IsDistroRunning(FinderWsl::GetDistroName(path)))
                 std::tie(total, freeBytes) = CDirStatApp::GetFreeDiskSpace(path);
-            return true;
+            return total != 0;
         }
 
         name = FormatVolumeNameOfRootPath(path);
@@ -551,8 +551,6 @@ bool CDriveItem::UpdateDriveInformation()
             if (!info.name.empty()) m_name = info.name;
             m_totalBytes = info.total;
             m_freeBytes = info.free;
-
-            if (m_wsl && m_totalBytes == 0) m_success = false;
 
             // guard against quotas where free may exceed total, or total is zero
             m_used = (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)

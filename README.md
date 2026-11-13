@@ -9,7 +9,6 @@ Find large or duplicate files, inspect permissions, estimate storage costs, expo
 ### Major features
 
 * Scan multiple drives or folders together, with pause/resume, refresh, and accelerated local NTFS scanning when elevated
-* Scan WSL 2 distributions as fast as local drives, and see a running distribution's files in place of its virtual disk
 * Inspect cloud storage through metadata listings, with saved connections, logical-size totals, and explicit incomplete-scan indicators
 * Explore largest files, file types, logical versus physical size, hardlinks, and free/unknown space with configurable visualizations
 * Search scanned results by name, size, file/folder type, or owner; filter scans by path, name, size, or age, with regular-expression support
@@ -24,14 +23,12 @@ For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 ### Getting started
 
-1. Choose drives or **Individual Folders** in **Select Drives**. Use the add-folder button to scan several folders together. Connected MTP devices and WSL 2 distributions appear under **Individual Drives**. For cloud storage, use **File > Select Cloud Storage** and add or select a connection.
+1. Choose drives or **Individual Folders** in **Select Drives**. Use the add-folder button to scan several folders together. Connected MTP devices appear under **Individual Drives**. For cloud storage, use **File > Select Cloud Storage** and add or select a connection.
 2. Enable **Scan for duplicate files** only when needed; hashing adds file reads. Direct cloud scans list metadata without downloading file contents and do not perform duplicate detection. For accelerated full-drive NTFS scans, use **File > Run Elevated**.
 3. Sort **All Files** or open **Largest Files**, select an item to locate it in the visualization, and use `Ctrl+F` to search. Right-click column headers to choose details and use **View** to switch graphs.
 4. Review items in Explorer before cleanup, then refresh affected results. Use **File > Save Results To CSV/JSON** to keep a scan snapshot.
 
 For scripting, use `/SaveTo`, `/SaveDupesTo`, or `/SavePermsTo` followed by an output filename and scan targets. Save modes write a report and exit; `/LoadFrom` reopens a saved scan. See [command-line examples and export formats](https://github.com/windirstat/windirstat/wiki/Command-Line-and-CSV).
-
-WSL 2 distributions are listed by a small static Linux helper that WinDirStat runs inside the distribution through `wsl.exe` as root, so a scan reads the Linux filesystem directly instead of through the slower `\\wsl.localhost` share. The helper does not enter other mounted filesystems, such as `/mnt/c`, and counts the blocks of hard-linked files once. When a scan meets the virtual disk (`ext4.vhdx`) of a running distribution, it shows the distribution's files there instead, with `<Unused Virtual Disk Space>` for space the disk holds but no file uses; **Optimize VHD Files** can return that space to Windows. Use **Show WSL Disk Contents** on a disk to do the same for a stopped distribution, which starts it. If the helper cannot run, WinDirStat scans through the share.
 
 An incomplete scan retains the items already found and marks affected branches. Save modes return a nonzero exit code when scanning is incomplete, even if a report was written. Cloud physical allocation is unknown and appears blank; use logical size to compare cloud content.
 
@@ -63,8 +60,6 @@ Running from an archive does not automatically enable portable settings. Enable 
 * Copyright © WinDirStat Team ([windirstat.net](https://windirstat.net/))
 
 The application itself is distributed under the terms of the [GPL v3 or later](windirstat/res/license.txt), but parts of the source code are also available under more lenient license terms.
-
-The WSL scanning helper in [wslscan](wslscan) is part of WinDirStat and is distributed under the same license. Its embedded Linux executables are statically linked with [musl libc](https://musl.libc.org/), which is distributed under the [MIT license](https://git.musl-libc.org/cgit/musl/tree/COPYRIGHT).
 
 The logo and all derivatives are available under the terms of the Creative
 Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
@@ -104,7 +99,7 @@ For your safety, install WinDirStat only through the Microsoft Store link and pa
 
 ## Building
 
-Open `windirstat.sln` in Visual Studio with the C++ desktop workload, MSVC v145 toolset with C++23 support, ATL, and a Windows SDK. Install the compiler tools for each architecture you build: x64, Win32, or ARM64. Git and Windows PowerShell are required by the build scripts; the first build downloads xxHash if it is absent. The embedded WSL helper executables are rebuilt from source with `wslscan/build.sh`, which needs [Zig](https://ziglang.org/) 0.13.0.
+Open `windirstat.sln` in Visual Studio with the C++ desktop workload, MSVC v145 toolset with C++23 support, ATL, and a Windows SDK. Install the compiler tools for each architecture you build: x64, Win32, or ARM64. Git and Windows PowerShell are required by the build scripts; the first build downloads xxHash if it is absent.
 
 ## Contributors
 

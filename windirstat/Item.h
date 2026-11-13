@@ -274,10 +274,9 @@ public:
     void RemoveUnknownItem();
     void UpwardDrivePacman() const;
 
-    // WSL virtual disks shown as the distribution's files
-    static CItem* CreateWslDiskItem(const std::wstring& distro, FILETIME lastChange);
-    void UpdateWslDiskItem();
-    static void UpdateWslDiskItems(CItem* root);
+    // WSL trees and the virtual disks shown as the distribution's files
+    void AdjustWslHardlinks(bool restore, const std::vector<CItem*>& refreshed = {});
+    static void UpdateWslDiskItems(const std::vector<CItem*>& items, std::unordered_set<CItem*> roots, bool disksShown);
 
     // Hardlinks & Hashing
     void CreateHardlinksItem();
