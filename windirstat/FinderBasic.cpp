@@ -354,3 +354,44 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
         p.parent_path().wstring(),
         p.filename().wstring());
 }
+
+// Check on disk that a folder holds no files
+bool FinderBasic::IsEmptyFolderOnDisk(const CItem* item, std::unordered_map<std::wstring, bool>& checkedFolders)
+{
+    if (item == nullptr || !item->IsTypeOrFlag(IT_DIRECTORY) || item->IsTypeOrFlag(ITRP_MASK)
+        || item->IsRootItem() || item->GetFilesCount() != 0) return false;
+
+    const auto isEmptySubtree = [&](auto& self, const CItem* folder) -> bool
+    {
+        const std::wstring path = folder->GetPathLong();
+        if (const auto found = checkedFolders.find(path); found != checkedFolders.end()) return found->second;
+
+        // Treat a link as not empty
+        const DWORD attributes = GetFileAttributes(path.c_str());
+        if (attributes == INVALID_FILE_ATTRIBUTES || (attributes &
+            (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != FILE_ATTRIBUTE_DIRECTORY)
+            return checkedFolders.emplace(path, false).first->second;
+
+        const auto& children = folder->GetChildren();
+        for (const CItem* child : children)
+        {
+            if (!child->IsTypeOrFlag(IT_DIRECTORY) || !self(self, child))
+                return checkedFolders.emplace(path, false).first->second;
+        }
+
+        // Count disk entries against the scanned subfolders
+        std::error_code ec;
+        std::filesystem::directory_iterator it(path, ec);
+        if (ec) return checkedFolders.emplace(path, false).first->second;
+
+        size_t entries = 0;
+        for (; it != std::filesystem::directory_iterator(); it.increment(ec))
+        {
+            if (ec || ++entries > children.size()) return checkedFolders.emplace(path, false).first->second;
+        }
+
+        return checkedFolders.emplace(path, !ec && entries == children.size()).first->second;
+    };
+
+    return isEmptySubtree(isEmptySubtree, item);
+}

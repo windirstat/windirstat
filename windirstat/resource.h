@@ -427,6 +427,8 @@
 #define ID_WATCHER_START                32967
 #define ID_WDS_CONTROL                  32968
 #define ID_FILE_SELECT_CLOUD            32969
+#define ID_CLEANUP_SEARCH_EMPTY         32970
+#define ID_SEARCH_SELECT_ALL            32971
 #define IDS_APP_TITLE                   57344
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_FILTER_EXAMPLE_DIRS         57346
@@ -442,7 +444,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        124
-#define _APS_NEXT_COMMAND_VALUE         32970
+#define _APS_NEXT_COMMAND_VALUE         32972
 #define _APS_NEXT_CONTROL_VALUE         1204
 #define _APS_NEXT_SYMED_VALUE           124
 #endif

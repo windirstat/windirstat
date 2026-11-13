@@ -107,4 +107,5 @@ public:
     const ScanResult& GetResult() const noexcept override { return m_result; }
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
+    static bool IsEmptyFolderOnDisk(const CItem* item, std::unordered_map<std::wstring, bool>& checkedFolders);
 };
