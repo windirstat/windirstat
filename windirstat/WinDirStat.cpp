@@ -10,6 +10,7 @@
 #include "CsvLoader.h"
 #include "FinderMtp.h"
 #include "StorageSource.h"
+#include "WinDirStat.h"
 
 CIconHandler* GetIconHandler()
 {
@@ -224,6 +225,7 @@ class CWinDirStatCommandLineInfo final
     static constexpr std::wstring_view savePermsToFlag = L"savepermsto";
     static constexpr std::wstring_view loadFromFlag = L"loadfrom";
     static constexpr std::wstring_view legacyUninstallFlag = L"legacyuninstall";
+    static constexpr std::wstring_view helpFlag = L"help";
     std::wstring m_path;
 
 public:
@@ -239,7 +241,7 @@ public:
         {
             const wchar_t* param = rawParam;
             const bool saveDash = (m_pendingFlag == saveToFlag || m_pendingFlag == saveDupesToFlag ||
-                m_pendingFlag == savePermsToFlag) && param[0] == L'-' && param[1] == L'\0';
+                m_pendingFlag == savePermsToFlag) && IsStdoutPath(param);
             const bool flag = !saveDash && (param[0] == L'-' || param[0] == L'/');
             if (flag) ++param;
             ParseParam(param, flag, std::cmp_equal(i + 1, args.size() - 1));
@@ -253,6 +255,7 @@ public:
     }
     bool HasInvalidPath() const noexcept { return m_invalidPath; }
     bool IsLegacyUninstallRequested() const noexcept { return m_operationFlag == legacyUninstallFlag; }
+    bool IsHelpRequested() const noexcept { return m_operationFlag == helpFlag; }
     const std::wstring& GetPath() const noexcept { return m_path; }
 
 private:
@@ -360,9 +363,9 @@ private:
             m_pendingFlag = param;
             if (bLast) m_malformedFlag = true;
         }
-        else if (param == legacyUninstallFlag)
+        else if (param == legacyUninstallFlag || param == helpFlag)
         {
-            // Defer this destructive standalone action until parsing is validated.
+            // Defer standalone actions until parsing is validated.
             if (hadPriorParam || !bLast || !m_operationFlag.empty()) m_malformedFlag = true;
             else
             {
@@ -371,6 +374,51 @@ private:
         }
     }
 };
+
+static void PrintCommandLineHelp()
+{
+    ConsoleOutput out;
+    if (!out.Open()) return;
+
+    std::wstring version = CAboutDlg::GetAppVersion();
+    if (const size_t pos = version.find(L'\n'); pos != std::wstring::npos)
+        version.replace(pos, 1, L"\r\n");
+
+    out.ClearLine();
+    out.PrintLine(L"{}", version);
+    out.PrintLine();
+    out.PrintLine(L"USAGE:");
+    out.PrintLine(L"    WinDirStat.exe [targets | -loadfrom <file> | -legacyuninstall | -help |");
+    out.PrintLine(L"                    -saveto <output> <targets> |");
+    out.PrintLine(L"                    -savedupesto <output> <targets> |");
+    out.PrintLine(L"                    -savepermsto <output> <targets>]");
+    out.PrintLine();
+    out.PrintLine(L"    Arguments:");
+    out.PrintLine(L"        targets             Scan paths separated by '|' (folder, drive, URI,");
+    out.PrintLine(L"                            or MTP device path).");
+    out.PrintLine(L"        file                Path to a saved CSV or JSON scan results file.");
+    out.PrintLine(L"        output              Target .csv/.json file path, or '-', '-stdout',");
+    out.PrintLine(L"                            '-stdout-csv', or '-stdout-json'.");
+    out.PrintLine();
+    out.PrintLine(L"    Options:");
+    out.PrintLine(L"        -help               Display this help message.");
+    out.PrintLine(L"        -saveto             Export scan results silently to output.");
+    out.PrintLine(L"        -savedupesto        Export duplicate files silently to output.");
+    out.PrintLine(L"        -savepermsto        Export permissions silently to output.");
+    out.PrintLine(L"        -loadfrom           Open a saved CSV or JSON scan results file.");
+    out.PrintLine(L"        -legacyuninstall    Stop running instances and remove legacy installs.");
+    out.PrintLine();
+    out.PrintLine(L"    Examples:");
+    out.PrintLine(L"        > WinDirStat.exe \"C:\\|D:\\Projects\"");
+    out.PrintLine(L"          Scan two local folders in the graphical interface.");
+    out.PrintLine(L"        > WinDirStat.exe -saveto report.json C:\\");
+    out.PrintLine(L"          Silently scan C:\\ and save results as JSON.");
+    out.PrintLine(L"        > WinDirStat.exe -savedupesto -stdout-csv D:\\");
+    out.PrintLine(L"          Silently scan D:\\ and write duplicate files as CSV to stdout.");
+    out.PrintLine();
+    out.PrintLine(L"    Flags accept '-' or '/' prefixes and are case-insensitive.");
+    out.Close(true);
+}
 
 bool CDirStatApp::InitInstance()
 {
@@ -406,13 +454,14 @@ bool CDirStatApp::InitInstance()
 
     const CWinDirStatCommandLineInfo cmdInfo;
     if (cmdInfo.HasMalformedCommandLine()) ExitProcess(1);
+    if (cmdInfo.IsHelpRequested()) { PrintCommandLineHelp(); ExitProcess(0); }
 
     const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
     const bool autoElevate = IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt;
 
     // Elevate non-interactive operations before rejecting protected paths or applying changes.
     // A relaunch cannot inherit standard output, so a dash save continues without elevating.
-    const bool saveToStdout = m_saveToPath == L"-" || m_saveDupesToPath == L"-" || m_savePermsToPath == L"-";
+    const bool saveToStdout = IsStdoutPath(m_saveToPath) || IsStdoutPath(m_saveDupesToPath) || IsStdoutPath(m_savePermsToPath);
     if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
 
     if (cmdInfo.IsLegacyUninstallRequested())
@@ -535,6 +584,22 @@ bool CDirStatApp::IsIdleMessage(const MSG* pMsg) const noexcept
     if (pMsg->message == WM_TIMER) return false;
     if (pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE) return false;
     return CWinApp::IsIdleMessage(pMsg);
+}
+
+bool CDirStatApp::IsQuietSave() const noexcept
+{
+    return
+        !m_saveToPath.empty() ||
+        !m_saveDupesToPath.empty() ||
+        !m_savePermsToPath.empty();
+}
+
+bool CDirStatApp::IsStdout() const noexcept
+{
+    return
+        IsStdoutPath(CDirStatApp::Get()->GetSaveToPath()) ||
+        IsStdoutPath(CDirStatApp::Get()->GetSaveDupesToPath()) ||
+        IsStdoutPath(CDirStatApp::Get()->GetSavePermsToPath());;
 }
 
 void CDirStatApp::OnAppAbout()

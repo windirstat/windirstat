@@ -30,6 +30,8 @@ public:
     ~CDirStatApp() override;
     bool InitInstance() override;
     bool IsIdleMessage(const MSG* pMsg) const noexcept override;
+    bool IsQuietSave() const noexcept;
+    bool IsStdout() const noexcept;
 
     static bool InPortableMode();
     static bool IsForcedPortableMode();

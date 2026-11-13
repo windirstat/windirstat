@@ -11,11 +11,6 @@
 #include <fcntl.h>
 #include <io.h>
 
-static bool IsJsonPath(const std::wstring& path)
-{
-    return path.size() >= 5 && _wcsicmp(path.c_str() + path.size() - 5, L".json") == 0;
-}
-
 // Wide string → UTF-8; Localization has no reverse equivalent so we keep this here
 static std::string WideToUtf8(const std::wstring_view wv)
 {
@@ -548,7 +543,9 @@ static constexpr size_t ReportBufferSize = 64 * 1024;
 // Open the report file, or standard output when the path is a dash.
 static std::ofstream OpenReport(const std::wstring& path)
 {
-    if (path != L"-") return std::ofstream(path, std::ios::binary);
+    if (!IsStdoutPath(path)) return std::ofstream(path, std::ios::binary);
+    if (const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE); hOut == nullptr || hOut == INVALID_HANDLE_VALUE)
+        AttachConsole(ATTACH_PARENT_PROCESS);
     const int fd = _fileno(stdout);
     if (fd < 0 || _setmode(fd, _O_BINARY) == -1) return {};
     return std::ofstream(stdout);
@@ -560,7 +557,11 @@ static bool FlushReportBuffer(std::ofstream& outf, std::string& buffer, const bo
     if (buffer.size() < ReportBufferSize && !finish) return true;
     outf.write(buffer.data(), static_cast<std::streamsize>(buffer.size()));
     buffer.clear();
-    if (finish) outf.flush();
+
+    if (finish) {
+        outf.flush();
+        fflush(stdout);
+    }
     return outf.good();
 }
 
