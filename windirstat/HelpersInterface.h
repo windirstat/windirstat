@@ -8,6 +8,22 @@
 
 #include "pch.h"
 
+constexpr auto MakeLowerAsciiView(std::wstring_view text) noexcept
+{
+    return text | std::views::transform([](wchar_t ch) noexcept -> wchar_t {
+        if (ch >= L'A' && ch <= L'Z')
+        {
+            return static_cast<wchar_t>(ch + (L'a' - L'A'));
+        }
+        return ch;
+    });
+}
+
+constexpr bool IsEqualIgnoreCase(std::wstring_view left, std::wstring_view right) noexcept
+{
+    return std::ranges::equal(MakeLowerAsciiView(left), MakeLowerAsciiView(right));
+}
+
 class ComApartmentScope final
 {
 public:

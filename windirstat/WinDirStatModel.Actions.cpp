@@ -1328,6 +1328,18 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         affectedWslRoots = std::move(affectedWslRoots), requestedWslDisks = std::move(requestedWslDisks),
         folderContexts = std::move(folderContexts)] () mutable
     {
+        std::optional<ConsoleSpinner> spinner;
+        if (CDirStatApp::Get()->IsQuietSave())
+        {
+            const ULONGLONG range = HasRootItem() ? GetRootItem()->GetProgressRange() : 0;
+            spinner.emplace(
+                std::format(L"{}: {}", GetAppTitle(), Localization::Lookup(IDS_SCANNING)),
+                [this, range]() noexcept -> int {
+                    return range > 0 && HasRootItem() ?
+                        static_cast<int>(std::min(100ull, GetRootItem()->GetProgressPos() * 100 / range)) : -1;
+                });
+        }
+
         // Virtual disks of running WSL distributions are shown as their files when met during the scan
         std::vector<WslDistro> wslDisks;
         if (COptions::ScanWslDisks || !requestedWslDisks.empty())
@@ -1490,6 +1502,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Sorting and other finalization tasks
         CItem::ScanItemsFinalize(GetRootItem());
         Get()->RebuildExtensionData();
+        if (spinner) spinner->Stop(CDirStatApp::Get()->IsStdout());
 
         // Handle quiet save mode if path is set
         if (const auto savePath = CDirStatApp::Get()->GetSaveToPath(); !savePath.empty())

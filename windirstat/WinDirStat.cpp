@@ -239,7 +239,7 @@ public:
         {
             const wchar_t* param = rawParam;
             const bool saveDash = (m_pendingFlag == saveToFlag || m_pendingFlag == saveDupesToFlag ||
-                m_pendingFlag == savePermsToFlag) && param[0] == L'-' && param[1] == L'\0';
+                m_pendingFlag == savePermsToFlag) && IsStdoutPath(param);
             const bool flag = !saveDash && (param[0] == L'-' || param[0] == L'/');
             if (flag) ++param;
             ParseParam(param, flag, std::cmp_equal(i + 1, args.size() - 1));
@@ -412,7 +412,7 @@ bool CDirStatApp::InitInstance()
 
     // Elevate non-interactive operations before rejecting protected paths or applying changes.
     // A relaunch cannot inherit standard output, so a dash save continues without elevating.
-    const bool saveToStdout = m_saveToPath == L"-" || m_saveDupesToPath == L"-" || m_savePermsToPath == L"-";
+    const bool saveToStdout = IsStdoutPath(m_saveToPath) || IsStdoutPath(m_saveDupesToPath) || IsStdoutPath(m_savePermsToPath);
     if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested()))
         RunElevated(m_lpCmdLine, hideApp);
 
@@ -536,6 +536,22 @@ bool CDirStatApp::IsIdleMessage(const MSG* pMsg) const noexcept
     if (pMsg->message == WM_TIMER) return false;
     if (pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE) return false;
     return CWinApp::IsIdleMessage(pMsg);
+}
+
+bool CDirStatApp::IsQuietSave() const noexcept
+{
+    return
+        !m_saveToPath.empty() ||
+        !m_saveDupesToPath.empty() ||
+        !m_savePermsToPath.empty();
+}
+
+bool CDirStatApp::IsStdout() const noexcept
+{
+    return
+        IsStdoutPath(CDirStatApp::Get()->GetSaveToPath()) ||
+        IsStdoutPath(CDirStatApp::Get()->GetSaveDupesToPath()) ||
+        IsStdoutPath(CDirStatApp::Get()->GetSavePermsToPath());;
 }
 
 void CDirStatApp::OnAppAbout()
