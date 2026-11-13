@@ -768,3 +768,176 @@ int CToolBar::AddImage(const CBitmap& bmp)
     }
     return index;
 }
+
+inline bool ConsoleOutput::Open(bool attached) noexcept
+{
+    if (IsOpen()) return true;
+
+    m_isRedirected = false;
+    if (!attached)
+    {
+        if (const HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            stdOut != nullptr && stdOut != INVALID_HANDLE_VALUE)
+        {
+            if (const DWORD fileType = GetFileType(stdOut);
+                fileType == FILE_TYPE_PIPE || fileType == FILE_TYPE_DISK)
+            {
+                m_outHandle = stdOut;
+                m_isRedirected = true;
+                m_lineBuffer.reserve(128);
+                return true;
+            }
+        }
+    }
+
+    AttachConsole(ATTACH_PARENT_PROCESS);
+    m_outHandle = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (!IsOpen()) return false;
+
+    if (DWORD consoleMode = 0; GetConsoleMode(m_outHandle, &consoleMode))
+        SetConsoleMode(m_outHandle, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    m_lineBuffer.reserve(128);
+    return true;
+}
+
+inline bool ConsoleOutput::IsOpen() const noexcept
+{
+    return m_outHandle != INVALID_HANDLE_VALUE;
+}
+
+inline void ConsoleOutput::BlockInput() noexcept
+{
+    if (m_isRedirected || m_hook != nullptr || GetConsoleWindow() == nullptr) return;
+
+    // Suppress key presses in the console window while active; caller must pump messages.
+    m_hook = SetWindowsHookExW(WH_KEYBOARD_LL,
+        [](int nCode, WPARAM wParam, LPARAM lParam) noexcept -> LRESULT {
+            if (nCode == HC_ACTION && GetForegroundWindow() == GetConsoleWindow())
+            {
+                // Allow Ctrl+C to be processed for console copy, but block all other keys.
+                const DWORD vkCode = reinterpret_cast<const KBDLLHOOKSTRUCT*>(lParam)->vkCode;
+                const bool isCtrlKey = vkCode == VK_CONTROL || vkCode == VK_LCONTROL || vkCode == VK_RCONTROL;
+                const bool isCtrlC = vkCode == 'C' && (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                if (!isCtrlKey && !isCtrlC) return 1;
+            }
+            return CallNextHookEx(nullptr, nCode, wParam, lParam);
+        }, GetModuleHandleW(nullptr), 0);
+}
+
+inline void ConsoleOutput::UnblockInput() noexcept
+{
+    if (const HHOOK hook = std::exchange(m_hook, nullptr); hook != nullptr)
+        UnhookWindowsHookEx(hook);
+}
+
+void ConsoleOutput::PrintLine() noexcept
+{
+    if (!IsOpen()) return;
+    FlushRaw(L"\r\n");
+}
+
+inline void ConsoleOutput::ClearLine() noexcept
+{
+    if (!IsOpen() || m_isRedirected) return;
+    FlushRaw(L"\r\x1b[K");
+}
+
+inline void ConsoleOutput::Close(const bool redrawPrompt) noexcept
+{
+    UnblockInput();
+    if (!IsOpen()) return;
+    CloseHandle(std::exchange(m_outHandle, INVALID_HANDLE_VALUE));
+    if (std::exchange(m_isRedirected, false))
+    {
+        m_outHandle = INVALID_HANDLE_VALUE;
+        return;
+    }
+    if (redrawPrompt)
+    {
+        const HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+        if (hIn != nullptr && hIn != INVALID_HANDLE_VALUE)
+        {
+            DWORD written = 0;
+            INPUT_RECORD ir{ .EventType = KEY_EVENT, .Event = { .KeyEvent = { .bKeyDown = TRUE,
+                .wRepeatCount = 1, .wVirtualKeyCode = VK_RETURN, .uChar = { .UnicodeChar = L'\r' } } } };
+            WriteConsoleInputW(hIn, &ir, 1, &written);
+        }
+    }
+}
+
+inline void ConsoleOutput::FlushRaw(const std::wstring_view text) const noexcept
+{
+    if (text.empty()) return;
+
+    if (m_isRedirected)
+    {
+        const UINT codePage = GetConsoleOutputCP();
+        const int requiredBytes = WideCharToMultiByte(codePage, 0,
+            text.data(), static_cast<int>(text.size()), nullptr, 0, nullptr, nullptr);
+        if (requiredBytes <= 0) return;
+
+        std::string encoded(static_cast<std::size_t>(requiredBytes), '\0');
+        if (WideCharToMultiByte(codePage, 0, text.data(), static_cast<int>(text.size()),
+            encoded.data(), requiredBytes, nullptr, nullptr) <= 0)
+        {
+            return;
+        }
+
+        DWORD totalWritten = 0;
+        while (totalWritten < encoded.size())
+        {
+            DWORD written = 0;
+            if (!WriteFile(m_outHandle, encoded.data() + totalWritten,
+                static_cast<DWORD>(encoded.size() - totalWritten), &written, nullptr) || written == 0)
+            {
+                break;
+            }
+            totalWritten += written;
+        }
+        return;
+    }
+
+    DWORD written = 0;
+    WriteConsoleW(m_outHandle, text.data(), static_cast<DWORD>(text.size()), &written, nullptr);
+}
+
+ConsoleSpinner::ConsoleSpinner(const std::wstring_view label, std::function<int()> getPercent)
+{
+    if (label.empty() || !m_console.Open(true)) return;
+
+    m_thread = std::jthread([&consoleOutput = m_console, prefix = std::wstring(label),
+        getPercent = std::move(getPercent)](const std::stop_token& stopToken)
+        {
+            static constexpr std::array glyphs{ L'|', L'/', L'-', L'\\' };
+            static constexpr std::chrono::milliseconds interval{ 250 };
+
+            consoleOutput.BlockInput();
+            for (size_t idx = 0; !stopToken.stop_requested(); ++idx)
+            {
+                if (const int pct = getPercent ? getPercent() : -1; pct >= 0)
+                    consoleOutput.UpdateLine(L"{} {}%...{}", prefix, pct, glyphs[idx % glyphs.size()]);
+                else
+                    consoleOutput.UpdateLine(L"{}...{}", prefix, glyphs[idx % glyphs.size()]);
+
+                for (const auto deadline = std::chrono::steady_clock::now() + interval; !stopToken.stop_requested();)
+                {
+                    const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        deadline - std::chrono::steady_clock::now()).count();
+                    if (remaining <= 0) break;
+                    MsgWaitForMultipleObjects(0, nullptr, FALSE, static_cast<DWORD>(remaining), QS_ALLINPUT);
+                    for (MSG msg{}; PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE); DispatchMessageW(&msg))
+                        TranslateMessage(&msg);
+                }
+            }
+            consoleOutput.ClearLine();
+            consoleOutput.UnblockInput();
+        });
+}
+
+void ConsoleSpinner::Stop(bool isStdout) noexcept
+{
+    if (m_thread.joinable()) { m_thread.request_stop(); m_thread.join(); }
+    m_console.Close(!isStdout);
+}
