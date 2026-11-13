@@ -249,6 +249,8 @@ public:
         L"ShowTimeSeconds", false, CheckboxBind(IDC_SHOW_TIME_SECONDS) };
     inline static Setting<bool> ProcessHardlinks{ OptionsGeneral,
         L"ProcessHardlinks", true, CheckboxBind(IDC_PROCESS_HARDLINKS) };
+    inline static Setting<bool> ScanWslDisks{ OptionsGeneral,
+        L"ScanWslDisks", true, CheckboxBind(IDC_SCAN_WSL_DISKS) };
     inline static Setting<COLORREF> FileTreeColors[TREELISTCOLORCOUNT] =
     {
         { OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140) },

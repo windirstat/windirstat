@@ -8,6 +8,7 @@
 #include "HelpersInterface.h"
 #include "Item.h"
 #include "FinderMtp.h"
+#include "FinderWsl.h"
 #include "StorageSource.h"
 #include "Options.h"
 #include "Localization.h"
@@ -366,7 +367,8 @@ std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec)
         }
 
         // Compare complete components, treating ordinary and extended paths alike.
-        std::wstring key = MakeLower(isMtp ? path : Finder::MakeLongPathCompatible(path));
+        std::wstring key = FinderWsl::GetPathKey(path);
+        if (key.empty()) key = MakeLower(isMtp ? path : Finder::MakeLongPathCompatible(path));
         while (key.ends_with(L'\\')) key.pop_back();
         key += L'\\';
         if (std::ranges::any_of(roots, [&key](const auto& root) { return key.starts_with(root.second); })) continue;

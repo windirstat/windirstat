@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "CsvLoader.h"
 #include "FinderMtp.h"
+#include "FinderWsl.h"
 #include "StorageSource.h"
 #include <fcntl.h>
 #include <io.h>
@@ -280,6 +281,15 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
                 displayName = std::wstring_view(namePath).substr(separator + 1);
             }
         }
+
+        // A WSL tree's path omits the folder that held its virtual disk, so reports write the tree right after
+        // that folder; attaching it needs no distribution registered on the loading computer
+        if (parent == nullptr && (type & ITF_WSL) != 0 && itType == IT_DIRECTORY &&
+            _wcsicmp(FinderWsl::GetRootPath(FinderWsl::GetDistroName(namePath)).c_str(), namePath.c_str()) == 0)
+        {
+            if (const auto found = parentMap.find(std::wstring_view{}); found != parentMap.end())
+                parent = found->second;
+        }
     }
 
     // Rows are written parent-before-child, so a row under a multi-root container whose parent
@@ -330,6 +340,9 @@ static CItem* BuildAndAttachItem(const std::wstring& namePath, const std::wstrin
 
         // Also map drive letter without trailing backslash
         if (newitem->IsTypeOrFlag(IT_DRIVE)) parentMap[namePath.substr(0, 2)] = newitem;
+
+        // Remember the last folder outside WSL, which holds any WSL tree written next
+        if (!newitem->IsTypeOrFlag(ITF_WSL)) parentMap[std::wstring{}] = newitem;
     }
 
     return newitem;
@@ -491,7 +504,7 @@ CItem* LoadResults(const std::wstring& path)
     return IsJsonPath(path) ? LoadResultsJson(reader) : LoadResultsCsv(reader);
 }
 
-// Walk the item tree breadth-first and return a flat ordered list
+// Walk the item tree depth-first, parents before children, and return a flat ordered list
 static std::vector<const CItem*> CollectItems(CItem* rootItem)
 {
     std::vector<const CItem*> items;
@@ -508,9 +521,11 @@ static std::vector<const CItem*> CollectItems(CItem* rootItem)
         items.push_back(qitem);
         if (qitem->IsLeaf()) continue;
 
+        // Children are taken from the back, so WSL trees sort last to follow their folder directly
         std::vector<CItem*> children = qitem->GetChildren();
         std::ranges::sort(children, [](auto a, auto b)
         {
+            if (a->IsWslRoot() != b->IsWslRoot()) return b->IsWslRoot();
             return _wcsicmp(a->GetNameView().data(), b->GetNameView().data()) > 0;
         });
 

@@ -82,6 +82,36 @@ function Get-DiskSnapshot {
     return @($items | Sort-Object Path)
 }
 
+function Get-WslTestDistro {
+    # The first running WSL 2 distribution other than Docker's, unless WDS_TEST_WSL_DISTRO names one.
+    $cached = Get-Variable -Name WslTestDistro -Scope Script -ErrorAction Ignore
+    if ($cached) { return $cached.Value }
+    $script:WslTestDistro = ''
+    $wsl = Join-Path ([Environment]::SystemDirectory) 'wsl.exe'
+    if (-not (Test-Path -LiteralPath $wsl)) { return '' }
+    $previous = $env:WSL_UTF8
+    try {
+        $env:WSL_UTF8 = '1'
+        $running = @(& $wsl --list --running --quiet 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    }
+    finally { $env:WSL_UTF8 = $previous }
+    if ($LASTEXITCODE -ne 0) { return '' }
+    $requested = $env:WDS_TEST_WSL_DISTRO
+    $script:WslTestDistro = if ($requested) { @($running | Where-Object { $_ -ieq $requested })[0] }
+        else { @($running | Where-Object { $_ -notlike 'docker-desktop*' })[0] }
+    if (-not $script:WslTestDistro) { $script:WslTestDistro = '' }
+    return $script:WslTestDistro
+}
+
+function Invoke-WslRoot {
+    param([string] $Distro, [string] $Script, [string[]] $Arguments = @())
+    $Script = $Script.Replace("`r", '') # scenario files use Windows line endings
+    $output = & (Join-Path ([Environment]::SystemDirectory) 'wsl.exe') --distribution $Distro --user root `
+        --exec /bin/sh -c $Script wds-test @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "WSL command failed ($LASTEXITCODE): $($output -join "`n")" }
+    return $output
+}
+
 function New-TestRunner {
     param([System.Collections.IDictionary] $Settings = @{}, [string[]] $LanguageLines = @())
     $folder = Join-Path $script:Context.Root ('app-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
@@ -122,7 +152,7 @@ function Set-TestSettings {
     $sections = [ordered]@{
         Options = [ordered]@{
             LanguageId = 9; DarkMode = 0; UseFastScanEngine = 0; ScanningThreads = 4; UseBackupRestore = 0
-            ShowElevationPrompt = 0; AutoElevate = 0; ShowFreeSpace = 0; ShowUnknown = 0; ProcessHardlinks = 0
+            ShowElevationPrompt = 0; AutoElevate = 0; ShowFreeSpace = 0; ShowUnknown = 0; ProcessHardlinks = 0; ScanWslDisks = 0
             ShowDeletePermanentlyWarning = 0; ShowCreateHardlinkPrompt = 0; ShowRemoveMotwPrompt = 0
             ShowRemoveEmptyFoldersPrompt = 0; ShowSetDatesPrompt = 0; FontSizePercent = 100; ToolBarSizePercent = 100
             ShowFileTypes = 1; ShowVisualization = 1; GroupUnregisteredTypes = 0

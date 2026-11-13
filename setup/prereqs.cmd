@@ -38,11 +38,12 @@ IF NOT DEFINED VSPATH (
 ECHO Found Visual Studio:
 ECHO   %VSPATH%
 ECHO.
-ECHO Installing C++ workload, MSVC v145 toolset, ATL, ARM64 tools, and recommended Windows SDK...
+ECHO Installing C++ workload, MSVC v145 toolset, Clang, ATL, ARM64 tools, and recommended Windows SDK...
 
 START /WAIT "" "%VSSETUP%" modify --installPath "%VSPATH%" --channelId "%VSCHANNEL%" ^
     --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended ^
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 ^
+    --add Microsoft.VisualStudio.Component.VC.Llvm.Clang ^
     --add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.ATL.ARM64 ^
     --removeOos true --norestart --quiet
 SET "RC=!ERRORLEVEL!"

@@ -15,6 +15,8 @@ class Finder;
 class FinderNtfsContext;
 class FinderBasicContext;
 class FinderRemote;
+class FinderWslContext;
+struct WslDistro;
 
 // Columns
 enum ITEMCOLUMNS : std::uint8_t
@@ -47,8 +49,9 @@ enum ITEMTYPE : std::uint32_t
     IT_HLINKS_IDX  = 1u << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1u << 9,  // Pseudo File reference under Index N
     IT_CONTAINER   = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_HLINKS | IT_HLINKS_SET | IT_HLINKS_IDX,
-    IT_MASK        = 0x00003FFF,
+    IT_MASK        = 0x00001FFF,
 
+    ITF_WSL        = 1u << 13, // Indicates an item inside a WSL distribution
     ITF_SCANERROR  = 1u << 14, // Indicates an incomplete scan
     ITF_REMOTE     = 1u << 15, // Indicates a remote file, object, or directory
 
@@ -75,7 +78,7 @@ enum ITEMTYPE : std::uint32_t
     ITF_DONE       = 1u << 29, // Indicates done processing
     ITF_PREVIEW    = 1u << 30, // Indicates preview item (color stored in index)
     ITF_MTP        = 1u << 31, // Indicates MTP item
-    ITF_MASK       = 0xFF00C000,
+    ITF_MASK       = 0xFF00E000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
@@ -151,6 +154,11 @@ public:
     bool IsScanRoot() const noexcept;
     bool IsMtpRoot() const noexcept;
     bool SupportsFilesystemApis() const noexcept { return !IsTypeOrFlag(ITF_MTP, ITF_REMOTE); }
+    // The top of a WSL tree: a scan root or the folder that replaced a distribution's virtual disk
+    bool IsWslRoot() const noexcept
+    {
+        return IsTypeOrFlag(ITF_WSL) && (GetParent() == nullptr || !GetParent()->IsTypeOrFlag(ITF_WSL));
+    }
     std::shared_ptr<StorageSource> GetStorageSource(bool renew = false) const;
     ScanResult GetScanResult() const;
     void SetScanResult(ScanResult result);
@@ -236,8 +244,8 @@ public:
     void SortItemsBySize(bool logical) const;
     void UpdateStatsFromDisk();
     static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic,
-        std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr,
-        const std::shared_ptr<StorageSource>& remoteSource = {});
+        FinderWslContext& contextWsl, std::unordered_map<const CItem*, FinderBasicContext>* folderContexts = nullptr,
+        const std::shared_ptr<StorageSource>& remoteSource = {}, const std::vector<WslDistro>* wslDisks = nullptr);
     static void ScanItemsFinalize(CItem* item);
 
     // CTreeMap Interface
@@ -265,6 +273,10 @@ public:
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
     void UpwardDrivePacman() const;
+
+    // WSL trees and the virtual disks shown as the distribution's files
+    void AdjustWslHardlinks(bool restore, const std::vector<CItem*>& refreshed = {});
+    static void UpdateWslDiskItems(const std::vector<CItem*>& items, std::unordered_set<CItem*> roots, bool disksShown);
 
     // Hardlinks & Hashing
     void CreateHardlinksItem();
