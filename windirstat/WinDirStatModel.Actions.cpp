@@ -1251,6 +1251,18 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Lambda captures assume the model exists for the duration of the scan.
     m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents)] () mutable
     {
+        std::optional<ConsoleSpinner> spinner;
+        if (CDirStatApp::Get()->IsQuietSave())
+        {
+            const ULONGLONG range = HasRootItem() ? GetRootItem()->GetProgressRange() : 0;
+            spinner.emplace(
+                std::format(L"{}: {}", GetAppTitle(), Localization::Lookup(IDS_SCANNING)),
+                [this, range]() noexcept -> int {
+                    return range > 0 && HasRootItem() ?
+                        static_cast<int>(std::min(100ull, GetRootItem()->GetProgressPos() * 100 / range)) : -1;
+                });
+        }
+
         std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
 
         // Add items to processing queue
@@ -1410,6 +1422,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         // Sorting and other finalization tasks
         CItem::ScanItemsFinalize(GetRootItem());
         Get()->RebuildExtensionData();
+        if (spinner) spinner->Stop(CDirStatApp::Get()->IsStdout());
 
         // Handle quiet save mode if path is set
         if (const auto savePath = CDirStatApp::Get()->GetSaveToPath(); !savePath.empty())
