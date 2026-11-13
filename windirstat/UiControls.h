@@ -354,6 +354,77 @@ private:
     CRect m_rect;
 };
 
+// Console output for writing output to the console, with support for rewriting lines and blocking user input.
+class ConsoleOutput final
+{
+public:
+    // Prints the specified formatted text to the console output, if open.
+    template <typename... Args>
+    void Print(const std::wformat_string<Args...> fmt, Args&&... args)
+    {
+        if (!IsOpen()) return;
+        m_lineBuffer.clear();
+        std::format_to(std::back_inserter(m_lineBuffer), fmt, std::forward<Args>(args)...);
+        FlushRaw(m_lineBuffer);
+    }
+
+    // Prints the specified formatted text followed by a newline to the console output, if open.
+    template <typename... Args>
+    void PrintLine(const std::wformat_string<Args...> fmt, Args&&... args)
+    {
+        if (!IsOpen()) return;
+        m_lineBuffer.clear();
+        std::format_to(std::back_inserter(m_lineBuffer), fmt, std::forward<Args>(args)...);
+        m_lineBuffer.append(L"\r\n");
+        FlushRaw(m_lineBuffer);
+    }
+
+    // Updates the current line in the console output with the specified formatted text, if open and not redirected.
+    template <typename... Args>
+    void UpdateLine(const std::wformat_string<Args...> fmt, Args&&... args)
+    {
+        if (!IsOpen() || m_isRedirected) return;
+        m_lineBuffer.assign(L"\r");
+        std::format_to(std::back_inserter(m_lineBuffer), fmt, std::forward<Args>(args)...);
+        m_lineBuffer.append(L"\x1b[K");
+        FlushRaw(m_lineBuffer);
+    }
+
+    ~ConsoleOutput() noexcept { Close(); }
+
+    bool Open(bool attached = false) noexcept; // Opens a console output for writing, if not already open.
+    void Close(const bool redrawPrompt = false) noexcept; // Closes the console output, optionally redrawing the prompt if it was open and attached to a console.
+    bool IsOpen() const noexcept; // Returns true if the console output is open and ready for writing.
+
+    void BlockInput() noexcept;   // Blocks user input to the console output, preventing the user from typing or interacting with it.
+    void UnblockInput() noexcept; // Unblocks user input to the console output, allowing the user to type and interact with it again.
+    void PrintLine() noexcept;    // Prints a newline to the console output, if open.
+    void ClearLine() noexcept;    // Clears the current line in the console output, if open and not redirected.
+
+private:
+    void FlushRaw(const std::wstring_view text) const noexcept;
+    HHOOK m_hook = nullptr;
+    HANDLE m_outHandle = INVALID_HANDLE_VALUE;
+    bool m_isRedirected = false;
+    std::wstring m_lineBuffer;
+};
+
+// A console spinner that displays a spinning animation in the console while a long-running operation is in progress.
+class ConsoleSpinner final
+{
+public:
+    ConsoleSpinner(const std::wstring_view label, std::function<int()> getPercent = {});
+    ~ConsoleSpinner() noexcept { Stop(); }
+    ConsoleSpinner(const ConsoleSpinner&) = delete;
+    ConsoleSpinner& operator=(const ConsoleSpinner&) = delete;
+
+    void Stop(bool isStdout = false) noexcept; // Stops the spinner and optionally writes a newline to stdout if isStdout is true.
+
+private:
+    ConsoleOutput m_console;
+    std::jthread m_thread;
+};
+
 // -----------------------------------------------------------------------------
 //  Native common-dialog helpers
 // -----------------------------------------------------------------------------
