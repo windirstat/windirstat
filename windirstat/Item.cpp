@@ -638,7 +638,7 @@ void CItem::ExtensionDataProcessChildren(const bool remove)
     std::vector childStack({ this });
     while (!childStack.empty()) [[msvc::forceinline_calls]]
     {
-        const auto& item = childStack.back();
+        CItem* const item = childStack.back();
         childStack.pop_back();
 
         if (item->IsTypeOrFlag(IT_MYCOMPUTER, IT_DIRECTORY, IT_DRIVE))
@@ -1485,7 +1485,7 @@ void CItem::ScanItemsFinalize(CItem* item)
     std::vector queue({item});
     while (!queue.empty()) [[msvc::forceinline_calls]]
     {
-        const auto & qitem = queue.back();
+        CItem* const qitem = queue.back();
         queue.pop_back();
         qitem->SetDone();
         if (qitem->IsLeaf()) continue;
