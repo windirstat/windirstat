@@ -33,9 +33,15 @@ protected:
     virtual void InitializeColumns() = 0;
     virtual DWORD GetControlStyle() const = 0;
 
+    // Optional band above the list (for example a selector). LayoutBand positions
+    // its windows for the given width and returns its height; the list gets the rest.
+    virtual void CreateBand() {}
+    virtual int LayoutBand(int /*cx*/) { return 0; }
+    int m_bandHeight = 0;
+
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSize(UINT nType, int cx, int cy);
-    bool OnEraseBkgnd(CDC*) { return true; }
+    bool OnEraseBkgnd(CDC* pDC);
     void OnSetFocus(WindowRef pOldWnd);
     void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
     void OnUpdatePopupToggle(CCmdUI* pCmdUI);

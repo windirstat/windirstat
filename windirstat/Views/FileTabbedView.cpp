@@ -42,6 +42,8 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     m_fileTreeView = AddPane<CFileTreeView>(m_fileTreeViewIndex, IDS_ALL_FILES);
     m_fileTopView = AddPane<CFileTopView>(m_fileTopViewIndex, IDS_LARGEST_FILES);
+    m_changeSizeView = AddPane<CFileChangeSizeView>(m_changeSizeViewIndex, IDS_CHANGES_SIZE);
+    m_changeFilesView = AddPane<CFileChangeFilesView>(m_changeFilesViewIndex, IDS_CHANGES_FILES);
     m_fileDupeView = AddPane<CFileDupeView>(m_fileDupeViewIndex, IDS_DUPLICATE_FILES);
     m_fileSearchView = AddPane<CFileSearchView>(m_fileSearchViewIndex, IDS_SEARCH_RESULTS);
     m_fileWatcherView = AddPane<CFileWatcherView>(m_fileWatcherViewIndex, IDS_WATCHER);
@@ -49,7 +51,7 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_storageAnalyticsView = AddPane<CStorageAnalyticsView>(m_storageAnalyticsViewIndex, IDS_STORAGE_ANALYTICS);
     if (m_fileTreeView == nullptr || m_fileTopView == nullptr || m_fileDupeView == nullptr
         || m_fileSearchView == nullptr || m_fileWatcherView == nullptr || m_filePermsView == nullptr
-        || m_storageAnalyticsView == nullptr)
+        || m_changeSizeView == nullptr || m_changeFilesView == nullptr || m_storageAnalyticsView == nullptr)
     {
         return -1;
     }
@@ -147,6 +149,11 @@ LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
         CFileDupeControl::Get()->SortItems();
     }
 
+    if (wp == static_cast<WPARAM>(m_changeSizeViewIndex) || wp == static_cast<WPARAM>(m_changeFilesViewIndex))
+    {
+        RefreshChangeTabs();
+    }
+
     // Show the contextual watcher toolbar buttons only while its tab is active
     if (CMainFrame::Get() != nullptr)
     {
@@ -174,6 +181,8 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
 
     for (auto* pane : { static_cast<CWinDirStatPane*>(m_fileTreeView),
         static_cast<CWinDirStatPane*>(m_fileTopView),
+        static_cast<CWinDirStatPane*>(m_changeSizeView),
+        static_cast<CWinDirStatPane*>(m_changeFilesView),
         static_cast<CWinDirStatPane*>(m_fileDupeView),
         static_cast<CWinDirStatPane*>(m_fileSearchView),
         static_cast<CWinDirStatPane*>(m_fileWatcherView),
@@ -185,11 +194,22 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
             pane->OnUpdate(sender, change, item);
         }
     }
+
+    // A finished scan has just stored a new history point
+    if (change == MODEL_CHANGE_NONE && CWinDirStatModel::Get()->IsScanSettled()) RefreshChangeTabs();
+}
+
+// Reloads the visible change list; hidden ones are refreshed when their tab is selected.
+void CFileTabbedView::RefreshChangeTabs()
+{
+    if (m_changeSizeView == nullptr || m_changeFilesView == nullptr) return;
+    if (IsChangeSizeViewTabActive()) m_changeSizeView->RefreshChanges();
+    else if (IsChangeFilesViewTabActive()) m_changeFilesView->RefreshChanges();
 }
 
 bool CFileTabbedView::CycleTab(const bool forward)
 {
-    const auto allTabs = { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex,
+    const auto allTabs = { m_fileTreeViewIndex, m_fileTopViewIndex, m_changeSizeViewIndex, m_changeFilesViewIndex, m_fileDupeViewIndex,
         m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex };
     std::vector<int> visibleTabs;
     for (const int tabIndex : allTabs)

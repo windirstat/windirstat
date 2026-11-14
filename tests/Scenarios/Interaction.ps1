@@ -35,7 +35,7 @@ function Test-VisualizationCommands {
         Assert-Equal (Get-AppCommandState $app 'ID_TREEMAP_PHYSICAL_SIZE').Checked (-not $logical) `
             'Physical size selection follows the requested mode'
     }
-    foreach ($command in 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_SUNBURST') {
+    foreach ($command in 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_SUNBURST', 'ID_VIEW_PIECHART', 'ID_VIEW_AGECHART', 'ID_VIEW_BARCHART') {
         Invoke-AppCommand $app $command
         Assert-True (Get-AppCommandState $app $command).Checked 'Switching graphs updates the selected view'
         foreach ($shown in $false, $true) {

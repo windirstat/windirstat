@@ -18,6 +18,7 @@ int CControlView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     control.ShowStripes(COptions::ListStripes);
     control.ShowFullRowSelection(COptions::ListFullRowSelection);
     InitializeColumns();
+    CreateBand();
     return 0;
 }
 
@@ -76,9 +77,21 @@ void CControlView::OnSize(UINT /*nType*/, const int cx, const int cy)
 {
     if (IsWindow(GetControl().m_hWnd))
     {
-        CRect rc(0, 0, cx, cy);
+        m_bandHeight = LayoutBand(cx);
+        CRect rc(0, m_bandHeight, cx, std::max(m_bandHeight, cy));
         GetControl().MoveWindow(rc);
     }
+}
+
+bool CControlView::OnEraseBkgnd(CDC* pDC)
+{
+    if (pDC != nullptr && m_bandHeight > 0)
+    {
+        CRect band = GetClientRect();
+        band.bottom = band.top + m_bandHeight;
+        pDC->FillSolidRect(band, DarkMode::SystemColor(COLOR_BTNFACE));
+    }
+    return true;
 }
 
 void CControlView::OnSetFocus(WindowRef /*pOldWnd*/)

@@ -173,6 +173,18 @@
     <ClInclude Include="Controls\FlameGraph.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\AgeChart.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\HistoryChart.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\BarChart.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\PieChart.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\Sunburst.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -209,6 +221,21 @@
     <ClInclude Include="Views\FlameGraphView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
+    <ClInclude Include="Views\AgeChartView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanHistory.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\HistoryChartView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\BarChartView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\PieChartView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
     <ClInclude Include="Views\SunburstView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
@@ -240,6 +267,9 @@
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileWatcherControl.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FileChangeControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Views\ControlView.h">
@@ -433,6 +463,21 @@
     <ClCompile Include="Views\FlameGraphView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="Views\AgeChartView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanHistory.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\HistoryChartView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\BarChartView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\PieChartView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="Views\SunburstView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
@@ -452,6 +497,18 @@
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FlameGraph.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\AgeChart.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\HistoryChart.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\BarChart.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\PieChart.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Sunburst.cpp">
@@ -506,6 +563,9 @@
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileWatcherControl.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FileChangeControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Views\ControlView.cpp">

@@ -352,7 +352,7 @@ function Get-GraphWindow {
         @([TestDesktop]::Children($App.Window) | Where-Object {
             [TestDesktop]::IsWindowVisible($_) -and
             [TestDesktop]::Class($_) -in
-                @('WinDirStatTreeMapClass', 'WinDirStatFlameGraphClass', 'WinDirStatSunburstClass')
+                @('WinDirStatTreeMapClass', 'WinDirStatFlameGraphClass', 'WinDirStatSunburstClass', 'WinDirStatPieChartClass', 'WinDirStatAgeChartClass', 'WinDirStatHistoryChartClass', 'WinDirStatBarChartClass')
         } | Select-Object -First 1)
     } 'A visualization pane is visible'
 }

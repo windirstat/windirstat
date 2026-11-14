@@ -1122,6 +1122,8 @@ void CWdsListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
     const auto* phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
     *pResult = false;
 
+    if (OnHeaderClick(ColumnToSubItem(phdr->iItem))) return;
+
     if (const int col = phdr->iItem; col == m_sorting.column1)
     {
         m_sorting.ascending1 = !m_sorting.ascending1;

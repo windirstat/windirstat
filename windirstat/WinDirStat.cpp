@@ -429,6 +429,9 @@ bool CDirStatApp::InitInstance()
     if (!m_saveToPath.empty()) COptions::ScanForDuplicates = false;
     else if (!m_saveDupesToPath.empty()) COptions::ScanForDuplicates = true;
 
+    // The selection dialog will open at startup; enumerate portable devices while the main window is built.
+    if (!hideApp && m_loadFromPath.empty() && cmdInfo.GetPath().empty()) CSelectDrivesDlg::PrefetchDevices();
+
     m_model = std::make_unique<CWinDirStatModel>();
 
     m_mainFrame = std::make_unique<CMainFrame>();

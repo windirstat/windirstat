@@ -107,3 +107,33 @@ void CFileSearchView::InitializeColumns()
     control.SetSorting(COL_ITEMSEARCH_SIZE_LOGICAL, false);
     control.OnColumnsInserted();
 }
+
+void CFileChangeSizeView::InitializeColumns()
+{
+    auto& control = GetControl();
+
+    // Columns should be in enumeration order so initial sort will work
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 500, COL_ITEMCHANGE_NAME);
+    InsertCol(IDS_COL_CHANGE_BAR, LVCFMT_LEFT, 130, COL_ITEMCHANGE_BAR);
+    InsertCol(IDS_COL_PREVIOUS, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_PREVIOUS);
+    InsertCol(IDS_COL_CURRENT, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_CURRENT);
+    InsertCol(IDS_COL_CHANGE, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_DELTA);
+    InsertCol(IDS_COL_CHANGE_PERCENT, LVCFMT_RIGHT, 90, COL_ITEMCHANGE_PERCENT);
+    control.SetSorting(COL_ITEMCHANGE_DELTA, false);
+    control.OnColumnsInserted();
+}
+
+void CFileChangeFilesView::InitializeColumns()
+{
+    auto& control = GetControl();
+
+    // Columns should be in enumeration order so initial sort will work
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 500, COL_ITEMCHANGE_NAME);
+    InsertCol(IDS_COL_CHANGE_BAR, LVCFMT_LEFT, 130, COL_ITEMCHANGE_BAR);
+    InsertCol(IDS_COL_PREVIOUS, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_PREVIOUS);
+    InsertCol(IDS_COL_CURRENT, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_CURRENT);
+    InsertCol(IDS_COL_CHANGE, LVCFMT_RIGHT, 100, COL_ITEMCHANGE_DELTA);
+    InsertCol(IDS_COL_CHANGE_PERCENT, LVCFMT_RIGHT, 90, COL_ITEMCHANGE_PERCENT);
+    control.SetSorting(COL_ITEMCHANGE_DELTA, false);
+    control.OnColumnsInserted();
+}

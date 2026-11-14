@@ -569,6 +569,50 @@ void CMainFrame::OnUpdateViewSunburst(CCmdUI* pCmdUI) const
     pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::Sunburst);
 }
 
+void CMainFrame::OnViewPieChart()
+{
+    SelectGraphPane(GraphPane::PieChart);
+}
+
+void CMainFrame::OnUpdateViewPieChart(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::PieChart);
+}
+
+void CMainFrame::OnViewAgeChart()
+{
+    SelectGraphPane(GraphPane::AgeChart);
+}
+
+void CMainFrame::OnUpdateViewAgeChart(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::AgeChart);
+}
+
+void CMainFrame::OnViewHistoryChart()
+{
+    SelectGraphPane(GraphPane::HistoryChart);
+}
+
+void CMainFrame::OnUpdateViewHistoryChart(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::HistoryChart);
+}
+
+void CMainFrame::OnViewBarChart()
+{
+    SelectGraphPane(GraphPane::BarChart);
+}
+
+void CMainFrame::OnUpdateViewBarChart(CCmdUI* pCmdUI) const
+{
+    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::BarChart);
+}
+
 static void SortItemRecursive(CItem* item)
 {
     if (item == nullptr || item->IsLeaf()) return;
