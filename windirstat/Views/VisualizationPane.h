@@ -30,7 +30,7 @@ GraphPane GetActivePaneType() const { return m_activePane; }
     void SuspendRecalculationDrawing(bool suspend) override;
 
 protected:
-    std::array<std::unique_ptr<CGraphView>, 3> m_views{};
+    std::array<std::unique_ptr<CGraphView>, 7> m_views{};
     GraphPane m_activePane = GraphPane::TreeMap;
     bool m_showVisualization = true;
     unsigned int m_drawingSuspensionCount = 0;

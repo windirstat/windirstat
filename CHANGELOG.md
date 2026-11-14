@@ -9,6 +9,32 @@ Enhancements
 Bug Fixes
 - Corrected list column alignment when scrolling horizontally
 
+Fork Changes (branch "mejoras")
+
+New visualizations
+- Added a 3D pie chart of the children of the selected folder; it follows the folder selected in the file list
+- Added a vertical bar chart of the largest items, ordered from largest to smallest
+- Added a file age bar chart that follows the selected folder
+- Added a history chart with the size, allocated size and file count of the selected folder across scans, stored in one JSON file per scan origin
+  - Horizontal zoom and panning (mouse wheel, drag, scroll bar with step, page and show-all buttons)
+  - Selecting a point shows its exact date and values
+  - Context menu to remove a point, purge data, change the storage location, copy values, copy/export (PNG) and print the chart
+
+New tabs
+- Added "Biggest Changes - Size" and "Biggest Changes - Files" tabs listing the folders that changed most since the previous scan
+
+Improvements
+- The file types list (extension, color, description) now updates with the folder selected while navigating
+
+Proposals
+- Use TB and GB as the size units throughout the application instead of TiB and GiB (not implemented)
+
+Verification
+- All implemented fork changes above have been verified to work correctly
+
+Pending Improvements
+- Reduce the time between the program window appearing and the drive list becoming selectable
+
 <a name="windirstat-2.9.2"></a>
 # WinDirStat 2.9.2
 

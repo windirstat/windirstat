@@ -60,7 +60,7 @@ public:
 
     explicit CDialog(const UINT nIDTemplate, WindowRef parent = {}) : m_nIDTemplate(nIDTemplate), m_parent(parent) {}
 
-    static std::optional<std::wstring> PickFile(FilePickerMode mode, std::wstring filter, WindowRef parent = nullptr);
+    static std::optional<std::wstring> PickFile(FilePickerMode mode, std::wstring filter, WindowRef parent = nullptr, const wchar_t* defaultExtension = L"csv");
     static std::optional<std::wstring> PickFolder(WindowRef parent = nullptr);
     static std::vector<std::wstring> PickFolders(WindowRef parent = nullptr, bool multiSelect = true);
     static std::optional<COLORREF> PickColor(COLORREF initial, WindowRef parent = nullptr);

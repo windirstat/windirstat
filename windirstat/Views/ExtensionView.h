@@ -30,6 +30,12 @@ public:
     void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
     void SetSelection();
 
+    // Fills the list with the extensions of the whole scan or, when a folder other than the
+    // root is selected, only with the files below that folder.
+    void RefreshData();
+    const CItem* GetScopeItem() const;
+
+    const CItem* m_scope = nullptr; // Folder the list currently describes; null for the whole scan
     bool m_showTypes = true; // Whether this view shall be shown (F8 option)
     CExtensionListControl m_extensionListControl; // The list control
 

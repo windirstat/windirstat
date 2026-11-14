@@ -97,14 +97,14 @@ public:
 
 protected:
     void OnSize(UINT nType, int cx, int cy);
-    void OnLButtonDblClk(UINT nFlags, CPoint point);
-    void OnLButtonDown(UINT nFlags, CPoint point);
+    virtual void OnLButtonDblClk(UINT nFlags, CPoint point);
+    virtual void OnLButtonDown(UINT nFlags, CPoint point);
     void OnMButtonDown(UINT nFlags, CPoint point);
     void OnSetFocus(WindowRef pOldWnd);
-    void OnContextMenu(WindowRef pWnd, CPoint point);
-    void OnMouseMove(UINT nFlags, CPoint point);
+    virtual void OnContextMenu(WindowRef pWnd, CPoint point);
+    virtual void OnMouseMove(UINT nFlags, CPoint point);
     void OnMouseLeave();
-    bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    virtual bool OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
     void OnFontSizeChanged(int, int) override { TrimRenderCache(); Invalidate(false); }
 };
 

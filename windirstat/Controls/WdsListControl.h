@@ -136,6 +136,8 @@ protected:
     int GetSubItemWidth(CWdsListItem* item, int subitem, CDC* pDC = nullptr);
     bool IsColumnRequired(int subitem) const;
     virtual void OnItemContextMenu(CPoint /*point*/) {}
+    // Return true to handle a click on a column header instead of sorting by it.
+    virtual bool OnHeaderClick(int /*subitem*/) { return false; }
     void SavePersistentAttributes() const override;
     void ShowColumnContextMenu(CPoint point);
 

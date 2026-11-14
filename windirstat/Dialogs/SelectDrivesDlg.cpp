@@ -701,9 +701,29 @@ void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult) const
 
 /////////////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // Written and consumed by the GUI thread only; the worker owns its inputs and result.
+    std::shared_future<std::vector<MtpDevice>> s_prefetchedDevices;
+}
+
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) :
     MessageTarget(IDD, COptions::DriveSelectWindowRect.Ptr(), pParent)
 {
+}
+
+void CSelectDrivesDlg::PrefetchDevices()
+{
+    try
+    {
+        std::packaged_task<std::vector<MtpDevice>()> task([] { return FinderMtp::GetDevices(); });
+        s_prefetchedDevices = task.get_future().share();
+        std::thread(std::move(task)).detach();
+    }
+    catch (...)
+    {
+        s_prefetchedDevices = {};
+    }
 }
 
 bool CSelectDrivesDlg::OnInitDialog()
@@ -817,7 +837,17 @@ bool CSelectDrivesDlg::OnInitDialog()
         }
 
         // Add shell-backed portable devices alongside the filesystem drive list
-        for (const auto& device : FinderMtp::GetDevices())
+        // Use the startup prefetch once (it may still be running); later openings re-enumerate for fresh results.
+        std::vector<MtpDevice> devices;
+        if (s_prefetchedDevices.valid())
+        {
+            try { devices = s_prefetchedDevices.get(); }
+            catch (...) { devices = FinderMtp::GetDevices(); }
+            s_prefetchedDevices = {};
+        }
+        else devices = FinderMtp::GetDevices();
+
+        for (const auto& device : devices)
         {
             const auto item = new CDriveItem(&m_driveList, device.path, device.name);
             item->StartQuery();

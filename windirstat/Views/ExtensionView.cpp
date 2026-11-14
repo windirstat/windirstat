@@ -57,24 +57,19 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
     {
     case MODEL_CHANGE_NEW_ROOT:
     case MODEL_CHANGE_NONE:
-        if (IsShowTypes() && CWinDirStatModel::Get()->IsRootDone())
-        {
-            m_extensionListControl.SetRootSize(CWinDirStatModel::Get()->GetRootSize());
-            m_extensionListControl.SetExtensionData(CWinDirStatModel::Get()->GetExtensionData());
+        RefreshData();
 
-            // If there is no vertical scroll bar, the header control doesn't repaint
-            // correctly. Don't know why. But this helps:
+        // If there is no vertical scroll bar, the header control doesn't repaint
+        // correctly. Don't know why. But this helps:
+        if (IsShowTypes() && CWinDirStatModel::Get()->IsRootDone())
             m_extensionListControl.GetHeader().Invalidate();
-        }
-        else
-        {
-            m_extensionListControl.SetExtensionData(nullptr);
-        }
 
         [[fallthrough]];
     case MODEL_CHANGE_SELECTION_REFRESH:
         if (IsShowTypes())
         {
+            // Navigating to another folder updates the list to that folder's files
+            if (change == MODEL_CHANGE_SELECTION_REFRESH && GetScopeItem() != m_scope) RefreshData();
             SetSelection();
         }
         break;
@@ -100,6 +95,65 @@ void CExtensionView::OnUpdate(CWnd* /*sender*/, const MODEL_CHANGE change, CItem
     default:
         break;
     }
+}
+
+// The folder selected in the file tree (the parent for a selected file), or null when the
+// whole scan applies: nothing selected, the root selected, or no usable folder.
+const CItem* CExtensionView::GetScopeItem() const
+{
+    const CItem* root = CWinDirStatModel::Get()->GetRootItem();
+    const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
+    if (items.empty()) return nullptr;
+
+    const CItem* scope = items.front();
+    if (!scope->IsTypeOrFlag(IT_MYCOMPUTER, IT_DIRECTORY, IT_DRIVE)) scope = scope->GetParent();
+    return scope == root ? nullptr : scope;
+}
+
+void CExtensionView::RefreshData()
+{
+    CWinDirStatModel* model = CWinDirStatModel::Get();
+    if (!IsShowTypes() || !model->IsRootDone())
+    {
+        m_scope = nullptr;
+        m_extensionListControl.SetExtensionData(nullptr);
+        return;
+    }
+
+    m_scope = GetScopeItem();
+    if (m_scope == nullptr)
+    {
+        m_extensionListControl.SetRootSize(model->GetRootSize());
+        m_extensionListControl.SetExtensionData(model->GetExtensionData());
+        return;
+    }
+
+    // Accumulate the files below the folder; colors stay those of the whole scan
+    CExtensionData local;
+    const CExtensionData& global = *model->GetExtensionData();
+    std::vector<const CItem*> stack{ m_scope };
+    while (!stack.empty())
+    {
+        const CItem* item = stack.back();
+        stack.pop_back();
+        if (item->IsTypeOrFlag(IT_MYCOMPUTER, IT_DIRECTORY, IT_DRIVE))
+        {
+            for (const CItem* child : item->GetChildren()) stack.push_back(child);
+        }
+        else if (item->IsTypeOrFlag(IT_FILE))
+        {
+            const std::wstring& ext = item->GetExtension();
+            const auto [it, inserted] = local.try_emplace(ext);
+            if (inserted)
+            {
+                if (const auto found = global.find(ext); found != global.end()) it->second.color = found->second.color;
+            }
+            it->second.AddFile(item->GetSizeLogical());
+        }
+    }
+
+    m_extensionListControl.SetRootSize(m_scope->GetSizeLogical());
+    m_extensionListControl.SetExtensionData(&local);
 }
 
 void CExtensionView::SetSelection()

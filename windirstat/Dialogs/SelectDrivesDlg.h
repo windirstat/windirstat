@@ -111,6 +111,9 @@ public:
 
     CSelectDrivesDlg(CWnd* pParent = nullptr);
 
+    // Starts the slow portable-device enumeration in the background so the first dialog opens without waiting for it.
+    static void PrefetchDevices();
+
     std::vector<std::wstring> GetSelectedItems() const;
     bool OnInitDialog() override;
     void OnOK() override;

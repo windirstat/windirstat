@@ -187,6 +187,37 @@ public:
         ti.lpszText = const_cast<LPWSTR>(text.c_str());
         SendNativeMessage(TTM_UPDATETIPTEXTW, 0, &ti);
     }
+    // Manually positioned tooltip that follows the caller instead of the mouse hook.
+    bool AddTrackingTool(WindowRef window)
+    {
+        if (window == nullptr) return false;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+        ti.hwnd = window.Handle();
+        ti.uId = reinterpret_cast<UINT_PTR>(window.Handle());
+        ti.lpszText = const_cast<LPWSTR>(L"");
+        return static_cast<bool>(SendNativeMessage(TTM_ADDTOOLW, 0, &ti));
+    }
+    void ShowTracking(WindowRef window, const std::wstring& text, const CPoint screenPoint)
+    {
+        if (window == nullptr) return;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+        ti.hwnd = window.Handle();
+        ti.uId = reinterpret_cast<UINT_PTR>(window.Handle());
+        ti.lpszText = const_cast<LPWSTR>(text.c_str());
+        SendNativeMessage(TTM_UPDATETIPTEXTW, 0, &ti);
+        SendNativeMessage(TTM_TRACKPOSITION, 0, MAKELPARAM(screenPoint.x + 16, screenPoint.y + 20));
+        SendNativeMessage(TTM_TRACKACTIVATE, TRUE, &ti);
+    }
+    void HideTracking(WindowRef window)
+    {
+        if (window == nullptr) return;
+        TTTOOLINFOW ti{}; ti.cbSize = sizeof(ti);
+        ti.hwnd = window.Handle();
+        ti.uId = reinterpret_cast<UINT_PTR>(window.Handle());
+        SendNativeMessage(TTM_TRACKACTIVATE, FALSE, &ti);
+    }
     void Activate() { SendNativeMessage(TTM_ACTIVATE, true); }
     void Pop() { SendNativeMessage(TTM_POP); }
     void SetToolRect(WindowRef window, const UINT_PTR id, const RECT& rect)

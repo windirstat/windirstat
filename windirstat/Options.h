@@ -43,15 +43,23 @@ enum class GraphPane : std::uint8_t
     TreeMap,
     FlameGraph,
     Sunburst,
+    PieChart,
+    AgeChart,
+    HistoryChart,
+    BarChart,
 };
 
 // GraphPaneStyle historically stored treemap layouts (0, 1, 4, 5) alongside
-// flame graph (2) and sunburst (3). Decode those values while keeping the
+// flame graph (2), sunburst (3), pie chart (6), age chart (7) history chart (8) and bar chart (9). Decode those values while keeping the
 // runtime pane model independent from TreeMapLayout::Style.
 constexpr GraphPane DecodeGraphPane(const int persisted) noexcept
 {
     if (persisted == 2) return GraphPane::FlameGraph;
     if (persisted == 3) return GraphPane::Sunburst;
+    if (persisted == 6) return GraphPane::PieChart;
+    if (persisted == 7) return GraphPane::AgeChart;
+    if (persisted == 8) return GraphPane::HistoryChart;
+    if (persisted == 9) return GraphPane::BarChart;
     return GraphPane::TreeMap;
 }
 
@@ -62,11 +70,15 @@ constexpr int EncodeGraphPane(const GraphPane pane) noexcept
     case GraphPane::TreeMap: return 0;
     case GraphPane::FlameGraph: return 2;
     case GraphPane::Sunburst: return 3;
+    case GraphPane::PieChart: return 6;
+    case GraphPane::AgeChart: return 7;
+    case GraphPane::HistoryChart: return 8;
+    case GraphPane::BarChart: return 9;
     }
     return 0;
 }
 
-constexpr int MaxPersistedGraphPane = 5;
+constexpr int MaxPersistedGraphPane = 9;
 
 // Layout view types
 enum LAYOUT_VIEW_TYPE : char
@@ -150,6 +162,8 @@ class COptions final
     inline static constexpr std::wstring_view OptionsTopView = L"TopView";
     inline static constexpr std::wstring_view OptionsSearch = L"SearchView";
     inline static constexpr std::wstring_view OptionsWatcher = L"Watcher";
+    inline static constexpr std::wstring_view OptionsChangeSize = L"ChangeSizeView";
+    inline static constexpr std::wstring_view OptionsChangeFiles = L"ChangeFilesView";
     inline static constexpr std::wstring_view OptionsPerms = L"PermissionsView";
     inline static constexpr std::wstring_view OptionsDriveSelect = L"DriveSelect";
 
@@ -356,6 +370,12 @@ public:
     inline static Setting<std::vector<int>> WatcherColumnOrder{ OptionsWatcher, L"ColumnOrder" };
     inline static Setting<std::vector<int>> WatcherColumnWidths{ OptionsWatcher, L"ColumnWidths" };
     inline static Setting<std::vector<int>> WatcherColumnVisibility{ OptionsWatcher, L"ColumnVisibility" };
+    inline static Setting<std::vector<int>> ChangeSizeColumnOrder{ OptionsChangeSize, L"ColumnOrder" };
+    inline static Setting<std::vector<int>> ChangeSizeColumnWidths{ OptionsChangeSize, L"ColumnWidths" };
+    inline static Setting<std::vector<int>> ChangeSizeColumnVisibility{ OptionsChangeSize, L"ColumnVisibility" };
+    inline static Setting<std::vector<int>> ChangeFilesColumnOrder{ OptionsChangeFiles, L"ColumnOrder" };
+    inline static Setting<std::vector<int>> ChangeFilesColumnWidths{ OptionsChangeFiles, L"ColumnWidths" };
+    inline static Setting<std::vector<int>> ChangeFilesColumnVisibility{ OptionsChangeFiles, L"ColumnVisibility" };
     inline static Setting<std::vector<int>> PermsViewColumnOrder{ OptionsPerms, L"ColumnOrder" };
     inline static Setting<std::vector<int>> PermsViewColumnWidths{ OptionsPerms, L"ColumnWidths" };
     inline static Setting<std::vector<int>> PermsViewColumnVisibility{ OptionsPerms, L"ColumnVisibility" };
@@ -363,6 +383,7 @@ public:
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesCloud{ OptionsDriveSelect, L"SelectDrivesCloud" };
     inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
+    inline static Setting<std::wstring> HistoryFolder{ OptionsGeneral, L"HistoryFolder", L"" };
     inline static Setting<std::wstring> SearchHistory{ OptionsSearch, L"SearchHistory" };
     inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };
     inline static Setting<std::wstring> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum" };

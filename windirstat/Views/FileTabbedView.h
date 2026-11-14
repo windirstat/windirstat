@@ -21,6 +21,8 @@ public:
     bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileSearchViewIndex; }
     bool IsFileWatcherViewTabActive() { return GetTabControl().GetActiveTab() == m_fileWatcherViewIndex; }
     bool IsFilePermsViewTabActive() { return GetTabControl().GetActiveTab() == m_filePermsViewIndex; }
+    bool IsChangeSizeViewTabActive() { return GetTabControl().GetActiveTab() == m_changeSizeViewIndex; }
+    bool IsChangeFilesViewTabActive() { return GetTabControl().GetActiveTab() == m_changeFilesViewIndex; }
     bool IsStorageAnalyticsViewTabActive() { return GetTabControl().GetActiveTab() == m_storageAnalyticsViewIndex; }
     CFileTopView* GetFileTopView() const { return m_fileTopView; }
     CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
@@ -74,10 +76,15 @@ CFileTabbedView() = default;
     CFileWatcherView* m_fileWatcherView = nullptr;
     int m_filePermsViewIndex = -1;
     CFilePermsView* m_filePermsView = nullptr;
+    int m_changeSizeViewIndex = -1;
+    CFileChangeSizeView* m_changeSizeView = nullptr;
+    int m_changeFilesViewIndex = -1;
+    CFileChangeFilesView* m_changeFilesView = nullptr;
     int m_storageAnalyticsViewIndex = -1;
     CStorageAnalyticsView* m_storageAnalyticsView = nullptr;
 
     void FocusActiveTabContent();
+    void RefreshChangeTabs();
 
 static std::span<const RouteEntry> Routes();
 
