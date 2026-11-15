@@ -1406,12 +1406,8 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
             auto* basicContext = &contextBasic;
             if (item->IsTypeOrFlag(ITF_WSL))
             {
-                // A WSL tree read through its share keeps details apart from the volume that holds its disk
-                if (!wslHelper)
-                {
-                    item->SetIndex(0);
-                    basicContext = contextWsl.GetShareContext(item->GetVolumeRoot());
-                }
+                // Only a selected WSL tree is read through its share, whose details this queue's context holds
+                if (!wslHelper) item->SetIndex(0);
             }
             else if (folderContexts != nullptr)
             {

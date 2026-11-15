@@ -8,7 +8,6 @@
 
 #include "pch.h"
 #include "Finder.h"
-#include "FinderBasic.h"
 
 // A registered WSL 2 distribution and the virtual disk that holds its root filesystem.
 struct WslDistro
@@ -48,7 +47,6 @@ class FinderWslContext final
 
     std::shared_mutex m_lock;
     std::unordered_map<const CItem*, std::unique_ptr<Tree>> m_trees;
-    std::unordered_map<const CItem*, FinderBasicContext> m_shareContexts;
 
     static std::unique_ptr<Tree> Load(const std::wstring& path, BlockingQueue<CItem*>* queue, std::wstring& error);
 
@@ -57,9 +55,6 @@ public:
     // Returns the tree listing this folder, loading one rooted at it when no loaded tree does;
     // null means the helper failed for a selected distribution, whose folders need basic enumeration.
     const Tree* Resolve(CItem* item, BlockingQueue<CItem*>* queue);
-
-    // Returns the share details of the WSL tree rooted at the item, apart from the volume that holds its disk.
-    FinderBasicContext* GetShareContext(const CItem* root);
 };
 
 class FinderWsl final : public Finder
