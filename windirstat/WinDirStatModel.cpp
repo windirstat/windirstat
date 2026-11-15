@@ -14,6 +14,7 @@
 #include "FinderBasic.h"
 #include "FinderMtp.h"
 #include "FinderRemote.h"
+#include "FinderWsl.h"
 #include "ProgressDlg.h"
 
 CWinDirStatModel::CWinDirStatModel()
@@ -136,7 +137,8 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
             }
 
             const bool isDrive = isDrivePath(rootFolder);
-            const auto child = CItem::Create(isDrive ? IT_DRIVE : IT_DIRECTORY, rootFolder);
+            const auto child = CItem::Create(isDrive ? IT_DRIVE :
+                FinderWsl::IsPath(rootFolder) ? IT_DIRECTORY | ITF_WSL : IT_DIRECTORY, rootFolder);
             m_rootItem->AddChild(child);
 
             // Folder roots are never visited by the drive metadata pass, so read their stats here
@@ -146,7 +148,8 @@ bool CWinDirStatModel::StartScan(const std::wstring& pathSpec)
     else
     {
         // Create a storage-specific root for a single selection
-        const ITEMTYPE type = isDrivePath(selections.front()) ? IT_DRIVE : IT_DIRECTORY;
+        const ITEMTYPE type = isDrivePath(selections.front()) ? IT_DRIVE :
+            FinderWsl::IsPath(selections.front()) ? IT_DIRECTORY | ITF_WSL : IT_DIRECTORY;
         m_rootItem = StorageSource::IsPath(selections.front()) ?
             CItem::Create(IT_DIRECTORY | ITF_REMOTE | ITF_ROOTITEM, selections.front()) :
             FinderMtp::IsPath(selections.front()) ? createMtpItem(selections.front(), ITF_ROOTITEM) :

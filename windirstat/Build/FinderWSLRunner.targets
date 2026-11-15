@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <WslLLVMDirectory>$(VCInstallDir)Tools\Llvm\x64\bin\</WslLLVMDirectory>
+    <WslLLVMDirectory Condition="!Exists('$(WslLLVMDirectory)clang.exe') And Exists('$(VCInstallDir)Tools\Llvm\ARM64\bin\clang.exe')">$(VCInstallDir)Tools\Llvm\ARM64\bin\</WslLLVMDirectory>
+    <WslRunnerDirectory>$(MSBuildProjectDirectory)\..\Build\Temp\WSL\$(Platform)\$(Configuration)\</WslRunnerDirectory>
+    <WslHeadersDirectory>$(MSBuildProjectDirectory)\..\contrib\linux-headers</WslHeadersDirectory>
+    <WslHeadersScript>$(MSBuildThisFileDirectory)Download Linux Headers.ps1</WslHeadersScript>
+    <WslCompilerOptions>-std=c++23 -O2 -ffreestanding -nostdinc++ -fno-exceptions -fno-rtti -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -nostdlib -static -fuse-ld=lld -Wall -Wextra -Werror -Wl,--build-id=none,-z,noexecstack,-s</WslCompilerOptions>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(WslRunnerDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="FinderWSLRunner.cpp">
+      <Message>Building the x64 and ARM64 WSL runners</Message>
+      <!-- Keep Clang's compiler headers ahead of the C++ compatibility headers. -->
+      <Command>IF NOT EXIST "$(WslRunnerDirectory)" MKDIR "$(WslRunnerDirectory)"
+"$(WslLLVMDirectory)clang.exe" --target=x86_64-linux-gnu -isystem "$(WslHeadersDirectory)\x86_64" -idirafter "$(WslHeadersDirectory)\x86_64\cpp" -idirafter "$(WslHeadersDirectory)\x86_64\cpp\x86_64-alpine-linux-musl" $(WslCompilerOptions) -o "$(WslRunnerDirectory)FinderWSLRunner-x86_64" "%(FullPath)"
+IF ERRORLEVEL 1 EXIT /B 1
+"$(WslLLVMDirectory)clang.exe" --target=aarch64-linux-gnu -isystem "$(WslHeadersDirectory)\aarch64" -idirafter "$(WslHeadersDirectory)\aarch64\cpp" -idirafter "$(WslHeadersDirectory)\aarch64\cpp\aarch64-alpine-linux-musl" -mno-outline-atomics $(WslCompilerOptions) -o "$(WslRunnerDirectory)FinderWSLRunner-aarch64" "%(FullPath)"
+IF ERRORLEVEL 1 EXIT /B 1</Command>
+      <Outputs>$(WslRunnerDirectory)FinderWSLRunner-x86_64;$(WslRunnerDirectory)FinderWSLRunner-aarch64</Outputs>
+      <AdditionalInputs>$(MSBuildProjectDirectory)\FinderWSLProtocol.h;$(MSBuildThisFileFullPath);$(WslHeadersScript);$(WslHeadersDirectory)\.complete;$(WslLLVMDirectory)clang.exe;$(WslLLVMDirectory)ld.lld.exe;%(AdditionalInputs)</AdditionalInputs>
+      <LinkObjects>false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <Target Name="DownloadWslHeaders" BeforeTargets="PrepareForBuild" DependsOnTargets="CheckWslCompiler"
+    Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(WslHeadersScript)&quot; -Path &quot;$(WslHeadersDirectory)&quot;" />
+  </Target>
+  <Target Name="CheckWslCompiler" BeforeTargets="CustomBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="!Exists('$(WslLLVMDirectory)clang.exe') Or !Exists('$(WslLLVMDirectory)ld.lld.exe')"
+      Text="Install the Visual Studio component 'C++ Clang Compiler for Windows' to build the WSL runners." />
+  </Target>
+</Project>

@@ -178,6 +178,7 @@ private:
     std::atomic_bool m_heapMinPending = false;
     std::future<void> m_heapMinTask; // Heap cleanup that does not extend scan state
     std::jthread m_thread; // Wrapper thread so we do not occupy the UI thread
+    std::vector<std::wstring> m_requestedWslDisks; // Distributions whose virtual disks the next scan opens
 
     // Cache selected items so command-update handlers can use a non-owning view
     // without repeated queries or copies
@@ -231,6 +232,7 @@ protected:
     void OnComputeHash();
     void OnCleanupCompress(UINT id);
     void OnCleanupOptimizeVhd();
+    void OnScanWslDisk();
     void OnCleanupSparsifyFile();
     void OnCleanupRemoveEmpty();
     void OnToolsSetDates();
@@ -333,6 +335,8 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Command<&OnCleanupCompress>(ID_COMPRESS_NONE, ID_COMPRESS_LZX),
         Route::Command<&OnCleanupOptimizeVhd>(ID_CLEANUP_OPTIMIZE_VHD),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_OPTIMIZE_VHD),
+        Route::Command<&OnScanWslDisk>(ID_SCAN_WSL_DISK),
+        Route::Update<&OnUpdateCentralHandler>(ID_SCAN_WSL_DISK),
         Route::Command<&OnCleanupSparsifyFile>(ID_CLEANUP_SPARSIFY_FILE),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_SPARSIFY_FILE),
         Route::Command<&OnToolsSetDates>(ID_TOOLS_SET_DATES),
