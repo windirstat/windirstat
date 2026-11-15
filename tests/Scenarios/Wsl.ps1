@@ -455,7 +455,7 @@ function Test-WslRunnerChecks {
     $runners = @{}
     foreach ($machine in $native, $other) {
         $runners[$machine] = Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'Build\Temp\WSL') -Recurse -File `
-            -Filter "FinderWSLRunner-$machine" -ErrorAction Ignore | Sort-Object LastWriteTimeUtc -Descending |
+            -Filter "FinderWslRunner-$machine" -ErrorAction Ignore | Sort-Object LastWriteTimeUtc -Descending |
             Select-Object -First 1
     }
     if (-not $runners[$native]) { Skip-Scenario 'Build WinDirStat to produce the WSL runners.' }

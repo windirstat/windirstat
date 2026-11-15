@@ -6,7 +6,7 @@
 
 #include "pch.h"
 #include "FinderWsl.h"
-#include "FinderWSLProtocol.h"
+#include "FinderWslProtocol.h"
 
 // --- Distribution and path helpers ---
 
@@ -60,7 +60,7 @@ static void AppendLinuxName(std::vector<wchar_t>& out, const std::string_view na
 }
 
 // Converts the part of a \\wsl.localhost path after the distribution name to a Linux path.
-static std::string ToLinuxPath(const std::wstring_view relative)
+static std::wstring ToLinuxPath(const std::wstring_view relative)
 {
     std::wstring mapped(relative);
     for (auto& c : mapped)
@@ -71,13 +71,7 @@ static std::string ToLinuxPath(const std::wstring_view relative)
     }
     while (mapped.size() > 1 && mapped.ends_with(L'/')) mapped.pop_back();
     if (!mapped.starts_with(L'/')) mapped.insert(0, 1, L'/');
-
-    const int size = WideCharToMultiByte(CP_UTF8, 0, mapped.data(), static_cast<int>(mapped.size()),
-        nullptr, 0, nullptr, nullptr);
-    std::string result(static_cast<size_t>(std::max(size, 0)), '\0');
-    WideCharToMultiByte(CP_UTF8, 0, mapped.data(), static_cast<int>(mapped.size()),
-        result.data(), size, nullptr, nullptr);
-    return result;
+    return mapped;
 }
 
 static std::wstring GetWslExecutable()
@@ -454,9 +448,9 @@ std::unique_ptr<FinderWslContext::Tree> FinderWslContext::Load(const std::wstrin
         error = TranslateError(ERROR_NOT_SUPPORTED);
         return nullptr;
     }
-    const std::wstring distro = FinderWsl::GetDistroName(path);
     const auto separator = rest->find(L'\\');
-    const std::string linuxPath = ToLinuxPath(separator == std::wstring_view::npos ? L"" : rest->substr(separator));
+    const std::wstring_view distro = rest->substr(0, separator);
+    const std::wstring linuxPath = ToLinuxPath(separator == std::wstring_view::npos ? L"" : rest->substr(separator));
 
     // Copy the helper from standard input into the first temporary directory that permits execution;
     // exit code 126 from the shell means a directory refused to run it, so the next one is tried.
@@ -469,7 +463,7 @@ std::unique_ptr<FinderWslContext::Tree> FinderWslContext::Load(const std::wstrin
         L"if [ $r -ne 126 ]; then rm -f \"$s\" \"$f\"; exit $r; fi; "
         L"if [ \"$f\" != \"$s\" ]; then rm -f \"$f\"; fi; done; rm -f \"$s\"; exit 126";
     const std::wstring arguments = std::format(L"--distribution {} --user root --exec /bin/sh -c {} wds-wsl-scan {}",
-        QuoteArgument(distro), QuoteArgument(script), QuoteArgument(Utf8ToWide(linuxPath)));
+        QuoteArgument(distro), QuoteArgument(script), QuoteArgument(linuxPath));
 
     WslProcess process;
     if (!process.Start(arguments, static_cast<DWORD>(helper.size()) + 4096) || !process.Write(helper))
@@ -657,12 +651,6 @@ const FinderWslContext::Tree* FinderWslContext::Resolve(CItem* item, BlockingQue
     else VTRACE(L"WSL helper unavailable for {}: {}", item->GetPath(), error);
     std::unique_lock lock(m_lock);
     return m_trees.insert_or_assign(item, std::move(tree)).first->second.get();
-}
-
-FinderBasicContext* FinderWslContext::GetShareContext(const CItem* root)
-{
-    std::unique_lock lock(m_lock);
-    return &m_shareContexts.try_emplace(root, root->GetPath()).first->second;
 }
 
 // --- Enumeration ---

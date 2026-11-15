@@ -5,9 +5,9 @@
 // Distributed WITHOUT ANY WARRANTY; see LICENSE.md for details.
 
 // Freestanding Linux executable: compiler, C++ library, and Linux UAPI headers plus direct system calls.
-// FinderWsl.cpp consumes the stream described by FinderWSLProtocol.h.
+// FinderWsl.cpp consumes the stream described by FinderWslProtocol.h.
 
-#include "FinderWSLProtocol.h"
+#include "FinderWslProtocol.h"
 #include <array>
 #include <bit>
 #include <span>
@@ -82,7 +82,7 @@ extern "C" void* memset(void* destination, int value, size_t size)
 
 [[noreturn]] static void Fail(void)
 {
-    constexpr char message[] = "FinderWSLRunner: cannot complete the scan\n";
+    constexpr char message[] = "FinderWslRunner: cannot complete the scan\n";
     SystemCall(__NR_write, 2, (long)message, sizeof(message) - 1, 0, 0, 0);
     Exit(2);
 }
