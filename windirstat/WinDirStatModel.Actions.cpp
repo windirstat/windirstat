@@ -14,6 +14,7 @@
 #include "FinderMtp.h"
 #include "FinderRemote.h"
 #include "FinderNtfs.h"
+#include "FinderWsl.h"
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
 #include "Filtering.h"
@@ -47,7 +48,9 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     // Define item capability checks for shell and filesystem-specific commands.
     static bool (*isShellChild)(CItem*) = [](CItem* item)
     {
-        return item != nullptr && !item->IsRootItem() && !item->IsMtpRoot() && item->HasShellIdentity();
+        // A WSL root stands for a whole distribution, like a drive, so it is never deleted or moved as a folder
+        return item != nullptr && !item->IsRootItem() && !item->IsMtpRoot() && !item->IsWslRoot() &&
+            item->HasShellIdentity();
     };
     static bool (*isDeletable)(CItem*) = [](CItem* item)
     {
@@ -84,8 +87,13 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i)
     {
-        return i != nullptr && i->SupportsFilesystemApis() && IsElevationActive() &&
+        return i != nullptr && i->SupportsFilesystemApis() && !i->IsTypeOrFlag(ITF_WSL) && IsElevationActive() &&
             (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx"));
+    };
+    static bool (*isWslDisk)(CItem*) = [](CItem* i)
+    {
+        return i != nullptr && i->SupportsFilesystemApis() && !i->IsTypeOrFlag(ITF_WSL) &&
+            i->HasExtension(L".vhdx") && FinderWsl::FindDistroByVhd(i->GetPath()).has_value();
     };
     static bool (*isStorageSenseAvailable)(CItem*) = [](CItem*) { return IsStorageSenseAvailable(); };
     static constexpr ITEMTYPE shellTypes = IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE;
@@ -136,6 +144,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     ITF_ANY, isResumable } },
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
+        { ID_SCAN_WSL_DISK,           { false, true,  false, LF_NONE,     IT_FILE, isWslDisk } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     ITF_ANY, isSuspendable } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_TOOLS_SET_DATES,         { true,  true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
@@ -911,6 +920,21 @@ void CWinDirStatModel::OnCleanupOptimizeVhd()
     RefreshItem(itemsSelected);
 }
 
+void CWinDirStatModel::OnScanWslDisk()
+{
+    // Rescan each disk's folder so the scan meets the disk again and shows it as the distribution's files;
+    // a distribution that is not running is started by the helper.
+    std::vector<CItem*> folders;
+    for (const CItem* item : GetAllSelected())
+    {
+        const auto distro = item->IsTypeOrFlag(IT_FILE) ? FinderWsl::FindDistroByVhd(item->GetPath()) : std::nullopt;
+        if (!distro || item->GetParent() == nullptr) continue;
+        m_requestedWslDisks.emplace_back(distro->name);
+        if (!std::ranges::contains(folders, item->GetParent())) folders.emplace_back(item->GetParent());
+    }
+    if (!folders.empty()) RefreshItem(folders);
+}
+
 void CWinDirStatModel::OnScanSuspend()
 {
     // Wait for system to fully shut down
@@ -1003,9 +1027,10 @@ void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
 
 void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 {
-    // Stop any previous executions
+    // Stop any previous executions; a request to open virtual disks belongs to this scan alone
     CWaitCursor wc;
     StopScanningEngine();
+    auto requestedWslDisks = std::exchange(m_requestedWslDisks, {});
 
     // Watcher entries are detached snapshots; refresh the matching scan item or its nearest scanned ancestor.
     if (!HasRootItem()) return;
@@ -1017,6 +1042,16 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // Resolve hardlink references before their derived snapshot can be discarded.
     for (auto*& item : items)
         if (item != nullptr && item->IsTypeOrFlag(IT_HLINKS_FILE)) item = item->GetLinkedItem();
+
+    // Native WSL metadata comes from the containing folder; changing engines must replace the whole tree's identities.
+    for (auto*& item : items)
+    {
+        if (item == nullptr || !item->IsTypeOrFlag(ITF_WSL)) continue;
+        CItem* const root = item->GetEnumRoot();
+        const bool native = COptions::UseFastScanEngine || !root->IsScanRoot();
+        if (native != (root->GetIndex() != 0)) item = root;
+        else if (item->IsTypeOrFlag(IT_FILE)) item = item->GetParent();
+    }
     std::erase_if(items, [](const CItem* item)
     {
         return item != nullptr && item->IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX);
@@ -1065,9 +1100,13 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     }
 
     const std::unordered_set<CItem*> selectedItems(std::from_range, GetAllSelected());
+    std::unordered_set<CItem*> affectedWslRoots;
+    for (CItem* item : items)
+        if (item->IsTypeOrFlag(ITF_WSL) && !item->IsWslRoot()) affectedWslRoots.insert(item->GetEnumRoot());
     std::unordered_set<CItem*> doneItems;
     for (auto* item : items)
         if (item->IsDone()) doneItems.insert(item);
+    for (CItem* root : affectedWslRoots) root->AdjustWslHardlinks(true);
 
     // Paint scan feedback before pruning results and keep it visible through final sorting.
     if (!items.empty())
@@ -1123,7 +1162,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     {
         const CItem* parent = item->GetParent();
         if (!doneItems.contains(item) || parent == nullptr || parent->IsTypeOrFlag(IT_MYCOMPUTER) ||
-            !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || item->IsTypeOrFlag(ITF_REMOTE, ITF_MTP)) continue;
+            !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) || item->IsTypeOrFlag(ITF_REMOTE, ITF_MTP) ||
+            item->IsWslRoot()) continue;
         if (std::wstring folded = fold(item->GetNameView()); !folded.empty())
             listings[parent].try_emplace(std::move(folded));
     }
@@ -1201,7 +1241,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
         // Handle if item to be refreshed has been removed or filtered
         bool exists = true;
-        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE))
+        // A WSL root stands for its distribution, which the share path cannot look up as a file
+        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE) && !item->IsWslRoot())
         {
             if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
             else exists = existsOnDisk(item);
@@ -1249,7 +1290,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop during inserts.
     // Lambda captures assume the model exists for the duration of the scan.
-    m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents)] () mutable
+    m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents),
+        affectedWslRoots = std::move(affectedWslRoots), requestedWslDisks = std::move(requestedWslDisks)] () mutable
     {
         std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
 
@@ -1272,22 +1314,54 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             // Share a bounded worker pool for folder roots while keeping volume metadata separate.
             const CItem* volumeRoot = item->GetVolumeRoot();
             const std::wstring volumePath = volumeRoot->GetPath();
-            const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && volumeRoot->SupportsFilesystemApis();
+            const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && volumeRoot->SupportsFilesystemApis() &&
+                !volumeRoot->IsTypeOrFlag(ITF_WSL);
             if (basicFolder) folderContexts.try_emplace(volumeRoot, volumePath);
             m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
+        }
+
+        // Virtual disks of running WSL distributions are shown as their files when met during the scan
+        std::vector<WslDistro> wslDisks;
+        if (COptions::ScanWslDisks || !requestedWslDisks.empty())
+        {
+            // Only disks below the scanned folders matter, which spares other scans a call to wsl.exe
+            std::vector<std::wstring> folders;
+            for (const CItem* item : items)
+            {
+                if (item->IsLeaf() || !item->SupportsFilesystemApis() || item->IsTypeOrFlag(ITF_WSL)) continue;
+                std::wstring& folder = folders.emplace_back(FinderWsl::ExpandShortNames(item->GetPath()));
+                if (!folder.ends_with(L'\\')) folder += L'\\';
+            }
+            for (auto& distro : FinderWsl::GetDistros())
+            {
+                if (std::ranges::any_of(folders, [&](const std::wstring& folder)
+                {
+                    return distro.vhdPath.size() > folder.size() &&
+                        _wcsnicmp(distro.vhdPath.c_str(), folder.c_str(), folder.size()) == 0;
+                })) wslDisks.emplace_back(std::move(distro));
+            }
+
+            // Starting a stopped distribution takes seconds and memory, so only a request opens one
+            auto shown = std::move(requestedWslDisks);
+            if (COptions::ScanWslDisks && !wslDisks.empty()) shown.append_range(FinderWsl::GetRunningDistros());
+            std::erase_if(wslDisks, [&](const WslDistro& distro) { return !std::ranges::any_of(shown,
+                [&](const auto& name) { return _wcsicmp(name.c_str(), distro.name.c_str()) == 0; }); });
         }
 
         // Create subordinate threads if there is work to do
         std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
         std::unordered_map<std::wstring, FinderBasicContext> queueContextBasic;
+        std::unordered_map<std::wstring, FinderWslContext> queueContextWsl;
         for (auto& queue : m_queues)
         {
             queueContextNtfs.try_emplace(queue.first);
             queueContextBasic.try_emplace(queue.first, queue.first);
+            queueContextWsl.try_emplace(queue.first);
 
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];
             auto* basicCtx = &queueContextBasic[queue.first];
+            auto* wslCtx = &queueContextWsl[queue.first];
             const bool remote = StorageSource::IsPath(queue.first);
             std::shared_ptr<StorageSource> remoteSource;
 
@@ -1301,9 +1375,10 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             const unsigned int threads = remote ? std::clamp(COptions::ScanningThreads.Obj(), 1, 4) :
                 FinderMtp::IsPath(queue.first) ? 1 : COptions::ScanningThreads.Obj();
             auto* contexts = queue.first.empty() ? &folderContexts : nullptr;
-            queue.second.StartThreads(threads, [queuePtr, ntfsCtx, basicCtx, contexts, remoteSource]
+            auto* disks = &wslDisks;
+            queue.second.StartThreads(threads, [queuePtr, ntfsCtx, basicCtx, wslCtx, contexts, remoteSource, disks]
             {
-                CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx, contexts, remoteSource);
+                CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx, *wslCtx, contexts, remoteSource, disks);
             });
         }
 
@@ -1320,6 +1395,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             stopReason = static_cast<StopReason>(std::max(static_cast<int>(stopReason), queue.WaitForCompletion()));
         for (auto& queue : m_queues | std::views::values) queue.JoinThreads();
         queueContextNtfs.clear();
+        queueContextWsl.clear();
 
         // If new scan or closing, complete scan UI cleanup before the old
         // tree is torn down.
@@ -1341,6 +1417,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             const CItem* root = item->GetVolumeRoot();
             return &folderContexts.try_emplace(root, root->GetPath()).first->second;
         });
+
+        // Account for virtual disk space that no WSL file uses
+        CItem::UpdateWslDiskItems(items, std::move(affectedWslRoots), !wslDisks.empty());
 
         // Restore unknown and freespace items
         for (const auto& item : items)

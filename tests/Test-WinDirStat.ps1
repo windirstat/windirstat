@@ -118,7 +118,7 @@ if (-not (Test-Path -LiteralPath $ExePath -PathType Leaf)) {
 }
 $exeInfo = Get-Item -LiteralPath $ExePath
 $newestSource = Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'windirstat') -Recurse -File |
-    Where-Object { $_.Extension -in @('.cpp', '.h', '.rc', '.vcxproj', '.props', '.targets', '.txt') } |
+    Where-Object { $_.Extension -in @('.c', '.cpp', '.h', '.rc', '.vcxproj', '.props', '.targets', '.txt') } |
     Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
 $script:ExecutableInfo = [pscustomobject]@{
     Version = $exeInfo.VersionInfo.FileVersion; BuiltUtc = $exeInfo.LastWriteTimeUtc.ToString('o')

@@ -143,6 +143,11 @@ function Get-CapabilityReason {
             }
         }
         Mtp { if (-not $MtpDevice) { return 'Set -MtpDevice to the exact connected device label in Select Target.' } }
+        Wsl {
+            if (-not (Get-WslTestDistro)) {
+                return 'A running WSL 2 distribution is required; set WDS_TEST_WSL_DISTRO to choose one.'
+            }
+        }
         S3 { if (-not $env:WDS_S3_TEST_ENDPOINT) { return 'Run Test-S3.ps1 for the disposable local S3 fixture.' } }
         Remote {
             if (-not $env:WDS_REMOTE_TEST_ENDPOINT) {

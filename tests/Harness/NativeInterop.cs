@@ -171,6 +171,17 @@ public static class WdsNativeFs
         }
         finally { CloseHandle(h); }
     }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    static extern uint GetLongPathNameW(string shortPath, StringBuilder longPath, uint size);
+
+    // Expand 8.3 aliases, which name the same file differently than its long path does.
+    public static string GetLongPath(string path)
+    {
+        var buffer = new StringBuilder(32768);
+        uint length = GetLongPathNameW(path, buffer, (uint)buffer.Capacity);
+        return length == 0 || length >= buffer.Capacity ? path : buffer.ToString();
+    }
 }
 
 public static class NativeListViewHelper

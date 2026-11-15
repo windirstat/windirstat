@@ -40,7 +40,8 @@ std::optional<CPropertyPage::ValidationError> CPageAdvanced::PrepareSettings()
         &COptions::ExcludeSymbolicLinksDirectory, &COptions::ExcludeVolumeMountPoints, &COptions::ExcludeSymbolicLinksFile });
     const bool refreshAll = BindsChanged(checkboxes, { &COptions::ExcludeHiddenDirectory,
         &COptions::ExcludeProtectedDirectory, &COptions::ExcludeDropboxIgnored,
-        &COptions::ExcludeHiddenFile, &COptions::ExcludeProtectedFile, &COptions::ProcessHardlinks }) ||
+        &COptions::ExcludeHiddenFile, &COptions::ExcludeProtectedFile, &COptions::ProcessHardlinks,
+        &COptions::ScanWslDisks }) ||
         (COptions::ScanForDuplicates && (fileHashAlgorithm.Changed() ||
             BindsChanged(checkboxes, { &COptions::SampleLargeFiles })));
 

@@ -21,6 +21,8 @@
 #define IDR_MAINFRAME                   116
 #define IDR_POPUP_MAP                   117
 #define IDR_POPUP_TREE                  118
+#define IDR_WSLSCAN_X64                 124
+#define IDR_WSLSCAN_ARM64               125
 #define IDD_S3_CONNECTION               119
 #define IDD_WEBDAV_CONNECTION           120
 #define IDD_AZURE_CONNECTION            121
@@ -112,6 +114,7 @@
 #define IDC_PORTABLE_MODE               1083
 #define IDC_PREVIEW                     1084
 #define IDC_PROCESS_HARDLINKS           1085
+#define IDC_SCAN_WSL_DISKS              1204
 #define IDC_PROCESS_PRIORITY            1086
 #define IDC_PROGRESS_BAR                1087
 #define IDC_PROGRESS_MESSAGE            1088
@@ -279,6 +282,7 @@
 #define ID_SCAN_RESUME                  32819
 #define ID_SCAN_STOP                    32820
 #define ID_SCAN_SUSPEND                 32821
+#define ID_SCAN_WSL_DISK                32970
 #define ID_SEARCH                       32822
 #define ID_TOOLS_CHKDSK_BASE            32823
 #define ID_TOOLS_CHKDSK_DRIVE_B         32824
@@ -441,9 +445,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        124
-#define _APS_NEXT_COMMAND_VALUE         32970
-#define _APS_NEXT_CONTROL_VALUE         1204
-#define _APS_NEXT_SYMED_VALUE           124
+#define _APS_NEXT_RESOURCE_VALUE        126
+#define _APS_NEXT_COMMAND_VALUE         32971
+#define _APS_NEXT_CONTROL_VALUE         1205
+#define _APS_NEXT_SYMED_VALUE           126
 #endif
 #endif

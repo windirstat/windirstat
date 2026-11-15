@@ -43,6 +43,7 @@ public:
     std::wstring GetDrive() const;
     bool IsRemote() const { return m_isRemote; }
     bool IsMtp() const { return m_mtp; }
+    bool IsWsl() const { return m_wsl; }
     bool IsSUBSTed() const { return m_subst; }
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
@@ -52,6 +53,7 @@ private:
     CDrivesList* m_driveList; // Backpointer
     std::wstring m_path; // e.g. "C:\"
     bool m_mtp = false;
+    bool m_wsl = false; // A WSL distribution, listed by its \\wsl.localhost share
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
