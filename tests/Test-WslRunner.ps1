@@ -100,7 +100,7 @@ function Read-Scan {
     finally { $reader.Dispose() }
 }
 
-$root = [string](Invoke-Linux 'mktemp -d /tmp/wds-runner.XXXXXXXX')
+$root = [string](Invoke-Linux 'd=$(mktemp -d /tmp/wds-runner.XXXXXXXX) && chmod 777 "$d" && echo "$d"')
 try {
     $destination = if ($IsWindows) { "\\wsl.localhost\$Distro" + $root.Replace('/', '\') + '\runner' }
         else { "$root/runner" }

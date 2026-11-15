@@ -29,6 +29,7 @@ printf hidden > "$r/mnt/inside"
 mount -t tmpfs wds-test "$r/tree/inner-mnt"
 printf hidden > "$r/tree/inner-mnt/inside"
 mount --bind "$r/tree" "$r/bound"
+chmod 777 "$r"
 '@ @($linux) | Out-Null
     return [pscustomobject]@{ Linux = $linux; Windows = "\\wsl.localhost\$Distro" + $linux.Replace('/', '\') }
 }
@@ -432,7 +433,7 @@ function Test-WslRunnerChecks {
     if (-not $runners[$native]) { Skip-Scenario 'Build WinDirStat to produce the WSL runners.' }
 
     # The runner for this processor runs directly; the other one runs under QEMU when the distribution has it
-    $emulator = ([string](Invoke-WslRoot $distro "command -v qemu-$other-static || command -v qemu-$other || true")).Trim()
+    $emulator = "$(Invoke-WslRoot $distro "command -v qemu-$other-static || command -v qemu-$other || true")".Trim()
     foreach ($machine in $native, $other) {
         if ($machine -eq $other -and (-not $emulator -or -not $runners[$other])) {
             Write-TestNote "The $other runner was not run: its binary or qemu-$other is missing."
