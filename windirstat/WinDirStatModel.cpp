@@ -490,9 +490,15 @@ void CWinDirStatModel::RebuildExtensionData()
 
 void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
+    if (!ConfirmPhysicalDeletion(items, toTrashBin, emptyOnly)) return;
+    if (const auto refresh = PerformPhysicalDeletion(items, toTrashBin, emptyOnly); !refresh.empty()) RefreshItem(refresh);
+}
+
+bool CWinDirStatModel::ConfirmPhysicalDeletion(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly)
+{
     const bool hasRemoteItems = std::ranges::any_of(items,
         [](const CItem* item) { return item->IsTypeOrFlag(ITF_REMOTE); });
-    if (toTrashBin && hasRemoteItems) return;
+    if (toTrashBin && hasRemoteItems) return false;
     auto& showDeleteWarning = toTrashBin ?
         COptions::ShowDeleteToRecycleBinWarning : COptions::ShowDeletePermanentlyWarning;
     if (showDeleteWarning)
@@ -515,9 +521,14 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             // Save off the deletion warning preference
             showDeleteWarning = !result.isChecked;
             return true;
-        }()) return;
+        }()) return false;
     }
+    return true;
+}
 
+std::vector<CItem*> CWinDirStatModel::PerformPhysicalDeletion(const std::vector<CItem*>& items, const bool toTrashBin,
+    const bool emptyOnly) const
+{
     // Clear active selections
     if (!emptyOnly)
     {
@@ -615,12 +626,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                     return;
                 }
 
-                // RemoveDirectory rejects read-only directories even when empty.
-                const std::wstring path = item->GetPathLong();
-                if (item->GetAttributes() != INVALID_FILE_ATTRIBUTES &&
-                    (item->GetAttributes() & FILE_ATTRIBUTE_READONLY) != 0)
-                    SetFileAttributes(path.c_str(), item->GetAttributes() & ~FILE_ATTRIBUTE_READONLY);
-                RemoveDirectory(path.c_str());
+                RemoveDirectoryForce(item->GetPathLong(), item->GetAttributes());
                 pdlg->Increment();
             }
 
@@ -694,7 +700,7 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
             itemsToRefresh.push_back(refresh);
     }
     itemsToRefresh.append_range(recyclers);
-    if (!itemsToRefresh.empty()) RefreshItem(itemsToRefresh);
+    return itemsToRefresh;
 }
 
 void CWinDirStatModel::SetZoomItem(CItem* item)
