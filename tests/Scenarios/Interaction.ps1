@@ -672,6 +672,24 @@ function Test-VerifiedFileOperation {
     $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
     $app = Start-TestApp @($root)
     $list = Get-AppList $app -AllFiles
+    if ($Case.Kind -eq 'Sparse') {
+        $writer = [IO.File]::Open((Join-Path $root 'untouched.bin'), 'Open', 'ReadWrite', 'ReadWrite, Delete')
+        try {
+            Select-AppRows $app $list @('untouched.bin')
+            Invoke-AppCommand $app $Case.Command
+            $errorDialog = Wait-Until {
+                foreach ($dialog in [TestDesktop]::Windows($app.Process.Id)) {
+                    if ([TestDesktop]::Class($dialog) -ne '#32770') { continue }
+                    foreach ($control in [TestDesktop]::Children($dialog)) {
+                        if ([TestDesktop]::Class($control) -eq 'Button' -and
+                            [TestDesktop]::ControlText($control).Replace('&', '') -eq 'OK') { return $dialog }
+                    }
+                }
+            } 'Sparsify reports the active writer'
+            Close-AppDialog $errorDialog -ButtonName 'OK'
+            Wait-AppIdle $app
+        } finally { $writer.Dispose() }
+    }
     foreach ($names in @(@('single.bin'), @('multiple-a.bin', 'multiple-b.bin'))) {
         Select-AppRows $app $list $names
         Invoke-AppCommand $app $Case.Command

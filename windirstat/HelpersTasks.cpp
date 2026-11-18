@@ -564,9 +564,8 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
 
 bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG chunkSize, const ULONGLONG minZeroRunSize)
 {
-    // Open file with read/write access
-    const SmartPointer h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+    // Keep the observed zero ranges stable until they have been deallocated.
+    const SmartPointer h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (h == INVALID_HANDLE_VALUE) return false;
     LARGE_INTEGER fileSize{};
@@ -608,7 +607,12 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
     {
         if (isCancelled()) return false;
         const DWORD toRead = static_cast<DWORD>(std::min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
-        if (!ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
+        if (!ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr)) return false;
+        if (bytesRead == 0)
+        {
+            SetLastError(ERROR_HANDLE_EOF);
+            return false;
+        }
 
         const BYTE* data = buffer.data();
         for (DWORD i = 0; i < bytesRead; )
@@ -648,7 +652,6 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
         return false;
 
     // Deallocate storage for each zero range
-    bool success = true;
     for (const auto& [offset, length] : ranges) {
         if (isCancelled()) return false;
         FILE_ZERO_DATA_INFORMATION zdi{};
@@ -656,9 +659,9 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
         zdi.BeyondFinalZero.QuadPart = static_cast<LONGLONG>(offset + length);
         if (!DeviceIoControl(h, FSCTL_SET_ZERO_DATA, &zdi, sizeof(zdi),
             nullptr, 0, &bytesReturned, nullptr))
-            success = false;
+            return false;
     }
-    return success;
+    return true;
 }
 
 bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo)
