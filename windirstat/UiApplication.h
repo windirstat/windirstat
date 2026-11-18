@@ -242,7 +242,7 @@ public:
     int Run();
 
     static void RunTaskWithUiUpdates(const std::function<void()>& task);
-    static void WaitForHandleWithUiUpdates(HANDLE handle) noexcept;
+    static bool WaitForHandleWithUiUpdates(HANDLE handle) noexcept;
 
     void OnAppExit() const
     {

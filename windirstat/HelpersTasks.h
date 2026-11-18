@@ -92,7 +92,7 @@ bool IsElevationActive() noexcept;
 bool IsElevationAvailable() noexcept;
 inline bool IsElevationPossible() noexcept { return IsElevationActive() || IsElevationAvailable(); }
 bool EnableReadPrivileges() noexcept;
-void RunElevated(const std::wstring& cmdLine);
+void RunElevated(const std::wstring& cmdLine, bool waitForExit = false);
 
 // SID helpers
 std::wstring GetNameFromSid(PSID sid);

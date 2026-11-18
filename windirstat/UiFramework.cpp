@@ -27,12 +27,13 @@ void CWinApp::RunTaskWithUiUpdates(const std::function<void()>& task)
     if (error) std::rethrow_exception(error);
 }
 
-void CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle) noexcept
+bool CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle) noexcept
 {
     // Service paints and synchronous worker callbacks while leaving scan and close commands in the message queue.
     std::optional<int> quitCode;
-    while (MsgWaitForMultipleObjectsEx(1, &handle, INFINITE,
-        QS_PAINT | QS_SENDMESSAGE, MWMO_INPUTAVAILABLE) == WAIT_OBJECT_0 + 1)
+    DWORD result;
+    while ((result = MsgWaitForMultipleObjectsEx(1, &handle, INFINITE,
+        QS_PAINT | QS_SENDMESSAGE, MWMO_INPUTAVAILABLE)) == WAIT_OBJECT_0 + 1)
     {
         MSG message{};
         while (PeekMessageW(&message, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
@@ -42,6 +43,7 @@ void CWinApp::WaitForHandleWithUiUpdates(const HANDLE handle) noexcept
         }
     }
     if (quitCode) PostQuitMessage(*quitCode);
+    return result == WAIT_OBJECT_0;
 }
 
 // -----------------------------------------------------------------------------

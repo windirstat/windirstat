@@ -413,7 +413,8 @@ bool CDirStatApp::InitInstance()
     // Elevate non-interactive operations before rejecting protected paths or applying changes.
     // A relaunch cannot inherit standard output, so a dash save continues without elevating.
     const bool saveToStdout = m_saveToPath == L"-" || m_saveDupesToPath == L"-" || m_savePermsToPath == L"-";
-    if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
+    if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested()))
+        RunElevated(m_lpCmdLine, hideApp);
 
     if (cmdInfo.IsLegacyUninstallRequested())
     {

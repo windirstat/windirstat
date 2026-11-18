@@ -340,12 +340,21 @@ bool IsElevationAvailable() noexcept
     return result;
 }
 
-void RunElevated(const std::wstring& cmdLine)
+void RunElevated(const std::wstring& cmdLine, const bool waitForExit)
 {
     PersistedSetting::WritePersistedProperties();
     SmartPointer process(CloseHandle, HANDLE{});
     if (!ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas",
         GetDialogOwner(), L"", SW_NORMAL, SEE_MASK_NOASYNC, &process)) return;
+
+    // A caller waiting for an export needs the elevated writer's exit status.
+    if (waitForExit)
+    {
+        DWORD code = 1;
+        if (!CWinApp::WaitForHandleWithUiUpdates(process) || !GetExitCodeProcess(process, &code))
+            ExitProcess(1);
+        ExitProcess(code);
+    }
 
     AllowSetForegroundWindow(GetProcessId(process));
     ExitProcess(0);
