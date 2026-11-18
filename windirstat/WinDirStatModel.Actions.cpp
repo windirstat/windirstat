@@ -1137,6 +1137,9 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
 
+    // Both pruning and enumeration use the same filter cutoffs for this refresh.
+    CFiltering::CompileFilters();
+
     // Volume details do not change during one refresh, so the lookups below share them per volume
     std::unordered_map<const CItem*, FinderBasicContext> volumeContexts;
     const auto volumeContext = [&](const CItem* item)
@@ -1155,7 +1158,14 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             folded.data(), static_cast<int>(folded.size()), nullptr, nullptr, 0) == 0) folded.clear();
         return folded;
     };
-    std::unordered_map<const CItem*, std::unordered_map<std::wstring, std::wstring>> listings;
+    struct ListedEntry { std::wstring name; bool included = true; };
+    std::unordered_map<const CItem*, std::unordered_map<std::wstring, ListedEntry>> listings;
+    const auto includeFile = [](const FinderBasic& finder)
+    {
+        return !CFiltering::IsFilterActive() || finder.IsDirectory() || !CFiltering::IsFilteredOut(
+            finder.GetFileName(), CFiltering::IncludeDirsRegex.empty() ? std::wstring() : finder.GetFilePath(),
+            finder.GetFileSizeLogical(), finder.GetLastWriteTime());
+    };
     for (CItem* item : items)
     {
         const CItem* parent = item->GetParent();
@@ -1179,26 +1189,42 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         {
             const std::wstring folded = fold(finder.GetFileName());
             if (folded.empty()) return true;
-            if (const auto name = names.find(folded); name != names.end() && name->second.empty())
-                name->second = finder.GetFileName();
+            if (const auto name = names.find(folded); name != names.end() && name->second.name.empty())
+                name->second = { std::wstring(finder.GetFileName()), includeFile(finder) };
         }
         return found || finder.GetResult().outcome != ScanOutcome::Complete;
     });
-    const auto existsOnDisk = [&](const CItem* item)
+    const auto keepItem = [&](const CItem* item)
     {
+        if (missingRemote.contains(item)) return false;
+        // Virtual items and folders use model paths. Files are filtered using this refresh's size and timestamp.
+        if ((!item->IsTypeOrFlag(IT_FILE) || !item->SupportsFilesystemApis()) && CFiltering::IsFilteredOut(item))
+            return false;
+        if (item->IsTypeOrFlag(ITF_REMOTE) || item->IsWslRoot() || !item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE))
+            return true;
+        if (item->IsTypeOrFlag(ITF_MTP)) return FinderMtp::DoesFileExist(item);
+
+        // A drive root has no entry of its own to look up, so open the root and keep it unless it is gone.
+        if (item->IsTypeOrFlag(IT_DRIVE))
+        {
+            FinderBasic root(volumeContext(item));
+            return root.FindFile(item->GetPath()) || root.GetResult().outcome != ScanOutcome::Missing;
+        }
+
         // A listing settles exact and missing names; a name found only in another case is looked up below
         if (const auto listing = listings.find(item->GetParent()); listing != listings.end())
         {
             if (const auto name = listing->second.find(fold(item->GetNameView())); name != listing->second.end())
             {
-                if (name->second == item->GetNameView()) return true;
-                if (name->second.empty()) return false;
+                if (name->second.name == item->GetNameView()) return name->second.included;
+                if (name->second.name.empty()) return false;
             }
         }
 
         // Retain inaccessible filesystem items so enumeration can report their failure.
         FinderBasic finder(true, volumeContext(item));
-        return finder.FindFile(item->GetPath()) || finder.GetResult().outcome != ScanOutcome::Missing;
+        if (finder.FindFile(item->GetPath())) return includeFile(finder);
+        return finder.GetResult().outcome != ScanOutcome::Missing;
     };
 
     // Vanished items are detached together after the loop
@@ -1223,7 +1249,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             else if (auto* parent = item->GetParent(); parent != nullptr) recalcParents.insert(parent);
         }
 
-        // Remove item from tree
+        // Evaluate filters before removing the item's contribution to the tree.
+        const bool retain = keepItem(item);
         item->ExtensionDataProcessChildren(true);
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
@@ -1237,15 +1264,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             iter != visualInfo.end() && item->IsVisible())
             item->SetExpanded(iter->second.wasExpanded);
 
-        // Handle if item to be refreshed has been removed or filtered
-        bool exists = !missingRemote.contains(item);
-        // A WSL root stands for its distribution, which the share path cannot look up as a file
-        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) && !item->IsTypeOrFlag(ITF_REMOTE) && !item->IsWslRoot())
-        {
-            if (item->IsTypeOrFlag(ITF_MTP)) exists = FinderMtp::DoesFileExist(item);
-            else exists = existsOnDisk(item);
-        }
-        if (CFiltering::IsFilteredOut(item) || !exists)
+        // Detach vanished or filtered items before launching the workers.
+        if (!retain)
         {
             if (item->IsRootItem())
             {
@@ -1275,10 +1295,6 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     std::erase_if(items, [&](CItem* item) { return vanished.contains(item); });
     CItem::RemoveChildren(vanished);
     InvalidateSelectionCache();
-
-    // Refresh filter cutoffs immediately before scanning in case settings
-    // were compiled long ago (e.g. dialog left open before clicking scan).
-    CFiltering::CompileFilters();
 
     std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
 

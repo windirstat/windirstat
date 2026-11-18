@@ -62,7 +62,9 @@ function Test-RefreshTimestamps {
         [IO.File]::SetLastWriteTimeUtc($path, [datetime]::new(2030 - $index, 1, 1, 0, 0, 0, [DateTimeKind]::Utc))
         $path
     })
-    $app = Start-TestApp @($Context.Fixture) -Hidden
+    $app = Start-TestApp @($Context.Fixture) -Hidden -Settings @{
+        Options = @{ FilteringSizeMinimum = 1; FilteringSizeUnits = 1 }
+    }
     $list = Wait-Until {
         foreach ($control in [TestDesktop]::Children($app.Window)) {
             if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
@@ -104,6 +106,13 @@ function Test-RefreshTimestamps {
                 'Refreshing a surviving file updates ancestors when its timestamp increases or decreases'
         }
     }
+
+    & $select @($paths[2])
+    [IO.File]::WriteAllBytes($paths[2], [byte[]]::new(128))
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Assert-True ((Find-AppRow $list $paths[2] -Optional) -lt 0 -and [IO.File]::Exists($paths[2])) `
+        'Selected refresh removes a file that now falls below the size filter'
 
     & $select @($folder)
     [IO.File]::SetLastWriteTimeUtc($paths[3], [datetime]::new(2021, 1, 1, 0, 0, 0, [DateTimeKind]::Utc))
