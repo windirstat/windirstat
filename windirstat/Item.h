@@ -231,7 +231,6 @@ public:
     // Scanning & Done State
     void SetDone();
     bool IsDone() const noexcept { return IsTypeOrFlag(ITF_DONE); }
-    void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
     ULONG GetReadJobs() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_jobs; }
     void UpwardAddReadJobs(ULONG count) const noexcept;

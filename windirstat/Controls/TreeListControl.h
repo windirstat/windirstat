@@ -70,7 +70,6 @@ public:
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
     void SetTitleRect(const CRect& rc) const;
-    void StartPacman() const;
     void StopPacman() const;
     void DrivePacman() const;
 

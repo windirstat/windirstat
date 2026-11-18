@@ -25,7 +25,6 @@ public:
 
     void SuspendRecalculationDrawing(bool suspend) final;
     void TrimRenderCache();
-    void DrawEmptyView();
     HoverInfo GetHoverInfo() const final;
 
 protected:

@@ -44,12 +44,6 @@ bool CGraphView::PreCreateWindow(CREATESTRUCT& cs)
     return true;
 }
 
-void CGraphView::DrawEmptyView()
-{
-    CClientDC dc(this);
-    PaintEmptyView(&dc);
-}
-
 void CGraphView::TrimRenderCache()
 {
     ResetInputState();
