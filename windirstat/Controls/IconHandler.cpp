@@ -11,14 +11,7 @@
 
 CIconHandler::~CIconHandler()
 {
-    for (auto* queue : { &m_fastQueue, &m_slowQueue })
-    {
-        // Interrupt any blocking SHGetFileInfo/ReadFile in workers so they return
-        // quickly to their Pop() loop where they will see CancelExecution's flag.
-        // Without this, the destructor can hang until the current icon fetch completes.
-        queue->CancelThreadIo();
-        queue->CancelExecution();
-    }
+    for (auto* queue : { &m_fastQueue, &m_slowQueue }) queue->CancelExecution();
 }
 
 void CIconHandler::Initialize()
@@ -135,12 +128,7 @@ void CIconHandler::StopAsyncShellInfoQueue()
     m_pendingLookups.clear();
     CWinApp::RunTaskWithUiUpdates([this]
     {
-        for (auto* queue : { &m_fastQueue, &m_slowQueue })
-        {
-            queue->CancelThreadIo();
-            queue->SuspendExecution();
-            queue->CancelExecution();
-        }
+        for (auto* queue : { &m_fastQueue, &m_slowQueue }) queue->CancelExecution();
     });
 }
 

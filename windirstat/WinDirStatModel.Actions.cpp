@@ -974,17 +974,7 @@ void CWinDirStatModel::OnScanStop()
 
 void CWinDirStatModel::StopScanningEngine(StopReason stopReason)
 {
-    // Interrupt blocking I/O (e.g. ReadFile on large files) in worker threads
-    // so they reach WaitIfSuspended promptly. Without this, SuspendExecution
-    // hangs indefinitely waiting for AllThreadsIdling() while a thread reads.
-    for (auto& queue : m_queues | std::views::values)
-        queue.CancelThreadIo();
-
-    // Request for all threads to stop processing
-    for (auto& queue : m_queues | std::views::values)
-        CWinApp::RunTaskWithUiUpdates([&queue] { queue.SuspendExecution(); });
-
-    // Stop m_queues from executing
+    // Cancel pending and active work before joining the coordinator.
     for (auto& queue : m_queues | std::views::values)
         CWinApp::RunTaskWithUiUpdates([&queue, &stopReason] { queue.CancelExecution(stopReason); });
 
@@ -1290,38 +1280,38 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
     // were compiled long ago (e.g. dialog left open before clicking scan).
     CFiltering::CompileFilters();
 
-    // Start a thread so we do not hang the message loop during inserts.
-    // Lambda captures assume the model exists for the duration of the scan.
-    m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents),
-        affectedWslRoots = std::move(affectedWslRoots), requestedWslDisks = std::move(requestedWslDisks)] () mutable
+    std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
+
+    // Publish every queue before the coordinator starts so Stop and Suspend see a stable collection.
+    for (const auto & item : items)
     {
-        std::unordered_map<const CItem*, FinderBasicContext> folderContexts;
+        item->SetFlag(ITF_SCANERROR, true);
+        item->SetScanResult({});
 
-        // Add items to processing queue
-        for (const auto & item : items)
+        // Skip any items we should not follow
+        if (!item->IsTypeOrFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
         {
-            item->SetFlag(ITF_SCANERROR, true);
-            item->SetScanResult({});
-
-            // Skip any items we should not follow
-            if (!item->IsTypeOrFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
-            {
-                item->SetScanResult({ ScanOutcome::Complete, {} });
-                continue;
-            }
-
-            item->UpwardAddReadJobs(1);
-            item->UpwardSetUndone();
-
-            // Share a bounded worker pool for folder roots while keeping volume metadata separate.
-            const CItem* volumeRoot = item->GetVolumeRoot();
-            const std::wstring volumePath = volumeRoot->GetPath();
-            const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && volumeRoot->SupportsFilesystemApis() &&
-                !volumeRoot->IsTypeOrFlag(ITF_WSL);
-            if (basicFolder) folderContexts.try_emplace(volumeRoot, volumePath);
-            m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
+            item->SetScanResult({ ScanOutcome::Complete, {} });
+            continue;
         }
 
+        item->UpwardAddReadJobs(1);
+        item->UpwardSetUndone();
+
+        // Share a bounded worker pool for folder roots while keeping volume metadata separate.
+        const CItem* volumeRoot = item->GetVolumeRoot();
+        const std::wstring volumePath = volumeRoot->GetPath();
+        const bool basicFolder = volumeRoot->IsTypeOrFlag(IT_DIRECTORY) && volumeRoot->SupportsFilesystemApis() &&
+            !volumeRoot->IsTypeOrFlag(ITF_WSL);
+        if (basicFolder) folderContexts.try_emplace(volumeRoot, volumePath);
+        m_queues[basicFolder ? std::wstring() : volumePath].Push(item);
+    }
+
+    // Discover WSL disks and start the workers off the UI thread.
+    m_thread = std::jthread([this, items, visualInfo, recalcParents = std::move(recalcParents),
+        affectedWslRoots = std::move(affectedWslRoots), requestedWslDisks = std::move(requestedWslDisks),
+        folderContexts = std::move(folderContexts)] () mutable
+    {
         // Virtual disks of running WSL distributions are shown as their files when met during the scan
         std::vector<WslDistro> wslDisks;
         if (COptions::ScanWslDisks || !requestedWslDisks.empty())
