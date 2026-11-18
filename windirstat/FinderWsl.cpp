@@ -315,6 +315,30 @@ bool FinderWsl::IsPath(const std::wstring_view path) noexcept
     return rest.has_value() && !rest->empty() && rest->front() != L'\\';
 }
 
+bool FinderWsl::CanEmptyFolder(const std::wstring_view path)
+{
+    const auto rest = AfterPrefix(path);
+    if (!rest) return true;
+    const auto separator = rest->find(L'\\');
+    if (separator == std::wstring_view::npos) return false;
+    const std::wstring linuxPath = ToLinuxPath(rest->substr(separator));
+    if (linuxPath == L"/") return false;
+
+    // The Windows share hides bind mounts. Check the guest's mount table, including unscanned descendants.
+    std::wstring encoded;
+    for (const wchar_t c : linuxPath)
+    {
+        if (c == L' ' || c == L'\t' || c == L'\n' || c == L'\\') encoded += std::format(L"\\{:03o}", unsigned(c));
+        else encoded += c;
+    }
+    constexpr auto check = L"BEGIN { p = ARGV[1]; ARGV[1] = \"\" } "
+        L"$5 == p || index($5, p \"/\") == 1 { exit 1 } END { if (NR == 0) exit 1 }";
+    WslProcess process;
+    return process.Start(std::format(L"--distribution {} --exec awk {} {} /proc/self/mountinfo",
+        QuoteArgument(rest->substr(0, separator)), QuoteArgument(check), QuoteArgument(encoded)), 0) &&
+        process.Write({}) && process.Wait(10000) == 0;
+}
+
 std::wstring FinderWsl::GetDistroName(const std::wstring_view path)
 {
     const auto rest = AfterPrefix(path);

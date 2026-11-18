@@ -57,6 +57,11 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         if (item != nullptr && item->IsTypeOrFlag(ITF_REMOTE)) return !item->IsScanRoot();
         return isShellChild(item);
     };
+    static bool (*canEmptyFolder)(CItem*) = [](CItem* item)
+    {
+        return isDeletable(item) && !item->IsTypeOrFlag(ITRP_SYMLINK, ITRP_MOUNT, ITRP_JUNCTION) &&
+            !(item->IsTypeOrFlag(ITF_WSL) && item->GetIndex() == FinderWsl::MountIndex);
+    };
     static bool (*hasShellIdentity)(CItem*) = [](CItem* item)
     {
         return item != nullptr && item->HasShellIdentity();
@@ -112,7 +117,7 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     ITF_ANY, isElevationPossible } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     ITF_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, isDeletable } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, canEmptyFolder } },
         { ID_CLEANUP_REMOVE_EMPTY,    { false, true,  false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY, filesystemOnly } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE, hasShellIdentity } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     ITF_ANY, isHibernate } },

@@ -527,7 +527,8 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
     // Build list of items to delete
     std::vector itemsToDelete{ items };
-    std::atomic<bool> cancelled = false;
+    bool cancelled = false;
+    bool refreshLocalParents = false;
     std::vector<CItem*> remoteItems;
     std::unordered_set<const CItem*> remoteChanged;
     std::erase_if(itemsToDelete, [&](CItem* item)
@@ -551,83 +552,6 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
         if (!error.empty()) ShowMessageBox(GetMainWindowHandle(), error, wds::strWinDirStat, MB_OK | MB_ICONERROR);
     }
 
-    if (emptyOnly)
-    {
-        auto childrenView = itemsToDelete | std::views::transform(&CItem::GetChildren) | std::views::join;
-        itemsToDelete = std::vector<CItem*>(childrenView.begin(), childrenView.end());
-    }
-    // MTP items require shell deletion instead of direct filesystem calls
-    const bool hasMtpItems = std::ranges::any_of(itemsToDelete,
-        [](const CItem* item) { return item->IsTypeOrFlag(ITF_MTP); });
-
-    // Calculate total item count for progress tracking
-    const ULONGLONG totalItems = std::ranges::fold_left(itemsToDelete, ULONGLONG{ 0 },
-        [](const ULONGLONG total, const CItem* item) { return total + 1 + item->GetItemsCount(); });
-
-    // Use direct parallel deletion only for filesystem items without shell progress UI
-    if (!cancelled && !itemsToDelete.empty() && !hasMtpItems && !toTrashBin &&
-        !COptions::ShowMicrosoftProgress) CProgressDlg(
-        totalItems, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* pdlg)
-        {
-            // Collect items depth-first and separate into files and directories
-            std::vector<const CItem*> files;
-            std::vector<const CItem*> directories;
-            for (std::vector<CItem*> stack = itemsToDelete; !stack.empty();)
-            {
-                const CItem* item = stack.back(); stack.pop_back();
-
-                // Sort into files or directories
-                (item->IsTypeOrFlag(IT_DIRECTORY) ? directories : files).push_back(item);
-
-                // Add children to stack
-                if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
-                {
-                    const auto& children = item->GetChildren();
-                    stack.append_range(children);
-                }
-            }
-
-            // Delete files in parallel
-            std::for_each(std::execution::par, files.begin(), files.end(), [&](const CItem* item)
-                {
-                    if (pdlg->IsCancelled() || cancelled)
-                    {
-                        cancelled = true;
-                        return;
-                    }
-
-                    DeleteFileForce(item->GetPathLong(), item->GetAttributes());
-                    pdlg->Increment();
-                });
-
-            // Check if cancelled during parallel deletion
-            if (cancelled) return;
-
-            // Delete directories in reverse order (children before parents)
-            for (const auto& item : directories | std::views::reverse)
-            {
-                if (pdlg->IsCancelled())
-                {
-                    cancelled = true;
-                    return;
-                }
-
-                RemoveDirectoryForce(item->GetPathLong());
-                pdlg->Increment();
-            }
-
-            // Check if top-level items still exist
-            std::vector<CItem*> remainingItems;
-            for (const auto& item : itemsToDelete)
-            {
-                if (GetFileAttributes(item->GetPathLong().c_str()) != INVALID_FILE_ATTRIBUTES)
-                {
-                    remainingItems.push_back(item);
-                }
-            }
-            itemsToDelete = std::move(remainingItems);
-        }).ShowModal();
-
     if (!cancelled && !itemsToDelete.empty())
     {
         DWORD flags = FOFX_SHOWELEVATIONPROMPT | FOF_NOCONFIRMATION;
@@ -645,9 +569,57 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
                 FAILED(fileOperation->SetOwnerWindow(hwnd)) ||
                 FAILED(fileOperation->SetOperationFlags(opFlags)))
                 return;
-            // Queue the complete shell selection and execute it as one deletion
-            const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete, true);
-            if (psia == nullptr || FAILED(fileOperation->DeleteItems(psia))) return;
+            // Let the shell recurse over the physical selection, including virtual disks shown as folders in the scan.
+            std::vector<SmartPointer<HANDLE, decltype(&CloseHandle)>> folders;
+            if (!emptyOnly)
+            {
+                const auto selection = CreateShellItemArray(itemsToDelete, true);
+                if (selection == nullptr || FAILED(fileOperation->DeleteItems(selection))) return;
+            }
+            else for (const CItem* item : itemsToDelete)
+            {
+                // A portable device exposes its children through the shell namespace.
+                if (item->IsTypeOrFlag(ITF_MTP))
+                {
+                    const SmartPointer pidl(CoTaskMemFree, CreateShellPidl(item));
+                    CComPtr<IShellItem> folder;
+                    CComPtr<IEnumShellItems> children;
+                    if (!pidl || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&folder))) ||
+                        FAILED(folder->BindToHandler(nullptr, BHID_EnumItems, IID_PPV_ARGS(&children))) ||
+                        (children && FAILED(fileOperation->DeleteItems(children)))) return;
+                    continue;
+                }
+
+                // Never enumerate a guest mount or pass a mounted subtree to recursive shell deletion.
+                if ((item->IsTypeOrFlag(ITF_WSL) && item->GetIndex() == FinderWsl::MountIndex) ||
+                    !FinderWsl::CanEmptyFolder(item->GetPath())) return;
+
+                // Pin the physical directory and reject junctions substituted since the scan.
+                auto& handle = folders.emplace_back(CloseHandle, CreateFile(item->GetPathLong().c_str(),
+                    FILE_READ_ATTRIBUTES, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+                FILE_ATTRIBUTE_TAG_INFO info{};
+                if (!handle.IsValid() || !GetFileInformationByHandleEx(handle, FileAttributeTagInfo, &info,
+                    sizeof(info)) || !(info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+                    ((info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && IsReparseTagNameSurrogate(info.ReparseTag)))
+                {
+                    // Refresh from the parents so a replaced directory is rediscovered without following its stale path.
+                    refreshLocalParents = true;
+                    return;
+                }
+
+                // Enumerate live filesystem entries, including hidden children and virtual disk files.
+                FinderBasic finder;
+                for (bool found = finder.FindFile(item); found; found = finder.FindNext())
+                {
+                    CComPtr<IShellItem> child;
+                    if (progress && progress->IsCancelled()) return;
+                    const auto path = finder.GetFilePath();
+                    if (FAILED(SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&child))) ||
+                        FAILED(fileOperation->DeleteItem(child, nullptr))) return;
+                }
+                if (finder.GetResult().outcome != ScanOutcome::Complete) return;
+            }
             const HRESULT res = progress == nullptr ? fileOperation->PerformOperations() :
                 PerformCancellableOperations(fileOperation, opFlags, [progress] { return progress->IsCancelled(); });
             if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
@@ -676,12 +648,13 @@ void CWinDirStatModel::DeletePhysicalItems(const std::vector<CItem*>& items, con
 
     // Refresh the items and recycler directories
     std::vector<CItem*> itemsToRefresh;
-    // Refresh parents of deleted remote items and MTP files, retaining folders that were only emptied.
+    // Refresh direct parents when a name was removed or a local folder could no longer be verified.
     for (auto* item : items)
     {
         if (item->IsTypeOrFlag(ITF_REMOTE) && !remoteChanged.contains(item)) continue;
-        CItem* refresh = item->IsTypeOrFlag(ITF_REMOTE) && !emptyOnly ||
-            item->IsTypeOrFlag(ITF_MTP) && item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item;
+        const bool refreshParent = item->IsTypeOrFlag(ITF_REMOTE) ? !emptyOnly :
+            item->IsTypeOrFlag(ITF_MTP) ? item->IsTypeOrFlag(IT_FILE) : refreshLocalParents;
+        CItem* refresh = refreshParent ? item->GetParent() : item;
         if (refresh != nullptr && !std::ranges::contains(itemsToRefresh, refresh))
             itemsToRefresh.push_back(refresh);
     }

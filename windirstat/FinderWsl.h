@@ -95,6 +95,7 @@ public:
 
     // Distribution and path helpers
     static bool IsPath(std::wstring_view path) noexcept;
+    static bool CanEmptyFolder(std::wstring_view path);
     static std::wstring GetRootPath(std::wstring_view distro) { return L"\\\\wsl.localhost\\" + std::wstring(distro); }
     static std::wstring GetDistroName(std::wstring_view path);
     static std::wstring GetPathKey(std::wstring_view path);

@@ -246,38 +246,6 @@ bool RemoveDirectoryForce(const std::wstring& path)
     return false;
 }
 
-bool DeleteFileForce(const std::wstring& path, DWORD attributes)
-{
-    // Attempt deletion
-    if (DeleteFile(path.c_str())) return true;
-
-    // If attributes not provided, query them
-    if (attributes == INVALID_FILE_ATTRIBUTES)
-    {
-        attributes = GetFileAttributes(path.c_str());
-    }
-
-    // Clear problematic attributes
-    const DWORD newAttrs = attributes == INVALID_FILE_ATTRIBUTES ? FILE_ATTRIBUTE_NORMAL :
-        attributes & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
-    if (newAttrs != attributes)
-    {
-        SetFileAttributes(path.c_str(), newAttrs);
-        if (DeleteFile(path.c_str())) return true;
-    }
-
-    // If normal delete failed, try delete-on-close
-    const SmartPointer handle(CloseHandle, CreateFile(path.c_str(), DELETE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (handle == INVALID_HANDLE_VALUE) return false;
-
-    FILE_DISPOSITION_INFO info{ .DeleteFile = true };
-    SetFileInformationByHandle(handle, FileDispositionInfo, &info, sizeof(info));
-    return GetFileAttributes(path.c_str()) == INVALID_FILE_ATTRIBUTES
-        && GetLastError() == ERROR_FILE_NOT_FOUND;
-}
-
 // Path utilities
 std::wstring QueryDosDevicePath(const std::wstring& drive)
 {

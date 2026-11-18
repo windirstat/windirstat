@@ -965,11 +965,23 @@ function Test-CleanupReparseReplacement {
     $empty.Attributes = $empty.Attributes -bor [IO.FileAttributes]::ReadOnly
     $target = Join-Path $Context.Root 'external-target\empty-sentinel'
     [IO.Directory]::CreateDirectory($target) | Out-Null
-    $app = Start-TestApp @($root)
+    $outside = [IO.Path]::GetDirectoryName($target)
+    New-TestJunction (Join-Path $root 'known-junction') $outside
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ ExcludeJunctions = 1 } }
     $list = Get-AppList $app -AllFiles
     [IO.File]::WriteAllText((Join-Path $readOnly.FullName 'new.txt'), 'keep')
+    Select-AppRows $app $list @('known-junction')
+    Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_EMPTY_FOLDER').Enabled) `
+        'Empty Folder is disabled on a scanned junction'
     [IO.Directory]::Delete($stale)
-    New-TestJunction $stale ([IO.Path]::GetDirectoryName($target))
+    New-TestJunction $stale $outside
+    Select-AppRows $app $list @('ordinary-before-scan')
+    Invoke-AppCommand $app 'ID_CLEANUP_EMPTY_FOLDER'
+    Wait-AppIdle $app
+    Assert-True ([IO.Directory]::Exists($target)) 'Empty Folder preserves the target of a substituted junction'
+    Select-AppRows $app $list @('ordinary-before-scan')
+    Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_EMPTY_FOLDER').Enabled) `
+        'The refreshed selection recognizes the replacement junction'
     Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
@@ -991,6 +1003,12 @@ function Test-SelectedDeletion {
     $root = New-TestTree
     $removed = Join-Path $root 'alpha'
     $single = Join-Path $root 'beta\untouched.txt'
+    $protectedAttributes = [IO.FileAttributes]'Hidden, System, ReadOnly'
+    [IO.File]::SetAttributes($single, $protectedAttributes)
+    $stale = Join-Path $removed 'ordinary'
+    $victim = New-TestFile (Join-Path $stale 'sentinel.txt') 128
+    $outside = New-TestFile (Join-Path $Context.Root 'outside\sentinel.txt') 256
+    $empty = [IO.Directory]::CreateDirectory((Join-Path $root 'to-empty')).FullName
     $before = Get-DiskSnapshot $root
     $hashes = @($before | Where-Object { -not $_.Directory -and
         -not $_.Path.StartsWith((Get-NormalPath $removed) + '\') -and $_.Path -ne (Get-NormalPath $single) } |
@@ -999,11 +1017,26 @@ function Test-SelectedDeletion {
     $list = Get-AppList $app -AllFiles
     Expand-AppDirectory $app $list 'beta' 'untouched.txt'
     Select-AppRows $app $list @('alpha', 'untouched.txt')
-    New-TestFile (Join-Path $removed 'created-after-scan.txt') 353 | Out-Null
+    $late = New-TestFile (Join-Path $removed 'created-after-scan.txt') 353
+    [IO.File]::SetAttributes($late, $protectedAttributes)
+    [IO.File]::Delete($victim)
+    [IO.Directory]::Delete($stale)
+    New-TestJunction $stale ([IO.Path]::GetDirectoryName($outside))
     Invoke-AppCommand $app 'ID_CLEANUP_DELETE'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists($removed) -and -not [IO.File]::Exists($single)) `
-        'Permanent deletion removes the selected folder, new descendants, and separately selected file'
+        'Permanent deletion removes both directly selected and nested HSR files'
+    Assert-True ([IO.File]::Exists($outside)) 'Permanent deletion leaves the substituted junction target intact'
+    $hidden = New-TestFile (Join-Path $empty 'hidden-after-scan.bin') 128
+    [IO.File]::SetAttributes($hidden, $protectedAttributes)
+    $deep = (('long-' + ('x' * 50) + '\') * 5) + 'leaf.bin'
+    New-TestFile (Join-Path $empty $deep) 1 | Out-Null
+    New-TestJunction (Join-Path $empty 'junction') ([IO.Path]::GetDirectoryName($outside))
+    Select-AppRows $app $list @('to-empty')
+    Invoke-AppCommand $app 'ID_CLEANUP_EMPTY_FOLDER'
+    Wait-AppIdle $app
+    Assert-Equal ([IO.Directory]::GetFileSystemEntries($empty).Length) 0 'Empty Folder removes newly created HSR files'
+    Assert-True ([IO.File]::Exists($outside)) 'Empty Folder leaves the junction target intact'
     $after = @($hashes.Path | Get-FileHash | Sort-Object Path)
     Assert-Sequence @($after.Hash) @($hashes.Hash) 'Permanent deletion preserves every unselected payload'
     Assert-ScanSnapshot (Save-AppReport $app 'deleted-local') (Get-DiskSnapshot $root) $root -Physical
