@@ -7,7 +7,9 @@
 #include "pch.h"
 #include "HelpersTasks.h"
 #include "FinderBasic.h"
+#include <ktmw32.h>
 
+#pragma comment(lib,"ktmw32.lib")
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"wbemuuid.lib")
 #pragma comment(lib,"virtdisk.lib")
@@ -664,22 +666,86 @@ bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg, const ULONGLONG 
     return true;
 }
 
-bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo)
+DWORD CreateHardlinkFromFile(const std::wstring& sourcePath, const std::wstring& targetPath,
+    const CProgressDlg& progress)
 {
-    // Construct a temporary name in the same directory
-    GUID guid;
-    if (FAILED(CoCreateGuid(&guid))) return false;
-    std::array<WCHAR, GUIDSTRING_MAX> guidStr;
-    (void) StringFromGUID2(guid, guidStr.data(), static_cast<int>(guidStr.size()));
+    // Existing links already share their data and need no replacement.
+    std::error_code ec;
+    if (std::filesystem::equivalent(sourcePath, targetPath, ec)) return ERROR_SUCCESS;
 
-    // Create hardlink to source and move it over the target
-    const std::wstring tempPath = pathTwo + guidStr.data();
-    if (CreateHardLink(tempPath.c_str(), pathOne.c_str(), nullptr) == 0) return false;
-    if (MoveFileEx(tempPath.c_str(), pathTwo.c_str(), MOVEFILE_REPLACE_EXISTING) != 0) return true;
+    // A transacted writer excludes changes to every stream and both names until the replacement commits.
+    const SmartPointer transaction(CloseHandle, CreateTransaction(nullptr, nullptr, 0, 0, 0, 0, nullptr));
+    if (!transaction.IsValid()) return GetLastError();
+    const auto open = [&](const std::wstring& path, const DWORD access = GENERIC_READ)
+    {
+        return SmartPointer(CloseHandle, CreateFileTransacted(path.c_str(), access, FILE_SHARE_READ | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN, nullptr,
+            transaction, nullptr, nullptr));
+    };
+    auto source = open(sourcePath, GENERIC_READ | FILE_WRITE_ATTRIBUTES);
+    if (!source.IsValid()) return GetLastError();
+    auto target = open(targetPath, GENERIC_READ | FILE_WRITE_ATTRIBUTES);
+    if (!target.IsValid()) return GetLastError();
 
-    // Do not leave the temporary link behind on failure
-    DeleteFile(tempPath.c_str());
-    return false;
+    // Compare the names, lengths and bytes of every data stream, including the unnamed stream.
+    using Streams = std::vector<std::pair<std::wstring, LONGLONG>>;
+    const auto listStreams = [&](const std::wstring& path, const HANDLE file, Streams& streams) -> DWORD
+    {
+        BY_HANDLE_FILE_INFORMATION info{};
+        if (!GetFileInformationByHandle(file, &info)) return GetLastError();
+        if (info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
+            return ERROR_NOT_SUPPORTED;
+
+        WIN32_FIND_STREAM_DATA data{};
+        const SmartPointer search(FindClose, FindFirstStreamTransactedW(path.c_str(), FindStreamInfoStandard,
+            &data, 0, transaction));
+        if (!search.IsValid()) return GetLastError();
+        do { streams.emplace_back(data.cStreamName, data.StreamSize.QuadPart); }
+        while (FindNextStreamW(search, &data));
+        if (const DWORD error = GetLastError(); error != ERROR_HANDLE_EOF) return error;
+        std::ranges::sort(streams);
+        return ERROR_SUCCESS;
+    };
+    Streams sourceStreams, targetStreams;
+    if (const DWORD error = listStreams(sourcePath, source, sourceStreams)) return error;
+    if (const DWORD error = listStreams(targetPath, target, targetStreams)) return error;
+    if (sourceStreams != targetStreams) return ERROR_NOT_SAME_OBJECT;
+
+    constexpr DWORD chunkSize = 256 * wds::Ki;
+    const auto buffers = std::make_unique_for_overwrite<BYTE[]>(2 * chunkSize);
+    for (const auto& [name, size] : sourceStreams)
+    {
+        SmartPointer sourceStream(CloseHandle, HANDLE{}), targetStream(CloseHandle, HANDLE{});
+        if (name != L"::$DATA")
+        {
+            sourceStream = open(sourcePath + name);
+            if (!sourceStream.IsValid()) return GetLastError();
+            targetStream = open(targetPath + name);
+            if (!targetStream.IsValid()) return GetLastError();
+        }
+        const HANDLE first = sourceStream.IsValid() ? sourceStream.Get() : source.Get();
+        const HANDLE second = targetStream.IsValid() ? targetStream.Get() : target.Get();
+        for (LONGLONG remaining = size; remaining > 0;)
+        {
+            if (progress.IsCancelled()) return ERROR_CANCELLED;
+            const DWORD chunk = static_cast<DWORD>(std::min<LONGLONG>(remaining, chunkSize));
+            DWORD sourceRead = 0, targetRead = 0;
+            if (!ReadFile(first, buffers.get(), chunk, &sourceRead, nullptr) ||
+                !ReadFile(second, buffers.get() + chunkSize, chunk, &targetRead, nullptr)) return GetLastError();
+            if (sourceRead != chunk || targetRead != chunk) return ERROR_HANDLE_EOF;
+            if (memcmp(buffers.get(), buffers.get() + chunkSize, chunk) != 0) return ERROR_NOT_SAME_OBJECT;
+            remaining -= chunk;
+        }
+    }
+
+    // NTFS retains the file locks after close and rolls back both namespace changes on failure or cancellation.
+    source.Release();
+    target.Release();
+    if (progress.IsCancelled()) return ERROR_CANCELLED;
+    if (!DeleteFileTransacted(targetPath.c_str(), transaction) ||
+        !CreateHardLinkTransacted(targetPath.c_str(), sourcePath.c_str(), nullptr, transaction)) return GetLastError();
+    if (progress.IsCancelled()) return ERROR_CANCELLED;
+    return CommitTransaction(transaction) ? ERROR_SUCCESS : GetLastError();
 }
 
 // File hashing

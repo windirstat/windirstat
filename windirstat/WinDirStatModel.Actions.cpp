@@ -1646,11 +1646,22 @@ void CWinDirStatModel::OnCreateHardlink()
     if (targets.empty() || !ConfirmOperation(IDS_MENU_CREATE_HARDLINK,
         COptions::ShowCreateHardlinkPrompt, targets)) return;
 
-    // Replace each target with a hardlink to its group's source.
-    for (const auto& [source, target] : hardlinks)
+    // Report targets that changed or could not be replaced after comparing their current contents.
+    std::vector<std::wstring> failures;
+    CProgressDlg(hardlinks.size(), CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* progress)
     {
-        CreateHardlinkFromFile(source->GetPathLong(), target->GetPathLong());
-    }
+        for (const auto& [source, target] : hardlinks)
+        {
+            if (progress->IsCancelled()) break;
+            const DWORD error = CreateHardlinkFromFile(source->GetPathLong(), target->GetPathLong(), *progress);
+            if (error == ERROR_CANCELLED) break;
+            if (error) failures.push_back(target->GetPath() + L" — " + TranslateError(error));
+            progress->Increment();
+        }
+    }).ShowModal();
+    if (!failures.empty())
+        CMessageBoxDlg::Show(GetLocalizedMenuText(IDS_MENU_CREATE_HARDLINK), failures, {}, false,
+            MB_OK | MB_ICONWARNING, GetMainWindow(), { 600, 400 });
 
     // Refresh the target item to reflect the change
     RefreshItem(selected);

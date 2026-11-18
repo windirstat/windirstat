@@ -102,7 +102,8 @@ bool CompressFileAllowed(const std::wstring& volumeName, CompressionAlgorithm al
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
 bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg = nullptr,
     ULONGLONG chunkSize = wds::Mi, ULONGLONG minZeroRunSize = 64ull * wds::Ki);
-bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
+DWORD CreateHardlinkFromFile(const std::wstring& sourcePath, const std::wstring& targetPath,
+    const CProgressDlg& progress);
 
 // File hashing
 class CItem;

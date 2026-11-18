@@ -732,10 +732,11 @@ function Test-VerifiedFileOperation {
 function Test-DeduplicateGroups {
     param($Context, $Case)
     $root = $Context.Fixture
-    $paths = @(foreach ($group in 1, 2) {
+    $paths = @(foreach ($group in 1..6) {
         foreach ($member in 'a', 'b') { New-TestFile (Join-Path $root "group-$group-$member.bin") 32768 $group }
     })
-    $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
+    foreach ($i in 2, 3, 10, 11) { [IO.File]::WriteAllText(($paths[$i] + ':notes'), 'shared') }
+    foreach ($i in 6, 7) { [IO.File]::WriteAllText(($paths[$i] + ':notes'), "note-$i") }
     $app = Start-TestApp @($root) -Settings @{ DupeView = @{ ScanForDuplicates = 1 } }
     Get-AppList $app -AllFiles | Out-Null
     Invoke-AppCommand $app 'ID_VIEW_DUPLICATE_FILES'
@@ -745,13 +746,32 @@ function Test-DeduplicateGroups {
     Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_CREATE_HARDLINK').Enabled) `
         'A single duplicate cannot trigger hardlink replacement'
     Select-AppRows $app $list $paths
-    Invoke-AppCommand $app 'ID_CLEANUP_CREATE_HARDLINK'
+    $edited = [IO.File]::ReadAllBytes($paths[5])
+    $edited[-1] = $edited[-1] -bxor 1
+    [IO.File]::WriteAllBytes($paths[5], $edited)
+    $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
+    $writer = [IO.File]::Open($paths[9], 'Open', 'ReadWrite', 'ReadWrite, Delete')
+    $streamWriter = [IO.File]::Open(($paths[11] + ':notes'), 'Open', 'ReadWrite', 'ReadWrite, Delete')
+    try {
+        Invoke-AppCommand $app 'ID_CLEANUP_CREATE_HARDLINK'
+        $warning = Wait-Until { Get-AppDialog $app 'IDC_MESSAGE_LISTVIEW' } 'Unverified duplicate pairs are reported'
+        $failed = Get-DialogControl $warning 'IDC_MESSAGE_LISTVIEW'
+        Assert-Equal ([NativeListViewHelper]::GetItemCount($failed)) 4 'Four unverified pairs are skipped'
+        Close-AppDialog $warning -ButtonName 'OK'
+    } finally { $streamWriter.Dispose(); $writer.Dispose() }
     Wait-AppIdle $app
     $identities = @($paths | ForEach-Object { Get-FileIdentity $_ })
     Assert-Equal $identities[0].Id $identities[1].Id 'The first hash group shares a physical file after deduplication'
     Assert-Equal $identities[2].Id $identities[3].Id 'The second hash group shares a separate physical file'
     Assert-True ($identities[0].Id -ne $identities[2].Id) `
         'Selecting multiple hash groups does not cross-link different contents'
+    Assert-True ($identities[4].Id -ne $identities[5].Id -and $identities[6].Id -ne $identities[7].Id) `
+        'Differing contents and named streams keep independent files'
+    Assert-True ($identities[8].Id -ne $identities[9].Id) 'An active writer keeps its original file'
+    Assert-True ($identities[10].Id -ne $identities[11].Id) 'An active named-stream writer keeps its original file'
+    foreach ($i in 6, 7) {
+        Assert-Equal ([IO.File]::ReadAllText(($paths[$i] + ':notes'))) "note-$i" 'Named stream survives'
+    }
     Assert-Sequence @($paths | Get-FileHash | ForEach-Object Hash) $hashes `
         'Hardlink deduplication preserves each group payload'
     Assert-ScanSnapshot (Save-AppReport $app 'after-dedup') (Get-DiskSnapshot $root) $root -Physical
