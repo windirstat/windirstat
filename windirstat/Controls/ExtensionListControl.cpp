@@ -384,8 +384,9 @@ void CExtensionListControl::OnExcludeExtension() const
     const std::wstring ext = GetSelectedExtension();
     if (ext.empty()) return;
 
-    // Build a glob pattern: e.g. "*.txt"; for no-extension files use "*."
-    const std::wstring pattern = L"*" + EscapeGlobLiteral(ext);
+    // Store the extension in the active filter syntax.
+    const std::wstring glob = L"*" + EscapeGlobLiteral(ext);
+    const std::wstring pattern = COptions::FilteringUseRegex ? GlobToRegex(glob, false) : glob;
 
     CWinDirStatModel::Get()->StopScanningEngine();
     std::wstring& current = COptions::FilteringExcludeFiles.Obj();

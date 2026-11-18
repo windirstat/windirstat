@@ -1,4 +1,21 @@
-﻿function Test-ScopedRefresh {
+﻿function Test-ExcludeExtension {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($name in 'match.c++', 'keep.cpp') { New-TestFile (Join-Path $root $name) 128 | Out-Null }
+    foreach ($regex in 0, 1) {
+        $app = Start-TestApp @($root) -Settings @{ Options = @{ FilteringUseRegex = $regex } }
+        $tree = Get-AppList $app -AllFiles
+        Select-AppRows $app $app.ExtensionList @('.c++')
+        [void][TestDesktop]::PostMessage($app.ExtensionList, 0x0111, [IntPtr](Get-ResourceId 'ID_FILTER_EXCLUDE_ITEM'),
+            [IntPtr]::Zero)
+        Wait-Until { (Find-AppRow $tree 'match.c++' -Optional) -lt 0 } 'The literal suffix is excluded' | Out-Null
+        Wait-AppIdle $app
+        Assert-True ((Find-AppRow $tree 'keep.cpp' -Optional) -ge 0) 'A neighboring extension remains visible'
+        Stop-TestApp $app
+    }
+}
+
+function Test-ScopedRefresh {
     param($Context, $Case)
     $root = New-TestTree
     $before = @(Get-DiskSnapshot $root)
@@ -1406,6 +1423,8 @@ foreach ($operation in @(
         'Single and multiple file actions update disk and UI, preserving unselected files' `
         Test-VerifiedFileOperation -Tags Desktop,Filesystem -Requires $operation.Requires -Data $operation
 }
+Register-Scenario interaction.exclude-extension Interaction 'Extension exclusion respects wildcard and regex settings' `
+    Test-ExcludeExtension -Tags Desktop,Persistence -Requires Windows,Desktop
 Register-Scenario interaction.dedup-groups Interaction `
     'Hardlink deduplication retains independent sources within multiple hash groups' `
     Test-DeduplicateGroups -Tags Desktop,Filesystem -Requires Windows,Desktop,Ntfs
