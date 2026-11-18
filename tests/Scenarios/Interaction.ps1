@@ -55,6 +55,8 @@ function Test-VisualizationCommands {
     foreach ($command in 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_SUNBURST') {
         Invoke-AppCommand $app $command
         Assert-True (Get-AppCommandState $app $command).Checked 'Switching graphs updates the selected view'
+        Assert-Equal (Get-AppCommandState $app 'ID_TREEMAP_SHOW_FOLDER_FRAMES').Enabled `
+            ($command -eq 'ID_VIEW_TREEMAP_SQUARIFIED') 'Only the treemap offers folder frames'
         foreach ($shown in $false, $true) {
             if ((Get-AppCommandState $app 'ID_VIEW_SHOWVISUALIZATION').Checked -ne $shown) {
                 Invoke-AppCommand $app 'ID_VIEW_SHOWVISUALIZATION'

@@ -194,25 +194,3 @@ void CTreeMapView::DrillDown(CItem* item)
         GetMainWindow()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
     }
 }
-
-std::span<const UINT> CTreeMapView::GetPersistentContextCommands() const
-{
-    static constexpr std::array<UINT, 15> persistentCommands{
-        ID_TREEMAP_ZOOMIN,
-        ID_TREEMAP_ZOOMOUT,
-        ID_TREEMAP_SELECT_PARENT,
-        ID_TREEMAP_RESELECT_CHILD,
-        ID_VIEW_GROUP_TYPES,
-        ID_TREEMAP_SHOW_FOLDER_FRAMES,
-        ID_TREEMAP_SHOW_EXTENSIONS,
-        ID_TREEMAP_LOGICAL_SIZE,
-        ID_TREEMAP_PHYSICAL_SIZE,
-        ID_VIEW_GRAPH_PRESET_CLASSIC,
-        ID_VIEW_GRAPH_PRESET_CALM,
-        ID_VIEW_GRAPH_PRESET_FLAT,
-        ID_VIEW_GRAPH_PRESET_PASTEL,
-        ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST,
-        ID_VIEW_GRAPH_PRESET_CUSTOM,
-    };
-    return persistentCommands;
-}

@@ -422,9 +422,10 @@ void CGraphView::ClearHover()
         CMainFrame::Get()->UpdatePaneText();
 }
 
-std::span<const UINT> CGraphView::GetPersistentContextCommands() const
+void CGraphView::OnContextMenu(WindowRef /*pWnd*/, const CPoint point)
 {
-    static constexpr std::array<UINT, 14> commands{
+    static constexpr UINT commands[]{
+        ID_TREEMAP_SHOW_FOLDER_FRAMES,
         ID_TREEMAP_ZOOMIN,
         ID_TREEMAP_ZOOMOUT,
         ID_TREEMAP_SELECT_PARENT,
@@ -440,13 +441,7 @@ std::span<const UINT> CGraphView::GetPersistentContextCommands() const
         ID_VIEW_GRAPH_PRESET_HIGH_CONTRAST,
         ID_VIEW_GRAPH_PRESET_CUSTOM,
     };
-    return commands;
-}
-
-void CGraphView::OnContextMenu(WindowRef /*pWnd*/, const CPoint point)
-{
-    ShowGraphContextMenu(ResolveItemAtPoint(point, true), point,
-        GetPersistentContextCommands());
+    ShowGraphContextMenu(ResolveItemAtPoint(point, true), point, commands);
 }
 
 void CGraphView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
