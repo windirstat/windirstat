@@ -302,8 +302,8 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         }
 
         const COLORREF bgColor =
-            (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? SystemColor(COLOR_MENU) :
-            (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? SystemColor(COLOR_MENU) : SystemColor(COLOR_MENUBAR);
+            SystemColor(bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED || bgId == MBI_HOT || bgId == MBI_DISABLEDHOT
+                ? COLOR_MENU : COLOR_MENUBAR);
 
         auto dc = CDC::Borrow(pUDMI->um.hdc);
         dc.FillSolidRect(pUDMI->dis.rcItem, bgColor);

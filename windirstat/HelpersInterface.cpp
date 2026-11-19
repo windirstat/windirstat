@@ -16,11 +16,25 @@
 
 #pragma comment(lib, "cabinet.lib")
 
+template<LCTYPE Type>
+static wchar_t GetLocaleSeparator() noexcept
+{
+    static thread_local LCID cachedLocale = static_cast<LCID>(-1);
+    static thread_local wchar_t separator{};
+    const LCID locale = COptions::GetLocaleForFormatting();
+    if (locale != cachedLocale)
+    {
+        separator = GetLocaleString(Type, locale)[0];
+        cachedLocale = locale;
+    }
+    return separator;
+}
+
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
     if (n == 0) return L"0";
 
-    const wchar_t sep = GetLocaleThousandSeparator();
+    const wchar_t sep = GetLocaleSeparator<LOCALE_STHOUSAND>();
     std::array<WCHAR, 32> buffer;
     size_t pos = buffer.size() - 1;
     buffer[pos] = L'\0';
@@ -70,30 +84,6 @@ std::wstring GetLocaleLanguage(const LANGID langid)
     return s + L" - " + n;
 }
 
-wchar_t GetLocaleThousandSeparator() noexcept
-{
-    static LCID cachedLocale = static_cast<LCID>(-1);
-    static wchar_t cachedChar;
-    if (cachedLocale != COptions::GetLocaleForFormatting())
-    {
-        cachedLocale = COptions::GetLocaleForFormatting();
-        cachedChar = GetLocaleString(LOCALE_STHOUSAND, cachedLocale)[0];
-    }
-    return cachedChar;
-}
-
-wchar_t GetLocaleDecimalSeparator() noexcept
-{
-    static LCID cachedLocale = static_cast<LCID>(-1);
-    static wchar_t cachedChar;
-    if (cachedLocale != COptions::GetLocaleForFormatting())
-    {
-        cachedLocale = COptions::GetLocaleForFormatting();
-        cachedChar = GetLocaleString(LOCALE_SDECIMAL, cachedLocale)[0];
-    }
-    return cachedChar;
-}
-
 std::wstring FormatBytes(const ULONGLONG n) noexcept
 {
     if (COptions::UseSizeSuffixes)
@@ -101,7 +91,7 @@ std::wstring FormatBytes(const ULONGLONG n) noexcept
         return FormatSizeSuffixes(n);
     }
 
-    return FormatLongLongNormal(n) + L" " + GetSpec_Bytes();
+    return FormatLongLongNormal(n) + L" " + GetSizeUnitLabels().front();
 }
 
 std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
@@ -110,22 +100,22 @@ std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
     static constexpr struct {
         ULONGLONG bytes;
         ULONGLONG threshold;
-        const std::wstring& (*suffix)();
+        size_t unit;
     } units[] = {
-        {Ti, Ti - Gi / 2, GetSpec_TiB},
-        {Gi, Gi - Mi / 2, GetSpec_GiB},
-        {Mi, Mi - Ki / 2, GetSpec_MiB},
-        {Ki, Ki,          GetSpec_KiB},
+        {Ti, Ti - Gi / 2, 4},
+        {Gi, Gi - Mi / 2, 3},
+        {Mi, Mi - Ki / 2, 2},
+        {Ki, Ki,          1},
     };
 
-    for (const auto& [bytes, threshold, suffix] : units) [[msvc::flatten]]
+    for (const auto& [bytes, threshold, unit] : units) [[msvc::flatten]]
     {
         if (n < threshold) continue;
 
         return FormatDouble(static_cast<double>(n)
-            / static_cast<double>(bytes)) + L" " + suffix();
+            / static_cast<double>(bytes)) + L" " + GetSizeUnitLabels()[unit];
     }
-    return std::to_wstring(n) + L" " + GetSpec_Bytes();
+    return std::to_wstring(n) + L" " + GetSizeUnitLabels().front();
 }
 
 std::wstring FormatCount(const ULONGLONG n) noexcept
@@ -140,7 +130,7 @@ std::wstring FormatDouble(const double d) noexcept
     const int i = x / 100;
     const int r = x % 100;
 
-    return std::to_wstring(i) + GetLocaleDecimalSeparator() +
+    return std::to_wstring(i) + GetLocaleSeparator<LOCALE_SDECIMAL>() +
         std::wstring({ static_cast<wchar_t>(L'0' + r / 10), static_cast<wchar_t>(L'0' + r % 10) });
 }
 
@@ -199,24 +189,30 @@ std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
     return std::wstring(date.data()) + L"  " + time;
 }
 
+static constexpr struct { DWORD flag; wchar_t code; } attributeCodes[] =
+{
+    { FILE_ATTRIBUTE_READONLY, wds::chrAttributeReadonly },
+    { FILE_ATTRIBUTE_HIDDEN, wds::chrAttributeHidden },
+    { FILE_ATTRIBUTE_SYSTEM, wds::chrAttributeSystem },
+    { FILE_ATTRIBUTE_ARCHIVE, wds::chrAttributeArchive },
+    { FILE_ATTRIBUTE_COMPRESSED, wds::chrAttributeCompressed },
+    { FILE_ATTRIBUTE_ENCRYPTED, wds::chrAttributeEncrypted },
+    { FILE_ATTRIBUTE_OFFLINE, wds::chrAttributeOffline },
+    { FILE_ATTRIBUTE_SPARSE_FILE, wds::chrAttributeSparse },
+};
+
 std::wstring FormatAttributes(const DWORD attr) noexcept
 {
     if (attr == INVALID_FILE_ATTRIBUTES) return wds::strInvalidAttributes;
 
     std::wstring attributes;
-    if (attr & FILE_ATTRIBUTE_READONLY) attributes += wds::chrAttributeReadonly;
-    if (attr & FILE_ATTRIBUTE_HIDDEN) attributes += wds::chrAttributeHidden;
-    if (attr & FILE_ATTRIBUTE_SYSTEM) attributes += wds::chrAttributeSystem;
-    if (attr & FILE_ATTRIBUTE_ARCHIVE) attributes += wds::chrAttributeArchive;
-    if (attr & FILE_ATTRIBUTE_COMPRESSED) attributes += wds::chrAttributeCompressed;
-    if (attr & FILE_ATTRIBUTE_ENCRYPTED) attributes += wds::chrAttributeEncrypted;
-    if (attr & FILE_ATTRIBUTE_OFFLINE) attributes += wds::chrAttributeOffline;
-    if (attr & FILE_ATTRIBUTE_SPARSE_FILE) attributes += wds::chrAttributeSparse;
+    for (const auto& [flag, code] : attributeCodes)
+        if (attr & flag) attributes += code;
 
     return attributes;
 }
 
-std::wstring FormatHex(const std::vector<BYTE> & bytes, const bool upper) noexcept
+std::wstring FormatHex(const std::span<const BYTE> bytes, const bool upper)
 {
     if (bytes.empty()) return {};
 
@@ -417,50 +413,17 @@ DWORD ParseAttributes(const std::wstring_view& attributes) noexcept
     if (attributes == wds::strInvalidAttributes) return INVALID_FILE_ATTRIBUTES;
 
     DWORD attr = 0;
-    for (const WCHAR ch : attributes)
-    {
-        if (ch == wds::chrAttributeReadonly) attr |= FILE_ATTRIBUTE_READONLY;
-        else if (ch == wds::chrAttributeHidden) attr |= FILE_ATTRIBUTE_HIDDEN;
-        else if (ch == wds::chrAttributeSystem) attr |= FILE_ATTRIBUTE_SYSTEM;
-        else if (ch == wds::chrAttributeArchive) attr |= FILE_ATTRIBUTE_ARCHIVE;
-        else if (ch == wds::chrAttributeCompressed) attr |= FILE_ATTRIBUTE_COMPRESSED;
-        else if (ch == wds::chrAttributeEncrypted) attr |= FILE_ATTRIBUTE_ENCRYPTED;
-        else if (ch == wds::chrAttributeOffline) attr |= FILE_ATTRIBUTE_OFFLINE;
-        else if (ch == wds::chrAttributeSparse) attr |= FILE_ATTRIBUTE_SPARSE_FILE;
-    }
-
+    for (const auto& [flag, code] : attributeCodes)
+        if (attributes.contains(code)) attr |= flag;
     return attr;
 }
 
 // Size specifiers
-const std::wstring& GetSpec_Bytes() noexcept
+const std::array<std::wstring, 5>& GetSizeUnitLabels() noexcept
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES);
-    return s;
-}
-
-const std::wstring& GetSpec_KiB() noexcept
-{
-    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB);
-    return s;
-}
-
-const std::wstring& GetSpec_MiB() noexcept
-{
-    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB);
-    return s;
-}
-
-const std::wstring& GetSpec_GiB() noexcept
-{
-    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB);
-    return s;
-}
-
-const std::wstring& GetSpec_TiB() noexcept
-{
-    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB);
-    return s;
+    static const std::array labels{ Localization::Lookup(IDS_SPEC_BYTES), Localization::Lookup(IDS_SPEC_KiB),
+        Localization::Lookup(IDS_SPEC_MiB), Localization::Lookup(IDS_SPEC_GiB), Localization::Lookup(IDS_SPEC_TiB) };
+    return labels;
 }
 
 // System information

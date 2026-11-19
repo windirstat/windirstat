@@ -55,10 +55,6 @@ public:
 
 protected:
     void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
-    void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
-    void OnHScroll(UINT nSBCode, UINT nPos, WindowRef scrollBar);
-    void OnLightSourceChanged(NMHDR*, LRESULT*);
-    void OnSetModified();
     void OnPresetChanged();
 };
 
@@ -66,13 +62,13 @@ inline std::span<const RouteEntry> CPageTreeMap::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Window<&OnHScroll>(WM_HSCROLL),
+        Route::Window<&OnSomethingChanged>(WM_HSCROLL),
         Route::Notify<&OnColorChangedTreeMapGrid>(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR),
-        Route::Notify<&OnColorChangedTreeMapHighlight>(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR),
-        Route::Control<&OnSetModified>(CBN_SELCHANGE, IDC_TREEMAPSTYLE),
-        Route::Control<&OnSetModified>(BN_CLICKED, IDC_TREEMAPGRID),
+        Route::Notify<&OnSomethingChanged>(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR),
+        Route::Control<&OnSomethingChanged>(CBN_SELCHANGE, IDC_TREEMAPSTYLE),
+        Route::Control<&OnSomethingChanged>(BN_CLICKED, IDC_TREEMAPGRID),
         Route::Control<&OnPresetChanged>(CBN_SELCHANGE, IDC_TREEMAPPRESET),
-        Route::Notify<&OnLightSourceChanged>(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE),
+        Route::Notify<&OnSomethingChanged>(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE),
     };
     return entries;
 }

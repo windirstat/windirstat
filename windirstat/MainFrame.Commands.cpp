@@ -303,20 +303,20 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
     switch (logicalFocus)
     {
         case LF_EXTLIST: GetExtensionView()->SetFocus(); break;
-        case LF_DUPELIST: GetFileDupeView()->SetFocus(); break;
-        case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
-        case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
-        case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
-        case LF_PERMSLIST: GetFilePermsView()->SetFocus(); break;
+        case LF_DUPELIST: m_fileTabbedView->GetPane(FileTab::Duplicates)->SetFocus(); break;
+        case LF_TOPLIST: m_fileTabbedView->GetPane(FileTab::Largest)->SetFocus(); break;
+        case LF_SEARCHLIST: m_fileTabbedView->GetPane(FileTab::Search)->SetFocus(); break;
+        case LF_WATCHERLIST: m_fileTabbedView->GetPane(FileTab::Watcher)->SetFocus(); break;
+        case LF_PERMSLIST: m_fileTabbedView->GetPane(FileTab::Permissions)->SetFocus(); break;
         case LF_STORAGEANALYTICS:
         {
-            GetFileTabbedView()->SetActiveStorageAnalyticsView();
+            GetFileTabbedView()->SetActiveTab(FileTab::StorageAnalytics);
             GetFileTabbedView()->SetFocus();
             break;
         }
         case LF_FILETREE:
         {
-            GetFileTabbedView()->SetActiveFileTreeView();
+            GetFileTabbedView()->SetActiveTab(FileTab::Tree);
             GetFileTreeView()->SetFocus();
             break;
         }
@@ -431,16 +431,10 @@ void CMainFrame::OnUpdateViewShowVisualization(CCmdUI* pCmdUI) const
     pCmdUI->SetCheck(IsVisualizationShown());
 }
 
-void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
+void CMainFrame::OnUpdateViewTreeMapSize(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(COptions::TreeMapUseLogical);
-}
-
-void CMainFrame::OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(!COptions::TreeMapUseLogical);
+    pCmdUI->SetRadio(COptions::TreeMapUseLogical == (pCmdUI->m_nID == ID_TREEMAP_LOGICAL_SIZE));
 }
 
 void CMainFrame::OnUpdateViewAbsolutePercentages(CCmdUI* pCmdUI)
@@ -462,7 +456,7 @@ void CMainFrame::OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI) const
 
 void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI) const
 {
-    pCmdUI->SetCheck(GetFileTabbedView()->IsWatcherTabVisible());
+    pCmdUI->SetCheck(GetFileTabbedView()->IsTabVisible(FileTab::Watcher));
 }
 
 GraphPane CMainFrame::GetGraphPaneType() const
@@ -547,26 +541,20 @@ void CMainFrame::OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const
     pCmdUI->SetRadio(custom ? !current : current == preset);
 }
 
-void CMainFrame::OnViewFlameGraph()
+static GraphPane GraphPaneForCommand(const UINT commandId)
 {
-    SelectGraphPane(GraphPane::FlameGraph);
+    return commandId == ID_VIEW_FLAMEGRAPH ? GraphPane::FlameGraph : GraphPane::Sunburst;
 }
 
-void CMainFrame::OnUpdateViewFlameGraph(CCmdUI* pCmdUI) const
+void CMainFrame::OnViewGraphPane(const UINT commandId)
+{
+    SelectGraphPane(GraphPaneForCommand(commandId));
+}
+
+void CMainFrame::OnUpdateViewGraphPane(CCmdUI* pCmdUI) const
 {
     pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::FlameGraph);
-}
-
-void CMainFrame::OnViewSunburst()
-{
-    SelectGraphPane(GraphPane::Sunburst);
-}
-
-void CMainFrame::OnUpdateViewSunburst(CCmdUI* pCmdUI) const
-{
-    pCmdUI->Enable(!CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetRadio(GetGraphPaneType() == GraphPane::Sunburst);
+    pCmdUI->SetRadio(GetGraphPaneType() == GraphPaneForCommand(pCmdUI->m_nID));
 }
 
 static void SortItemRecursive(CItem* item)
@@ -618,36 +606,21 @@ void CMainFrame::OnViewGroupUnregisteredTypes() const
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
-void CMainFrame::OnViewShowExtensionsOnTreeMap() const
+void CMainFrame::OnViewTreeMapOverlay(const UINT commandId) const
 {
     if (GetGraphPaneType() != GraphPane::TreeMap) return;
-
-    COptions::TreeMapShowExtensions = !static_cast<bool>(COptions::TreeMapShowExtensions);
-    COptions::TreeMapOptions.showExtensions = COptions::TreeMapShowExtensions;
+    const bool extensions = commandId == ID_TREEMAP_SHOW_EXTENSIONS;
+    auto& setting = extensions ? COptions::TreeMapShowExtensions : COptions::TreeMapShowFolderFrames;
+    auto& visible = extensions ? COptions::TreeMapOptions.showExtensions : COptions::TreeMapOptions.showFolderFrames;
+    visible = setting = !setting;
     CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
 }
 
-void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI) const
+void CMainFrame::OnUpdateViewTreeMapOverlay(CCmdUI* pCmdUI) const
 {
-    pCmdUI->Enable(GetGraphPaneType() == GraphPane::TreeMap
-        && !CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
-}
-
-void CMainFrame::OnViewShowFolderFramesOnTreeMap() const
-{
-    if (GetGraphPaneType() != GraphPane::TreeMap) return;
-
-    COptions::TreeMapShowFolderFrames = !static_cast<bool>(COptions::TreeMapShowFolderFrames);
-    COptions::TreeMapOptions.showFolderFrames = COptions::TreeMapShowFolderFrames;
-    CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_TREEMAP_STYLE);
-}
-
-void CMainFrame::OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI) const
-{
-    pCmdUI->Enable(GetGraphPaneType() == GraphPane::TreeMap
-        && !CWinDirStatModel::Get()->IsScanRunning());
-    pCmdUI->SetCheck(COptions::TreeMapOptions.showFolderFrames);
+    pCmdUI->Enable(GetGraphPaneType() == GraphPane::TreeMap && !CWinDirStatModel::Get()->IsScanRunning());
+    pCmdUI->SetCheck(pCmdUI->m_nID == ID_TREEMAP_SHOW_EXTENSIONS ? COptions::TreeMapOptions.showExtensions :
+        COptions::TreeMapOptions.showFolderFrames);
 }
 
 static void PaintWatcherAutoScroll(Gdiplus::Graphics& g, const bool enabled)
@@ -766,7 +739,7 @@ void CMainFrame::RebuildToolBar(const bool rebuildButtons)
 
     // The watcher buttons are contextual and only shown while its tab is active
     SetWatcherToolBarButtons(m_fileTabbedView != nullptr &&
-        m_fileTabbedView->IsFileWatcherViewTabActive(), false);
+        m_fileTabbedView->IsActive(FileTab::Watcher), false);
 
     m_wndToolBar.UpdateLayout();
     LayoutWatcherFilter();
@@ -999,9 +972,7 @@ void CMainFrame::OnSysColorChange()
     RebuildToolBar();
     EnumThreadWindows(GetCurrentThreadId(), [](const HWND window, LPARAM) -> BOOL
     {
-        std::array<WCHAR, MAX_CLASS_NAME> className{};
-        GetClassNameW(window, className.data(), static_cast<int>(className.size()));
-        if (CWnd::FindAttached(window) == nullptr && wcscmp(className.data(), TOOLTIPS_CLASSW) != 0) return TRUE;
+        if (CWnd::FindAttached(window) == nullptr && !IsWindowClass(window, TOOLTIPS_CLASSW)) return TRUE;
 
         DarkMode::AdjustControls(window);
         NotifyAppearanceChanged(window);
@@ -1061,48 +1032,32 @@ bool CMainFrame::CreateFromResource(const UINT nIDResource)
 
 void CMainFrame::OnToolsWatcher() const
 {
-    const bool visible = !GetFileTabbedView()->IsWatcherTabVisible();
-    GetFileTabbedView()->SetWatcherTabVisibility(visible);
+    const bool visible = !GetFileTabbedView()->IsTabVisible(FileTab::Watcher);
+    GetFileTabbedView()->SetTabVisible(FileTab::Watcher, visible);
     if (visible)
     {
-        GetFileTabbedView()->SetActiveWatcherView();
+        GetFileTabbedView()->SetActiveTab(FileTab::Watcher);
     }
 }
 
-void CMainFrame::OnToolsPermissions() const
+static FileTab ToolTabForCommand(const UINT commandId)
 {
-    GetFileTabbedView()->SetPermsTabVisibility(!GetFileTabbedView()->IsPermsTabVisible());
-
-    // Re-check visibility: a cancelled scan leaves the tab hidden, so don't activate it
-    if (GetFileTabbedView()->IsPermsTabVisible())
-    {
-        GetFileTabbedView()->SetActivePermsView();
-    }
+    return commandId == ID_TOOLS_PERMISSIONS ? FileTab::Permissions : FileTab::StorageAnalytics;
 }
 
-void CMainFrame::OnUpdateToolsPermissions(CCmdUI* pCmdUI) const
+void CMainFrame::OnToolsTab(const UINT commandId) const
 {
-    // Only allow launching a scan once the file tree has been fully populated
-    const auto* model = CWinDirStatModel::Get();
-    pCmdUI->SetCheck(GetFileTabbedView()->IsPermsTabVisible());
-    pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() || model->IsScanSettled());
+    const FileTab tab = ToolTabForCommand(commandId);
+    m_fileTabbedView->SetTabVisible(tab, !m_fileTabbedView->IsTabVisible(tab));
+    // A canceled permissions scan leaves the tab hidden.
+    if (m_fileTabbedView->IsTabVisible(tab)) m_fileTabbedView->SetActiveTab(tab);
 }
 
-void CMainFrame::OnToolsStorageAnalytics() const
+void CMainFrame::OnUpdateToolsTab(CCmdUI* pCmdUI) const
 {
-    GetFileTabbedView()->SetStorageAnalyticsTabVisibility(!GetFileTabbedView()->IsStorageAnalyticsTabVisible());
-
-    if (GetFileTabbedView()->IsStorageAnalyticsTabVisible())
-    {
-        GetFileTabbedView()->SetActiveStorageAnalyticsView();
-    }
-}
-
-void CMainFrame::OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI) const
-{
-    const auto* model = CWinDirStatModel::Get();
-    pCmdUI->SetCheck(GetFileTabbedView()->IsStorageAnalyticsTabVisible());
-    pCmdUI->Enable(GetFileTabbedView()->IsStorageAnalyticsTabVisible() || model->IsScanSettled());
+    const bool visible = m_fileTabbedView->IsTabVisible(ToolTabForCommand(pCmdUI->m_nID));
+    pCmdUI->SetCheck(visible);
+    pCmdUI->Enable(visible || CWinDirStatModel::Get()->IsScanSettled());
 }
 
 void CMainFrame::OnViewWindowLayout()

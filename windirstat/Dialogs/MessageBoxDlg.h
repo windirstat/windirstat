@@ -26,7 +26,6 @@ public:
     static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, const bool checkboxValue = false, const UINT type = MB_YESNO | MB_ICONQUESTION, WindowRef pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
     static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, WindowRef pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(IDS_APP_TITLE));
 
-    INT_PTR ShowModal() override;
     void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
     void SetWidthAuto() { m_autoWidth = true; }
 
@@ -42,9 +41,7 @@ public:
     static std::span<const RouteEntry> Routes();
 
 protected:
-    void OnButtonLeft();
-    void OnButtonMiddle();
-    void OnButtonRight();
+    void OnButton(UINT controlId);
     HBRUSH OnCtlColor(CDC* pDC, WindowRef pWnd, UINT nCtlColor);
     bool OnEraseBkgnd(CDC* pDC) const;
     void OnSize(UINT nType, int cx, int cy);
@@ -59,15 +56,11 @@ protected:
 
 private:
 
-    using ButtonContext = struct ButtonContext
+    struct ButtonContext
     {
-        BYTE btnLeftID = 0;
-        BYTE btnMidID = 0;
-        BYTE btnRightID = 0;
-        std::wstring_view btnLeftIDS;
-        std::wstring_view btnMidIDS;
-        std::wstring_view btnRightIDS;
-        CButton * btnFocus = nullptr;
+        std::array<BYTE, 3> ids{};
+        std::array<std::wstring_view, 3> labels;
+        size_t focus;
     };
 
     std::wstring m_message;
@@ -79,9 +72,7 @@ private:
     SmartPointer<HICON, decltype(&DestroyIcon)> m_icon{ &DestroyIcon };
     CStatic m_iconCtrl;
     CStatic m_messageCtrl;
-    CButton m_buttonLeft;
-    CButton m_buttonMiddle;
-    CButton m_buttonRight;
+    std::array<CButton, 3> m_buttons;
     CSize m_initialSize{};
     bool m_autoWidth = false;
 
@@ -101,9 +92,7 @@ inline std::span<const RouteEntry> CMessageBoxDlg::Routes()
 {
     static constexpr std::array entries
     {
-        Route::Control<&OnButtonLeft>(BN_CLICKED, IDC_MESSAGE_BUTTONLEFT),
-        Route::Control<&OnButtonMiddle>(BN_CLICKED, IDC_MESSAGE_BUTTONMIDDLE),
-        Route::Control<&OnButtonRight>(BN_CLICKED, IDC_MESSAGE_BUTTONRIGHT),
+        Route::Control<&OnButton>(BN_CLICKED, IDC_MESSAGE_BUTTONLEFT, IDC_MESSAGE_BUTTONRIGHT),
         Route::Window<&OnCtlColor>(WM_CTLCOLOR),
         Route::Window<&OnEraseBkgnd>(WM_ERASEBKGND),
         Route::Window<&OnSize>(WM_SIZE),

@@ -89,8 +89,6 @@ public:
         { return { m_tree->names.data() + m_record->nameOffset, m_record->nameLength }; }
     ULONGLONG GetIndex() const override;
     DWORD GetReparseTag() const override;
-    bool IsReserved() const override { return false; }
-    bool HasIgnoredStream() const override { return false; }
     const ScanResult& GetResult() const noexcept override { return m_result; }
 
     // Distribution and path helpers

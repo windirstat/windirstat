@@ -241,6 +241,18 @@ int wmain(const int argc, wchar_t** argv)
         add("trailing-dot-space", base, L"trailing filename. ", 57, true, L"trailing filename");
         if (ntfs) add("reserved-device", base, L"NUL.txt", 91, true, L"_NUL.txt");
 
+        // Keep the reuse source live while the rest of the scan fixtures are exercised.
+        const auto reuseDirectory = base + L"\\cluster reuse";
+        MakeDirectory(reuseDirectory);
+        const std::wstring reuseName = L"deleted cluster reuse source.bin";
+        const auto reuseSource = reuseDirectory + L"\\" + reuseName;
+        SYSTEM_INFO systemInfo{};
+        GetSystemInfo(&systemInfo);
+        const size_t moveBytes = std::max<size_t>(cluster, systemInfo.dwPageSize);
+        const DWORD moveClusters = static_cast<DWORD>(moveBytes / cluster);
+        const auto reuseBytes = Pattern(2 * moveBytes, 0x71AABC23);
+        WriteBytes(reuseSource, reuseBytes);
+
         // Deep ancestry uses iterative filesystem operations and approaches the extended path limit.
         auto deep = base;
         size_t depth = 0;
@@ -253,6 +265,12 @@ int wmain(const int argc, wchar_t** argv)
         add("deep-source", deep, L"very deep recovered file.bin", 119);
         add("deep-max-name", deep, longest, 83);
         std::cout << "Deep fixture levels " << depth << ", path code units " << deep.size() << std::endl;
+
+        // Separate the replacement and its parent from the source's NTFS record so moves cannot rewrite its MFT page.
+        const auto replacementDirectory = reuseDirectory + L"\\replacement";
+        MakeDirectory(replacementDirectory);
+        const auto replacement = replacementDirectory + L"\\allocated replacement.bin";
+        WriteBytes(replacement, Pattern(moveBytes, 0x198735));
 
         // Recycle Bin metadata must restore the original basename and path after both companions are deleted.
         const auto recycle = (source.starts_with(L"\\\\?\\") ? source : L"\\\\?\\" + source) + L"$Recycle.Bin";
@@ -554,48 +572,59 @@ int wmain(const int argc, wchar_t** argv)
 
         Test("reallocated-source-cluster-rejected", [&]
         {
-            auto record = find(fixtures[2]);
-            if (ntfs && record && record->data.runs.empty()) record = find(fixtures[4]);
-            Require(record && record->data.runs.size() == 1, "allocation fixture has a saved physical extent");
-            const auto live = base + L"\\allocated replacement.bin";
-            WriteBytes(live, Pattern(std::max<size_t>(cluster, 4096), 0x198735));
-            const TestHandle file(CloseHandle, CreateFileW(live.c_str(), GENERIC_READ | GENERIC_WRITE,
+            TestHandle file(CloseHandle, CreateFileW(replacement.c_str(), GENERIC_READ | GENERIC_WRITE,
                 FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            wchar_t name[MAX_PATH]{};
-            WinCheck(GetVolumeNameForVolumeMountPointW(source.c_str(), name, MAX_PATH), "allocation volume name");
-            std::wstring volumeName(name);
+            auto volumeName = reader->Name();
             volumeName.pop_back();
             const TestHandle volume(CloseHandle, CreateFileW(volumeName.c_str(), GENERIC_READ | GENERIC_WRITE,
                 FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
             WinCheck(file.IsValid() && volume.IsValid(), "open reallocation fixture");
-            DWORD extentCount = 0, returned = 0;
-            if (FirstCluster(file, extentCount) != record->data.runs.front().lcn)
-            {
-                MOVE_FILE_DATA move{ .FileHandle = file, .StartingVcn = {},
-                    .StartingLcn = { .QuadPart = record->data.runs.front().lcn }, .ClusterCount = 1 };
-                if (!DeviceIoControl(volume, FSCTL_MOVE_FILE, &move, sizeof(move), nullptr, 0, &returned, nullptr))
-                {
-                    // Subsector moves can be rejected; reserving free space also reuses the candidate's allocation.
-                    const auto error = GetLastError();
-                    WinCheck(error == ERROR_INVALID_PARAMETER || (cluster < 4096 && error == ERROR_ACCESS_DENIED),
-                        "reuse deleted fixture allocation");
-                    ULARGE_INTEGER available{};
-                    WinCheck(GetDiskFreeSpaceExW(source.c_str(), &available, nullptr, nullptr),
-                        "reallocation free space");
-                    FILE_ALLOCATION_INFO allocation{ .AllocationSize =
-                        { .QuadPart = static_cast<LONGLONG>(available.QuadPart / cluster * cluster) } };
-                    WinCheck(SetFileInformationByHandle(file, FileAllocationInfo, &allocation, sizeof(allocation)),
-                        "reserve deleted source allocation");
-                    FlushVolume(source);
-                }
-            }
+
+            WinCheck(DeleteFileW(reuseSource.c_str()) && FlushFileBuffers(volume), "delete and flush reuse source");
+            const auto reuseReader = RecoveryShared::Open(source, &progress);
+            RecoveryShared::ScanResult saved;
+            reuseReader->Scan(progress, saved);
+            const auto record = std::ranges::find(saved.records, reuseName, &RecoveryShared::Record::name);
+            Require(record != saved.records.end() && !record->data.runs.empty(),
+                "the deleted reuse source has a saved physical extent");
+
+            // Move a whole, aligned page on volumes with clusters smaller than a memory page.
+            const auto run = std::ranges::max(record->data.runs, {}, &RecoveryShared::Run::count);
+            const auto target = (run.lcn + moveClusters - 1) / moveClusters * moveClusters;
+            Require(run.lcn >= 0 && static_cast<ULONGLONG>(target - run.lcn) + moveClusters <= run.count,
+                "the deleted extent contains the entire replacement allocation");
+
+            // Recover first to prove the saved metadata and bytes are intact immediately before reuse.
             const auto folder = outputRoot + L"\\reallocated source";
             MakeDirectory(folder);
+            const auto original = reuseReader->Recover(*record, folder, progress);
+            Require(ReadBytes(original) == reuseBytes, "the candidate recovers before its cluster is reused");
+            WinCheck(DeleteFileW(original.c_str()), "remove control recovery");
+
+            MOVE_FILE_DATA move{ .FileHandle = file, .StartingVcn = {},
+                .StartingLcn = { .QuadPart = target }, .ClusterCount = moveClusters };
+            DWORD returned = 0, extentCount = 0;
+            WinCheck(DeviceIoControl(volume, FSCTL_MOVE_FILE, &move, sizeof(move), nullptr, 0, &returned, nullptr),
+                "reuse deleted fixture allocation");
+            WinCheck(FlushFileBuffers(volume), "flush reused source allocation");
+            Require(FirstCluster(file, extentCount) == target, "the live replacement owns the saved source cluster");
             bool rejected = false;
-            try { reader->Recover(*record, folder, progress); }
-            catch (const RecoveryShared::Failure&) { rejected = true; }
+            try { reuseReader->Recover(*record, folder, progress); }
+            catch (const RecoveryShared::Failure& failure)
+            {
+                if (failure.message != L"IDS_RECOVERY_CHANGED") throw;
+                rejected = true;
+            }
             Require(rejected, "a newly allocated source cluster cannot be copied");
             Require(std::filesystem::is_empty(folder), "reused source allocation leaves no output");
+
+            // Releasing the cluster must make the same saved record recoverable again, even if its bytes changed.
+            file.Release();
+            WinCheck(DeleteFileW(replacement.c_str()) && FlushFileBuffers(volume), "release replacement allocation");
+            const auto released = reuseReader->Recover(*record, folder, progress);
+            Require(std::filesystem::file_size(released) == reuseBytes.size(),
+                "the saved record remains valid after the replacement releases its cluster");
+            WinCheck(DeleteFileW(released.c_str()), "remove released control recovery");
         });
         std::cout << "RESULT " << checks << " checks, " << failures << " failures" << std::endl;
         return failures == 0 ? 0 : 1;

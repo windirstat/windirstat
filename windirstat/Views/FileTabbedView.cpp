@@ -14,47 +14,33 @@ CFileTabbedView::~CFileTabbedView()
     DestroyWindow();
 }
 
-template<typename Pane>
-Pane* CFileTabbedView::AddPane(int& index, const std::wstring_view& tabLabel)
-{
-    static_assert(std::is_base_of_v<CWinDirStatPane, Pane>);
-    auto pane = std::make_unique<Pane>();
-    index = GetTabControl().GetTabCount();
-    if (!pane->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, CRect(), &m_tabControl,
-        static_cast<UINT>(WDS_PANE_ID_BASE + index)))
-    {
-        assert(false);
-        return nullptr;
-    }
-
-    Pane* view = pane.get();
-    m_panes.push_back(std::move(pane));
-    GetTabControl().AddTab(view, tabLabel);
-    return view;
-}
-
 int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
-    if (CWinDirStatPane::OnCreate(lpCreateStruct) == -1)
-        return -1;
+    if (CWinDirStatPane::OnCreate(lpCreateStruct) == -1 ||
+        !m_tabControl.Create(CRect(), this, ID_WDS_CONTROL)) return -1;
 
-    m_tabControl.Create(CRect(), this, ID_WDS_CONTROL);
-
-    m_fileTreeView = AddPane<CFileTreeView>(m_fileTreeViewIndex, IDS_ALL_FILES);
-    m_fileTopView = AddPane<CFileTopView>(m_fileTopViewIndex, IDS_LARGEST_FILES);
-    m_fileDupeView = AddPane<CFileDupeView>(m_fileDupeViewIndex, IDS_DUPLICATE_FILES);
-    m_fileSearchView = AddPane<CFileSearchView>(m_fileSearchViewIndex, IDS_SEARCH_RESULTS);
-    m_fileWatcherView = AddPane<CFileWatcherView>(m_fileWatcherViewIndex, IDS_WATCHER);
-    m_filePermsView = AddPane<CFilePermsView>(m_filePermsViewIndex, IDS_PERMISSIONS);
-    m_storageAnalyticsView = AddPane<CStorageAnalyticsView>(m_storageAnalyticsViewIndex, IDS_STORAGE_ANALYTICS);
-    if (m_fileTreeView == nullptr || m_fileTopView == nullptr || m_fileDupeView == nullptr
-        || m_fileSearchView == nullptr || m_fileWatcherView == nullptr || m_filePermsView == nullptr
-        || m_storageAnalyticsView == nullptr)
+    // Keep tab IDs stable even when optional tabs are hidden.
+    const auto addPane = [this](FileTab tab, std::unique_ptr<CWinDirStatPane> pane, std::wstring_view label)
     {
+        const int index = std::to_underlying(tab);
+        assert(index == m_tabControl.GetTabCount());
+        if (!pane->Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, CRect(), &m_tabControl,
+            static_cast<UINT>(WDS_PANE_ID_BASE + index))) return false;
+        m_panes.push_back(std::move(pane));
+        m_tabControl.AddTab(m_panes.back().get(), label);
+        return true;
+    };
+    if (!addPane(FileTab::Tree, std::make_unique<CFileTreeView>(), IDS_ALL_FILES) ||
+        !addPane(FileTab::Largest, std::make_unique<CFileTopView>(), IDS_LARGEST_FILES) ||
+        !addPane(FileTab::Duplicates, std::make_unique<CFileDupeView>(), IDS_DUPLICATE_FILES) ||
+        !addPane(FileTab::Search, std::make_unique<CFileSearchView>(), IDS_SEARCH_RESULTS) ||
+        !addPane(FileTab::Watcher, std::make_unique<CFileWatcherView>(), IDS_WATCHER) ||
+        !addPane(FileTab::Permissions, std::make_unique<CFilePermsView>(), IDS_PERMISSIONS) ||
+        !addPane(FileTab::StorageAnalytics, std::make_unique<CStorageAnalyticsView>(), IDS_STORAGE_ANALYTICS))
         return -1;
-    }
 
-    OnInitialUpdate();
+    Localization::UpdateTabControl(m_tabControl);
+    ResetOptionalTabVisibility();
     return 0;
 }
 
@@ -71,19 +57,13 @@ void CFileTabbedView::OnSetFocus(WindowRef /*pOldWnd*/)
     FocusActiveTabContent();
 }
 
-void CFileTabbedView::OnInitialUpdate()
-{
-    Localization::UpdateTabControl(GetTabControl());
-    ResetOptionalTabVisibility();
-}
-
 void CFileTabbedView::ResetOptionalTabVisibility()
 {
-    SetSearchTabVisibility(false);
-    SetWatcherTabVisibility(false);
-    SetPermsTabVisibility(false);
-    SetStorageAnalyticsTabVisibility(false);
-    SetDupeTabVisibility(COptions::ScanForDuplicates &&
+    SetTabVisible(FileTab::Search, false);
+    SetTabVisible(FileTab::Watcher, false);
+    SetTabVisible(FileTab::Permissions, false);
+    SetTabVisible(FileTab::StorageAnalytics, false);
+    SetTabVisible(FileTab::Duplicates, COptions::ScanForDuplicates &&
         CWinDirStatModel::Get()->GetRootItem() != nullptr);
 }
 
@@ -95,23 +75,13 @@ void CFileTabbedView::OnSize(UINT /*nType*/, const int cx, const int cy)
     }
 }
 
-void CFileTabbedView::SetDupeTabVisibility(const bool show)
+void CFileTabbedView::SetTabVisible(const FileTab tab, bool show)
 {
-    GetTabControl().SetTabVisible(m_fileDupeViewIndex, show);
-}
-
-void CFileTabbedView::SetSearchTabVisibility(const bool show)
-{
-    GetTabControl().SetTabVisible(m_fileSearchViewIndex, show);
-}
-
-void CFileTabbedView::SetWatcherTabVisibility(const bool show)
-{
-    GetTabControl().SetTabVisible(m_fileWatcherViewIndex, show);
-    if (show)
-    {
-        CFileWatcherControl::Get()->StartMonitoring();
-    }
+    // Reveal permissions only after the scan completes.
+    if (tab == FileTab::Permissions && show) show = CFilePermsControl::Get()->StartScan();
+    m_tabControl.SetTabVisible(std::to_underlying(tab), show);
+    if (tab != FileTab::Watcher) return;
+    if (show) CFileWatcherControl::Get()->StartMonitoring();
     else
     {
         CFileWatcherControl::Get()->StopMonitoring();
@@ -119,28 +89,11 @@ void CFileTabbedView::SetWatcherTabVisibility(const bool show)
     }
 }
 
-void CFileTabbedView::SetPermsTabVisibility(const bool show)
-{
-    if (!show)
-    {
-        GetTabControl().SetTabVisible(m_filePermsViewIndex, false);
-        return;
-    }
-
-    // Scan first; only reveal the tab if the scan completed (a cancelled scan stays hidden)
-    GetTabControl().SetTabVisible(m_filePermsViewIndex, CFilePermsControl::Get()->StartScan());
-}
-
-void CFileTabbedView::SetStorageAnalyticsTabVisibility(const bool show)
-{
-    GetTabControl().SetTabVisible(m_storageAnalyticsViewIndex, show);
-}
-
 LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
 {
     UNREFERENCED_PARAMETER(lp);
 
-    if (wp == static_cast<WPARAM>(m_fileDupeViewIndex))
+    if (wp == static_cast<WPARAM>(FileTab::Duplicates))
     {
         // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;
@@ -150,7 +103,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
     // Show the contextual watcher toolbar buttons only while its tab is active
     if (CMainFrame::Get() != nullptr)
     {
-        CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(m_fileWatcherViewIndex));
+        CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(FileTab::Watcher));
     }
 
     // Route keyboard focus to the newly active tab's content when focus is
@@ -172,43 +125,25 @@ void CFileTabbedView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* i
         ResetOptionalTabVisibility();
     }
 
-    for (auto* pane : { static_cast<CWinDirStatPane*>(m_fileTreeView),
-        static_cast<CWinDirStatPane*>(m_fileTopView),
-        static_cast<CWinDirStatPane*>(m_fileDupeView),
-        static_cast<CWinDirStatPane*>(m_fileSearchView),
-        static_cast<CWinDirStatPane*>(m_fileWatcherView),
-        static_cast<CWinDirStatPane*>(m_filePermsView),
-        static_cast<CWinDirStatPane*>(m_storageAnalyticsView) })
+    for (const auto& pane : m_panes)
     {
-        if (pane != nullptr && pane != sender)
-        {
-            pane->OnUpdate(sender, change, item);
-        }
+        if (pane.get() != sender) pane->OnUpdate(sender, change, item);
     }
 }
 
 bool CFileTabbedView::CycleTab(const bool forward)
 {
-    const auto allTabs = { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex,
-        m_fileSearchViewIndex, m_fileWatcherViewIndex, m_filePermsViewIndex, m_storageAnalyticsViewIndex };
-    std::vector<int> visibleTabs;
-    for (const int tabIndex : allTabs)
+    const int active = m_tabControl.GetActiveTab();
+    if (!m_tabControl.IsTabVisible(active)) return false;
+    const int step = forward ? 1 : -1;
+    for (int i = active + step; i >= 0 && i < m_tabControl.GetTabCount(); i += step)
     {
-        if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
+        if (!m_tabControl.IsTabVisible(i)) continue;
+        m_tabControl.SelectTab(i);
+        FocusActiveTabContent();
+        return true;
     }
-
-    const int activeTab = GetTabControl().GetActiveTab();
-    const auto it = std::ranges::find(visibleTabs, activeTab);
-    if (it == visibleTabs.end()) return false;
-
-    const size_t currentPos = static_cast<size_t>(std::ranges::distance(visibleTabs.begin(), it));
-    const size_t nextPos = currentPos + (forward ? 1 : -1);
-
-    if (nextPos >= visibleTabs.size()) return false;
-
-    SetActiveView(visibleTabs[nextPos]);
-    FocusActiveTabContent();
-    return true;
+    return false;
 }
 
 bool CFileTabbedView::PreprocessMessage(MSG* pMsg)

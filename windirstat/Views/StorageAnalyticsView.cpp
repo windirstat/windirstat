@@ -260,9 +260,7 @@ bool CStorageAnalyticsView::PreprocessMessage(MSG* pMsg)
         const auto pFocus = GetFocus();
         if (pFocus && pFocus.GetParent().Handle() == Handle())
         {
-            TCHAR className[16]{};
-            if (::GetClassName(pFocus.m_hWnd, className, 16) &&
-                _tcsicmp(className, _T("Edit")) == 0)
+            if (IsWindowClass(pFocus, WC_EDIT))
             {
                 bool shouldBypass = false;
                 if (pMsg->wParam == VK_DELETE || pMsg->wParam == VK_BACK)

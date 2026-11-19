@@ -87,8 +87,14 @@ void CWinDirStatModel::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
-    static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
-    static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
+    static bool (*isDupeTabVisible)(CItem*) = [](CItem*)
+    {
+        return CMainFrame::Get()->GetFileTabbedView()->IsTabVisible(FileTab::Duplicates);
+    };
+    static bool (*isPermsTabVisible)(CItem*) = [](CItem*)
+    {
+        return CMainFrame::Get()->GetFileTabbedView()->IsTabVisible(FileTab::Permissions);
+    };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i)
     {
@@ -268,39 +274,18 @@ void CWinDirStatModel::OnRefreshAll()
     StartScan(Get()->GetScanPathSpec());
 }
 
-void CWinDirStatModel::OnSaveResults() const
+void CWinDirStatModel::OnSaveReport(const UINT commandId) const
 {
-    // Request the file path from the user
     const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
     if (!path) return;
-
     CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
     {
-        SaveResults(*path, GetRootItem());
-    }).ShowModal();
-}
-
-void CWinDirStatModel::OnSaveDuplicates()
-{
-    // Request the file path from the user
-    const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
-    if (!path) return;
-
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
-    {
-        SaveDuplicates(*path, CFileDupeControl::Get()->GetRootItem());
-    }).ShowModal();
-}
-
-void CWinDirStatModel::OnSavePermissions()
-{
-    // Request the file path from the user
-    const auto path = ChooseReportPath(CDialog::FilePickerMode::Save);
-    if (!path) return;
-
-    CProgressDlg(0, CProgressDlg::Flags::NoCancel, GetMainWindow(), [&](CProgressDlg*)
-    {
-        SavePermissions(*path, CFilePermsControl::Get()->GetPermItems());
+        switch (commandId)
+        {
+            case ID_SAVE_RESULTS: SaveResults(*path, GetRootItem()); break;
+            case ID_SAVE_DUPLICATES: SaveDuplicates(*path, CFileDupeControl::Get()->GetRootItem()); break;
+            case ID_SAVE_PERMISSIONS: SavePermissions(*path, CFilePermsControl::Get()->GetPermItems()); break;
+        }
     }).ShowModal();
 }
 
@@ -370,73 +355,29 @@ void CWinDirStatModel::OnRemoveShadowCopies() const
     GetRootItem()->UpdateFreeSpaceItem();
 }
 
-void CWinDirStatModel::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
+void CWinDirStatModel::OnUpdateViewSpaceItem(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(COptions::ShowFreeSpace);
+    pCmdUI->SetCheck(pCmdUI->m_nID == ID_VIEW_SHOWFREESPACE ? COptions::ShowFreeSpace : COptions::ShowUnknown);
 }
 
-void CWinDirStatModel::OnViewShowFreeSpace()
+void CWinDirStatModel::OnViewSpaceItem(const UINT commandId)
 {
+    const bool freeSpace = commandId == ID_VIEW_SHOWFREESPACE;
+    auto& visible = freeSpace ? COptions::ShowFreeSpace : COptions::ShowUnknown;
+    const ITEMTYPE type = freeSpace ? IT_FREESPACE : IT_UNKNOWN;
     for (CItem* root : GetRootItem()->GetSpaceItems())
     {
-        if (COptions::ShowFreeSpace)
+        if (!visible) root->CreateSpaceItem(type);
+        else if (auto child = root->FindChildByType(type))
         {
-            const CItem* free = root->FindFreeSpaceItem();
-            assert(free != nullptr);
-
-            if (GetZoomItem() == free)
-            {
-                m_zoomItem = free->GetParent();
-            }
-
-            root->RemoveFreeSpaceItem();
-        }
-        else
-        {
-            root->CreateFreeSpaceItem();
+            if (GetZoomItem() == child) m_zoomItem = root;
+            root->RemoveSpaceItem(child);
         }
     }
 
-    // Toggle value
-    COptions::ShowFreeSpace = !COptions::ShowFreeSpace;
-
-    // Force recalculation and graph refresh
-    StartScanningEngine({});
-}
-
-void CWinDirStatModel::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
-{
-    OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(COptions::ShowUnknown);
-}
-
-void CWinDirStatModel::OnViewShowUnknown()
-{
-    for (CItem* root : GetRootItem()->GetSpaceItems())
-    {
-        if (COptions::ShowUnknown)
-        {
-            const CItem* unknown = root->FindUnknownItem();
-            assert(unknown != nullptr);
-
-            if (GetZoomItem() == unknown)
-            {
-                m_zoomItem = unknown->GetParent();
-            }
-
-            root->RemoveUnknownItem();
-        }
-        else
-        {
-            root->CreateUnknownItem();
-        }
-    }
-
-    // Toggle value
-    COptions::ShowUnknown = !COptions::ShowUnknown;
-
-    // Force recalculation and graph refresh
+    // Recalculate totals and refresh the graph with the new setting.
+    visible = !visible;
     StartScanningEngine({});
 }
 
@@ -1254,8 +1195,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         item->ExtensionDataProcessChildren(true);
         item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
-        item->UpwardSubtractFiles(item->GetFilesCount());
-        item->UpwardSubtractFolders(item->GetFoldersCount());
+        item->UpwardSubtractCounts(item->GetFilesCount(), item->GetFoldersCount());
         item->RemoveAllChildren();
         item->UpwardSetUndone();
 
@@ -1281,8 +1221,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             // Direct multi-root branches are not included in the synthetic root's folder count.
             if (!parent->IsTypeOrFlag(IT_MYCOMPUTER))
             {
-                parent->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
-                parent->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
+                const bool file = item->IsTypeOrFlag(IT_FILE);
+                parent->UpwardSubtractCounts(file, !file);
             }
             visualInfo.erase(item);
             vanished.insert(item);
@@ -1429,11 +1369,11 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
 
             if (COptions::ShowFreeSpace)
             {
-                item->CreateFreeSpaceItem();
+                item->CreateSpaceItem(IT_FREESPACE);
             }
             if (COptions::ShowUnknown)
             {
-                item->CreateUnknownItem();
+                item->CreateSpaceItem(IT_UNKNOWN);
             }
         }
 

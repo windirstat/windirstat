@@ -60,3 +60,13 @@ function Stop-StorageFixture {
     }
     [IO.Directory]::Delete($Fixture.Directory, $false)
 }
+
+function Invoke-StorageSuite {
+    param([string] $Scenario, [string] $ExePath, [string] $OutputPath, [switch] $KeepArtifacts)
+    $arguments = @('-NoProfile', '-STA', '-File', (Join-Path $PSScriptRoot '../Test-WinDirStat.ps1'),
+        '-Scenario', $Scenario, '-RequireAll')
+    if ($ExePath) { $arguments += @('-ExePath', $ExePath) }
+    if ($OutputPath) { $arguments += @('-OutputPath', $OutputPath) }
+    if ($KeepArtifacts) { $arguments += '-KeepArtifacts' }
+    & (Join-Path $PSHOME 'pwsh.exe') @arguments
+}

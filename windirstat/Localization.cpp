@@ -25,14 +25,6 @@ std::wstring Localization::FormatImpl(const std::wstring_view format, const std:
     }
 }
 
-void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
-{
-    for (size_t pos = 0; (pos = input.find(search, pos)) != std::wstring::npos; pos += replace.size())
-    {
-        input.replace(pos, search.size(), replace);
-    }
-}
-
 const std::wstring& Localization::GetResourceData()
 {
     // Decompress the combined language resource once; the leading newline
@@ -49,9 +41,9 @@ bool Localization::CrackStrings(const std::wstring_view data)
     {
         // Parse the string after the first equals
         std::wstring line(std::from_range, range);
-        SearchReplace(line, L"\r", wds::strEmpty);
-        SearchReplace(line, L"\\n", L"\n");
-        SearchReplace(line, L"\\t", L"\t");
+        ReplaceString(line, L"\r", wds::strEmpty);
+        ReplaceString(line, L"\\n", L"\n");
+        ReplaceString(line, L"\\t", L"\t");
         if (const auto e = line.find_first_of(wds::chrEqual); e != wds::szNpos)
         {
             m_map[line.substr(0, e)] = line.substr(e + 1);

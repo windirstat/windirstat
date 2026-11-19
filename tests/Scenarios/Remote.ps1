@@ -30,6 +30,21 @@ function Get-RemoteTarget {
         '?endpoint=' + [Uri]::EscapeDataString($endpoint)
 }
 
+function Assert-StorageObjectSizes {
+    param([object[]] $Files, [string] $Base, $Manifest, [string[]] $Names)
+    Assert-Equal $Files.Count $Names.Count 'Every remote file is enumerated exactly once'
+    $actual = [Collections.Generic.Dictionary[string,long]]::new([StringComparer]::Ordinal)
+    foreach ($file in $Files) {
+        $name = [Uri]::UnescapeDataString(($file.Name -split '\?', 2)[0].Substring($Base.Length))
+        Assert-True (-not $actual.ContainsKey($name)) "Distinct remote identity: $name"
+        $actual.Add($name, [long]$file.'Logical Size')
+    }
+    foreach ($name in $Names) {
+        Assert-True $actual.ContainsKey($name) "Exact name is preserved: $name"
+        Assert-Equal $actual[$name] ([long]$Manifest[$name]) "Metadata size matches the server: $name"
+    }
+}
+
 function Assert-RemoteObjects {
     param([object[]] $Rows, [string] $Protocol, [string] $Prefix = '')
     $manifest = (Invoke-WebRequest "$env:WDS_REMOTE_TEST_ENDPOINT/__manifest").Content | ConvertFrom-Json -AsHashtable
@@ -38,17 +53,7 @@ function Assert-RemoteObjects {
     $base = (Get-RemoteTarget $Protocol) -split '\?', 2 | Select-Object -First 1
     $files = @(Get-ReportFiles $Rows | Where-Object { $_.Name.StartsWith($root, [StringComparison]::Ordinal) })
     $names = @($expected.Keys | Where-Object { $_.StartsWith($Prefix, [StringComparison]::Ordinal) })
-    Assert-Equal $files.Count $names.Count 'Every remote file is enumerated exactly once'
-    $actual = [Collections.Generic.Dictionary[string,long]]::new([StringComparer]::Ordinal)
-    foreach ($file in $files) {
-        $name = [Uri]::UnescapeDataString(($file.Name -split '\?', 2)[0].Substring($base.Length))
-        Assert-True (-not $actual.ContainsKey($name)) "Distinct remote identity: $name"
-        $actual.Add($name, [long]$file.'Logical Size')
-    }
-    foreach ($name in $names) {
-        Assert-True $actual.ContainsKey($name) "Exact name is preserved: $name"
-        Assert-Equal $actual[$name] ([long]$expected[$name]) "Metadata size matches the server: $name"
-    }
+    Assert-StorageObjectSizes $files $base $expected $names
     Assert-True (-not ($Rows | Where-Object Name -Match 'windirstat-test-password|AccountKey=|[?&]sig=')) `
         'Reports contain connection identities without credentials'
 }
@@ -119,7 +124,7 @@ function Test-RemoteFailures {
         $result = Invoke-TestProcess $runner @('/saveto', $report, (Get-RemoteTarget $protocol -Mode $mode))
         Assert-Equal $result.ExitCode 1 "$mode cannot produce a successful scan"
         $rows = Read-ScanReport $report
-        Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+        Assert-True (Test-ReportIncomplete $rows[0]) `
             'Incomplete results retain their error state'
         if ($mode -eq 'partial') {
             Assert-True (@(Get-ReportFiles $rows).Count -gt 0) 'Earlier pages survive a later failure'
@@ -161,11 +166,16 @@ function Test-WebDavCollectionMetadata {
     Assert-Equal $rows[0].'Last Change' '2025-01-01T00:00:00Z' 'The collection retains its own modification time'
 }
 
-function Test-RemoteRoundTrip {
+function Test-StorageRoundTrip {
     param($Context, $Case)
     $protocol = $Case.Protocol
-    $runner = New-RemoteRunner -Protocol $protocol
-    $uri = Get-RemoteTarget $protocol
+    if ($protocol -eq 's3') {
+        $runner = New-S3Runner
+        $uri = Get-S3Target
+    } else {
+        $runner = New-RemoteRunner -Protocol $protocol
+        $uri = Get-RemoteTarget $protocol
+    }
     $source = Invoke-ScanReport $runner @($uri) 'source' -Format $Case.Format
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "source.$($Case.Format)"))
     $app.Roots = @($uri)
@@ -176,14 +186,20 @@ function Test-RemoteRoundTrip {
     $list = Get-AppList $app -AllFiles
     Select-AppRows $app $list @('unicode')
     Assert-True (Get-AppCommandState $app 'ID_CLEANUP_DELETE').Enabled 'Remote children support permanent deletion'
-    foreach ($command in 'ID_CLEANUP_DELETE_BIN', 'ID_CLEANUP_MOVE_TO', 'ID_CLEANUP_OPEN_SELECTED', 'ID_COMPUTE_HASH') {
+    foreach ($command in 'ID_CLEANUP_DELETE_BIN', 'ID_CLEANUP_MOVE_TO', 'ID_CLEANUP_OPEN_SELECTED',
+        'ID_CLEANUP_OPEN_IN_CONSOLE', 'ID_COMPUTE_HASH') {
         Assert-True (-not (Get-AppCommandState $app $command).Enabled) `
             'Filesystem actions are unavailable for remote items'
     }
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
-    Assert-RemoteObjects (Save-AppReport $app 'refreshed') $protocol
-    Save-Frame ([TestDesktop]::Capture($app.Window)) (Join-Path $Context.Root 'remote-results.png')
+    $refreshed = Save-AppReport $app 'refreshed'
+    if ($protocol -eq 's3') {
+        Assert-S3Objects $refreshed
+        Assert-GraphRendered $app | Out-Null
+    } else { Assert-RemoteObjects $refreshed $protocol }
+    $image = if ($protocol -eq 's3') { 's3-results.png' } else { 'remote-results.png' }
+    Save-Frame ([TestDesktop]::Capture($app.Window)) (Join-Path $Context.Root $image)
 }
 
 function Test-RemoteConnection {
@@ -215,29 +231,8 @@ function Test-RemoteConnection {
     } else {
         $values.IDC_REMOTE_ACCOUNT = 'fixture'; $values.IDC_REMOTE_ENDPOINT = $target
     }
-    foreach ($entry in $values.GetEnumerator()) {
-        [TestDesktop]::SetText((Get-DialogControl $dialog $entry.Key), $entry.Value)
-    }
-    foreach ($control in 'IDC_REMOTE_ENDPOINT', 'IDC_REMOTE_ACCOUNT', 'IDC_REMOTE_SECRET') {
-        $field = Get-DialogControl $dialog $control
-        [TestDesktop]::SetText($field, '')
-        Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($dialog, 1))) `
-            'Connections require an explicit endpoint and credentials even with valid environment defaults'
-        [TestDesktop]::SetText($field, $values[$control])
-    }
-    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($dialog, 1))) `
-        'Connections accept supplied settings and credentials'
-    Select-CloudProvider $select 'S3'
-    Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($select, 1))) `
-        'An incomplete provider cannot confirm another provider connection'
-    Select-CloudProvider $select $provider
-    foreach ($entry in $values.GetEnumerator()) {
-        if ($entry.Key -eq 'IDC_REMOTE_SECRET') { continue }
-        Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $select $entry.Key))) $entry.Value `
-            'Switching providers preserves unfinished connection fields'
-    }
-    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($select, 1))) `
-        'Returning to a valid source restores confirmation'
+    Assert-CloudConnectionFields $dialog $provider $values @(
+        'IDC_REMOTE_ENDPOINT', 'IDC_REMOTE_ACCOUNT', 'IDC_REMOTE_SECRET')
     if ($Case.Font -eq 100) {
         Set-DialogCheck $dialog 'IDC_REMOTE_REMEMBER' $true
         $credential = 'WinDirStat/' + $(if ($protocol -eq 'azure') { Get-RemoteTarget $protocol } else { $target })
@@ -408,25 +403,38 @@ function Test-StorageRecentTargets {
     if ($protocol -eq 's3') { Assert-S3Objects $rows } else { Assert-RemoteObjects $rows $protocol }
 }
 
-function Test-RemoteCancellation {
-    param($Context, $Case)
-    Invoke-RestMethod "$env:WDS_REMOTE_TEST_ENDPOINT/__control?slow=1" | Out-Null
-    Add-Cleanup 'Reset delayed remote response' {
-        Invoke-RestMethod "$env:WDS_REMOTE_TEST_ENDPOINT/__control?slow=0" | Out-Null
-    }
-    $before = (Invoke-RestMethod "$env:WDS_REMOTE_TEST_ENDPOINT/__stats").slow
-    $app = Start-TestApp -Runner (New-RemoteRunner -Protocol $Case.Protocol) `
-        -Roots @((Get-RemoteTarget $Case.Protocol -Mode 'slow')) -DuringScan
-    Wait-Until { (Invoke-RestMethod "$env:WDS_REMOTE_TEST_ENDPOINT/__stats").slow -gt $before } `
-        'A listing is delayed' | Out-Null
+function Suspend-StorageTestScan {
+    param([string] $Endpoint, $Runner, [string] $Target)
+    Invoke-RestMethod "$Endpoint/__control?slow=1" | Out-Null
+    Add-Cleanup 'Reset delayed storage response' {
+        param($url); Invoke-RestMethod "$url/__control?slow=0" | Out-Null
+    } @($Endpoint)
+    $before = (Invoke-RestMethod "$Endpoint/__stats").slow
+    $app = Start-TestApp -Runner $Runner -Roots @($Target) -DuringScan
+    Wait-Until { (Invoke-RestMethod "$Endpoint/__stats").slow -gt $before } 'A listing is delayed' | Out-Null
+    $timer = [Diagnostics.Stopwatch]::StartNew()
     Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
-    Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } `
-        'Pause interrupts remote I/O' -Seconds 5 | Out-Null
-    Invoke-RestMethod "$env:WDS_REMOTE_TEST_ENDPOINT/__control?slow=0" | Out-Null
+    Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } 'Pause interrupts I/O' -Seconds 5 | Out-Null
+    Assert-True ($timer.Elapsed.TotalSeconds -lt 5) 'Pause responds before the delayed server response arrives'
+    return $app
+}
+
+function Test-StorageResume {
+    param($Context, $Case)
+    if ($Case.Protocol -eq 's3') {
+        $endpoint = $env:WDS_S3_TEST_ENDPOINT
+        $app = Suspend-StorageTestScan $endpoint (New-S3Runner) (Get-S3Target -Bucket 'windirstat-slow')
+    } else {
+        $endpoint = $env:WDS_REMOTE_TEST_ENDPOINT
+        $app = Suspend-StorageTestScan $endpoint (New-RemoteRunner -Protocol $Case.Protocol) `
+            (Get-RemoteTarget $Case.Protocol -Mode 'slow')
+    }
+    Invoke-RestMethod "$endpoint/__control?slow=0" | Out-Null
     Invoke-AppCommand $app 'ID_SCAN_RESUME'
     Wait-AppIdle $app
-    Assert-Equal @(Get-ReportFiles (Save-AppReport $app 'resumed')).Count 1 `
-        'Resume retries the interrupted directory once'
+    $resumed = Save-AppReport $app 'resumed'
+    if ($Case.Protocol -eq 's3') { Assert-S3Objects $resumed '' 'windirstat-slow' }
+    else { Assert-Equal @(Get-ReportFiles $resumed).Count 1 'Resume retries the interrupted directory once' }
 }
 
 function Get-StorageDeletionTarget {
@@ -656,11 +664,11 @@ foreach ($protocol in 'webdav', 'azure') {
     foreach ($format in 'csv', 'json') {
         Register-Scenario "remote.$protocol.roundtrip.$format" Remote `
             'Save, reload, scoped refresh, and action availability' `
-            Test-RemoteRoundTrip -Tags External -Requires Windows,Desktop,Remote `
+            Test-StorageRoundTrip -Tags External -Requires Windows,Desktop,Remote `
             -Data @{ Protocol = $protocol; Format = $format }
     }
     Register-Scenario "remote.$protocol.cancellation" Remote 'Pause and resume interrupted network requests' `
-        Test-RemoteCancellation -Tags External -Requires Windows,Desktop,Remote -Data @{ Protocol = $protocol }
+        Test-StorageResume -Tags External -Requires Windows,Desktop,Remote -Data @{ Protocol = $protocol }
     foreach ($font in 100, 200) {
         Register-Scenario "remote.$protocol.connection.$font" Remote `
             'Connection editor, saved credentials, and text scaling' `

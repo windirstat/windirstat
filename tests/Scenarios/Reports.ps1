@@ -190,8 +190,7 @@ function Test-ReportRoundTrip {
         'Loading a report does not scan newly created files'
     Get-AppList $app -AllFiles | Out-Null
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-    $largest = @([NativeListViewHelper]::GetItemTexts((Get-AppList $app -TabName 'Largest Files')) |
-        Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $largest = Get-AppListPaths (Get-AppList $app -TabName 'Largest Files')
     Assert-Sequence @($largest | Sort-Object) @((Get-ReportFiles $source).Name | Sort-Object) `
         'Loading a report lists its saved files as the largest files'
     Invoke-AppCommand $app 'ID_REFRESH_ALL'

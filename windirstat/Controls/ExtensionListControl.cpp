@@ -296,19 +296,19 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /
         else
         {
             auto* tabbedView = CMainFrame::Get()->GetFileTabbedView();
-            if (tabbedView->IsSearchTabVisible())
+            if (tabbedView->IsTabVisible(FileTab::Search))
             {
-                tabbedView->SetActiveSearchView();
+                tabbedView->SetActiveTab(FileTab::Search);
                 CMainFrame::Get()->MoveFocus(LF_SEARCHLIST);
             }
-            else if (tabbedView->IsDupeTabVisible())
+            else if (tabbedView->IsTabVisible(FileTab::Duplicates))
             {
-                tabbedView->SetActiveDupeView();
+                tabbedView->SetActiveTab(FileTab::Duplicates);
                 CMainFrame::Get()->MoveFocus(LF_DUPELIST);
             }
             else
             {
-                tabbedView->SetActiveTopView();
+                tabbedView->SetActiveTab(FileTab::Largest);
                 CMainFrame::Get()->MoveFocus(LF_TOPLIST);
             }
         }
@@ -374,7 +374,7 @@ void CExtensionListControl::OnSearchExtension() const
     CFileSearchControl::Get()->ProcessSearch(CWinDirStatModel::Get()->GetRootItem(),
         SearchCriteria{ .term = searchTerm, .regex = true, .includeFolders = false });
 
-    CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveTab(FileTab::Search);
 }
 
 void CExtensionListControl::OnExcludeExtension() const

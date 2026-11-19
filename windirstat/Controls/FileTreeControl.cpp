@@ -126,26 +126,24 @@ void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
     CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
+CItem* CFileTreeControl::HitTestHardlink(const CPoint point) const
+{
+    const int row = HitTest(point);
+    if (row < 0) return nullptr;
+    auto* item = static_cast<CItem*>(GetItem(row));
+    if (!item || !item->IsTypeOrFlag(ITF_HARDLINK, IT_HLINKS_FILE)) return nullptr;
+    const int column = SubItemToColumn(COL_SIZE_PHYSICAL);
+    return column >= 0 && GetWholeSubitemRect(row, column).Contains(point) ? item : nullptr;
+}
+
 void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     ClearPortionToolTip();
     CTreeListControl::OnLButtonDown(nFlags, point);
 
-    // Hit test
-    const int i = HitTest(point);
-    if (i == -1 || !CWinDirStatModel::Get()->IsScanSettled()) return;
-
-    // Check if item is a hardlink or hardlinks file reference
-    const auto* item = static_cast<const CItem*>(GetItem(i));
-    if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK, IT_HLINKS_FILE)) return;
-
-    // Validate if in physical size column
-    if (!std::ranges::any_of(std::views::iota(0, m_columnCount), [&](const int col)
-        {
-            LVCOLUMN colInfo{ .mask = LVCF_SUBITEM };
-            GetColumn(col, &colInfo);
-            return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).Contains(point);
-        })) return;
+    if (!CWinDirStatModel::Get()->IsScanSettled()) return;
+    CItem* item = HitTestHardlink(point);
+    if (!item) return;
 
     if (item->IsTypeOrFlag(ITF_HARDLINK))
     {
@@ -156,10 +154,10 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_ACTION, indexItem);
         ExpandItem(indexItem);
     }
-    else if (item->IsTypeOrFlag(IT_HLINKS_FILE))
+    else
     {
         // Navigate to the actual file in the tree
-        CItem* linkedItem = const_cast<CItem*>(item)->GetLinkedItem();
+        CItem* linkedItem = item->GetLinkedItem();
         if (linkedItem == nullptr || linkedItem == item) return;
 
         CWinDirStatModel::Get()->NotifyPanes(MODEL_CHANGE_SELECTION_ACTION, linkedItem);
@@ -208,34 +206,13 @@ void CFileTreeControl::OnVScroll(UINT /*nSBCode*/, UINT /*nPos*/, WindowRef /*pS
 
 bool CFileTreeControl::OnSetCursor(WindowRef /*pWnd*/, const UINT nHitTest, UINT /*message*/)
 {
-    auto defaultReturn = [this] { return CallDefaultHandler() != 0; };
-    if (nHitTest != HTCLIENT) return defaultReturn();
-
-    const auto point = GetClientCursorPos();
-    if (!point) return defaultReturn();
-
-    // Hit test
-    const int i = HitTest(*point);
-    if (i == -1) return defaultReturn();
-
-    // Check if item is a hardlink or hardlinks file reference
-    const auto* item = static_cast<const CItem*>(GetItem(i));
-    if (item == nullptr) return defaultReturn();
-
-    // Check for ITF_HARDLINK or IT_HLINKS_FILE
-    const bool isHardlink = item->IsTypeOrFlag(ITF_HARDLINK);
-    const bool isHlinksFile = item->IsTypeOrFlag(IT_HLINKS_FILE);
-
-    if (!isHardlink && !isHlinksFile) return defaultReturn();
-
-    // Validate if in physical size column
-    if (!std::ranges::any_of(std::views::iota(0, m_columnCount), [&](const int col)
+    if (nHitTest == HTCLIENT)
     {
-        LVCOLUMN colInfo{ .mask = LVCF_SUBITEM };
-        GetColumn(col, &colInfo);
-        return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).Contains(*point);
-    })) return defaultReturn();
-
-    SetCursor(LoadCursorW(nullptr, IDC_HAND));
-    return true;
+        if (const auto point = GetClientCursorPos(); point && HitTestHardlink(*point))
+        {
+            SetCursor(LoadCursorW(nullptr, IDC_HAND));
+            return true;
+        }
+    }
+    return CallDefaultHandler() != 0;
 }

@@ -40,10 +40,10 @@ public:
     virtual std::wstring_view GetFileName() const = 0;
     virtual std::wstring GetShellPath() const { return {}; }
     virtual PCIDLIST_ABSOLUTE GetShellPidl() const { return nullptr; }
-    virtual inline ULONGLONG GetIndex() const = 0;
-    virtual DWORD GetReparseTag() const = 0;
-    virtual bool IsReserved() const = 0;
-    virtual bool HasIgnoredStream() const = 0;
+    virtual ULONGLONG GetIndex() const { return 0; }
+    virtual DWORD GetReparseTag() const { return 0; }
+    virtual bool IsReserved() const { return false; }
+    virtual bool HasIgnoredStream() const { return false; }
     virtual const ScanResult& GetResult() const noexcept
     {
         static const ScanResult complete{ ScanOutcome::Complete, {} };

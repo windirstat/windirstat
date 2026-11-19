@@ -579,18 +579,33 @@ static bool FlushReportBuffer(std::ofstream& outf, std::string& buffer, const bo
     return outf.good();
 }
 
+static bool SaveCsv(std::ofstream& outf, const std::vector<std::wstring>& cols, const auto& items,
+    const bool trailingNewline, const auto& writeItem)
+{
+    std::string buffer;
+    buffer.reserve(ReportBufferSize);
+    for (const auto& col : cols)
+    {
+        if (!buffer.empty()) buffer += ',';
+        buffer += QuoteAndConvert(col);
+    }
+
+    // Separate records with CRLF and retain each report's final-line convention.
+    for (const auto& item : items)
+    {
+        buffer += "\r\n";
+        writeItem(item, buffer);
+        if (!FlushReportBuffer(outf, buffer)) return false;
+    }
+    if (trailingNewline) buffer += "\r\n";
+    return FlushReportBuffer(outf, buffer, true);
+}
+
 static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>& items,
     const std::vector<std::wstring>& cols, const std::unordered_map<const CItem*, LONGLONG>& adjustedSizes,
     const bool includeOwner)
 {
-    // Header
-    for (const auto [i, col] : std::views::enumerate(cols))
-        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
-
-    // Rows
-    std::string buffer;
-    buffer.reserve(ReportBufferSize);
-    for (const auto* item : items)
+    return SaveCsv(outf, cols, items, false, [&](const CItem* item, std::string& buffer)
     {
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
@@ -598,7 +613,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
         // MTP indices are process-local path registrations and must not be serialized
         const ULONGLONG index = item->IsTypeOrFlag(ITF_MTP) ? 0 : item->GetIndex();
-        std::format_to(std::back_inserter(buffer), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
+        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -613,9 +628,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         std::format_to(std::back_inserter(buffer), ",{},{}",
             QuoteAndConvert(scanOutcomes[static_cast<size_t>(result.outcome)]),
             QuoteAndConvert(StorageSource::EscapeName(result.error, true)));
-        if (!FlushReportBuffer(outf, buffer)) return false;
-    }
-    return FlushReportBuffer(outf, buffer, true);
+    });
 }
 
 // ── JSON save ─────────────────────────────────────────────────────────────────
@@ -723,16 +736,10 @@ static std::vector<std::tuple<std::wstring, const CItem*, bool>>
 static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
     const std::vector<std::tuple<std::wstring, const CItem*, bool>>& dupeItems)
 {
-    for (const auto [i, col] : std::views::enumerate(cols))
-        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
-    outf << "\r\n";
-
-    // Rows
-    std::string buffer;
-    buffer.reserve(ReportBufferSize);
-    for (const auto& [hash, linkedItem, sampled] : dupeItems)
+    return SaveCsv(outf, cols, dupeItems, true, [](const auto& dupe, std::string& buffer)
     {
-        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},{},{}\r\n",
+        const auto& [hash, linkedItem, sampled] = dupe;
+        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},{},{}",
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),
@@ -740,9 +747,7 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
             ToTimePoint(linkedItem->GetLastChange()),
             QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())),
             sampled);
-        if (!FlushReportBuffer(outf, buffer)) return false;
-    }
-    return FlushReportBuffer(outf, buffer, true);
+    });
 }
 
 // ── JSON dupe save ─────────────────────────────────────────────────────────────
@@ -798,16 +803,9 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
 static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
     const std::vector<const CItemPerm*>& items)
 {
-    for (const auto [i, col] : std::views::enumerate(cols))
-        outf << QuoteAndConvert(col) << (static_cast<size_t>(i) + 1 < cols.size() ? "," : "");
-    outf << "\r\n";
-
-    // Rows
-    std::string buffer;
-    buffer.reserve(ReportBufferSize);
-    for (const auto* item : items)
+    return SaveCsv(outf, cols, items, true, [](const CItemPerm* item, std::string& buffer)
     {
-        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},0x{:08X},{}\r\n",
+        std::format_to(std::back_inserter(buffer), "{},{},{},{},{},0x{:08X},{}",
             QuoteAndConvert(item->GetPath()),
             QuoteAndConvert(item->GetAccount()),
             QuoteAndConvert(CItemPerm::GetAccessTypeName(item->IsDeny())),
@@ -815,9 +813,7 @@ static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstri
             QuoteAndConvert(item->GetAppliesText()),
             item->GetAccessMask(),
             QuoteAndConvert(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())));
-        if (!FlushReportBuffer(outf, buffer)) return false;
-    }
-    return FlushReportBuffer(outf, buffer, true);
+    });
 }
 
 static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstring>& cols,

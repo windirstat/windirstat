@@ -28,8 +28,7 @@ public:
 
     // Draw the prepared graph rows. Breadcrumbs are drawn separately so a view
     // can keep their compact row fixed while the graph scrolls beneath it.
-    void DrawFlameGraph(CDC* pdc) const;
-    void DrawBreadcrumbs(CDC* pdc) const;
+    void Draw(CDC* pdc, bool breadcrumbs) const;
 
     // In the resulting layout, find the item below a given coordinate.
     CItem* FindItemByPoint(CItem* item, CPoint point) const;
@@ -90,7 +89,6 @@ private:
     static void ComputeChildSpans(const CItem* item, LONG left, LONG right,
         std::vector<ChildSpan>& spans);
 
-    void RenderLayout(CDC* pdc, bool breadcrumbs) const;
     void RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle) const;
     void RenderBreadcrumb(CDC* pdc, const CItem* item, const CRect& rectangle) const;
     void RenderLabel(CDC* pdc, const CItem* item, const CRect& rc, COLORREF background) const;

@@ -15,12 +15,7 @@ $exitCode = 2
 try {
     $fixture = Start-StorageFixture S3
     $env:WDS_S3_TEST_ENDPOINT = $fixture.Endpoint
-    $arguments = @('-NoProfile', '-STA', '-File', (Join-Path $PSScriptRoot 'Test-WinDirStat.ps1'),
-        '-Scenario', $Scenario, '-RequireAll')
-    if ($ExePath) { $arguments += @('-ExePath', $ExePath) }
-    if ($OutputPath) { $arguments += @('-OutputPath', $OutputPath) }
-    if ($KeepArtifacts) { $arguments += '-KeepArtifacts' }
-    & (Join-Path $PSHOME 'pwsh.exe') @arguments
+    Invoke-StorageSuite $Scenario $ExePath $OutputPath -KeepArtifacts:$KeepArtifacts
     $exitCode = $LASTEXITCODE
 } catch {
     Write-Error $_ -ErrorAction Continue

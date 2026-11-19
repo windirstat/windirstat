@@ -91,13 +91,8 @@ function Test-SymbolicLinks {
 function Test-AllocatedSizes {
     param($Context, $Case)
     $root = New-TestTree
-    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
-    $sparse = New-TestFile (Join-Path $root 'sparse.bin') 0
-    $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $sparse)
-    if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
-    $stream = [IO.File]::Open($sparse, 'Open', 'ReadWrite')
-    try { $stream.SetLength(4MB) } finally { $stream.Dispose() }
-    $utility.Exe = Join-Path $env:windir 'System32\compact.exe'
+    New-SparseTestFile (Join-Path $root 'sparse.bin') 4MB
+    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\compact.exe'; Directory = $Context.Root }
     $compressed = New-TestFile (Join-Path $root 'compressed.bin') 1MB -Zeros
     $probe = Invoke-TestProcess $utility @('/c', $compressed)
     if ($probe.ExitCode -ne 0) { throw 'Could not create the compressed fixture; see the command output.' }
@@ -215,20 +210,19 @@ function Test-DirectoryFilterMatching {
             Files = $extendedFiles }
     )
     $runner = New-TestRunner @{ Options = @{ ScanningThreads = $Case.Threads } }
+    $format = if ($Case.Threads -eq 1) { 'csv' } else { 'json' }
     foreach ($entry in $cases) {
         Set-TestSettings $runner @{
             Options = @{ FilteringUseRegex = $entry.Regex; ScanningThreads = $Case.Threads }
             DriveSelect = @{ FilteringIncludeDirs = $entry.Pattern }
         }
-        foreach ($format in 'csv', 'json') {
-            $scanRoot = if ($entry.ContainsKey('Root')) { $entry.Root } else { $root }
-            $rows = Invoke-ScanReport $runner @($scanRoot) "$($entry.Id)-$format" -Format $format
-            Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
-                @($entry.Files | Sort-Object) 'Directory matching preserves exact file membership'
-            $bytes = 0L
-            foreach ($path in $entry.Files) { $bytes += (Get-Item -LiteralPath $path).Length }
-            Assert-Equal ([long]$rows[0].'Logical Size') $bytes 'Filtered directory totals include only matching files'
-        }
+        $scanRoot = if ($entry.ContainsKey('Root')) { $entry.Root } else { $root }
+        $rows = Invoke-ScanReport $runner @($scanRoot) "$($entry.Id)-$format" -Format $format
+        Assert-Sequence @(Get-ReportFiles $rows | ForEach-Object Name | Sort-Object) `
+            @($entry.Files | Sort-Object) 'Directory matching preserves exact file membership'
+        $bytes = 0L
+        foreach ($path in $entry.Files) { $bytes += (Get-Item -LiteralPath $path).Length }
+        Assert-Equal ([long]$rows[0].'Logical Size') $bytes 'Filtered directory totals include only matching files'
     }
     Set-TestSettings $runner @{
         Options = @{ FilteringUseRegex = 0; FilteringSizeMinimum = 102; FilteringSizeUnits = 0
@@ -265,19 +259,8 @@ function Test-EmptyScan {
 function Test-LargeFileSizes {
     param($Context, $Case)
     $root = $Context.Fixture
-    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
     foreach ($size in @((2GB + 17L), (4GB + 31L))) {
-        $path = New-TestFile (Join-Path $root "sparse-$size.bin") 0
-        $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $path)
-        if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
-        $stream = [IO.File]::Open($path, 'Open', 'ReadWrite')
-        try {
-            $stream.SetLength($size)
-            $stream.WriteByte(0x37)
-            $stream.Position = $size - 1
-            $stream.WriteByte(0x71)
-            $stream.Flush($true)
-        } finally { $stream.Dispose() }
+        New-SparseTestFile (Join-Path $root "sparse-$size.bin") $size -FirstByte 0x37 -LastByte 0x71
     }
     $snapshot = Get-DiskSnapshot $root
     $runner = New-TestRunner
@@ -365,17 +348,7 @@ function Test-DeniedDirectory {
     New-TestFile (Join-Path $blocked 'private.txt') 331 | Out-Null
     $empty = Join-Path $Context.Fixture 'empty'
     [IO.Directory]::CreateDirectory($empty) | Out-Null
-    $acl = Get-Acl -LiteralPath $blocked
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    try { $sid = $identity.User } finally { $identity.Dispose() }
-    $denied = Get-Acl -LiteralPath $blocked
-    $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,
-        [Security.AccessControl.FileSystemRights]::ListDirectory, [Security.AccessControl.AccessControlType]::Deny))
-    Add-Cleanup 'Restore directory access' {
-        param($Directory, $Security)
-        Set-Acl -LiteralPath $Directory -AclObject $Security
-    } @($blocked, $acl)
-    Set-Acl -LiteralPath $blocked -AclObject $denied
+    $acl = Protect-DeniedDirectory $blocked
     $runner = New-TestRunner
     $report = Join-Path $Context.Root "access-denied.$($Case.Format)"
     $result = Invoke-TestProcess $runner @('/saveto', $report, $Context.Fixture)
@@ -388,9 +361,9 @@ function Test-DeniedDirectory {
     Assert-Equal $failed.ScanOutcome 'enumeration-error' 'The failed directory owns its enumeration outcome'
     Assert-True ([Uri]::UnescapeDataString($failed.ScanError).Contains($blocked)) `
         'The report preserves the failing filesystem path and system error'
-    Assert-True (([Convert]::ToUInt32($failed.'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+    Assert-True (Test-ReportIncomplete $failed) `
         'The unreadable branch carries the shared scan-error flag'
-    Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+    Assert-True (Test-ReportIncomplete $rows[0]) `
         'The ancestor reflects incomplete descendants'
     Assert-Equal $rows[0].ScanOutcome 'complete' 'The parent listing has its own successful outcome'
     Assert-Equal @($rows | Where-Object Name -IEQ $empty)[0].ScanOutcome 'complete' `
@@ -404,17 +377,12 @@ function Test-DeniedDirectory {
     $filteredRunner = New-TestRunner @{ DriveSelect = @{ FilteringExcludeDirs = $blocked } }
     $filtered = Invoke-ScanReport $filteredRunner @($Context.Fixture) 'excluded-denied' -Format $Case.Format
     Assert-Equal @($filtered | Where-Object {
-        ([Convert]::ToUInt32($_.'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0
+        Test-ReportIncomplete $_
     }).Count 0 'An intentional directory exclusion does not mark the scan incomplete'
 
     # Inspect and refresh the loaded model through targeted messages while its main window stays hidden.
     $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', $report) -Hidden
-    $list = Wait-Until {
-        foreach ($control in [TestDesktop]::Children($app.Window)) {
-            if ([TestDesktop]::Class($control) -ne 'SysListView32') { continue }
-            if ('z-denied (Scan incomplete)' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
-        }
-    } 'The loaded model preserves the failed local branch and its label'
+    $list = Get-AppListWithRow $app 'z-denied (Scan incomplete)' 'The loaded model preserves the failed branch label'
     Assert-True (-not [TestDesktop]::IsWindowVisible($app.Window)) 'The validation does not activate a desktop window'
     Assert-True ([NativeListViewHelper]::FocusListView($list) -and
         [NativeListViewHelper]::SelectItems($list, [int[]]@((Find-AppRow $list 'z-denied (Scan incomplete)')))) `

@@ -18,6 +18,7 @@ public:
     static CFileTreeControl* Get() { return m_singleton; }
 
 protected:
+    CItem* HitTestHardlink(CPoint point) const;
     bool GetPortionToolTip(CPoint point, CRect& rect, std::wstring& text) const;
     void ClearPortionToolTip();
     void SelectFirstItemByType(ITEMTYPE itemType);

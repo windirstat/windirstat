@@ -84,12 +84,7 @@ function Test-RefreshTimestamps {
     $app = Start-TestApp @($Context.Fixture) -Hidden -Settings @{
         Options = @{ FilteringSizeMinimum = 1; FilteringSizeUnits = 1 }
     }
-    $list = Wait-Until {
-        foreach ($control in [TestDesktop]::Children($app.Window)) {
-            if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
-                'changed' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
-        }
-    } 'The hidden model exposes the refreshed directory'
+    $list = Get-AppListWithRow $app 'changed' 'The hidden model exposes the refreshed directory'
     $select = {
         param([string[]] $Names)
         $indices = [int[]]@(foreach ($name in $Names) { Find-AppRow $list $name })
@@ -152,12 +147,7 @@ function Test-RefreshManyFiles {
     $folder = Join-Path $Context.Fixture 'many'
     $paths = @(foreach ($index in 0..2999) { New-TestFile (Join-Path $folder "file-$index.bin") 1 })
     $app = Start-TestApp @($Context.Fixture) -Hidden
-    $list = Wait-Until {
-        foreach ($control in [TestDesktop]::Children($app.Window)) {
-            if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
-                'many' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
-        }
-    } 'The hidden model exposes the large directory'
+    $list = Get-AppListWithRow $app 'many' 'The hidden model exposes the large directory'
     Assert-True ([NativeListViewHelper]::FocusListView($list) -and
         [NativeListViewHelper]::SelectSingleItem($list, (Find-AppRow $list 'many'))) 'Select the large directory'
     [void][NativeListViewHelper]::PostRight($list)
@@ -171,20 +161,11 @@ function Test-RefreshManyFiles {
     for ($index = 0; $index -lt $paths.Count; $index += 2) { [IO.File]::Delete($paths[$index]) }
     [IO.File]::Move($paths[1], (Join-Path $folder 'FILE-1.BIN'))
 
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -lt $names.Count -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Refreshing many deleted files finishes' -StableMilliseconds 500 | Out-Null
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -lt $names.Count
+    } 'Refreshing many deleted files finishes'
     Write-TestNote ("Refresh $($paths.Count) files: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
+        $timing.Total, $timing.Longest)
     Assert-True ($timing.Longest -lt 3000) 'Refreshing many deleted files does not block the UI for three seconds'
 
     $expected = [Collections.Generic.HashSet[string]]::new([string[]]@(
@@ -339,12 +320,7 @@ function Test-SearchRecovery {
     $root = New-TestTree
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), 'selected-[ab]\.bin$')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $false
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app 'selected-[ab]\.bin$' -Regex -Folders $false
     $expected = @((Join-Path $root 'alpha\selected-a.bin'), (Join-Path $root 'alpha\selected-b.bin') | Sort-Object)
     Wait-Until { @($expected | Where-Object { $_ -notin [NativeListViewHelper]::GetItemTexts($list) }).Count -eq 0 } `
         'The search exposes both matching files beneath its summary row' | Out-Null
@@ -422,18 +398,10 @@ function Test-SearchRefresh {
     $root = New-TestTree
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
     $term = 'selected-[ab]\.bin$|^alpha$'
     if ($Case.Root) { $term += '|fixture$' }
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), $term)
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $Case.Folders
-    if ($Case.Minimum) {
-        [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_MIN'), '1000')
-        [void] [TestDesktop]::Message((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_UNITS'), 0x014E, 0)
-    }
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $minimum = if ($Case.Minimum) { 1000 } else { 0 }
+    $list = Invoke-AppSearch $app $term -Regex -Folders $Case.Folders -MinimumBytes $minimum
     $first = Join-Path $root 'alpha\selected-a.bin'
     $second = Join-Path $root 'alpha\selected-b.bin'
     $folder = Join-Path $root 'alpha'
@@ -448,7 +416,7 @@ function Test-SearchRefresh {
         Select-AppRows $app $list $selection
         Invoke-AppKeys $app '{F5}'
         Wait-AppIdle $app
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
             'Single, multiple, and folder refreshes preserve surviving search results'
         Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selection.Count `
@@ -473,7 +441,7 @@ function Test-SearchRefresh {
     Invoke-AppKeys $app '{F5}'
     Wait-AppIdle $app
     $expected = @($expected | Where-Object { $_ -ne $second })
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
         'Refreshing a deleted search result removes only results that no longer match'
 
@@ -487,7 +455,7 @@ function Test-SearchRefresh {
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 1 'Refreshing keeps the search root collapsed'
     [void] [NativeListViewHelper]::PostRight($list)
     Wait-Until { [NativeListViewHelper]::GetItemCount($list) -gt 1 } 'The refreshed search expands' | Out-Null
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
         'Collapsed search results are restored without stale rows'
 }
@@ -507,12 +475,7 @@ function Test-SearchRefreshCaseSensitive {
     }
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^selected-a\.bin$|^alpha$')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '^selected-a\.bin$|^alpha$' -Regex -Folders $true
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 4 `
         'The search finds both case-distinct files and their folder'
     Select-AppRows $app $list @($folder)
@@ -541,12 +504,7 @@ function Test-SearchRefreshLarge {
     [IO.Directory]::CreateDirectory($untouched) | Out-Null
     $app = Start-TestApp @($root) -Settings @{ SearchView = @{ SearchMaxResults = 1000000 } }
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^d')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '^d' -Regex -Folders $true
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) ($count + 2) 'Every folder appears in the search'
     $names = [NativeListViewHelper]::GetItemTexts($list)
     $indices = [int[]]@([Array]::IndexOf($names, $expected[1]), [Array]::IndexOf($names, $untouched))
@@ -558,21 +516,11 @@ function Test-SearchRefreshLarge {
     $tree = Get-AppList $app -AllFiles
     Select-AppRows $app $tree @($folder)
 
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Large folder refresh finishes' -StableMilliseconds 500 | Out-Null
-    $watch.Stop()
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1)
+    } 'Large folder refresh finishes'
     Write-TestNote ("Refresh $count results: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
+        $timing.Total, $timing.Longest)
 
     Invoke-AppCommand $app 'ID_VIEW_SEARCH_RESULTS'
     $names = [NativeListViewHelper]::GetItemTexts($list)
@@ -593,22 +541,12 @@ function Test-SearchRefreshLarge {
     Assert-True ([NativeListViewHelper]::SelectItems($list, $indices)) 'Select a large batch of search results'
     [IO.Directory]::Delete($selected[0])
     $expected = @($expected | Select-Object -Skip 1)
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch.Restart()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Refreshing a large selection drops the deleted result' -StableMilliseconds 500 | Out-Null
-    $watch.Stop()
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1)
+    } 'Refreshing a large selection drops the deleted result'
     Write-TestNote ("Refresh 1000 selected results: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $timing.Total, $timing.Longest)
+    $paths = Get-AppListPaths $list
     [void]$expectedSet.Remove($selected[0])
     Assert-True ($paths.Count -eq $expected.Count -and $expectedSet.SetEquals([string[]]$paths)) `
         'Batch selection refresh preserves exact paths'
@@ -921,10 +859,9 @@ function Test-LargestRefresh {
         Close-AppDialog $settings 1
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
         Wait-Until {
-            @([NativeListViewHelper]::GetItemTexts($list) |
-                Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq $limit
+            (Get-AppListPaths $list).Count -eq $limit
         } 'Largest files applies its new limit' | Out-Null
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         $expected = @(@($first, $stable, $second, $replacement) | Select-Object -First $limit)
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
             "Largest files refills from the scan after its limit changes to $limit"
@@ -937,7 +874,7 @@ function Test-LargestRefresh {
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($stable, $replacement | Sort-Object) `
         'Largest files replaces removed rows with the next surviving candidate'
     Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $stable), 2).ToInt32()) 2 `
@@ -955,7 +892,7 @@ function Test-LargestReserve {
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
     $list = Get-AppList $app -TabName 'Largest Files'
     Select-AppRows $app $list @($files[0])
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($files[0..2] | Sort-Object) `
         'Largest files displays only the configured count with a full reserve'
 
@@ -978,8 +915,7 @@ function Test-LargestReserve {
         Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
         Wait-AppIdle $app
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         $expected = @(Get-ChildItem -LiteralPath $root -File | Sort-Object Length -Descending |
             Select-Object -First 3 -ExpandProperty FullName)
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) $change.Name
@@ -997,12 +933,10 @@ function Test-LargestEqualSizes {
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
     $list = Get-AppList $app -TabName 'Largest Files'
     Wait-Until {
-        @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq 3
+        (Get-AppListPaths $list).Count -eq 3
     } 'The initial largest files are displayed' | Out-Null
     Wait-AppIdle $app
-    $selected = @([NativeListViewHelper]::GetItemTexts($list) |
-        Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $selected = Get-AppListPaths $list
     Select-AppRows $app $list $selected
     foreach ($path in $files | Where-Object { $_ -notin $selected }) {
         [IO.File]::Delete($path)
@@ -1011,8 +945,7 @@ function Test-LargestEqualSizes {
         Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
         Wait-AppIdle $app
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-        $remaining = @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $remaining = Get-AppListPaths $list
         Assert-Sequence @($remaining | Sort-Object) @($selected | Sort-Object) `
             'Removing an undisplayed equal-size file preserves the displayed candidates'
         Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selected.Count `

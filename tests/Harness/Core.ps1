@@ -59,9 +59,9 @@ function Wait-Until {
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $readyAt = $null
     while ($watch.Elapsed.TotalSeconds -lt $Seconds) {
-        foreach ($app in $script:Context.Apps) {
-            if (-not $app.ExpectExit -and $app.Process.HasExited) {
-                throw "Application exited while waiting for $Because; exit=$($app.Process.ExitCode)"
+        foreach ($trackedApp in $script:Context.Apps) {
+            if (-not $trackedApp.ExpectExit -and $trackedApp.Process.HasExited) {
+                throw "Application exited while waiting for $Because; exit=$($trackedApp.Process.ExitCode)"
             }
         }
         $value = & $Probe

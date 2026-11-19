@@ -407,35 +407,13 @@ std::vector<NtfsRecovery::Run> NtfsRecovery::GetMftRuns() const
     }
 }
 
-std::span<const BYTE> NtfsRecovery::ReadAt(const ULONGLONG offset, const DWORD length) const
+std::span<const BYTE> NtfsRecovery::ReadAt(const ULONGLONG offset, const DWORD length)
 {
     const ULONGLONG volumeSize = m_info.TotalClusters.QuadPart * ULONGLONG(m_info.BytesPerCluster);
-    if (length == 0 || offset >= volumeSize || length > volumeSize - offset) throw Failure{ {}, ERROR_INVALID_DATA };
-
-    // Align raw reads to full sectors while retaining the requested view's prefix.
-    const DWORD prefix = static_cast<DWORD>(offset % m_info.BytesPerSector);
-    const ULONGLONG alignedLength = (ULONGLONG(prefix) + length + m_info.BytesPerSector - 1) &
-        ~ULONGLONG(m_info.BytesPerSector - 1);
-    if (alignedLength > MAXDWORD) throw Failure{ {}, ERROR_INVALID_DATA };
-    if (alignedLength > m_bufferSize)
-    {
-        m_buffer = _aligned_malloc(static_cast<size_t>(alignedLength), RawBufferAlignment);
-        m_bufferSize = m_buffer.IsValid() ? static_cast<size_t>(alignedLength) : 0;
-    }
-    if (!m_buffer.IsValid()) throw Failure{ {}, ERROR_NOT_ENOUGH_MEMORY };
-
-    // Expose the requested view only after the complete aligned read succeeds.
-    LARGE_INTEGER position{ .QuadPart = static_cast<LONGLONG>(offset - prefix) };
-    DWORD returned = 0;
-    if (!SetFilePointerEx(m_volume, position, nullptr, FILE_BEGIN) ||
-        !ReadFile(m_volume, m_buffer.Get(), static_cast<DWORD>(alignedLength), &returned, nullptr))
-        throw Failure{ {}, GetLastError() };
-    if (returned != alignedLength) throw Failure{ {}, ERROR_HANDLE_EOF };
-    const auto bytes = static_cast<const BYTE*>(m_buffer.Get()) + prefix;
-    return { bytes, length };
+    return ReadVolumeSpan(offset, length, volumeSize, m_info.BytesPerSector);
 }
 
-std::span<const BYTE> NtfsRecovery::ReadMft(ULONGLONG offset, const DWORD length) const
+std::span<const BYTE> NtfsRecovery::ReadMft(ULONGLONG offset, const DWORD length)
 {
     if (offset > static_cast<ULONGLONG>(m_info.MftValidDataLength.QuadPart) ||
         length > static_cast<ULONGLONG>(m_info.MftValidDataLength.QuadPart) - offset)
@@ -638,7 +616,7 @@ void NtfsRecovery::Scan(Progress& progress, ScanResult& result,
     });
 }
 
-void NtfsRecovery::ValidateRecord(const Record& record) const
+void NtfsRecovery::ValidateRecord(const Record& record)
 {
     // Recheck the MFT mapping and saved record bytes before trusting a recovery candidate.
     if (record.number >= static_cast<ULONGLONG>(m_info.MftValidDataLength.QuadPart) /

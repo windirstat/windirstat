@@ -67,7 +67,7 @@ bool SearchDlg::OnInitDialog()
         m_layout.AddControl(units, 0, 0, 0, 0);
         GetDlgItem(minimum).SendMessage(EM_SETCUEBANNER, true, L"0");
         GetDlgItem(maximum).SendMessage(EM_SETCUEBANNER, true, L"\u221E");
-        for (const auto& unit : { GetSpec_Bytes(), GetSpec_KiB(), GetSpec_MiB(), GetSpec_GiB(), GetSpec_TiB() })
+        for (const auto& unit : GetSizeUnitLabels())
             GetDlgItem(units).SendMessage(CB_ADDSTRING, 0, unit.c_str());
     }
     m_layout.AddControl(IDC_SEARCH_FILES, 1, 0, 0, 0);
@@ -196,7 +196,7 @@ void SearchDlg::OnBnClickedOk()
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
-    tabbedView->SetActiveSearchView();
+    tabbedView->SetActiveTab(FileTab::Search);
 }
 
 void SearchDlg::SaveSearchHistory(const SearchCriteria* criteria) const

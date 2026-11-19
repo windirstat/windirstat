@@ -98,15 +98,15 @@ std::wstring RecoveryShared::Recover(const Record& record, const std::wstring& f
     return RecoverFile(record, ValidateDestination(folder), progress);
 }
 
-void RecoveryShared::ReadVolume(const ULONGLONG offset, const std::span<BYTE> bytes,
+std::span<const BYTE> RecoveryShared::ReadVolumeSpan(const ULONGLONG offset, const size_t size,
     const ULONGLONG length, const DWORD alignment)
 {
     // Validate the byte range before rounding it out to complete sectors.
-    if (!std::has_single_bit(alignment) || alignment > RawBufferAlignment || bytes.empty() ||
-        bytes.size() > MAXDWORD - 2 * alignment || length > LLONG_MAX ||
-        offset > length || bytes.size() > length - offset) throw Failure{ {}, ERROR_INVALID_DATA };
+    if (!std::has_single_bit(alignment) || alignment > RawBufferAlignment || size == 0 ||
+        size > MAXDWORD - 2 * alignment || length > LLONG_MAX ||
+        offset > length || size > length - offset) throw Failure{ {}, ERROR_INVALID_DATA };
     const DWORD prefix = static_cast<DWORD>(offset % alignment);
-    const size_t take = (prefix + bytes.size() + alignment - 1) & ~size_t(alignment - 1);
+    const size_t take = (prefix + size + alignment - 1) & ~size_t(alignment - 1);
     if (take > length - (offset - prefix)) throw Failure{ {}, ERROR_INVALID_DATA };
 
     // Grow the aligned buffer only when the current read needs more space.
@@ -117,14 +117,49 @@ void RecoveryShared::ReadVolume(const ULONGLONG offset, const std::span<BYTE> by
     }
     if (!m_rawBuffer.IsValid()) throw Failure{ {}, ERROR_NOT_ENOUGH_MEMORY };
 
-    // Verify the full raw read before copying the requested bytes.
+    // Verify the full raw read before exposing the requested bytes.
     LARGE_INTEGER position{ .QuadPart = static_cast<LONGLONG>(offset - prefix) };
     DWORD returned = 0;
     if (!SetFilePointerEx(m_volume, position, nullptr, FILE_BEGIN) ||
         !ReadFile(m_volume, m_rawBuffer.Get(), static_cast<DWORD>(take), &returned, nullptr))
         throw Failure{ {}, GetLastError() };
     if (returned != take) throw Failure{ {}, ERROR_HANDLE_EOF };
-    std::memcpy(bytes.data(), static_cast<const BYTE*>(m_rawBuffer.Get()) + prefix, bytes.size());
+    return { static_cast<const BYTE*>(m_rawBuffer.Get()) + prefix, size };
+}
+
+void RecoveryShared::ReadVolume(const ULONGLONG offset, const std::span<BYTE> bytes,
+    const ULONGLONG length, const DWORD alignment)
+{
+    const auto source = ReadVolumeSpan(offset, bytes.size(), length, alignment);
+    std::memcpy(bytes.data(), source.data(), bytes.size());
+}
+
+std::wstring RecoveryShared::CopyContiguousFile(const Record& record, const std::wstring& destination,
+    Progress& progress, const std::function<void()>& validate,
+    const std::function<void(ULONGLONG, std::span<BYTE>)>& readFree)
+{
+    validate();
+    OutputFile output(destination, record);
+    std::vector<BYTE> bytes(static_cast<size_t>(std::min<ULONGLONG>(CopyBufferBytes, record.data.size)));
+
+    // Read initialized data only. The rest of an exFAT stream is logically zero.
+    for (ULONGLONG position = 0; position < record.data.size;)
+    {
+        progress.Check();
+        const auto take = static_cast<size_t>(std::min<ULONGLONG>(bytes.size(), record.data.size - position));
+        const auto chunk = std::span(bytes).first(take);
+        const size_t initialized = position < record.data.initialized ?
+            static_cast<size_t>(std::min<ULONGLONG>(chunk.size(), record.data.initialized - position)) : 0;
+        if (initialized != 0) readFree(position, chunk.first(initialized));
+        std::ranges::fill(chunk.subspan(initialized), BYTE{ 0 });
+        output.Write(chunk, progress);
+        position += chunk.size();
+    }
+
+    // Revalidate the source on both sides of the final flush.
+    output.Commit(validate, record.created.dwHighDateTime != 0 ? &record.created : nullptr,
+        record.modified.dwHighDateTime != 0 ? &record.modified : nullptr);
+    return output.Path();
 }
 
 std::wstring RecoveryShared::ValidateDestination(const std::wstring& folder)

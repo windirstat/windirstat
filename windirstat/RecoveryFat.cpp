@@ -593,34 +593,16 @@ void FatRecovery::Validate(const Record& record, Progress& progress)
 std::wstring FatRecovery::RecoverFile(const Record& record,
     const std::wstring& canonicalDestination, Progress& progress)
 {
-    Validate(record, progress);
-    OutputFile output(canonicalDestination, record);
-    std::vector<BYTE> bytes(static_cast<size_t>(std::min<ULONGLONG>(CopyBufferBytes, record.data.size)));
-
-    // Copy bounded chunks, checking allocation before and after every source read.
-    for (ULONGLONG position = 0; position < record.data.size;)
+    return CopyContiguousFile(record, canonicalDestination, progress, [&] { Validate(record, progress); },
+    [&](const ULONGLONG position, const std::span<BYTE> bytes)
     {
-        progress.Check();
-        const auto take = static_cast<size_t>(std::min<ULONGLONG>(bytes.size(), record.data.size - position));
-        const DWORD first = static_cast<DWORD>(record.data.runs.front().lcn + FatFirstDataCluster +
-            position / m_geometry.clusterSize);
-        const ULONGLONG count = (position % m_geometry.clusterSize + take + m_geometry.clusterSize - 1) /
+        // Refresh allocation state on both sides of the source read to detect concurrent reuse.
+        const auto start = static_cast<DWORD>(record.data.runs.front().lcn + FatFirstDataCluster);
+        const auto first = static_cast<DWORD>(start + position / m_geometry.clusterSize);
+        const ULONGLONG count = (position % m_geometry.clusterSize + bytes.size() + m_geometry.clusterSize - 1) /
             m_geometry.clusterSize;
         if (!ClustersFree(first, count, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
-        ReadAt(ClusterOffset(static_cast<DWORD>(record.data.runs.front().lcn + FatFirstDataCluster)) + position,
-            std::span<BYTE>(bytes).first(take));
+        ReadAt(ClusterOffset(start) + position, bytes);
         if (!ClustersFree(first, count, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
-        output.Write(std::span<const BYTE>(bytes).first(take), progress);
-        position += take;
-    }
-
-    // Recheck directory entries and allocation on both sides of the final flush.
-    output.Commit([&]
-    {
-        // Recheck the source metadata around the destination flush.
-        Validate(record, progress);
-    },
-        record.created.dwHighDateTime != 0 ? &record.created : nullptr,
-        record.modified.dwHighDateTime != 0 ? &record.modified : nullptr);
-    return output.Path();
+    });
 }

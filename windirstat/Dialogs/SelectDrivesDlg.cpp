@@ -767,9 +767,7 @@ bool CSelectDrivesDlg::OnInitDialog()
         }
     }
 
-    m_driveList.ShowGrid(COptions::ListGrid);
-    m_driveList.ShowStripes(COptions::ListStripes);
-    m_driveList.ShowFullRowSelection(COptions::ListFullRowSelection);
+    m_driveList.ApplyListOptions();
     m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 
     m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, ScaleForDpi(150), COL_DRIVES_NAME);
@@ -889,7 +887,7 @@ void CSelectDrivesDlg::OnOK()
 
     // Switch focus to file tree view
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
-    tabbedView->SetActiveFileTreeView();
+    tabbedView->SetActiveTab(FileTab::Tree);
 
     CLayoutDialog::OnOK();
 }
@@ -1203,17 +1201,6 @@ CSelectCloudDlg::CSelectCloudDlg(CWnd* parent) : MessageTarget(IDD_SELECTCLOUD, 
 {
 }
 
-MessageResult CSelectCloudDlg::RecentList::OnNotify(const WPARAM wParam, const LPARAM lParam)
-{
-    // Native headers need the dialog's text color in dark mode.
-    const auto header = reinterpret_cast<NMHDR*>(lParam);
-    if (!header || header->code != NM_CUSTOMDRAW || header->hwndFrom != GetHeader().Handle() ||
-        !DarkMode::IsDarkModeActive()) return CListCtrl::OnNotify(wParam, lParam);
-    const auto draw = reinterpret_cast<NMCUSTOMDRAW*>(header);
-    if (draw->dwDrawStage == CDDS_ITEMPREPAINT) ::SetTextColor(draw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
-    return draw->dwDrawStage == CDDS_PREPAINT ? CDRF_NOTIFYITEMDRAW : CDRF_DODEFAULT;
-}
-
 bool CSelectCloudDlg::OnInitDialog()
 {
     CLayoutDialog::OnInitDialog();
@@ -1305,7 +1292,7 @@ void CSelectCloudDlg::OnOK()
     // Scanning a connection promotes it without changing local scan preferences.
     RememberCloudTarget(m_path);
     COptions::SelectCloudProvider = static_cast<int>(StorageSource::Parse(m_path)->protocol);
-    CMainFrame::Get()->GetFileTabbedView()->SetActiveFileTreeView();
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveTab(FileTab::Tree);
     CLayoutDialog::OnOK();
 }
 

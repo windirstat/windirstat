@@ -187,10 +187,7 @@ protected:
     void SavePersistentAttributes() const override;
 
 private:
-    class RecentList final : public CListCtrl
-    {
-        MessageResult OnNotify(WPARAM wParam, LPARAM lParam) override;
-    } m_recent;
+    CDarkHeaderListCtrl m_recent;
     bool ShowEditor(int index);
     void ReloadRecentTargets();
     void UpdateButtons();

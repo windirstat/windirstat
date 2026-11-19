@@ -82,6 +82,7 @@ inline int UnscaleForDpi(const int value, const HWND window = nullptr) noexcept
     return MulDiv(value, USER_DEFAULT_SCREEN_DPI * 100, GetWindowDpi(window) * GetFontSizePercent());
 }
 
+bool IsWindowClass(HWND window, const wchar_t* name) noexcept;
 HFONT GetAppFont(HWND window = nullptr);
 void ApplyAppFont(HWND window, int oldPercent = 0);
 void ApplyMenuFont(HWND window);
@@ -786,10 +787,7 @@ public:
     }
     CRect ToScreen(const RECT& rect) const noexcept
     {
-        CRect result(rect);
-        ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&result));
-        ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&result) + 1);
-        return result;
+        return { ToScreen(POINT{ rect.left, rect.top }), ToScreen(POINT{ rect.right, rect.bottom }) };
     }
     CPoint ToClient(const POINT point) const noexcept
     {
@@ -799,10 +797,7 @@ public:
     }
     CRect ToClient(const RECT& rect) const noexcept
     {
-        CRect result(rect);
-        ::ScreenToClient(m_hWnd, reinterpret_cast<LPPOINT>(&result));
-        ::ScreenToClient(m_hWnd, reinterpret_cast<LPPOINT>(&result) + 1);
-        return result;
+        return { ToClient(POINT{ rect.left, rect.top }), ToClient(POINT{ rect.right, rect.bottom }) };
     }
     CRect GetChildWindowRect(const HWND window) const noexcept { return ToClient(CRect(window)); }
     std::optional<CPoint> GetClientCursorPos() const noexcept
@@ -869,21 +864,11 @@ public:
     LONG GetStyle() const noexcept { return static_cast<LONG>(GetWindowLongPtrW(m_hWnd, GWL_STYLE)); }
     bool ModifyStyle(const DWORD remove, const DWORD add, const UINT flags = 0)
     {
-        const LONG_PTR s = GetWindowLongPtrW(m_hWnd, GWL_STYLE);
-        const LONG_PTR n = (s & ~static_cast<LONG_PTR>(remove)) | add;
-        if (s == n) return false;
-        SetWindowLongPtrW(m_hWnd, GWL_STYLE, n);
-        if (flags) ::SetWindowPos(m_hWnd, nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | flags);
-        return true;
+        return ChangeStyle(GWL_STYLE, remove, add, flags);
     }
     bool ModifyStyleEx(const DWORD remove, const DWORD add, const UINT flags = 0)
     {
-        const LONG_PTR s = GetWindowLongPtrW(m_hWnd, GWL_EXSTYLE);
-        const LONG_PTR n = (s & ~static_cast<LONG_PTR>(remove)) | add;
-        if (s == n) return false;
-        SetWindowLongPtrW(m_hWnd, GWL_EXSTYLE, n);
-        if (flags) ::SetWindowPos(m_hWnd, nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | flags);
-        return true;
+        return ChangeStyle(GWL_EXSTYLE, remove, add, flags);
     }
 
     UINT_PTR SetTimer(const UINT_PTR id, const UINT interval) const noexcept { return ::SetTimer(m_hWnd, id, interval, nullptr); }
@@ -913,5 +898,17 @@ public:
     }
 
     void CenterWindow();
+
+private:
+    bool ChangeStyle(const int index, const DWORD remove, const DWORD add, const UINT flags)
+    {
+        const LONG_PTR previous = GetWindowLongPtrW(m_hWnd, index);
+        const LONG_PTR style = (previous & ~static_cast<LONG_PTR>(remove)) | add;
+        if (style == previous) return false;
+        SetWindowLongPtrW(m_hWnd, index, style);
+        if (flags) ::SetWindowPos(m_hWnd, nullptr, 0, 0, 0, 0,
+            SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | flags);
+        return true;
+    }
 
 };

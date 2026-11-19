@@ -40,98 +40,66 @@ static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 }
 
 // WMI helpers
-void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
+static bool ForEachWmiObject(IWbemServices* service, const wchar_t* query, const auto& visit,
+    CProgressDlg* progress = nullptr)
 {
-    count = 0;
-    bytesUsed = 0;
-    if (!IsElevationActive()) return;
-
-    CComPtr<IWbemServices> svcObj;
-    CComPtr<IEnumWbemClassObject> enumObj;
-    if (FAILED(WmiConnect(svcObj)) ||
-        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT UsedSpace FROM Win32_ShadowStorage"),
-            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj))) return;
-
-    // Sum up all used space
-    while (true)
+    CComPtr<IEnumWbemClassObject> rows;
+    if (FAILED(service->ExecQuery(CComBSTR(L"WQL"), CComBSTR(query),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &rows))) return false;
+    while (!progress || !progress->IsCancelled())
     {
-        ULONG uRet;
-        CComPtr<IWbemClassObject> pObj;
-        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
-
-        CComVariant usedStr, usedString;
-        if (SUCCEEDED(pObj->Get(L"UsedSpace", 0, &usedStr, nullptr, nullptr)) &&
-            SUCCEEDED(VariantChangeType(&usedString, &usedStr, 0, VT_UI8)))
-            bytesUsed += usedString.ullVal;
+        CComPtr<IWbemClassObject> row;
+        ULONG returned = 0;
+        if (rows->Next(WBEM_INFINITE, 1, &row, &returned) != WBEM_S_NO_ERROR || returned == 0) break;
+        visit(row);
+        if (progress) progress->Increment();
     }
-
-    // Count existing shadow copies
-    enumObj.Release();
-    if (SUCCEEDED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT ID FROM Win32_ShadowCopy"),
-        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
-    {
-        for (ULONG ret = 0;; ++count)
-        {
-            CComPtr<IWbemClassObject> pObj;
-            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR || ret == 0) break;
-        }
-    }
+    return true;
 }
 
-std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause)
+void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
+{
+    count = bytesUsed = 0;
+    CComPtr<IWbemServices> service;
+    if (!IsElevationActive() || FAILED(WmiConnect(service))) return;
+
+    // Sum storage and count snapshots on the same connection.
+    if (!ForEachWmiObject(service, L"SELECT UsedSpace FROM Win32_ShadowStorage", [&](IWbemClassObject* row)
+    {
+        CComVariant used, bytes;
+        if (SUCCEEDED(row->Get(L"UsedSpace", 0, &used, nullptr, nullptr)) &&
+            SUCCEEDED(VariantChangeType(&bytes, &used, 0, VT_UI8))) bytesUsed += bytes.ullVal;
+    })) return;
+    ForEachWmiObject(service, L"SELECT ID FROM Win32_ShadowCopy", [&](IWbemClassObject*) { ++count; });
+}
+
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property,
+    const std::wstring& whereClause)
 {
     std::vector<std::wstring> results;
-    CComPtr<IWbemServices> svcObj;
-    CComPtr<IEnumWbemClassObject> enumObj;
-    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
-        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"),
-            CComBSTR(std::format(L"SELECT {} FROM {} WHERE {}", property, wmiClass, whereClause).c_str()),
-            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    CComPtr<IWbemServices> service;
+    if (FAILED(WmiConnect(service))) return results;
+    const auto query = std::format(L"SELECT {} FROM {} WHERE {}", property, wmiClass, whereClause);
+    ForEachWmiObject(service, query.c_str(), [&](IWbemClassObject* row)
     {
-        return results;
-    }
-
-    while (true)
-    {
-        ULONG uRet;
-        CComPtr<IWbemClassObject> pObj;
-        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
-
-        CComVariant vtVal;
-        if (SUCCEEDED(pObj->Get(property.c_str(), 0, &vtVal, nullptr, nullptr)) && vtVal.vt == VT_BSTR)
-        {
-            results.emplace_back(vtVal.bstrVal);
-        }
-    }
-
+        CComVariant value;
+        if (SUCCEEDED(row->Get(property.c_str(), 0, &value, nullptr, nullptr)) && value.vt == VT_BSTR)
+            results.emplace_back(value.bstrVal);
+    });
     return results;
 }
 
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause)
 {
-    CComPtr<IWbemServices> svcObj;
-    CComPtr<IWbemClassObject> classObj;
-    CComPtr<IEnumWbemClassObject> enumObj;
-    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
-        FAILED(svcObj->GetObject(CComBSTR(wmiClass.c_str()), 0, nullptr, &classObj, nullptr)) || !classObj ||
-        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(std::format(L"SELECT __PATH FROM {} WHERE {}", wmiClass, whereClause).c_str()),
-            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    CComPtr<IWbemServices> service;
+    if (FAILED(WmiConnect(service))) return;
+    const auto query = std::format(L"SELECT __PATH FROM {} WHERE {}", wmiClass, whereClause);
+    ForEachWmiObject(service, query.c_str(), [&](IWbemClassObject* row)
     {
-        return;
-    }
-
-    for (; !pdlg->IsCancelled(); pdlg->Increment())
-    {
-        ULONG uRet;
-        CComPtr<IWbemClassObject> pObj;
-        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
-
-        CComVariant vtPath;
-        if (SUCCEEDED(pObj->Get(L"__PATH", 0, &vtPath, nullptr, nullptr)) && vtPath.vt == VT_BSTR)
-        {
-            svcObj->DeleteInstance(vtPath.bstrVal, 0, nullptr, nullptr);
-        }
-    }
+        CComVariant path;
+        if (SUCCEEDED(row->Get(L"__PATH", 0, &path, nullptr, nullptr)) && path.vt == VT_BSTR)
+            service->DeleteInstance(path.bstrVal, 0, nullptr, nullptr);
+    }, pdlg);
 }
 
 bool CreateShadowCopy(const std::wstring& volumePath)
@@ -301,43 +269,28 @@ bool IsHibernateEnabled() noexcept
 }
 
 // Elevation and privileges
+template<typename T>
+static T QueryCurrentProcessToken(const TOKEN_INFORMATION_CLASS infoClass) noexcept
+{
+    SmartPointer token(CloseHandle, HANDLE{});
+    T info{};
+    DWORD size = sizeof(info);
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) ||
+        !GetTokenInformation(token, infoClass, &info, sizeof(info), &size)) return {};
+    return info;
+}
+
 bool IsElevationActive() noexcept
 {
-    static const auto result = []() noexcept -> bool
-    {
-        SmartPointer token(CloseHandle, HANDLE{});
-        TOKEN_ELEVATION elevation;
-        DWORD size = sizeof(TOKEN_ELEVATION);
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
-            GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) == 0)
-        {
-            return false;
-        }
-        return elevation.TokenIsElevated != 0;
-    }();
-
-    return result;
+    static const bool active = QueryCurrentProcessToken<TOKEN_ELEVATION>(TokenElevation).TokenIsElevated != 0;
+    return active;
 }
 
 bool IsElevationAvailable() noexcept
 {
-    static const auto result = []() noexcept -> bool
-    {
-        if (IsElevationActive()) return false;
-
-        SmartPointer token(CloseHandle, HANDLE{});
-        TOKEN_ELEVATION_TYPE elevationType;
-        DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
-            GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) == 0)
-        {
-            return false;
-        }
-
-        return elevationType == TokenElevationTypeLimited;
-    }();
-
-    return result;
+    static const bool available = !IsElevationActive() &&
+        QueryCurrentProcessToken<TOKEN_ELEVATION_TYPE>(TokenElevationType) == TokenElevationTypeLimited;
+    return available;
 }
 
 void RunElevated(const std::wstring& cmdLine, const bool waitForExit)
