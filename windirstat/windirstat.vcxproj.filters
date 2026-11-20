@@ -226,6 +226,9 @@
     <ClInclude Include="Views\AgeChartView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
+    <ClInclude Include="ScanHistory.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Views\BarChartView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
@@ -464,6 +467,9 @@
     </ClCompile>
     <ClCompile Include="Views\AgeChartView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanHistory.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Views\BarChartView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>

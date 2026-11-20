@@ -374,6 +374,7 @@ public:
     inline static Setting<std::vector<std::wstring>> SelectDrivesFolder{ OptionsDriveSelect, L"SelectDrivesFolder" };
     inline static Setting<std::vector<std::wstring>> SelectDrivesCloud{ OptionsDriveSelect, L"SelectDrivesCloud" };
     inline static Setting<std::wstring> SearchTerm{ OptionsSearch, L"SearchTerm" };
+    inline static Setting<std::wstring> HistoryFolder{ OptionsGeneral, L"HistoryFolder", L"" };
     inline static Setting<std::wstring> SearchHistory{ OptionsSearch, L"SearchHistory" };
     inline static Setting<std::wstring> SearchOwner{ OptionsSearch, L"SearchOwner" };
     inline static Setting<std::wstring> SearchSizeMinimum{ OptionsSearch, L"SearchSizeMinimum" };

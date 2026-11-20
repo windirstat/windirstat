@@ -245,6 +245,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Views\FlameGraphView.h" />
     <ClInclude Include="Views\AgeChartView.h" />
     <ClInclude Include="Views\BarChartView.h" />
+    <ClInclude Include="ScanHistory.h" />
     <ClInclude Include="Views\PieChartView.h" />
     <ClInclude Include="Views\SunburstView.h" />
     <ClInclude Include="WinDirStat.h" />
@@ -357,6 +358,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\FlameGraphView.cpp" />
     <ClCompile Include="Views\AgeChartView.cpp" />
     <ClCompile Include="Views\BarChartView.cpp" />
+    <ClCompile Include="ScanHistory.cpp" />
     <ClCompile Include="Views\PieChartView.cpp" />
     <ClCompile Include="Views\SunburstView.cpp" />
     <ClCompile Include="WinDirStat.cpp">
