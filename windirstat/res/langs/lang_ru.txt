@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Перекрестки
 IDS_LARGEST_FILES=Самые большие файлы
 IDS_MENU_ABSOLUTE_PERCENTAGES=&Показывать абсолютные проценты
 IDS_MENU_AGECHART=&График возраста
+IDS_MENU_BARCHART=&Столбчатая диаграмма
 IDS_MENU_CANCEL=Отмена
 IDS_MENU_CHKDSK=Проверить диск
 IDS_MENU_CLEANUP=&Очистка

@@ -100,6 +100,7 @@ IDS_JUNCTIONS=نقاط اتصال (Junctions)
 IDS_LARGEST_FILES=أكبر الملفات حجماً
 IDS_MENU_ABSOLUTE_PERCENTAGES=إظهار النسب المئوية ال&مطلقة
 IDS_MENU_AGECHART=مخطط &العمر
+IDS_MENU_BARCHART=مخطط &أعمدة
 IDS_MENU_CANCEL=إلغاء الأم&ر
 IDS_MENU_CHKDSK=فحص القرص (CHKDSK)
 IDS_MENU_CLEANUP=ت&نظيف

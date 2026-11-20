@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Liitokset
 IDS_LARGEST_FILES=Suurimmat tiedostot
 IDS_MENU_ABSOLUTE_PERCENTAGES=Näytä a&bsoluuttiset prosentit
 IDS_MENU_AGECHART=&Ikäkaavio
+IDS_MENU_BARCHART=&Pylväskaavio
 IDS_MENU_CANCEL=Peruu&ta
 IDS_MENU_CHKDSK=Tarkista levy
 IDS_MENU_CLEANUP=&Siivoa

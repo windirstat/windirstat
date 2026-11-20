@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Csomópontok
 IDS_LARGEST_FILES=Legnagyobb fájlok
 IDS_MENU_ABSOLUTE_PERCENTAGES=A&bszolút százalékok megjelenítése
 IDS_MENU_AGECHART=&Kor diagram
+IDS_MENU_BARCHART=&Oszlopdiagram
 IDS_MENU_CANCEL=&Mégse
 IDS_MENU_CHKDSK=Lemez ellenőrzése
 IDS_MENU_CLEANUP=&Kitakarítás

@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Kruispunten
 IDS_LARGEST_FILES=Grootste bestanden
 IDS_MENU_ABSOLUTE_PERCENTAGES=Absolute &percentages weergeven
 IDS_MENU_AGECHART=&Leeftijdsgrafiek
+IDS_MENU_BARCHART=&Staafdiagram
 IDS_MENU_CANCEL=&Annuleren
 IDS_MENU_CHKDSK=Schijf controleren
 IDS_MENU_CLEANUP=&Opschonen

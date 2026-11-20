@@ -11,12 +11,14 @@
 #include "SunburstView.h"
 #include "PieChartView.h"
 #include "AgeChartView.h"
+#include "BarChartView.h"
 
 static_assert(std::to_underlying(GraphPane::TreeMap) == 0
     && std::to_underlying(GraphPane::FlameGraph) == 1
     && std::to_underlying(GraphPane::Sunburst) == 2
     && std::to_underlying(GraphPane::PieChart) == 3
-    && std::to_underlying(GraphPane::AgeChart) == 4);
+    && std::to_underlying(GraphPane::AgeChart) == 4
+    && std::to_underlying(GraphPane::BarChart) == 5);
 
 CVisualizationPane::~CVisualizationPane()
 {
@@ -45,6 +47,7 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CSunburstView>(); }, WS_CHILD },
         ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CPieChartView>(); }, WS_CHILD },
         ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CAgeChartView>(); }, WS_CHILD },
+        ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CBarChartView>(); }, WS_CHILD },
     };
 
     for (const auto [index, def] : std::views::enumerate(definitions))

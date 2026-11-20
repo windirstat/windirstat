@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Bağlantı Noktaları
 IDS_LARGEST_FILES=En Büyük Dosyalar
 IDS_MENU_ABSOLUTE_PERCENTAGES=Mutlak &yüzdeleri göster
 IDS_MENU_AGECHART=&Yaş grafiği
+IDS_MENU_BARCHART=&Çubuk grafik
 IDS_MENU_CANCEL=İptal
 IDS_MENU_CHKDSK=Diski denetle
 IDS_MENU_CLEANUP=&Temizle

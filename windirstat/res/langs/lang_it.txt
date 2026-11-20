@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Punti di giunzione
 IDS_LARGEST_FILES=File più grandi
 IDS_MENU_ABSOLUTE_PERCENTAGES=Visualizza percentuali &assolute
 IDS_MENU_AGECHART=Grafico &età
+IDS_MENU_BARCHART=Grafico a &barre
 IDS_MENU_CANCEL=A&nnulla
 IDS_MENU_CHKDSK=Controlla disco
 IDS_MENU_CLEANUP=Pulis&ci

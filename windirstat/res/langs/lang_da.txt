@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Kryds
 IDS_LARGEST_FILES=Største filer
 IDS_MENU_ABSOLUTE_PERCENTAGES=Vis &absolutte procenter
 IDS_MENU_AGECHART=&Aldersdiagram
+IDS_MENU_BARCHART=&Søjlediagram
 IDS_MENU_CANCEL=Annuller
 IDS_MENU_CHKDSK=Kontrollér disk
 IDS_MENU_CLEANUP=Ryd &op

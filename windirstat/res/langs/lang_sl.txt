@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Stiki (Junctions)
 IDS_LARGEST_FILES=Največje datoteke
 IDS_MENU_ABSOLUTE_PERCENTAGES=Prikaži &absolutne odstotke
 IDS_MENU_AGECHART=&Graf starosti
+IDS_MENU_BARCHART=&Stolpčni grafikon
 IDS_MENU_CANCEL=P&rekliči
 IDS_MENU_CHKDSK=Preveri disk
 IDS_MENU_CLEANUP=Po&čisti

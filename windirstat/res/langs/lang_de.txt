@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Verknüpfungen
 IDS_LARGEST_FILES=Größte Dateien
 IDS_MENU_ABSOLUTE_PERCENTAGES=Absolute &Prozentwerte anzeigen
 IDS_MENU_AGECHART=&Altersdiagramm
+IDS_MENU_BARCHART=&Balkendiagramm
 IDS_MENU_CANCEL=A&bbrechen
 IDS_MENU_CHKDSK=Datenträger überprüfen
 IDS_MENU_CLEANUP=A&ufräumen

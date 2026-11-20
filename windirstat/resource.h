@@ -433,6 +433,7 @@
 #define ID_FILE_SELECT_CLOUD            32969
 #define ID_VIEW_PIECHART                32971
 #define ID_VIEW_AGECHART                32972
+#define ID_VIEW_BARCHART                32974
 #define IDS_APP_TITLE                   57344
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_FILTER_EXAMPLE_DIRS         57346
@@ -448,7 +449,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        126
-#define _APS_NEXT_COMMAND_VALUE         32973
+#define _APS_NEXT_COMMAND_VALUE         32975
 #define _APS_NEXT_CONTROL_VALUE         1205
 #define _APS_NEXT_SYMED_VALUE           126
 #endif

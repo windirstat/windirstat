@@ -100,6 +100,7 @@ IDS_JUNCTIONS=Junciones
 IDS_LARGEST_FILES=Archivos más grandes
 IDS_MENU_ABSOLUTE_PERCENTAGES=Mostrar porcen&tajes absolutos
 IDS_MENU_AGECHART=Gráfico de &antigüedad
+IDS_MENU_BARCHART=Gráfico de &barras
 IDS_MENU_CANCEL=Cancelar
 IDS_MENU_CHKDSK=Comprobar disco
 IDS_MENU_CLEANUP=&Limpiar
