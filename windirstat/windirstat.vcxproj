@@ -174,6 +174,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Controls\TreeMapLayout.h" />
     <ClInclude Include="Controls\HilbertMooreTreeMap.h" />
     <ClInclude Include="Controls\FlameGraph.h" />
+    <ClInclude Include="Controls\AgeChart.h" />
     <ClInclude Include="Controls\PieChart.h" />
     <ClInclude Include="Controls\Sunburst.h" />
     <ClInclude Include="Controls\XYSlider.h" />
@@ -241,6 +242,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClInclude Include="Views\FileTreeView.h" />
     <ClInclude Include="Views\TreeMapView.h" />
     <ClInclude Include="Views\FlameGraphView.h" />
+    <ClInclude Include="Views\AgeChartView.h" />
     <ClInclude Include="Views\PieChartView.h" />
     <ClInclude Include="Views\SunburstView.h" />
     <ClInclude Include="WinDirStat.h" />
@@ -268,6 +270,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Controls\TreeMapLayout.cpp" />
     <ClCompile Include="Controls\HilbertMooreTreeMap.cpp" />
     <ClCompile Include="Controls\FlameGraph.cpp" />
+    <ClCompile Include="Controls\AgeChart.cpp" />
     <ClCompile Include="Controls\PieChart.cpp" />
     <ClCompile Include="Controls\Sunburst.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />
@@ -349,6 +352,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="Views\FileTreeView.cpp" />
     <ClCompile Include="Views\TreeMapView.cpp" />
     <ClCompile Include="Views\FlameGraphView.cpp" />
+    <ClCompile Include="Views\AgeChartView.cpp" />
     <ClCompile Include="Views\PieChartView.cpp" />
     <ClCompile Include="Views\SunburstView.cpp" />
     <ClCompile Include="WinDirStat.cpp">

@@ -178,6 +178,9 @@
     <ClInclude Include="Controls\FlameGraph.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\AgeChart.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\PieChart.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -215,6 +218,9 @@
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\FlameGraphView.h">
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\AgeChartView.h">
       <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\PieChartView.h">
@@ -450,6 +456,9 @@
     <ClCompile Include="Views\FlameGraphView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
+    <ClCompile Include="Views\AgeChartView.cpp">
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
     <ClCompile Include="Views\PieChartView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
@@ -472,6 +481,9 @@
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FlameGraph.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\AgeChart.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\PieChart.cpp">

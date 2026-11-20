@@ -547,6 +547,7 @@ static GraphPane GraphPaneForCommand(const UINT commandId)
     {
     case ID_VIEW_FLAMEGRAPH: return GraphPane::FlameGraph;
     case ID_VIEW_PIECHART: return GraphPane::PieChart;
+    case ID_VIEW_AGECHART: return GraphPane::AgeChart;
     default: return GraphPane::Sunburst;
     }
 }

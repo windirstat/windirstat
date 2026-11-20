@@ -341,7 +341,7 @@ function Test-GraphResourceCycles {
     $root = New-TestTree
     $app = Start-TestApp @($root)
     $commands = @('ID_VIEW_TREEMAP_ROWS', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_TREEMAP_HILBERT',
-        'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST', 'ID_VIEW_PIECHART')
+        'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST', 'ID_VIEW_PIECHART', 'ID_VIEW_AGECHART')
     foreach ($command in $commands) {
         Invoke-AppCommand $app $command
         Get-StableFrame (Get-GraphWindow $app) | Out-Null
@@ -364,7 +364,7 @@ function Test-EmptyGraphTransitions {
     $app = Start-TestApp @($root) -Settings @{ TreeMapView = @{ TreeMapUseLogicalSize = 1 } }
     [TestDesktop]::ParkCursor($app.Window)
     $commands = @('ID_VIEW_TREEMAP_ROWS', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_TREEMAP_HILBERT',
-        'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST', 'ID_VIEW_PIECHART')
+        'ID_VIEW_TREEMAP_MOORE', 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_SUNBURST', 'ID_VIEW_PIECHART', 'ID_VIEW_AGECHART')
     $empty = @{}
     foreach ($command in $commands) {
         Invoke-AppCommand $app $command
@@ -403,7 +403,8 @@ foreach ($graph in @(
     @{ Id = 'rows'; Command = 'ID_VIEW_TREEMAP_ROWS' }, @{ Id = 'squarified'; Command = 'ID_VIEW_TREEMAP_SQUARIFIED' },
     @{ Id = 'hilbert'; Command = 'ID_VIEW_TREEMAP_HILBERT' }, @{ Id = 'moore'; Command = 'ID_VIEW_TREEMAP_MOORE' },
     @{ Id = 'flame'; Command = 'ID_VIEW_FLAMEGRAPH' }, @{ Id = 'sunburst'; Command = 'ID_VIEW_SUNBURST' },
-    @{ Id = 'pie'; Command = 'ID_VIEW_PIECHART' }
+    @{ Id = 'pie'; Command = 'ID_VIEW_PIECHART' },
+    @{ Id = 'age'; Command = 'ID_VIEW_AGECHART' }
 )) {
     foreach ($dark in 0, 1) {
         $theme = if ($dark) { 'dark' } else { 'light' }
