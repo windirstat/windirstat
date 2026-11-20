@@ -12,7 +12,7 @@ HBRUSH CDialog::OnCtlColor(CDC* pDC, WindowRef, const UINT nCtlColor)
     return brush ? brush : reinterpret_cast<HBRUSH>(CallDefaultHandler());
 }
 
-std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter, WindowRef parent)
+std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::wstring filter, WindowRef parent, const wchar_t* defaultExtension)
 {
     std::ranges::replace(filter, L'|', L'\0');
     filter.push_back(L'\0');
@@ -22,7 +22,7 @@ std::optional<std::wstring> CDialog::PickFile(const FilePickerMode mode, std::ws
     dialog.lpstrFilter = filter.c_str();
     dialog.lpstrFile = file.data();
     dialog.nMaxFile = static_cast<DWORD>(file.size());
-    dialog.lpstrDefExt = L"csv";
+    dialog.lpstrDefExt = defaultExtension;
     dialog.Flags = OFN_EXPLORER | OFN_DONTADDTORECENT |
         (mode == FilePickerMode::Open ? OFN_PATHMUSTEXIST : OFN_OVERWRITEPROMPT);
     if (!(mode == FilePickerMode::Open ? GetOpenFileNameW(&dialog) : GetSaveFileNameW(&dialog)))
