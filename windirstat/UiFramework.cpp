@@ -110,10 +110,10 @@ void CFrameWnd::UpdateMenuCommands(MenuRef menu, const bool bSysMenu)
 
 LPCWSTR RegisterWindowClass(UINT classStyle, HCURSOR hCursor, HBRUSH hbrBackground, HICON hIcon)
 {
-    static std::map<std::wstring, std::wstring> registered;
+    static std::set<std::wstring, std::less<>> registered;
     wchar_t name[160];
     swprintf_s(name, L"WdsWindow.%x.%p.%p.%p", classStyle, hCursor, hbrBackground, hIcon);
-    if (const auto it = registered.find(name); it != registered.end()) return it->second.c_str();
+    if (const auto it = registered.find(name); it != registered.end()) return it->c_str();
     WNDCLASSEXW wc{ sizeof(wc) };
     wc.style = classStyle;
     wc.lpfnWndProc = FrameworkWindowProc;
@@ -123,7 +123,7 @@ LPCWSTR RegisterWindowClass(UINT classStyle, HCURSOR hCursor, HBRUSH hbrBackgrou
     wc.hIcon = hIcon;
     wc.lpszClassName = name;
     ::RegisterClassExW(&wc);
-    return registered.emplace(name, name).first->second.c_str();
+    return registered.emplace(name).first->c_str();
 }
 
 bool WindowRef::CopyTextToClipboard(const std::wstring_view text) const
@@ -133,22 +133,18 @@ bool WindowRef::CopyTextToClipboard(const std::wstring_view text) const
     if (!EmptyClipboard() || text.size() >= std::numeric_limits<size_t>::max() / sizeof(wchar_t)) return false;
 
     const SIZE_T bytes = (text.size() + 1) * sizeof(wchar_t);
-    const HGLOBAL data = GlobalAlloc(GMEM_MOVEABLE, bytes);
-    if (data == nullptr) return false;
+    SmartPointer data(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, bytes));
+    if (!data.IsValid()) return false;
 
     auto* buffer = static_cast<wchar_t*>(GlobalLock(data));
-    if (buffer == nullptr)
-    {
-        GlobalFree(data);
-        return false;
-    }
+    if (buffer == nullptr) return false;
 
     if (!text.empty()) std::memcpy(buffer, text.data(), text.size() * sizeof(wchar_t));
     buffer[text.size()] = L'\0';
     GlobalUnlock(data);
-    if (SetClipboardData(CF_UNICODETEXT, data) != nullptr) return true;
-    GlobalFree(data);
-    return false;
+    if (!SetClipboardData(CF_UNICODETEXT, data)) return false;
+    data.Detach(); // The clipboard owns the allocation after a successful transfer.
+    return true;
 }
 
 void WindowRef::CenterWindow()
@@ -168,9 +164,8 @@ void WindowRef::CenterWindow()
     LONG y = rcParent.top + (rcParent.Height() - rcWnd.Height()) / 2;
 
     // If the dialog is larger than the parent window, adjust the position to ensure it is fully visible
-    if (MONITORINFO mi{ sizeof(MONITORINFO) }; ::GetMonitorInfoW(::MonitorFromWindow(hTargetWnd, MONITOR_DEFAULTTONEAREST), &mi))
+    if (const CRect viewport = GetWorkArea(hTargetWnd); !viewport.IsEmpty())
     {
-        const CRect viewport(mi.rcWork);
         x = std::clamp<LONG>(x, viewport.left, std::max<LONG>(viewport.left, viewport.right - rcWnd.Width()));
         y = std::clamp<LONG>(y, viewport.top, std::max<LONG>(viewport.top, viewport.bottom - rcWnd.Height()));
     }

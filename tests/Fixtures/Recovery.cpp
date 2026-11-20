@@ -22,6 +22,18 @@ void WinCheck(const bool success, const std::string_view operation)
     if (!success) throw std::runtime_error(std::format("{}: Windows error {}", operation, GetLastError()));
 }
 
+bool RecoveryFails(const auto& action, const RecoveryShared::Failure expected = {})
+{
+    try { action(); }
+    catch (const RecoveryShared::Failure& failure)
+    {
+        if ((expected.error && failure.error != expected.error) ||
+            (!expected.message.empty() && failure.message != expected.message)) throw;
+        return true;
+    }
+    return false;
+}
+
 void Test(const std::string_view name, const std::function<void()>& body)
 {
     try
@@ -61,11 +73,24 @@ std::vector<BYTE> Pattern(const size_t size, DWORD seed)
     return bytes;
 }
 
+TestHandle OpenFixture(const std::wstring& path, const std::string_view operation, const DWORD access,
+    const DWORD sharing = 0, const DWORD creation = OPEN_EXISTING, const DWORD flags = 0)
+{
+    TestHandle file(CloseHandle, CreateFileW(path.c_str(), access, sharing, nullptr, creation, flags, nullptr));
+    WinCheck(file.IsValid(), operation);
+    return file;
+}
+
+std::array<FILETIME, 2> ReadFileTimes(const HANDLE file)
+{
+    std::array<FILETIME, 2> times{};
+    WinCheck(GetFileTime(file, &times[0], nullptr, &times[1]), "read fixture creation and modification times");
+    return times;
+}
+
 void WriteBytes(const std::wstring& path, const std::span<const BYTE> bytes)
 {
-    const TestHandle file(CloseHandle, CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr,
-        CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr));
-    WinCheck(file.IsValid(), "CreateFile");
+    const auto file = OpenFixture(path, "CreateFile", GENERIC_WRITE, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL);
     DWORD written = 0;
     WinCheck(WriteFile(file, bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr), "WriteFile");
     Require(written == bytes.size(), "complete fixture write");
@@ -76,9 +101,7 @@ void WriteBytes(const std::wstring& path, const std::span<const BYTE> bytes)
 
 std::vector<BYTE> ReadBytes(const std::wstring& path)
 {
-    const TestHandle file(CloseHandle, CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
-        nullptr, OPEN_EXISTING, 0, nullptr));
-    WinCheck(file.IsValid(), "open recovered file");
+    const auto file = OpenFixture(path, "open recovered file", GENERIC_READ, FILE_SHARE_READ);
     LARGE_INTEGER size{};
     WinCheck(GetFileSizeEx(file, &size), "GetFileSizeEx");
     Require(size.QuadPart >= 0 && size.QuadPart < 1024 * 1024 * 1024, "bounded recovered length");
@@ -89,17 +112,14 @@ std::vector<BYTE> ReadBytes(const std::wstring& path)
     return bytes;
 }
 
-void FlushVolume(const std::wstring& source)
+TestHandle OpenVolume(const std::wstring& source)
 {
-    // Flush filesystem metadata before the readers inspect the raw volume.
+    // Open the volume itself by removing the mount point's trailing separator.
     wchar_t volume[MAX_PATH]{};
     WinCheck(GetVolumeNameForVolumeMountPointW(source.c_str(), volume, MAX_PATH), "volume name");
     std::wstring name(volume);
     name.pop_back();
-    const TestHandle handle(CloseHandle, CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-    WinCheck(handle.IsValid(), "open volume to flush");
-    WinCheck(FlushFileBuffers(handle), "flush volume");
+    return OpenFixture(name, "open volume", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE);
 }
 
 struct Fixture
@@ -165,10 +185,8 @@ int wmain(const int argc, wchar_t** argv)
                 return record.data.size > available.QuadPart;
             });
             Require(candidate != scan.records.end(), "deleted candidate exceeds the small destination volume");
-            bool rejected = false;
-            try { reader->Recover(*candidate, argv[3], progress); }
-            catch (const RecoveryShared::Failure& failure) { rejected = failure.error == ERROR_DISK_FULL; }
-            Require(rejected, "insufficient space is reported as a disk-full failure");
+            Require(RecoveryFails([&] { reader->Recover(*candidate, argv[3], progress); },
+                { .error = ERROR_DISK_FULL }), "insufficient space is reported as a disk-full failure");
             Require(std::filesystem::is_empty(argv[3]), "disk-full recovery leaves no temporary or final output");
         });
         return failures == 0 ? 0 : 1;
@@ -293,9 +311,7 @@ int wmain(const int argc, wchar_t** argv)
         {
             add("uninitialized-tail", base, L"uninitialized tail.bin", cluster * 3 + 11);
             auto& fixture = fixtures.back();
-            const TestHandle file(CloseHandle, CreateFileW(fixture.path.c_str(), GENERIC_WRITE, 0,
-                nullptr, OPEN_EXISTING, 0, nullptr));
-            WinCheck(file.IsValid(), "open tail fixture");
+            const auto file = OpenFixture(fixture.path, "open tail fixture", GENERIC_WRITE);
             LARGE_INTEGER end{ .QuadPart = static_cast<LONGLONG>(cluster * 7 + 19) };
             WinCheck(SetFilePointerEx(file, end, nullptr, FILE_BEGIN) && SetEndOfFile(file), "extend logical EOF");
             fixture.bytes.resize(static_cast<size_t>(end.QuadPart), 0);
@@ -305,12 +321,11 @@ int wmain(const int argc, wchar_t** argv)
             const auto hole = std::max<size_t>(cluster, 64 * 1024);
             add("sparse", base, L"sparse recovery.bin", hole * 3);
             auto& sparse = fixtures.back();
-            const TestHandle sparseFile(CloseHandle, CreateFileW(sparse.path.c_str(), GENERIC_READ | GENERIC_WRITE,
-                0, nullptr, OPEN_EXISTING, 0, nullptr));
+            const auto sparseFile = OpenFixture(sparse.path, "open sparse fixture", GENERIC_READ | GENERIC_WRITE);
             DWORD returned = 0;
             FILE_ZERO_DATA_INFORMATION zero{ .FileOffset = { .QuadPart = static_cast<LONGLONG>(hole) },
                 .BeyondFinalZero = { .QuadPart = static_cast<LONGLONG>(hole * 2) } };
-            WinCheck(sparseFile.IsValid() && DeviceIoControl(sparseFile, FSCTL_SET_SPARSE, nullptr, 0,
+            WinCheck(DeviceIoControl(sparseFile, FSCTL_SET_SPARSE, nullptr, 0,
                 nullptr, 0, &returned, nullptr) && DeviceIoControl(sparseFile, FSCTL_SET_ZERO_DATA, &zero,
                     sizeof(zero), nullptr, 0, &returned, nullptr), "create sparse hole");
             std::fill(sparse.bytes.begin() + hole, sparse.bytes.begin() + hole * 2, BYTE{});
@@ -325,11 +340,11 @@ int wmain(const int argc, wchar_t** argv)
                 add("compressed-excluded", base, L"compressed recovery.bin", 256 * 1024, false);
                 auto& compressed = fixtures.back();
                 std::fill(compressed.bytes.begin(), compressed.bytes.end(), BYTE{});
-                const TestHandle compressedFile(CloseHandle, CreateFileW(compressed.path.c_str(),
-                    GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr));
+                const auto compressedFile = OpenFixture(compressed.path, "open compressed fixture",
+                    GENERIC_READ | GENERIC_WRITE);
                 WORD format = COMPRESSION_FORMAT_DEFAULT;
                 DWORD written = 0;
-                WinCheck(compressedFile.IsValid() && DeviceIoControl(compressedFile, FSCTL_SET_COMPRESSION,
+                WinCheck(DeviceIoControl(compressedFile, FSCTL_SET_COMPRESSION,
                     &format, sizeof(format), nullptr, 0, &returned, nullptr) &&
                     WriteFile(compressedFile, compressed.bytes.data(), static_cast<DWORD>(compressed.bytes.size()),
                         &written, nullptr) && FlushFileBuffers(compressedFile), "create compressed fixture");
@@ -347,17 +362,11 @@ int wmain(const int argc, wchar_t** argv)
         const auto decoyPath = base + L"\\fragmentation decoy.bin";
         WriteBytes(decoyPath, Pattern(cluster, 0x83DA17));
         {
-            const TestHandle file(CloseHandle, CreateFileW(fragmented.c_str(), GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            const TestHandle decoy(CloseHandle, CreateFileW(decoyPath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            wchar_t name[MAX_PATH]{};
-            WinCheck(GetVolumeNameForVolumeMountPointW(source.c_str(), name, MAX_PATH), "fragment volume name");
-            std::wstring volumeName(name);
-            volumeName.pop_back();
-            const TestHandle volume(CloseHandle, CreateFileW(volumeName.c_str(), GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            WinCheck(file.IsValid() && decoy.IsValid() && volume.IsValid(), "open fragmentation fixtures");
+            const auto file = OpenFixture(fragmented, "open fragmentation fixture", GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE);
+            const auto decoy = OpenFixture(decoyPath, "open fragmentation decoy", GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE);
+            const auto volume = OpenVolume(source);
             DWORD count = 0, returned = 0;
             const auto first = FirstCluster(file, count);
             Require(count == 1, "fragmentation fixture initially contiguous");
@@ -376,12 +385,8 @@ int wmain(const int argc, wchar_t** argv)
         WinCheck(DeleteFileW(decoyPath.c_str()), "delete fragmentation decoy");
         for (auto& fixture : fixtures)
         {
-            {
-                const TestHandle file(CloseHandle, CreateFileW(fixture.path.c_str(), FILE_READ_ATTRIBUTES,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
-                WinCheck(file.IsValid(), "read original timestamps");
-                WinCheck(GetFileTime(file, &fixture.times[0], nullptr, &fixture.times[1]), "original file times");
-            }
+            fixture.times = ReadFileTimes(OpenFixture(fixture.path, "read original timestamps",
+                FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT));
             WinCheck(DeleteFileW(fixture.path.c_str()), "delete fixture");
         }
         WinCheck(DeleteFileW((sid + L"\\$IABC123.bin").c_str()), "delete recycle companion");
@@ -393,7 +398,8 @@ int wmain(const int argc, wchar_t** argv)
             for (auto directory = deep; directory.size() > base.size(); directory.resize(directory.rfind(L'\\')))
                 WinCheck(RemoveDirectoryW(directory.c_str()), "delete deep fixture directory");
         }
-        FlushVolume(source);
+        // Flush filesystem metadata before the readers inspect the raw volume.
+        WinCheck(FlushFileBuffers(OpenVolume(source)), "flush volume");
 
         // Exercise the exact production readers, then verify complete file bytes and reconstructed ancestry.
         RecoveryShared::Progress progress;
@@ -436,10 +442,8 @@ int wmain(const int argc, wchar_t** argv)
                 const auto recovered = reader->Recover(*record, destination, progress);
                 Require(std::filesystem::path(recovered).filename() == fixture.outputName, "original output filename");
                 Require(ReadBytes(recovered) == fixture.bytes, "recovered data matches the complete original payload");
-                const TestHandle file(CloseHandle, CreateFileW(recovered.c_str(), FILE_READ_ATTRIBUTES,
-                    FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr));
-                std::array<FILETIME, 2> times{};
-                WinCheck(file.IsValid() && GetFileTime(file, &times[0], nullptr, &times[1]), "recovered file times");
+                const auto times = ReadFileTimes(OpenFixture(recovered, "recovered file times",
+                    FILE_READ_ATTRIBUTES, FILE_SHARE_READ));
                 Require(CompareFileTime(&times[0], &fixture.times[0]) == 0, "original creation timestamp is preserved");
                 Require(CompareFileTime(&times[1], &fixture.times[1]) == 0,
                     "original modification timestamp is preserved");
@@ -450,15 +454,13 @@ int wmain(const int argc, wchar_t** argv)
         {
             RecoveryShared::Progress stopped;
             RecoveryShared::ScanResult partial;
-            bool canceled = false;
-            try
+            const bool canceled = RecoveryFails([&]
             {
                 reader->Scan(stopped, partial, [&](const RecoveryShared::Record& record)
                 {
                     if (record.name == fixtures[0].name) stopped.cancel = true;
                 });
-            }
-            catch (const RecoveryShared::Failure& failure) { canceled = failure.error == ERROR_CANCELLED; }
+            }, { .error = ERROR_CANCELLED });
             Require(canceled && !partial.records.empty(), "canceled scan retains validated discoveries");
             const auto empty = std::ranges::find(partial.records, fixtures[0].name, &RecoveryShared::Record::name);
             Require(empty != partial.records.end(), "published candidate remains available after stopping");
@@ -493,10 +495,8 @@ int wmain(const int argc, wchar_t** argv)
             {
                 const auto file = outputRoot + L"\\destination file";
                 WriteBytes(file, Pattern(1, 123));
-                bool rejected = false;
-                try { reader->Recover(*candidate, file, progress); }
-                catch (const RecoveryShared::Failure&) { rejected = true; }
-                Require(rejected, "a file cannot be used as a recovery directory");
+                Require(RecoveryFails([&] { reader->Recover(*candidate, file, progress); }),
+                    "a file cannot be used as a recovery directory");
             });
             Test("destination-alias-resolves-volume", [&]
             {
@@ -514,10 +514,8 @@ int wmain(const int argc, wchar_t** argv)
                 const auto file = folder + L"\\" + candidate->name;
                 const auto bytes = Pattern(321, 234);
                 WriteBytes(file, bytes);
-                bool rejected = false;
-                try { reader->Recover(*candidate, folder, progress); }
-                catch (const RecoveryShared::Failure&) { rejected = true; }
-                Require(rejected, "existing output must not be overwritten");
+                Require(RecoveryFails([&] { reader->Recover(*candidate, folder, progress); }),
+                    "existing output must not be overwritten");
                 Require(ReadBytes(file) == bytes, "existing file bytes are preserved");
                 Require(!std::filesystem::exists(folder + L"\\" +
                     std::format(L"{}-{}.partial", candidate->number, candidate->sequence)),
@@ -534,10 +532,8 @@ int wmain(const int argc, wchar_t** argv)
                     Sleep(75);
                     stopped.cancel = true;
                 });
-                bool canceled = false;
-                try { reader->Recover(*candidate, folder, stopped); }
-                catch (const RecoveryShared::Failure& failure) { canceled = failure.error == ERROR_CANCELLED; }
-                Require(canceled, "paused recovery cancels promptly");
+                Require(RecoveryFails([&] { reader->Recover(*candidate, folder, stopped); },
+                    { .error = ERROR_CANCELLED }), "paused recovery cancels promptly");
                 Require(std::filesystem::is_empty(folder), "canceled recovery leaves no output");
             });
             Test("recreated-source-name", [&]
@@ -547,24 +543,22 @@ int wmain(const int argc, wchar_t** argv)
                 if (ntfs)
                 {
                     // A recreated name can use a different MFT record while the deleted version remains intact.
-                    const TestHandle file(CloseHandle, CreateFileW(fixtures[1].path.c_str(), FILE_READ_ATTRIBUTES,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
+                    const auto file = OpenFixture(fixtures[1].path, "open replacement fixture",
+                        FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE);
                     BY_HANDLE_FILE_INFORMATION information{};
-                    WinCheck(file.IsValid() && GetFileInformationByHandle(file, &information), "replacement identity");
+                    WinCheck(GetFileInformationByHandle(file, &information), "replacement identity");
                     retained = ((ULONGLONG(information.nFileIndexHigh) << 32 | information.nFileIndexLow) &
                         0x0000FFFFFFFFFFFFull) != candidate->number;
                 }
-                FlushVolume(source);
+                WinCheck(FlushFileBuffers(OpenVolume(source)), "flush volume");
                 const auto folder = outputRoot + L"\\stale";
                 MakeDirectory(folder);
-                bool rejected = false;
-                try
+                const bool rejected = RecoveryFails([&]
                 {
                     const auto recovered = reader->Recover(*candidate, folder, progress);
                     Require(retained && ReadBytes(recovered) == fixtures[1].bytes,
                         "an intact earlier version recovers its original data after the name is reused");
-                }
-                catch (const RecoveryShared::Failure&) { rejected = true; }
+                });
                 Require(retained || rejected, "reallocated file records invalidate the saved candidate");
                 if (rejected) Require(std::filesystem::is_empty(folder), "stale candidate leaves no output");
             });
@@ -572,13 +566,9 @@ int wmain(const int argc, wchar_t** argv)
 
         Test("reallocated-source-cluster-rejected", [&]
         {
-            TestHandle file(CloseHandle, CreateFileW(replacement.c_str(), GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            auto volumeName = reader->Name();
-            volumeName.pop_back();
-            const TestHandle volume(CloseHandle, CreateFileW(volumeName.c_str(), GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
-            WinCheck(file.IsValid() && volume.IsValid(), "open reallocation fixture");
+            auto file = OpenFixture(replacement, "open reallocation fixture", GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE);
+            const auto volume = OpenVolume(source);
 
             WinCheck(DeleteFileW(reuseSource.c_str()) && FlushFileBuffers(volume), "delete and flush reuse source");
             const auto reuseReader = RecoveryShared::Open(source, &progress);
@@ -608,14 +598,8 @@ int wmain(const int argc, wchar_t** argv)
                 "reuse deleted fixture allocation");
             WinCheck(FlushFileBuffers(volume), "flush reused source allocation");
             Require(FirstCluster(file, extentCount) == target, "the live replacement owns the saved source cluster");
-            bool rejected = false;
-            try { reuseReader->Recover(*record, folder, progress); }
-            catch (const RecoveryShared::Failure& failure)
-            {
-                if (failure.message != L"IDS_RECOVERY_CHANGED") throw;
-                rejected = true;
-            }
-            Require(rejected, "a newly allocated source cluster cannot be copied");
+            Require(RecoveryFails([&] { reuseReader->Recover(*record, folder, progress); },
+                { .message = L"IDS_RECOVERY_CHANGED" }), "a newly allocated source cluster cannot be copied");
             Require(std::filesystem::is_empty(folder), "reused source allocation leaves no output");
 
             // Releasing the cluster must make the same saved record recoverable again, even if its bytes changed.

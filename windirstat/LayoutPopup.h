@@ -51,9 +51,8 @@ protected:
     CRect CardRect(int idx) const;
     int   CardAtPoint(CPoint pt) const;
     void PaintCard(CDC& dc, int idx) const;
-    void DrawAllFilesPane(CDC& dc, CRect r) const;
-    void DrawFileTypesPane(CDC& dc, CRect r) const;
-    void DrawVisualizationPane(CDC& dc, CRect r, int cardIdx) const;
+    void DrawListPane(CDC& dc, CRect r, LAYOUT_VIEW_TYPE viewType) const;
+    void DrawVisualizationPane(CDC& dc, CRect r) const;
 
 public:
     static std::span<const RouteEntry> Routes();

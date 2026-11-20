@@ -126,18 +126,19 @@ EXTERN_C VOID WINAPI WakeByAddressAll(PVOID Address)
     if (native) native(Address);
 }
 
-EXTERN_C{
+// Import pointers use stdcall decoration on x86 and the plain function name on x64.
 #if defined(_M_IX86)
-    constinit decltype(&CreateFile2) __identifier("_imp__CreateFile2@20") = &CreateFile2;
-    constinit decltype(&GetSystemTimePreciseAsFileTime) __identifier("_imp__GetSystemTimePreciseAsFileTime@4") = &GetSystemTimePreciseAsFileTime;
-    constinit decltype(&WaitOnAddress) __identifier("_imp__WaitOnAddress@16") = &WaitOnAddress;
-    constinit decltype(&WakeByAddressSingle) __identifier("_imp__WakeByAddressSingle@4") = &WakeByAddressSingle;
-    constinit decltype(&WakeByAddressAll) __identifier("_imp__WakeByAddressAll@4") = &WakeByAddressAll;
+#define STRINGIZE_IMPORT(symbol) #symbol
+#define IMPORT_SYMBOL(fn, bytes) __identifier(STRINGIZE_IMPORT(_imp__##fn@bytes))
 #elif defined(_M_X64)
-    constinit decltype(&CreateFile2) __imp_CreateFile2 = &CreateFile2;
-    constinit decltype(&GetSystemTimePreciseAsFileTime) __imp_GetSystemTimePreciseAsFileTime = &GetSystemTimePreciseAsFileTime;
-    constinit decltype(&WaitOnAddress) __imp_WaitOnAddress = &WaitOnAddress;
-    constinit decltype(&WakeByAddressSingle) __imp_WakeByAddressSingle = &WakeByAddressSingle;
-    constinit decltype(&WakeByAddressAll) __imp_WakeByAddressAll = &WakeByAddressAll;
+#define IMPORT_SYMBOL(fn, bytes) __imp_##fn
 #endif
-}
+
+#ifdef IMPORT_SYMBOL
+#define DEFINE_IMPORT(fn, bytes) EXTERN_C constinit decltype(&fn) IMPORT_SYMBOL(fn, bytes) = &fn
+DEFINE_IMPORT(CreateFile2, 20);
+DEFINE_IMPORT(GetSystemTimePreciseAsFileTime, 4);
+DEFINE_IMPORT(WaitOnAddress, 16);
+DEFINE_IMPORT(WakeByAddressSingle, 4);
+DEFINE_IMPORT(WakeByAddressAll, 4);
+#endif

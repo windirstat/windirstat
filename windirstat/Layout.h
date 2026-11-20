@@ -14,28 +14,12 @@
 //
 class CLayout final
 {
-    template <typename T>
-    struct SControlInfoT
+    struct SControlInfo
     {
         HWND control;
-        T movex;
-        T movey;
-        T stretchx;
-        T stretchy;
-
+        double movex, movey, stretchx, stretchy;
         CRect originalRectangle;
-
-        SControlInfoT(HWND ctl, const T& x, const T& y, const T& w, const T& h)
-            : control(ctl)
-              , movex(x)
-              , movey(y)
-              , stretchx(w)
-              , stretchy(h)
-        {
-        }
     };
-
-    using SControlInfo = SControlInfoT<double>;
 
     class CSizeGripper final : public MessageTarget<CSizeGripper, CWnd>
     {
@@ -56,20 +40,8 @@ class CLayout final
         LRESULT OnNcHitTest(CPoint point) const;
     };
 
-    class CPositioner final
-    {
-    public:
-        CPositioner(int nNumWindows = 10);
-        ~CPositioner();
-        void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
-
-    private:
-        HDWP m_wdp;
-    };
-
 public:
     CLayout(CWnd* dialog, RECT* placement);
-    int AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy);
     void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
     void OnInitDialog(bool centerWindow);

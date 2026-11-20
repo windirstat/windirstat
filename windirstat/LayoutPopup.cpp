@@ -103,13 +103,10 @@ void CLayoutPopup::ShowAtButton(const CRect& buttonScreenRect)
     m_selectedLayout = COptions::WindowLayout;
     m_hoveredLayout  = -1;
 
-    const int cw = ScaleForDpi(CARD_W_BASE);
-    const int ch = ScaleForDpi(CARD_H_BASE);
-    const int gp = ScaleForDpi(GAP_BASE);
-    const int mg = ScaleForDpi(MARGIN_BASE);
-
-    const int popupW = COLS * cw + (COLS - 1) * gp + 2 * mg;
-    const int popupH = ROWS * ch + (ROWS - 1) * gp + 2 * mg;
+    const CRect lastCard = CardRect(COLS * ROWS - 1);
+    const int margin = ScaleForDpi(MARGIN_BASE);
+    const int popupW = lastCard.right + margin;
+    const int popupH = lastCard.bottom + margin;
 
     // Default: anchor below the button, left-aligned
     CPoint origin(buttonScreenRect.left, buttonScreenRect.bottom + ScaleForDpi(2));
@@ -172,191 +169,99 @@ int CLayoutPopup::CardAtPoint(const CPoint pt) const
     return it != range.end() ? *it : -1;
 }
 
-static void DrawPaneHeader(CDC& dc, const CRect& r, const int rowH, const COLORREF hdr, const COLORREF sep)
+static void DrawPaneHeader(CDC& dc, const CRect& r, const int rowH, std::initializer_list<int> columnEnds)
 {
-    dc.FillSolidRect(r.left, r.top,            r.Width(), rowH + 1, hdr);
-    dc.FillSolidRect(r.left, r.top + 1 + rowH, r.Width(), 1,    sep);
+    const bool dark = DarkMode::IsDarkModeActive();
+    const COLORREF separator = DarkMode::SystemColor(dark ? COLOR_3DHIGHLIGHT : COLOR_3DSHADOW);
+    dc.FillSolidRect(r.left, r.top, r.Width(), rowH + 1, DarkMode::SystemColor(COLOR_BTNFACE));
+    dc.FillSolidRect(r.left, r.top + rowH + 1, r.Width(), 1, separator);
+
+    // Draw each column label between its inset edges and divide neighboring columns.
+    int left = r.left;
+    for (const auto [index, right] : std::views::enumerate(columnEnds))
+    {
+        const int width = right - left - 4;
+        if (width > 2 && rowH > 0)
+        {
+            const int stroke = std::max(2, width * (55 + static_cast<int>(index) * 10) / 100);
+            dc.FillSolidRect(left + 2, r.top + (rowH - 1) / 2, stroke, 1, dark ? RGB(176, 176, 176) : RGB(88, 88, 88));
+        }
+        if (right > r.left && right < r.right) dc.FillSolidRect(right, r.top + 1, 1, rowH, separator);
+        left = right;
+    }
 }
 
-static COLORREF GetPaneHeaderBackground()
+void CLayoutPopup::DrawListPane(CDC& dc, const CRect r, const LAYOUT_VIEW_TYPE viewType) const
 {
-    return DarkMode::SystemColor(COLOR_BTNFACE);
-}
-
-static COLORREF GetPaneHeaderSeparator()
-{
-    return DarkMode::SystemColor(DarkMode::IsDarkModeActive() ? COLOR_3DHIGHLIGHT : COLOR_3DSHADOW);
-}
-
-static COLORREF GetPaneHeaderTextColor()
-{
-    return DarkMode::IsDarkModeActive() ? RGB(176, 176, 176) : RGB(88, 88, 88);
-}
-
-static void DrawHeaderDivider(CDC& dc, const CRect& r, const int rowH, const int x, const COLORREF color)
-{
-    if (x <= r.left || x >= r.right) return;
-    dc.FillSolidRect(x, r.top + 1, 1, rowH, color);
-}
-
-static void DrawHeaderText(CDC& dc, CRect r, const int seed = 0)
-{
-    r.Deflate(2, 0);
-    if (r.Width() <= 2 || r.Height() <= 0) return;
-
-    constexpr int strokeH = 1;
-    const int y = r.top + (r.Height() - strokeH) / 2;
-    const int width = std::max(2, r.Width() * (55 + (seed % 3) * 10) / 100);
-    dc.FillSolidRect(r.left, y, std::min(width, r.Width()), strokeH, GetPaneHeaderTextColor());
-}
-
-static void DrawMiniText(CDC& dc, const CRect r, const int seed = 0)
-{
-    if (r.Width() <= 2 || r.Height() <= 0) return;
-
-    const COLORREF color = DarkMode::IsDarkModeActive() ? RGB(204, 204, 204) : RGB(52, 52, 52);
-    constexpr int strokeH = 1;
-    const int y = r.top + (r.Height() - strokeH) / 2;
-    const int first = std::max(2, r.Width() - (seed % 4));
-    dc.FillSolidRect(r.left, y, first, strokeH, color);
-}
-
-static COLORREF GetFileTreeColor(const int index)
-{
-    const int count = std::clamp(static_cast<int>(COptions::FileTreeColorCount), 1, TREELISTCOLORCOUNT);
-    return COptions::FileTreeColors[index % count];
-}
-
-void CLayoutPopup::DrawAllFilesPane(CDC& dc, const CRect r) const
-{
-    const COLORREF bg    = DarkMode::IsDarkModeActive() ? RGB(26, 24, 22)    : RGB(255, 254, 249);
-    const COLORREF alt   = DarkMode::IsDarkModeActive() ? RGB(34, 32, 28)    : RGB(247, 245, 240);
-    const COLORREF hdrBg = GetPaneHeaderBackground();
-    const COLORREF sep   = GetPaneHeaderSeparator();
-    constexpr COLORREF folio = RGB(228, 178, 36);
-
-    const int rowH  = ScaleForDpi(7);
-    const int iSz   = std::max(3, rowH - 2);
-    const int indU  = std::max(2, r.Width() / 9);
-    const int pColX = r.left + r.Width() * 54 / 100;
-
-    DrawPaneHeader(dc, r, rowH, hdrBg, sep);
-    DrawHeaderText(dc, CRect(r.left, r.top, pColX, r.top + rowH), 0);
-    DrawHeaderDivider(dc, r, rowH, pColX, sep);
-    DrawHeaderText(dc, CRect(pColX, r.top, r.right, r.top + rowH), 1);
-
-    struct Row { int ind; float pf; };
-    static constexpr std::array rows = {
-        Row{0, 0.95f}, Row{1, 0.37f}, Row{1, 0.29f}, Row{1, 0.16f},
-        Row{2, 0.10f}, Row{2, 0.07f}, Row{1, 0.04f}, Row{1, 0.02f},
+    struct FileRow { int indent; float fraction; };
+    static constexpr std::array fileRows = {
+        FileRow{0, 0.95f}, FileRow{1, 0.37f}, FileRow{1, 0.29f}, FileRow{1, 0.16f},
+        FileRow{2, 0.10f}, FileRow{2, 0.07f}, FileRow{1, 0.04f}, FileRow{1, 0.02f},
+    };
+    static constexpr std::array typeColors = {
+        RGB(65, 115, 220), RGB(185, 130, 40), RGB(45, 165, 80), RGB(55, 125, 200),
+        RGB(140, 140, 170), RGB(190, 65, 65), RGB(45, 165, 165), RGB(155, 65, 195),
     };
 
-    for (const auto [i, row] : std::views::enumerate(rows))
+    // The file tree has a percentage column. The file-type list has a description and a count.
+    const bool files = viewType == VT_ALLFILES;
+    const bool dark = DarkMode::IsDarkModeActive();
+    const int rowH = ScaleForDpi(7);
+    const int icon = std::max(3, rowH - 2);
+    const int textH = std::max(2, icon - 1);
+    const int firstColumnEnd = r.left + r.Width() * (files ? 54 : 28) / 100;
+    const int countColumn = r.left + r.Width() * 68 / 100;
+    COLORREF bg, alt;
+    if (files)
     {
-        const int y0 = r.top + 2 + rowH + static_cast<int>(i) * rowH;
-        if (y0 >= r.bottom) break;
-        const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
+        bg = dark ? RGB(26, 24, 22) : RGB(255, 254, 249);
+        alt = dark ? RGB(34, 32, 28) : RGB(247, 245, 240);
+        DrawPaneHeader(dc, r, rowH, { firstColumnEnd, r.right });
+    }
+    else
+    {
+        bg = dark ? RGB(22, 24, 26) : RGB(249, 252, 255);
+        alt = dark ? RGB(28, 30, 36) : RGB(241, 245, 252);
+        DrawPaneHeader(dc, r, rowH, { firstColumnEnd, countColumn, r.right });
+    }
 
-        CRect rowR(r.left, y0, r.right, y1);
-        dc.FillSolidRect(rowR, i % 2 ? alt : bg);
-
-        const int ix = r.left + 2 + row.ind * indU;
-        const int iy = y0 + (rowH - iSz + 1) / 2;
-
-        if (ix + iSz < pColX - 2)
+    // Paint the visible sample rows with the same spacing and alternating backgrounds in both lists.
+    const int count = static_cast<int>(files ? fileRows.size() : typeColors.size());
+    for (int i = 0, top = r.top + rowH + 2; i < count && top < r.bottom; ++i, top += rowH)
+    {
+        dc.FillSolidRect(r.left, top, r.Width(), std::min<int>(rowH, r.bottom - top), i % 2 ? alt : bg);
+        const int y = top + (rowH - icon + 1) / 2;
+        const auto drawText = [&](const int x, const int width, const int seed)
         {
-            CRect ico(ix, iy, ix + iSz, iy + iSz);
-            dc.FillSolidRect(ico, folio);
+            if (width > 2) dc.FillSolidRect(x, y + (textH - 1) / 2, std::max(2, width - seed % 4), 1,
+                dark ? RGB(204, 204, 204) : RGB(52, 52, 52));
+        };
+
+        if (files)
+        {
+            const auto [indent, fraction] = fileRows[i];
+            const int x = r.left + 2 + indent * std::max(2, r.Width() / 9);
+            if (x + icon < firstColumnEnd - 2) dc.FillSolidRect(x, y, icon, icon, RGB(228, 178, 36));
+            const int textX = x + icon + 2;
+            drawText(textX, (firstColumnEnd - textX - 2) * 2 / 3, i);
+            const int width = static_cast<int>((r.right - firstColumnEnd - 2) * fraction);
+            const int colors = std::clamp(static_cast<int>(COptions::FileTreeColorCount), 1, TREELISTCOLORCOUNT);
+            if (width > 0) dc.FillSolidRect(firstColumnEnd, y, width, textH, COptions::FileTreeColors[i % colors]);
         }
-
-        const int tx  = ix + iSz + 2;
-        const int txW = (pColX - tx - 2) * 2 / 3;
-        if (tx < pColX - 4 && txW > 2)
+        else
         {
-            const CRect txt(tx, iy, std::min(tx + txW, pColX - 2), iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, txt, static_cast<int>(i));
-        }
-
-        const int pw = static_cast<int>((r.right - pColX - 2) * row.pf);
-        if (pw > 0)
-        {
-            CRect bar(pColX, iy, pColX + pw, iy + std::max(2, iSz - 1));
-            dc.FillSolidRect(bar, GetFileTreeColor(static_cast<int>(i)));
+            const int x = r.left + 2;
+            if (x + icon < countColumn - 2) dc.FillSolidRect(x, y, icon, icon, typeColors[i]);
+            const int textX = x + icon + 2;
+            if (textX < countColumn - 4) drawText(textX, firstColumnEnd - textX, i);
+            const int descriptionX = firstColumnEnd + 2;
+            drawText(descriptionX, (countColumn - descriptionX - 2) * 3 / 4, i + 1);
+            drawText(countColumn + 2, (r.right - countColumn - 2) * 2 / 3, i + 2);
         }
     }
 }
 
-void CLayoutPopup::DrawFileTypesPane(CDC& dc, const CRect r) const
-{
-    const COLORREF bg    = DarkMode::IsDarkModeActive() ? RGB(22, 24, 26)    : RGB(249, 252, 255);
-    const COLORREF alt   = DarkMode::IsDarkModeActive() ? RGB(28, 30, 36)    : RGB(241, 245, 252);
-    const COLORREF hdrBg = GetPaneHeaderBackground();
-    const COLORREF sep   = GetPaneHeaderSeparator();
-
-    static constexpr std::array iconClr = {
-        RGB( 65, 115, 220),
-        RGB(185, 130,  40),
-        RGB( 45, 165,  80),
-        RGB( 55, 125, 200),
-        RGB(140, 140, 170),
-        RGB(190,  65,  65),
-        RGB( 45, 165, 165),
-        RGB(155,  65, 195),
-    };
-
-    const int rowH    = ScaleForDpi(7);
-    const int iSz     = std::max(3, rowH - 2);
-    const int extColW = r.Width() * 28 / 100;
-    const int numColX = r.left + r.Width() * 68 / 100;
-
-    DrawPaneHeader(dc, r, rowH, hdrBg, sep);
-    DrawHeaderText(dc, CRect(r.left, r.top, r.left + extColW, r.top + rowH), 0);
-    DrawHeaderDivider(dc, r, rowH, r.left + extColW, sep);
-    DrawHeaderText(dc, CRect(r.left + extColW, r.top, numColX, r.top + rowH), 1);
-    DrawHeaderDivider(dc, r, rowH, numColX, sep);
-    DrawHeaderText(dc, CRect(numColX, r.top, r.right, r.top + rowH), 2);
-
-    for (const auto [i, clr] : std::views::enumerate(iconClr))
-    {
-        const int y0 = r.top + 2 + rowH + static_cast<int>(i) * rowH;
-        if (y0 >= r.bottom) break;
-        const int y1 = std::min(y0 + rowH, static_cast<int>(r.bottom));
-
-        CRect rowR(r.left, y0, r.right, y1);
-        dc.FillSolidRect(rowR, i % 2 ? alt : bg);
-
-        const int iy = y0 + (rowH - iSz + 1) / 2;
-
-        CRect ico(r.left + 2, iy, r.left + 2 + iSz, iy + iSz);
-        if (ico.right < numColX - 2)
-            dc.FillSolidRect(ico, clr);
-
-        const int extX = ico.right + 2;
-        const int extW = r.left + extColW - extX;
-        if (extX < numColX - 4 && extW > 2)
-        {
-            const CRect extR(extX, iy, extX + extW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, extR, static_cast<int>(i));
-        }
-
-        const int descX = r.left + extColW + 2;
-        const int descW = (numColX - descX - 2) * 3 / 4;
-        if (descX < numColX - 4 && descW > 2)
-        {
-            const CRect descR(descX, iy, descX + descW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, descR, static_cast<int>(i + 1));
-        }
-
-        const int numW = (r.right - numColX - 2) * 2 / 3;
-        if (numW > 2)
-        {
-            const CRect numR(numColX + 2, iy, numColX + 2 + numW, iy + std::max(2, iSz - 1));
-            DrawMiniText(dc, numR, static_cast<int>(i + 2));
-        }
-    }
-}
-
-void CLayoutPopup::DrawVisualizationPane(CDC& dc, const CRect r, int /*cardIdx*/) const
+void CLayoutPopup::DrawVisualizationPane(CDC& dc, const CRect r) const
 {
     static const std::unique_ptr<CItem> demoRoot = CTreeMap::BuildDemoTree();
     CTreeMap treeMap;
@@ -393,9 +298,9 @@ void CLayoutPopup::PaintCard(CDC& dc, const int idx) const
 
         switch (viewType)
         {
-        case VT_ALLFILES : DrawAllFilesPane (dc, pr);       break;
-        case VT_FILETYPES: DrawFileTypesPane(dc, pr);       break;
-        case VT_VISUALIZATION: DrawVisualizationPane(dc, pr, idx); break;
+        case VT_ALLFILES:
+        case VT_FILETYPES: DrawListPane(dc, pr, viewType); break;
+        case VT_VISUALIZATION: DrawVisualizationPane(dc, pr); break;
         }
     }
 

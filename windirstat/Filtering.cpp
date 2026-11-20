@@ -41,15 +41,20 @@ static bool IsRemotePattern(const std::wstring_view pattern)
     return StorageSource::IsPath(pattern) || pattern.starts_with(L'^') && StorageSource::IsPath(pattern.substr(1));
 }
 
-static bool CompareThreshold(const ULONGLONG value, const ULONGLONG threshold, const int comparison)
+static std::vector<std::wstring> FilterPatterns(const std::wstring& text)
 {
-    return comparison == 1 ? (value > threshold) : (value < threshold);
+    auto patterns = SplitString(text, L'\n');
+    for (auto& pattern : patterns) pattern.erase(pattern.find_last_not_of(L"\r\\") + 1);
+    std::erase(patterns, L"");
+    return patterns;
 }
 
-static bool CompareFileAge(const FILETIME& lastWriteTime, const FILETIME& cutoff, const int comparison)
+static bool MatchesAny(const std::wstring_view value, const std::vector<std::wregex>& patterns)
 {
-    const int lastWriteCmp = CompareFileTime(&lastWriteTime, &cutoff);
-    return comparison == 1 ? (lastWriteCmp < 0) : (lastWriteCmp > 0);
+    return std::ranges::any_of(patterns, [&](const auto& pattern)
+    {
+        return std::regex_match(value.begin(), value.end(), pattern);
+    });
 }
 
 // Extracts the longest fixed-path prefix from an include-dir pattern that can
@@ -154,10 +159,8 @@ std::wregex CFiltering::CompilePattern(const std::wstring& pattern, const bool u
 std::optional<std::wstring> CFiltering::ValidateFilters(
     const std::wstring& text, const bool useRegex, const bool pathFilter)
 {
-    for (auto& token : SplitString(text, L'\n'))
+    for (const auto& token : FilterPatterns(text))
     {
-        while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
-        if (token.empty()) continue;
         try { CompilePattern(token, useRegex, pathFilter); }
         catch (const std::regex_error&) { return token; }
     }
@@ -182,13 +185,10 @@ void CFiltering::CompileFilters()
         const bool isIncludeDirs = &optionRegex.get() == &IncludeDirsRegex;
         const bool isExcludeDirs = &optionRegex.get() == &ExcludeDirsRegex;
         const bool isPathFilter = isIncludeDirs || isExcludeDirs;
-        for (auto& token : SplitString(optionString, L'\n'))
+        for (const auto& token : FilterPatterns(optionString))
         {
             try
             {
-                while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
-                if (token.empty()) continue;
-
                 optionRegex.get().push_back(CompilePattern(token, COptions::FilteringUseRegex, isPathFilter));
 
                 if (isIncludeDirs)
@@ -246,13 +246,7 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
 {
     if (patterns.empty()) return false;
 
-    const auto matches = [&patterns](std::wstring_view candidate)
-    {
-        return std::ranges::any_of(patterns,
-        [&candidate](const auto& pattern) { return std::regex_match(candidate.begin(), candidate.end(), pattern); });
-    };
-
-    if (matches(path)) return true;
+    if (MatchesAny(path, patterns)) return true;
 
     // Match remote ancestors at URI boundaries, preserving connection options after each candidate path.
     if (StorageSource::IsPath(path))
@@ -263,7 +257,8 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
         const auto rootEnd = candidate.find(L'/', candidate.find(L"://") + 3);
         for (;;)
         {
-            if (matches(candidate) || (!options.empty() && matches(candidate + options))) return true;
+            if (MatchesAny(candidate, patterns) || (!options.empty() && MatchesAny(candidate + options, patterns)))
+                return true;
             if (candidate.ends_with(L'/')) { candidate.pop_back(); continue; }
             const auto slash = candidate.rfind(L'/');
             if (slash == candidate.npos || slash < rootEnd) return false;
@@ -272,7 +267,7 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
     }
 
     const std::wstring_view trimmed = WithoutTrailingBackslashes(path);
-    return trimmed != path && matches(trimmed);
+    return trimmed != path && MatchesAny(trimmed, patterns);
 }
 
 bool CFiltering::IsFilteredOut(const std::wstring& directoryName, const bool scanRoot)
@@ -316,25 +311,18 @@ bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstr
     if (!FilterActive) return false;
 
     // Exclude files beyond the size threshold based on comparison selection
-    if (SizeMinimumCalculated > 0 &&
-        CompareThreshold(fileSizeLogical, SizeMinimumCalculated, COptions::FilteringSizeComparison))
-    {
-        return true;
-    }
+    if (SizeMinimumCalculated > 0 && (COptions::FilteringSizeComparison == 1
+        ? fileSizeLogical > SizeMinimumCalculated : fileSizeLogical < SizeMinimumCalculated)) return true;
 
     // Exclude files outside the max-age cutoff based on comparison selection
     if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
     {
-        if (CompareFileAge(lastWriteTime, MaxAgeFileTimeCutoff, COptions::FilteringMaxAgeComparison))
-            return true;
+        const auto ageOrder = CompareFileTime(&lastWriteTime, &MaxAgeFileTimeCutoff);
+        if (COptions::FilteringMaxAgeComparison == 1 ? ageOrder < 0 : ageOrder > 0) return true;
     }
 
     // Exclude files matching name filter
-    if (!ExcludeFilesRegex.empty() && std::ranges::any_of(ExcludeFilesRegex,
-        [&fileName](const auto& pattern) { return std::regex_match(fileName.begin(), fileName.end(), pattern); }))
-    {
-        return true;
-    }
+    if (MatchesAny(fileName, ExcludeFilesRegex)) return true;
 
     // Include only files whose path matches the include directory filter
     if (!directoryIncluded && !IncludeDirsRegex.empty() && !MatchesAnyPath(filePath, IncludeDirsRegex))
@@ -343,13 +331,7 @@ bool CFiltering::IsFilteredOut(const std::wstring_view fileName, const std::wstr
     }
 
     // Include only files whose name matches the include name filter
-    if (!IncludeFilesRegex.empty() && std::ranges::none_of(IncludeFilesRegex,
-        [&fileName](const auto& pattern) { return std::regex_match(fileName.begin(), fileName.end(), pattern); }))
-    {
-        return true;
-    }
-
-    return false;
+    return !IncludeFilesRegex.empty() && !MatchesAny(fileName, IncludeFilesRegex);
 }
 
 bool CFiltering::IsFilteredOut(const CItem* item)

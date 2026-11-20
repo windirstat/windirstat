@@ -164,19 +164,20 @@ std::span<const RouteEntry> CPropertySheet::Routes()
 bool CPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 {
     if (m_applying) return true;
-    const UINT id = LOWORD(wParam);
-    if (id == IDOK)
+    switch (const UINT id = LOWORD(wParam))
     {
-        if (ApplyPages(id)) RequestModalExit(IDOK);
+    case IDOK:
+        if (ApplyPages(id)) RequestModalExit(id);
         return true;
-    }
-    if (id == IDCANCEL) { RequestModalExit(IDCANCEL); return true; }
-    if (id == ID_APPLY_NOW)
-    {
+    case IDCANCEL:
+        RequestModalExit(id);
+        return true;
+    case ID_APPLY_NOW:
         ApplyPages(id);
         return true;
+    default:
+        return CWnd::OnCommand(wParam, lParam);
     }
-    return CWnd::OnCommand(wParam, lParam);
 }
 
 bool CPropertySheet::EnsurePageCreated(const int i)
@@ -223,9 +224,8 @@ bool CPropertySheet::ActivatePage(const int active)
 void CPropertySheet::SyncTabSelection(const int active)
 {
     if (m_tab.GetActiveTab() == active) return;
-    m_syncingTabSelection = true;
+    const ScopedValue syncing(m_syncingTabSelection, true);
     m_tab.SelectTab(active);
-    m_syncingTabSelection = false;
 }
 
 bool CPropertySheet::ApplyPages(const UINT command)
@@ -308,19 +308,17 @@ bool CPropertySheet::OnInitDialog()
     // Buttons (bottom-right: OK, Cancel, Apply)
     const int btnY = pageY + maxH + gap;
     int bx = margin + maxW - 3 * btnW - 2 * btnGap;
-    const auto createButton = [this, btnY, btnW, btnH](const int x, const UINT id, const LPCWSTR text, const DWORD style)
-        {
-            const HWND button = CreateWindowExW(0, WC_BUTTONW, text, WS_CHILD | WS_VISIBLE | WS_TABSTOP | style,
-                x, btnY, btnW, btnH, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(id)),
-                GetAppInstance(), nullptr);
-            ::SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(button)), true);
-            return button;
-        };
-    createButton(bx, IDOK, L"IDS_GENERIC_OK", BS_DEFPUSHBUTTON);
-    bx += btnW + btnGap;
-    createButton(bx, IDCANCEL, L"IDS_GENERIC_CANCEL", BS_PUSHBUTTON);
-    bx += btnW + btnGap;
-    m_applyButton = createButton(bx, ID_APPLY_NOW, L"IDS_GENERIC_APPLY", BS_PUSHBUTTON);
+    for (const auto& [id, text] : { std::pair{ IDOK, L"IDS_GENERIC_OK" },
+        { IDCANCEL, L"IDS_GENERIC_CANCEL" }, { ID_APPLY_NOW, L"IDS_GENERIC_APPLY" } })
+    {
+        const DWORD style = id == IDOK ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON;
+        const HWND button = CreateWindowExW(0, WC_BUTTONW, text, WS_CHILD | WS_VISIBLE | WS_TABSTOP | style,
+            bx, btnY, btnW, btnH, m_hWnd, reinterpret_cast<HMENU>(static_cast<UINT_PTR>(id)),
+            GetAppInstance(), nullptr);
+        ::SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(button)), true);
+        if (id == ID_APPLY_NOW) m_applyButton = button;
+        bx += btnW + btnGap;
+    }
 
     if (GetPageCount() > 0) SelectPage(0);
     UpdateApplyButton();
