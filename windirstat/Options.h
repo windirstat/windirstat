@@ -43,15 +43,17 @@ enum class GraphPane : std::uint8_t
     TreeMap,
     FlameGraph,
     Sunburst,
+    PieChart,
 };
 
 // GraphPaneStyle historically stored treemap layouts (0, 1, 4, 5) alongside
-// flame graph (2) and sunburst (3). Decode those values while keeping the
+// flame graph (2), sunburst (3) and pie chart (6). Decode those values while keeping the
 // runtime pane model independent from TreeMapLayout::Style.
 constexpr GraphPane DecodeGraphPane(const int persisted) noexcept
 {
     if (persisted == 2) return GraphPane::FlameGraph;
     if (persisted == 3) return GraphPane::Sunburst;
+    if (persisted == 6) return GraphPane::PieChart;
     return GraphPane::TreeMap;
 }
 
@@ -62,11 +64,12 @@ constexpr int EncodeGraphPane(const GraphPane pane) noexcept
     case GraphPane::TreeMap: return 0;
     case GraphPane::FlameGraph: return 2;
     case GraphPane::Sunburst: return 3;
+    case GraphPane::PieChart: return 6;
     }
     return 0;
 }
 
-constexpr int MaxPersistedGraphPane = 5;
+constexpr int MaxPersistedGraphPane = 6;
 
 // Layout view types
 enum LAYOUT_VIEW_TYPE : char

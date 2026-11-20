@@ -9,10 +9,12 @@
 #include "TreeMapView.h"
 #include "FlameGraphView.h"
 #include "SunburstView.h"
+#include "PieChartView.h"
 
 static_assert(std::to_underlying(GraphPane::TreeMap) == 0
     && std::to_underlying(GraphPane::FlameGraph) == 1
-    && std::to_underlying(GraphPane::Sunburst) == 2);
+    && std::to_underlying(GraphPane::Sunburst) == 2
+    && std::to_underlying(GraphPane::PieChart) == 3);
 
 CVisualizationPane::~CVisualizationPane()
 {
@@ -39,6 +41,7 @@ int CVisualizationPane::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CFlameGraphView>(); },
             WS_CHILD | WS_VSCROLL },
         ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CSunburstView>(); }, WS_CHILD },
+        ViewDefinition{ []() -> std::unique_ptr<CGraphView> { return std::make_unique<CPieChartView>(); }, WS_CHILD },
     };
 
     for (const auto [index, def] : std::views::enumerate(definitions))
@@ -69,6 +72,20 @@ void CVisualizationPane::SelectPane(const GraphPane pane)
         {
             previous->ShowWindow(SW_HIDE);
             previous->TrimRenderCache();
+
+            // The pie drills into the directory selected in the file tree; leaving
+            // it clears that selection marker so the list no longer points at it.
+            if (m_activePane == GraphPane::PieChart)
+            {
+                const CItem* root = static_cast<CPieChartView*>(previous)->ReleaseRoot();
+                auto* tree = CFileTreeControl::Get();
+                if (root != nullptr && tree != nullptr &&
+                    std::ranges::contains(tree->GetAllSelected<CItem>(), root))
+                {
+                    tree->DeselectAll();
+                    tree->PostSelectionChanged();
+                }
+            }
         }
         m_activePane = pane;
     }

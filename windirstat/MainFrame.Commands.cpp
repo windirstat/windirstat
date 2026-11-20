@@ -543,7 +543,12 @@ void CMainFrame::OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const
 
 static GraphPane GraphPaneForCommand(const UINT commandId)
 {
-    return commandId == ID_VIEW_FLAMEGRAPH ? GraphPane::FlameGraph : GraphPane::Sunburst;
+    switch (commandId)
+    {
+    case ID_VIEW_FLAMEGRAPH: return GraphPane::FlameGraph;
+    case ID_VIEW_PIECHART: return GraphPane::PieChart;
+    default: return GraphPane::Sunburst;
+    }
 }
 
 void CMainFrame::OnViewGraphPane(const UINT commandId)
