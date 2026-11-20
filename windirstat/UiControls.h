@@ -328,6 +328,11 @@ public:
 
 };
 
+class CDarkHeaderListCtrl final : public CListCtrl
+{
+    MessageResult OnNotify(WPARAM wParam, LPARAM lParam) override;
+};
+
 // -----------------------------------------------------------------------------
 //  CWaitCursor
 // -----------------------------------------------------------------------------

@@ -37,6 +37,7 @@ public sealed class WdsStorageFixture
     private string azureEndpoint, davEndpoint;
     private long signed, rejected, downloads, retries, delayed, deletions, deleted, deleteDelayed;
     private long listings, flatListings, batches, storageConnections, activeDav, maxActiveDav;
+    private readonly ConcurrentDictionary<long, byte> activeStorageConnections = new();
 
     private sealed record Request(string Method, string Path, string RawQuery,
         Dictionary<string, string> Headers, Dictionary<string, string> Query, byte[] Body);
@@ -98,11 +99,11 @@ public sealed class WdsStorageFixture
         using (client)
         using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
         {
+            long storageConnection = 0;
             try
             {
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.Latin1, false, 4096, true);
-                bool storageConnection = false;
                 while (true)
                 {
                     string first = await reader.ReadLineAsync(timeout.Token);
@@ -125,10 +126,10 @@ public sealed class WdsStorageFixture
                     int question = line[1].IndexOf('?');
                     string path = question < 0 ? line[1] : line[1][..question];
                     string query = question < 0 ? "" : line[1][(question + 1)..];
-                    if (!path.StartsWith("/__", StringComparison.Ordinal) && !storageConnection)
+                    if (!path.StartsWith("/__", StringComparison.Ordinal) && storageConnection == 0)
                     {
-                        storageConnection = true;
-                        Interlocked.Increment(ref storageConnections);
+                        storageConnection = Interlocked.Increment(ref storageConnections);
+                        activeStorageConnections.TryAdd(storageConnection, 0);
                     }
                     var response = await Respond(new(line[0], path, query, headers, ParseQuery(query),
                         Encoding.Latin1.GetBytes(body)));
@@ -143,6 +144,10 @@ public sealed class WdsStorageFixture
             catch (Exception error) when (error is IOException or SocketException or OperationCanceledException)
             {
                 // A cancelled scan closes its connection before the delayed fixture response is sent.
+            }
+            finally
+            {
+                if (storageConnection != 0) activeStorageConnections.TryRemove(storageConnection, out _);
             }
         }
     }
@@ -177,6 +182,7 @@ public sealed class WdsStorageFixture
                 deleted = Interlocked.Read(ref deleted), deleteSlow = Interlocked.Read(ref deleteDelayed),
                 listings = Interlocked.Read(ref listings), flatListings = Interlocked.Read(ref flatListings),
                 batches = Interlocked.Read(ref batches), storageConnections = Interlocked.Read(ref storageConnections),
+                activeStorageConnections = activeStorageConnections.Keys.ToArray(),
                 maxActiveDav = Interlocked.Read(ref maxActiveDav)
             });
             if (request.Path == "/__deletions")
@@ -265,7 +271,7 @@ public sealed class WdsStorageFixture
             Interlocked.Increment(ref downloads);
             return new(405, "");
         }
-        if (dav && request.Headers.GetValueOrDefault("Depth") != "1") return new(400, "");
+        if (dav && request.Headers.GetValueOrDefault("Depth") is not ("0" or "1")) return new(400, "");
         if (s3 && request.Path == "/windirstat-delete" && deleteMode == "list-failure" &&
             !query.ContainsKey("delimiter") && query.ContainsKey("continuation-token")) return new(403, "");
         Interlocked.Increment(ref listings);
@@ -285,11 +291,8 @@ public sealed class WdsStorageFixture
             {
                 await Task.Delay(200);
                 string prefix = "/" + mode + "/";
-                string Collection(string key) => "<d:response><d:href>" + key +
-                    "</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype>" +
-                    "</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
-                var xml = new StringBuilder("<d:multistatus xmlns:d=\"DAV:\">" + Collection(prefix));
-                if (mode == "parallel") for (int i = 0; i < 12; ++i) xml.Append(Collection(prefix + $"dir-{i}/"));
+                var xml = new StringBuilder("<d:multistatus xmlns:d=\"DAV:\">" + DavCollection(prefix));
+                if (mode == "parallel") for (int i = 0; i < 12; ++i) xml.Append(DavCollection(prefix + $"dir-{i}/"));
                 else xml.Append("<d:response><d:href>" + prefix + "file.txt</d:href><d:propstat><d:prop>" +
                     "<d:resourcetype/><d:getcontentlength>1</d:getcontentlength></d:prop>" +
                     "<d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>");
@@ -316,7 +319,7 @@ public sealed class WdsStorageFixture
             Interlocked.Increment(ref delayed);
             await Task.Delay(s3 ? 15000 : 10000);
         }
-        return s3 ? S3Listing(request, mode) : dav ? DavListing(mode) : AzureListing(mode);
+        return s3 ? S3Listing(request, mode) : dav ? DavListing(mode, request.Headers["Depth"] == "0") : AzureListing(mode);
     }
 
     private static Response Json(object value) => new(200, JsonSerializer.Serialize(value), "application/json");
@@ -401,9 +404,10 @@ public sealed class WdsStorageFixture
         {
             // S3 form-encodes listed keys, so a space arrives as a plus.
             string key = Xml(Uri.EscapeDataString(entry.Key).Replace("%20", "+"));
+            string modified = entry.Key == "folder/visible.txt" ? "2026-07-01T00:00:00.000Z" : Modified;
             if (entry.Value) xml.Append("<CommonPrefixes><Prefix>" + key + "</Prefix></CommonPrefixes>");
             else xml.Append($"<Contents><Key>{key}</Key><Size>{sizes[entry.Key]}</Size>" +
-                $"<LastModified>{Modified}</LastModified></Contents>");
+                $"<LastModified>{modified}</LastModified></Contents>");
         }
         if (more)
         {
@@ -425,28 +429,28 @@ public sealed class WdsStorageFixture
             "<NextMarker>" + marker + "</NextMarker></EnumerationResults>");
     }
 
-    private static Response DavListing(string mode)
+    private static string DavCollection(string href) =>
+        "<d:response><d:href>" + Xml(href) + "</d:href><d:propstat><d:prop>" +
+        "<d:resourcetype><d:collection/></d:resourcetype></d:prop>" +
+        "<d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
+
+    private static Response DavListing(string mode, bool selfOnly)
     {
         // Exercise self-collection metadata, unrepresentable names, and collection work queued before an error.
         string prefix = "/" + mode + "/";
-        string self = "<d:response><d:href>" + prefix + "</d:href><d:propstat><d:prop>" +
-            "<d:resourcetype><d:collection/></d:resourcetype></d:prop>" +
-            "<d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
-        if (mode == "delete-partial") self += "<d:response><d:href>" + prefix +
-            "locked/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype>" +
-            "</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
+        string self = DavCollection(prefix);
+        if (!selfOnly && mode == "delete-partial") self += DavCollection(prefix + "locked/");
         if (mode == "empty-date")
         {
             self = self.Replace("</d:prop>",
                 "<d:getlastmodified>Wed, 01 Jan 2025 00:00:00 GMT</d:getlastmodified></d:prop>");
-            return new(207, "<d:multistatus xmlns:d=\"DAV:\">" + self + "</d:multistatus>");
         }
+        if (selfOnly || mode == "empty-date")
+            return new(207, "<d:multistatus xmlns:d=\"DAV:\">" + self + "</d:multistatus>");
         string href = prefix + "file.txt";
         if (mode is "oversize" or "oversize-queued") href = prefix + new string('a', 65536);
         if (mode == "oversize-escaped") href = prefix + string.Concat(Enumerable.Repeat("%25", 22000));
-        if (mode == "oversize-queued") self += "<d:response><d:href>" + prefix +
-            "dir/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>" +
-            "<d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
+        if (mode == "oversize-queued") self += DavCollection(prefix + "dir/");
         if (mode == "foreign") href = "https://unrelated.invalid/file.txt";
         if (mode == "escape") href = prefix + "../file.txt";
         string size = mode == "missing-metadata" ? "" : "<d:getcontentlength>23</d:getcontentlength>";
@@ -498,13 +502,28 @@ public sealed class WdsStorageFixture
         response.EnsureSuccessStatusCode();
     }
 
+    private static HttpClient CreateSeedClient() =>
+        new(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false })
+            { Timeout = TimeSpan.FromSeconds(30) };
+
+    private static Task SeedObjects(HttpClient client, SortedDictionary<string, int> objects,
+        string azureContainer, string dav, Func<string, bool> includeDav)
+    {
+        return Parallel.ForEachAsync(objects, new ParallelOptions { MaxDegreeOfParallelism = 16 }, async (entry, _) =>
+        {
+            string name = string.Join("/", entry.Key.Split('/').Select(Uri.EscapeDataString));
+            byte[] data = Enumerable.Repeat((byte)'x', entry.Value).ToArray();
+            await Put(client, azureContainer, name, data, true);
+            if (includeDav(entry.Key)) await Put(client, dav, name, data, false);
+        });
+    }
+
     private async Task Seed(string azure, string dav)
     {
         // Populate the actual storage servers through authenticated HTTP requests, keeping fixture endpoints private.
         azureEndpoint = azure;
         davEndpoint = new Uri(new Uri(dav), "../delete/").AbsoluteUri;
-        using var handler = new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        using var client = CreateSeedClient();
         for (int attempt = 0; ; attempt++)
         {
             try
@@ -520,14 +539,7 @@ public sealed class WdsStorageFixture
         }
         foreach (string folder in new[] { "bulk", "unicode", "folder", "empty-folder" })
             await Put(client, dav, folder + "/", Array.Empty<byte>(), false, "MKCOL");
-        await Parallel.ForEachAsync(azureManifest, new ParallelOptions { MaxDegreeOfParallelism = 16 },
-        async (entry, cancellation) =>
-        {
-            string name = string.Join("/", entry.Key.Split('/').Select(Uri.EscapeDataString));
-            byte[] data = Enumerable.Repeat((byte)'x', entry.Value).ToArray();
-            await Put(client, azure, "/objects/" + name, data, true);
-            if (manifest.ContainsKey(entry.Key)) await Put(client, dav, name, data, false);
-        });
+        await SeedObjects(client, azureManifest, azure + "/objects/", dav, manifest.ContainsKey);
     }
 
     private async Task SeedDeletion(bool late)
@@ -546,6 +558,8 @@ public sealed class WdsStorageFixture
         {
             if (!late)
             {
+                objects.Add("log?.txt", 1);
+                objects.Add("log1.txt", 2);
                 objects.Add("same/", 11);
                 objects.Add("empty/", 17);
                 objects.Add("invalid/control\u0001.bin", 1);
@@ -564,22 +578,14 @@ public sealed class WdsStorageFixture
             }
             return;
         }
-        using var handler = new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        using var client = CreateSeedClient();
         await Put(client, azureEndpoint, "/deleteobjects?restype=container", Array.Empty<byte>(), true, existing: true);
         if (!late)
         {
             foreach (string folder in new[] { "bulk", "unicode", "odd", "same", "folder", "folder/nested", "empty" })
                 await Put(client, davEndpoint, folder + "/", Array.Empty<byte>(), false, "MKCOL", true);
         }
-        await Parallel.ForEachAsync(objects, new ParallelOptions { MaxDegreeOfParallelism = 16 },
-        async (entry, cancellation) =>
-        {
-            string name = string.Join("/", entry.Key.Split('/').Select(Uri.EscapeDataString));
-            byte[] data = Enumerable.Repeat((byte)'x', entry.Value).ToArray();
-            await Put(client, azureEndpoint, "/deleteobjects/" + name, data, true);
-            if (entry.Key != "same") await Put(client, davEndpoint, name, data, false);
-        });
+        await SeedObjects(client, objects, azureEndpoint + "/deleteobjects/", davEndpoint, key => key != "same");
         if (late) return;
         foreach (string marker in new[] { "same/", "empty/" })
             await Put(client, azureEndpoint, "/deleteobjects/" + marker, new byte[11], true);

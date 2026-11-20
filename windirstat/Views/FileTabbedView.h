@@ -10,78 +10,27 @@
 #include "WinDirStatPane.h"
 #include "FileTreeView.h"
 
-class CStorageAnalyticsView;
+enum class FileTab { Tree, Largest, Duplicates, Search, Watcher, Permissions, StorageAnalytics };
 
 class CFileTabbedView final : public MessageTarget<CFileTabbedView, CWinDirStatPane>
 {
 public:
-    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTreeViewIndex; }
-    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileDupeViewIndex; }
-    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
-    bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileSearchViewIndex; }
-    bool IsFileWatcherViewTabActive() { return GetTabControl().GetActiveTab() == m_fileWatcherViewIndex; }
-    bool IsFilePermsViewTabActive() { return GetTabControl().GetActiveTab() == m_filePermsViewIndex; }
-    bool IsStorageAnalyticsViewTabActive() { return GetTabControl().GetActiveTab() == m_storageAnalyticsViewIndex; }
-    CFileTopView* GetFileTopView() const { return m_fileTopView; }
-    CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
-    CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }
-    CFileSearchView* GetFileSearchView() const { return m_fileSearchView; }
-    CFileWatcherView* GetFileWatcherView() const { return m_fileWatcherView; }
-    CFilePermsView* GetFilePermsView() const { return m_filePermsView; }
-    CStorageAnalyticsView* GetStorageAnalyticsView() const { return m_storageAnalyticsView; }
-    void SetActiveFileTreeView() { SetActiveView(m_fileTreeViewIndex); }
-    void SetActiveTopView() { SetActiveView(m_fileTopViewIndex); }
-    void SetActiveDupeView() { SetActiveView(m_fileDupeViewIndex); }
-    void SetActiveSearchView() { SetActiveView(m_fileSearchViewIndex); }
-    void SetActiveWatcherView() { SetActiveView(m_fileWatcherViewIndex); }
-    void SetActivePermsView() { SetActiveView(m_filePermsViewIndex); }
-    void SetActiveStorageAnalyticsView() { SetActiveView(m_storageAnalyticsViewIndex); }
-    void SetDupeTabVisibility(bool show = true);
-    void SetSearchTabVisibility(bool show = true);
-    void SetWatcherTabVisibility(bool show = true);
-    void SetPermsTabVisibility(bool show = true);
-    void SetStorageAnalyticsTabVisibility(bool show = true);
-    bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_fileDupeViewIndex); }
-    bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_fileSearchViewIndex); }
-    bool IsWatcherTabVisible() { return GetTabControl().IsTabVisible(m_fileWatcherViewIndex); }
-    bool IsPermsTabVisible() { return GetTabControl().IsTabVisible(m_filePermsViewIndex); }
-    bool IsStorageAnalyticsTabVisible() { return GetTabControl().IsTabVisible(m_storageAnalyticsViewIndex); }
-    bool CycleTab(bool forward);
-    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
-
-CFileTabbedView() = default;
     ~CFileTabbedView() override;
-    void OnInitialUpdate();
-    CTabControl& GetTabControl() { return m_tabControl; }
-    const CTabControl& GetTabControl() const { return m_tabControl; }
-    void SetActiveView(const int index) { m_tabControl.SelectTab(index); }
-    template<typename Pane>
-    Pane* AddPane(int& index, const std::wstring_view& tabLabel);
-    void ResetOptionalTabVisibility();
+    bool IsActive(FileTab tab) const { return m_tabControl.GetActiveTab() == std::to_underlying(tab); }
+    bool IsTabVisible(FileTab tab) const { return m_tabControl.IsTabVisible(std::to_underlying(tab)); }
+    CWnd* GetPane(FileTab tab) const { return m_tabControl.GetTabWindow(std::to_underlying(tab)); }
+    void SetActiveTab(FileTab tab) { m_tabControl.SelectTab(std::to_underlying(tab)); }
+    void SetTabVisible(FileTab tab, bool show);
+    void FocusActiveTabContent();
+    void OnUpdate(CWnd* sender, MODEL_CHANGE change, CItem* item) override;
+    static std::span<const RouteEntry> Routes();
 
-    // Used for storing and retrieving the various tab views
+private:
     CTabControl m_tabControl;
     std::vector<std::unique_ptr<CWinDirStatPane>> m_panes;
-    int m_fileTreeViewIndex = -1;
-    CFileTreeView* m_fileTreeView = nullptr;
-    int m_fileDupeViewIndex = -1;
-    CFileDupeView* m_fileDupeView = nullptr;
-    int m_fileTopViewIndex = -1;
-    CFileTopView* m_fileTopView = nullptr;
-    int m_fileSearchViewIndex = -1;
-    CFileSearchView* m_fileSearchView = nullptr;
-    int m_fileWatcherViewIndex = -1;
-    CFileWatcherView* m_fileWatcherView = nullptr;
-    int m_filePermsViewIndex = -1;
-    CFilePermsView* m_filePermsView = nullptr;
-    int m_storageAnalyticsViewIndex = -1;
-    CStorageAnalyticsView* m_storageAnalyticsView = nullptr;
+    void ResetOptionalTabVisibility();
+    bool CycleTab(bool forward);
 
-    void FocusActiveTabContent();
-
-static std::span<const RouteEntry> Routes();
-
-protected:
     int OnCreate(LPCREATESTRUCT lpCreateStruct);
     void OnSetFocus(WindowRef pOldWnd);
     void OnSize(UINT nType, int cx, int cy);

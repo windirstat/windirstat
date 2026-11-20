@@ -9,6 +9,17 @@
 // -----------------------------------------------------------------------------
 //  Class-owned theme drawing
 // -----------------------------------------------------------------------------
+MessageResult CDarkHeaderListCtrl::OnNotify(const WPARAM wParam, const LPARAM lParam)
+{
+    // Native headers need the dialog's text color in dark mode.
+    const auto header = reinterpret_cast<NMHDR*>(lParam);
+    if (!header || header->code != NM_CUSTOMDRAW || header->hwndFrom != GetHeader().Handle() ||
+        !DarkMode::IsDarkModeActive()) return CListCtrl::OnNotify(wParam, lParam);
+    const auto draw = reinterpret_cast<NMCUSTOMDRAW*>(header);
+    if (draw->dwDrawStage == CDDS_ITEMPREPAINT) ::SetTextColor(draw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
+    return draw->dwDrawStage == CDDS_PREPAINT ? CDRF_NOTIFYITEMDRAW : CDRF_DODEFAULT;
+}
+
 void CSplitterWnd::DrawBackground(CDC& dc, const CRect& rect) const
 {
     const COLORREF paneFace = DarkMode::SystemColor(DarkMode::IsDarkModeActive() ? COLOR_MENUBAR : COLOR_BTNFACE);

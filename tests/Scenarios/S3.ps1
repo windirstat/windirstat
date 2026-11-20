@@ -28,24 +28,13 @@ function Get-S3Target {
 function Assert-S3Objects {
     param([object[]] $Rows, [string] $Prefix = '', [string] $Bucket = 'windirstat-test')
     $manifest = (Invoke-WebRequest "$env:WDS_S3_TEST_ENDPOINT/__manifest").Content | ConvertFrom-Json -AsHashtable
-    $expected = @($manifest.Keys | Where-Object { $_.StartsWith($Prefix, [StringComparison]::Ordinal) } |
-        ForEach-Object { [pscustomobject]@{ Name = $_; Value = $manifest[$_] } })
+    $names = @($manifest.Keys | Where-Object { $_.StartsWith($Prefix, [StringComparison]::Ordinal) })
     $objects = @(Get-ReportFiles $Rows | Where-Object Name -Like 's3://*')
-    Assert-Equal $objects.Count $expected.Count 'Every object is represented once, including folder marker objects'
-    $actual = [Collections.Generic.Dictionary[string,long]]::new([StringComparer]::Ordinal)
-    foreach ($row in $objects) {
-        $key = [Uri]::UnescapeDataString(($row.Name -split '\?', 2)[0].Substring("s3://$Bucket/".Length))
-        Assert-True (-not $actual.ContainsKey($key)) "Object identity remains unique: $key"
-        $actual.Add($key, [long]$row.'Logical Size')
-    }
-    foreach ($entry in $expected) {
-        Assert-True $actual.ContainsKey($entry.Name) "Exact object key survives enumeration: $($entry.Name)"
-        Assert-Equal $actual[$entry.Name] ([long]$entry.Value) "Object byte count matches the server: $($entry.Name)"
-    }
-    $total = [long]($expected | Measure-Object Value -Sum).Sum
+    Assert-StorageObjectSizes $objects "s3://$Bucket/" $manifest $names
     if ($Rows[0].Name -like 's3://*') {
+        $total = [long]($names | ForEach-Object { $manifest[$_] } | Measure-Object -Sum).Sum
         Assert-Equal ([long]$Rows[0].'Logical Size') $total 'Prefix aggregation preserves the total object size'
-        Assert-Equal ([long]$Rows[0].Files) ([long]$expected.Count) 'Prefix aggregation preserves the object count'
+        Assert-Equal ([long]$Rows[0].Files) ([long]$names.Count) 'Prefix aggregation preserves the object count'
     }
     $stats = Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__stats"
     Assert-True ($stats.signed -gt 0) 'The fixture independently validates AWS Signature Version 4'
@@ -83,7 +72,7 @@ function Test-S3Credentials {
     $result = Invoke-TestProcess $runner @('/saveto', $out, $uri)
     Assert-Equal $result.ExitCode 1 'A rejected signature exits unsuccessfully instead of reporting an empty success'
     $rows = Read-ScanReport $out
-    Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+    Assert-True (Test-ReportIncomplete $rows[0]) `
         'The saved root records an incomplete scan after authentication failure'
 
     & cmdkey.exe ('/delete:WinDirStat/' + (Get-S3Target)) | Out-Null
@@ -163,12 +152,7 @@ function Test-S3SearchRefresh {
     $uri = Get-S3Target -Prefix 'same/'
     $app = Start-TestApp -Runner (New-S3Runner) -Roots @($uri, (Get-S3Target -Prefix 'unicode/'))
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '')
-    Set-DialogCheck $dialog 'IDC_SEARCH_FILES' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $Case.Folders
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '' -Files $true -Folders $Case.Folders
     $names = [NativeListViewHelper]::GetItemTexts($list)
     Assert-Equal ($names.Count - 1) $(if ($Case.Folders) { 5 } else { 3 }) `
         'The search includes the marker object and optionally its synthetic directory'
@@ -210,14 +194,7 @@ function Test-S3SearchRefreshAncestors {
     $other = Get-S3Target -Bucket 'windirstat-other' -Prefix 'unicode/'
     $app = Start-TestApp -Runner (New-S3Runner) -Roots @($root, $other)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '')
-    Set-DialogCheck $dialog 'IDC_SEARCH_FILES' $false
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_MIN'), '1')
-    [void][TestDesktop]::Message((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_UNITS'), 0x014E, 0)
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '' -Files $false -Folders $true -MinimumBytes 1
     $expected = @([NativeListViewHelper]::GetItemTexts($list) | Select-Object -Skip 1)
     $sizes = [NativeListViewHelper]::GetItemTexts($list, 2)
     $rootSize = [long]($sizes[(Find-AppRow $list $root)] -replace '\D', '')
@@ -270,29 +247,8 @@ function Test-S3ConnectionDialog {
         IDC_S3_REGION = 'us-east-1'; IDC_S3_ACCESS = 'windirstat-test'; IDC_REMOTE_SECRET = 'windirstat-test-secret'
         IDC_S3_TOKEN = 'temporary-test-token'
     }
-    foreach ($entry in $values.GetEnumerator()) {
-        [TestDesktop]::SetText((Get-DialogControl $dialog $entry.Key), $entry.Value)
-    }
-    foreach ($control in 'IDC_REMOTE_ENDPOINT', 'IDC_S3_REGION', 'IDC_S3_ACCESS', 'IDC_REMOTE_SECRET') {
-        $field = Get-DialogControl $dialog $control
-        [TestDesktop]::SetText($field, '')
-        Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($dialog, 1))) `
-            'S3 requires explicit settings and credentials even with valid environment defaults'
-        [TestDesktop]::SetText($field, $values[$control])
-    }
-    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($dialog, 1))) `
-        'S3 accepts supplied settings and credentials'
-    Select-CloudProvider $select 'WebDAV'
-    Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($select, 1))) `
-        'An incomplete provider cannot confirm another provider connection'
-    Select-CloudProvider $select 'S3'
-    foreach ($entry in $values.GetEnumerator()) {
-        if ($entry.Key -in 'IDC_REMOTE_SECRET', 'IDC_S3_TOKEN') { continue }
-        Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $select $entry.Key))) $entry.Value `
-            'Switching providers preserves unfinished connection fields'
-    }
-    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($select, 1))) `
-        'Returning to a valid source restores confirmation'
+    Assert-CloudConnectionFields $dialog 'S3' $values @(
+        'IDC_REMOTE_ENDPOINT', 'IDC_S3_REGION', 'IDC_S3_ACCESS', 'IDC_REMOTE_SECRET')
     if ($Case.Font -eq 100) {
         Set-DialogCheck $dialog 'IDC_REMOTE_REMEMBER' $true
         Add-Cleanup 'Remove fixture-only saved S3 credential' {
@@ -342,7 +298,7 @@ function Test-S3Failures {
         $result = Invoke-TestProcess $runner @('/saveto', $path, (Get-S3Target -Bucket "windirstat-$mode"))
         Assert-Equal $result.ExitCode 1 "$mode responses cannot be mistaken for a successful scan"
         $rows = Read-ScanReport $path
-        Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+        Assert-True (Test-ReportIncomplete $rows[0]) `
             "$mode results retain their incomplete state"
         if ($mode -eq 'partial') {
             Assert-True (@(Get-ReportFiles $rows).Count -gt 0) `
@@ -357,73 +313,22 @@ function Test-S3Failures {
         'A throttled listing is retried without duplicating objects'
 }
 
-function Test-S3RoundTrip {
-    param($Context, $Case)
-    $runner = New-S3Runner
-    $uri = Get-S3Target
-    $source = Invoke-ScanReport $runner @($uri) 'source' -Format $Case.Format
-    $app = Start-TestApp -Runner $runner -Arguments @('/loadfrom', (Join-Path $Context.Root "source.$($Case.Format)"))
-    $app.Roots = @($uri)
-    $loaded = Save-AppReport $app 'loaded' -Format $Case.Format
-    $fields = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Last Change', 'WinDirStat Attributes')
-    Assert-Sequence (Get-ReportSignature $loaded $fields) (Get-ReportSignature $source $fields) `
-        'S3 keys, synthetic prefixes, metadata, and counts survive save/reload exactly'
-    $list = Get-AppList $app -AllFiles
-    Select-AppRows $app $list @('unicode')
-    Assert-True (Get-AppCommandState $app 'ID_CLEANUP_DELETE').Enabled 'Remote prefixes support permanent deletion'
-    foreach ($command in 'ID_CLEANUP_DELETE_BIN', 'ID_CLEANUP_MOVE_TO', 'ID_CLEANUP_OPEN_SELECTED',
-        'ID_CLEANUP_OPEN_IN_CONSOLE', 'ID_COMPUTE_HASH') {
-        Assert-True (-not (Get-AppCommandState $app $command).Enabled) "$command is unavailable for remote prefixes"
-    }
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-AppIdle $app
-    Assert-S3Objects (Save-AppReport $app 'refreshed')
-    Assert-GraphRendered $app | Out-Null
-    Save-Frame ([TestDesktop]::Capture($app.Window)) (Join-Path $Context.Root 's3-results.png')
-}
-
 function Test-S3Cancellation {
     param($Context, $Case)
-    Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=1" | Out-Null
-    Add-Cleanup 'Reset slow S3 fixture' { Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=0" | Out-Null }
-    $before = (Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__stats").slow
     $uri = Get-S3Target -Bucket 'windirstat-slow' -Prefix 'unicode/'
-    $app = Start-TestApp -Runner (New-S3Runner) -Roots @($uri) -DuringScan
-    Wait-Until { (Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__stats").slow -gt $before } `
-        'The S3 request is awaiting a deliberately delayed response' | Out-Null
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
-    Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } `
-        'Pause cancels outstanding S3 I/O' -Seconds 5 | Out-Null
-    Assert-True ($watch.Elapsed.TotalSeconds -lt 5) 'Pause responds before the delayed server response arrives'
+    $app = Suspend-StorageTestScan $env:WDS_S3_TEST_ENDPOINT (New-S3Runner) $uri
     Invoke-AppCommand $app 'ID_SCAN_STOP'
     Wait-AppIdle $app
     $stopped = Save-AppReport $app 'stopped'
-    Assert-True (([Convert]::ToUInt32($stopped[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+    Assert-True (Test-ReportIncomplete $stopped[0]) `
         'Stopping remote enumeration preserves its incomplete state in saved scans'
     Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=0" | Out-Null
     Invoke-AppCommand $app 'ID_REFRESH_ALL'
     Wait-AppIdle $app
     $rows = Save-AppReport $app 'restarted'
     Assert-S3Objects $rows 'unicode/' 'windirstat-slow'
-    Assert-True (([Convert]::ToUInt32($rows[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -eq 0) `
+    Assert-True (-not (Test-ReportIncomplete $rows[0])) `
         'A successful replacement scan clears the incomplete state'
-}
-
-function Test-S3Resume {
-    param($Context, $Case)
-    Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=1" | Out-Null
-    Add-Cleanup 'Reset slow S3 fixture' { Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=0" | Out-Null }
-    $before = (Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__stats").slow
-    $app = Start-TestApp -Runner (New-S3Runner) -Roots @((Get-S3Target -Bucket 'windirstat-slow')) -DuringScan
-    Wait-Until { (Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__stats").slow -gt $before } `
-        'The paginated listing is awaiting a delayed response' | Out-Null
-    Invoke-AppCommand $app 'ID_SCAN_SUSPEND'
-    Wait-Until { (Get-AppCommandState $app 'ID_SCAN_RESUME').Enabled } 'The remote scan pauses' -Seconds 5 | Out-Null
-    Invoke-RestMethod "$env:WDS_S3_TEST_ENDPOINT/__control?slow=0" | Out-Null
-    Invoke-AppCommand $app 'ID_SCAN_RESUME'
-    Wait-AppIdle $app
-    Assert-S3Objects (Save-AppReport $app 'resumed') '' 'windirstat-slow'
 }
 
 function Test-S3DeletionFailure {
@@ -495,7 +400,7 @@ Register-Scenario s3.failures S3 'Access denial, malformed XML, partial paginati
     Test-S3Failures -Tags External -Requires @('Windows', 'S3')
 foreach ($format in @('csv', 'json')) {
     Register-Scenario "s3.roundtrip.$format" S3 'S3 save/reload, actions, rendering, and scoped refresh' `
-        Test-S3RoundTrip -Tags External -Requires @('Windows', 'Desktop', 'S3') -Data @{ Format = $format }
+        Test-StorageRoundTrip -Tags External -Requires Windows,Desktop,S3 -Data @{ Protocol = 's3'; Format = $format }
 }
 Register-Scenario s3.cancellation S3 'Pause, stop, and rescan while an S3 response is delayed' `
     Test-S3Cancellation -Tags External -Requires @('Windows', 'Desktop', 'S3')
@@ -511,7 +416,7 @@ foreach ($mode in 'denied', 'list-failure') {
 Register-Scenario s3.deletion.cancellation S3 'Cancellation interrupts remote deletion and preserves remaining selections' `
     Test-S3DeletionCancellation -Tags External -Requires Windows,Desktop,S3
 Register-Scenario s3.resume S3 'Resuming an interrupted paginated S3 listing preserves every object exactly once' `
-    Test-S3Resume -Tags External -Requires @('Windows', 'Desktop', 'S3')
+    Test-StorageResume -Tags External -Requires @('Windows', 'Desktop', 'S3') -Data @{ Protocol = 's3' }
 foreach ($font in 100, 200) {
     Register-Scenario "s3.connection.$font" S3 'Native connection editor and scanning at alternate text scales' `
         Test-S3ConnectionDialog -Tags External -Requires @('Windows', 'Desktop', 'S3') -Data @{ Font = $font }
@@ -519,6 +424,59 @@ foreach ($font in 100, 200) {
 
 Register-Scenario s3.recents S3 'Recent targets, credential isolation, removal, and persistence' `
     Test-StorageRecentTargets -Tags External,Persistence -Requires Windows,Desktop,S3 -Data @{ Protocol = 's3' }
+
+function Test-S3ScopedRefresh {
+    param($Context, $Case)
+    $endpoint = $env:WDS_S3_TEST_ENDPOINT
+    Invoke-RestMethod "$endpoint/__control?seed=delete&delete=" | Out-Null
+    $target = Get-StorageDeletionTarget 's3'
+    $runner = New-S3Runner -NoCredentials
+    Set-StorageTestCredential $target 'windirstat-test' 'windirstat-test-secret' 'temporary-test-token'
+    $before = (Invoke-RestMethod "$endpoint/__stats").storageConnections
+    $app = Start-TestApp -Runner $runner -Roots @($target) -Hidden
+    $list = Get-AppListWithRow $app 'folder' 'The remote tree is listed'
+    $select = {
+        param([string[]] $Names)
+        $indices = [int[]]@($Names | ForEach-Object { Find-AppRow $list $_ })
+        Assert-True ([NativeListViewHelper]::FocusListView($list) -and
+            [NativeListViewHelper]::SelectItems($list, $indices)) 'The requested remote rows are selected'
+    }
+    foreach ($name in 'folder', 'unicode') {
+        & $select $name
+        [void][NativeListViewHelper]::PostRight($list)
+        $child = if ($name -eq 'folder') { 'visible.txt' } else { 'café 雪.txt' }
+        Wait-Until { (Find-AppRow $list $child -Optional) -ge 0 } "Expanding the folder reveals $child" | Out-Null
+    }
+    $dates = [NativeListViewHelper]::GetItemTexts($list, 8)
+    $older = $dates[(Find-AppRow $list 'keep.txt')]
+    $newer = $dates[(Find-AppRow $list 'visible.txt')]
+    Assert-True ($older -and $newer -and $older -ne $newer) 'The fixture has two different modification times'
+    Assert-Equal $dates[(Find-AppRow $list $target)] $newer 'The newest descendant supplies the root date'
+    Wait-Until {
+        $active = (Invoke-RestMethod "$endpoint/__stats").activeStorageConnections
+        @($active | Where-Object { $_ -gt $before }).Count -eq 0
+    } 'The idle scan releases its own connections' -Seconds 5 | Out-Null
+
+    & $select @('visible.txt', 'café 雪.txt')
+    Invoke-AppCommand $app 'ID_CLEANUP_DELETE'
+    Wait-AppIdle $app
+    Assert-Equal (Find-AppRow $list 'unicode' -Optional) -1 'The last object disappearing removes its implicit prefix'
+    $dates = [NativeListViewHelper]::GetItemTexts($list, 8)
+    foreach ($name in 'folder', $target) {
+        Assert-Equal $dates[(Find-AppRow $list $name)] $older 'Scoped refresh lowers ancestor modification times'
+    }
+
+    & $select 'log?.txt'
+    Invoke-AppCommand $app 'ID_FILTER_EXCLUDE_ITEM'
+    Wait-AppIdle $app
+    Invoke-AppCommand $app 'ID_REFRESH_ALL'
+    Wait-AppIdle $app
+    Assert-True ((Find-AppRow $list 'log1.txt' -Optional) -ge 0) 'The other matching filename survives a full refresh'
+    Assert-Equal (Find-AppRow $list 'log?.txt' -Optional) -1 'A literal question mark can be excluded independently'
+}
+
+Register-Scenario s3.scoped-refresh S3 'Remote dates, implicit prefixes, literal names, and idle connections' `
+    Test-S3ScopedRefresh -Tags External -Requires Windows,NativeLists,S3
 
 function Test-S3FlatPlan {
     param($Context, $Case)
@@ -563,14 +521,14 @@ function Test-S3BranchRecovery {
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
     $partial = Save-AppReport $app 'still-partial' -Format $Case.Format
-    Assert-True (([Convert]::ToUInt32($partial[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -ne 0) `
+    Assert-True (Test-ReportIncomplete $partial[0]) `
         'Refreshing a healthy sibling retains the failed branch and aggregate incompleteness'
     Select-AppRows $app $list @('z-denied (Scan incomplete)')
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
     $recovered = Save-AppReport $app 'recovered' -Format $Case.Format
     Assert-Equal @(Get-ReportFiles $recovered).Count 2 'Refreshing the failed branch restores its objects'
-    Assert-True (([Convert]::ToUInt32($recovered[0].'WinDirStat Attributes'.Substring(2), 16) -band 0x4000) -eq 0) `
+    Assert-True (-not (Test-ReportIncomplete $recovered[0])) `
         'Successful branch refresh clears aggregate ancestor incompleteness'
 }
 
@@ -656,10 +614,7 @@ function Test-S3UnknownPhysical {
         'Mixed reports preserve known local bytes and unknown physical totals on reload'
     $app.Roots = @($target)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '')
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app ''
     Assert-Equal ([NativeListViewHelper]::GetItemTexts($list, 1)[0]) '' `
         'Search totals preserve unknown physical allocation'
     $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'

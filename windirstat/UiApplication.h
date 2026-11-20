@@ -109,11 +109,8 @@ public:
         {
             if (const auto point = GetClientCursorPos())
             {
-                wchar_t className[16]{};
                 if (const auto control = ChildWindowFromPoint(*point, CWP_SKIPINVISIBLE);
-                    control != nullptr && control.Handle() != m_hWnd &&
-                    GetClassNameW(control.m_hWnd, className, static_cast<int>(std::size(className))) != 0 &&
-                    _wcsicmp(className, WC_STATIC) == 0)
+                    control != nullptr && control.Handle() != m_hWnd && IsWindowClass(control, WC_STATIC))
                 {
                     if (const std::wstring value = control.GetText();
                         !value.empty() && CopyTextToClipboard(value)) return true;
@@ -242,7 +239,7 @@ public:
     int Run();
 
     static void RunTaskWithUiUpdates(const std::function<void()>& task);
-    static void WaitForHandleWithUiUpdates(HANDLE handle) noexcept;
+    static bool WaitForHandleWithUiUpdates(HANDLE handle) noexcept;
 
     void OnAppExit() const
     {

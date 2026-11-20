@@ -192,18 +192,14 @@ public:
 protected:
     void OnRefreshSelected();
     void OnRefreshAll();
-    void OnSaveResults() const;
-    void OnSaveDuplicates();
-    void OnSavePermissions();
+    void OnSaveReport(UINT commandId) const;
     void OnLoadResults();
     void OnEditCopy();
     void OnCleanupEmptyRecycleBin() const;
     void OnUpdateCentralHandler(CCmdUI* pCmdUI);
     void OnUpdateCompressionHandler(CCmdUI* pCmdUI);
-    void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
-    void OnViewShowFreeSpace();
-    void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
-    void OnViewShowUnknown();
+    void OnUpdateViewSpaceItem(CCmdUI* pCmdUI);
+    void OnViewSpaceItem(UINT commandId);
     void OnTreeMapZoomIn();
     void OnTreeMapZoomOut();
     void OnTreeMapZoomReset();
@@ -257,22 +253,16 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Command<&OnRefreshAll>(ID_REFRESH_ALL),
         Route::Update<&OnUpdateCentralHandler>(ID_REFRESH_ALL),
         Route::Command<&OnLoadResults>(ID_LOAD_RESULTS),
-        Route::Command<&OnSaveResults>(ID_SAVE_RESULTS),
-        Route::Update<&OnUpdateCentralHandler>(ID_SAVE_RESULTS),
-        Route::Command<&OnSaveDuplicates>(ID_SAVE_DUPLICATES),
-        Route::Update<&OnUpdateCentralHandler>(ID_SAVE_DUPLICATES),
-        Route::Command<&OnSavePermissions>(ID_SAVE_PERMISSIONS),
-        Route::Update<&OnUpdateCentralHandler>(ID_SAVE_PERMISSIONS),
+        Route::Command<&OnSaveReport>(ID_SAVE_DUPLICATES, ID_SAVE_RESULTS),
+        Route::Update<&OnUpdateCentralHandler>(ID_SAVE_DUPLICATES, ID_SAVE_RESULTS),
         Route::Command<&OnEditCopy>(ID_EDIT_COPY_CLIPBOARD),
         Route::Update<&OnUpdateCentralHandler>(ID_EDIT_COPY_CLIPBOARD),
         Route::Command<&OnCleanupEmptyRecycleBin>(ID_CLEANUP_EMPTY_BIN),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_EMPTY_BIN),
         Route::Command<&OnCleanupMoveTo>(ID_CLEANUP_MOVE_TO),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_MOVE_TO),
-        Route::Update<&OnUpdateViewShowFreeSpace>(ID_VIEW_SHOWFREESPACE),
-        Route::Command<&OnViewShowFreeSpace>(ID_VIEW_SHOWFREESPACE),
-        Route::Update<&OnUpdateViewShowUnknown>(ID_VIEW_SHOWUNKNOWN),
-        Route::Command<&OnViewShowUnknown>(ID_VIEW_SHOWUNKNOWN),
+        Route::Update<&OnUpdateViewSpaceItem>(ID_VIEW_SHOWFREESPACE, ID_VIEW_SHOWUNKNOWN),
+        Route::Command<&OnViewSpaceItem>(ID_VIEW_SHOWFREESPACE, ID_VIEW_SHOWUNKNOWN),
         Route::Command<&OnTreeMapZoomIn>(ID_TREEMAP_ZOOMIN),
         Route::Update<&OnUpdateCentralHandler>(ID_TREEMAP_ZOOMIN),
         Route::Command<&OnTreeMapZoomOut>(ID_TREEMAP_ZOOMOUT),

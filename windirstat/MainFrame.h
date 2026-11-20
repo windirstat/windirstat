@@ -172,12 +172,10 @@ public:
     std::unique_ptr<CFileTabbedView> m_fileTabbedView;
     std::unique_ptr<CExtensionView> m_extensionView;
     std::unique_ptr<CVisualizationPane> m_visualizationPane;
-    CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
-    CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
-    CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
-    CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
-    CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
-    CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
+    CFileTreeView* GetFileTreeView() const
+    {
+        return static_cast<CFileTreeView*>(m_fileTabbedView->GetPane(FileTab::Tree));
+    }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView.get(); }
     CExtensionView* GetExtensionView() const { return m_extensionView.get(); }
     GraphPane GetGraphPaneType() const;
@@ -270,8 +268,7 @@ protected:
     LRESULT OnMenuCommand(WPARAM position, LPARAM menuHandle);
     void OnSize(UINT nType, int cx, int cy);
     void OnUpdateViewShowVisualization(CCmdUI* pCmdUI) const;
-    void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
-    void OnUpdateTreeMapUsePhysical(CCmdUI* pCmdUI);
+    void OnUpdateViewTreeMapSize(CCmdUI* pCmdUI);
     void OnUpdateViewAbsolutePercentages(CCmdUI* pCmdUI);
     void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI) const;
     void OnUpdateViewGroupUnregisteredTypes(CCmdUI* pCmdUI) const;
@@ -281,22 +278,18 @@ protected:
     void OnUpdateViewTreeMapStyle(CCmdUI* pCmdUI) const;
     void OnViewGraphPreset(UINT commandId);
     void OnUpdateViewGraphPreset(CCmdUI* pCmdUI) const;
-    void OnViewFlameGraph();
-    void OnUpdateViewFlameGraph(CCmdUI* pCmdUI) const;
-    void OnViewSunburst();
-    void OnUpdateViewSunburst(CCmdUI* pCmdUI) const;
+    void OnViewGraphPane(UINT commandId);
+    void OnUpdateViewGraphPane(CCmdUI* pCmdUI) const;
     void OnViewTreeMapSize(UINT commandId);
     void OnViewAbsolutePercentages() const;
     void OnViewShowFileTypes();
     void OnViewGroupUnregisteredTypes() const;
-    void OnViewShowExtensionsOnTreeMap() const;
-    void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI) const;
-    void OnViewShowFolderFramesOnTreeMap() const;
-    void OnUpdateViewShowFolderFramesOnTreeMap(CCmdUI* pCmdUI) const;
-    void OnViewAllFiles() const { GetFileTabbedView()->SetActiveFileTreeView(); }
-    void OnViewLargestFiles() const { GetFileTabbedView()->SetActiveTopView(); }
-    void OnViewDuplicateFiles() const { GetFileTabbedView()->SetActiveDupeView(); }
-    void OnViewSearchResults() const { GetFileTabbedView()->SetActiveSearchView(); }
+    void OnViewTreeMapOverlay(UINT commandId) const;
+    void OnUpdateViewTreeMapOverlay(CCmdUI* pCmdUI) const;
+    void OnViewAllFiles() const { GetFileTabbedView()->SetActiveTab(FileTab::Tree); }
+    void OnViewLargestFiles() const { GetFileTabbedView()->SetActiveTab(FileTab::Largest); }
+    void OnViewDuplicateFiles() const { GetFileTabbedView()->SetActiveTab(FileTab::Duplicates); }
+    void OnViewSearchResults() const { GetFileTabbedView()->SetActiveTab(FileTab::Search); }
     void OnViewToolBarSize(UINT commandId);
     void OnUpdateViewToolBarSize(CCmdUI* pCmdUI) const;
     void OnViewFontSize(UINT commandId);
@@ -315,10 +308,8 @@ protected:
     void OnUpdateWatcherClear(CCmdUI* pCmdUI);
     void OnToolsRecovery();
     void OnUpdateToolsRecovery(CCmdUI* pCmdUI) const;
-    void OnToolsPermissions() const;
-    void OnUpdateToolsPermissions(CCmdUI* pCmdUI) const;
-    void OnToolsStorageAnalytics() const;
-    void OnUpdateToolsStorageAnalytics(CCmdUI* pCmdUI) const;
+    void OnToolsTab(UINT commandId) const;
+    void OnUpdateToolsTab(CCmdUI* pCmdUI) const;
     void UpdateToolsMenu(MenuRef menu) const;
     void OnViewWindowLayout();
     void OnConfigure();
@@ -399,10 +390,9 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Command<&OnViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
         Route::Command<&OnViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
         Route::Command<&OnViewGraphPreset>(ID_VIEW_GRAPH_PRESET_CLASSIC, ID_VIEW_GRAPH_PRESET_CUSTOM),
-        Route::Command<&OnViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
-        Route::Command<&OnViewSunburst>(ID_VIEW_SUNBURST),
-        Route::Command<&OnViewTreeMapSize>(ID_TREEMAP_LOGICAL_SIZE),
-        Route::Command<&OnViewTreeMapSize>(ID_TREEMAP_PHYSICAL_SIZE),
+        Route::Command<&OnViewGraphPane>(ID_VIEW_FLAMEGRAPH),
+        Route::Command<&OnViewGraphPane>(ID_VIEW_SUNBURST),
+        Route::Command<&OnViewTreeMapSize>(ID_TREEMAP_LOGICAL_SIZE, ID_TREEMAP_PHYSICAL_SIZE),
         Route::Command<&OnViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
         Route::Window<&OnEnterSizeMove>(WM_ENTERSIZEMOVE),
         Route::Window<&OnExitSizeMove>(WM_EXITSIZEMOVE),
@@ -413,17 +403,14 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Update<&OnUpdateViewShowVisualization>(ID_VIEW_SHOWVISUALIZATION),
         Route::Update<&OnUpdateViewTreeMapStyle>(ID_VIEW_TREEMAP_ROWS, ID_VIEW_TREEMAP_MOORE),
         Route::Update<&OnUpdateViewGraphPreset>(ID_VIEW_GRAPH_PRESET_CLASSIC, ID_VIEW_GRAPH_PRESET_CUSTOM),
-        Route::Update<&OnUpdateViewFlameGraph>(ID_VIEW_FLAMEGRAPH),
-        Route::Update<&OnUpdateViewSunburst>(ID_VIEW_SUNBURST),
+        Route::Update<&OnUpdateViewGraphPane>(ID_VIEW_FLAMEGRAPH),
+        Route::Update<&OnUpdateViewGraphPane>(ID_VIEW_SUNBURST),
         Route::Update<&OnUpdateViewShowFileTypes>(ID_VIEW_SHOWFILETYPES),
         Route::Update<&OnUpdateViewGroupUnregisteredTypes>(ID_VIEW_GROUP_TYPES),
-        Route::Update<&OnUpdateTreeMapUseLogical>(ID_TREEMAP_LOGICAL_SIZE),
-        Route::Update<&OnUpdateTreeMapUsePhysical>(ID_TREEMAP_PHYSICAL_SIZE),
+        Route::Update<&OnUpdateViewTreeMapSize>(ID_TREEMAP_LOGICAL_SIZE, ID_TREEMAP_PHYSICAL_SIZE),
         Route::Update<&OnUpdateViewAbsolutePercentages>(ID_VIEW_ABSOLUTE_PERCENTAGES),
-        Route::Command<&OnViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
-        Route::Update<&OnUpdateViewShowExtensionsOnTreeMap>(ID_TREEMAP_SHOW_EXTENSIONS),
-        Route::Command<&OnViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
-        Route::Update<&OnUpdateViewShowFolderFramesOnTreeMap>(ID_TREEMAP_SHOW_FOLDER_FRAMES),
+        Route::Command<&OnViewTreeMapOverlay>(ID_TREEMAP_SHOW_EXTENSIONS, ID_TREEMAP_SHOW_FOLDER_FRAMES),
+        Route::Update<&OnUpdateViewTreeMapOverlay>(ID_TREEMAP_SHOW_EXTENSIONS, ID_TREEMAP_SHOW_FOLDER_FRAMES),
         Route::Update<&OnUpdateViewShowWatcher>(ID_TOOLS_WATCHER),
         Route::Window<&OnClose>(WM_CLOSE),
         Route::Window<&OnEndSession>(WM_ENDSESSION),
@@ -464,10 +451,10 @@ inline std::span<const RouteEntry> CMainFrame::Routes()
         Route::Update<&OnUpdateWatcherClear>(ID_WATCHER_CLEAR),
         Route::Command<&OnToolsRecovery>(ID_TOOLS_RECOVERY),
         Route::Update<&OnUpdateToolsRecovery>(ID_TOOLS_RECOVERY),
-        Route::Command<&OnToolsPermissions>(ID_TOOLS_PERMISSIONS),
-        Route::Update<&OnUpdateToolsPermissions>(ID_TOOLS_PERMISSIONS),
-        Route::Command<&OnToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
-        Route::Update<&OnUpdateToolsStorageAnalytics>(ID_TOOLS_STORAGE_ANALYTICS),
+        Route::Command<&OnToolsTab>(ID_TOOLS_PERMISSIONS),
+        Route::Update<&OnUpdateToolsTab>(ID_TOOLS_PERMISSIONS),
+        Route::Command<&OnToolsTab>(ID_TOOLS_STORAGE_ANALYTICS),
+        Route::Update<&OnUpdateToolsTab>(ID_TOOLS_STORAGE_ANALYTICS),
         Route::Command<&OnViewWindowLayout>(ID_VIEW_WINDOW_LAYOUT),
     };
     return entries;

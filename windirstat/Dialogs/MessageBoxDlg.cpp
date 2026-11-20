@@ -15,18 +15,17 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     , m_listViewItems(listViewItems)
     , m_checkboxChecked(checkBoxValue)
 {
-    const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
+    static const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
     {
-        // m_buttonType          btnLeftID  btnMidID   btnRightID  btnLeftIDS         btnMidIDS          btnRightIDS         btnFocus
-        { MB_OK,               { 0,         0,         IDOK,       IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK,     &m_buttonRight  } },
-        { MB_OKCANCEL,         { 0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL, &m_buttonMiddle } },
-        { MB_YESNO,            { 0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO,     &m_buttonMiddle } },
-        { MB_YESNOCANCEL,      { IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL, &m_buttonLeft   } },
-        // These MB types are not used by WinDirStat, but are included for completeness and use
-        // IDS_GENERIC_BLANK as a placeholder for button labels. Please add the required IDS to
-        // the localization engine upon use.
-        { MB_RETRYCANCEL,      { 0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL, &m_buttonMiddle } },
-        { MB_ABORTRETRYIGNORE, { IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK,  &m_buttonLeft   } },
+        { MB_OK, { { 0, 0, IDOK }, { IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK }, 2 } },
+        { MB_OKCANCEL, { { 0, IDOK, IDCANCEL }, { IDS_GENERIC_BLANK, IDS_GENERIC_OK, IDS_GENERIC_CANCEL }, 1 } },
+        { MB_YESNO, { { 0, IDYES, IDNO }, { IDS_GENERIC_BLANK, IDS_GENERIC_YES, IDS_GENERIC_NO }, 1 } },
+        { MB_YESNOCANCEL, { { IDYES, IDNO, IDCANCEL }, { IDS_GENERIC_YES, IDS_GENERIC_NO, IDS_GENERIC_CANCEL }, 0 } },
+        { MB_RETRYCANCEL, { { 0, IDRETRY, IDCANCEL },
+            { IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL }, 1 } },
+        // These button labels are placeholders until WinDirStat uses this message-box type.
+        { MB_ABORTRETRYIGNORE, { { IDABORT, IDRETRY, IDIGNORE },
+            { IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK }, 0 } },
     };
 
     const auto buttonType = type & MB_TYPEMASK;
@@ -79,12 +78,12 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
     // Expand checkbox width to the leftmost visible button
     if (pTargetControl == &m_listView && m_checkbox.GetStyle() & WS_VISIBLE)
     {
-        for (const CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
+        for (const auto& button : m_buttons)
         {
-            if (pBtn->Handle() && pBtn->GetStyle() & WS_VISIBLE)
+            if (button.Handle() && button.GetStyle() & WS_VISIBLE)
             {
                 CRect cbRect = GetChildWindowRect(m_checkbox.Handle());
-                const CRect btnRect = GetChildWindowRect(pBtn->Handle());
+                const CRect btnRect = GetChildWindowRect(button.Handle());
 
                 cbRect.right = btnRect.left;
                 if (cbRect.right > cbRect.left) m_checkbox.MoveWindow(cbRect);
@@ -119,9 +118,6 @@ bool CMessageBoxDlg::OnInitDialog()
 
     m_iconCtrl.SubclassDlgItem(IDC_MESSAGE_ICON, this);
     m_messageCtrl.SubclassDlgItem(IDC_MESSAGE_TEXT, this);
-    m_buttonLeft.SubclassDlgItem(IDC_MESSAGE_BUTTONLEFT, this);
-    m_buttonMiddle.SubclassDlgItem(IDC_MESSAGE_BUTTONMIDDLE, this);
-    m_buttonRight.SubclassDlgItem(IDC_MESSAGE_BUTTONRIGHT, this);
     m_checkbox.SubclassDlgItem(IDC_MESSAGE_CHECKBOX, this);
     m_listView.SubclassDlgItem(IDC_MESSAGE_LISTVIEW, this);
 
@@ -129,15 +125,15 @@ bool CMessageBoxDlg::OnInitDialog()
     SetText(m_title);
     m_messageCtrl.SetText(m_message);
 
-    // Configure buttons
-    m_buttonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
-    m_buttonMiddle.ShowWindow(m_buttonContext.btnMidID != 0 ? SW_SHOW : SW_HIDE);
-    m_buttonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
-
-    // Set button texts
-    m_buttonLeft.SetText(Localization::Lookup(m_buttonContext.btnLeftIDS));
-    m_buttonMiddle.SetText(Localization::Lookup(m_buttonContext.btnMidIDS));
-    m_buttonRight.SetText(Localization::Lookup(m_buttonContext.btnRightIDS));
+    // Control IDs follow the left-to-right order used by the layout and command handler.
+    static_assert(IDC_MESSAGE_BUTTONLEFT + 1 == IDC_MESSAGE_BUTTONMIDDLE &&
+        IDC_MESSAGE_BUTTONLEFT + 2 == IDC_MESSAGE_BUTTONRIGHT);
+    for (auto [i, button] : std::views::enumerate(m_buttons))
+    {
+        button.SubclassDlgItem(IDC_MESSAGE_BUTTONLEFT + static_cast<UINT>(i), this);
+        button.ShowWindow(m_buttonContext.ids[i] != 0 ? SW_SHOW : SW_HIDE);
+        button.SetText(Localization::Lookup(m_buttonContext.labels[i]));
+    }
 
     // Set display icon
     const CSize iconSize = m_iconCtrl.GetClientRect().Size();
@@ -172,7 +168,7 @@ bool CMessageBoxDlg::OnInitDialog()
     }
 
     // Collapse hidden controls vertically and add padding to vertically center the message area
-    ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, 16);
+    ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttons[0], &m_buttons[1], &m_buttons[2] }, 16);
 
     // Measure message text
     const CRect rectMessage = GetChildWindowRect(m_messageCtrl.Handle());
@@ -232,7 +228,7 @@ bool CMessageBoxDlg::OnInitDialog()
         m_messageCtrl.SetWindowPos(nullptr, 0, 0, rectMessage.Width(), rectMessage.Height() + deltaHeight + padding, SWP_NOMOVE | SWP_NOZORDER);
 
         // Push everything else down
-        ShiftControls({ &m_listView, &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, deltaHeight + padding);
+        ShiftControls({ &m_listView, &m_checkbox, &m_buttons[0], &m_buttons[1], &m_buttons[2] }, deltaHeight + padding);
     }
 
     // Activate automatic layout management (snapshots current positions)
@@ -265,14 +261,10 @@ bool CMessageBoxDlg::OnInitDialog()
     CenterWindow();
 
     // Set focus to default button
-    if (m_buttonContext.btnFocus)
-    {
-        SendMessage(DM_SETDEFID, m_buttonContext.btnFocus->GetDlgCtrlID());
-        m_buttonContext.btnFocus->SetFocus();
-        return false;
-    }
-
-    return true;
+    auto& focus = m_buttons[m_buttonContext.focus];
+    SendMessage(DM_SETDEFID, focus.GetDlgCtrlID());
+    focus.SetFocus();
+    return false;
 }
 
 void CMessageBoxDlg::UpdateListViewColumnWidth()
@@ -339,27 +331,10 @@ void CMessageBoxDlg::OnListViewItemChanging(NMHDR* pNMHDR, LRESULT* pResult)
         ((listView->uNewState ^ listView->uOldState) & LVIS_SELECTED) != 0;
 }
 
-void CMessageBoxDlg::OnButtonLeft()
+void CMessageBoxDlg::OnButton(const UINT controlId)
 {
     m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
-    CloseModal(m_buttonContext.btnLeftID);
-}
-
-void CMessageBoxDlg::OnButtonMiddle()
-{
-    m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
-    CloseModal(m_buttonContext.btnMidID);
-}
-
-void CMessageBoxDlg::OnButtonRight()
-{
-    m_checkboxChecked = IsChecked(IDC_MESSAGE_CHECKBOX);
-    CloseModal(m_buttonContext.btnRightID);
-}
-
-INT_PTR CMessageBoxDlg::ShowModal()
-{
-    return CLayoutDialog::ShowModal();
+    CloseModal(m_buttonContext.ids[controlId - IDC_MESSAGE_BUTTONLEFT]);
 }
 
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, WindowRef pWnd, const UINT nCtlColor)
@@ -396,9 +371,9 @@ bool CMessageBoxDlg::OnEraseBkgnd(CDC* pDC) const
 
     int lineY = rect.bottom - ScaleForDpi(46);
 
-    if (m_buttonRight.Handle())
+    if (m_buttons[2].Handle())
     {
-        const CRect btnRect = GetChildWindowRect(m_buttonRight.Handle());
+        const CRect btnRect = GetChildWindowRect(m_buttons[2].Handle());
         lineY = btnRect.top - ScaleForDpi(12);
     }
 

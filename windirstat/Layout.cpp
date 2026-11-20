@@ -37,12 +37,6 @@ CLayout::CLayout(CWnd* dialog, RECT* placement)
     assert(dialog != nullptr);
 }
 
-int CLayout::AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy)
-{
-    m_control.emplace_back(control->Handle(), movex, movey, stretchx, stretchy);
-    return static_cast<int>(m_control.size() - 1);
-}
-
 void CLayout::AddControl(const UINT id, const double movex, const double movey, const double stretchx, const double stretchy)
 {
     m_control.emplace_back(GetDlgItem(m_dialog->Handle(), id), movex, movey, stretchx, stretchy);
@@ -70,9 +64,8 @@ void CLayout::OnInitDialog(const bool centerWindow)
     sg.top = sg.bottom - m_sizeGripper.m_width;
     m_sizeGripper.Create(m_dialog, sg);
 
-    const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
     sg.Offset(LOWORD(deficit), HIWORD(deficit));
-    m_control[i].originalRectangle = sg;
+    m_control.emplace_back(m_sizeGripper.Handle(), 1, 1, 0, 0, sg);
 
     // Fit the full size to the work area, regaining clipped space the dialog's own adjustments freed.
     const CRect work = GetWorkArea(m_dialog->Handle());
@@ -98,20 +91,23 @@ void CLayout::OnSize()
     const CRect wrc = m_dialog->GetWindowRect();
     const CSize diff = wrc.Size() - m_originalDialogSize;
 
-    CPositioner pos(static_cast<int>(m_control.size()));
+    HDWP positions = BeginDeferWindowPos(static_cast<int>(m_control.size()));
 
     for (const auto& [control, movex, movey, stretchx, stretchy, originalRectangle] : m_control)
     {
+        if (!positions) break;
         CRect rc = originalRectangle;
 
         rc.Offset(static_cast<int>(diff.cx * movex), static_cast<int>(diff.cy * movey));
         rc.right = std::max(rc.left, rc.right + static_cast<int>(diff.cx * stretchx));
         rc.bottom = std::max(rc.top, rc.bottom + static_cast<int>(diff.cy * stretchy));
 
-        pos.SetWindowPos(control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
+        positions = DeferWindowPos(positions, control, nullptr, rc.left, rc.top, rc.Width(), rc.Height(),
+            SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
 
     m_dialog->Invalidate();
+    if (positions) EndDeferWindowPos(positions);
 }
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
@@ -125,7 +121,7 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 
 void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
 {
-    CWnd::Create(RegisterWindowClass(0, LoadCursorW(nullptr, IDC_ARROW)),
+    CWnd::Create(RegisterWindowClass(0),
         wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER);
 }
 
@@ -167,22 +163,4 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point) const
 {
     point = ToClient(point);
     return (point.x + point.y >= m_width) ? HTBOTTOMRIGHT : 0;
-}
-
-CLayout::CPositioner::CPositioner(const int nNumWindows)
-    : m_wdp(BeginDeferWindowPos(nNumWindows))
-{
-}
-
-CLayout::CPositioner::~CPositioner()
-{
-    if (m_wdp != nullptr)
-    {
-        EndDeferWindowPos(m_wdp);
-    }
-}
-
-void CLayout::CPositioner::SetWindowPos(const HWND hWnd, const int x, const int y, const int cx, const int cy, const UINT uFlags)
-{
-    m_wdp = DeferWindowPos(m_wdp, hWnd, nullptr, x, y, cx, cy, uFlags | SWP_NOZORDER);
 }

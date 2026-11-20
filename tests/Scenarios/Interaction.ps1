@@ -1,4 +1,21 @@
-﻿function Test-ScopedRefresh {
+﻿function Test-ExcludeExtension {
+    param($Context, $Case)
+    $root = $Context.Fixture
+    foreach ($name in 'match.c++', 'keep.cpp') { New-TestFile (Join-Path $root $name) 128 | Out-Null }
+    foreach ($regex in 0, 1) {
+        $app = Start-TestApp @($root) -Settings @{ Options = @{ FilteringUseRegex = $regex } }
+        $tree = Get-AppList $app -AllFiles
+        Select-AppRows $app $app.ExtensionList @('.c++')
+        [void][TestDesktop]::PostMessage($app.ExtensionList, 0x0111, [IntPtr](Get-ResourceId 'ID_FILTER_EXCLUDE_ITEM'),
+            [IntPtr]::Zero)
+        Wait-Until { (Find-AppRow $tree 'match.c++' -Optional) -lt 0 } 'The literal suffix is excluded' | Out-Null
+        Wait-AppIdle $app
+        Assert-True ((Find-AppRow $tree 'keep.cpp' -Optional) -ge 0) 'A neighboring extension remains visible'
+        Stop-TestApp $app
+    }
+}
+
+function Test-ScopedRefresh {
     param($Context, $Case)
     $root = New-TestTree
     $before = @(Get-DiskSnapshot $root)
@@ -38,6 +55,8 @@ function Test-VisualizationCommands {
     foreach ($command in 'ID_VIEW_FLAMEGRAPH', 'ID_VIEW_TREEMAP_SQUARIFIED', 'ID_VIEW_SUNBURST') {
         Invoke-AppCommand $app $command
         Assert-True (Get-AppCommandState $app $command).Checked 'Switching graphs updates the selected view'
+        Assert-Equal (Get-AppCommandState $app 'ID_TREEMAP_SHOW_FOLDER_FRAMES').Enabled `
+            ($command -eq 'ID_VIEW_TREEMAP_SQUARIFIED') 'Only the treemap offers folder frames'
         foreach ($shown in $false, $true) {
             if ((Get-AppCommandState $app 'ID_VIEW_SHOWVISUALIZATION').Checked -ne $shown) {
                 Invoke-AppCommand $app 'ID_VIEW_SHOWVISUALIZATION'
@@ -62,13 +81,10 @@ function Test-RefreshTimestamps {
         [IO.File]::SetLastWriteTimeUtc($path, [datetime]::new(2030 - $index, 1, 1, 0, 0, 0, [DateTimeKind]::Utc))
         $path
     })
-    $app = Start-TestApp @($Context.Fixture) -Hidden
-    $list = Wait-Until {
-        foreach ($control in [TestDesktop]::Children($app.Window)) {
-            if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
-                'changed' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
-        }
-    } 'The hidden model exposes the refreshed directory'
+    $app = Start-TestApp @($Context.Fixture) -Hidden -Settings @{
+        Options = @{ FilteringSizeMinimum = 1; FilteringSizeUnits = 1 }
+    }
+    $list = Get-AppListWithRow $app 'changed' 'The hidden model exposes the refreshed directory'
     $select = {
         param([string[]] $Names)
         $indices = [int[]]@(foreach ($name in $Names) { Find-AppRow $list $name })
@@ -105,6 +121,13 @@ function Test-RefreshTimestamps {
         }
     }
 
+    & $select @($paths[2])
+    [IO.File]::WriteAllBytes($paths[2], [byte[]]::new(128))
+    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
+    Wait-AppIdle $app
+    Assert-True ((Find-AppRow $list $paths[2] -Optional) -lt 0 -and [IO.File]::Exists($paths[2])) `
+        'Selected refresh removes a file that now falls below the size filter'
+
     & $select @($folder)
     [IO.File]::SetLastWriteTimeUtc($paths[3], [datetime]::new(2021, 1, 1, 0, 0, 0, [DateTimeKind]::Utc))
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
@@ -124,12 +147,7 @@ function Test-RefreshManyFiles {
     $folder = Join-Path $Context.Fixture 'many'
     $paths = @(foreach ($index in 0..2999) { New-TestFile (Join-Path $folder "file-$index.bin") 1 })
     $app = Start-TestApp @($Context.Fixture) -Hidden
-    $list = Wait-Until {
-        foreach ($control in [TestDesktop]::Children($app.Window)) {
-            if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
-                'many' -in [NativeListViewHelper]::GetItemTexts($control)) { return $control }
-        }
-    } 'The hidden model exposes the large directory'
+    $list = Get-AppListWithRow $app 'many' 'The hidden model exposes the large directory'
     Assert-True ([NativeListViewHelper]::FocusListView($list) -and
         [NativeListViewHelper]::SelectSingleItem($list, (Find-AppRow $list 'many'))) 'Select the large directory'
     [void][NativeListViewHelper]::PostRight($list)
@@ -143,20 +161,11 @@ function Test-RefreshManyFiles {
     for ($index = 0; $index -lt $paths.Count; $index += 2) { [IO.File]::Delete($paths[$index]) }
     [IO.File]::Move($paths[1], (Join-Path $folder 'FILE-1.BIN'))
 
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -lt $names.Count -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Refreshing many deleted files finishes' -StableMilliseconds 500 | Out-Null
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -lt $names.Count
+    } 'Refreshing many deleted files finishes'
     Write-TestNote ("Refresh $($paths.Count) files: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
+        $timing.Total, $timing.Longest)
     Assert-True ($timing.Longest -lt 3000) 'Refreshing many deleted files does not block the UI for three seconds'
 
     $expected = [Collections.Generic.HashSet[string]]::new([string[]]@(
@@ -311,12 +320,7 @@ function Test-SearchRecovery {
     $root = New-TestTree
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), 'selected-[ab]\.bin$')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $false
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app 'selected-[ab]\.bin$' -Regex -Folders $false
     $expected = @((Join-Path $root 'alpha\selected-a.bin'), (Join-Path $root 'alpha\selected-b.bin') | Sort-Object)
     Wait-Until { @($expected | Where-Object { $_ -notin [NativeListViewHelper]::GetItemTexts($list) }).Count -eq 0 } `
         'The search exposes both matching files beneath its summary row' | Out-Null
@@ -394,18 +398,10 @@ function Test-SearchRefresh {
     $root = New-TestTree
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
     $term = 'selected-[ab]\.bin$|^alpha$'
     if ($Case.Root) { $term += '|fixture$' }
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), $term)
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $Case.Folders
-    if ($Case.Minimum) {
-        [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_MIN'), '1000')
-        [void] [TestDesktop]::Message((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_UNITS'), 0x014E, 0)
-    }
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $minimum = if ($Case.Minimum) { 1000 } else { 0 }
+    $list = Invoke-AppSearch $app $term -Regex -Folders $Case.Folders -MinimumBytes $minimum
     $first = Join-Path $root 'alpha\selected-a.bin'
     $second = Join-Path $root 'alpha\selected-b.bin'
     $folder = Join-Path $root 'alpha'
@@ -420,7 +416,7 @@ function Test-SearchRefresh {
         Select-AppRows $app $list $selection
         Invoke-AppKeys $app '{F5}'
         Wait-AppIdle $app
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
             'Single, multiple, and folder refreshes preserve surviving search results'
         Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selection.Count `
@@ -445,7 +441,7 @@ function Test-SearchRefresh {
     Invoke-AppKeys $app '{F5}'
     Wait-AppIdle $app
     $expected = @($expected | Where-Object { $_ -ne $second })
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
         'Refreshing a deleted search result removes only results that no longer match'
 
@@ -459,7 +455,7 @@ function Test-SearchRefresh {
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 1 'Refreshing keeps the search root collapsed'
     [void] [NativeListViewHelper]::PostRight($list)
     Wait-Until { [NativeListViewHelper]::GetItemCount($list) -gt 1 } 'The refreshed search expands' | Out-Null
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
         'Collapsed search results are restored without stale rows'
 }
@@ -479,12 +475,7 @@ function Test-SearchRefreshCaseSensitive {
     }
     $app = Start-TestApp @($root)
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^selected-a\.bin$|^alpha$')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '^selected-a\.bin$|^alpha$' -Regex -Folders $true
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) 4 `
         'The search finds both case-distinct files and their folder'
     Select-AppRows $app $list @($folder)
@@ -513,12 +504,7 @@ function Test-SearchRefreshLarge {
     [IO.Directory]::CreateDirectory($untouched) | Out-Null
     $app = Start-TestApp @($root) -Settings @{ SearchView = @{ SearchMaxResults = 1000000 } }
     Get-AppList $app -AllFiles | Out-Null
-    $dialog = Open-AppDialog $app 'ID_SEARCH' 'IDC_SEARCH_TERM'
-    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), '^d')
-    Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true
-    Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $true
-    Close-AppDialog $dialog 1
-    $list = Get-AppList $app -TabName 'Search Results'
+    $list = Invoke-AppSearch $app '^d' -Regex -Folders $true
     Assert-Equal ([NativeListViewHelper]::GetItemCount($list)) ($count + 2) 'Every folder appears in the search'
     $names = [NativeListViewHelper]::GetItemTexts($list)
     $indices = [int[]]@([Array]::IndexOf($names, $expected[1]), [Array]::IndexOf($names, $untouched))
@@ -530,21 +516,11 @@ function Test-SearchRefreshLarge {
     $tree = Get-AppList $app -AllFiles
     Select-AppRows $app $tree @($folder)
 
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Large folder refresh finishes' -StableMilliseconds 500 | Out-Null
-    $watch.Stop()
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1)
+    } 'Large folder refresh finishes'
     Write-TestNote ("Refresh $count results: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
+        $timing.Total, $timing.Longest)
 
     Invoke-AppCommand $app 'ID_VIEW_SEARCH_RESULTS'
     $names = [NativeListViewHelper]::GetItemTexts($list)
@@ -565,22 +541,12 @@ function Test-SearchRefreshLarge {
     Assert-True ([NativeListViewHelper]::SelectItems($list, $indices)) 'Select a large batch of search results'
     [IO.Directory]::Delete($selected[0])
     $expected = @($expected | Select-Object -Skip 1)
-    $timing = @{ LastResponse = 0L; Longest = 0L }
-    $watch.Restart()
-    Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
-    Wait-Until {
-        try { [void] [TestDesktop]::Message($app.Window, 0) }
-        catch [System.TimeoutException] { return $false }
-        $now = $watch.ElapsedMilliseconds
-        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
-        $timing.LastResponse = $now
-        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1) -and
-            [TestDesktop]::Text($app.Window) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
-    } 'Refreshing a large selection drops the deleted result' -StableMilliseconds 500 | Out-Null
-    $watch.Stop()
+    $timing = Measure-AppRefresh $app {
+        [NativeListViewHelper]::GetItemCount($list) -eq ($expected.Count + 1)
+    } 'Refreshing a large selection drops the deleted result'
     Write-TestNote ("Refresh 1000 selected results: {0} ms total; {1} ms longest response" -f
-        $watch.ElapsedMilliseconds, $timing.Longest)
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $timing.Total, $timing.Longest)
+    $paths = Get-AppListPaths $list
     [void]$expectedSet.Remove($selected[0])
     Assert-True ($paths.Count -eq $expected.Count -and $expectedSet.SetEquals([string[]]$paths)) `
         'Batch selection refresh preserves exact paths'
@@ -672,6 +638,24 @@ function Test-VerifiedFileOperation {
     $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
     $app = Start-TestApp @($root)
     $list = Get-AppList $app -AllFiles
+    if ($Case.Kind -eq 'Sparse') {
+        $writer = [IO.File]::Open((Join-Path $root 'untouched.bin'), 'Open', 'ReadWrite', 'ReadWrite, Delete')
+        try {
+            Select-AppRows $app $list @('untouched.bin')
+            Invoke-AppCommand $app $Case.Command
+            $errorDialog = Wait-Until {
+                foreach ($dialog in [TestDesktop]::Windows($app.Process.Id)) {
+                    if ([TestDesktop]::Class($dialog) -ne '#32770') { continue }
+                    foreach ($control in [TestDesktop]::Children($dialog)) {
+                        if ([TestDesktop]::Class($control) -eq 'Button' -and
+                            [TestDesktop]::ControlText($control).Replace('&', '') -eq 'OK') { return $dialog }
+                    }
+                }
+            } 'Sparsify reports the active writer'
+            Close-AppDialog $errorDialog -ButtonName 'OK'
+            Wait-AppIdle $app
+        } finally { $writer.Dispose() }
+    }
     foreach ($names in @(@('single.bin'), @('multiple-a.bin', 'multiple-b.bin'))) {
         Select-AppRows $app $list $names
         Invoke-AppCommand $app $Case.Command
@@ -714,10 +698,11 @@ function Test-VerifiedFileOperation {
 function Test-DeduplicateGroups {
     param($Context, $Case)
     $root = $Context.Fixture
-    $paths = @(foreach ($group in 1, 2) {
+    $paths = @(foreach ($group in 1..6) {
         foreach ($member in 'a', 'b') { New-TestFile (Join-Path $root "group-$group-$member.bin") 32768 $group }
     })
-    $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
+    foreach ($i in 2, 3, 10, 11) { [IO.File]::WriteAllText(($paths[$i] + ':notes'), 'shared') }
+    foreach ($i in 6, 7) { [IO.File]::WriteAllText(($paths[$i] + ':notes'), "note-$i") }
     $app = Start-TestApp @($root) -Settings @{ DupeView = @{ ScanForDuplicates = 1 } }
     Get-AppList $app -AllFiles | Out-Null
     Invoke-AppCommand $app 'ID_VIEW_DUPLICATE_FILES'
@@ -727,13 +712,32 @@ function Test-DeduplicateGroups {
     Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_CREATE_HARDLINK').Enabled) `
         'A single duplicate cannot trigger hardlink replacement'
     Select-AppRows $app $list $paths
-    Invoke-AppCommand $app 'ID_CLEANUP_CREATE_HARDLINK'
+    $edited = [IO.File]::ReadAllBytes($paths[5])
+    $edited[-1] = $edited[-1] -bxor 1
+    [IO.File]::WriteAllBytes($paths[5], $edited)
+    $hashes = @($paths | Get-FileHash | ForEach-Object Hash)
+    $writer = [IO.File]::Open($paths[9], 'Open', 'ReadWrite', 'ReadWrite, Delete')
+    $streamWriter = [IO.File]::Open(($paths[11] + ':notes'), 'Open', 'ReadWrite', 'ReadWrite, Delete')
+    try {
+        Invoke-AppCommand $app 'ID_CLEANUP_CREATE_HARDLINK'
+        $warning = Wait-Until { Get-AppDialog $app 'IDC_MESSAGE_LISTVIEW' } 'Unverified duplicate pairs are reported'
+        $failed = Get-DialogControl $warning 'IDC_MESSAGE_LISTVIEW'
+        Assert-Equal ([NativeListViewHelper]::GetItemCount($failed)) 4 'Four unverified pairs are skipped'
+        Close-AppDialog $warning -ButtonName 'OK'
+    } finally { $streamWriter.Dispose(); $writer.Dispose() }
     Wait-AppIdle $app
     $identities = @($paths | ForEach-Object { Get-FileIdentity $_ })
     Assert-Equal $identities[0].Id $identities[1].Id 'The first hash group shares a physical file after deduplication'
     Assert-Equal $identities[2].Id $identities[3].Id 'The second hash group shares a separate physical file'
     Assert-True ($identities[0].Id -ne $identities[2].Id) `
         'Selecting multiple hash groups does not cross-link different contents'
+    Assert-True ($identities[4].Id -ne $identities[5].Id -and $identities[6].Id -ne $identities[7].Id) `
+        'Differing contents and named streams keep independent files'
+    Assert-True ($identities[8].Id -ne $identities[9].Id) 'An active writer keeps its original file'
+    Assert-True ($identities[10].Id -ne $identities[11].Id) 'An active named-stream writer keeps its original file'
+    foreach ($i in 6, 7) {
+        Assert-Equal ([IO.File]::ReadAllText(($paths[$i] + ':notes'))) "note-$i" 'Named stream survives'
+    }
     Assert-Sequence @($paths | Get-FileHash | ForEach-Object Hash) $hashes `
         'Hardlink deduplication preserves each group payload'
     Assert-ScanSnapshot (Save-AppReport $app 'after-dedup') (Get-DiskSnapshot $root) $root -Physical
@@ -855,10 +859,9 @@ function Test-LargestRefresh {
         Close-AppDialog $settings 1
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
         Wait-Until {
-            @([NativeListViewHelper]::GetItemTexts($list) |
-                Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq $limit
+            (Get-AppListPaths $list).Count -eq $limit
         } 'Largest files applies its new limit' | Out-Null
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         $expected = @(@($first, $stable, $second, $replacement) | Select-Object -First $limit)
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) `
             "Largest files refills from the scan after its limit changes to $limit"
@@ -871,7 +874,7 @@ function Test-LargestRefresh {
     Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
     Wait-AppIdle $app
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($stable, $replacement | Sort-Object) `
         'Largest files replaces removed rows with the next surviving candidate'
     Assert-Equal ([TestDesktop]::Message($list, 0x102C, (Find-AppRow $list $stable), 2).ToInt32()) 2 `
@@ -889,7 +892,7 @@ function Test-LargestReserve {
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
     $list = Get-AppList $app -TabName 'Largest Files'
     Select-AppRows $app $list @($files[0])
-    $paths = @([NativeListViewHelper]::GetItemTexts($list) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $paths = Get-AppListPaths $list
     Assert-Sequence @($paths | Sort-Object) @($files[0..2] | Sort-Object) `
         'Largest files displays only the configured count with a full reserve'
 
@@ -912,8 +915,7 @@ function Test-LargestReserve {
         Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
         Wait-AppIdle $app
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-        $paths = @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $paths = Get-AppListPaths $list
         $expected = @(Get-ChildItem -LiteralPath $root -File | Sort-Object Length -Descending |
             Select-Object -First 3 -ExpandProperty FullName)
         Assert-Sequence @($paths | Sort-Object) @($expected | Sort-Object) $change.Name
@@ -931,12 +933,10 @@ function Test-LargestEqualSizes {
     Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
     $list = Get-AppList $app -TabName 'Largest Files'
     Wait-Until {
-        @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) }).Count -eq 3
+        (Get-AppListPaths $list).Count -eq 3
     } 'The initial largest files are displayed' | Out-Null
     Wait-AppIdle $app
-    $selected = @([NativeListViewHelper]::GetItemTexts($list) |
-        Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+    $selected = Get-AppListPaths $list
     Select-AppRows $app $list $selected
     foreach ($path in $files | Where-Object { $_ -notin $selected }) {
         [IO.File]::Delete($path)
@@ -945,8 +945,7 @@ function Test-LargestEqualSizes {
         Invoke-AppCommand $app 'ID_REFRESH_SELECTED'
         Wait-AppIdle $app
         Invoke-AppCommand $app 'ID_VIEW_LARGEST_FILES'
-        $remaining = @([NativeListViewHelper]::GetItemTexts($list) |
-            Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+        $remaining = Get-AppListPaths $list
         Assert-Sequence @($remaining | Sort-Object) @($selected | Sort-Object) `
             'Removing an undisplayed equal-size file preserves the displayed candidates'
         Assert-Equal ([NativeListViewHelper]::GetSelectedCount($list)) $selected.Count `
@@ -959,21 +958,43 @@ function Test-CleanupReparseReplacement {
     $root = New-TestTree
     $stale = Join-Path $root 'ordinary-before-scan'
     [IO.Directory]::CreateDirectory($stale) | Out-Null
+    $readOnly = [IO.Directory]::CreateDirectory((Join-Path $root 'read-only'))
+    $readOnly.Attributes = $readOnly.Attributes -bor [IO.FileAttributes]::ReadOnly
+    $empty = [IO.DirectoryInfo]::new((Join-Path $root 'empty'))
+    $empty.Attributes = $empty.Attributes -bor [IO.FileAttributes]::ReadOnly
     $target = Join-Path $Context.Root 'external-target\empty-sentinel'
     [IO.Directory]::CreateDirectory($target) | Out-Null
-    $app = Start-TestApp @($root)
+    $outside = [IO.Path]::GetDirectoryName($target)
+    New-TestJunction (Join-Path $root 'known-junction') $outside
+    $app = Start-TestApp @($root) -Settings @{ Options = @{ ExcludeJunctions = 1 } }
     $list = Get-AppList $app -AllFiles
+    [IO.File]::WriteAllText((Join-Path $readOnly.FullName 'new.txt'), 'keep')
+    Select-AppRows $app $list @('known-junction')
+    Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_EMPTY_FOLDER').Enabled) `
+        'Empty Folder is disabled on a scanned junction'
     [IO.Directory]::Delete($stale)
-    New-TestJunction $stale ([IO.Path]::GetDirectoryName($target))
+    New-TestJunction $stale $outside
+    Select-AppRows $app $list @('ordinary-before-scan')
+    Invoke-AppCommand $app 'ID_CLEANUP_EMPTY_FOLDER'
+    Wait-AppIdle $app
+    Assert-True ([IO.Directory]::Exists($target)) 'Empty Folder preserves the target of a substituted junction'
+    Select-AppRows $app $list @('ordinary-before-scan')
+    Assert-True (-not (Get-AppCommandState $app 'ID_CLEANUP_EMPTY_FOLDER').Enabled) `
+        'The refreshed selection recognizes the replacement junction'
     Select-AppRows $app $list @($root)
     Invoke-AppCommand $app 'ID_CLEANUP_REMOVE_EMPTY'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists((Join-Path $root 'empty'))) `
-        'Ordinary empty directories are actually removed'
+        'Empty read-only directories are removed'
     Assert-True ([IO.Directory]::Exists($target)) `
         'Cleanup does not traverse an ordinary directory replaced with a junction after scanning'
     Assert-True (([IO.File]::GetAttributes($stale) -band [IO.FileAttributes]::ReparsePoint) -ne 0) `
         'The replacement junction is preserved'
+    $readOnly.Refresh()
+    try {
+        Assert-True (($readOnly.Attributes -band [IO.FileAttributes]::ReadOnly) -ne 0) `
+            'A directory that acquired a file keeps its read-only attribute'
+    } finally { $readOnly.Attributes = $readOnly.Attributes -band (-bnot [IO.FileAttributes]::ReadOnly) }
 }
 
 function Test-SelectedDeletion {
@@ -981,6 +1002,12 @@ function Test-SelectedDeletion {
     $root = New-TestTree
     $removed = Join-Path $root 'alpha'
     $single = Join-Path $root 'beta\untouched.txt'
+    $protectedAttributes = [IO.FileAttributes]'Hidden, System, ReadOnly'
+    [IO.File]::SetAttributes($single, $protectedAttributes)
+    $stale = Join-Path $removed 'ordinary'
+    $victim = New-TestFile (Join-Path $stale 'sentinel.txt') 128
+    $outside = New-TestFile (Join-Path $Context.Root 'outside\sentinel.txt') 256
+    $empty = [IO.Directory]::CreateDirectory((Join-Path $root 'to-empty')).FullName
     $before = Get-DiskSnapshot $root
     $hashes = @($before | Where-Object { -not $_.Directory -and
         -not $_.Path.StartsWith((Get-NormalPath $removed) + '\') -and $_.Path -ne (Get-NormalPath $single) } |
@@ -989,11 +1016,26 @@ function Test-SelectedDeletion {
     $list = Get-AppList $app -AllFiles
     Expand-AppDirectory $app $list 'beta' 'untouched.txt'
     Select-AppRows $app $list @('alpha', 'untouched.txt')
-    New-TestFile (Join-Path $removed 'created-after-scan.txt') 353 | Out-Null
+    $late = New-TestFile (Join-Path $removed 'created-after-scan.txt') 353
+    [IO.File]::SetAttributes($late, $protectedAttributes)
+    [IO.File]::Delete($victim)
+    [IO.Directory]::Delete($stale)
+    New-TestJunction $stale ([IO.Path]::GetDirectoryName($outside))
     Invoke-AppCommand $app 'ID_CLEANUP_DELETE'
     Wait-AppIdle $app
     Assert-True (-not [IO.Directory]::Exists($removed) -and -not [IO.File]::Exists($single)) `
-        'Permanent deletion removes the selected folder, new descendants, and separately selected file'
+        'Permanent deletion removes both directly selected and nested HSR files'
+    Assert-True ([IO.File]::Exists($outside)) 'Permanent deletion leaves the substituted junction target intact'
+    $hidden = New-TestFile (Join-Path $empty 'hidden-after-scan.bin') 128
+    [IO.File]::SetAttributes($hidden, $protectedAttributes)
+    $deep = (('long-' + ('x' * 50) + '\') * 5) + 'leaf.bin'
+    New-TestFile (Join-Path $empty $deep) 1 | Out-Null
+    New-TestJunction (Join-Path $empty 'junction') ([IO.Path]::GetDirectoryName($outside))
+    Select-AppRows $app $list @('to-empty')
+    Invoke-AppCommand $app 'ID_CLEANUP_EMPTY_FOLDER'
+    Wait-AppIdle $app
+    Assert-Equal ([IO.Directory]::GetFileSystemEntries($empty).Length) 0 'Empty Folder removes newly created HSR files'
+    Assert-True ([IO.File]::Exists($outside)) 'Empty Folder leaves the junction target intact'
     $after = @($hashes.Path | Get-FileHash | Sort-Object Path)
     Assert-Sequence @($after.Hash) @($hashes.Hash) 'Permanent deletion preserves every unselected payload'
     Assert-ScanSnapshot (Save-AppReport $app 'deleted-local') (Get-DiskSnapshot $root) $root -Physical
@@ -1316,6 +1358,8 @@ foreach ($operation in @(
         'Single and multiple file actions update disk and UI, preserving unselected files' `
         Test-VerifiedFileOperation -Tags Desktop,Filesystem -Requires $operation.Requires -Data $operation
 }
+Register-Scenario interaction.exclude-extension Interaction 'Extension exclusion respects wildcard and regex settings' `
+    Test-ExcludeExtension -Tags Desktop,Persistence -Requires Windows,Desktop
 Register-Scenario interaction.dedup-groups Interaction `
     'Hardlink deduplication retains independent sources within multiple hash groups' `
     Test-DeduplicateGroups -Tags Desktop,Filesystem -Requires Windows,Desktop,Ntfs

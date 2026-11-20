@@ -73,7 +73,7 @@ void CFileSearchControl::ProcessSearch(CItem* item, const SearchCriteria& criter
     if (!CWinDirStatModel::Get()->IsScanSettled()) return;
 
     // Update tab visibility to show search tab if results exist
-    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
+    CMainFrame::Get()->GetFileTabbedView()->SetTabVisible(FileTab::Search, true);
 
     // Remove previous results
     SetRootItem();

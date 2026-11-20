@@ -375,17 +375,7 @@ COLORREF CSunburst::GetItemColor(const LayoutEntry& entry) const
         return CColorSpace::BlendColor(DarkMode::SystemColor(COLOR_WINDOW),
             DarkMode::SystemColor(COLOR_WINDOWTEXT), 0.20);
 
-    const DWORD rawColor = entry.item->TmiGetGraphColor();
-    COLORREF color = rawColor & 0x00FFFFFF;
-
-    if (color == RGB(0, 0, 0) && !entry.item->TmiIsLeaf()
-        && !entry.item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
-    {
-        color = m_folderColors.GetColor(entry.item);
-    }
-    else color = CTreeMap::GetFlatColor(rawColor, COptions::TreeMapOptions);
-
-    return color;
+    return m_folderColors.GetItemColor(entry.item);
 }
 
 void CSunburst::RenderEntry(Gdiplus::Graphics& graphics, const LayoutEntry& entry,

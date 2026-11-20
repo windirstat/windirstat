@@ -573,7 +573,7 @@ ULONGLONG CItem::GetProgressPos() const
     if (IsTypeOrFlag(IT_DRIVE))
     {
         ULONGLONG pos = GetSizePhysical();
-        const CItem* fs = FindFreeSpaceItem();
+        const CItem* fs = FindChildByType(IT_FREESPACE);
         pos -= (fs != nullptr) ? fs->GetSizePhysical() : 0;
         return pos;
     }
@@ -604,27 +604,22 @@ CItem* CItem::FindRecyclerItem() const
     return nullptr;
 }
 
-void CItem::CreateFreeSpaceItem()
+void CItem::CreateSpaceItem(const ITEMTYPE type)
 {
-    assert(SupportsSpaceItems());
-
+    assert(SupportsSpaceItems() && (type == IT_FREESPACE || type == IT_UNKNOWN));
     UpwardSetUndone();
-
-    auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
-
-    const auto freespace = CItem::Create(IT_FREESPACE, Localization::Lookup(IDS_FREESPACE_ITEM));
-    freespace->SetSizePhysical(free);
-    freespace->SetDone();
-
-    AddChild(freespace);
+    const auto label = type == IT_FREESPACE ? IDS_FREESPACE_ITEM : IDS_UNKNOWN_ITEM;
+    const auto size = type == IT_FREESPACE ? std::get<1>(CDirStatApp::GetFreeDiskSpace(GetPath())) : 0;
+    const auto child = CItem::Create(type, Localization::Lookup(label));
+    child->SetSizePhysical(size);
+    child->SetDone();
+    AddChild(child);
 }
 
-CItem* CItem::FindFreeSpaceItem() const
+CItem* CItem::FindChildByType(const ITEMTYPE type) const
 {
     const auto& children = GetChildren();
-    const auto it = std::ranges::find_if(children,
-        [](const auto& child) { return child->IsTypeOrFlag(IT_FREESPACE); });
-
+    const auto it = std::ranges::find_if(children, [type](const CItem* child) { return child->IsTypeOrFlag(type); });
     return it != children.end() ? *it : nullptr;
 }
 
@@ -651,7 +646,7 @@ void CItem::UpdateFreeSpaceItem()
         }
 
         // Update freespace item if it exists
-        if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
+        if (CItem* freeSpaceItem = FindChildByType(IT_FREESPACE); freeSpaceItem != nullptr)
         {
             freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
             freeSpaceItem->UpwardAddSizePhysical(free);
@@ -660,43 +655,19 @@ void CItem::UpdateFreeSpaceItem()
     else assert(false);
 }
 
-void CItem::RemoveFreeSpaceItem()
+void CItem::RemoveSpaceItem(CItem* child)
 {
-    assert(SupportsSpaceItems());
-
-    if (const auto freespace = FindFreeSpaceItem(); freespace != nullptr)
-    {
-        UpwardSetUndone();
-        UpwardSubtractSizePhysical(freespace->GetSizePhysical());
-        RemoveChild(freespace);
-    }
-}
-
-void CItem::CreateUnknownItem()
-{
-    assert(SupportsSpaceItems());
-
+    assert(SupportsSpaceItems() && child->GetParent() == this && child->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN));
     UpwardSetUndone();
-
-    const auto unknown = CItem::Create(IT_UNKNOWN, Localization::Lookup(IDS_UNKNOWN_ITEM));
-    unknown->SetDone();
-
-    AddChild(unknown);
-}
-
-CItem* CItem::FindUnknownItem() const
-{
-    const auto& children = GetChildren();
-    const auto it = std::ranges::find_if(children,
-        [](const auto& child) { return child->IsTypeOrFlag(IT_UNKNOWN); });
-    return it != children.end() ? *it : nullptr;
+    UpwardSubtractSizePhysical(child->GetSizePhysical());
+    RemoveChild(child);
 }
 
 void CItem::UpdateUnknownItem() const
 {
     assert(SupportsSpaceItems());
 
-    CItem* unknown = FindUnknownItem();
+    CItem* unknown = FindChildByType(IT_UNKNOWN);
     if (unknown == nullptr)
     {
         return;
@@ -706,23 +677,11 @@ void CItem::UpdateUnknownItem() const
     unknown->UpwardSubtractSizePhysical(unknown->GetSizePhysical());
 
     // Get the tallied size, account for whether the freespace item is part of it
-    const CItem* freeSpaceItem = FindFreeSpaceItem();
+    const CItem* freeSpaceItem = FindChildByType(IT_FREESPACE);
     const ULONGLONG tallied = GetSizePhysical() - (freeSpaceItem ? freeSpaceItem->GetSizePhysical() : 0);
 
     auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
     unknown->UpwardAddSizePhysical((tallied > total - free) ? 0 : total - free - tallied);
-}
-
-void CItem::RemoveUnknownItem()
-{
-    assert(SupportsSpaceItems());
-
-    if (const auto unknown = FindUnknownItem(); unknown != nullptr)
-    {
-        UpwardSetUndone();
-        UpwardSubtractSizePhysical(unknown->GetSizePhysical());
-        RemoveChild(unknown);
-    }
 }
 
 void CItem::AdjustWslHardlinks(const bool restore, const std::vector<CItem*>& refreshed)
@@ -799,7 +758,7 @@ void CItem::UpdateWslDiskItems(const std::vector<CItem*>& items, std::unordered_
         // Rebaseline the existing item as if the unused space was not shown; the ancestors' sort order and
         // unknown space are settled again once the scan finishes
         root->UpwardSetUndone();
-        CItem* unused = root->FindUnknownItem();
+        CItem* unused = root->FindChildByType(IT_UNKNOWN);
         if (unused == nullptr)
         {
             unused = Create(IT_UNKNOWN, Localization::Lookup(IDS_WSL_UNUSED_ITEM));
@@ -854,15 +813,9 @@ void CItem::CreateHardlinksItem()
 
 CItem* CItem::FindHardlinksItem() const
 {
-    // Folder roots have no parent drive and therefore no hardlinks container
-    const CItem* parentDrive = GetParentDrive();
-    if (parentDrive == nullptr) return nullptr;
-
-    const auto& children = parentDrive->GetChildren();
-    const auto it = std::ranges::find_if(children,
-        [](const auto& child) { return child->IsTypeOrFlag(IT_HLINKS); });
-
-    return it != children.end() ? *it : nullptr;
+    // Folder roots have no parent drive and therefore no hardlinks container.
+    const auto drive = GetParentDrive();
+    return drive ? drive->FindChildByType(IT_HLINKS) : nullptr;
 }
 
 CItem* CItem::FindHardlinksIndexItem() const

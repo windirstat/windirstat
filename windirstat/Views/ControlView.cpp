@@ -14,9 +14,7 @@ int CControlView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     constexpr RECT rect = { 0, 0, 0, 0 };
     auto& control = GetControl();
     control.CreateExtended(LVS_EX_HEADERDRAGDROP, GetControlStyle(), rect, this, ID_WDS_CONTROL);
-    control.ShowGrid(COptions::ListGrid);
-    control.ShowStripes(COptions::ListStripes);
-    control.ShowFullRowSelection(COptions::ListFullRowSelection);
+    control.ApplyListOptions();
     InitializeColumns();
     return 0;
 }
@@ -42,9 +40,7 @@ void CControlView::OnUpdate(CWnd* sender, const MODEL_CHANGE change, CItem* item
 
     case MODEL_CHANGE_LIST_STYLE:
     {
-        control.ShowGrid(COptions::ListGrid);
-        control.ShowStripes(COptions::ListStripes);
-        control.ShowFullRowSelection(COptions::ListFullRowSelection);
+        control.ApplyListOptions();
     }
     break;
 

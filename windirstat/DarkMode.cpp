@@ -302,8 +302,8 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         }
 
         const COLORREF bgColor =
-            (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? SystemColor(COLOR_MENU) :
-            (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? SystemColor(COLOR_MENU) : SystemColor(COLOR_MENUBAR);
+            SystemColor(bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED || bgId == MBI_HOT || bgId == MBI_DISABLEDHOT
+                ? COLOR_MENU : COLOR_MENUBAR);
 
         auto dc = CDC::Borrow(pUDMI->um.hdc);
         dc.FillSolidRect(pUDMI->dis.rcItem, bgColor);
@@ -322,50 +322,6 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
     }
 
     return 1;
-}
-
-void DarkMode::LightenBitmap(CBitmap& bitmap, const bool invert)
-{
-    if (!s_darkModeEnabled) return;
-    const auto bitmapInfo = bitmap.Info();
-    if (!bitmapInfo) return;
-    const BITMAP& bm = *bitmapInfo;
-    if (bm.bmWidth <= 0 || bm.bmHeight <= 0) return;
-
-    const auto width = static_cast<std::size_t>(bm.bmWidth);
-    const auto height = static_cast<std::size_t>(bm.bmHeight);
-    if (width > (std::numeric_limits<std::size_t>::max)() / height / 4) return;
-
-    const std::size_t byteCount = width * height * 4;
-    CDC memDC(nullptr);
-    GdiObjectSelection sobmp(&memDC, &bitmap);
-    BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
-    const auto pixels = std::make_unique_for_overwrite<BYTE[]>(byteCount);
-    if (!GetDIBits(memDC, bitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
-
-    if (invert)
-    {
-        // Invert all color channels (BGR)
-        for (std::size_t i = 0; i < byteCount; i += 4)
-            std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
-                pixels.get() + i, [](const BYTE b) { return static_cast<BYTE>(255 - b); });
-    }
-    else
-    {
-        // Gamma lookup table
-        std::array<BYTE, 256> lut;
-        for (const auto [i, val] : std::views::enumerate(lut))
-        {
-            val = static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f);
-        }
-
-        // Apply to all color channels (BGR)
-        for (std::size_t i = 0; i < byteCount; i += 4)
-            std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
-                pixels.get() + i, [&lut](const BYTE b) { return lut[b]; });
-    }
-
-    SetDIBits(memDC, bitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
 }
 
 void DarkMode::DrawFocusRect(CDC* pdc, const CRect& rc)

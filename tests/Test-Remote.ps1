@@ -46,12 +46,7 @@ try {
     $fixture = Start-StorageFixture Remote $env:WDS_REMOTE_AZURE_ENDPOINT $env:WDS_REMOTE_DAV_ENDPOINT
     $previous['WDS_REMOTE_TEST_ENDPOINT'] = $env:WDS_REMOTE_TEST_ENDPOINT
     $env:WDS_REMOTE_TEST_ENDPOINT = $fixture.Endpoint
-    $arguments = @('-NoProfile', '-STA', '-File', (Join-Path $PSScriptRoot 'Test-WinDirStat.ps1'),
-        '-Scenario', $Scenario, '-RequireAll')
-    if ($ExePath) { $arguments += @('-ExePath', $ExePath) }
-    if ($OutputPath) { $arguments += @('-OutputPath', $OutputPath) }
-    if ($KeepArtifacts) { $arguments += '-KeepArtifacts' }
-    & (Join-Path $PSHOME 'pwsh.exe') @arguments
+    Invoke-StorageSuite $Scenario $ExePath $OutputPath -KeepArtifacts:$KeepArtifacts
     $exitCode = $LASTEXITCODE
     $davLog = docker logs $dav 2>&1 | Out-String
     $azureLog = docker logs $azure 2>&1 | Out-String

@@ -151,6 +151,16 @@ function Test-StopAndRescan {
         'Rescanning replaces partial data without duplicate rows'
     Assert-Equal @($rows | Where-Object Name -IEQ $new).Count 1 'The new scan observes the external sentinel'
     Assert-GraphRendered $app | Out-Null
+
+    # Queue Stop immediately behind Refresh so it can arrive before the first worker starts.
+    foreach ($attempt in 1..3) {
+        Invoke-AppCommand $app 'ID_REFRESH_ALL' -Unchecked
+        Invoke-AppCommand $app 'ID_SCAN_STOP' -Unchecked
+        Wait-AppIdle $app
+        Assert-True (-not (Get-AppCommandState $app 'ID_SCAN_STOP').Enabled) 'Stopping a starting scan completes'
+    }
+    Invoke-AppCommand $app 'ID_REFRESH_ALL' -Unchecked
+    Stop-TestApp $app
 }
 
 function Test-ScanResizeOverlap {

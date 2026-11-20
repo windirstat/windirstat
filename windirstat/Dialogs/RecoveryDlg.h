@@ -24,11 +24,6 @@ protected:
     void OnOK() override {}
 
 private:
-    class ResultsList final : public CListCtrl
-    {
-        MessageResult OnNotify(WPARAM wParam, LPARAM lParam) override;
-    };
-
     class ProgressAnimation final : public CStatic
     {
     public:
@@ -57,7 +52,7 @@ private:
     std::wstring CellText(size_t index, int column) const;
     static std::wstring ErrorText(const RecoveryShared::Failure& failure);
 
-    ResultsList m_list;
+    CDarkHeaderListCtrl m_list;
     ProgressAnimation m_animation;
     CToolTipCtrl m_tooltips;
     std::array<std::wstring, 4> m_tooltipText;

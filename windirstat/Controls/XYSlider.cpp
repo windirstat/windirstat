@@ -72,13 +72,6 @@ CRect CXySlider::GetGripperRect() const
     return rc;
 }
 
-void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
-{
-    assert(minVal <= maxVal);
-
-    val = std::clamp(val, static_cast<LONG>(minVal), static_cast<LONG>(maxVal));
-}
-
 void CXySlider::InternToExtern()
 {
     m_externalPos.x = static_cast<LONG>(std::round(static_cast<double>(m_pos.x) * m_externalRange.cx / m_range.cx));
@@ -168,11 +161,8 @@ void CXySlider::PaintGripper(CDC* pdc) const
 
 void CXySlider::DoMoveBy(const int cx, const int cy)
 {
-    m_pos.x += cx;
-    CheckMinMax(m_pos.x, -m_range.cx, m_range.cx);
-
-    m_pos.y += cy;
-    CheckMinMax(m_pos.y, -m_range.cy, m_range.cy);
+    m_pos.x = std::clamp(m_pos.x + cx, -m_range.cx, m_range.cx);
+    m_pos.y = std::clamp(m_pos.y + cy, -m_range.cy, m_range.cy);
 
     RedrawWindow();
 
@@ -217,8 +207,8 @@ void CXySlider::DoDrag(const CPoint & point)
         {
             CPoint pt = ToClient(msg.pt);
 
-            CheckMinMax(pt.x, ptMin.x, ptMax.x);
-            CheckMinMax(pt.y, ptMin.y, ptMax.y);
+            pt.x = std::clamp(pt.x, ptMin.x, ptMax.x);
+            pt.y = std::clamp(pt.y, ptMin.y, ptMax.y);
 
             const int dx = pt.x - pt0.x;
             const int dy = pt.y - pt0.y;
@@ -259,13 +249,7 @@ void CXySlider::HighlightGripper(const bool on)
     RedrawWindow();
 }
 
-void CXySlider::OnSetFocus(WindowRef /*pOldWnd*/)
-{
-    CallDefaultHandler();
-    Invalidate();
-}
-
-void CXySlider::OnKillFocus(WindowRef /*pNewWnd*/)
+void CXySlider::OnFocusChanged()
 {
     CallDefaultHandler();
     Invalidate();

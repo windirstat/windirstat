@@ -163,6 +163,7 @@ class CFolderColors final
 {
 public:
     COLORREF GetColor(const CItem* item) const;
+    COLORREF GetItemColor(const CItem* item) const;
     void Clear() { m_branches.clear(); m_colors.clear(); }
 
 private:
@@ -391,14 +392,10 @@ protected:
 class CTreeMapPreview final : public MessageTarget<CTreeMapPreview, CStatic>
 {
 public:
-    CTreeMapPreview();
-    ~CTreeMapPreview() override;
     void SetOptions(const CTreeMap::Options* options);
 
 protected:
-    void BuildDemoData();
-
-    CItem* m_root;                  // Demo tree
+    std::unique_ptr<CItem> m_root = CTreeMap::BuildDemoTree();
     CTreeMap m_treeMap;             // Our treemap creator
 
 public:

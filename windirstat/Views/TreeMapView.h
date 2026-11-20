@@ -42,7 +42,6 @@ public:
     void ClearVisualizationLayout() override;
     void OnRenderCacheTrimmed() override;
     void DrillDown(CItem* item) override;
-    std::span<const UINT> GetPersistentContextCommands() const override;
 
     static constexpr int ZoomFrameWidth = 4;
 

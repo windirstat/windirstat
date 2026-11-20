@@ -105,6 +105,7 @@ public:
             if (m_session != nullptr) break;
         }
         RemoteCheck(m_session != nullptr, GetLastError());
+        WinHttpSetOption(m_session, WINHTTP_OPTION_DISABLE_GLOBAL_POOLING, nullptr, 0);
         for (DWORD protocols : { WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3,
             WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 })
             if (WinHttpSetOption(m_session, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols))) break;
@@ -403,13 +404,14 @@ static FILETIME RemoteTime(const RemoteXml* element)
     return result;
 }
 
-FinderRemote::Page FinderRemote::ReadS3Page(const bool recursive)
+FinderRemote::Page FinderRemote::ReadS3Page(const bool recursive, const unsigned limit)
 {
     // Read a bounded page with exact keys and opaque continuation tokens.
     std::string query;
     if (!m_token.empty()) query = "continuation-token=" + RemoteEncode(m_token) + "&";
     if (!recursive) query += "delimiter=%2F&";
-    query += "encoding-type=url&list-type=2&max-keys=1000&prefix=" + RemoteEncode(m_target.prefix);
+    query += "encoding-type=url&list-type=2&max-keys=" + std::to_string(limit) +
+        "&prefix=" + RemoteEncode(m_target.prefix);
     const auto response = RemoteS3Request(*m_source, m_target, L"GET", L"/" + m_target.bucket,
         query, m_queue, m_progress);
     RemoteStatus(response, 200);
@@ -585,12 +587,13 @@ static RemoteResponse RemoteAzureRequest(StorageSource& source, const RemoteTarg
     return RemoteRequest(source, target.endpoint, request.resource, method, request.headers, body, queue, {}, progress);
 }
 
-FinderRemote::Page FinderRemote::ReadAzurePage(const bool recursive, const bool probe)
+FinderRemote::Page FinderRemote::ReadAzurePage(const bool recursive, const bool probe, const unsigned limit)
 {
     // List current committed blobs, retaining opaque continuation markers and exact object names.
     std::wstring prefix = m_target.prefix;
     if (probe) prefix.pop_back();
-    std::map<std::wstring, std::wstring> parameters{ { L"comp", L"list" }, { L"maxresults", probe ? L"1" : L"1000" },
+    std::map<std::wstring, std::wstring> parameters{ { L"comp", L"list" },
+        { L"maxresults", std::to_wstring(probe ? 1u : limit) },
         { L"prefix", prefix }, { L"restype", L"container" } };
     if (!recursive) parameters[L"delimiter"] = L"/";
     if (!m_token.empty()) parameters[L"marker"] = m_token;
@@ -652,9 +655,9 @@ static DWORD RemoteDavStatus(const RemoteXml* element)
     return code;
 }
 
-FinderRemote::Page FinderRemote::ReadWebDavPage()
+FinderRemote::Page FinderRemote::ReadWebDavPage(const bool selfOnly)
 {
-    // Depth one avoids unbounded server recursion and obtains sizes without downloading file content.
+    // Request just the collection when looking up its date; enumerate one level for a scan.
     const std::string body = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
         "<d:propfind xmlns:d=\"DAV:\"><d:prop><d:resourcetype/><d:getcontentlength/>"
         "<d:getlastmodified/></d:prop></d:propfind>";
@@ -662,7 +665,8 @@ FinderRemote::Page FinderRemote::ReadWebDavPage()
     RemoteCheck(!credentials.user.empty() && !credentials.secret.empty(), ERROR_LOGON_FAILURE);
     const auto response = RemoteRequest(*m_source, m_target.endpoint,
         L"/" + RemoteEncodePath(m_target.prefix), L"PROPFIND",
-        L"Depth: 1\r\nContent-Type: application/xml; charset=utf-8\r\n", body, m_queue, credentials, m_progress);
+        std::wstring(selfOnly ? L"Depth: 0" : L"Depth: 1") + L"\r\nContent-Type: application/xml; charset=utf-8\r\n",
+        body, m_queue, credentials, m_progress);
     RemoteStatus(response, 207);
     Page page;
     std::unordered_set<std::wstring> seen;
@@ -735,6 +739,91 @@ void FinderRemote::LoadPage(const bool recursive)
     m_directoryTime = page.directoryTime;
     m_entries = std::move(page.entries);
     m_position = 0;
+}
+
+std::optional<FILETIME> FinderRemote::ReadDirectoryInfo(const bool knownToExist)
+{
+    // Collections have their own timestamp. An object prefix exists only while a key or concrete directory backs it.
+    if (m_target.protocol == RemoteProtocol::WebDav) return ReadWebDavPage(true).directoryTime;
+    if (m_target.protocol == RemoteProtocol::Azure && m_target.prefix.ends_with(L'/'))
+    {
+        const auto page = ReadAzurePage(true, true);
+        if (!page.entries.empty()) return page.entries.front().modified;
+    }
+    if (knownToExist) return FILETIME{};
+
+    // One key proves a prefix exists, even when the scan filters hide it.
+    for (;;)
+    {
+        auto page = m_target.protocol == RemoteProtocol::S3 ? ReadS3Page(true, 1) : ReadAzurePage(true, false, 1);
+        if (!page.entries.empty()) return FILETIME{};
+        if (page.nextToken.empty()) return {};
+        RemoteCheck(m_tokens.insert(page.nextToken).second);
+        m_token = std::move(page.nextToken);
+    }
+}
+
+bool FinderRemote::PrepareRefresh(std::vector<CItem*>& items, std::unordered_set<const CItem*>& missing)
+{
+    const auto remote = [](const CItem* item) { return item && item->IsTypeOrFlag(ITF_REMOTE) && item->IsDone(); };
+    if (std::ranges::none_of(items, remote)) return true;
+
+    // Read only the selected branches and their ancestors, leaving sibling listings and failures intact.
+    std::unordered_map<const CItem*, FILETIME> ownTimes;
+    const auto result = CProgressDlg(0, CProgressDlg::Flags::None, GetMainWindow(), [&](CProgressDlg* progress)
+    {
+        std::unordered_map<const CItem*, std::shared_ptr<StorageSource>> sources;
+        for (auto* item : items)
+        {
+            if (!remote(item)) continue;
+            const auto* root = item->GetEnumRoot();
+            auto& source = sources[root];
+            if (!source) source = StorageSource::Open(root->GetNameView());
+            bool existsBelow = false;
+            for (auto* dir = item->IsLeaf() ? item->GetParent() : item; dir && dir->IsTypeOrFlag(ITF_REMOTE);
+                dir = dir->GetParent())
+            {
+                if (progress->IsCancelled()) return;
+                auto [time, inserted] = ownTimes.try_emplace(dir, dir->GetLastChange());
+                if (!inserted) break;
+                auto target = StorageSource::Parse(dir->GetPath());
+                if (!source || !target) continue;
+                FinderRemote finder(source, nullptr);
+                finder.m_target = std::move(*target);
+                finder.m_progress = progress;
+                try
+                {
+                    const auto info = finder.ReadDirectoryInfo(existsBelow || dir->IsScanRoot());
+                    if (info) { time->second = *info; existsBelow = true; }
+                    else missing.insert(dir);
+                }
+                catch (const RemoteFailure& failure)
+                {
+                    // Keep inaccessible directories so the scan can report their error.
+                    if (failure.missing && !dir->IsScanRoot()) missing.insert(dir);
+                }
+                catch (const RemoteInterrupted&) { return; }
+            }
+        }
+    }).ShowModal();
+    if (result == IDCANCEL) return false;
+
+    // Prune the highest vanished prefix and clear its old contribution before workers publish new timestamps.
+    for (auto*& item : items) if (remote(item))
+        for (auto* dir = item; dir != nullptr; dir = dir->GetParent())
+            if (missing.contains(dir)) item = dir;
+    const std::unordered_set<const CItem*> selected(items.begin(), items.end());
+    for (auto* item : items) if (remote(item))
+    {
+        for (auto* dir = item->IsLeaf() ? item->GetParent() : item; dir != nullptr; dir = dir->GetParent())
+        {
+            FILETIME latest = ownTimes[dir];
+            if (!selected.contains(dir)) for (const auto* child : dir->GetChildren())
+                if (!selected.contains(child)) latest = (std::max)(latest, child->GetLastChange());
+            dir->SetLastChange(latest);
+        }
+    }
+    return true;
 }
 
 bool FinderRemote::FindFile(const CItem* item)
@@ -1039,7 +1128,7 @@ RemoteDeleteResult FinderRemote::Delete(const std::span<CItem* const> items,
             auto group = std::ranges::find(groups, item->GetEnumRoot(), &Group::root);
             if (group == groups.end())
             {
-                groups.push_back({ item->GetEnumRoot(), *root, item->GetStorageSource(),
+                groups.push_back({ item->GetEnumRoot(), *root, StorageSource::Open(item->GetEnumRoot()->GetNameView()),
                     std::make_unique<RemoteDeletePlan>(), {} });
                 group = groups.end() - 1;
             }

@@ -142,7 +142,7 @@ void CFlameGraphView::RenderViewport(CDC* pDC, CRect clip) const
         // Layout coordinates cover the full graph; the cached bitmap contains
         // only the visible client-sized viewport below the sticky header.
         pDC->SetViewportOrg(0, -m_scrollPos);
-        m_flameGraph.DrawFlameGraph(pDC);
+        m_flameGraph.Draw(pDC, false);
     }
 
     if (CRect breadcrumbClip(0, 0, client.Width(), breadcrumbHeight);
@@ -150,7 +150,7 @@ void CFlameGraphView::RenderViewport(CDC* pDC, CRect clip) const
     {
         const ScopedDcState breadcrumbState(pDC);
         pDC->IntersectClipRect(breadcrumbClip);
-        m_flameGraph.DrawBreadcrumbs(pDC);
+        m_flameGraph.Draw(pDC, true);
     }
 }
 

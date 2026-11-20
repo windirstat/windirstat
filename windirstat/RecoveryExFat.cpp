@@ -615,41 +615,16 @@ void ExFatRecovery::Validate(const Record& record, Progress& progress)
 std::wstring ExFatRecovery::RecoverFile(const Record& record,
     const std::wstring& canonicalDestination, Progress& progress)
 {
-    Validate(record, progress);
-    OutputFile output(canonicalDestination, record);
-    std::vector<BYTE> bytes(static_cast<size_t>(std::min<ULONGLONG>(CopyBufferBytes, record.data.size)));
-    for (ULONGLONG position = 0; position < record.data.size;)
+    return CopyContiguousFile(record, canonicalDestination, progress, [&] { Validate(record, progress); },
+    [&](const ULONGLONG position, const std::span<BYTE> bytes)
     {
-        progress.Check();
-        const auto take = static_cast<size_t>(std::min<ULONGLONG>(bytes.size(), record.data.size - position));
-        const auto initialized = static_cast<size_t>(position < record.data.initialized ?
-            std::min<ULONGLONG>(take, record.data.initialized - position) : 0);
-        if (initialized != 0)
-        {
-            // Refresh allocation state on both sides of each source read to detect concurrent reuse.
-            const DWORD first = static_cast<DWORD>(record.data.runs.front().lcn + ExFatFirstDataCluster +
-                position / m_geometry.clusterSize);
-            const ULONGLONG count = (position % m_geometry.clusterSize + initialized +
-                m_geometry.clusterSize - 1) / m_geometry.clusterSize;
-            if (!ClustersHaveState(first, count, false, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
-            ReadAt(ClusterOffset(static_cast<DWORD>(record.data.runs.front().lcn + ExFatFirstDataCluster)) + position,
-                std::span<BYTE>(bytes).first(initialized));
-            if (!ClustersHaveState(first, count, false, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
-        }
-
-        // Bytes beyond ValidDataLength are logically zero, regardless of their on-disk contents.
-        std::fill(bytes.begin() + initialized, bytes.begin() + take, BYTE{ 0 });
-        output.Write(std::span<const BYTE>(bytes).first(take), progress);
-        position += take;
-    }
-
-    // Revalidate around the final flush; OutputFile removes any uncommitted partial output.
-    output.Commit([&]
-    {
-        // Recheck the source metadata around the destination flush.
-        Validate(record, progress);
-    },
-        record.created.dwHighDateTime != 0 ? &record.created : nullptr,
-        record.modified.dwHighDateTime != 0 ? &record.modified : nullptr);
-    return output.Path();
+        // Refresh allocation state on both sides of the source read to detect concurrent reuse.
+        const auto start = static_cast<DWORD>(record.data.runs.front().lcn + ExFatFirstDataCluster);
+        const auto first = static_cast<DWORD>(start + position / m_geometry.clusterSize);
+        const ULONGLONG count = (position % m_geometry.clusterSize + bytes.size() + m_geometry.clusterSize - 1) /
+            m_geometry.clusterSize;
+        if (!ClustersHaveState(first, count, false, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
+        ReadAt(ClusterOffset(start) + position, bytes);
+        if (!ClustersHaveState(first, count, false, progress, true)) throw Failure{ L"IDS_RECOVERY_CHANGED" };
+    });
 }

@@ -25,7 +25,6 @@ public:
 
     void SuspendRecalculationDrawing(bool suspend) final;
     void TrimRenderCache();
-    void DrawEmptyView();
     HoverInfo GetHoverInfo() const final;
 
 protected:
@@ -58,7 +57,6 @@ protected:
     virtual void OnVisualizationChanged(MODEL_CHANGE change);
     virtual void DrillDown(CItem* item);
     void ResetZoom(CPoint point);
-    virtual std::span<const UINT> GetPersistentContextCommands() const;
 
     bool IsReadyToDraw() const;
     bool IsDrawn() const { return m_bitmap.m_hObject != nullptr; }

@@ -70,8 +70,7 @@ public:
         if (m_children.empty()) return;
         m_parent->UpwardAddSizePhysical(std::exchange(m_physical, 0));
         m_parent->UpwardAddSizeLogical(std::exchange(m_logical, 0));
-        m_parent->UpwardAddFiles(std::exchange(m_files, 0));
-        m_parent->UpwardAddFolders(std::exchange(m_folders, 0));
+        m_parent->UpwardAddCounts(std::exchange(m_files, 0), std::exchange(m_folders, 0));
         m_parent->UpwardUpdateLastChange(std::exchange(m_lastChange, FILETIME{}));
         for (const auto& [extension, totals] : m_extensions)
         {
@@ -431,11 +430,6 @@ CItem* CItem::AddFile(const Finder& finder, ScanBatch& batch)
     return child;
 }
 
-std::shared_ptr<StorageSource> CItem::GetStorageSource(const bool renew) const
-{
-    return IsTypeOrFlag(ITF_REMOTE) ? StorageSource::Open(GetEnumRoot()->GetNameView(), renew) : nullptr;
-}
-
 ScanResult CItem::GetScanResult() const
 {
     if (!IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY)) return { ScanOutcome::Complete, {} };
@@ -532,45 +526,28 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes) noexcept
     }
 }
 
-void CItem::UpwardAddFolders(const ULONG dirCount) const noexcept
+void CItem::UpwardAddCounts(const ULONG files, const ULONG folders) const noexcept
 {
-    if (dirCount == 0) return;
+    if (files == 0 && folders == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->GetFolderInfo()->m_subdirs += dirCount;
+        const auto info = p->GetFolderInfo();
+        if (info == nullptr) continue;
+        if (files != 0) info->m_files += files;
+        if (folders != 0) info->m_subdirs += folders;
     }
 }
 
-void CItem::UpwardSubtractFolders(const ULONG dirCount) const noexcept
+void CItem::UpwardSubtractCounts(const ULONG files, const ULONG folders) const noexcept
 {
-    if (dirCount == 0) return;
+    if (files == 0 && folders == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        assert(p->GetFolderInfo()->m_subdirs >= dirCount);
-        if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->GetFolderInfo()->m_subdirs -= dirCount;
-    }
-}
-
-void CItem::UpwardAddFiles(const ULONG fileCount) const noexcept
-{
-    if (fileCount == 0) return;
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->GetFolderInfo()->m_files += fileCount;
-    }
-}
-
-void CItem::UpwardSubtractFiles(const ULONG fileCount) const noexcept
-{
-    if (fileCount == 0) return;
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        if (p->IsTypeOrFlag(IT_FILE)) continue;
-        assert(p->GetFolderInfo()->m_files >= fileCount);
-        p->GetFolderInfo()->m_files -= fileCount;
+        const auto info = p->GetFolderInfo();
+        if (info == nullptr) continue;
+        assert(info->m_files >= files && info->m_subdirs >= folders);
+        if (files != 0) info->m_files -= files;
+        if (folders != 0) info->m_subdirs -= folders;
     }
 }
 
@@ -1138,21 +1115,13 @@ void CItem::SetDone()
     SetFlag(ITF_DONE);
 }
 
-void CItem::UpwardSetDone() noexcept
-{
-    for (auto p = this; p != nullptr; p = p->GetParent())
-    {
-        p->SetDone();
-    }
-}
-
 void CItem::UpwardSetUndone() noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->SupportsSpaceItems() && p->IsDone())
         {
-            if (CItem* unknown = p->FindUnknownItem(); unknown != nullptr)
+            if (CItem* unknown = p->FindChildByType(IT_UNKNOWN); unknown != nullptr)
             {
                 p->UpwardSubtractSizePhysical(unknown->GetSizePhysical());
                 unknown->SetSizePhysical(0);

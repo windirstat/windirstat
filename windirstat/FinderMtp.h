@@ -33,10 +33,6 @@ public:
     std::wstring_view GetFileName() const override { return m_name; }
     std::wstring GetShellPath() const override { return m_shellPath; }
     PCIDLIST_ABSOLUTE GetShellPidl() const override { return m_shellPidl.Get(); }
-    ULONGLONG GetIndex() const override { return 0; }
-    DWORD GetReparseTag() const override { return 0; }
-    bool IsReserved() const override { return false; }
-    bool HasIgnoredStream() const override { return false; }
 
     static bool IsPath(std::wstring_view path) noexcept;
     static std::wstring StripPrefix(std::wstring_view path);

@@ -8,6 +8,37 @@
     return $Path
 }
 
+function New-SparseTestFile {
+    param([string] $Path, [long] $Size, [byte] $FirstByte, [byte] $LastByte)
+    New-TestFile $Path 0 | Out-Null
+    $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $script:Context.Root }
+    $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $Path)
+    if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
+    $stream = [IO.File]::Open($Path, 'Open', 'ReadWrite')
+    try {
+        $stream.SetLength($Size)
+        if ($PSBoundParameters.ContainsKey('FirstByte')) { $stream.WriteByte($FirstByte) }
+        if ($PSBoundParameters.ContainsKey('LastByte')) { $stream.Position = $Size - 1; $stream.WriteByte($LastByte) }
+        $stream.Flush($true)
+    } finally { $stream.Dispose() }
+}
+
+function Protect-DeniedDirectory {
+    param([string] $Path)
+    $acl = Get-Acl -LiteralPath $Path
+    $denied = Get-Acl -LiteralPath $Path
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    try { $sid = $identity.User } finally { $identity.Dispose() }
+    $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,
+        [Security.AccessControl.FileSystemRights]::ListDirectory, [Security.AccessControl.AccessControlType]::Deny))
+    Add-Cleanup 'Restore directory access' {
+        param($Directory, $Security)
+        Set-Acl -LiteralPath $Directory -AclObject $Security
+    } @($Path, $acl)
+    Set-Acl -LiteralPath $Path -AclObject $denied
+    return $acl
+}
+
 function New-TestTree {
     param([string] $Root = $script:Context.Fixture)
     $files = [ordered]@{
@@ -248,6 +279,11 @@ function Read-ScanReport {
         [IO.File]::ReadAllText($Path) | ConvertFrom-Json -DateKind String
     } else { Import-Csv -LiteralPath $Path -Encoding utf8 }
     return ,@($rows)
+}
+
+function Test-ReportIncomplete {
+    param($Row)
+    return ([Convert]::ToUInt32($Row.'WinDirStat Attributes', 16) -band 0x4000) -ne 0
 }
 
 function Get-ReportFiles {

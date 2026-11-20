@@ -51,13 +51,7 @@ function Test-DisposableFileSystem {
         $deep = $root
         foreach ($level in 1..9) { $deep = Join-Path $deep ("level-$level-" + ('x' * 20)) }
         New-TestFile (Join-Path $deep 'deep-é.txt') 5003 31 | Out-Null
-        $sparse = New-TestFile (Join-Path $root 'wide-sparse.bin') 0
-        $utility = [pscustomobject]@{ Exe = Join-Path $env:windir 'System32\fsutil.exe'; Directory = $Context.Root }
-        $probe = Invoke-TestProcess $utility @('sparse', 'setflag', $sparse)
-        if ($probe.ExitCode -ne 0) { throw 'Could not create the sparse fixture; see the command output.' }
-        $stream = [IO.File]::Open($sparse, 'Open', 'ReadWrite')
-        try { $stream.SetLength(4GB + 17L); $stream.WriteByte(0x71); $stream.Flush($true) }
-        finally { $stream.Dispose() }
+        New-SparseTestFile (Join-Path $root 'wide-sparse.bin') (4GB + 17L) -FirstByte 0x71
     }
     $snapshot = @([pscustomobject]@{ Path = Get-NormalPath $root; Directory = $true; Link = $false }) +
         @(Get-DiskSnapshot $root)
@@ -70,16 +64,7 @@ function Test-DisposableFileSystem {
         Assert-ScanSnapshot $rows $snapshot $volumeRoot -Physical
     }
     if ($Case.FileSystem -eq 'NTFS') {
-        $acl = Get-Acl -LiteralPath $blocked
-        $denied = Get-Acl -LiteralPath $blocked
-        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-        try { $sid = $identity.User } finally { $identity.Dispose() }
-        $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,
-            [Security.AccessControl.FileSystemRights]::ListDirectory, [Security.AccessControl.AccessControlType]::Deny))
-        Add-Cleanup 'Restore disposable directory access' {
-            param($Directory, $Security); Set-Acl -LiteralPath $Directory -AclObject $Security
-        } @($blocked, $acl)
-        Set-Acl -LiteralPath $blocked -AclObject $denied
+        Protect-DeniedDirectory $blocked | Out-Null
         foreach ($engine in 0, 1) {
             $runner = New-TestRunner @{ Options = @{ UseFastScanEngine = $engine }
                 DriveSelect = @{ FilteringIncludeDirs = $root } }

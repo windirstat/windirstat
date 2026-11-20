@@ -25,18 +25,15 @@ private:
     Handle m_mft{ CloseHandle };
     NTFS_VOLUME_DATA_BUFFER m_info = {};
     std::vector<Run> m_mftRuns;
-    mutable SmartPointer<void*, decltype(&_aligned_free)> m_buffer{ _aligned_free };
-    mutable size_t m_bufferSize = 0;
-    mutable std::vector<BYTE> m_mftBuffer;
+    std::vector<BYTE> m_mftBuffer;
 
     std::vector<Run> GetMftRuns() const;
 
-    // Read views remain valid until the next raw read.
-    std::span<const BYTE> ReadAt(ULONGLONG offset, DWORD length) const;
-    std::span<const BYTE> ReadMft(ULONGLONG offset, DWORD length) const;
+    std::span<const BYTE> ReadAt(ULONGLONG offset, DWORD length);
+    std::span<const BYTE> ReadMft(ULONGLONG offset, DWORD length);
     bool ClustersFree(ULONGLONG lcn, ULONGLONG count, Progress& progress,
         std::vector<BYTE>* cached = nullptr) const;
-    void ValidateRecord(const Record& record) const;
+    void ValidateRecord(const Record& record);
 
     std::wstring RecoverFile(const Record& record,
         const std::wstring& canonicalDestination, Progress& progress) override;

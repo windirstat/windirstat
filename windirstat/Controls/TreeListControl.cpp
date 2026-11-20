@@ -57,13 +57,6 @@ void CTreeListItem::DrawPacman(CDC* pdc, const CRect& rc) const
     if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.Draw(pdc, rc);
 }
 
-void CTreeListItem::StartPacman() const
-{
-    std::unique_lock lock(CTreeListControl::s_viewStateMutex);
-    const auto it = CTreeListControl::s_viewStates.find(this);
-    if (it != CTreeListControl::s_viewStates.end()) it->second.pacman.Start();
-}
-
 void CTreeListItem::StopPacman() const
 {
     std::unique_lock lock(CTreeListControl::s_viewStateMutex);

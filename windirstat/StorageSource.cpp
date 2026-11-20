@@ -318,17 +318,12 @@ StorageSource::~StorageSource()
     SecureZeroMemory(credentials.token.data(), credentials.token.size() * sizeof(wchar_t));
 }
 
-std::shared_ptr<StorageSource> StorageSource::Open(const std::wstring_view path, const bool renew)
+std::shared_ptr<StorageSource> StorageSource::Open(const std::wstring_view path)
 {
-    // Each enumeration root shares one source until an operation renews its credentials.
-    static std::mutex mutex;
-    static std::unordered_map<std::wstring, std::shared_ptr<StorageSource>> sources;
+    // Each scan or cleanup owns its credentials and transport for the duration of the operation.
     const auto target = Parse(path);
     if (!target) return {};
-    std::lock_guard guard(mutex);
-    auto& source = sources[std::wstring(path)];
-    if (source != nullptr && !renew) return source;
-    source = std::make_shared<StorageSource>();
+    auto source = std::make_shared<StorageSource>();
     source->target = *target;
     source->credentials = GetCredentials(*target);
     source->capabilities.flatListing = target->protocol != RemoteProtocol::WebDav;

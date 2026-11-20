@@ -363,31 +363,12 @@ void CWdsListControl::CalculateRowHeight()
     }
 }
 
-void CWdsListControl::ShowGrid(const bool show)
+void CWdsListControl::ApplyListOptions()
 {
-    m_showGrid = show;
-    if (IsWindow(m_hWnd))
-    {
-        Invalidate();
-    }
-}
-
-void CWdsListControl::ShowStripes(const bool show)
-{
-    m_showStripes = show;
-    if (IsWindow(m_hWnd))
-    {
-        Invalidate();
-    }
-}
-
-void CWdsListControl::ShowFullRowSelection(const bool show)
-{
-    m_showFullRowSelect = show;
-    if (IsWindow(m_hWnd))
-    {
-        Invalidate();
-    }
+    m_showGrid = COptions::ListGrid;
+    m_showStripes = COptions::ListStripes;
+    m_showFullRowSelect = COptions::ListFullRowSelection;
+    if (IsWindow(m_hWnd)) Invalidate();
 }
 
 COLORREF CWdsListControl::GetHighlightColor() const
@@ -1132,11 +1113,6 @@ void CWdsListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
     }
 
     SortItems();
-}
-
-void CWdsListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
-{
-    OnHdnItemClick(pNMHDR, pResult);
 }
 
 void CWdsListControl::OnDestroy()

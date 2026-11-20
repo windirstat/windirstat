@@ -41,15 +41,13 @@ private:
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleString(LCTYPE lctype, const std::wstring& localeName);
 std::wstring GetLocaleLanguage(LANGID langid);
-wchar_t GetLocaleThousandSeparator() noexcept;
-wchar_t GetLocaleDecimalSeparator() noexcept;
 std::wstring FormatBytes(ULONGLONG n) noexcept;
 std::wstring FormatSizeSuffixes(ULONGLONG n) noexcept;
 std::wstring FormatCount(ULONGLONG n) noexcept;
 std::wstring FormatDouble(double d) noexcept;
 std::wstring FormatFileTime(const FILETIME& t, bool seconds = false) noexcept;
 std::wstring FormatAttributes(DWORD attr) noexcept;
-std::wstring FormatHex(const std::vector<BYTE>& bytes, bool upper = true) noexcept;
+std::wstring FormatHex(std::span<const BYTE> bytes, bool upper = true);
 std::wstring FormatMilliseconds(ULONGLONG ms) noexcept;
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);
@@ -58,6 +56,7 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 std::vector<std::wstring> NormalizeScanPaths(const std::wstring& pathSpec);
 std::wstring GetFolderNameFromPath(std::wstring_view path);
 std::wstring GetBaseNameFromPath(std::wstring_view path);
+std::wstring EscapeGlobLiteral(std::wstring_view value);
 std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);
 
 // String helpers
@@ -71,11 +70,7 @@ std::vector<std::wstring> SplitString(const std::wstring& string, WCHAR delim = 
 DWORD ParseAttributes(const std::wstring_view& attributes) noexcept;
 
 // Size specifiers
-const std::wstring& GetSpec_Bytes() noexcept;
-const std::wstring& GetSpec_KiB() noexcept;
-const std::wstring& GetSpec_MiB() noexcept;
-const std::wstring& GetSpec_GiB() noexcept;
-const std::wstring& GetSpec_TiB() noexcept;
+const std::array<std::wstring, 5>& GetSizeUnitLabels() noexcept;
 
 // System information
 FILETIME CurrentSystemFileTime() noexcept;

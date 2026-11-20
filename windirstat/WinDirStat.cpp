@@ -413,7 +413,8 @@ bool CDirStatApp::InitInstance()
     // Elevate non-interactive operations before rejecting protected paths or applying changes.
     // A relaunch cannot inherit standard output, so a dash save continues without elevating.
     const bool saveToStdout = m_saveToPath == L"-" || m_saveDupesToPath == L"-" || m_savePermsToPath == L"-";
-    if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested())) RunElevated(m_lpCmdLine);
+    if (autoElevate && ((hideApp && !saveToStdout) || cmdInfo.IsLegacyUninstallRequested()))
+        RunElevated(m_lpCmdLine, hideApp);
 
     if (cmdInfo.IsLegacyUninstallRequested())
     {
@@ -532,33 +533,30 @@ bool CDirStatApp::IsIdleMessage(const MSG* pMsg) const noexcept
 {
     // Treat WM_TIMER as an idle message to prevent excessive OnIdle calls
     // The timer is used for UI updates and should not trigger idle processing
-    if (pMsg->message == WM_TIMER) return false;
-    if (pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE) return false;
-    return CWinApp::IsIdleMessage(pMsg);
+    return pMsg->message != WM_TIMER && CWinApp::IsIdleMessage(pMsg);
 }
 
 void CDirStatApp::OnAppAbout()
 {
-    const auto dlg = std::make_unique<CAboutDlg>();
-    dlg->ShowModal();
+    CAboutDlg().ShowModal();
 }
 
 void CDirStatApp::OnSelectScanRoots()
 {
     CopyAllDriveMappings();
 
-    if (const auto dlg = std::make_unique<CSelectDrivesDlg>(); IDOK == dlg->ShowModal())
+    if (CSelectDrivesDlg dlg; IDOK == dlg.ShowModal())
     {
-        const std::wstring path = JoinString(dlg->GetSelectedItems());
+        const std::wstring path = JoinString(dlg.GetSelectedItems());
         CWinDirStatModel::Get()->StartScan(path);
     }
 }
 
 void CDirStatApp::OnSelectCloudRoot()
 {
-    if (const auto dlg = std::make_unique<CSelectCloudDlg>(); IDOK == dlg->ShowModal())
+    if (CSelectCloudDlg dlg; IDOK == dlg.ShowModal())
     {
-        CWinDirStatModel::Get()->StartScan(dlg->GetSelectedPath());
+        CWinDirStatModel::Get()->StartScan(dlg.GetSelectedPath());
     }
 }
 

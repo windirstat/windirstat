@@ -81,9 +81,7 @@ public:
     int GetRowHeight() const { return m_rowHeight; }
     int GetIconSize() const { return m_iconSize; }
     void CalculateRowHeight();
-    void ShowGrid(bool show);
-    void ShowStripes(bool show);
-    void ShowFullRowSelection(bool show);
+    void ApplyListOptions();
     bool IsFullRowSelection() const { return m_showFullRowSelect; }
 
     COLORREF GetHighlightColor() const;
@@ -189,7 +187,6 @@ protected:
     void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult) const;
     void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult) const;
     void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
-    void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
     void OnDestroy();
     void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
     virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
@@ -205,7 +202,7 @@ inline std::span<const RouteEntry> CWdsListControl::Routes()
         Route::Notify<&OnHdnDividerdblclick>(HDN_DIVIDERDBLCLICK, 0),
         Route::Notify<&OnHdnItemchanging>(HDN_ITEMCHANGING, 0),
         Route::Notify<&OnHdnItemClick>(HDN_ITEMCLICK, 0),
-        Route::Notify<&OnHdnItemDblClick>(HDN_ITEMDBLCLICK, 0),
+        Route::Notify<&OnHdnItemClick>(HDN_ITEMDBLCLICK, 0),
         Route::Notify<&OnCustomDraw>(NM_CUSTOMDRAW, 0),
         Route::ReflectNotify<&OnLvnGetDispInfo>(LVN_GETDISPINFO),
         Route::Window<&OnContextMenu>(WM_CONTEXTMENU),

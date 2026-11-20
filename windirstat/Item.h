@@ -159,7 +159,6 @@ public:
     {
         return IsTypeOrFlag(ITF_WSL) && (GetParent() == nullptr || !GetParent()->IsTypeOrFlag(ITF_WSL));
     }
-    std::shared_ptr<StorageSource> GetStorageSource(bool renew = false) const;
     ScanResult GetScanResult() const;
     void SetScanResult(ScanResult result);
     static void ReconcileScanResults(CItem* root, bool cancelled = false);
@@ -180,10 +179,8 @@ public:
     void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
     void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
     void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
-    void UpwardAddFolders(ULONG dirCount) const noexcept;
-    void UpwardSubtractFolders(ULONG dirCount) const noexcept;
-    void UpwardAddFiles(ULONG fileCount) const noexcept;
-    void UpwardSubtractFiles(ULONG fileCount) const noexcept;
+    void UpwardAddCounts(ULONG files, ULONG folders) const noexcept;
+    void UpwardSubtractCounts(ULONG files, ULONG folders) const noexcept;
     double GetFraction() const noexcept;
     double GetAbsoluteFraction() const noexcept;
     ULONG GetFilesCount() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_files; }
@@ -232,7 +229,6 @@ public:
     // Scanning & Done State
     void SetDone();
     bool IsDone() const noexcept { return IsTypeOrFlag(ITF_DONE); }
-    void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
     ULONG GetReadJobs() const noexcept { if (IsLeaf()) return 0; return GetFolderInfo()->m_jobs; }
     void UpwardAddReadJobs(ULONG count) const noexcept;
@@ -264,14 +260,11 @@ public:
     ULONGLONG GetProgressPos() const;
     static int GetSizeProportionWidth() { return 105; }
     CItem* FindRecyclerItem() const;
-    void CreateFreeSpaceItem();
-    CItem* FindFreeSpaceItem() const;
+    void CreateSpaceItem(ITEMTYPE type);
+    CItem* FindChildByType(ITEMTYPE type) const;
     void UpdateFreeSpaceItem();
-    void RemoveFreeSpaceItem();
-    void CreateUnknownItem();
-    CItem* FindUnknownItem() const;
+    void RemoveSpaceItem(CItem* child);
     void UpdateUnknownItem() const;
-    void RemoveUnknownItem();
     void UpwardDrivePacman() const;
 
     // WSL trees and the virtual disks shown as the distribution's files

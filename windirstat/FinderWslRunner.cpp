@@ -99,7 +99,7 @@ struct DirectoryEntry
 
 struct Directory
 {
-    struct Directory* parent;
+    Directory* parent;
     long descriptor;
     uint64_t inode;
     size_t used, position;
@@ -109,7 +109,7 @@ struct Directory
 struct Worker
 {
     atomic_int tid;
-    struct Directory* freeDirectories;
+    Directory* freeDirectories;
     size_t outputUsed;
     uint64_t entries;
     std::array<unsigned char, OutputSize> output;
@@ -157,7 +157,7 @@ static bool Submit(long descriptor, uint64_t inode)
     return submitted;
 }
 
-static bool Take(struct Task* task)
+static bool Take(Task* task)
 {
     for (;;)
     {
@@ -175,7 +175,7 @@ static bool Take(struct Task* task)
     }
 }
 
-static void Flush(struct Worker* worker)
+static void Flush(Worker* worker)
 {
     Lock(&outputLock);
     for (size_t offset = 0; offset < worker->outputUsed;)
@@ -190,38 +190,39 @@ static void Flush(struct Worker* worker)
     worker->outputUsed = 0;
 }
 
-static void Emit(struct Worker* worker, const void* data, size_t size)
+static void Emit(Worker* worker, const auto& record, const char* name = "", size_t nameLength = 0)
 {
-    memcpy(worker->output.data() + worker->outputUsed, data, size);
+    // Keep a record and its name in the same locked write, even when workers flush concurrently.
+    const size_t size = sizeof(record) + nameLength;
+    if (size > worker->output.size() - worker->outputUsed) Flush(worker);
+    auto* output = worker->output.data() + worker->outputUsed;
+    memcpy(output, &record, sizeof(record));
+    memcpy(output + sizeof(record), name, nameLength);
     worker->outputUsed += size;
 }
 
-static void EmitEntry(struct Worker* worker, const struct statx* status, uint64_t parent, const char* name,
+static void EmitEntry(Worker* worker, const struct statx* status, uint64_t parent, const char* name,
     size_t nameLength, uint8_t type, uint8_t flags)
 {
     uint64_t allocated;
     if (ckd_mul(&allocated, status->stx_blocks, 512u)) Fail();
-    const struct WslEntryRecord record = {
+    const WslEntryRecord record = {
         .kind = WslKindEntry, .type = type, .flags = flags, .reserved = 0,
         .nameLength = (uint16_t)nameLength, .reserved2 = 0, .links = status->stx_nlink,
         .inode = status->stx_ino, .parent = parent,
         .size = type == WslTypeDirectory ? 0 : status->stx_size, .allocated = allocated,
         .seconds = status->stx_mtime.tv_sec, .nanoseconds = status->stx_mtime.tv_nsec, .reserved3 = 0
     };
-    // Keep a record and its name in the same locked write, even when workers flush concurrently.
-    if (sizeof(record) + nameLength > worker->output.size() - worker->outputUsed) Flush(worker);
-    Emit(worker, &record, sizeof(record));
-    Emit(worker, name, nameLength);
+    Emit(worker, record, name, nameLength);
     ++worker->entries;
 }
 
-static void EmitFailure(struct Worker* worker, uint64_t inode, long error)
+static void EmitFailure(Worker* worker, uint64_t inode, long error)
 {
-    const struct WslShortRecord record = {
+    const WslShortRecord record = {
         .kind = WslKindFailure, .reserved = {}, .error = (uint32_t)-error, .value = inode
     };
-    if (sizeof(record) > worker->output.size() - worker->outputUsed) Flush(worker);
-    Emit(worker, &record, sizeof(record));
+    Emit(worker, record);
 }
 
 static long GetStatus(long descriptor, const char* name, struct statx* status)
@@ -256,17 +257,17 @@ static long OpenDirectory(long parent, const char* name, bool root)
     }
 }
 
-static struct Directory* PushDirectory(struct Worker* worker, struct Directory* parent,
+static Directory* PushDirectory(Worker* worker, Directory* parent,
     long descriptor, uint64_t inode)
 {
-    struct Directory* directory = worker->freeDirectories;
+    Directory* directory = worker->freeDirectories;
     if (directory != nullptr) worker->freeDirectories = directory->parent;
     else
     {
         const long memory = SystemCall(__NR_mmap, 0, sizeof(*directory),
             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         if ((uint64_t)memory >= (uint64_t)-4095) Fail();
-        directory = (struct Directory*)memory;
+        directory = (Directory*)memory;
     }
     directory->parent = parent;
     directory->descriptor = descriptor;
@@ -275,9 +276,9 @@ static struct Directory* PushDirectory(struct Worker* worker, struct Directory* 
     return directory;
 }
 
-static void Scan(struct Worker* worker, const struct Task* task)
+static void Scan(Worker* worker, const Task* task)
 {
-    struct Directory* directory = PushDirectory(worker, nullptr, task->descriptor, task->inode);
+    Directory* directory = PushDirectory(worker, nullptr, task->descriptor, task->inode);
     while (directory != nullptr)
     {
         if (directory->position == directory->used)
@@ -289,7 +290,7 @@ static void Scan(struct Worker* worker, const struct Task* task)
             {
                 if (count < 0) EmitFailure(worker, directory->inode, count);
                 SystemCall(__NR_close, directory->descriptor, 0, 0, 0, 0, 0);
-                struct Directory* finished = directory;
+                Directory* finished = directory;
                 directory = directory->parent;
                 finished->parent = worker->freeDirectories;
                 worker->freeDirectories = finished;
@@ -302,9 +303,9 @@ static void Scan(struct Worker* worker, const struct Task* task)
         // Validate variable-length kernel records before accessing their names.
         const size_t remaining = directory->used - directory->position;
         const auto* entry = reinterpret_cast<const DirectoryEntry*>(directory->listing.data() + directory->position);
-        if (remaining < offsetof(struct DirectoryEntry, name) + 1 || entry->length > remaining ||
-            entry->length < offsetof(struct DirectoryEntry, name) + 1 || entry->length % 8 != 0) Fail();
-        const size_t capacity = entry->length - offsetof(struct DirectoryEntry, name);
+        if (remaining < offsetof(DirectoryEntry, name) + 1 || entry->length > remaining ||
+            entry->length < offsetof(DirectoryEntry, name) + 1 || entry->length % 8 != 0) Fail();
+        const size_t capacity = entry->length - offsetof(DirectoryEntry, name);
         size_t length = 0;
         while (length < capacity && entry->name[length] != '\0') ++length;
         if (length == 0 || length == capacity || length > NAME_MAX) Fail();
@@ -341,11 +342,11 @@ static void Scan(struct Worker* worker, const struct Task* task)
     }
 }
 
-static void WorkerMain(struct Worker* worker) __asm__("WorkerMain");
+static void WorkerMain(Worker* worker) __asm__("WorkerMain");
 
-__attribute__((used)) static void WorkerMain(struct Worker* worker)
+__attribute__((used)) static void WorkerMain(Worker* worker)
 {
-    struct Task task;
+    Task task;
     while (Take(&task))
     {
         Scan(worker, &task);
@@ -358,7 +359,7 @@ __attribute__((used)) static void WorkerMain(struct Worker* worker)
     Flush(worker);
 }
 
-extern "C" long StartWorker(struct Worker* worker, void* stack, atomic_int* tid, long flags);
+extern "C" long StartWorker(Worker* worker, void* stack, atomic_int* tid, long flags);
 
 #define STRINGIFY_VALUE(value) #value
 #define STRINGIFY(value) STRINGIFY_VALUE(value)
@@ -405,7 +406,7 @@ __asm__(".text\nStartWorker:\n"
     struct statx root;
     if (descriptor < 0 || GetStatus(descriptor, "", &root) < 0) Fail();
     rootMount = root.stx_mnt_id;
-    Emit(&workers[0], &WslStreamHeaderValue, sizeof(WslStreamHeaderValue));
+    Emit(&workers[0], WslStreamHeaderValue);
     EmitEntry(&workers[0], &root, 0, "", 0, WslTypeDirectory, 0);
     Flush(&workers[0]);
     Submit(descriptor, root.stx_ino);
@@ -419,7 +420,7 @@ __asm__(".text\nStartWorker:\n"
     unsigned started = 1;
     for (; started < wanted; ++started)
     {
-        struct Worker* worker = &workers[started];
+        Worker* worker = &workers[started];
         if (StartWorker(worker, worker->stack.data() + worker->stack.size(), &worker->tid, WorkerFlags) < 0) break;
     }
     WorkerMain(&workers[0]);
@@ -431,8 +432,8 @@ __asm__(".text\nStartWorker:\n"
             SystemCall(__NR_futex, (long)&worker.tid, FUTEX_WAIT, tid, 0, 0, 0);
         entries += worker.entries;
     }
-    const struct WslShortRecord end = { .kind = WslKindEnd, .reserved = {}, .error = 0, .value = entries };
-    Emit(&workers[0], &end, sizeof(end));
+    const WslShortRecord end = { .kind = WslKindEnd, .reserved = {}, .error = 0, .value = entries };
+    Emit(&workers[0], end);
     Flush(&workers[0]);
     Exit(0);
 }

@@ -40,24 +40,6 @@ int CFlameGraph::PrepareLayout(const CItem* root, const int width, const int row
     return m_renderArea.Height();
 }
 
-void CFlameGraph::DrawFlameGraph(CDC* pdc) const
-{
-    if (pdc == nullptr || m_layoutRoot == nullptr || m_renderArea.IsEmpty()) return;
-
-    GdiObjectSelection soFont(pdc, GetAppFont());
-    ScopedBkMode soBkMode(pdc, TRANSPARENT);
-    RenderLayout(pdc, false);
-}
-
-void CFlameGraph::DrawBreadcrumbs(CDC* pdc) const
-{
-    if (pdc == nullptr || m_breadcrumbs.empty()) return;
-
-    GdiObjectSelection soFont(pdc, GetAppFont());
-    ScopedBkMode soBkMode(pdc, TRANSPARENT);
-    RenderLayout(pdc, true);
-}
-
 void CFlameGraph::BuildLayout(const CItem* root, const int width, const int rowHeight)
 {
     ClearLayout();
@@ -302,8 +284,11 @@ void CFlameGraph::LayoutItem(const CItem* item, const CRect& rc, const int depth
     }
 }
 
-void CFlameGraph::RenderLayout(CDC* pdc, const bool breadcrumbs) const
+void CFlameGraph::Draw(CDC* pdc, const bool breadcrumbs) const
 {
+    if (!pdc || (breadcrumbs ? m_breadcrumbs.empty() : !m_layoutRoot || m_renderArea.IsEmpty())) return;
+    GdiObjectSelection font(pdc, GetAppFont());
+    ScopedBkMode bkMode(pdc, TRANSPARENT);
     const CRect clip = pdc->GetClipBox().value_or(m_renderArea);
 
     VisitRowItems(clip, CPoint(0, 0), [this, pdc, breadcrumbs](const RowItem& entry,
@@ -326,16 +311,7 @@ void CFlameGraph::RenderItem(CDC* pdc, const CItem* item, const CRect& rectangle
     CRect rc = rectangle;
     if (rc.Width() <= 0 || rc.Height() <= 0) return;
 
-    const DWORD rawColor = item->TmiGetGraphColor();
-    COLORREF drawColor = rawColor & 0x00FFFFFF;
-
-    if (drawColor == RGB(0, 0, 0) && !item->TmiIsLeaf()
-        && !item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
-    {
-        drawColor = m_folderColors.GetColor(item);
-    }
-    else drawColor = CTreeMap::GetFlatColor(rawColor, COptions::TreeMapOptions);
-
+    const COLORREF drawColor = m_folderColors.GetItemColor(item);
     pdc->FillSolidRect(rc, drawColor);
 
     RenderLabel(pdc, item, rc, drawColor);

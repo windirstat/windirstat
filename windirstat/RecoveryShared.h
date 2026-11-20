@@ -111,7 +111,12 @@ protected:
 
     explicit RecoveryShared(const std::wstring& volumeName);
 
+    // A raw view remains valid until the next volume read.
+    std::span<const BYTE> ReadVolumeSpan(ULONGLONG offset, size_t size, ULONGLONG length, DWORD alignment);
     void ReadVolume(ULONGLONG offset, std::span<BYTE> bytes, ULONGLONG length, DWORD alignment);
+
+    std::wstring CopyContiguousFile(const Record& record, const std::wstring& destination, Progress& progress,
+        const std::function<void()>& validate, const std::function<void(ULONGLONG, std::span<BYTE>)>& readFree);
 
     template <typename T>
     static T Read(const std::span<const BYTE> bytes, const size_t offset)

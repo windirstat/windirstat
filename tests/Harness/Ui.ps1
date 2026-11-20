@@ -169,6 +169,53 @@ function Wait-AppTab {
     } "The '$Name' results tab becomes active" -StableMilliseconds 150 | Out-Null
 }
 
+function Invoke-AppSearch {
+    param($App, [string] $Term, [bool] $Folders, [switch] $Regex, [bool] $Files, [int] $MinimumBytes)
+    $dialog = Open-AppDialog $App 'ID_SEARCH' 'IDC_SEARCH_TERM'
+    [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_TERM'), $Term)
+    if ($Regex) { Set-DialogCheck $dialog 'IDC_SEARCH_REGEX' $true }
+    if ($PSBoundParameters.ContainsKey('Files')) { Set-DialogCheck $dialog 'IDC_SEARCH_FILES' $Files }
+    if ($PSBoundParameters.ContainsKey('Folders')) { Set-DialogCheck $dialog 'IDC_SEARCH_FOLDERS' $Folders }
+    if ($MinimumBytes) {
+        [TestDesktop]::SetText((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_MIN'), [string]$MinimumBytes)
+        [void][TestDesktop]::Message((Get-DialogControl $dialog 'IDC_SEARCH_SIZE_UNITS'), 0x014E, 0)
+    }
+    Close-AppDialog $dialog 1
+    Get-AppList $App -TabName 'Search Results'
+}
+
+function Measure-AppRefresh {
+    param($App, [scriptblock] $Complete, [string] $Because)
+    $targetWindow = $App.Window
+    $timing = @{ LastResponse = 0L; Longest = 0L }
+    $refreshTimer = [Diagnostics.Stopwatch]::StartNew()
+    Invoke-AppCommand $App 'ID_REFRESH_SELECTED'
+    Wait-Until {
+        try { [void][TestDesktop]::Message($targetWindow, 0) }
+        catch [System.TimeoutException] { return $false }
+        $now = $refreshTimer.ElapsedMilliseconds
+        $timing.Longest = [Math]::Max($timing.Longest, $now - $timing.LastResponse)
+        $timing.LastResponse = $now
+        (& $Complete) -and [TestDesktop]::Text($targetWindow) -notmatch '(?:^| - )(Scanning|\d+([.,]\d+)?%)(?: |$)'
+    } $Because -StableMilliseconds 500 | Out-Null
+    return [pscustomobject]@{ Total = $refreshTimer.ElapsedMilliseconds; Longest = $timing.Longest }
+}
+
+function Get-AppListWithRow {
+    param($App, [string] $Row, [string] $Because)
+    Wait-Until {
+        foreach ($control in [TestDesktop]::Children($App.Window)) {
+            if ([TestDesktop]::Class($control) -eq 'SysListView32' -and
+                $Row -cin [NativeListViewHelper]::GetItemTexts($control)) { return $control }
+        }
+    } $Because
+}
+
+function Get-AppListPaths {
+    param([IntPtr] $List)
+    return ,@([NativeListViewHelper]::GetItemTexts($List) | Where-Object { [IO.Path]::IsPathFullyQualified($_) })
+}
+
 function Get-AppList {
     param([object] $App, [switch] $AllFiles, [string] $TabName)
     if ($TabName) { Wait-AppTab $App $TabName }
@@ -255,6 +302,33 @@ function Invoke-AppKeys {
 function Select-SettingsPage {
     param([IntPtr] $Dialog, [string] $Name)
     Select-DialogTab $Dialog $Name 0xCAFE
+}
+
+function Assert-CloudConnectionFields {
+    param([IntPtr] $Dialog, [string] $Provider, [hashtable] $Values, [string[]] $Required)
+    foreach ($entry in $Values.GetEnumerator()) {
+        [TestDesktop]::SetText((Get-DialogControl $Dialog $entry.Key), $entry.Value)
+    }
+    foreach ($control in $Required) {
+        $field = Get-DialogControl $Dialog $control
+        [TestDesktop]::SetText($field, '')
+        Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($Dialog, 1))) `
+            'Connections require an explicit endpoint and credentials even with valid environment defaults'
+        [TestDesktop]::SetText($field, $Values[$control])
+    }
+    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($Dialog, 1))) `
+        'Connections accept supplied settings and credentials'
+    Select-CloudProvider $Dialog $(if ($Provider -eq 'S3') { 'WebDAV' } else { 'S3' })
+    Assert-True (-not [TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($Dialog, 1))) `
+        'An incomplete provider cannot confirm another provider connection'
+    Select-CloudProvider $Dialog $Provider
+    foreach ($entry in $Values.GetEnumerator()) {
+        if ($entry.Key -in 'IDC_REMOTE_SECRET', 'IDC_S3_TOKEN') { continue }
+        Assert-Equal ([TestDesktop]::ControlText((Get-DialogControl $Dialog $entry.Key))) $entry.Value `
+            'Switching providers preserves unfinished connection fields'
+    }
+    Assert-True ([TestDesktop]::IsWindowEnabled([TestDesktop]::GetDlgItem($Dialog, 1))) `
+        'Returning to a valid source restores confirmation'
 }
 
 function Select-CloudProvider {

@@ -40,11 +40,8 @@ public:
     void SetEntryName(std::wstring name) { m_name = std::move(name); }
     const ScanResult& GetResult() const noexcept override { return m_result; }
     void UseFlatListing(bool flat) noexcept { m_flat = flat; }
-    ULONGLONG GetIndex() const override { return 0; }
-    DWORD GetReparseTag() const override { return 0; }
-    bool IsReserved() const override { return false; }
-    bool HasIgnoredStream() const override { return false; }
 
+    static bool PrepareRefresh(std::vector<CItem*>& items, std::unordered_set<const CItem*>& missing);
     static RemoteDeleteResult Delete(std::span<CItem* const> items, CProgressDlg* progress, bool emptyOnly = false);
 
 private:
@@ -63,9 +60,10 @@ private:
     };
     const Entry& Current() const { return m_entries[m_position]; }
     void LoadPage(bool recursive = false);
-    Page ReadS3Page(bool recursive);
-    Page ReadAzurePage(bool recursive, bool probe = false);
-    Page ReadWebDavPage();
+    Page ReadS3Page(bool recursive, unsigned limit = 1000);
+    Page ReadAzurePage(bool recursive, bool probe = false, unsigned limit = 1000);
+    Page ReadWebDavPage(bool selfOnly = false);
+    std::optional<FILETIME> ReadDirectoryInfo(bool knownToExist);
 
     std::shared_ptr<StorageSource> m_source;
     BlockingQueue<CItem*>* m_queue;

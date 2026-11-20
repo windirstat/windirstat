@@ -102,7 +102,6 @@ public:
     std::wstring GetFilePath() const override { return m_base + m_name; }
     ULONGLONG GetIndex() const override;
     DWORD GetReparseTag() const override { return m_reparseTag; }
-    bool IsReserved() const override { return false; }
     bool HasIgnoredStream() const override;
     const ScanResult& GetResult() const noexcept override { return m_result; }
 

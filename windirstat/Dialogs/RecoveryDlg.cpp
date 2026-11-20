@@ -8,18 +8,6 @@
 #include "RecoveryDlg.h"
 #include "IconHandler.h"
 
-MessageResult RecoveryDlg::ResultsList::OnNotify(const WPARAM wParam, const LPARAM lParam)
-{
-    // Keep native header text readable with the dark palette.
-    const auto header = reinterpret_cast<NMHDR*>(lParam);
-    if (!header || header->code != NM_CUSTOMDRAW || header->hwndFrom != GetHeader().Handle() ||
-        !DarkMode::IsDarkModeActive()) return CListCtrl::OnNotify(wParam, lParam);
-    const auto draw = reinterpret_cast<NMCUSTOMDRAW*>(header);
-    const LRESULT result = draw->dwDrawStage == CDDS_PREPAINT ? CDRF_NOTIFYITEMDRAW : CDRF_DODEFAULT;
-    if (draw->dwDrawStage == CDDS_ITEMPREPAINT) ::SetTextColor(draw->hdc, DarkMode::SystemColor(COLOR_BTNTEXT));
-    return result;
-}
-
 void RecoveryDlg::ProgressAnimation::DrawItem(LPDRAWITEMSTRUCT item)
 {
     auto target = CDC::Borrow(item->hDC);

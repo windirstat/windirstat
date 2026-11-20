@@ -22,12 +22,17 @@ int ResolveTextScalePercent(const int configuredPercent) noexcept
 
 static std::map<std::pair<int, int>, HFONT> s_appFonts;
 
+bool IsWindowClass(const HWND window, const wchar_t* name) noexcept
+{
+    wchar_t className[MAX_CLASS_NAME];
+    return window && GetClassNameW(window, className, static_cast<int>(std::size(className))) &&
+        _wcsicmp(className, name) == 0;
+}
+
 HFONT GetAppFont(const HWND window)
 {
     const int dpi = GetWindowDpi(window);
-    std::array<WCHAR, MAX_CLASS_NAME> className{};
-    if (window != nullptr) GetClassNameW(window, className.data(), static_cast<int>(className.size()));
-    const int percent = wcscmp(className.data(), TOOLBARCLASSNAMEW) == 0 ? GetToolBarSizePercent() : GetFontSizePercent();
+    const int percent = IsWindowClass(window, TOOLBARCLASSNAMEW) ? GetToolBarSizePercent() : GetFontSizePercent();
     const std::pair key(dpi, percent);
     if (const auto found = s_appFonts.find(key); found != s_appFonts.end()) return found->second;
 
@@ -561,10 +566,8 @@ static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
     try
     {
         SendMessageW(window, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(window)), false);
-        std::array<WCHAR, MAX_CLASS_NAME> className{};
-        GetClassNameW(window, className.data(), static_cast<int>(className.size()));
         constexpr std::array buttonTypes{ BS_CHECKBOX, BS_AUTOCHECKBOX, BS_RADIOBUTTON, BS_AUTORADIOBUTTON };
-        if (wcscmp(className.data(), WC_BUTTONW) == 0 && std::ranges::contains(buttonTypes,
+        if (IsWindowClass(window, WC_BUTTONW) && std::ranges::contains(buttonTypes,
             GetWindowLongPtrW(window, GWL_STYLE) & BS_TYPEMASK))
             SetWindowSubclass(window, ScaledButtonSubclass, 1, 0);
     }
@@ -574,9 +577,7 @@ static BOOL CALLBACK SetAppFontCallback(const HWND window, LPARAM) noexcept
 
 static BOOL CALLBACK RefreshToolTipFontCallback(const HWND window, LPARAM) noexcept
 {
-    std::array<WCHAR, MAX_CLASS_NAME> className{};
-    GetClassNameW(window, className.data(), static_cast<int>(className.size()));
-    if (wcscmp(className.data(), TOOLTIPS_CLASSW) != 0) return true;
+    if (!IsWindowClass(window, TOOLTIPS_CLASSW)) return true;
 
     SendMessageW(window, TTM_POP, 0, 0);
     SetAppFontCallback(window, 0);
@@ -621,9 +622,7 @@ void InitializeDialogFontAndSize(const HWND dialog)
             CRect rect(control);
             MapWindowPoints(nullptr, dialog, reinterpret_cast<LPPOINT>(&rect), 2);
             controls.emplace_back(control, rect);
-            std::array<WCHAR, MAX_CLASS_NAME> className{};
-            GetClassNameW(control, className.data(), static_cast<int>(className.size()));
-            if (wcscmp(className.data(), TRACKBAR_CLASSW) == 0)
+            if (IsWindowClass(control, TRACKBAR_CLASSW))
             {
                 const int length = static_cast<int>(SendMessageW(control, TBM_GETTHUMBLENGTH, 0, 0));
                 SetWindowLongPtrW(control, GWL_STYLE, GetWindowLongPtrW(control, GWL_STYLE) | TBS_FIXEDLENGTH);

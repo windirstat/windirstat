@@ -75,7 +75,7 @@ bool FolderExists(const std::wstring& path) noexcept;
 bool DriveExists(const std::wstring& path, bool checkAccess = true) noexcept;
 bool IsLocalDrive(const std::wstring& path) noexcept;
 std::wstring GetVolumeName(const std::wstring& rootPath);
-bool DeleteFileForce(const std::wstring& path, DWORD attributes = INVALID_FILE_ATTRIBUTES);
+bool RemoveDirectoryForce(const std::wstring& path);
 
 // Path utilities
 std::wstring QueryDosDevicePath(const std::wstring& drive);
@@ -92,7 +92,7 @@ bool IsElevationActive() noexcept;
 bool IsElevationAvailable() noexcept;
 inline bool IsElevationPossible() noexcept { return IsElevationActive() || IsElevationAvailable(); }
 bool EnableReadPrivileges() noexcept;
-void RunElevated(const std::wstring& cmdLine);
+void RunElevated(const std::wstring& cmdLine, bool waitForExit = false);
 
 // SID helpers
 std::wstring GetNameFromSid(PSID sid);
@@ -102,7 +102,8 @@ bool CompressFileAllowed(const std::wstring& volumeName, CompressionAlgorithm al
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
 bool SparsifyFile(const std::wstring& path, CProgressDlg* pdlg = nullptr,
     ULONGLONG chunkSize = wds::Mi, ULONGLONG minZeroRunSize = 64ull * wds::Ki);
-bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
+DWORD CreateHardlinkFromFile(const std::wstring& sourcePath, const std::wstring& targetPath,
+    const CProgressDlg& progress);
 
 // File hashing
 class CItem;

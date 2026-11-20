@@ -548,12 +548,6 @@ void CMainFrame::OnClose()
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();
 
-    // It's too late to do this in OnDestroy() because the toolbar, if undocked,
-    // is already destroyed in OnDestroy(). So we must save the toolbar state here
-    // in OnClose().
-    COptions::ShowToolBar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
-    COptions::ShowStatusBar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
-
     CallDefaultHandler();
 }
 
@@ -802,13 +796,13 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         else CFileTreeControl::Get()->Invalidate(false);
 
         // Conditionally sort duplicates
-        if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->IsFileDupeViewTabActive())
+        if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->IsActive(FileTab::Duplicates))
         {
             CFileDupeControl::Get()->SortItems();
         }
 
         // Conditionally sort largest files
-        if (doInfrequentUpdate && GetFileTabbedView()->IsFileTopViewTabActive())
+        if (doInfrequentUpdate && GetFileTabbedView()->IsActive(FileTab::Largest))
         {
             CFileTopControl::Get()->SortItems();
         }

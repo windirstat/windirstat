@@ -27,7 +27,6 @@ public:
 protected:
     void Initialize();
     CRect GetGripperRect() const;
-    void CheckMinMax(LONG& val, int minVal, int maxVal) const;
     void InternToExtern();
     void ExternToIntern();
     void NotifyParent() const;
@@ -64,8 +63,7 @@ public:
 protected:
     UINT OnGetDlgCode() { return DLGC_WANTARROWS; }
     LRESULT OnNcHitTest(CPoint) { return HTCLIENT; }
-    void OnSetFocus(WindowRef pOldWnd);
-    void OnKillFocus(WindowRef pNewWnd);
+    void OnFocusChanged();
     void OnPaint();
     void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     void OnLButtonDown(UINT nFlags, CPoint point);
@@ -80,8 +78,8 @@ inline std::span<const RouteEntry> CXySlider::Routes()
     {
         Route::Window<&OnGetDlgCode>(WM_GETDLGCODE),
         Route::Window<&OnNcHitTest>(WM_NCHITTEST),
-        Route::Window<&OnSetFocus>(WM_SETFOCUS),
-        Route::Window<&OnKillFocus>(WM_KILLFOCUS),
+        Route::Window<&OnFocusChanged>(WM_SETFOCUS),
+        Route::Window<&OnFocusChanged>(WM_KILLFOCUS),
         Route::Window<&OnPaint>(WM_PAINT),
         Route::Window<&OnKeyDown>(WM_KEYDOWN),
         Route::Window<&OnLButtonDown>(WM_LBUTTONDOWN),

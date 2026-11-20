@@ -50,7 +50,7 @@ struct StorageSource
     static RemoteCredentials GetCredentials(const RemoteTarget& target);
     static DWORD SetCredentials(const RemoteTarget& target, const RemoteCredentials& credentials, bool remember);
     static void ForgetCredentials(const RemoteTarget& target, std::span<const std::wstring> retained);
-    static std::shared_ptr<StorageSource> Open(std::wstring_view path, bool renew = false);
+    static std::shared_ptr<StorageSource> Open(std::wstring_view path);
     static bool IsPath(std::wstring_view path) noexcept
     {
         return path.starts_with(L"s3://") || path.starts_with(L"azure://") ||

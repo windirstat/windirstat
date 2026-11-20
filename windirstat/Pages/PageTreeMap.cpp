@@ -7,10 +7,7 @@
 #include "pch.h"
 #include "PageTreeMap.h"
 
-namespace
-{
-    constexpr UINT c_MaxHeight = 200;
-}
+static constexpr UINT c_MaxHeight = 200;
 
 CPageTreeMap::CPageTreeMap()
     : MessageTarget(IDD, L"IDS_PAGE_GRAPHS_TITLE")
@@ -158,27 +155,6 @@ void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
 {
     *result = 0;
     m_options.gridColor = m_gridColor.GetColor();
-    OnSomethingChanged();
-}
-
-void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
-{
-    *result = 0;
-    OnSomethingChanged();
-}
-
-void CPageTreeMap::OnHScroll(UINT, UINT, WindowRef)
-{
-    OnSomethingChanged();
-}
-
-void CPageTreeMap::OnLightSourceChanged(NMHDR*, LRESULT*)
-{
-    OnSomethingChanged();
-}
-
-void CPageTreeMap::OnSetModified()
-{
     OnSomethingChanged();
 }
 

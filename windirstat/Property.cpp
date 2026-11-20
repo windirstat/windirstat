@@ -185,19 +185,8 @@ bool PersistedSettingStorage::WriteBinary(const std::wstring& section, const std
             static_cast<DWORD>(data.size())) == ERROR_SUCCESS;
     }
 
-    static constexpr std::wstring_view hexDigits = L"0123456789ABCDEF";
-    std::wstring hex;
-    if (data.size() > hex.max_size() / 2) return false;
-    if (!data.empty()) hex.resize_and_overwrite(data.size() * 2,
-    [&](wchar_t* buffer, const size_t size) noexcept {
-        for (const auto [i, value] : std::views::enumerate(data))
-        {
-            const unsigned byte = std::to_integer<unsigned>(value);
-            buffer[2 * i] = hexDigits[byte >> 4];
-            buffer[2 * i + 1] = hexDigits[byte & 0x0F];
-        }
-        return size;
-    });
+    if (data.size() > std::wstring{}.max_size() / 2) return false;
+    const auto hex = FormatHex({ reinterpret_cast<const BYTE*>(data.data()), data.size() });
     return WritePrivateProfileStringW(section.c_str(), entry.c_str(), hex.c_str(), m_iniPath->c_str());
 }
 

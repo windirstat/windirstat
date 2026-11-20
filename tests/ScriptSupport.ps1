@@ -24,40 +24,6 @@ function Read-CHeaderNumericDefines {
     return $defines
 }
 
-function Read-CSequentialEnum {
-    param(
-        [Parameter(Mandatory)] [string] $Path,
-        [Parameter(Mandatory)] [string] $EnumName
-    )
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Required header not found: $Path"
-    }
-
-    $text = [System.IO.File]::ReadAllText($Path)
-    $pattern = "enum\s+$([regex]::Escape($EnumName))\s*\{(?<body>.*?)\};"
-    $match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    if (-not $match.Success) {
-        throw "Enum '$EnumName' was not found in $Path"
-    }
-
-    $values = [ordered] @{}
-    $nextValue = 0
-    foreach ($rawLine in ($match.Groups['body'].Value -split '\r?\n')) {
-        $line = ($rawLine -replace '//.*$', '').Trim().TrimEnd(',')
-        if ([string]::IsNullOrWhiteSpace($line)) { continue }
-
-        if ($line -match '^(?<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?<value>(?:0[xX][0-9A-Fa-f]+)|-?\d+))?$') {
-            if ($Matches.ContainsKey('value') -and $Matches.value) {
-                $nextValue = Convert-CIntegerLiteral $Matches.value
-            }
-            $values[$Matches.name] = $nextValue
-            $nextValue++
-        }
-    }
-    return $values
-}
-
 function Get-RequiredMapValue {
     param(
         [Parameter(Mandatory)] [System.Collections.IDictionary] $Map,

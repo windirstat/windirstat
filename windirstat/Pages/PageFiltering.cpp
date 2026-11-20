@@ -24,11 +24,7 @@ void CPageFiltering::InitializePage()
     m_ctrlFilteringIncludeFiles.SubclassDlgItem(IDC_FILTERING_INCLUDE_FILES, this);
     m_ctrlFilteringIncludeDirs.SubclassDlgItem(IDC_FILTERING_INCLUDE_DIRS, this);
 
-    m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_KiB());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_MiB());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_GiB());
-    m_ctlFilteringSizeUnits.AddString(GetSpec_TiB());
+    for (const auto& label : GetSizeUnitLabels()) m_ctlFilteringSizeUnits.AddString(label);
     m_ctlFilteringSizeComparison.AddString(L"<");
     m_ctlFilteringSizeComparison.AddString(L">");
     m_ctlFilteringMaxAgeComparison.AddString(L"<");

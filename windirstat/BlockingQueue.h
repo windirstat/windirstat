@@ -58,8 +58,11 @@ public:
 
     void StartThreads(const unsigned int workerThreads, const std::function<void()>& callback)
     {
-        ResetQueue(workerThreads, false);
-        std::scoped_lock threadLock(m_threadMutex);
+        // A stop or suspension requested during scan discovery also applies to the first worker.
+        std::scoped_lock lock(m_threadMutex, m_mutex);
+        if (m_cancelled) return;
+        m_totalWorkerThreads = workerThreads;
+        m_threads.reserve(workerThreads);
 
         for ([[maybe_unused]] const auto _ : std::views::iota(0u, m_totalWorkerThreads))
         {
@@ -179,33 +182,31 @@ public:
 
     void CancelExecution(const int stopReason = -1)
     {
-        // Start cancellation process
-        if (std::scoped_lock lock(m_mutex); true)
+        // Serialize cancellation with worker startup and keep the stop reason visible to the coordinator.
+        std::scoped_lock threadLock(m_threadMutex);
         {
+            std::scoped_lock lock(m_mutex);
             if (stopReason != -1) m_stopReason = stopReason;
             m_cancelled = true;
+            m_queue.clear();
             m_waiting.notify_all();
             m_pushed.notify_all();
         }
 
-        // Wait for threads to complete
-        JoinThreads();
-
-        // Keep completion observable until StartThreads resets the queue.
-        std::scoped_lock lock(m_threadMutex, m_mutex);
+        // Interrupt blocking reads after setting cancellation, then join all workers.
+        for (auto& thread : m_threads)
+            if (thread.joinable()) CancelSynchronousIo(thread.native_handle());
         m_threads.clear();
-        m_queue.clear();
     }
 
     void SuspendExecution(const bool clearQueue = false)
     {
         std::unique_lock lock(m_mutex);
-        if (!m_started) return;
         m_suspended = true;
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]
         {
-            return m_workersWaiting + m_workersSuspended == m_totalWorkerThreads;
+            return m_cancelled || !m_started || m_workersWaiting + m_workersSuspended == m_totalWorkerThreads;
         });
         if (clearQueue) m_queue.clear();
     }
@@ -216,21 +217,6 @@ public:
         m_suspended = false;
         m_waiting.notify_all();
         m_pushed.notify_all();
-    }
-
-    void ResetQueue(const int totalWorkerThreads, const bool clearQueue = true)
-    {
-        std::scoped_lock lock(m_threadMutex, m_mutex);
-        m_workersWaiting = 0;
-        m_workersSuspended = 0;
-        m_suspended = false;
-        m_started = false;
-        m_cancelled = false;
-        m_stopReason = 0;
-        m_totalWorkerThreads = totalWorkerThreads;
-        m_threads.clear();
-        m_threads.reserve(m_totalWorkerThreads);
-        if (clearQueue) m_queue.clear();
     }
 };
 

@@ -85,6 +85,14 @@ COLORREF MakeBitmapColor(const COLORREF color, const double brightness)
     return BGR(blue, green, red);
 }
 
+COLORREF CFolderColors::GetItemColor(const CItem* item) const
+{
+    const DWORD rawColor = item->TmiGetGraphColor();
+    if ((rawColor & 0x00FFFFFF) == 0 && !item->TmiIsLeaf() && !item->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN))
+        return GetColor(item);
+    return CTreeMap::GetFlatColor(rawColor, COptions::TreeMapOptions);
+}
+
 COLORREF CFolderColors::GetColor(const CItem* item) const
 {
     const COLORREF background = DarkMode::SystemColor(COLOR_WINDOW);
@@ -1120,31 +1128,15 @@ void CTreeMap::DrawTreeMapLabels(HDC dc, const CPoint& offset, const BitmapView 
 
 /////////////////////////////////////////////////////////////////////////////
 
-CTreeMapPreview::CTreeMapPreview()
-{
-    m_root = nullptr;
-    BuildDemoData();
-}
-
-CTreeMapPreview::~CTreeMapPreview()
-{
-    delete m_root;
-}
-
 void CTreeMapPreview::SetOptions(const CTreeMap::Options* options)
 {
     m_treeMap.SetOptions(options);
     Invalidate();
 }
 
-void CTreeMapPreview::BuildDemoData()
-{
-    m_root = CTreeMap::BuildDemoTree().release();
-}
-
 void CTreeMapPreview::OnPaint()
 {
     const CPaintDC dc(this);
     const CRect rc = GetClientRect();
-    m_treeMap.DrawTreeMap(dc.Handle(), rc, m_root);
+    m_treeMap.DrawTreeMap(dc.Handle(), rc, m_root.get());
 }
