@@ -781,11 +781,10 @@ bool CSelectDrivesDlg::OnInitDialog()
     // Restore local folder history independently of cloud selections.
     for (const auto& folder : COptions::SelectDrivesFolder.Obj())
     {
-        if (StorageSource::IsPath(folder)) continue;
+        if (folder.empty() || StorageSource::IsPath(folder)) continue;
         m_browseList.AddString(folder);
-        if (m_folderName.empty()) m_folderName = folder;
     }
-    m_browseList.SetText(m_folderName);
+    m_browseList.SetCurSel(0);
 
     // Keep restored window sizes large enough for the current text scale.
     const CRect minimumRect = GetWindowRect();
@@ -1121,7 +1120,6 @@ bool CSelectDrivesDlg::PreprocessMessage(MSG* pMsg)
     // Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
     else if (RemoveSelectedHistoryEntry(pMsg, m_browseList, COptions::SelectDrivesFolder.Obj()))
     {
-        m_folderName = m_browseList.GetText();
         UpdateButtons();
         return true;
     }
