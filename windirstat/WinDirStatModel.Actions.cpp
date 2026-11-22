@@ -771,6 +771,9 @@ void CWinDirStatModel::OnCleanupProperties()
 {
     const auto& selected = GetAllSelected();
 
+    // Show a single file's association in the same context that opens it.
+    if (selected.size() == 1 && InvokeDesktopFileVerb(selected.front(), L"properties")) return;
+
     // Open every property sheet individually when the selection contains virtual This PC and MTP items.
     if (std::ranges::any_of(selected, [](const CItem* item) { return item->IsTypeOrFlag(IT_MYCOMPUTER, ITF_MTP); }))
     {
@@ -951,13 +954,24 @@ void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
     if (FAILED(contextMenu->QueryContextMenu(menu.Handle(), 0,
         CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
 
-    // launch command associated with passed item identifier
+    // Use the same desktop file actions when selected from the Explorer submenu.
+    const UINT offset = nID - CONTENT_MENU_MINCMD;
+    if (IsElevationActive() && selected.size() == 1)
+    {
+        WCHAR verb[64]{};
+        if (SUCCEEDED(contextMenu->GetCommandString(offset, GCS_VERBW, nullptr,
+            reinterpret_cast<LPSTR>(verb), std::size(verb) - 1)) &&
+            (_wcsicmp(verb, L"open") == 0 || _wcsicmp(verb, L"properties") == 0) &&
+            InvokeDesktopFileVerb(selected.front(), verb)) return;
+    }
+
+    // Invoke the shell command by its offset in the populated menu.
     CMINVOKECOMMANDINFOEX info = {};
     info.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
     info.fMask = CMIC_MASK_UNICODE;
     info.hwnd = CMainFrame::Get()->Handle();
-    info.lpVerb = MAKEINTRESOURCEA(nID - 1);
-    info.lpVerbW = MAKEINTRESOURCEW(nID - 1);
+    info.lpVerb = MAKEINTRESOURCEA(offset);
+    info.lpVerbW = MAKEINTRESOURCEW(offset);
     info.nShow = SW_SHOWNORMAL;
     contextMenu->InvokeCommand(reinterpret_cast<LPCMINVOKECOMMANDINFO>(&info));
 }

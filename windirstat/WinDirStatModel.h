@@ -150,6 +150,7 @@ public:
     void NotifyPanes(MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
 private:
+    static bool InvokeDesktopFileVerb(const CItem* item, const std::wstring& verb);
     static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,
         std::wstring_view detail = {});
     static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,

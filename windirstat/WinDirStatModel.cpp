@@ -353,12 +353,60 @@ bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, c
         (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
+bool CWinDirStatModel::InvokeDesktopFileVerb(const CItem* item, const std::wstring& verb)
+{
+    if (!IsElevationActive() || !item->IsTypeOrFlag(IT_FILE) ||
+        item->IsTypeOrFlag(ITF_RESERVED) || !item->SupportsFilesystemApis()) return false;
+
+    // Find the desktop Explorer that would launch the file.
+    const std::wstring path = item->GetPath();
+    CComPtr<IShellWindows> windows;
+    CComPtr<IDispatch> desktop, document;
+    CComPtr<IWebBrowser2> browser;
+    CComPtr<IShellFolderViewDual> view;
+    CComPtr<Folder> folder;
+    CComPtr<FolderItem> file;
+    CComVariant empty;
+    long hwnd = 0;
+    if (FAILED(windows.CoCreateInstance(CLSID_ShellWindows, nullptr, CLSCTX_LOCAL_SERVER)) ||
+        windows->FindWindowSW(&empty, &empty, SWC_DESKTOP, &hwnd, SWFO_NEEDDISPATCH, &desktop) != S_OK) return false;
+
+    // Test the existing file with Explorer's token before handing it to an application that may edit it.
+    if (verb.empty() || _wcsicmp(verb.c_str(), L"open") == 0)
+    {
+        DWORD processId = 0;
+        GetWindowThreadProcessId(static_cast<HWND>(LongToHandle(hwnd)), &processId);
+        const SmartPointer process(CloseHandle, OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId));
+        SmartPointer token(CloseHandle, HANDLE{});
+        const auto longPath = FinderBasic::MakeLongPathCompatible(path);
+        if (!process || !OpenProcessToken(process, TOKEN_QUERY | TOKEN_DUPLICATE, &token) ||
+            !ImpersonateLoggedOnUser(token)) return false;
+
+        const SmartPointer probe(CloseHandle, CreateFile(longPath.c_str(), GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+            FILE_FLAG_OPEN_NO_RECALL, nullptr));
+        if (!RevertToSelf()) std::terminate();
+        if (!probe.IsValid()) return false;
+    }
+
+    // Resolve the selected item in the desktop user's shell namespace.
+    if (FAILED(desktop.QueryInterface(&browser)) || FAILED(browser->get_Document(&document)) || !document ||
+        FAILED(document.QueryInterface(&view)) || FAILED(view->get_Folder(&folder)) || !folder ||
+        FAILED(folder->ParseName(CComBSTR(path.c_str()), &file)) || !file) return false;
+
+    // Let Explorer present the viewer or property sheet and report any launch failure once.
+    CoAllowSetForegroundWindow(file, nullptr);
+    if (const HRESULT hr = file->InvokeVerb(verb.empty() ? empty : CComVariant(verb.c_str()));
+        FAILED(hr) && hr != HRESULT_FROM_WIN32(ERROR_CANCELLED)) DisplayError(TranslateError(hr));
+    return true;
+}
+
 void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
 {
     assert(item != nullptr);
 
-    // Ignore if special reserved item
-    if (item->IsTypeOrFlag(ITF_RESERVED)) return;
+    // Delegate ordinary file actions to the desktop when scanning as administrator.
+    if (item->IsTypeOrFlag(ITF_RESERVED) || InvokeDesktopFileVerb(item, verb)) return;
 
     // Resolve filesystem paths and registered MTP PIDLs to shell identities
     CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> pidl;
@@ -378,7 +426,7 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
         return;
     }
 
-    // Launch properties dialog
+    // Invoke the requested verb on the shell item.
     SHELLEXECUTEINFO sei{};
     sei.cbSize = sizeof(sei);
     sei.hwnd = GetMainWindowHandle();

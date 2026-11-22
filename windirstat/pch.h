@@ -26,6 +26,7 @@
 #include <commdlg.h>
 #include <comdef.h>
 #include <dwmapi.h>
+#include <exdisp.h>
 #include <fdi.h>
 #include <gdiplus.h>
 #include <olectl.h>
@@ -38,6 +39,7 @@
 #include <sal.h>
 #include <sddl.h>
 #include <shellapi.h>
+#include <shldisp.h>
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <tlhelp32.h>
