@@ -1,3 +1,37 @@
+<a name="windirstat-2.10.0"></a>
+# WinDirStat 2.10.X (Upcoming)
+
+Enhancements
+- Added confidence ratings for deleted file recovery
+- Added CSV output to standard output (thanks @elsoran)
+- Added forced portable mode via `-portable.exe` (thanks @harryytm)
+- Added incomplete scan markers to results and reports
+- Added native WSL 2 scanning and virtual disk inspection (thanks @yutamago)
+- Added scans for S3-compatible storage, Azure Blob, and WebDAV with saved connections
+- Added Windows Run support for MSI and Store installations
+- Improved bulk refresh responsiveness (thanks @djdomi)
+- Improved Italian translation (thanks @bovirus)
+- Improved NTFS scan, search, duplicate hashing, and export performance
+- Improved visualization context menu consistency
+- Opened files from elevated sessions through Explorer when desktop permissions allow
+- Raised the scan thread limit on systems with over 16 logical processors (thanks @djdomi)
+- Reduced memory usage in the scan tree and Largest Files view
+
+Bug Fixes
+- Corrected checkbox background colors
+- Corrected completion handling and exit codes for elevated exports
+- Corrected CSV imports beyond 255 columns and tightened CSV/JSON tree validation
+- Corrected dialog clipping at large text sizes (thanks @djdomi)
+- Corrected directory filtering and regex-based extension exclusions
+- Corrected scan tree crashes, premature completion while paused, and startup cancellation
+- Corrected shell operations continuing after cancellation (thanks @djdomi)
+- Corrected stale timestamps and filtering after refresh
+- Corrected stale toolbar commands after scans
+- Prevented concurrent writes while making files sparse
+- Rechecked NTFS metadata and allocation before finalizing recovery
+- Used current filesystem entries for deletion and handled read-only files
+- Verified all file streams before hardlink replacement
+
 <a name="windirstat-2.9.3"></a>
 # WinDirStat 2.9.3
 
