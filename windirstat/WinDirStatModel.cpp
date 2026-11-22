@@ -353,8 +353,9 @@ bool CWinDirStatModel::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, c
         (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
-bool CWinDirStatModel::InvokeDesktopFileVerb(const CItem* item, const std::wstring& verb)
+bool CWinDirStatModel::TryOpenFileInExplorer(const CItem* item, const std::wstring& verb)
 {
+    if (!verb.empty() && _wcsicmp(verb.c_str(), L"open") != 0) return false;
     if (!IsElevationActive() || !item->IsTypeOrFlag(IT_FILE) ||
         item->IsTypeOrFlag(ITF_RESERVED) || !item->SupportsFilesystemApis()) return false;
 
@@ -372,7 +373,6 @@ bool CWinDirStatModel::InvokeDesktopFileVerb(const CItem* item, const std::wstri
         windows->FindWindowSW(&empty, &empty, SWC_DESKTOP, &hwnd, SWFO_NEEDDISPATCH, &desktop) != S_OK) return false;
 
     // Test the existing file with Explorer's token before handing it to an application that may edit it.
-    if (verb.empty() || _wcsicmp(verb.c_str(), L"open") == 0)
     {
         DWORD processId = 0;
         GetWindowThreadProcessId(static_cast<HWND>(LongToHandle(hwnd)), &processId);
@@ -394,7 +394,7 @@ bool CWinDirStatModel::InvokeDesktopFileVerb(const CItem* item, const std::wstri
         FAILED(document.QueryInterface(&view)) || FAILED(view->get_Folder(&folder)) || !folder ||
         FAILED(folder->ParseName(CComBSTR(path.c_str()), &file)) || !file) return false;
 
-    // Let Explorer present the viewer or property sheet and report any launch failure once.
+    // Let Explorer present the application and report any launch failure once.
     CoAllowSetForegroundWindow(file, nullptr);
     if (const HRESULT hr = file->InvokeVerb(verb.empty() ? empty : CComVariant(verb.c_str()));
         FAILED(hr) && hr != HRESULT_FROM_WIN32(ERROR_CANCELLED)) DisplayError(TranslateError(hr));
@@ -405,8 +405,8 @@ void CWinDirStatModel::OpenItem(const CItem* item, const std::wstring & verb)
 {
     assert(item != nullptr);
 
-    // Delegate ordinary file actions to the desktop when scanning as administrator.
-    if (item->IsTypeOrFlag(ITF_RESERVED) || InvokeDesktopFileVerb(item, verb)) return;
+    // Delegate file opens to the desktop when scanning as administrator.
+    if (item->IsTypeOrFlag(ITF_RESERVED) || TryOpenFileInExplorer(item, verb)) return;
 
     // Resolve filesystem paths and registered MTP PIDLs to shell identities
     CComHeapPtr<ITEMIDLIST_ABSOLUTE __unaligned> pidl;

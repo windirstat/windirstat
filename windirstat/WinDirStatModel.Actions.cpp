@@ -771,9 +771,6 @@ void CWinDirStatModel::OnCleanupProperties()
 {
     const auto& selected = GetAllSelected();
 
-    // Show a single file's association in the same context that opens it.
-    if (selected.size() == 1 && InvokeDesktopFileVerb(selected.front(), L"properties")) return;
-
     // Open every property sheet individually when the selection contains virtual This PC and MTP items.
     if (std::ranges::any_of(selected, [](const CItem* item) { return item->IsTypeOrFlag(IT_MYCOMPUTER, ITF_MTP); }))
     {
@@ -954,15 +951,14 @@ void CWinDirStatModel::OnContextMenuExplore(const UINT nID)
     if (FAILED(contextMenu->QueryContextMenu(menu.Handle(), 0,
         CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
 
-    // Use the same desktop file actions when selected from the Explorer submenu.
+    // Open files from the Explorer submenu with the same credentials as the main Open command.
     const UINT offset = nID - CONTENT_MENU_MINCMD;
     if (IsElevationActive() && selected.size() == 1)
     {
         WCHAR verb[64]{};
         if (SUCCEEDED(contextMenu->GetCommandString(offset, GCS_VERBW, nullptr,
             reinterpret_cast<LPSTR>(verb), std::size(verb) - 1)) &&
-            (_wcsicmp(verb, L"open") == 0 || _wcsicmp(verb, L"properties") == 0) &&
-            InvokeDesktopFileVerb(selected.front(), verb)) return;
+            _wcsicmp(verb, L"open") == 0 && TryOpenFileInExplorer(selected.front(), verb)) return;
     }
 
     // Invoke the shell command by its offset in the populated menu.
