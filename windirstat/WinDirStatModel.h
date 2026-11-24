@@ -126,6 +126,9 @@ public:
     void RebuildExtensionData();
     void RebuildRegisteredExtensions();
     void DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
+    static bool IsUnsafeDirectory(const CItem* item) noexcept;
+    static bool IsWalkableFolder(const CItem* item) noexcept;
+    static std::vector<CItem*> GetEmptyFolderRoots(const std::vector<CItem*>& items);
     void SetZoomItem(CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const;
@@ -155,6 +158,9 @@ private:
         std::wstring_view detail = {});
     static bool ConfirmOperation(std::wstring_view operationId, Setting<bool>& prompt,
         std::span<CItem* const> affectedItems, std::wstring_view detail = {});
+    static bool ConfirmPhysicalDeletion(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false);
+    std::vector<CItem*> PerformPhysicalDeletion(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
+    void RemoveEmptyFolders(const std::vector<CItem*>& selection, bool toTrashBin) const;
     void RemoveLocalProfiles(std::wstring_view whereClause) const;
     void NotifyPanesExcept(CWnd* sender, MODEL_CHANGE change = MODEL_CHANGE_NONE, CItem* item = nullptr);
 
@@ -232,6 +238,8 @@ protected:
     void OnScanWslDisk();
     void OnCleanupSparsifyFile();
     void OnCleanupRemoveEmpty();
+    void OnCleanupSearchEmpty();
+    void OnSearchSelectAll();
     void OnToolsSetDates();
     void OnScanSuspend();
     void OnScanResume();
@@ -284,6 +292,10 @@ inline std::span<const RouteEntry> CWinDirStatModel::Routes()
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_EMPTY_FOLDER),
         Route::Command<&OnCleanupRemoveEmpty>(ID_CLEANUP_REMOVE_EMPTY),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_EMPTY),
+        Route::Command<&OnCleanupSearchEmpty>(ID_CLEANUP_SEARCH_EMPTY),
+        Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_SEARCH_EMPTY),
+        Route::Command<&OnSearchSelectAll>(ID_SEARCH_SELECT_ALL),
+        Route::Update<&OnUpdateCentralHandler>(ID_SEARCH_SELECT_ALL),
         Route::Command<&OnRemoveShadowCopies>(ID_CLEANUP_REMOVE_SHADOW),
         Route::Update<&OnUpdateCentralHandler>(ID_CLEANUP_REMOVE_SHADOW),
         Route::Command<&OnSearch>(ID_SEARCH),

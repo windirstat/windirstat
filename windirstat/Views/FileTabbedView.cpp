@@ -100,9 +100,10 @@ LRESULT CFileTabbedView::OnChangeActiveTab(const WPARAM wp, const LPARAM lp)
         CFileDupeControl::Get()->SortItems();
     }
 
-    // Show the contextual watcher toolbar buttons only while its tab is active
+    // Show search and watcher buttons for the active tab
     if (CMainFrame::Get() != nullptr)
     {
+        CMainFrame::Get()->SetSearchToolBarButtons(wp == static_cast<WPARAM>(FileTab::Search));
         CMainFrame::Get()->SetWatcherToolBarButtons(wp == static_cast<WPARAM>(FileTab::Watcher));
     }
 
