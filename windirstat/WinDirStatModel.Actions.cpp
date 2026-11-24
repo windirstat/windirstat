@@ -15,6 +15,7 @@
 #include "FinderRemote.h"
 #include "FinderNtfs.h"
 #include "FinderWsl.h"
+#include "ScanHistory.h"
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
 #include "Filtering.h"
@@ -1489,6 +1490,8 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
         {
             CMainFrame::Get()->LockWindowUpdate();
             CFileSearchControl::Get()->GetRootItem()->SetTotals(searchTotals);
+            // Refreshes (not loaded scans) add a point to the history of this scan origin
+            if (!items.empty() && stopReason == Default) CScanHistory::RecordScan(GetRootItem(), GetScanPathSpec());
             Get()->NotifyPanes();
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->ApplyPaneVisibility(true);
