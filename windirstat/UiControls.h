@@ -150,11 +150,7 @@ public:
 class CToolTipCtrl final : public CWnd
 {
 public:
-    bool Create(CWnd* pParentWnd)
-    {
-        return CreateEx(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
-            CRect(), pParentWnd, 0);
-    }
+    bool Create(CWnd* pParentWnd);
     bool AddTool(WindowRef window, const LPCWSTR lpszText)
     {
         if (window == nullptr) return false;

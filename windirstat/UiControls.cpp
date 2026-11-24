@@ -52,6 +52,14 @@ void CSplitterWnd::OnPaint()
     DrawBackground(dc, rect);
 }
 
+bool CToolTipCtrl::Create(CWnd* pParentWnd)
+{
+    if (!CreateEx(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr,
+        WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, CRect(), pParentWnd, 0)) return false;
+    if (DarkMode::IsDarkModeActive()) DarkMode::AdjustControls(Handle());
+    return true;
+}
+
 HBRUSH CToolBar::OnCtlColor(CDC* dc, WindowRef, const UINT type)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(dc, type);

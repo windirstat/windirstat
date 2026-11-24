@@ -125,7 +125,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
 {
     if (!IsWindow(hWnd)) return;
 
-    auto ProcessWindow = [](const HWND hWnd, const LPARAM) -> BOOL
+    static const auto ProcessWindow = [](const HWND hWnd, const LPARAM) -> BOOL
     {
         std::array<WCHAR, MAX_CLASS_NAME> classNameBuffer{};
         const int length = GetClassName(hWnd, classNameBuffer.data(), static_cast<int>(classNameBuffer.size()));
@@ -181,11 +181,26 @@ void DarkMode::AdjustControls(const HWND hWnd)
             SendMessageW(hWnd, EM_SETCHARFORMAT, SCF_ALL, reinterpret_cast<LPARAM>(&format));
             SendMessageW(hWnd, EM_SETBKGNDCOLOR, 0, Color(ColorRole::Window));
         }
+        else if (className == TOOLTIPS_CLASSW || className == TOOLBARCLASSNAMEW)
+        {
+            // Re-apply the application font since SetWindowTheme resets fonts on these controls.
+            SendMessageW(hWnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(hWnd)), true);
+        }
         return TRUE;
     };
 
     ProcessWindow(hWnd, 0);
     EnumChildWindows(hWnd, ProcessWindow, 0);
+
+    // Tooltips are WS_POPUP windows, so EnumChildWindows does not visit them.
+    if ((GetWindowLongPtrW(hWnd, GWL_STYLE) & WS_CHILD) == 0 && !IsWindowClass(hWnd, TOOLTIPS_CLASSW))
+    {
+        EnumThreadWindows(GetWindowThreadProcessId(hWnd, nullptr), [](const HWND topWnd, LPARAM) -> BOOL
+        {
+            if (IsWindowClass(topWnd, TOOLTIPS_CLASSW)) ProcessWindow(topWnd, 0);
+            return TRUE;
+        }, 0);
+    }
 
     SetWindowPos(hWnd, nullptr, 0, 0, 0, 0,
         SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);

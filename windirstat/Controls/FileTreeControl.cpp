@@ -93,9 +93,6 @@ void CFileTreeControl::OnFontSizeChanged(const int oldPercent, const int newPerc
     if (!IsWindow(m_toolTip.Handle())) return;
 
     ClearPortionToolTip();
-
-    // The tooltip is a popup window, so ApplyAppFont's child enumeration misses it.
-    m_toolTip.SetFont(GetAppFont(m_toolTip.Handle()));
     m_toolTip.SetMaxTipWidth(ScaleForDpi(400));
 }
 
