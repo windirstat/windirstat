@@ -28,6 +28,31 @@ RecoveryDlg::~RecoveryDlg()
     }
 }
 
+static int GetInitialSourceSelection(const std::vector<std::wstring>& roots)
+{
+    const auto* model = CWinDirStatModel::Get();
+    if (!model->IsScanSettled()) return 0;
+
+    // Resolve scan roots in order so a mounted folder selects the drive for its own volume.
+    for (auto& path : SplitString(model->GetScanPathSpec()))
+    {
+        if (PathIsRelativeW(path.c_str()) || PathIsNetworkPathW(path.c_str())) continue;
+        if (path.size() == 2 && path.back() == L':') path += L'\\';
+        std::error_code error;
+        const auto resolved = std::filesystem::weakly_canonical(path, error);
+        const auto& localPath = error ? path : resolved.native();
+        std::wstring mountPoint(std::max<size_t>(MAX_PATH, localPath.size() + 2), L'\0');
+        wchar_t scanVolume[MAX_PATH], volume[MAX_PATH];
+        if (!GetVolumePathNameW(localPath.c_str(), mountPoint.data(), static_cast<DWORD>(mountPoint.size())) ||
+            !GetVolumeNameForVolumeMountPointW(mountPoint.c_str(), scanVolume, MAX_PATH)) continue;
+
+        for (const auto [index, root] : std::views::enumerate(roots))
+            if (GetVolumeNameForVolumeMountPointW(root.c_str(), volume, MAX_PATH) &&
+                _wcsicmp(volume, scanVolume) == 0) return static_cast<int>(index);
+    }
+    return 0;
+}
+
 bool RecoveryDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
@@ -55,7 +80,7 @@ bool RecoveryDlg::OnInitDialog()
         const auto text = label[0] == L'\0' ? root : std::format(L"{} ({})", root, label);
         GetDlgItem(IDC_RECOVERY_SOURCE).SendMessage(CB_ADDSTRING, 0, text.c_str());
     }
-    SetComboSelection(IDC_RECOVERY_SOURCE, m_roots.empty() ? -1 : 0);
+    SetComboSelection(IDC_RECOVERY_SOURCE, GetInitialSourceSelection(m_roots));
     const int iconSize = ScaleForDpi(16);
     m_icons.emplace_back(&DestroyIcon, Icons::MakeIcon(iconSize, Icons::PaintFileSelect));
     m_icons.emplace_back(&DestroyIcon, Icons::MakeIcon(iconSize, Icons::Char(L'▶', RGB(50, 205, 50))));
