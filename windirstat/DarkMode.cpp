@@ -181,9 +181,9 @@ void DarkMode::AdjustControls(const HWND hWnd)
             SendMessageW(hWnd, EM_SETCHARFORMAT, SCF_ALL, reinterpret_cast<LPARAM>(&format));
             SendMessageW(hWnd, EM_SETBKGNDCOLOR, 0, Color(ColorRole::Window));
         }
-        else if (className == TOOLTIPS_CLASSW)
+        else if (className == TOOLTIPS_CLASSW || className == TOOLBARCLASSNAMEW)
         {
-            // Re-apply the application font since SetWindowTheme resets tooltip fonts.
+            // Re-apply the application font since SetWindowTheme resets fonts on these controls.
             SendMessageW(hWnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetAppFont(hWnd)), true);
         }
         return TRUE;
